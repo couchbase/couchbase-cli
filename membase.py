@@ -19,3 +19,5 @@ public:
   virtual string runCmd () {}
   virtual ~MembaseCli () {}
 }
+
+

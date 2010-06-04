@@ -37,95 +37,114 @@ These tools will have some primary components:
 * Use the chain of responsibility design pattern. A good example of 
 this can be found at: 
 http://www.linuxtopia.org/online_books/programming_books/c++_practical_programming/c++_practical_programming_247.html 
-* These tools will be written in C/C++, depending on what works best
+Although this example is in C++, the basic concept will be possible
+to be implemented in Python.
+* These tools will be written in Python, using a framework which works best
 for extensibility
-* Top level source file that has a class defining virtual methods 
-that are over-ridden by each command subclasses (in their own source files)
-* Networking layer for sending REST requests to the server. The libcurl
-library will provide this networking layer
-* Parsing of JSON into objects that can be used by the command line 
-to display the results of the REST command
-* Functionality for parsing commands and dispatching the appropriate 
-command accordingly, as well as throwing an error for when the command
-is not yet supported
+* Top level source file:
+  - parses user input to obtain 
+    * operation name
+    * command line flags specific to that command of the desired operation. 
+  - has dictionary of functions keyed by the name which will be a 
+  "dispatch hash"
+  
+* Source file with the implementation of functions for sending REST 
+requests to the specified server and processing the JSON response. 
+  - PycURL library will provide the HTTP client functionality 
+  - Parsing of JSON into objects will be processed by the json module. 
+  The ouput of this processing can be used by the command line 
+  to display the JSON results of the REST command in a printable format
+
+  http://pycurl.sourceforge.net/
+  http://docs.python.org/library/json.html
 
 For instance:
 
-membase_cli.cc - contains top level class, virtual methods, handles 
-command args and dispatching of appropriate method. 
-membase_cli_list_servers.cc - contains child class that implements 
-the servers listing functionality
-membase_cli_json.cc - contains the methods/functions for converting
-json replies from the REST interface to something that can be printed 
-out by the program for the given command 
-membase_cli_curl.cc - contains the methods for network interface
-for sending REST commands and recieving the JSON replies
-membase_std_arg.cc - contains the methods/functions for parsing the 
-user input 
+* membase.py - contains parsing of command, dictionary of functions keyed by
+command string to dispatch appropriate method.
+* membase_cli_list_servers.py - contains the function that implements the 
+servers listing functionality
+* membase_cli_$operation - other operations, as they are implemented
+* membase_cli_rest_client.py - contains the functions for :
+  - converting json replies from the REST interface to something that 
+  can be printed out by the program for the given command 
+  - HTTP client interface for sending REST commands and recieving 
+  the JSON replies
 
 
+Operations/Functions:
+
+The following are operations that each function source file will implement:
+
+membase listservers
+
+membase join
+  -c cluster (IP:port, host:port) 
+  -u user
+  -p password
+
+membase eject
+  -c cluster (IP:port, host:port) 
+  -u user
+  -p password
+
+membase listpools
+  -s servers [server,] 
+
+membase listbuckets
+  -p pool [pool,]
+
+membase stats 
+  -p pools [pool,]
+  -s servers [server,] 
+  -b buckets
+  
+membase bucket
+  -g get
+  -p pool (required!)
+  -d delete
+  -f flush [bucket,]
+
+membase log
+  -e entry text
+
+membase version
+
+  
+membase 
 Low-level Discription
 
 Chain of responsibility/dispatcher
 
 One crude idea is a big switch() statement to call the appropriate
 command or function. But the article above brings to light a more
-flexible and extensible model: using some sort of C++ standard template
-vector or hash that contains whatever functions exist and to simple call
+flexible and extensible model: using a Python dictionary of functions,
+keyed by the operation for whatever functions exist and to simple call
 the appropriate function/method based on the command (hash key, value 
 being the function/method), without having to use a switch or 
 interpolation of the command string into a numeric value tested by a
 switch statement.
 
-Each command could exist in its own source file, and whatever happens to 
-linked into the overall project, that command should simply run. This idea
-has been used in the Drizzle User Defined functions, particularly the Drizzle
-Memcached UDFs. The MySQL Memcached UDFs were written in C and used a switch 
-statement that called the appropriate function based on the name of the
-function mapped to a enumerated list of commands that the switch statement used.
-The Drizzle Memcached UDFs used the new UDF API, C++ as opposed to C, 
-that uses instead a hash that keys the name of the function.
+Each command implementation will exist in its own source file, and 
+whatever happens to be imported into the top-level program, that 
+command should simply run as it is keyed from the function dictionary. 
 
 Networking Layer using REST
 
-A source file will contain the functions/methods for sending REST requests to the
-server using libcurl. Linked in, the programs that implment each 
-REST action will have access to these functions/methods
+The source file membase_cli_rest_client.py will contain the 
+functions for sending REST requests to the server using PyCURL.
+Imported by each source file implementing a particular command, the 
+programs that implment each REST action will have access to these 
+functions/methods
 
 JSON parsing of REST replies
 
-A source file will contain the functions/methods for parsing the REST JSON
-replies into data objects that can be displayed to the user. One library that looks
-very usable for this task is JSONCPP - see :
-
-http://jsoncpp.sourceforge.net/
+membase_cli_rest_client.py will also contain the functions/methods 
+for parsing the REST JSON replies into data objects that can be 
+displayed to the user. 
 
 Command line parsing
 
-A source file will contain the functions/methods for parsing user input to 
-the main command line program. The C++ library suitable for this is Tclap. 
-See: http://tclap.sourceforge.net/manual.html
-
-Licenses:
-
-Tclap:
-
-Copyright (c) 2003 Michael E. Smoot
-
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of the Software,
-and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-
-JSONCPP
-
-The json-cpp library and this documentation are in Public Domain
-
+The top level source file, membase.py, will contain the functionality for 
+parsing user input to the main command line program.
 
