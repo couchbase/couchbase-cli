@@ -5,6 +5,8 @@
   membase cluster
 
 """
+
+import pprint
 from membase_info import *
 from membase_cli_rest_client import *
 
@@ -24,13 +26,23 @@ class Listservers:
       if o == "-s":
         server = a
 
-      server, port = server.split(':')
-      if not port:
-        port = "8080";
+    server, port = server.split(':')
+    if not port:
+      port = "8080";
 
-      print "server: %s port: %s" % (server, port)
+    print "server: %s port: %s" % (server, port)
 
-      rest = MembaseCliRestClient(server, port, self.method, self.rest_cmd) 
+    rest = MembaseCliRestClient(server, port, self.method, self.rest_cmd) 
 
-      json = rest.sendCmd(); 
+    json = rest.sendCmd(); 
+
+    #pp = pprint.PrettyPrinter(indent=4) 
+
+    #pp.pprint(json)
+
+    i = 1 
+    for node in json['nodes']:
+      print "\t[%d]: %s" % (i,node['hostname'])
+      i=i+1
+    
 

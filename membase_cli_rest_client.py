@@ -17,9 +17,8 @@ class MembaseCliRestClient:
     self.port = port
     self.cmd = cmd
     self.method = method
-    self.url = 'http://' , self.server, ':', self.port , self.cmd
-    print "URL: http://%s:%s%s" % (self.server,self.port,self.cmd)
-    self.conn = httplib.HTTPConnection(server)
+    self.conn = httplib.HTTPConnection(server, int(port))
+    self.bootStrap()
 
   def setServer(self,server):
     # set value of private server member
@@ -29,28 +28,30 @@ class MembaseCliRestClient:
     # get value of private server member
     return self.server
 
-  def sendRequest(self):
-    # send the request to the server
-    self.conn.request(self.method, self.url)
-
-  def getResponse(self):
-    response = self.conn.getresponse()
+  def bootStrap(self):
+    self.conn.request('GET', '/pools')
     data = ""
-
-    if response.status == OK :
+    response = self.conn.getresponse()
+    if response.status == 200:
       data = response.read()
     else :
       print "Error!"
       sys.exit(2)
-    
-    return data
+    return
 
   def sendCmd(self):
-    self.sendRequest()
-    return self.getResponse()
-    self.sendRequest()
-    return self.getResponse()
+    data = ""
+    # send the request to the server
+    self.conn.request(self.method, self.cmd)
+    # obtain the response
+    response = self.conn.getresponse()
 
-  def processJson(data):
-    return json.loads
+    if response.status == 200:
+      data = response.read()
+    else :
+      print "Error!"
+      sys.exit(2)
+
+    return json.loads(data)
+
 
