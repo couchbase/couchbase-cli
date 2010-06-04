@@ -103,11 +103,15 @@ membase stats                         GET /pools/default/stats?stat=$stat&period
   -s servers [server,] 
   -b buckets
   
-membase bucket
+membase bucket                        POST /pools/$pool/buckets  (pool != default)                                              
+  -c create
+  -n bucketname                                                   name=$bucketname
   -g get
-  -p pool (required!)
+  -p pool 
   -d delete
   -f flush [bucket,]
+  -s cachesize                                                    cacheSize=$cachesize       
+
 
 membase log
   -g get
