@@ -76,25 +76,29 @@ Operations/Functions:
 
 The following are operations that each function source file will implement:
 
-membase listservers
+command as run by user                REST command 
+----------------------------------------------------------
+membase listservers                   GET /pools/default 
 
-membase join
+membase join                          POST /node/controller/doJoinCluster
   -c cluster (IP:port, host:port) 
   -u user
   -p password
 
-membase eject
+membase eject                         POST /node/controller/ejectNode
   -c cluster (IP:port, host:port) 
   -u user
   -p password
 
-membase listpools
+membase listpools                     GET  /pools/default
   -s servers [server,] 
 
-membase listbuckets
+membase listbuckets                   GET /pools/default/buckets/default
   -p pool [pool,]
 
-membase stats 
+membase flush                         GET /pools/default/bucket/default/controller/doFlush 
+
+membase stats                         GET /pools/default/stats?stat=$stat&period=$period 
   -p pools [pool,]
   -s servers [server,] 
   -b buckets
@@ -106,6 +110,7 @@ membase bucket
   -f flush [bucket,]
 
 membase log
+  -g get
   -e entry text
 
 membase version

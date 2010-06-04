@@ -12,6 +12,7 @@ class Listservers:
     """ 
       constructor
     """
+    self.rest_cmd = "/
 
   def runCmd(self, cmd, opts):
     print "Running %s " % cmd
