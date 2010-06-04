@@ -19,4 +19,4 @@ class Listservers:
     # check if usage specified
     for o, a in opts:
       if o == "-s":
-        print "server: %s" % a 
+        print "server: %s" % a

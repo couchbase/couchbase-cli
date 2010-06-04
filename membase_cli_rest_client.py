@@ -15,7 +15,6 @@ class MembaseCliRestClient:
     # do something here?
     this.server = server
     this.cmd = cmd
-    
 
   def setServer(server):
     # set value of private server member
