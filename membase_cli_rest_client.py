@@ -6,28 +6,51 @@
 
 """
 
-import sys, http.client, json, string
+import sys, httplib, json, string
 from StringIO import StringIO
 
 class MembaseCliRestClient:
 
-  def __init__(self, server, cmd):
+  def __init__(self, server, port, method, cmd):
     # do something here?
-    this.server = server
-    this.cmd = cmd
+    self.server = server
+    self.port = port
+    self.cmd = cmd
+    self.method = method
+    self.url = 'http://' , self.server, ':', self.port , self.cmd
+    print "URL: http://%s:%s%s" % (self.server,self.port,self.cmd)
+    self.conn = httplib.HTTPConnection(server)
 
-  def setServer(server):
+  def setServer(self,server):
     # set value of private server member
-    this.server = server
+    self.server = server
 
-  def getServer():
+  def getServer(self):
     # get value of private server member
-    return this.server
+    return self.server
 
-  def sendRequest(cmd = this.cmd):
+  def sendRequest(self):
     # send the request to the server
+    self.conn.request(self.method, self.url)
 
-  def getResponse():
+  def getResponse(self):
+    response = self.conn.getresponse()
+    data = ""
 
-  def processJson():
+    if response.status == OK :
+      data = response.read()
+    else :
+      print "Error!"
+      sys.exit(2)
+    
+    return data
+
+  def sendCmd(self):
+    self.sendRequest()
+    return self.getResponse()
+    self.sendRequest()
+    return self.getResponse()
+
+  def processJson(data):
+    return json.loads
 
