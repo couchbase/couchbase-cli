@@ -6,28 +6,34 @@
 
 """
 import getopt,sys
-from membase_cli_* import *
+from membase_cli_listservers import *
+from membase_info import *
 
 
-def usage():
-  print >> sys.stderr, "Usage: membase command [OPTIONS]"
 
 if __name__ == "__main__":
   try:
-    optlist, args = getopt.getopt(sys.argv[2:], 'b:c:e:gdp:c:p:s:')
+    opts, args = getopt.getopt(sys.argv[2:], 'b:c:e:gdp:c:hp:s:')
     cmd = sys.argv[1]
-    print "command: %s" % cmd 
-    optlist
   except  getopt.GetoptError, err:
     usage()
-    sys.exit(2)
 
+  # check if usage specified
+  for o, a in opts:
+    if o == "-h":
+      usage()
+
+  # need to make this dynamic
   commands = { 'listservers' : Listservers}
 
+  # make sure the command is defined
   if cmd not in commands:
-    usage()
+    err_message= "command: '%s' not found" % cmd
+    usage(err_message)
 
-  taskrunner = commands[cmd](optlist)
-  taskrunner.runCmd(cmd)
+  # instantiate
+  taskrunner = commands[cmd]()
+  # call runCmd method
+  taskrunner.runCmd(cmd, opts)
 
 

@@ -5,13 +5,18 @@
   membase cluster
 
 """
+from membase_info import *
 
 class Listservers:
-  def __init__(self, options):
+  def __init__(self):
     """ 
       constructor
     """
 
-  def runCmd(self, cmd):
-    print "Running %s" % cmd
+  def runCmd(self, cmd, opts):
+    print "Running %s " % cmd
 
+    # check if usage specified
+    for o, a in opts:
+      if o == "-s":
+        print "server: %s" % a 
