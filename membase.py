@@ -15,11 +15,12 @@ from membase_info import *
 if __name__ == "__main__":
   (cluster, user, password) = ('','','')
   try:
-    opts, args = getopt.getopt(sys.argv[2:], 'b:c:e:gdp:c:hp:s:',
+    opts, args = getopt.getopt(sys.argv[2:], 'b:c:e:gdp:c:hp:s',
                                              ['help',
                                               'cluster=',
                                               'password=',
-                                              'user='])
+                                              'user=',
+                                              'stats'])
     cmd = sys.argv[1]
     if cmd == "--help" or cmd == "help":
       usage()
@@ -49,7 +50,12 @@ if __name__ == "__main__":
   # need to make this dynamic
   commands = { 
                 'listservers' : Listservers,
-                'listbuckets' : Listbuckets
+                'listbuckets' : Buckets, 
+                'bucketinfo' : Buckets, 
+                'bucketstats' : Buckets, 
+                'bucketcreate' : Buckets, 
+                'bucketdelete' : Buckets, 
+                'bucketflush' : Buckets, 
                 }
 
   # make sure the command is defined
