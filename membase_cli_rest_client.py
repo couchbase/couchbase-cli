@@ -11,12 +11,12 @@ from StringIO import StringIO
 
 class MembaseCliRestClient:
 
-  def __init__(self, server, port, method, cmd):
+  def __init__(self, server, port):
     # do something here?
     self.server = server
     self.port = port
-    self.cmd = cmd
-    self.method = method
+    self.uri = '/pools'  
+    self.method = 'GET' # default 
     self.params = {}
     self.conn = httplib.HTTPConnection(server, int(port))
     self.bootStrap()
@@ -47,31 +47,32 @@ class MembaseCliRestClient:
       sys.exit(2)
     return
 
-  def sendCmd(self):
+  def sendCmd(self, method, uri):
     data = ""
     params = {}
+    self.method = method
+    self.uri = uri
 
     if self.method == 'POST':
       if self.params:
         params = urllib.urlencode(self.params)
 
     print "PARAMS: ", params
-    print "REST CMD: %s %s" % (self.method,self.cmd)
+    print "REST CMD: %s %s" % (self.method,self.uri)
 
     # send the request to the server
     if self.method == 'GET':
-      self.conn.request(self.method, self.cmd)
+      self.conn.request(self.method, self.uri)
     else:
       headers = { 
         'Content-type':'application/x-www-form-urlencoded',
-        'Accept':'text/plain'
       }
-      self.conn.request(self.method, self.cmd, params, headers)
+      self.conn.request(self.method, self.uri, params, headers)
 
     # obtain the response
     response = self.conn.getresponse()
 
-    if self.cmd == 'bucketflush':
+    if self.uri == 'bucketflush':
       if response.status == 204:
         data = "Success! %s flushed" % self.getparam('bucket')
       else:

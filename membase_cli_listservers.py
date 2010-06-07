@@ -28,9 +28,9 @@ class Listservers:
 
     print "cluster: %s port: %s" % (cluster, port)
 
-    rest = MembaseCliRestClient(cluster, port, self.method, self.rest_cmd) 
+    rest = MembaseCliRestClient(cluster, port) 
 
-    json = rest.sendCmd(); 
+    json = rest.sendCmd(self.method, self.rest_cmd); 
 
     #pp = pprint.PrettyPrinter(indent=4) 
     #pp.pprint(json)

@@ -53,7 +53,7 @@ class Buckets:
     if not port:
       port = "8080";
 
-    rest = MembaseCliRestClient(cluster, port, methods[cmd], self.rest_cmd) 
+    rest = MembaseCliRestClient(cluster, port) 
     self.rest_cmd = rest_cmds[cmd]
 
     # get the parameters straight
@@ -73,7 +73,7 @@ class Buckets:
     print "REST URI:" , self.rest_cmd
     print "Running %s " % cmd 
 
-    json = rest.sendCmd(); 
+    json = rest.sendCmd(methods[cmd], self.rest_cmd); 
 
     # debug
     pp = pprint.PrettyPrinter(indent=4) 
