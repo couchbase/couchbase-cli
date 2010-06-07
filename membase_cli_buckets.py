@@ -10,12 +10,12 @@ import pprint
 from membase_info import *
 from membase_cli_rest_client import *
 
-class Listservers:
+class Listbuckets:
   def __init__(self):
     """ 
       constructor
     """
-    self.rest_cmd = '/pools/default'
+    self.rest_cmd = '/pools/default/buckets'
     self.method = 'GET'
     
   def runCmd(self, cmd, cluster, user, password, opts):
@@ -37,6 +37,6 @@ class Listservers:
 
     i = 1 
     print "List of servers within the cluster %s:%s" % (cluster,port)
-    for node in json['nodes']:
-      print "\t[%d]: %s" % (i,node['hostname'])
-      i=i+1
+    for bucket in json:
+       print "\t[%d]: %s" % (i,bucket['name'])
+       i=i+1

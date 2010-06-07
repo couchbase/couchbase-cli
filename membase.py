@@ -7,24 +7,50 @@
 """
 import getopt,sys
 from membase_cli_listservers import *
+from membase_cli_buckets import *
 from membase_info import *
 
 
 
 if __name__ == "__main__":
+  (cluster, user, password) = ('','','')
   try:
-    opts, args = getopt.getopt(sys.argv[2:], 'b:c:e:gdp:c:hp:s:')
+    opts, args = getopt.getopt(sys.argv[2:], 'b:c:e:gdp:c:hp:s:',
+                                             ['help',
+                                              'cluster=',
+                                              'password=',
+                                              'user='])
     cmd = sys.argv[1]
+    if cmd == "--help" or cmd == "help":
+      usage()
   except  getopt.GetoptError, err:
     usage()
 
+
   # check if usage specified
   for o, a in opts:
-    if o == "-h":
+    if o == "-h" or o == "--help":
+      cmd == "help"
       usage()
+    if o == "-c" or o == "--cluster":
+      cluster = a
+    if o == "-u" or o == "--user":
+      user = a
+    if o == "-p" or o == "--password":
+      password = a
+
+  if (not cluster and cmd != "help"):
+    usage("You must specify at least two things: command, and cluster (--cluster)")
+  if not user:
+     user = ''
+  if not password:
+     password = ''
 
   # need to make this dynamic
-  commands = { 'listservers' : Listservers}
+  commands = { 
+                'listservers' : Listservers,
+                'listbuckets' : Listbuckets
+                }
 
   # make sure the command is defined
   if cmd not in commands:
@@ -34,6 +60,6 @@ if __name__ == "__main__":
   # instantiate
   taskrunner = commands[cmd]()
   # call runCmd method
-  taskrunner.runCmd(cmd, opts)
+  taskrunner.runCmd(cmd, cluster, user, password, opts)
 
 
