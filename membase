@@ -8,6 +8,7 @@
 import getopt,sys
 from membase_cli_listservers import *
 from membase_cli_buckets import *
+from membase_cli_node import *
 from membase_info import *
 
 
@@ -15,29 +16,36 @@ from membase_info import *
 if __name__ == "__main__":
   (cluster, user, password) = ('','','')
   try:
-    opts, args = getopt.getopt(sys.argv[2:], 'b:c:e:gdp:c:hp:s',
+    opts, args = getopt.getopt(sys.argv[2:], 'a:b:c:e:gdp:c:hp:r:s',
                                              ['help',
                                               'cluster=',
                                               'password=',
                                               'user=',
-                                              'stats'])
+                                              'stats',
+                                              'server-add=',
+                                              'server-add-username=',
+                                              'server-add-password=',
+                                              'server-remove=',
+                                              'server-remove-username=',
+                                              'server-remove-password=',
+                                              ])
     cmd = sys.argv[1]
-    if cmd == "--help" or cmd == "help":
+    if cmd in ("-h","--help"):
       usage()
   except  getopt.GetoptError, err:
-    usage()
+    usage(err)
 
 
   # check if usage specified
   for o, a in opts:
-    if o == "-h" or o == "--help":
+    if o in ("-h", "--help"):
       cmd == "help"
       usage()
-    if o == "-c" or o == "--cluster":
+    if o in ("-c", "--cluster"):
       cluster = a
-    if o == "-u" or o == "--user":
+    if o in ("-u", "--user"):
       user = a
-    if o == "-p" or o == "--password":
+    if o in ("-p", "--password"):
       password = a
 
   if (not cluster and cmd != "help"):
@@ -49,13 +57,16 @@ if __name__ == "__main__":
 
   # need to make this dynamic
   commands = { 
-                'server-list' : Listservers,
-                'bucket-list' : Buckets, 
-                'bucket-details' : Buckets, 
-                'bucket-stats' : Buckets, 
-                'bucket-create' : Buckets, 
-                'bucket-delete' : Buckets, 
-                'bucket-flush' : Buckets, 
+                'server-list'       : Listservers,
+                'bucket-list'       : Buckets, 
+                'bucket-details'    : Buckets, 
+                'bucket-stats'      : Buckets, 
+                'bucket-create'     : Buckets, 
+                'bucket-delete'     : Buckets, 
+                'bucket-flush'      : Buckets, 
+                'rebalance'         : Nodemgr,
+                'rebalance-stop'    : Nodemgr,
+                'rebalance-status'  : Nodemgr, 
                 }
 
   # make sure the command is defined
@@ -67,5 +78,3 @@ if __name__ == "__main__":
   taskrunner = commands[cmd]()
   # call runCmd method
   taskrunner.runCmd(cmd, cluster, user, password, opts)
-
-
