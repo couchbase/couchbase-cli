@@ -1,80 +1,88 @@
 #!/usr/bin/env python
-"""
-  membase.py
-
-  This program is the top level source file for the Membase Command Line Tools
+# -*- coding: utf-8 -*-
 
 """
-import getopt,sys
+membase.py
+
+This program is the top level source file for the Membase Command Line Tools
+"""
+
+import getopt
+import sys
 from membase_cli_listservers import *
 from membase_cli_buckets import *
 from membase_cli_node import *
 from membase_info import *
 
+if __name__ == '__main__':
+    (cluster, user, password) = ('', '', '')
+    try:
+        (opts, args) = getopt.getopt(sys.argv[2:],
+                                     'a:b:c:e:gdp:c:hp:r:s', [
+                'help',
+                'cluster=',
+                'password=',
+                'user=',
+                'stats',
+                'server-add=',
+                'server-add-username=',
+                'server-add-password=',
+                'server-remove=',
+                'server-remove-username=',
+                'server-remove-password=',
+                ])
+        cmd = sys.argv[1]
+        if cmd in ('-h', '--help'):
+            usage()
+    except getopt.GetoptError, err:
+        usage(err)
 
+    # check if usage specified
 
-if __name__ == "__main__":
-  (cluster, user, password) = ('','','')
-  try:
-    opts, args = getopt.getopt(sys.argv[2:], 'a:b:c:e:gdp:c:hp:r:s',
-                                             ['help',
-                                              'cluster=',
-                                              'password=',
-                                              'user=',
-                                              'stats',
-                                              'server-add=',
-                                              'server-add-username=',
-                                              'server-add-password=',
-                                              'server-remove=',
-                                              'server-remove-username=',
-                                              'server-remove-password=',
-                                              ])
-    cmd = sys.argv[1]
-    if cmd in ("-h","--help"):
-      usage()
-  except  getopt.GetoptError, err:
-    usage(err)
+    for (o, a) in opts:
+        if o in ('-h', '--help'):
+            cmd == 'help'
+            usage()
+        if o in ('-c', '--cluster'):
+            cluster = a
+        if o in ('-u', '--user'):
+            user = a
+        if o in ('-p', '--password'):
+            password = a
 
+    if not cluster and cmd != 'help':
+        usage('You must specify at least two things: command, and cluster (--cluster)'
+              )
+    if not user:
+        user = ''
+    if not password:
+        password = ''
 
-  # check if usage specified
-  for o, a in opts:
-    if o in ("-h", "--help"):
-      cmd == "help"
-      usage()
-    if o in ("-c", "--cluster"):
-      cluster = a
-    if o in ("-u", "--user"):
-      user = a
-    if o in ("-p", "--password"):
-      password = a
+    # need to make this dynamic
 
-  if (not cluster and cmd != "help"):
-    usage("You must specify at least two things: command, and cluster (--cluster)")
-  if not user:
-     user = ''
-  if not password:
-     password = ''
+    commands = {
+        'server-list': Listservers,
+        'bucket-list': Buckets,
+        'bucket-details': Buckets,
+        'bucket-stats': Buckets,
+        'bucket-create': Buckets,
+        'bucket-delete': Buckets,
+        'bucket-flush': Buckets,
+        'rebalance': Nodemgr,
+        'rebalance-stop': Nodemgr,
+        'rebalance-status': Nodemgr,
+        }
 
-  # need to make this dynamic
-  commands = { 
-                'server-list'       : Listservers,
-                'bucket-list'       : Buckets, 
-                'bucket-details'    : Buckets, 
-                'bucket-stats'      : Buckets, 
-                'bucket-create'     : Buckets, 
-                'bucket-delete'     : Buckets, 
-                'bucket-flush'      : Buckets, 
-                'rebalance'         : Nodemgr,
-                'rebalance-stop'    : Nodemgr,
-                'rebalance-status'  : Nodemgr, 
-                }
+    # make sure the command is defined
 
-  # make sure the command is defined
-  if cmd not in commands:
-    err_message= "command: '%s' not found" % cmd
-    usage(err_message)
+    if cmd not in commands:
+        err_message = "command: '%s' not found" % cmd
+        usage(err_message)
 
-  # instantiate
-  taskrunner = commands[cmd]()
-  # call runCmd method
-  taskrunner.runCmd(cmd, cluster, user, password, opts)
+    # instantiate
+
+    taskrunner = commands[cmd]()
+
+    # call runCmd method
+
+    taskrunner.runCmd(cmd, cluster, user, password, opts)
