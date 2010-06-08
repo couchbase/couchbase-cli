@@ -11,18 +11,17 @@ from membase_info import *
 from membase_cli_rest_client import *
 
 rest_cmds = { 
-  'listbuckets':'/pools/default/buckets',
-  'bucketflush':'/pools/default/buckets/',
-  'bucketdelete':'/pools/default/buckets/',
-  'bucketcreate':'/pools/default/buckets/'
+  'bucket-list'   :'/pools/default/buckets',
+  'bucket-flush'  :'/pools/default/buckets/',
+  'bucket-delete' :'/pools/default/buckets/',
+  'bucket-create' :'/pools/default/buckets/'
 }
 methods = { 
-  'listbuckets':'GET',
-  'bucketlist':'GET',
-  'bucketdelete':'DELETE',
-  'bucketcreate':'POST',
-  'bucketflush':'POST',
-  'bucketstats':'GET'
+  'bucket-list'   :'GET',
+  'bucket-delete' :'DELETE',
+  'bucket-create' :'POST',
+  'bucket-flush'  :'POST',
+  'bucket-stats'  :'GET'
 }
 
 class Buckets:
@@ -31,7 +30,7 @@ class Buckets:
       constructor
     """
     # default
-    self.rest_cmd = rest_cmds['listbuckets']
+    self.rest_cmd = rest_cmds['bucket-list']
 
     # default
     self.method = 'GET'
@@ -40,6 +39,7 @@ class Buckets:
     # default
     bucketname= ''
     cachesize= ''
+    standard_result= ''
 
     # set standard opts
     for o, a in opts:
@@ -57,33 +57,45 @@ class Buckets:
     self.rest_cmd = rest_cmds[cmd]
 
     # get the parameters straight
-    if (cmd == 'bucketdelete' or
-       cmd == 'bucketcreate' or
-       cmd == 'bucketflush') :
-      #if len(bucketname):
-      #  rest.setParam('name', bucketname)
+    if (cmd == 'bucket-delete' or
+       cmd == 'bucket-create' or
+       cmd == 'bucket-flush') :
+      if len(bucketname):
+        rest.setParam('name', bucketname)
       if len(cachesize):
         rest.setParam('cacheSize', cachesize)
       self.rest_cmd = self.rest_cmd + bucketname
-      if cmd == 'bucketflush':
+      if cmd == 'bucket-flush':
         self.rest_cmd = self.rest_cmd + '/controller/doFlush'
 
+    response = rest.sendCmd(methods[cmd], self.rest_cmd); 
 
-    print "cluster: %s port: %s" % (cluster, port)
-    print "REST URI:" , self.rest_cmd
-    print "Running %s " % cmd 
-
-    json = rest.sendCmd(methods[cmd], self.rest_cmd); 
-
-    # debug
-    pp = pprint.PrettyPrinter(indent=4) 
-    pp.pprint(json)
-
+    if cmd == 'bucket-flush':
+      if response.status == 204:
+        data = "Success! %s flushed" % bucketname 
+      else:
+        data = "Error: unable to flush %s" % bucketname 
+    else:
+      if response.status == 200:
+        data = response.read()
+      else :
+        print "Error! ", response.status, response.reason
+        sys.exit(2)
+        
     if methods[cmd] == 'GET':
+      json = rest.getJson(data)   
       i = 1 
-      print "List of servers within the cluster %s:%s" % (cluster,port)
+      print "List of buckets within the cluster %s:%s" % (cluster,port)
       for bucket in json:
-        print "\t[%d]: %s" % (i,bucket['name'])
+        standard_result= standard_result + "\t[%d]: %s\n" % (i,bucket['name'])
         i=i+1
     else:
-      print "JSON: ", json
+      standard_result = data
+      json = rest.jsonMessage(data)   
+
+    # debug
+    #pp = pprint.PrettyPrinter(indent=4) 
+    #pp.pprint(json)
+
+    print standard_result
+

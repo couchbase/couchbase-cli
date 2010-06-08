@@ -36,6 +36,9 @@ class MembaseCliRestClient:
     # get value of private server member
     return self.server
 
+  """
+  This must be prior to any other command
+  """
   def bootStrap(self):
     self.conn.request('GET', '/pools')
     data = ""
@@ -47,6 +50,12 @@ class MembaseCliRestClient:
       sys.exit(2)
     return
 
+  """
+  sendCmd
+
+  sends the method and URI for a REST command to be run
+  against, returns the resonse object
+  """
   def sendCmd(self, method, uri):
     data = ""
     params = {}
@@ -57,8 +66,8 @@ class MembaseCliRestClient:
       if self.params:
         params = urllib.urlencode(self.params)
 
-    print "PARAMS: ", params
-    print "REST CMD: %s %s" % (self.method,self.uri)
+    #print "PARAMS: ", params
+    #print "REST CMD: %s %s" % (self.method,self.uri)
 
     # send the request to the server
     if self.method == 'GET':
@@ -70,18 +79,20 @@ class MembaseCliRestClient:
       self.conn.request(self.method, self.uri, params, headers)
 
     # obtain the response
-    response = self.conn.getresponse()
+    return self.conn.getresponse()
 
-    if self.uri == 'bucketflush':
-      if response.status == 204:
-        data = "Success! %s flushed" % self.getparam('bucket')
-      else:
-        data = "Error: unable to flush %s" % self.getparam('bucket')
-    else:
-      if response.status == 200:
-        data = response.read()
-      else :
-        print "Error! ", response.status, response.reason
-        sys.exit(2)
-
+  """
+  method for returning a python object from a json response
+  Used with GET
+  """
+  def getJson(self,data):
     return json.loads(data)
+
+  """
+  method for returning json from a python object
+  Used with POST
+  """
+  def jsonMessage(self,data):
+    return json.JSONEncoder().encode(data)
+
+

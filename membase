@@ -49,13 +49,13 @@ if __name__ == "__main__":
 
   # need to make this dynamic
   commands = { 
-                'listservers' : Listservers,
-                'listbuckets' : Buckets, 
-                'bucketinfo' : Buckets, 
-                'bucketstats' : Buckets, 
-                'bucketcreate' : Buckets, 
-                'bucketdelete' : Buckets, 
-                'bucketflush' : Buckets, 
+                'server-list' : Listservers,
+                'bucket-list' : Buckets, 
+                'bucket-details' : Buckets, 
+                'bucket-stats' : Buckets, 
+                'bucket-create' : Buckets, 
+                'bucket-delete' : Buckets, 
+                'bucket-flush' : Buckets, 
                 }
 
   # make sure the command is defined

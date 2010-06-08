@@ -20,23 +20,28 @@ class Listservers:
     
   def runCmd(self, cmd, cluster, user, password, opts):
 
-    print "Running %s " % cmd 
-
     cluster, port = cluster.split(':')
     if not port:
       port = "8080";
 
-    print "cluster: %s port: %s" % (cluster, port)
-
     rest = MembaseCliRestClient(cluster, port) 
 
-    json = rest.sendCmd(self.method, self.rest_cmd); 
+    response = rest.sendCmd(self.method, self.rest_cmd); 
 
-    #pp = pprint.PrettyPrinter(indent=4) 
-    #pp.pprint(json)
+    if response.status == 200:
+      data = response.read()
+    else :
+      print "Error! ", response.status, response.reason
+      sys.exit(2)
+
+    json = rest.getJson(data)   
+
 
     i = 1 
     print "List of servers within the cluster %s:%s" % (cluster,port)
     for node in json['nodes']:
-      print "\t[%d]: %s" % (i,node['hostname'])
+      print "\t[%d]: %s\t%s" % (i,node['hostname'], node['status'])
       i=i+1
+
+    #pp = pprint.PrettyPrinter(indent=4) 
+    #pp.pprint(json)
