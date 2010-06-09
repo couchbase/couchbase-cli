@@ -11,7 +11,7 @@
 
 import pprint
 from membase_info import *
-from membase_cli_rest_client import *
+from restclient import *
 
 
 class Listservers:
@@ -33,11 +33,16 @@ class Listservers:
         opts,
         ):
 
+        output= 'default'
+        for (o, a) in opts:
+            if o in  ('-o', '--output'):
+                output = a
+
         (cluster, port) = cluster.split(':')
         if not port:
             port = '8080'
 
-        rest = MembaseCliRestClient(cluster, port)
+        rest = RestClient(cluster, port)
 
         response = rest.sendCmd(self.method, self.rest_cmd)
 
@@ -47,16 +52,17 @@ class Listservers:
             print 'Error! ', response.status, response.reason
             sys.exit(2)
 
-        json = rest.getJson(data)
+        if (output == 'json'):
+            print data
+        else:
+            json = rest.getJson(data)
 
-        i = 1
-        print 'List of servers within the cluster %s:%s' % (cluster,
-                port)
-        for node in json['nodes']:
-            print '\t[%d]: %s\t%s' % (i, node['hostname'], node['status'
-                    ])
-            i = i + 1
+            i = 1
+            print 'List of servers within the cluster %s:%s' % (cluster, port)
+            for node in json['nodes']:
+                print '\t[%d]: %s\t%s\t%s' % (i, node['hostname'],
+                    node['otpNode'], node['status' ])
+                i = i + 1
 
-
-    # pp = pprint.PrettyPrinter(indent=4)
-    # pp.pprint(json)
+        #pp = pprint.PrettyPrinter(indent=4)
+        #pp.pprint(json)

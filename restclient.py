@@ -17,7 +17,7 @@ import string
 from StringIO import StringIO
 
 
-class MembaseCliRestClient:
+class RestClient:
 
     def __init__(self, server, port):
 

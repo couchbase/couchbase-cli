@@ -11,7 +11,7 @@
 
 import pprint
 from membase_info import *
-from membase_cli_rest_client import *
+from restclient import *
 
 rest_cmds = {
     'bucket-list': '/pools/default/buckets',
@@ -60,11 +60,14 @@ class Buckets:
 
     # set standard opts
 
+        output= 'default'
         for (o, a) in opts:
             if o == '-b' or o == '--buckets':
                 bucketname = a
             if o == '-s' or o == '--size':
                 cachesize = a
+            if o in  ('-o', '--output'):
+                output = a
 
     # allow user to be lazy and not specify port
 
@@ -72,7 +75,7 @@ class Buckets:
         if not port:
             port = '8080'
 
-        rest = MembaseCliRestClient(cluster, port)
+        rest = RestClient(cluster, port)
         self.rest_cmd = rest_cmds[cmd]
 
     # get the parameters straight
@@ -102,22 +105,24 @@ class Buckets:
                 sys.exit(2)
 
         if methods[cmd] == 'GET':
-            json = rest.getJson(data)
-            i = 1
-            print 'List of buckets within the cluster %s:%s' \
-                % (cluster, port)
-            for bucket in json:
-                standard_result = standard_result + '\t[%d]: %s\n' \
-                    % (i, bucket['name'])
-                i = i + 1
+            if output == 'json':
+                print data
+            else:
+                json = rest.getJson(data)
+                i = 1
+                print 'List of buckets within the cluster %s:%s' \
+                    % (cluster, port)
+                for bucket in json:
+                    print '\t[%d]: %s' % (i, bucket['name'])
+                    i = i + 1
         else:
-            standard_result = data
-            json = rest.jsonMessage(data)
+            if output == 'json':
+                print rest.jsonMessage(data)
+            else:
+                print data
 
     # debug
     # pp = pprint.PrettyPrinter(indent=4)
     # pp.pprint(json)
-
-        print standard_result
 
 

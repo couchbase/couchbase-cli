@@ -9,20 +9,22 @@ This program is the top level source file for the Membase Command Line Tools
 
 import getopt
 import sys
-from membase_cli_listservers import *
-from membase_cli_buckets import *
-from membase_cli_node import *
+from listservers import *
+from buckets import *
+from node import *
 from membase_info import *
+from restclient import *
 
 if __name__ == '__main__':
     (cluster, user, password) = ('', '', '')
     try:
         (opts, args) = getopt.getopt(sys.argv[2:],
-                                     'a:b:c:e:gdp:c:hp:r:s', [
+                                     'a:b:c:e:gdho:p:r:s', [
                 'help',
                 'cluster=',
                 'password=',
                 'user=',
+                'output=',
                 'stats',
                 'server-add=',
                 'server-add-username=',
@@ -68,9 +70,9 @@ if __name__ == '__main__':
         'bucket-create': Buckets,
         'bucket-delete': Buckets,
         'bucket-flush': Buckets,
-        'rebalance': Nodemgr,
-        'rebalance-stop': Nodemgr,
-        'rebalance-status': Nodemgr,
+        'rebalance': Node,
+        'rebalance-stop': Node,
+        'rebalance-status': Node,
         }
 
     # make sure the command is defined
