@@ -1,159 +1,26 @@
-Membase Command Line Tool Set Specification
+Membase Command Line Tool Suit
 
-High Level Description
+This package contains the command line tool set that performs
+the same actions to provide the user the same capabilities as
+the Northscale Membase Server web interface.
 
-There will be a command line tool set that exists that allows users to have
-the same access to functions such as: 
+Prerequisites
 
-* Starting and stopping of the server
-* The dynamic cluster membership changes of the 
-  NorthScale Membase Server
-* Query/fetch a given key
-* Joining a host:port
-* Listing nodes
-* Replication information
-* Set a given key/value
+If you have installed the full Northscale Membase Server, these 
+tools will have all prerequisites required to run these tools.
+If you run these tools standalone, you will need:
 
+* Python 2.6 or greater
+* Command shell such as bash
 
-Requirements:
+Installation
+...
 
-* Not only support the Northscale Membase Server, but
-could also support the Northscale Memcached Server since both 
-of these products have a well-defined streaming REST 
-(Representational State Transfer) interface. 
-
-* Be able to point to any server node in 
-the cluster to be able to manage the entire Membase cluster.
-
-* Be extensible. To add new functions or commands to the tool,
-there needs to be a way to easy add new functions with the least
-amount of changes to the overall tool as well as existing tools
+How to use these tools
+...
 
 
-Mid-level Discription
 
-These tools will have some primary components:
-
-* Use the chain of responsibility design pattern. A good example of 
-this can be found at: 
-http://www.linuxtopia.org/online_books/programming_books/c++_practical_programming/c++_practical_programming_247.html 
-Although this example is in C++, the basic concept will be possible
-to be implemented in Python.
-* These tools will be written in Python, using a framework which works best
-for extensibility
-* Top level source file:
-  - parses user input to obtain 
-    * operation name
-    * command line flags specific to that command of the desired operation. 
-  - has dictionary of functions keyed by the name which will be a 
-  "dispatch hash"
-  
-* Source file with the implementation of functions for sending REST 
-requests to the specified server and processing the JSON response. 
-  - PycURL library will provide the HTTP client functionality 
-  - Parsing of JSON into objects will be processed by the json module. 
-  The ouput of this processing can be used by the command line 
-  to display the JSON results of the REST command in a printable format
-
-  http://pycurl.sourceforge.net/
-  http://docs.python.org/library/json.html
-
-For instance:
-
-* membase.py - contains parsing of command, dictionary of functions keyed by
-command string to dispatch appropriate method.
-* membase_cli_list_servers.py - contains the function that implements the 
-servers listing functionality
-* membase_cli_$operation - other operations, as they are implemented
-* membase_cli_rest_client.py - contains the functions for :
-  - converting json replies from the REST interface to something that 
-  can be printed out by the program for the given command 
-  - HTTP client interface for sending REST commands and recieving 
-  the JSON replies
-
-
-Operations/Functions:
-
-The following are operations that each function source file will implement:
-
-command as run by user                REST command 
-----------------------------------------------------------
-membase listservers                   GET /pools/default 
-
-membase join                          POST /node/controller/doJoinCluster
-  -c cluster (IP:port, host:port) 
-  -u user
-  -p password
-
-membase eject                         POST /node/controller/ejectNode
-  -c cluster (IP:port, host:port) 
-  -u user
-  -p password
-
-membase listpools                     GET  /pools/default
-  -s servers [server,] 
-
-membase listbuckets                   GET /pools/default/buckets/default
-  -p pool [pool,]
-
-membase flush                         GET /pools/default/bucket/default/controller/doFlush 
-
-membase stats                         GET /pools/default/stats?stat=$stat&period=$period 
-  -p pools [pool,]
-  -s servers [server,] 
-  -b buckets
-  
-membase bucket                        POST /pools/$pool/buckets  (pool != default)                                              
-  -c create
-  -n bucketname                                                   name=$bucketname
-  -g get
-  -p pool 
-  -d delete
-  -f flush [bucket,]
-  -s cachesize                                                    cacheSize=$cachesize       
-
-
-membase log
-  -g get
-  -e entry text
-
-membase version
-
-  
-membase 
-Low-level Discription
-
-Chain of responsibility/dispatcher
-
-One crude idea is a big switch() statement to call the appropriate
-command or function. But the article above brings to light a more
-flexible and extensible model: using a Python dictionary of functions,
-keyed by the operation for whatever functions exist and to simple call
-the appropriate function/method based on the command (hash key, value 
-being the function/method), without having to use a switch or 
-interpolation of the command string into a numeric value tested by a
-switch statement.
-
-Each command implementation will exist in its own source file, and 
-whatever happens to be imported into the top-level program, that 
-command should simply run as it is keyed from the function dictionary. 
-
-Networking Layer using REST
-
-The source file membase_cli_rest_client.py will contain the 
-functions for sending REST requests to the server using PyCURL.
-Imported by each source file implementing a particular command, the 
-programs that implment each REST action will have access to these 
-functions/methods
-
-JSON parsing of REST replies
-
-membase_cli_rest_client.py will also contain the functions/methods 
-for parsing the REST JSON replies into data objects that can be 
-displayed to the user. 
-
-Command line parsing
-
-The top level source file, membase.py, will contain the functionality for 
-parsing user input to the main command line program.
+***
+Copyright (c) 2010, NorthScale, Inc.
 
