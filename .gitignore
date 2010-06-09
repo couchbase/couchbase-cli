@@ -1,1 +1,4 @@
+*~
 *.pyc
+*.tar.gz
+tmp
