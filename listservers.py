@@ -4,7 +4,7 @@
 """
   listservers class
 
-  This class implements methods that will list servers within a 
+  This class implements methods that will list servers within a
   membase cluster
 
 """
@@ -17,7 +17,7 @@ from restclient import *
 class Listservers:
 
     def __init__(self):
-        """ 
+        """
       constructor
     """
 
@@ -42,27 +42,46 @@ class Listservers:
         if not port:
             port = '8080'
 
-        rest = RestClient(cluster, port)
+        data = self.getData(cluster,port)
+        if (output == 'json'):
+            print data
+        else:
+            print 'List of servers within the cluster %s:%s' % (cluster, port)
+            self.printNodes(self.getNodes(data))
 
-        response = rest.sendCmd(self.method, self.rest_cmd)
+
+    def getData(self,
+                cluster,
+                port):
+        """
+        get the raw json output from the server
+    """
+
+        self.rest = RestClient(cluster, port)
+        response = self.rest.sendCmd(self.method, self.rest_cmd)
 
         if response.status == 200:
             data = response.read()
         else:
-            print 'Error! ', response.status, response.reason
-            sys.exit(2)
+            data = '"Error! ' + response.status + response.reason + '"'
 
-        if (output == 'json'):
-            print data
-        else:
-            json = rest.getJson(data)
+        return data
 
-            i = 1
-            print 'List of servers within the cluster %s:%s' % (cluster, port)
-            for node in json['nodes']:
-                print '\t[%d]: %s\t%s\t%s' % (i, node['hostname'],
-                    node['otpNode'], node['status' ])
-                i = i + 1
+    def getNodes(self, data):
+        """
+        deserialize the raw json output and return just the nodes
+    """
 
+        json = self.rest.getJson(data)
         #pp = pprint.PrettyPrinter(indent=4)
-        #pp.pprint(json)
+        #pp.pprint(json['nodes'])
+        return json['nodes']
+
+    def printNodes(self, nodes):
+        """
+        print the nodes
+    """
+
+        for node in nodes:
+            print '\t%s\t%s\t%s' % (node['hostname'],
+                node['otpNode'], node['status' ])
