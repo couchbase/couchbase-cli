@@ -4,7 +4,7 @@
 """
   listservers class
 
-  This class implements methods that will list servers within a 
+  This class implements methods that will list servers within a
   membase cluster
 
 """
@@ -31,9 +31,10 @@ methods = {
 class Buckets:
 
     def __init__(self):
-        """ 
+        """
       constructor
     """
+        self.debug = False
 
     # default
 
@@ -52,33 +53,35 @@ class Buckets:
         opts,
         ):
 
-    # default
+        # default
 
         bucketname = ''
         cachesize = ''
         standard_result = ''
 
-    # set standard opts
+        # set standard opts
 
         output= 'default'
         for (o, a) in opts:
             if o == '-b' or o == '--buckets':
                 bucketname = a
-            if o == '-s' or o == '--size':
-                cachesize = a
+            if o == '-d' or o == '--debug':
+                self.debug = True
             if o in  ('-o', '--output'):
                 output = a
+            if o == '-s' or o == '--size':
+                cachesize = a
 
-    # allow user to be lazy and not specify port
+        # allow user to be lazy and not specify port
 
         (cluster, port) = cluster.split(':')
         if not port:
             port = '8080'
 
-        rest = RestClient(cluster, port)
+        rest = RestClient(cluster, port, {'debug':self.debug})
         self.rest_cmd = rest_cmds[cmd]
 
-    # get the parameters straight
+        # get the parameters straight
 
         if cmd == 'bucket-delete' or cmd == 'bucket-create' or cmd \
             == 'bucket-flush':
@@ -124,5 +127,3 @@ class Buckets:
     # debug
     # pp = pprint.PrettyPrinter(indent=4)
     # pp.pprint(json)
-
-

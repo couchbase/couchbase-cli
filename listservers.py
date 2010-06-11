@@ -23,6 +23,7 @@ class Listservers:
 
         self.rest_cmd = '/pools/default'
         self.method = 'GET'
+        self.debug = False
 
     def runCmd(
         self,
@@ -37,6 +38,8 @@ class Listservers:
         for (o, a) in opts:
             if o in  ('-o', '--output'):
                 output = a
+            if o in  ('-d', '--debug'):
+                self.debug = 1
 
         (cluster, port) = cluster.split(':')
         if not port:
@@ -57,7 +60,7 @@ class Listservers:
         get the raw json output from the server
     """
 
-        self.rest = RestClient(cluster, port)
+        self.rest = RestClient(cluster, port, {'debug':self.debug})
         response = self.rest.sendCmd(self.method, self.rest_cmd)
 
         if response.status == 200:

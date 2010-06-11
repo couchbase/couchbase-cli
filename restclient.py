@@ -19,12 +19,13 @@ from StringIO import StringIO
 
 class RestClient:
 
-    def __init__(self, server, port):
+    def __init__(self, server, port, opts= {}):
 
         # do something here?
 
         self.server = server
         self.port = port
+        self.debug = opts.get('debug', False)
         self.uri = '/pools'
         self.method = 'GET'  # default
         self.params = {}
@@ -74,8 +75,9 @@ class RestClient:
         if self.method == 'POST':
             encoded_params = urllib.urlencode(self.params)
 
-        # print "PARAMS: ", self.params
-        # print "REST CMD: %s %s" % (self.method,self.uri)
+        if self.debug:
+            print "PARAMS: ", params
+            print "REST CMD: %s %s" % (self.method,self.uri)
 
         # send the request to the server
 
@@ -88,7 +90,10 @@ class RestClient:
 
         # obtain the response
 
-        return self.conn.getresponse()
+        response = self.conn.getresponse()
+        if self.debug:
+            print "response.status: %s" % response.status
+        return response
 
     def getJson(self, data):
         return json.loads(data)
