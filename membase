@@ -17,11 +17,13 @@ from restclient import *
 
 if __name__ == '__main__':
     (cluster, user, password) = ('', '', '')
+    debug = False;
     try:
         (opts, args) = getopt.getopt(sys.argv[2:],
-                                     'a:b:c:e:gdho:p:r:s', [
+                                     'a:b:c:de:gdho:p:r:s', [
                 'help',
                 'cluster=',
+                'debug',
                 'password=',
                 'user=',
                 'output=',
@@ -42,6 +44,8 @@ if __name__ == '__main__':
     # check if usage specified
 
     for (o, a) in opts:
+        if o in ('-d', '--debug'):
+            debug = True
         if o in ('-h', '--help'):
             cmd == 'help'
             usage()
@@ -60,19 +64,24 @@ if __name__ == '__main__':
     if not password:
         password = ''
 
-    # need to make this dynamic
+    # these are the commands which map to the classes
+    # the contain the implementation of that particular
+    # command
 
     commands = {
-        'server-list': Listservers,
-        'bucket-list': Buckets,
-        'bucket-details': Buckets,
-        'bucket-stats': Buckets,
-        'bucket-create': Buckets,
-        'bucket-delete': Buckets,
-        'bucket-flush': Buckets,
-        'rebalance': Node,
-        'rebalance-stop': Node,
-        'rebalance-status': Node,
+        'server-list'       : Listservers,
+        'bucket-list'       : Buckets,
+        'bucket-details'    : Buckets,
+        'bucket-stats'      : Buckets,
+        'bucket-create'     : Buckets,
+        'bucket-delete'     : Buckets,
+        'bucket-flush'      : Buckets,
+        'server-add'        : Node,
+        'rebalance'         : Node,
+        'rebalance-stop'    : Node,
+        'rebalance-status'  : Node,
+        'eject-server'      : Node,
+        'failover'          : Node,
         }
 
     # make sure the command is defined

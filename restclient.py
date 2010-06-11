@@ -21,7 +21,7 @@ class RestClient:
 
     def __init__(self, server, port):
 
-    # do something here?
+        # do something here?
 
         self.server = server
         self.port = port
@@ -34,19 +34,23 @@ class RestClient:
     def setParam(self, param, value):
         self.params[param] = value
 
+    def delParam(self, param):
+        del self.params[param]
+        print "DELPARAMS: ", self.params
+
     def getParam(self, param):
         if self.params[param]:
             return self.params[param]
 
     def setServer(self, server):
 
-    # set value of private server member
+        # set value of private server member
 
         self.server = server
 
     def getServer(self):
 
-    # get value of private server member
+        # get value of private server member
 
         return self.server
 
@@ -61,29 +65,28 @@ class RestClient:
             sys.exit(2)
         return
 
-    def sendCmd(self, method, uri):
+    def sendCmd(self, method, uri, params = {}):
         data = ''
-        params = {}
         self.method = method
+        self.params = params
         self.uri = uri
 
         if self.method == 'POST':
-            if self.params:
-                params = urllib.urlencode(self.params)
+            encoded_params = urllib.urlencode(self.params)
 
-    # print "PARAMS: ", params
-    # print "REST CMD: %s %s" % (self.method,self.uri)
+        # print "PARAMS: ", self.params
+        # print "REST CMD: %s %s" % (self.method,self.uri)
 
-    # send the request to the server
+        # send the request to the server
 
         if self.method == 'GET':
             self.conn.request(self.method, self.uri)
         else:
             headers = \
                 {'Content-type': 'application/x-www-form-urlencoded'}
-            self.conn.request(self.method, self.uri, params, headers)
+            self.conn.request(self.method, self.uri, encoded_params, headers)
 
-    # obtain the response
+        # obtain the response
 
         return self.conn.getresponse()
 
@@ -92,5 +95,3 @@ class RestClient:
 
     def jsonMessage(self, data):
         return json.JSONEncoder().encode(data)
-
-

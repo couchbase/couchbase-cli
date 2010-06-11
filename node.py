@@ -1,101 +1,245 @@
 """
-  Nodemgr class
+  Node class
 
-  This class implements methods that will pertain to 
-  adding/removing servers to/from the cluster and rebalancing 
+  This class implements methods that will pertain to
+  rebalance, add, remove, stop rebalance
 
 """
 
-import pprint
 from membase_info import *
 from restclient import *
 
-rest_cmds = { 
+# Note: I would like to do this differently. I'm thinking
+# listservers should be moved into node since it does pertain
+# to nodes. TBD
+
+from listservers import *
+
+# the rest commands and associated URIs for various node operations
+
+rest_cmds = {
     'rebalance'         :'/controller/rebalance',
     'rebalance-stop'    :'/controller/stopRebalance',
     'rebalance-status'  :'/pools/default/rebalanceProgress',
     'eject-server'      :'/controller/ejectNode',
-    'add-server'        :'/controller/addNode',
+    'server-add'        :'/controller/addNode',
     'failover'          :'/controller/failOver',
 }
-# [{addNode, {struct, [{uri, <<"/controller/addNode">>}]}},
-# {rebalance, {struct, [{uri, <<"/controller/rebalance">>}]}},
-# {failOver, {struct, [{uri, <<"/controller/failOver">>}]}},
-# {reAddNode, {struct, [{uri, <<"/controller/reAddNode">>}]}},
-# {ejectNode, {struct, [{uri, <<"/controller/ejectNode">>}]}},
-methods = { 
+
+# Map of operations and the HTTP methods used against the REST interface
+
+methods = {
     'rebalance'         :'POST',
     'rebalance-stop'    :'POST',
     'rebalance-status'  :'GET',
     'eject-server'      :'POST',
-    'add-server'        :'POST',
+    'server-add'        :'POST',
     'failover'          :'POST',
+    're-add-server'     :'POST',
+}
+
+# Map of HTTP success code, success message and error message for
+# handling HTTP response properly
+
+response_dict = {
+    'server-add'    : { 'success_code'  : 200,
+    'success_msg'   :'server added.',
+    'error_msg'     :'unable to add server',
+    },
+    'rebalance'     : { 'success_code'  : 200,
+    'success_msg'   :'rebalance started.',
+    'error_msg'     :'unable to start rebalance',
+    },
+    'rebalance-stop': { 'success_code'  : 200,
+    'success_msg'   :'rebalance stopped.',
+    'error_msg'     :'unable to stop rebalance',
+    },
 }
 
 class Node:
     def __init__(self):
-        """ 
+        """
             constructor
             """
-        # default
-        self.rest_cmd = rest_cmds['rebalance-status']
+        # defaults
 
-        # default
+        self.rest_cmd = rest_cmds['rebalance-status']
         self.method = 'GET'
-    
-    def runCmd(self, cmd, cluster, user, password, opts):
-        # default
-        standard_result = ''
+        self.debug = False
+        self.params = {}
+
+    def runCmd(self,
+               cmd,
+               cluster,
+               user,
+               password,
+               opts):
+        """
+            runCmd - perform the operation. This is where all the
+            functionaly for the given operation is implemented
+
+            """
+
+        output = 'standard'
+        output_result = ''
         servers = {}
         servers['add'] = {}
         servers['remove'] = {}
+        ejectlist = []
+        ejectees = ''
+        self.cmd = cmd
         self.rest_cmd = rest_cmds[cmd]
+        self.method = methods[cmd]
 
         # set standard opts
-        # note: use of a server key keeps optional 
-        # args aligned with server 
+        # note: use of a server key keeps optional
+        # args aligned with server
+
         for o, a in opts:
             if o in ("-a","--server-add"):
                 server = a
-                servers['add'][server] = {} 
+                servers['add'][server] = { 'user':'','password':''}
+            elif o in ( "-r", "--server-remove"):
+                server = a
+                servers['remove'][server] = { 'user':'','password':''}
             elif o == "--server-add-username":
-                servers['add'][server]['username'] = a
+                servers['add'][server]['user'] = a
             elif o == "--server-add-password":
                 servers['add'][server]['password'] = a
-            elif o in ("-r","--server-remove"):
-                servers['remove'][server]= {} 
             elif o == "--server-remove-username":
-                servers['remove'][server]['username'] = a
+                servers['remove'][server]['user'] = a
             elif o == "--server-remove-password":
                 servers['remove'][server]['password'] = a
+            elif o in ('-o', '--output'):
+                if a == 'json':
+                    output = a
+            elif o in ('-d', '--debug'):
+                self.debug = True
+
+        if self.debug:
+            print "servers ", servers
 
         # allow user to be lazy and not specify port
-        cluster, port = cluster.split(':')
-        if not port:
-            port = "8080";
 
-        rest = RestClient(cluster, port) 
+        self.cluster, self.port = cluster.split(':')
+        if not self.port:
+            self.port = "8080";
 
-        # get the parameters straight
-        #if methods[cmd] == 'POST':
-        #  for server in server_add_list:
-        #    rest.setParam('name', server)
-        #    if creds['add'][server]['username']: 
-        #      rest.setParam('user', creds['add'][server]['username'])
-        #    if creds['add'][server]['password']: 
-        #      rest.setParam('password', creds['add'][server]['password'])
-        #  
-        #  for server in server_remove_list:
-        #    rest.setParam('name', server)
-        #    if creds['remove'][server]['username']: 
-        #      rest.setParam('user', creds['remove'][server]['username'])
-        #    if creds['remove'][server]['password']: 
-        #      rest.setParam('password', creds['remove'][server]['password'])
-    
-        print "DEBUG:"
-        print servers
+        # set the parameters for each server
 
-        standard_result= "This code will deal with cluster rebalance"
+        if methods[cmd] == 'POST':
+            if cmd in ('server-add','rebalance'):
+                for action in ('add', 'remove'):
+                    for server in servers[action]:
+                        if action == 'remove' and cmd == 'rebalance':
+                            ejectlist.append(server)
+                        else:
+                            self.setParam('hostname', server)
 
-        print standard_result
+                        if servers[action][server]['user'] and \
+                                servers[action][server]['password'] :
+                            self.rest.setParam('user', servers[action][server]['user'])
+                            self.rest.setParam('password', servers[action][server]['password'])
 
+                        # both rebalance and server-add call addServer()
+
+                        if servers['add']:
+                            print self.handlePostResponse('server-add')
+
+                # if rebalance, we have to prepare the knownNodes
+                # and ejectedNodes, and then rebalance after adding any servers
+
+                if cmd == 'rebalance':
+                    # a list of ejectNodes is needed (comma-separated)
+
+                    if len(ejectlist):
+                        ejectees = ejectees.join(',').join(ejectlist)
+                        self.setParam('ejectedNodes',ejectees)
+                    self.delParam('hostname')
+                    self.setParam('knownNodes',self.getKnownNodes(self.cluster,
+                                                                  self.port))
+
+            # POST response will be handled except server-add because that is
+            # handled in a loop per server in command line list
+
+            if cmd != 'server-add':
+                output_result = self.handlePostResponse(cmd)
+
+        else:
+            output_result = self.handleGetRequest(cmd)
+
+        if output == 'standard' and self.method == 'GET':
+            json = self.rest.getJson(output_result)
+            output_result = "Rebalance status: %s" % json['status']
+
+        # print the results, GET, SET or DELETE
+
+        print output_result
+
+
+    def getKnownNodes(self, cluster, port):
+        """
+            getKnownNodes - this obtains the list of nodes
+            in order from knownNodes to be passed to a rebalance
+
+            """
+
+        known_nodes = ''
+        listservers = Listservers()
+        known_nodes_list = listservers.getNodes(listservers.getData(cluster, port))
+
+        # I would like to do something like this
+        # known_nodes = known_nodes.join(',').join([node['hostname'] for node in nodes])
+
+        nodes = []
+        for node in known_nodes_list:
+            nodes.append(node['otpNode'])
+        known_nodes = known_nodes.join(',').join(nodes)
+        return known_nodes
+
+    def handleGetRequest(self, cmd):
+
+        self.rest = RestClient(self.cluster,
+                               self.port)
+        response = self.rest.sendCmd(self.method,
+                                     self.rest_cmd,
+                                     self.params)
+        return response.read()
+
+    def handlePostResponse(self, cmd):
+        """
+            handlePostResponse - this handles the response
+            from a POST according to the operation/cmd run
+
+            """
+
+        self.rest = RestClient(self.cluster,
+                               self.port)
+
+        response = self.rest.sendCmd(methods[cmd],
+                                     rest_cmds[cmd],
+                                     self.params)
+
+        if response.status == response_dict[cmd]['success_code']:
+            data = 'Success: %s.' % response_dict[cmd]['success_msg']
+        else:
+            data = 'Error: %s.' % response_dict[cmd]['error_msg']
+
+        return data
+
+    def setParam(self, param, value):
+        """
+            setParam - sets the param dictionary which
+            is used for POST
+
+            """
+
+        self.params[param] = value
+
+    def delParam(self, param):
+        """
+            delParam - removes a parameter from the param dictionary
+            which is used for POST
+
+            """
+        del self.params[param]
