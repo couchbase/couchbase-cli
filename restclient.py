@@ -12,7 +12,7 @@
 import sys
 import httplib
 import urllib
-import json
+import simplejson as json
 import string
 from StringIO import StringIO
 
