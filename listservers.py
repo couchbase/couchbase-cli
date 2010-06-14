@@ -57,7 +57,7 @@ class Listservers:
         get the raw json output from the server
     """
 
-        self.rest = RestClient(cluster, port, {'debug':self.debug})
+        self.rest = RestClient(server, port, {'debug':self.debug})
         response = self.rest.sendCmd(self.method, self.rest_cmd)
 
         if response.status == 200:
