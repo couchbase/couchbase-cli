@@ -14,7 +14,7 @@ import sys
 def usage(error_msg=''):
     print >> sys.stderr, ''
     if error_msg:
-        print >> sys.stderr, 'ERROR: %s' % error_msg
+        print >> sys.stderr, "ERROR: %s\n" % error_msg
 
     print >> sys.stderr, """Membase Commandline Tool Set
 

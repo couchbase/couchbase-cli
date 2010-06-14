@@ -18,6 +18,11 @@ from restclient import *
 if __name__ == '__main__':
     (cluster, user, password) = ('', '', '')
     debug = False;
+
+    # if no options provided, then give the user usage()
+    if len(sys.argv) == 1:
+        usage()
+
     try:
         (opts, args) = getopt.getopt(sys.argv[2:],
                                      'a:b:c:de:gdho:p:r:s', [
@@ -36,8 +41,6 @@ if __name__ == '__main__':
                 'server-remove-password=',
                 ])
         cmd = sys.argv[1]
-        if cmd in ('-h', '--help'):
-            usage()
     except getopt.GetoptError, err:
         usage(err)
 
@@ -47,7 +50,6 @@ if __name__ == '__main__':
         if o in ('-d', '--debug'):
             debug = True
         if o in ('-h', '--help'):
-            cmd == 'help'
             usage()
         if o in ('-c', '--cluster'):
             cluster = a
@@ -56,8 +58,9 @@ if __name__ == '__main__':
         if o in ('-p', '--password'):
             password = a
 
-    if not cluster and cmd != 'help':
-        usage('You must specify at least two things: command, and cluster (--cluster)'
+    if not cluster:
+        usage("You must specify at least two things: command, "
+              "and cluster (--cluster)"
               )
     try:
         server, port = cluster.split(':')
