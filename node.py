@@ -91,6 +91,10 @@ class Node:
         self.cmd = cmd
         self.rest_cmd = rest_cmds[cmd]
         self.method = methods[cmd]
+        self.server = server
+        self.port = int(port)
+        self.user = user
+        self.password = password
 
         # set standard opts
         # note: use of a server key keeps optional
@@ -150,7 +154,6 @@ class Node:
                     if len(ejectlist):
                         ejectees = ejectees.join(',').join(ejectlist)
                         self.setParam('ejectedNodes',ejectees)
-                    self.delParam('hostname')
                     self.setParam('knownNodes',self.getKnownNodes(self.server,
                                                                   self.port))
 
