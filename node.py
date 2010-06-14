@@ -137,8 +137,8 @@ class Node:
 
                         if servers[action][server]['user'] and \
                                 servers[action][server]['password'] :
-                            self.rest.setParam('user', servers[action][server]['user'])
-                            self.rest.setParam('password', servers[action][server]['password'])
+                            self.setParam('user', servers[action][server]['user'])
+                            self.setParam('password', servers[action][server]['password'])
 
                         # both rebalance and server-add call addServer()
 
