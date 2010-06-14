@@ -75,7 +75,7 @@ class Buckets:
 
         # allow user to be lazy and not specify port
 
-        rest = RestClient(cluster, port, {'debug':self.debug})
+        rest = RestClient(server, port, {'debug':self.debug})
         self.rest_cmd = rest_cmds[cmd]
 
         # get the parameters straight
