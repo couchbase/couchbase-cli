@@ -28,7 +28,8 @@ class Listservers:
     def runCmd(
         self,
         cmd,
-        cluster,
+        server,
+        port,
         user,
         password,
         opts,
@@ -41,20 +42,16 @@ class Listservers:
             if o in  ('-d', '--debug'):
                 self.debug = 1
 
-        (cluster, port) = cluster.split(':')
-        if not port:
-            port = '8080'
-
-        data = self.getData(cluster,port)
+        data = self.getData(server,port)
         if (output == 'json'):
             print data
         else:
-            print 'List of servers within the cluster %s:%s' % (cluster, port)
+            print 'List of servers within the server %s:%s' % (server, port)
             self.printNodes(self.getNodes(data))
 
 
     def getData(self,
-                cluster,
+                server,
                 port):
         """
         get the raw json output from the server

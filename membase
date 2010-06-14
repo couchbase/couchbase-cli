@@ -59,6 +59,12 @@ if __name__ == '__main__':
     if not cluster and cmd != 'help':
         usage('You must specify at least two things: command, and cluster (--cluster)'
               )
+    try:
+        server, port = cluster.split(':')
+        port = int(port)
+    except ValueError:
+        usage()
+
     if not user:
         user = ''
     if not password:
@@ -96,4 +102,4 @@ if __name__ == '__main__':
 
     # call runCmd method
 
-    taskrunner.runCmd(cmd, cluster, user, password, opts)
+    taskrunner.runCmd(cmd, server, port, user, password, opts)

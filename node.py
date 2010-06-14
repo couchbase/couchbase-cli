@@ -70,7 +70,8 @@ class Node:
 
     def runCmd(self,
                cmd,
-               cluster,
+               server,
+               port,
                user,
                password,
                opts):
@@ -119,12 +120,6 @@ class Node:
         if self.debug:
             print "servers ", servers
 
-        # allow user to be lazy and not specify port
-
-        self.cluster, self.port = cluster.split(':')
-        if not self.port:
-            self.port = "8080";
-
         # set the parameters for each server
 
         if methods[cmd] == 'POST':
@@ -156,7 +151,7 @@ class Node:
                         ejectees = ejectees.join(',').join(ejectlist)
                         self.setParam('ejectedNodes',ejectees)
                     self.delParam('hostname')
-                    self.setParam('knownNodes',self.getKnownNodes(self.cluster,
+                    self.setParam('knownNodes',self.getKnownNodes(self.server,
                                                                   self.port))
 
             # POST response will be handled except server-add because that is
@@ -177,7 +172,7 @@ class Node:
         print output_result
 
 
-    def getKnownNodes(self, cluster, port):
+    def getKnownNodes(self, server, port):
         """
             getKnownNodes - this obtains the list of nodes
             in order from knownNodes to be passed to a rebalance
@@ -186,7 +181,7 @@ class Node:
 
         known_nodes = ''
         listservers = Listservers()
-        known_nodes_list = listservers.getNodes(listservers.getData(cluster, port))
+        known_nodes_list = listservers.getNodes(listservers.getData(server, port))
 
         # I would like to do something like this
         # known_nodes = known_nodes.join(',').join([node['hostname'] for node in nodes])
@@ -199,7 +194,7 @@ class Node:
 
     def handleGetRequest(self, cmd):
 
-        self.rest = RestClient(self.cluster,
+        self.rest = RestClient(self.server,
                                self.port)
         response = self.rest.sendCmd(self.method,
                                      self.rest_cmd,
@@ -213,7 +208,7 @@ class Node:
 
             """
 
-        self.rest = RestClient(self.cluster,
+        self.rest = RestClient(self.server,
                                self.port)
 
         response = self.rest.sendCmd(methods[cmd],

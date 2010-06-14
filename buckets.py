@@ -47,7 +47,8 @@ class Buckets:
     def runCmd(
         self,
         cmd,
-        cluster,
+        server,
+        port,
         user,
         password,
         opts,
@@ -73,10 +74,6 @@ class Buckets:
                 cachesize = a
 
         # allow user to be lazy and not specify port
-
-        (cluster, port) = cluster.split(':')
-        if not port:
-            port = '8080'
 
         rest = RestClient(cluster, port, {'debug':self.debug})
         self.rest_cmd = rest_cmds[cmd]
@@ -113,8 +110,8 @@ class Buckets:
             else:
                 json = rest.getJson(data)
                 i = 1
-                print 'List of buckets within the cluster %s:%s' \
-                    % (cluster, port)
+                print 'List of buckets within the server %s:%s' \
+                    % (server, port)
                 for bucket in json:
                     print '\t[%d]: %s' % (i, bucket['name'])
                     i = i + 1
