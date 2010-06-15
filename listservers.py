@@ -24,6 +24,7 @@ class Listservers:
         self.rest_cmd = '/pools/default'
         self.method = 'GET'
         self.debug = False
+        self.verbose = False
         self.output = 'standard'
         self.user = ''
         self.password = ''
@@ -45,7 +46,9 @@ class Listservers:
             if o in  ('-o', '--output'):
                 self.output = a
             if o in  ('-d', '--debug'):
-                self.debug = 1
+                self.debug = True
+            if o in  ('-v', '--verbose'):
+                self.verbose = True
 
         data = self.getData(server,
                             port,
@@ -55,7 +58,8 @@ class Listservers:
         if (self.output == 'json'):
             print data
         else:
-            print 'List of servers within the server %s:%s' % (server, port)
+            if self.verbose:
+                print 'List of servers within the server %s:%s' % (server, port)
             self.printNodes(self.getNodes(data))
 
 
@@ -81,7 +85,7 @@ class Listservers:
         if response.status == 200:
             data = response.read()
         else:
-            data = '"Error! ' + response.status + response.reason + '"'
+            data = '"ERROR: ' + response.status + response.reason + '"'
 
         return data
 
@@ -101,5 +105,4 @@ class Listservers:
     """
 
         for node in nodes:
-            print '\t%s\t%s\t%s' % (node['hostname'],
-                node['otpNode'], node['status' ])
+            print '%s\t%s' % (node['otpNode'], node['status' ])

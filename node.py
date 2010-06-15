@@ -66,6 +66,7 @@ class Node:
         self.rest_cmd = rest_cmds['rebalance-status']
         self.method = 'GET'
         self.debug = False
+        self.verbose = False
         self.params = {}
 
     def runCmd(self,
@@ -120,6 +121,8 @@ class Node:
                     output = a
             elif o in ('-d', '--debug'):
                 self.debug = True
+            elif o in ('-v', '--verbose'):
+                self.verbose = True
 
         if self.debug:
             print "servers ", servers
@@ -233,9 +236,9 @@ class Node:
                                      self.params)
 
         if response.status == response_dict[cmd]['success_code']:
-            data = 'Success: %s.' % response_dict[cmd]['success_msg']
+            data = 'SUCCESS: %s.' % response_dict[cmd]['success_msg']
         else:
-            data = 'Error: %s.' % response_dict[cmd]['error_msg']
+            data = 'ERROR: %s.' % response_dict[cmd]['error_msg']
 
         return data
 

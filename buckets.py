@@ -34,14 +34,10 @@ class Buckets:
         """
       constructor
     """
+        # defaults
         self.debug = False
-
-    # default
-
+        self.verbose = False
         self.rest_cmd = rest_cmds['bucket-list']
-
-    # default
-
         self.method = 'GET'
 
     def runCmd(
@@ -54,7 +50,7 @@ class Buckets:
         opts,
         ):
 
-        # default
+        # defaults
 
         bucketname = ''
         cachesize = ''
@@ -74,6 +70,8 @@ class Buckets:
                 output = a
             if o == '-s' or o == '--size':
                 cachesize = a
+            if o == '-v' or o == '--verbose':
+                self.verbose = True
 
         # allow user to be lazy and not specify port
 
@@ -99,9 +97,11 @@ class Buckets:
 
         if cmd == 'bucket-flush':
             if response.status == 204:
-                data = 'Success! %s flushed' % bucketname
+                data = 'SUCCESS: %s flushed' % bucketname
+            elif response.status == 401:
+                data = "UNAUTHORIZED: check username and password"
             else:
-                data = 'Error: unable to flush %s' % bucketname
+                data = 'ERROR: unable to flush %s' % bucketname
         else:
             if response.status == 200:
                 data = response.read()
@@ -114,12 +114,11 @@ class Buckets:
                 print data
             else:
                 json = rest.getJson(data)
-                i = 1
-                print 'List of buckets within the server %s:%s' \
-                    % (server, port)
+                if self.verbose:
+                    print 'List of buckets within the server %s:%s' \
+                        % (server, port)
                 for bucket in json:
-                    print '\t[%d]: %s' % (i, bucket['name'])
-                    i = i + 1
+                    print '%s' % bucket['name']
         else:
             if output == 'json':
                 print rest.jsonMessage(data)

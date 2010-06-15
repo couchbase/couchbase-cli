@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     try:
         (opts, args) = getopt.getopt(sys.argv[2:],
-                                     'a:b:c:de:gdho:p:r:s', [
+                                     'a:b:c:de:gdho:p:r:sv', [
                 'help',
                 'cluster=',
                 'debug',
@@ -39,6 +39,7 @@ if __name__ == '__main__':
                 'server-remove=',
                 'server-remove-username=',
                 'server-remove-password=',
+                'verbose'
                 ])
         cmd = sys.argv[1]
     except getopt.GetoptError, err:
@@ -47,16 +48,18 @@ if __name__ == '__main__':
     # check if usage specified
 
     for (o, a) in opts:
+        if o in ('-c', '--cluster'):
+            cluster = a
         if o in ('-d', '--debug'):
             debug = True
         if o in ('-h', '--help'):
             usage()
-        if o in ('-c', '--cluster'):
-            cluster = a
-        if o in ('-u', '--user'):
-            user = a
         if o in ('-p', '--password'):
             password = a
+        if o in ('-u', '--user'):
+            user = a
+        if o in ('-v', '--verbose'):
+            verbose = True
 
     if not cluster:
         usage("You must specify at least two things: command, "
