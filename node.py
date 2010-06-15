@@ -184,7 +184,11 @@ class Node:
 
         known_nodes = ''
         listservers = Listservers()
-        known_nodes_list = listservers.getNodes(listservers.getData(server, port))
+        known_nodes_list = listservers.getNodes(
+                                listservers.getData(server,
+                                                    port,
+                                                    self.user,
+                                                    self.password))
 
         # I would like to do something like this
         # known_nodes = known_nodes.join(',').join([node['hostname'] for node in nodes])
@@ -201,6 +205,8 @@ class Node:
                                self.port)
         response = self.rest.sendCmd(self.method,
                                      self.rest_cmd,
+                                     self.user,
+                                     self.password,
                                      self.params)
         return response.read()
 
@@ -216,6 +222,8 @@ class Node:
 
         response = self.rest.sendCmd(methods[cmd],
                                      rest_cmds[cmd],
+                                     self.user,
+                                     self.password,
                                      self.params)
 
         if response.status == response_dict[cmd]['success_code']:

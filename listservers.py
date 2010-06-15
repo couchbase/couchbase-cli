@@ -24,6 +24,9 @@ class Listservers:
         self.rest_cmd = '/pools/default'
         self.method = 'GET'
         self.debug = False
+        self.output = 'standard'
+        self.user = ''
+        self.password = ''
 
     def runCmd(
         self,
@@ -35,15 +38,21 @@ class Listservers:
         opts,
         ):
 
-        output= 'default'
+        self.user = user
+        self.password = password
+
         for (o, a) in opts:
             if o in  ('-o', '--output'):
-                output = a
+                self.output = a
             if o in  ('-d', '--debug'):
                 self.debug = 1
 
-        data = self.getData(server,port)
-        if (output == 'json'):
+        data = self.getData(server,
+                            port,
+                            user,
+                            password)
+
+        if (self.output == 'json'):
             print data
         else:
             print 'List of servers within the server %s:%s' % (server, port)
@@ -52,13 +61,22 @@ class Listservers:
 
     def getData(self,
                 server,
-                port):
+                port,
+                user='',
+                password=''):
         """
         get the raw json output from the server
     """
 
+        if not user and not password:
+            user = self.user
+            password = self.password
+
         self.rest = RestClient(server, port, {'debug':self.debug})
-        response = self.rest.sendCmd(self.method, self.rest_cmd)
+        response = self.rest.sendCmd(self.method,
+                                     self.rest_cmd,
+                                     user,
+                                     password)
 
         if response.status == 200:
             data = response.read()

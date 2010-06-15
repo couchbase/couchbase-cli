@@ -59,6 +59,8 @@ class Buckets:
         bucketname = ''
         cachesize = ''
         standard_result = ''
+        self.user = user
+        self.password = password
 
         # set standard opts
 
@@ -90,7 +92,10 @@ class Buckets:
             if cmd == 'bucket-flush':
                 self.rest_cmd = self.rest_cmd + '/controller/doFlush'
 
-        response = rest.sendCmd(methods[cmd], self.rest_cmd)
+        response = rest.sendCmd(methods[cmd],
+                                self.rest_cmd,
+                                self.user,
+                                self.password)
 
         if cmd == 'bucket-flush':
             if response.status == 204:

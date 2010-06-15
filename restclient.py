@@ -12,6 +12,7 @@
 import sys
 import httplib
 import urllib
+import base64
 import simplejson as json
 import string
 from StringIO import StringIO
@@ -30,14 +31,12 @@ class RestClient:
         self.method = 'GET'  # default
         self.params = {}
         self.conn = httplib.HTTPConnection(server, int(port))
-        self.bootStrap()
 
     def setParam(self, param, value):
         self.params[param] = value
 
     def delParam(self, param):
         del self.params[param]
-        print "DELPARAMS: ", self.params
 
     def getParam(self, param):
         if self.params[param]:
@@ -55,25 +54,41 @@ class RestClient:
 
         return self.server
 
-    def bootStrap(self):
-        self.conn.request('GET', '/pools')
+    def bootStrap(self, headers):
+        self.conn.request('GET', '/pools','',headers)
         data = ''
         response = self.conn.getresponse()
         if response.status == 200:
             data = response.read()
+        elif response.status == 401:
+            print 'Unable to log into REST API - check username and password!'
+            sys.exit(2)
         else:
-            print 'Error!'
+            print 'Error bootstrapping!'
             sys.exit(2)
         return
 
-    def sendCmd(self, method, uri, params = {}):
+    def sendCmd(self,
+                method,
+                uri,
+                user='',
+                password='',
+                params = {}):
         data = ''
         self.method = method
         self.params = params
-        self.uri = uri
 
-        if self.method == 'POST':
-            encoded_params = urllib.urlencode(self.params)
+        self.uri = uri
+        headers = {}
+        encoded_params = ''
+
+        if user and password:
+            auth = 'Basic '  + string.strip(
+                        base64.encodestring(user + ':' + password))
+            headers['Authorization'] = auth
+
+        # this step must always be performed
+        self.bootStrap(headers)
 
         if self.debug:
             print "PARAMS: ", params
@@ -81,12 +96,11 @@ class RestClient:
 
         # send the request to the server
 
-        if self.method == 'GET':
-            self.conn.request(self.method, self.uri)
-        else:
-            headers = \
-                {'Content-type': 'application/x-www-form-urlencoded'}
-            self.conn.request(self.method, self.uri, encoded_params, headers)
+        if self.method == 'POST':
+            encoded_params = urllib.urlencode(self.params)
+            headers['Content-type'] = 'application/x-www-form-urlencoded'
+
+        self.conn.request(self.method, self.uri, encoded_params, headers)
 
         # obtain the response
 
