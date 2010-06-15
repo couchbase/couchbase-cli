@@ -149,13 +149,7 @@ class Node:
                 # and ejectedNodes, and then rebalance after adding any servers
 
                 if cmd == 'rebalance':
-                    # a list of ejectNodes is needed (comma-separated)
-
-                    if len(ejectlist):
-                        ejectees = ejectees.join(',').join(ejectlist)
-                        self.setParam('ejectedNodes',ejectees)
-                    self.setParam('knownNodes',self.getKnownNodes(self.server,
-                                                                  self.port))
+                    self.setNodes(ejectlist)
 
             # POST response will be handled except server-add because that is
             # handled in a loop per server in command line list
@@ -175,18 +169,19 @@ class Node:
         print output_result
 
 
-    def getKnownNodes(self, server, port):
+    def setNodes(self, ejectlist):
         """
-            getKnownNodes - this obtains the list of nodes
+            setNodes - this obtains the list of nodes
             in order from knownNodes to be passed to a rebalance
 
             """
 
         known_nodes = ''
+        eject_nodes = ''
         listservers = Listservers()
         known_nodes_list = listservers.getNodes(
-                                listservers.getData(server,
-                                                    port,
+                                listservers.getData(self.server,
+                                                    self.port,
                                                     self.user,
                                                     self.password))
 
@@ -194,10 +189,21 @@ class Node:
         # known_nodes = known_nodes.join(',').join([node['hostname'] for node in nodes])
 
         nodes = []
+        ejectnodes = []
+
         for node in known_nodes_list:
             nodes.append(node['otpNode'])
+            for ejectee in ejectlist:
+                if ejectee == node['hostname']:
+                    ejectnodes.append(node['otpNode'])
+
+        eject_nodes = eject_nodes.join(',').join(ejectnodes)
         known_nodes = known_nodes.join(',').join(nodes)
-        return known_nodes
+
+        # a list of ejectNodes and knownNodes is needed (comma-separated)
+
+        self.setParam('knownNodes', known_nodes);
+        self.setParam('ejectedNodes', eject_nodes);
 
     def handleGetRequest(self, cmd):
 
