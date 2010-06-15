@@ -9,22 +9,17 @@ This program is the top level source file for the Membase Command Line Tools
 
 import getopt
 import sys
-from listservers import *
-from buckets import *
-from node import *
-from membase_info import *
-from restclient import *
+import listservers
+import buckets
+import node
+from membase_info import usage
 
-if __name__ == '__main__':
+def main():
+    """Main CLI entry point."""
     (cluster, user, password) = ('', '', '')
-    debug = False;
-
-    # if no options provided, then give the user usage()
-    if len(sys.argv) == 1:
-        usage()
 
     try:
-        (opts, args) = getopt.getopt(sys.argv[2:],
+        (opts, _args) = getopt.getopt(sys.argv[2:],
                                      'a:b:c:de:gdho:p:r:sv', [
                 'help',
                 'cluster=',
@@ -39,61 +34,53 @@ if __name__ == '__main__':
                 'server-remove=',
                 'server-remove-username=',
                 'server-remove-password=',
-                'verbose'
                 ])
         cmd = sys.argv[1]
+    except IndexError:
+        usage()
     except getopt.GetoptError, err:
         usage(err)
 
     # check if usage specified
 
-    for (o, a) in opts:
-        if o in ('-c', '--cluster'):
-            cluster = a
-        if o in ('-d', '--debug'):
-            debug = True
-        if o in ('-h', '--help'):
+    for (opt, arg) in opts:
+        if opt in ('-c', '--cluster'):
+            cluster = arg
+        if opt in ('-h', '--help'):
             usage()
-        if o in ('-p', '--password'):
-            password = a
-        if o in ('-u', '--user'):
-            user = a
-        if o in ('-v', '--verbose'):
-            verbose = True
+        if opt in ('-p', '--password'):
+            password = arg
+        if opt in ('-u', '--user'):
+            user = arg
 
     if not cluster:
         usage("You must specify at least two things: command, "
-              "and cluster (--cluster)"
-              )
+              "and cluster (--cluster)")
+
     try:
         server, port = cluster.split(':')
         port = int(port)
     except ValueError:
         usage()
 
-    if not user:
-        user = ''
-    if not password:
-        password = ''
-
     # these are the commands which map to the classes
     # the contain the implementation of that particular
     # command
 
     commands = {
-        'server-list'       : Listservers,
-        'bucket-list'       : Buckets,
-        'bucket-details'    : Buckets,
-        'bucket-stats'      : Buckets,
-        'bucket-create'     : Buckets,
-        'bucket-delete'     : Buckets,
-        'bucket-flush'      : Buckets,
-        'server-add'        : Node,
-        'rebalance'         : Node,
-        'rebalance-stop'    : Node,
-        'rebalance-status'  : Node,
-        'eject-server'      : Node,
-        'failover'          : Node,
+        'server-list'       : listservers.Listservers,
+        'bucket-list'       : buckets.Buckets,
+        'bucket-details'    : buckets.Buckets,
+        'bucket-stats'      : buckets.Buckets,
+        'bucket-create'     : buckets.Buckets,
+        'bucket-delete'     : buckets.Buckets,
+        'bucket-flush'      : buckets.Buckets,
+        'server-add'        : node.Node,
+        'rebalance'         : node.Node,
+        'rebalance-stop'    : node.Node,
+        'rebalance-status'  : node.Node,
+        'eject-server'      : node.Node,
+        'failover'          : node.Node,
         }
 
     # make sure the command is defined
@@ -109,3 +96,6 @@ if __name__ == '__main__':
     # call runCmd method
 
     taskrunner.runCmd(cmd, server, port, user, password, opts)
+
+if __name__ == '__main__':
+    main()
