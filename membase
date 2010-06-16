@@ -20,7 +20,7 @@ def main():
 
     try:
         (opts, _args) = getopt.getopt(sys.argv[2:],
-                                     'a:b:c:de:gdho:p:r:sv', [
+                                     'a:b:c:de:gdho:p:r:su:v', [
                 'help',
                 'cluster=',
                 'debug',
