@@ -90,15 +90,18 @@ class RestClient:
         # this step must always be performed
         self.bootStrap(headers)
 
-        if self.debug:
-            print "PARAMS: ", params
-            print "REST CMD: %s %s" % (self.method,self.uri)
 
         # send the request to the server
 
         if self.method == 'POST':
             encoded_params = urllib.urlencode(self.params)
             headers['Content-type'] = 'application/x-www-form-urlencoded'
+
+        if self.debug:
+            print "METHOD: %s" % self.method
+            print "PARAMS: ", params
+            print "ENCODED_PARAMS: %s" % encoded_params
+            print "REST CMD: %s %s" % (self.method,self.uri)
 
         self.conn.request(self.method, self.uri, encoded_params, headers)
 

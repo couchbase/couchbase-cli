@@ -28,6 +28,7 @@ class Listservers:
         self.output = 'standard'
         self.user = ''
         self.password = ''
+        self.error = ''
 
     def runCmd(
         self,
@@ -60,7 +61,13 @@ class Listservers:
         else:
             if self.verbose:
                 print 'List of servers within the server %s:%s' % (server, port)
-            self.printNodes(self.getNodes(data))
+            # obtain dict of nodes. If not dict, is error message
+            nodes = self.getNodes(data)
+            if type(nodes) == type(list()):
+                self.printNodes(nodes)
+            else:
+                print self.error
+
 
 
     def getData(self,
@@ -85,7 +92,7 @@ class Listservers:
         if response.status == 200:
             data = response.read()
         else:
-            data = '"ERROR: ' + response.status + response.reason + '"'
+            data = '"ERROR: %d %s"' % (response.status, response.reason)
 
         return data
 
@@ -97,12 +104,18 @@ class Listservers:
         json = self.rest.getJson(data)
         #pp = pprint.PrettyPrinter(indent=4)
         #pp.pprint(json['nodes'])
+        # this means an error occured
+        if type(json) == type(unicode()):
+            self.error = json
+            return None
+        elif type(json) == type(list()):
+            self.error = json[0]
+            return None
         return json['nodes']
 
     def printNodes(self, nodes):
         """
         print the nodes
     """
-
         for node in nodes:
             print '%s\t%s' % (node['otpNode'], node['status' ])
