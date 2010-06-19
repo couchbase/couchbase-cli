@@ -6,6 +6,7 @@
 
 """
 
+import time
 from membase_info import *
 from restclient import *
 
@@ -152,7 +153,7 @@ class Node:
                 # and ejectedNodes, and then rebalance after adding any servers
 
                 if cmd == 'rebalance':
-                    self.setNodes(ejectlist)
+                    self.rebalance(ejectlist)
 
             # POST response will be handled except server-add because that is
             # handled in a loop per server in command line list
@@ -160,12 +161,10 @@ class Node:
             if cmd != 'server-add':
                 output_result = self.handlePostResponse(cmd)
 
+        elif cmd == 'rebalance-status':
+            output_result = self.rebalanceStatus()
         else:
             output_result = self.handleGetRequest(cmd)
-
-        if output == 'standard' and self.method == 'GET':
-            json = self.rest.getJson(output_result)
-            output_result = "Rebalance status: %s" % json['status']
 
         # print the results, GET, SET or DELETE
 
@@ -197,21 +196,36 @@ class Node:
         for node in known_nodes_list:
             nodes.append(node['otpNode'])
             for ejectee in ejectlist:
-                if ejectee == node['hostname']:
-                    ejectnodes.append(node['otpNode'])
+                if ':' in ejectee:
+                    host, port = ejectee.split(':')
+                    if host == node['hostname']:
+                        ejectnodes.append(node['otpNode'])
 
         eject_nodes = eject_nodes.join(',').join(ejectnodes)
         known_nodes = known_nodes.join(',').join(nodes)
 
         # a list of ejectNodes and knownNodes is needed (comma-separated)
 
-        self.setParam('knownNodes', known_nodes);
-        self.setParam('ejectedNodes', eject_nodes);
+        self.setParam('knownNodes', known_nodes)
+        self.setParam('ejectedNodes', eject_nodes)
+
+    def rebalance(self, ejectlist):
+        self.setNodes(ejectlist)
+        if self.verbose:
+            print "Sent rebalance request to cluster. Rebalance in "
+            print "progress..."
+
+        while self.rebalanceStatus() == 'running':
+            if self.verbose:
+                print "."
+            time.sleep(1)
+        if self.verbose:
+            print " Done."
 
     def handleGetRequest(self, cmd):
 
         self.rest = RestClient(self.server,
-                               self.port)
+                               self.port, { 'debug':self.debug})
         response = self.rest.sendCmd(self.method,
                                      self.rest_cmd,
                                      self.user,
@@ -227,7 +241,8 @@ class Node:
             """
 
         self.rest = RestClient(self.server,
-                               self.port)
+                               self.port,
+                               { 'debug':self.debug})
 
         response = self.rest.sendCmd(methods[cmd],
                                      rest_cmds[cmd],
@@ -238,9 +253,17 @@ class Node:
         if response.status == response_dict[cmd]['success_code']:
             data = 'SUCCESS: %s.' % response_dict[cmd]['success_msg']
         else:
-            data = 'ERROR: %s.' % response_dict[cmd]['error_msg']
+            data = 'ERROR: %s %s.' % (response.reason,
+                                      response_dict[cmd]['error_msg'])
 
         return data
+
+    def rebalanceStatus(self):
+        output_result = self.handleGetRequest('rebalance-status')
+        json = self.rest.getJson(output_result)
+        if type(json) == type(list()): 
+            return "ERROR: %s" % json[0]
+        return json['status']
 
     def setParam(self, param, value):
         """
