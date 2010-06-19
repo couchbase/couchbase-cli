@@ -10,8 +10,8 @@
 """
 
 import pprint
-from membase_info import *
-from restclient import *
+from membase_info import usage
+from restclient import sendCmd, getJson
 
 
 class Listservers:

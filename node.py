@@ -7,7 +7,7 @@
 """
 
 import time
-from membase_info import *
+from membase_info import usage
 from restclient import *
 
 # Note: I would like to do this differently. I'm thinking
@@ -69,6 +69,7 @@ class Node:
         self.debug = False
         self.verbose = False
         self.params = {}
+        self.output = 'standard'
 
     def runCmd(self,
                cmd,
@@ -83,13 +84,7 @@ class Node:
 
             """
 
-        output = 'standard'
         output_result = ''
-        servers = {}
-        servers['add'] = {}
-        servers['remove'] = {}
-        ejectlist = []
-        ejectees = ''
         self.cmd = cmd
         self.rest_cmd = rest_cmds[cmd]
         self.method = methods[cmd]
@@ -98,17 +93,41 @@ class Node:
         self.user = user
         self.password = password
 
+        servers = self.processOpts(opts)
+
+        if self.debug:
+            print "servers ", servers
+
+        if cmd in ('server-add', 'rebalance'):
+            self.addServers(servers['add'])
+            if cmd == 'rebalance':
+                self.rebalance(servers)
+        elif cmd == 'rebalance-status':
+            output_result = self.rebalanceStatus()
+        else:
+            if methods[cmd] == 'GET':
+                output_result = self.handleGetRequest(cmd)
+            else:
+                output_result = self.handlePostResponse(cmd)
+
+        # print the results, GET, SET or DELETE
+        print output_result
+
+    def processOpts(self, opts):
+
         # set standard opts
         # note: use of a server key keeps optional
         # args aligned with server
-
+        servers = {}
+        servers['add'] = {}
+        servers['remove'] = {}
         for o, a in opts:
             if o in ("-a","--server-add"):
                 server = a
-                servers['add'][server] = { 'user':'','password':''}
+                servers['add'][server] = { 'user':'', 'password':''}
             elif o in ( "-r", "--server-remove"):
                 server = a
-                servers['remove'][server] = { 'user':'','password':''}
+                servers['remove'][server] = { 'user':'', 'password':''}
             elif o == "--server-add-username":
                 servers['add'][server]['user'] = a
             elif o == "--server-add-password":
@@ -119,57 +138,34 @@ class Node:
                 servers['remove'][server]['password'] = a
             elif o in ('-o', '--output'):
                 if a == 'json':
-                    output = a
+                    self.output = a
             elif o in ('-d', '--debug'):
                 self.debug = True
             elif o in ('-v', '--verbose'):
                 self.verbose = True
 
-        if self.debug:
-            print "servers ", servers
+        return servers
 
-        # set the parameters for each server
+    def getEjectList(self, servers):
+        ejectlist = []
+        for server in servers['remove']:
+            ejectlist.append(server)
+        return ejectlist
 
-        if methods[cmd] == 'POST':
-            if cmd in ('server-add','rebalance'):
-                for action in ('add', 'remove'):
-                    for server in servers[action]:
-                        if action == 'remove' and cmd == 'rebalance':
-                            ejectlist.append(server)
-                        else:
-                            self.setParam('hostname', server)
+    def addServers(self, servers):
+        for server in servers:
+            user = servers[server]['user']
+            password = servers[server]['password']
+            output_result = self.serverAdd(server, user, password)
+            print output_result
 
-                        if servers[action][server]['user'] and \
-                                servers[action][server]['password'] :
-                            self.setParam('user', servers[action][server]['user'])
-                            self.setParam('password', servers[action][server]['password'])
-
-                        # both rebalance and server-add call addServer()
-
-                        if servers['add']:
-                            print self.handlePostResponse('server-add')
-
-                # if rebalance, we have to prepare the knownNodes
-                # and ejectedNodes, and then rebalance after adding any servers
-
-                if cmd == 'rebalance':
-                    self.rebalance(ejectlist)
-
-            # POST response will be handled except server-add because that is
-            # handled in a loop per server in command line list
-
-            if cmd != 'server-add':
-                output_result = self.handlePostResponse(cmd)
-
-        elif cmd == 'rebalance-status':
-            output_result = self.rebalanceStatus()
-        else:
-            output_result = self.handleGetRequest(cmd)
-
-        # print the results, GET, SET or DELETE
-
-        print output_result
-
+    def serverAdd(self, server, user, password):
+        self.setParam('hostname', server)
+        if user and password:
+            self.setParam('user', user)
+            self.setParam('password', password)
+        output_result = self.handlePostResponse('server-add')
+        return output_result
 
     def setNodes(self, ejectlist):
         """
@@ -188,7 +184,6 @@ class Node:
                                                     self.password))
 
         # I would like to do something like this
-        # known_nodes = known_nodes.join(',').join([node['hostname'] for node in nodes])
 
         nodes = []
         ejectnodes = []
@@ -209,11 +204,17 @@ class Node:
         self.setParam('knownNodes', known_nodes)
         self.setParam('ejectedNodes', eject_nodes)
 
-    def rebalance(self, ejectlist):
+    def rebalance(self, servers):
+        ejectlist = self.getEjectList(servers)
         self.setNodes(ejectlist)
+
+        # POST response will be handled except server-add because that is
+        # handled in a loop per server in command line list
+        output_result = self.handlePostResponse('rebalance')
+        print "rebalance POST response: %s" % output_result
+
         if self.verbose:
-            print "Sent rebalance request to cluster. Rebalance in "
-            print "progress..."
+            print "Sent rebalance request to cluster. Rebalance in progress..."
 
         while self.rebalanceStatus() == 'running':
             if self.verbose:
@@ -226,8 +227,8 @@ class Node:
 
         self.rest = RestClient(self.server,
                                self.port, { 'debug':self.debug})
-        response = self.rest.sendCmd(self.method,
-                                     self.rest_cmd,
+        response = self.rest.sendCmd(methods[cmd],
+                                     rest_cmds[cmd],
                                      self.user,
                                      self.password,
                                      self.params)
@@ -240,10 +241,11 @@ class Node:
 
             """
 
+        if self.debug:
+            print "> handlePostResponse(self, %s)" % cmd
         self.rest = RestClient(self.server,
                                self.port,
                                { 'debug':self.debug})
-
         response = self.rest.sendCmd(methods[cmd],
                                      rest_cmds[cmd],
                                      self.user,
@@ -255,14 +257,20 @@ class Node:
         else:
             data = 'ERROR: %s %s.' % (response.reason,
                                       response_dict[cmd]['error_msg'])
+        if self.debug:
+            print "< handlePostResponse()"
 
         return data
 
     def rebalanceStatus(self):
+        if self.debug:
+            print "> rebalanceStatus()"
         output_result = self.handleGetRequest('rebalance-status')
         json = self.rest.getJson(output_result)
-        if type(json) == type(list()): 
+        if type(json) == type(list()):
             return "ERROR: %s" % json[0]
+        if self.debug:
+            print "< rebalanceStatus()"
         return json['status']
 
     def setParam(self, param, value):
