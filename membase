@@ -12,6 +12,7 @@ import sys
 import listservers
 import buckets
 import node
+import info
 from membase_info import usage
 
 def main():
@@ -22,20 +23,27 @@ def main():
 
     try:
         (opts, _args) = getopt.getopt(sys.argv[2:],
-                                     'a:b:c:de:gdho:p:r:su:v', [
+                                     'a:b:c:dse:gdhlmo:OPp:r:Ssu:vV', [
                 'help',
                 'cluster=',
                 'debug',
+                'storage',
                 'password=',
                 'user=',
+                'mem',
                 'output=',
+                'os',
+                'ports',
                 'stats',
+                'license',
                 'server-add=',
                 'server-add-username=',
                 'server-add-password=',
                 'server-remove=',
                 'server-remove-username=',
                 'server-remove-password=',
+                'verbose',
+                'version'
                 ])
         cmd = sys.argv[1]
     except IndexError:
@@ -87,6 +95,7 @@ def main():
         'rebalance-status'  : node.Node,
         'eject-server'      : node.Node,
         'failover'          : node.Node,
+        'server-info'       : info.Info,
         }
 
     # make sure the command is defined

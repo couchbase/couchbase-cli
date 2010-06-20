@@ -37,6 +37,7 @@ OPTIONS:
   -o, --output [=json|standard]
   -p, --password[=password]
   -u, --user[=username]
+  -v, --verbose
 
   -b, --buckets[=buckets]
   --server-add[=server]                 The server being added
@@ -51,13 +52,44 @@ OPTIONS:
                                         being added
 
 
-
 EXAMPLES:
-  membase server-list -c 192.168.0.1:8080
 
-  membase server-add -c 192.168.0.1:8080 --server-add 192.168.0.2
+  List servers in a cluster:
+    membase server-list -c 192.168.0.1:8080
 
-  membase rebalance -c 192.168.0.1:8080 --server-add 192.168.0.2
+  List buckets in a cluster:
+    membase bucket-list -c 192.168.0.1:8080
+
+  Add a node to a cluster, but do not rebalance:
+    membase server-add -c 192.168.0.1:8080 --server-add=192.168.0.2
+
+  Add a node to a cluster and rebalance:
+    membase rebalance -c 192.168.0.1:8080 --server-add=192.168.0.2
+    membase rebalance -c 192.168.0.1:8080 --server-add=192.168.0.2 \
+    --server-add=192.168.0.3
+
+  Remove a node from a cluster and rebalance:
+    membase rebalance -c 192.168.0.1:8080 --server-remove=192.168.0.2
+
+  Remove and add nodes from/to a cluster and rebalance:
+    membase rebalance -c 192.168.0.1:8080 --server-remove=192.168.0.2 \
+    --server-add=192.168.0.4
+
+  Cancle rebalance:
+    membase rebalance-stop -c 192.168.0.1:8080
+
+  Server Information:
+
+  Obtain information about a server in the cluster:
+    membase server-info -c 192.168.0.1:8080 [server information options]
+
+  Server Infomation options:
+        -l, --list          display the license
+        -P, --ports         list the ports of moxi and memcached
+        -m, --mem           display memory quota of the server
+        -V, --version       print the version of the server software
+        -O, --os            print the OS the server software runs on
+
 """
 
     sys.exit(2)

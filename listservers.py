@@ -10,8 +10,8 @@
 """
 
 import pprint
+import restclient;
 from membase_info import usage
-from restclient import sendCmd, getJson
 
 
 class Listservers:
@@ -83,7 +83,7 @@ class Listservers:
             user = self.user
             password = self.password
 
-        self.rest = RestClient(server, port, {'debug':self.debug})
+        self.rest = restclient.RestClient(server, port, {'debug':self.debug})
         response = self.rest.sendCmd(self.method,
                                      self.rest_cmd,
                                      user,
