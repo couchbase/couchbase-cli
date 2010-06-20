@@ -24,8 +24,21 @@ rest_cmds = {
     'rebalance-status'  :'/pools/default/rebalanceProgress',
     'eject-server'      :'/controller/ejectNode',
     'server-add'        :'/controller/addNode',
+    're-add-server'     :'/controller/addNode',
     'failover'          :'/controller/failOver',
 }
+
+server_no_remove = [
+    'server-add',
+    're-add-server',
+    'rebalance-status',
+    'rebalance-stop',
+]
+server_no_add = [
+    'rebalance-status',
+    'rebalance-stop',
+    'failover',
+]
 
 # Map of operations and the HTTP methods used against the REST interface
 
@@ -85,7 +98,6 @@ class Node:
             """
 
         output_result = ''
-        self.cmd = cmd
         self.rest_cmd = rest_cmds[cmd]
         self.method = methods[cmd]
         self.server = server
@@ -93,7 +105,7 @@ class Node:
         self.user = user
         self.password = password
 
-        servers = self.processOpts(opts)
+        servers = self.processOpts(cmd, opts)
 
         if self.debug:
             print "servers ", servers
@@ -113,7 +125,7 @@ class Node:
         # print the results, GET, SET or DELETE
         print output_result
 
-    def processOpts(self, opts):
+    def processOpts(self, cmd, opts):
 
         # set standard opts
         # note: use of a server key keeps optional
@@ -121,6 +133,23 @@ class Node:
         servers = {}
         servers['add'] = {}
         servers['remove'] = {}
+
+        # don't allow options that don't correspond to given commands
+
+        for o, a in opts:
+            usage_msg = "You cannot specify the %s option with '%s'"\
+                % (o, cmd)
+            if o in ( "-r", "--server-remove", "--server-remove-username", \
+                        "--server-remove-password"):
+                if cmd in server_no_remove:
+                    print "cmd %s usage_msg %s" % (cmd, usage_msg)
+                    usage(usage_msg)
+            elif o in ( "-a", "--server-add", "--server-add-username", \
+                        "--server-add-password"):
+                if cmd in server_no_add:
+                    print "cmd %s usage_msg %s" % (cmd, usage_msg)
+                    usage(usage_msg)
+
         for o, a in opts:
             if o in ("-a","--server-add"):
                 server = a
