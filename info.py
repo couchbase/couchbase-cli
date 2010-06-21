@@ -25,12 +25,6 @@ class Info:
         self.method = 'GET'
         self.info = 'all'
         self.output = 'standard'
-        self.version = False
-        self.mem = False
-        self.os = False
-        self.license = False
-        self.storage = False
-        self.ports = False
 
     def runCmd(
         self,
@@ -54,18 +48,6 @@ class Info:
         for (o, a) in opts:
             if o in ('-o', '--output'):
                 self.output = a
-            if o in ('-O', '--os'):
-                self.os = True
-            if o in ('-P', '--ports'):
-                self.ports = True
-            if o in ('-l', '--license'):
-                self.license = True
-            if o in ('-S', '--storage'):
-                self.storage = True
-            if o in  ('-m', '--mem'):
-                self.mem = True
-            if o == '-V' or o == '--version':
-                self.version = True
             if o == '-v' or o == '--verbose':
                 self.verbose = True
             if o == '-d' or o == '--debug':
@@ -91,37 +73,27 @@ class Info:
 
         if self.output == 'json':
             print data
-            #json = rest.getJson(data)
-            #pp = pprint.PrettyPrinter(indent=4)
-            #pp.pprint(json)
         else:
             json = rest.getJson(data)
 
-            if self.verbose:
-                print "server stats for %s" % json['hostname']
-            if self.version:
-                print "server version: %s" % json['version']
-            if self.license:
-                print "license: %s" % json['license']
-                print "valid : %s" % json['licenseValid']
-                print "valid until: %s" % json['licenseValidUntil']
-            if self.os:
-                print "OS: %s" % json['os']
-            if self.mem:
-                print "memory quota in MB: %s" % json['memoryMb']
-            if self.ports:
-                print "Ports:\nproxy: %s\ndirect: %s" % \
+            print "server stats for %s" % json['hostname']
+            print "server version: %s" % json['version']
+            print "license: %s" % json['license']
+            print "valid : %s" % json['licenseValid']
+            print "valid until: %s" % json['licenseValidUntil']
+            print "OS: %s" % json['os']
+            print "memory quota in MB: %s" % json['memoryMb']
+            print "Ports:\nproxy: %s\ndirect: %s" % \
                     (json['ports']['proxy'], json['ports']['direct'])
-            if self.storage:
-                storage = json['storage']
-                for stype in storage:
-                    if len(storage[stype]):
-                        sobj = storage[stype][0]
-                        print "%s:" % stype
-                        print "\tstate: %s" % sobj['state']
-                        print "\tusage: %d %", sobj['diskStats']['usagePercent']
-                        print "\tsize: %d", sobj['diskStats']['sizeKBytes']
-                        print "\tpath: %s" % sobj['path']
-                        print "\tquota: %s" % sobj['quotaMb']
+            storage = json['storage']
+            for stype in storage:
+                if len(storage[stype]):
+                    sobj = storage[stype][0]
+                    print "%s:" % stype
+                    print "\tstate: %s" % sobj['state']
+                    print "\tusage: %d %", sobj['diskStats']['usagePercent']
+                    print "\tsize: %d", sobj['diskStats']['sizeKBytes']
+                    print "\tpath: %s" % sobj['path']
+                    print "\tquota: %s" % sobj['quotaMb']
 
 

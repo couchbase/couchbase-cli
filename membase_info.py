@@ -85,16 +85,7 @@ EXAMPLES:
     membase rebalance-stop -c 192.168.0.1:8080
 
   Server Information:
-
-  Obtain information about a server in the cluster:
     membase server-info -c 192.168.0.1:8080 [server information options]
-
-  Server Infomation options:
-        -l, --list          display the license
-        -P, --ports         list the ports of moxi and memcached
-        -m, --mem           display memory quota of the server
-        -V, --version       print the version of the server software
-        -O, --os            print the OS the server software runs on
 
 """
 
