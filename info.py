@@ -82,12 +82,12 @@ class Info:
             print "valid : %s" % json['licenseValid']
             print "valid until: %s" % json['licenseValidUntil']
             print "OS: %s" % json['os']
-            print "memory quota in MB: %s" % json['memoryMb']
+            print "memory quota in MB: %s" % json['memoryQuota']
             print "Ports:\nproxy: %s\ndirect: %s" % \
                     (json['ports']['proxy'], json['ports']['direct'])
             storage = json['storage']
             for stype in storage:
-                if len(storage[stype]):
+                if storage[stype]:
                     sobj = storage[stype][0]
                     print "%s:" % stype
                     print "\tstate: %s" % sobj['state']
