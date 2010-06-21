@@ -26,12 +26,13 @@ commands:
   server-list       Provide a list of membase servers within a given cluster
   bucket-list       Provide a list of buckets within a given cluster
   bucket-flush      Flush a given bucket
-  server-add        Add a server
   rebalance         Start a rebalance operation
   rebalance-stop    Stop a rebalance
   rebalance-status  Status of a rebalance
+  server-add        Add a server
+  server-info       Display information about a server
 
-OPTIONS:
+COMMON OPTIONS:
   -c, --cluster [=host:port]
   -d, --debug
   -o, --output [=json|standard]
@@ -39,7 +40,12 @@ OPTIONS:
   -u, --user[=username]
   -v, --verbose
 
+bucket-* OPTIONS:
+
   -b, --buckets[=buckets]
+
+server-add and rebalance-* OPTIONS:
+
   --server-add[=server]                 The server being added
   --server-add-username[=user]          The user specified for the server being
                                         added
@@ -65,17 +71,17 @@ EXAMPLES:
 
   Add a node to a cluster and rebalance:
     membase rebalance -c 192.168.0.1:8080 --server-add=192.168.0.2
-    membase rebalance -c 192.168.0.1:8080 --server-add=192.168.0.2 \
+    membase rebalance -c 192.168.0.1:8080 --server-add=192.168.0.2 \\
     --server-add=192.168.0.3
 
   Remove a node from a cluster and rebalance:
     membase rebalance -c 192.168.0.1:8080 --server-remove=192.168.0.2
 
   Remove and add nodes from/to a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8080 --server-remove=192.168.0.2 \
+    membase rebalance -c 192.168.0.1:8080 --server-remove=192.168.0.2 \\
     --server-add=192.168.0.4
 
-  Cancle rebalance:
+  Cancel rebalance:
     membase rebalance-stop -c 192.168.0.1:8080
 
   Server Information:
