@@ -7,6 +7,7 @@
 """
 
 import time
+import sys
 from membase_info import usage
 from restclient import *
 
@@ -240,7 +241,8 @@ class Node:
         # POST response will be handled except server-add because that is
         # handled in a loop per server in command line list
         output_result = self.handlePostResponse('rebalance')
-        print "rebalance POST response: %s" % output_result
+        if self.verbose:
+            print "rebalance POST response: %s" % output_result
 
         if self.verbose:
             print "Sent rebalance request to cluster. Rebalance in progress..."
@@ -286,6 +288,9 @@ class Node:
         else:
             data = 'ERROR: %s %s.' % (response.reason,
                                       response_dict[cmd]['error_msg'])
+            print data
+            sys.exit(2)
+
         if self.debug:
             print "< handlePostResponse()"
 
