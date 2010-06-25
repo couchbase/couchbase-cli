@@ -76,14 +76,14 @@ class Info:
         else:
             json = rest.getJson(data)
 
-            print "server stats for %s" % json['hostname']
-            print "server version: %s" % json['version']
+            print "%s" % json['hostname']
+            print "version: %s" % json['version']
             print "license: %s" % json['license']
-            print "valid : %s" % json['licenseValid']
-            print "valid until: %s" % json['licenseValidUntil']
-            print "OS: %s" % json['os']
-            print "memory quota in MB: %s" % json['memoryQuota']
-            print "Ports:\nproxy: %s\ndirect: %s" % \
+            print "licenseValid : %s" % json['licenseValid']
+            print "licenseUntil: %s" % json['licenseValidUntil']
+            print "os: %s" % json['os']
+            print "memoryQuota: %s" % json['memoryQuota']
+            print "ports:\n\tproxy: %s\n\tdirect: %s" % \
                     (json['ports']['proxy'], json['ports']['direct'])
             storage = json['storage']
             for stype in storage:
