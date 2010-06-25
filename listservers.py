@@ -10,7 +10,7 @@
 """
 
 import pprint
-import restclient;
+import restclient
 from membase_info import usage
 
 
@@ -118,4 +118,6 @@ class Listservers:
         print the nodes
     """
         for node in nodes:
-            print '%s\t%s' % (node['otpNode'], node['status' ])
+            print '%s %s %s' % (node['otpNode'],
+                                node['status'],
+                                node['clusterMembership'])
