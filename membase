@@ -13,6 +13,7 @@ import listservers
 import buckets
 import node
 import info
+import mbutil
 from membase_info import usage
 
 def main():
@@ -71,11 +72,7 @@ def main():
         usage("You must specify at least two things: command, "
               "and cluster (--cluster)")
 
-    try:
-        server, port = cluster.split(':')
-        port = int(port)
-    except ValueError:
-        usage()
+    server, port = mbutil.hostport(cluster)
 
     # these are the commands which map to the classes
     # the contain the implementation of that particular

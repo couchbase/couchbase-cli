@@ -9,6 +9,7 @@
 import time
 import os
 import sys
+import mbutil
 from membase_info import usage
 from restclient import *
 
@@ -212,15 +213,14 @@ class Node:
                                                     self.user,
                                                     self.password))
 
-        # I would like to do something like this
-
         nodes = []
         ejectnodes = []
 
         for node in known_nodes_list:
             nodes.append(node['otpNode'])
             for ejectee in ejectlist:
-                if ejectee == node['hostname']:
+                host, port = mbutil.hostport(ejectee)
+                if host == node['hostname']:
                     ejectnodes.append(node['otpNode'])
 
         eject_nodes = eject_nodes.join(',').join(ejectnodes)
