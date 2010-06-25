@@ -284,10 +284,10 @@ class Node:
                                      self.params)
 
         if response.status == response_dict[cmd]['success_code']:
-            data = 'SUCCESS: %s.' % response_dict[cmd]['success_msg']
+            data = '%s: SUCCESS' % response_dict[cmd]['success_msg']
         else:
-            data = 'ERROR: %s %s.' % (response.reason,
-                                      response_dict[cmd]['error_msg'])
+            data = '%s: ERROR: %s' % (response_dict[cmd]['error_msg'],
+                                         response.reason)
             print data
             sys.exit(2)
 
