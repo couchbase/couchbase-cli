@@ -91,8 +91,8 @@ class Info:
                     sobj = storage[stype][0]
                     print "%s:" % stype
                     print "\tstate: %s" % sobj['state']
-                    print "\tusage: %d %", sobj['diskStats']['usagePercent']
-                    print "\tsize: %d", sobj['diskStats']['sizeKBytes']
+                    print "\tusage: %d%%" % sobj['diskStats']['usagePercent']
+                    print "\tsize: %d" % sobj['diskStats']['sizeKBytes']
                     print "\tpath: %s" % sobj['path']
                     print "\tquota: %s" % sobj['quotaMb']
 
