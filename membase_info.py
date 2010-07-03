@@ -4,7 +4,7 @@
 """
   membase_info.py
 
-  Contains functions such as usage()
+  This module contains informational functions such as usage()
 
 """
 
@@ -12,11 +12,11 @@ import sys
 
 
 def usage(error_msg=''):
-    print >> sys.stderr, ''
+    print ''
     if error_msg:
-        print >> sys.stderr, "ERROR: %s\n" % error_msg
+        print "ERROR: %s\n" % error_msg
 
-    print >> sys.stderr, """Membase Commandline Tool Set
+    print """Membase Commandline Tool Set
 
 Command line interface to Membase cluster management via REST
 
