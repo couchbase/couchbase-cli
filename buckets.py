@@ -10,8 +10,8 @@
 """
 
 import pprint
-from membase_info import *
-from restclient import *
+from membase_info import usage
+import restclient
 
 rest_cmds = {
     'bucket-list': '/pools/default/buckets',
@@ -73,15 +73,17 @@ class Buckets:
             if o == '-v' or o == '--verbose':
                 self.verbose = True
 
-        # allow user to be lazy and not specify port
-
-        rest = RestClient(server, port, {'debug':self.debug})
         self.rest_cmd = rest_cmds[cmd]
+
+        # instantiate a rest client
+
+        rest = restclient.RestClient(server,
+                                     port,
+                                     {'debug':self.debug})
 
         # get the parameters straight
 
-        if cmd == 'bucket-delete' or cmd == 'bucket-create' or cmd \
-            == 'bucket-flush':
+        if cmd in ('bucket-delete', 'bucket-create', 'bucket-flush'):
             if len(bucketname):
                 rest.setParam('name', bucketname)
             if len(cachesize):
@@ -90,24 +92,12 @@ class Buckets:
             if cmd == 'bucket-flush':
                 self.rest_cmd = self.rest_cmd + '/controller/doFlush'
 
-        response = rest.sendCmd(methods[cmd],
+        opts = {'error_msg':"Unable to obtain bucket list"}
+        data = rest.restCmd(methods[cmd],
                                 self.rest_cmd,
                                 self.user,
-                                self.password)
-
-        if cmd == 'bucket-flush':
-            if response.status == 204:
-                data = 'SUCCESS: %s flushed' % bucketname
-            elif response.status == 401:
-                data = "UNAUTHORIZED: check username and password"
-            else:
-                data = 'ERROR: unable to flush %s' % bucketname
-        else:
-            if response.status == 200:
-                data = response.read()
-            else:
-                print 'Error! ', response.status, response.reason
-                sys.exit(2)
+                                self.password,
+                                opts)
 
         if methods[cmd] == 'GET':
             if output == 'json':

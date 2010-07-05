@@ -60,16 +60,11 @@ class Info:
 
         # get the parameters straight
 
-        response = rest.sendCmd('GET',
+        opts = {'error_msg':'Unable to obtain server information'}
+        data = rest.restCmd('GET',
                                 rest_uri,
                                 self.user,
                                 self.password)
-
-        if response.status == 200:
-            data = response.read()
-        else:
-            print 'Error! ', response.status, response.reason
-            sys.exit(2)
 
         if self.output == 'json':
             print data

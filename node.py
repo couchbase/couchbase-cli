@@ -7,6 +7,7 @@
 """
 
 import time
+import os
 import sys
 from membase_info import usage
 from restclient import *
@@ -56,21 +57,6 @@ methods = {
 # Map of HTTP success code, success message and error message for
 # handling HTTP response properly
 
-response_dict = {
-    'server-add'    : { 'success_code'  : 200,
-    'success_msg'   :'server added.',
-    'error_msg'     :'unable to add server',
-    },
-    'rebalance'     : { 'success_code'  : 200,
-    'success_msg'   :'rebalance started.',
-    'error_msg'     :'unable to start rebalance',
-    },
-    'rebalance-stop': { 'success_code'  : 200,
-    'success_msg'   :'rebalance stopped.',
-    'error_msg'     :'unable to stop rebalance',
-    },
-}
-
 class Node:
     def __init__(self):
         """
@@ -82,6 +68,10 @@ class Node:
         self.method = 'GET'
         self.debug = False
         self.verbose = False
+        self.server = ''
+        self.port = ''
+        self.user = ''
+        self.password = ''
         self.params = {}
         self.output = 'standard'
 
@@ -117,20 +107,17 @@ class Node:
                 self.rebalance(servers)
         elif cmd == 'rebalance-status':
             output_result = self.rebalanceStatus()
-        else:
-            if methods[cmd] == 'GET':
-                output_result = self.handleGetRequest(cmd)
-            else:
-                output_result = self.handlePostResponse(cmd)
-
-        # print the results, GET, SET or DELETE
-        print output_result
+            print output_result
 
     def processOpts(self, cmd, opts):
+        """
+            processOpts()
 
-        # set standard opts
-        # note: use of a server key keeps optional
-        # args aligned with server
+            This method sets standard opts
+            note: use of a server key keeps optional
+            args aligned with server
+            """
+
         servers = {}
         servers['add'] = {}
         servers['remove'] = {}
@@ -186,15 +173,27 @@ class Node:
         for server in servers:
             user = servers[server]['user']
             password = servers[server]['password']
-            output_result = self.serverAdd(server, user, password)
+            output_result = self.serverAdd(server,
+                                           user,
+                                           password)
             print output_result
 
-    def serverAdd(self, server, user, password):
-        self.setParam('hostname', server)
+    def serverAdd(self, server, user='', password=''):
+        opts = {}
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        rest.setParam('hostname', server)
         if user and password:
-            self.setParam('user', user)
-            self.setParam('password', password)
-        output_result = self.handlePostResponse('server-add')
+            rest.setParam('user', user)
+            rest.setParam('password', password)
+        opts['error_msg'] = "Unable to add %s" % server
+        opts['success_msg'] = "Added %s" % server
+        output_result = rest.restCmd('POST',
+                                     rest_cmds['server-add'],
+                                     user,
+                                     password,
+                                     opts)
         return output_result
 
     def setNodes(self, ejectlist):
@@ -221,90 +220,63 @@ class Node:
         for node in known_nodes_list:
             nodes.append(node['otpNode'])
             for ejectee in ejectlist:
-                if ':' in ejectee:
-                    host, port = ejectee.split(':')
-                    if host == node['hostname']:
-                        ejectnodes.append(node['otpNode'])
+                if ejectee == node['hostname']:
+                    ejectnodes.append(node['otpNode'])
 
         eject_nodes = eject_nodes.join(',').join(ejectnodes)
         known_nodes = known_nodes.join(',').join(nodes)
 
         # a list of ejectNodes and knownNodes is needed (comma-separated)
 
-        self.setParam('knownNodes', known_nodes)
-        self.setParam('ejectedNodes', eject_nodes)
+        return({ 'knownNodes':known_nodes, 'ejectedNodes':eject_nodes})
 
     def rebalance(self, servers):
+        opts = {}
         ejectlist = self.getEjectList(servers)
-        self.setNodes(ejectlist)
+        nodes = self.setNodes(ejectlist)
 
         # POST response will be handled except server-add because that is
         # handled in a loop per server in command line list
-        output_result = self.handlePostResponse('rebalance')
-        if self.verbose:
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        rest.setParam('knownNodes', nodes['knownNodes'])
+        rest.setParam('ejectedNodes', nodes['ejectedNodes'])
+
+        opts['success_msg'] = 'Rebalanced cluster'
+        opts['error_msg'] = 'Unable to reblance cluster'
+
+        output_result = rest.restCmd('POST',
+                                     rest_cmds['rebalance'],
+                                     self.user,
+                                     self.password,
+                                     opts)
+        if self.debug:
             print "rebalance POST response: %s" % output_result
 
-        if self.verbose:
-            print "Sent rebalance request to cluster. Rebalance in progress..."
+        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+        print "Start rebalance",
 
         while self.rebalanceStatus() == 'running':
-            if self.verbose:
-                print "."
+            print ".",
             time.sleep(1)
-        if self.verbose:
-            print " Done."
+        print output_result
 
-    def handleGetRequest(self, cmd):
-
-        self.rest = RestClient(self.server,
-                               self.port, { 'debug':self.debug})
-        response = self.rest.sendCmd(methods[cmd],
-                                     rest_cmds[cmd],
-                                     self.user,
-                                     self.password,
-                                     self.params)
-        return response.read()
-
-    def handlePostResponse(self, cmd):
-        """
-            handlePostResponse - this handles the response
-            from a POST according to the operation/cmd run
-
-            """
-
-        if self.debug:
-            print "> handlePostResponse(self, %s)" % cmd
-        self.rest = RestClient(self.server,
-                               self.port,
-                               { 'debug':self.debug})
-        response = self.rest.sendCmd(methods[cmd],
-                                     rest_cmds[cmd],
-                                     self.user,
-                                     self.password,
-                                     self.params)
-
-        if response.status == response_dict[cmd]['success_code']:
-            data = '%s: SUCCESS' % response_dict[cmd]['success_msg']
-        else:
-            data = '%s: ERROR: %s' % (response_dict[cmd]['error_msg'],
-                                         response.reason)
-            print data
-            sys.exit(2)
-
-        if self.debug:
-            print "< handlePostResponse()"
-
-        return data
+        return 0
 
     def rebalanceStatus(self):
-        if self.debug:
-            print "> rebalanceStatus()"
-        output_result = self.handleGetRequest('rebalance-status')
-        json = self.rest.getJson(output_result)
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        opts = { 'error_msg':'Unable to obtain rebalance status'}
+        output_result = rest.restCmd('GET',
+                                     rest_cmds['rebalance-status'],
+                                     self.user,
+                                     self.password,
+                                     opts)
+        json = rest.getJson(output_result)
         if type(json) == type(list()):
             return "ERROR: %s" % json[0]
-        if self.debug:
-            print "< rebalanceStatus()"
         return json['status']
 
     def setParam(self, param, value):
@@ -315,11 +287,3 @@ class Node:
             """
 
         self.params[param] = value
-
-    def delParam(self, param):
-        """
-            delParam - removes a parameter from the param dictionary
-            which is used for POST
-
-            """
-        del self.params[param]

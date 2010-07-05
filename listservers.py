@@ -39,7 +39,17 @@ class Listservers:
         password,
         opts,
         ):
+        """
+        runCmd()
 
+        This method is the primary method, defined for all command
+        modules that performs the primary task, in this case, listing
+        the servers that are part of a Membase cluster
+    """
+
+
+        self.server = server
+        self.port = port
         self.user = user
         self.password = password
 
@@ -51,10 +61,10 @@ class Listservers:
             if o in  ('-v', '--verbose'):
                 self.verbose = True
 
-        data = self.getData(server,
-                            port,
-                            user,
-                            password)
+        data = self.getData(self.server,
+                            self.port,
+                            self.user,
+                            self.password)
 
         if (self.output == 'json'):
             print data
@@ -68,37 +78,32 @@ class Listservers:
             else:
                 print self.error
 
-
-
-    def getData(self,
-                server,
-                port,
-                user='',
-                password=''):
+    def getData(self, server, port, user, password):
         """
-        get the raw json output from the server
+        getData()
+
+        This method obtains the raw json output from the server
+        The reason for passing arguments which could be obtained
+        from 'self' is because getData() must be callable externally
+
     """
 
-        if not user and not password:
-            user = self.user
-            password = self.password
+        self.rest = restclient.RestClient(server,
+                                          port,
+                                          {'debug':self.debug})
 
-        self.rest = restclient.RestClient(server, port, {'debug':self.debug})
-        response = self.rest.sendCmd(self.method,
-                                     self.rest_cmd,
-                                     user,
-                                     password)
-
-        if response.status == 200:
-            data = response.read()
-        else:
-            data = '"ERROR: %d %s"' % (response.status, response.reason)
+        opts = {'error_msg':"Unable to obtain server list"}
+        data = self.rest.restCmd('GET',
+                                 self.rest_cmd,
+                                 user,
+                                 password)
 
         return data
 
     def getNodes(self, data):
         """
-        deserialize the raw json output and return just the nodes
+        This method deserializes the raw json output and
+        returns only the nodes
     """
 
         json = self.rest.getJson(data)
@@ -115,7 +120,7 @@ class Listservers:
 
     def printNodes(self, nodes):
         """
-        print the nodes
+        This method prints the nodes
     """
         for node in nodes:
             print '%s %s %s' % (node['otpNode'],
