@@ -1,92 +1,95 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-  membase_info.py
-
-  This module contains informational functions such as usage()
-
-"""
-
 import sys
 
+def commands_usage():
+    return """
+  server-list       list all servers in a cluster
+  server-info       show details on one server
+  server-add        add a server to cluster
+  rebalance         start a cluster rebalancing
+  rebalance-stop    stop current cluster rebalancing
+  rebalance-status  show status of current cluster rebalancing
+  bucket-list       list all buckets in a cluster
+  bucket-flush      flush a given bucket
+  help              show longer usage/help and examples
+"""
+
+def short_usage():
+    print "usage: membase COMMAND CLUSTER [OPTIONS]"
+    print ""
+    print "CLUSTER is --cluster=HOST[:PORT] or -c HOST[:PORT]"
+    print ""
+    print "COMMAND's include" + commands_usage()
+
+    sys.exit(2)
 
 def usage(error_msg=''):
-    print ''
     if error_msg:
         print "ERROR: %s\n" % error_msg
+        sys.exit(2)
 
-    print """Membase Commandline Tool Set
+    print """membase - command-line cluster administration tool
 
-Command line interface to Membase cluster management via REST
+usage: membase COMMAND CLUSTER [OPTIONS]
 
-Usage: membase command [OPTIONS]
+COMMAND:""" + commands_usage() + """
+CLUSTER:
+  --cluster=HOST[:PORT] or -c HOST[:PORT]
 
-commands:
-  server-list       Provide a list of membase servers within a given cluster
-  bucket-list       Provide a list of buckets within a given cluster
-  bucket-flush      Flush a given bucket
-  rebalance         Start a rebalance operation
-  rebalance-stop    Stop a rebalance
-  rebalance-status  Status of a rebalance
-  server-add        Add a server
-  server-info       Display information about a server
-
-COMMON OPTIONS:
-  -c, --cluster [=host:port]
-  -d, --debug
-  -o, --output [=json|standard]
-  -p, --password[=password]
-  -u, --user[=username]
+OPTIONS:
+  -u USERNAME, --user=USERNAME      admin username of the cluster
+  -p PASSWORD, --password=PASSWORD  admin password of the cluster
+  -o KIND, --output=KIND            KIND is json or standard
   -v, --verbose
+  -d, --debug
+
+server-add OPTIONS:
+  --server-add=HOST[:PORT]          server to be added
+  --server-add-username=USERNAME    admin username for the
+                                    server to be added
+  --server-add-password=PASSWORD    admin password for the
+                                    server to be added
+
+rebalance OPTIONS:
+  --server-add*                     see server-add OPTIONS
+  --server-remove=HOST[:PORT]       the server to be removed
 
 bucket-* OPTIONS:
+  --buckets[=buckets]
 
-  -b, --buckets[=buckets]
-
-server-add and rebalance-* OPTIONS:
-
-  --server-add[=server]                 The server being added
-  --server-add-username[=user]          The user specified for the server being
-                                        added
-  --server-add-password[=password]      The password specified for the server
-                                        being added
-  --server-remove[=server]              The server being remove removed
-  --server-remove-username[=user]       The user specified for the server being
-                                        removed
-  --server-remove-password[=password]   The password specified for the server
-                                        being added
-
+The default PORT number is 8080.
 
 EXAMPLES:
-
   List servers in a cluster:
     membase server-list -c 192.168.0.1:8080
 
-  List buckets in a cluster:
-    membase bucket-list -c 192.168.0.1:8080
+  Server information:
+    membase server-info -c 192.168.0.1:8080
 
   Add a node to a cluster, but do not rebalance:
-    membase server-add -c 192.168.0.1:8080 --server-add=192.168.0.2
+    membase server-add -c 192.168.0.1:8080 \\
+       --server-add=192.168.0.2:8080
 
   Add a node to a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8080 --server-add=192.168.0.2
-    membase rebalance -c 192.168.0.1:8080 --server-add=192.168.0.2 \\
-    --server-add=192.168.0.3
+    membase rebalance -c 192.168.0.1:8080 \\
+       --server-add=192.168.0.2:8080
 
   Remove a node from a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8080 --server-remove=192.168.0.2
+    membase rebalance -c 192.168.0.1:8080 \\
+       --server-remove=192.168.0.2:8080
 
   Remove and add nodes from/to a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8080 --server-remove=192.168.0.2 \\
-    --server-add=192.168.0.4
+    membase rebalance -c 192.168.0.1:8080 \\
+      --server-remove=192.168.0.2 \\
+      --server-add=192.168.0.4
 
-  Cancel rebalance:
+  Stop the current rebalancing:
     membase rebalance-stop -c 192.168.0.1:8080
 
-  Server Information:
-    membase server-info -c 192.168.0.1:8080 [server information options]
-
+  List buckets in a cluster:
+    membase bucket-list -c 192.168.0.1:8080
 """
 
     sys.exit(2)

@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-membase.py
-
-This program is the top level source file for the Membase Command Line Tools
+membase - command-line cluster administration tool
 """
 
 import getopt
@@ -14,18 +12,25 @@ import buckets
 import node
 import info
 import mbutil
-from membase_info import usage
+
+from membase_info import usage, short_usage
 
 def main():
+    for x in sys.argv:
+       if x in ('-h', '--help', 'help'):
+           usage()
+
+    if len(sys.argv) <= 2:
+        short_usage()
+
     debug = False
     verbose = False
-    """Main CLI entry point."""
+
     (cluster, user, password) = ('', '', '')
 
     try:
         (opts, _args) = getopt.getopt(sys.argv[2:],
-                                     'a:b:c:dse:gdhlmo:OPp:r:Ssu:vV', [
-                'help',
+                                     'a:b:c:dse:gdlmo:OPp:r:Ssu:vV', [
                 'cluster=',
                 'debug',
                 'storage',
@@ -46,69 +51,53 @@ def main():
                 'verbose',
                 'version'
                 ])
-        cmd = sys.argv[1]
-    except IndexError:
-        usage()
     except getopt.GetoptError, err:
         usage(err)
 
-    # check if usage specified
-
-    for (opt, arg) in opts:
-        if opt in ('-c', '--cluster'):
-            cluster = arg
-        if opt in ('-h', '--help'):
-            usage()
-        if opt in ('-p', '--password'):
-            password = arg
-        if opt in ('-u', '--user'):
-            user = arg
-        if opt in ('-d', '--debug'):
-            debug = True
-        if opt in ('-v', '--verbose'):
-            verbose = True
-
-    if not cluster:
-        usage("You must specify at least two things: command, "
-              "and cluster (--cluster)")
-
-    server, port = mbutil.hostport(cluster)
-
-    # these are the commands which map to the classes
-    # the contain the implementation of that particular
-    # command
-
     commands = {
         'server-list'       : listservers.Listservers,
-        'bucket-list'       : buckets.Buckets,
-        'bucket-details'    : buckets.Buckets,
-        'bucket-stats'      : buckets.Buckets,
-        'bucket-create'     : buckets.Buckets,
-        'bucket-delete'     : buckets.Buckets,
-        'bucket-flush'      : buckets.Buckets,
+        'server-info'       : info.Info,
         'server-add'        : node.Node,
         'rebalance'         : node.Node,
         'rebalance-stop'    : node.Node,
         'rebalance-status'  : node.Node,
         'eject-server'      : node.Node,
         'failover'          : node.Node,
-        'server-info'       : info.Info,
+        'bucket-list'       : buckets.Buckets,
+        'bucket-details'    : buckets.Buckets,
+        'bucket-stats'      : buckets.Buckets,
+        'bucket-create'     : buckets.Buckets,
+        'bucket-delete'     : buckets.Buckets,
+        'bucket-flush'      : buckets.Buckets
         }
 
-    # make sure the command is defined
+    cmd = sys.argv[1]
 
     if cmd not in commands:
-        err_message = "command: '%s' not found" % cmd
+        err_message = "'%s' is not a membase command.  Use -h for more help." % cmd
         usage(err_message)
 
-    # instantiate
+    for (opt, arg) in opts:
+        if opt in ('-c', '--cluster'):
+            cluster = arg
+        if opt in ('-u', '--user'):
+            user = arg
+        if opt in ('-p', '--password'):
+            password = arg
+        if opt in ('-d', '--debug'):
+            debug = True
+        if opt in ('-v', '--verbose'):
+            verbose = True
+
+    if not cluster:
+        usage("please provide a CLUSTER, or use -h for more help.")
+
+    server, port = mbutil.hostport(cluster)
 
     if verbose:
-        print "running command: %s" % cmd
+        print "INFO: running command: %s" % cmd
+
     taskrunner = commands[cmd]()
-
-    # call runCmd method
-
     taskrunner.runCmd(cmd, server, port, user, password, opts)
 
 if __name__ == '__main__':
