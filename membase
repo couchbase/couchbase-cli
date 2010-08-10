@@ -55,7 +55,7 @@ def main():
         usage(err)
 
     commands = {
-        'server-list'       : listservers.Listservers,
+        'server-list'       : listservers.ListServers,
         'server-info'       : info.Info,
         'server-add'        : node.Node,
         'rebalance'         : node.Node,
@@ -97,8 +97,13 @@ def main():
     if verbose:
         print "INFO: running command: %s" % cmd
 
-    taskrunner = commands[cmd]()
-    taskrunner.runCmd(cmd, server, port, user, password, opts)
+    c = commands[cmd]()
+
+    try:
+        c.runCmd(cmd, server, port, user, password, opts)
+    except Exception, err:
+        print "ERROR: command: %s: %s:%d, %s" % (cmd, server, port, err)
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

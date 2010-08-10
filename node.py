@@ -206,7 +206,7 @@ class Node:
 
         known_nodes = ''
         eject_nodes = ''
-        listservers = Listservers()
+        listservers = ListServers()
         known_nodes_list = listservers.getNodes(
                                 listservers.getData(self.server,
                                                     self.port,
