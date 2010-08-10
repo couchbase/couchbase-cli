@@ -2,11 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-  membase_cli_rest_client
-
-  Class with methods for contacting to a HTTP server, sending REST commands
+  methods for contacting to a HTTP server, sending REST commands
   and processing the JSON response
-
 """
 
 import sys
@@ -16,24 +13,16 @@ import urllib
 import base64
 import simplejson as json
 import string
+
 from StringIO import StringIO
 
-
 class RestClient:
-
     def __init__(self, server, port, opts= {}):
-        """
-            __init__()
-            This method is the instatiation method
-            """
-
-        # do something here?
-
         self.server = server
         self.port = port
         self.debug = opts.get('debug', False)
         self.uri = '/pools'
-        self.method = 'GET'  # default
+        self.method = 'GET'
         self.params = {}
         self.user = ''
         self.password = ''
@@ -57,12 +46,6 @@ class RestClient:
             sys.exit(2)
 
     def setParam(self, param, value):
-        """
-            setParam()
-            This method allows the caller to set parameters which are in
-            turn later encoded for REST POST commands
-            """
-
         self.params[param] = value
 
     def handleResponse(self,
@@ -70,10 +53,7 @@ class RestClient:
                        response,
                        opts={ 'success_msg':'',
                               'error_msg':''}):
-        """
-            handleResponse()
-            This method handles the response, success or failure, and
-            returns the necessary data to the caller
+        """ parse response in standard way.
             """
 
         error = False
@@ -96,10 +76,7 @@ class RestClient:
         return data
 
     def bootStrap(self, headers):
-        """
-            bootStrap()
-            This method produces the initial access required for subsequent
-            REST commands to function properly
+        """ First REST call needed for info for later REST calls.
             """
 
         opts = {'error_msg':'Unable to bootstrap'}
@@ -107,20 +84,16 @@ class RestClient:
         response = self.conn.getresponse()
         return self.handleResponse('GET', response, opts)
 
-    def sendCmd(self,
-                method,
-                uri,
-                user='',
-                password='',
-                opts = {}):
-        data = ''
-        headers = {}
-        encoded_params = ''
+    def sendCmd(self, method, uri,
+                user='', password='', opts = {}):
         """
             sendCmd()
             This method handles accessing the REST API and returning
             either data, if a GET, or a success or error message if a POST
             """
+        data = ''
+        headers = {}
+        encoded_params = ''
 
         if user and password:
             self.user = user
@@ -129,11 +102,7 @@ class RestClient:
                         base64.encodestring(user + ':' + password))
             headers['Authorization'] = auth
 
-        # this step must always be performed
-
         self.bootStrap(headers)
-
-        # send the request to the server
 
         if method == 'POST':
             encoded_params = urllib.urlencode(self.params)
@@ -150,21 +119,13 @@ class RestClient:
 
         self.makeRequest(method, uri, encoded_params, headers)
 
-        # obtain the response
-
         response = self.conn.getresponse()
         if self.debug:
             print "response.status: %s" % response.status
         return response
 
     def makeRequest(self, method, uri, encoded_params, headers):
-        """
-            makeRequest()
-            This method handles the attempt to connect to the REST API
-            on the given server
-            """
-
-        error_connect = "Unable to connect to %s" % self.server
+        error_connect = "ERROR: unable to connect to %s:%d" % (self.server, self.port)
         try:
             self.conn.request(method, uri, encoded_params, headers)
         except httplib.HTTPException:
@@ -180,7 +141,6 @@ class RestClient:
             print error_connect
             sys.exit(2)
 
-
     def getJson(self, data):
         return json.loads(data)
 
@@ -188,12 +148,6 @@ class RestClient:
         return json.JSONEncoder().encode(data)
 
     def restCmd(self, method, uri, user='', password='', opts={}):
-        """
-            handlePostResponse - this handles the response
-            from a POST according to the operation/cmd run
-
-            """
-
         if method == None:
             method = 'GET'
 

@@ -1,16 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-  listservers class
-
-  This class implements methods that will list servers within a
-  membase cluster
-
-"""
-
-import pprint
 from membase_info import usage
+
 import restclient
 
 rest_cmds = {
@@ -27,38 +19,22 @@ methods = {
     'bucket-stats': 'GET',
     }
 
-
 class Buckets:
-
     def __init__(self):
-        """
-      constructor
-    """
         # defaults
         self.debug = False
         self.verbose = False
         self.rest_cmd = rest_cmds['bucket-list']
         self.method = 'GET'
 
-    def runCmd(
-        self,
-        cmd,
-        server,
-        port,
-        user,
-        password,
-        opts,
-        ):
-
-        # defaults
+    def runCmd(self, cmd, server, port,
+               user, password, opts):
+        self.user = user
+        self.password = password
 
         bucketname = ''
         cachesize = ''
         standard_result = ''
-        self.user = user
-        self.password = password
-
-        # set standard opts
 
         output= 'default'
         for (o, a) in opts:
@@ -74,8 +50,6 @@ class Buckets:
                 self.verbose = True
 
         self.rest_cmd = rest_cmds[cmd]
-
-        # instantiate a rest client
 
         rest = restclient.RestClient(server,
                                      port,
@@ -114,7 +88,3 @@ class Buckets:
                 print rest.jsonMessage(data)
             else:
                 print data
-
-    # debug
-    # pp = pprint.PrettyPrinter(indent=4)
-    # pp.pprint(json)

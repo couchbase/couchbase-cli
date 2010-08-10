@@ -60,11 +60,6 @@ methods = {
 
 class Node:
     def __init__(self):
-        """
-            constructor
-            """
-        # defaults
-
         self.rest_cmd = rest_cmds['rebalance-status']
         self.method = 'GET'
         self.debug = False
@@ -76,20 +71,10 @@ class Node:
         self.params = {}
         self.output = 'standard'
 
-    def runCmd(self,
-               cmd,
-               server,
-               port,
-               user,
-               password,
-               opts):
-        """
-            runCmd - perform the operation. This is where all the
-            functionaly for the given operation is implemented
-
-            """
-
+    def runCmd(self, cmd, server, port,
+               user, password, opts):
         output_result = ''
+
         self.rest_cmd = rest_cmds[cmd]
         self.method = methods[cmd]
         self.server = server
@@ -111,14 +96,10 @@ class Node:
             print output_result
 
     def processOpts(self, cmd, opts):
-        """
-            processOpts()
-
-            This method sets standard opts
+        """ Set standard opts.
             note: use of a server key keeps optional
-            args aligned with server
+            args aligned with server.
             """
-
         servers = {}
         servers['add'] = {}
         servers['remove'] = {}
@@ -198,12 +179,8 @@ class Node:
         return output_result
 
     def setNodes(self, ejectlist):
-        """
-            setNodes - this obtains the list of nodes
-            in order from knownNodes to be passed to a rebalance
-
+        """ Obtains the list of known nodes to be passed to a rebalance
             """
-
         known_nodes = ''
         eject_nodes = ''
         listservers = ListServers()
@@ -280,10 +257,4 @@ class Node:
         return json['status']
 
     def setParam(self, param, value):
-        """
-            setParam - sets the param dictionary which
-            is used for POST
-
-            """
-
         self.params[param] = value
