@@ -1,22 +1,14 @@
 """
-  Node class
-
-  This class implements methods that will pertain to
-  rebalance, add, remove, stop rebalance
-
+  Implementation for rebalance, add, remove, stop rebalance.
 """
 
 import time
 import os
 import sys
 import mbutil
+
 from membase_info import usage
 from restclient import *
-
-# Note: I would like to do this differently. I'm thinking
-# listservers should be moved into node since it does pertain
-# to nodes. TBD
-
 from listservers import *
 
 # the rest commands and associated URIs for various node operations
@@ -63,7 +55,6 @@ class Node:
         self.rest_cmd = rest_cmds['rebalance-status']
         self.method = 'GET'
         self.debug = False
-        self.verbose = False
         self.server = ''
         self.port = ''
         self.user = ''
@@ -107,21 +98,19 @@ class Node:
         # don't allow options that don't correspond to given commands
 
         for o, a in opts:
-            usage_msg = "You cannot specify the %s option with '%s'"\
-                % (o, cmd)
-            if o in ( "-r", "--server-remove", "--server-remove-username", \
-                        "--server-remove-password"):
+            usage_msg = "option '%s' is not used with command '%s'" % (o, cmd)
+
+            if o in ( "-r", "--server-remove"):
                 if cmd in server_no_remove:
-                    print "cmd %s usage_msg %s" % (cmd, usage_msg)
                     usage(usage_msg)
-            elif o in ( "-a", "--server-add", "--server-add-username", \
+            elif o in ( "-a", "--server-add",
+                        "--server-add-username",
                         "--server-add-password"):
                 if cmd in server_no_add:
-                    print "cmd %s usage_msg %s" % (cmd, usage_msg)
                     usage(usage_msg)
 
         for o, a in opts:
-            if o in ("-a","--server-add"):
+            if o in ("-a", "--server-add"):
                 server = a
                 servers['add'][server] = { 'user':'', 'password':''}
             elif o in ( "-r", "--server-remove"):
@@ -140,8 +129,6 @@ class Node:
                     self.output = a
             elif o in ('-d', '--debug'):
                 self.debug = True
-            elif o in ('-v', '--verbose'):
-                self.verbose = True
 
         return servers
 
@@ -169,8 +156,8 @@ class Node:
         if user and password:
             rest.setParam('user', user)
             rest.setParam('password', password)
-        opts['error_msg'] = "Unable to add %s" % server
-        opts['success_msg'] = "Added %s" % server
+        opts['error_msg'] = "unable to add %s" % server
+        opts['success_msg'] = "added %s" % server
         output_result = rest.restCmd('POST',
                                      rest_cmds['server-add'],
                                      user,
@@ -220,8 +207,8 @@ class Node:
         rest.setParam('knownNodes', nodes['knownNodes'])
         rest.setParam('ejectedNodes', nodes['ejectedNodes'])
 
-        opts['success_msg'] = 'Rebalanced cluster'
-        opts['error_msg'] = 'Unable to reblance cluster'
+        opts['success_msg'] = 'rebalanced cluster'
+        opts['error_msg'] = 'unable to reblance cluster'
 
         output_result = rest.restCmd('POST',
                                      rest_cmds['rebalance'],
@@ -232,28 +219,32 @@ class Node:
             print "rebalance POST response: %s" % output_result
 
         sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-        print "Start rebalance",
 
-        while self.rebalanceStatus() == 'running':
+        print "INFO: rebalancing",
+
+        while self.rebalanceStatus(prefix='\n') == 'running':
             print ".",
-            time.sleep(1)
-        print output_result
+            time.sleep(0.5)
 
-        return 0
+        print '\n' + output_result
 
-    def rebalanceStatus(self):
+    def rebalanceStatus(self, prefix=''):
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
-        opts = { 'error_msg':'Unable to obtain rebalance status'}
+        opts = { 'error_msg':'unable to obtain rebalance status'}
+
         output_result = rest.restCmd('GET',
                                      rest_cmds['rebalance-status'],
                                      self.user,
                                      self.password,
                                      opts)
+
         json = rest.getJson(output_result)
         if type(json) == type(list()):
-            return "ERROR: %s" % json[0]
+            print prefix + ("ERROR: %s" % json[0])
+            sys.exit(1)
+
         return json['status']
 
     def setParam(self, param, value):
