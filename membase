@@ -11,9 +11,9 @@ import listservers
 import buckets
 import node
 import info
-import mbutil
+import util
 
-from membase_info import usage, short_usage
+from usage import usage, short_usage
 
 def main():
     for x in sys.argv:
@@ -45,8 +45,6 @@ def main():
                 'server-add-username=',
                 'server-add-password=',
                 'server-remove=',
-                'server-remove-username=',
-                'server-remove-password=',
                 'version'
                 ])
     except getopt.GetoptError, err:
@@ -62,8 +60,6 @@ def main():
         'eject-server'      : node.Node,
         'failover'          : node.Node,
         'bucket-list'       : buckets.Buckets,
-        'bucket-details'    : buckets.Buckets,
-        'bucket-stats'      : buckets.Buckets,
         'bucket-create'     : buckets.Buckets,
         'bucket-delete'     : buckets.Buckets,
         'bucket-flush'      : buckets.Buckets
@@ -72,7 +68,8 @@ def main():
     cmd = sys.argv[1]
 
     if cmd not in commands:
-        err_message = "'%s' is not a membase command.  Use -h for more help." % cmd
+        err_message = ("'%s' is not a membase command;" +
+                       " please see -h for more help.") % cmd
         usage(err_message)
 
     for (opt, arg) in opts:
@@ -88,7 +85,7 @@ def main():
     if not cluster:
         usage("please provide a CLUSTER, or use -h for more help.")
 
-    server, port = mbutil.hostport(cluster)
+    server, port = util.hostport(cluster)
 
     if debug:
         print "INFO: running command: %s" % cmd

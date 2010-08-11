@@ -10,4 +10,4 @@ def hostport(hoststring, default_port=8080):
         host = hoststring
         port = default_port
 
-    return [ host, port ]
+    return (host, port)

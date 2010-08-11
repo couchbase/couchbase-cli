@@ -5,9 +5,9 @@
 import time
 import os
 import sys
-import mbutil
+import util
 
-from membase_info import usage
+from usage import usage
 from restclient import *
 from listservers import *
 
@@ -76,7 +76,7 @@ class Node:
         servers = self.processOpts(cmd, opts)
 
         if self.debug:
-            print "servers ", servers
+            print "INFO: servers %s" % servers
 
         if cmd in ('server-add', 'rebalance'):
             self.addServers(servers['add'])
@@ -91,9 +91,10 @@ class Node:
             note: use of a server key keeps optional
             args aligned with server.
             """
-        servers = {}
-        servers['add'] = {}
-        servers['remove'] = {}
+        servers = {
+            'add': {},
+            'remove': {}
+        }
 
         # don't allow options that don't correspond to given commands
 
@@ -109,34 +110,35 @@ class Node:
                 if cmd in server_no_add:
                     usage(usage_msg)
 
+        server = None
+
         for o, a in opts:
             if o in ("-a", "--server-add"):
-                server = a
+                server = "%s:%d" % util.hostport(a)
                 servers['add'][server] = { 'user':'', 'password':''}
-            elif o in ( "-r", "--server-remove"):
-                server = a
-                servers['remove'][server] = { 'user':'', 'password':''}
             elif o == "--server-add-username":
+                if server is None:
+                    usage("please specify --server-add" +
+                          " before --server-add-username")
                 servers['add'][server]['user'] = a
             elif o == "--server-add-password":
+                if server is None:
+                    usage("please specify --server-add" +
+                          " before --server-add-password")
                 servers['add'][server]['password'] = a
-            elif o == "--server-remove-username":
-                servers['remove'][server]['user'] = a
-            elif o == "--server-remove-password":
-                servers['remove'][server]['password'] = a
+            elif o in ( "-r", "--server-remove"):
+                server = "%s:%d" % util.hostport(a)
+                servers['remove'][a] = True
+                server = None
             elif o in ('-o', '--output'):
                 if a == 'json':
                     self.output = a
+                server = None
             elif o in ('-d', '--debug'):
                 self.debug = True
+                server = None
 
         return servers
-
-    def getEjectList(self, servers):
-        ejectlist = []
-        for server in servers['remove']:
-            ejectlist.append(server)
-        return ejectlist
 
     def addServers(self, servers):
         for server in servers:
@@ -147,29 +149,29 @@ class Node:
                                            password)
             print output_result
 
-    def serverAdd(self, server, user='', password=''):
+    def serverAdd(self, add_server, add_with_user, add_with_password):
         opts = {}
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
-        rest.setParam('hostname', server)
-        if user and password:
-            rest.setParam('user', user)
-            rest.setParam('password', password)
-        opts['error_msg'] = "unable to add %s" % server
-        opts['success_msg'] = "added %s" % server
+        rest.setParam('hostname', add_server)
+        if add_with_user and add_with_password:
+            rest.setParam('user', add_with_user)
+            rest.setParam('password', add_with_password)
+
+        opts['error_msg'] = "unable to add %s" % add_server
+        opts['success_msg'] = "added %s" % add_server
+
         output_result = rest.restCmd('POST',
                                      rest_cmds['server-add'],
-                                     user,
-                                     password,
+                                     self.user,
+                                     self.password,
                                      opts)
         return output_result
 
-    def setNodes(self, ejectlist):
+    def getNodeOtps(self, to_eject):
         """ Obtains the list of known nodes to be passed to a rebalance
             """
-        known_nodes = ''
-        eject_nodes = ''
         listservers = ListServers()
         known_nodes_list = listservers.getNodes(
                                 listservers.getData(self.server,
@@ -177,27 +179,20 @@ class Node:
                                                     self.user,
                                                     self.password))
 
-        nodes = []
-        ejectnodes = []
+        eject_otps = []
+        known_otps = []
 
         for node in known_nodes_list:
-            nodes.append(node['otpNode'])
-            for ejectee in ejectlist:
-                host, port = mbutil.hostport(ejectee)
-                if host == node['hostname']:
-                    ejectnodes.append(node['otpNode'])
+            known_otps.append(node['otpNode'])
+            if node['hostname'] in to_eject:
+                eject_otps.append(node['otpNode'])
 
-        eject_nodes = eject_nodes.join(',').join(ejectnodes)
-        known_nodes = known_nodes.join(',').join(nodes)
-
-        # a list of ejectNodes and knownNodes is needed (comma-separated)
-
-        return({ 'knownNodes':known_nodes, 'ejectedNodes':eject_nodes})
+        return({ 'ejectedNodes' : ','.join(eject_otps),
+                 'knownNodes'   : ','.join(known_otps) })
 
     def rebalance(self, servers):
         opts = {}
-        ejectlist = self.getEjectList(servers)
-        nodes = self.setNodes(ejectlist)
+        nodes = self.getNodeOtps(servers['remove'])
 
         # POST response will be handled except server-add because that is
         # handled in a loop per server in command line list
@@ -216,7 +211,7 @@ class Node:
                                      self.password,
                                      opts)
         if self.debug:
-            print "rebalance POST response: %s" % output_result
+            print "INFO: rebalance started: %s" % output_result
 
         sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
