@@ -42,7 +42,6 @@ OPTIONS:
   -u USERNAME, --user=USERNAME      admin username of the cluster
   -p PASSWORD, --password=PASSWORD  admin password of the cluster
   -o KIND, --output=KIND            KIND is json or standard
-  -v, --verbose
   -d, --debug
 
 server-add OPTIONS:

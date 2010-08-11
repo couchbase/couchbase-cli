@@ -12,7 +12,6 @@ class ListServers:
         self.method = 'GET'
         self.output = 'standard'
         self.debug = False
-        self.verbose = False
         self.user = ''
         self.password = ''
         self.error = ''
@@ -29,8 +28,6 @@ class ListServers:
                 self.output = a
             if o in  ('-d', '--debug'):
                 self.debug = True
-            if o in  ('-v', '--verbose'):
-                self.verbose = True
 
         data = self.getData(self.server,
                             self.port,
@@ -39,9 +36,6 @@ class ListServers:
         if (self.output == 'json'):
             print data
         else:
-            if self.verbose:
-                print 'List of servers within the server %s:%s' % (server, port)
-
             # obtain dict of nodes. If not dict, is error message
             nodes = self.getNodes(data)
             if type(nodes) == type(list()):

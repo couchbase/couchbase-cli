@@ -52,36 +52,30 @@ class RestClient:
                        method,
                        response,
                        opts={ 'success_msg':'',
-                              'error_msg':''}):
+                              'error_msg':'' }):
         """ parse response in standard way.
             """
-
-        error = False
         if response.status == 200 or response.status == 204:
             if method == 'GET':
-                data = response.read()
-            else:
-                data = "SUCCESS: %s" % opts['success_msg']
-        elif response.status == 401:
-            error = True
-            data = 'ERROR: Unable to access the REST API - check username and password!'
-        else:
-            error = True
-            data = 'ERROR: %s %s' % (opts['error_msg'], response.reason)
+                return response.read()
 
-        if error:
-            print data
+            return "SUCCESS: %s" % opts['success_msg']
+
+        if response.status == 401:
+            print 'ERROR: unable to access the REST API - check username and password!'
             sys.exit(2)
 
-        return data
+        print 'ERROR: %s (%d) %s' % (opts['error_msg'],
+                                     response.status, response.reason)
+        sys.exit(2)
 
     def bootStrap(self, headers):
         """ First REST call needed for info for later REST calls.
             """
-
-        opts = {'error_msg':'Unable to bootstrap'}
         self.conn.request('GET', '/pools', '', headers)
         response = self.conn.getresponse()
+
+        opts = {'error_msg':'bootstrap failed'}
         return self.handleResponse('GET', response, opts)
 
     def sendCmd(self, method, uri,
@@ -98,8 +92,10 @@ class RestClient:
         if user and password:
             self.user = user
             self.password = password
-            auth = 'Basic '  + string.strip(
-                        base64.encodestring(user + ':' + password))
+
+            auth = ('Basic ' +
+                    string.strip(base64.encodestring(user + ':' + password)))
+
             headers['Authorization'] = auth
 
         self.bootStrap(headers)
@@ -151,10 +147,7 @@ class RestClient:
         if method == None:
             method = 'GET'
 
-        response = self.sendCmd(method,
-                                uri,
-                                user,
-                                password,
-                                opts)
+        response = self.sendCmd(method, uri,
+                                user, password, opts)
 
         return self.handleResponse(method, response, opts)

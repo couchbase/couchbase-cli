@@ -24,7 +24,6 @@ def main():
         short_usage()
 
     debug = False
-    verbose = False
 
     (cluster, user, password) = ('', '', '')
 
@@ -48,7 +47,6 @@ def main():
                 'server-remove=',
                 'server-remove-username=',
                 'server-remove-password=',
-                'verbose',
                 'version'
                 ])
     except getopt.GetoptError, err:
@@ -86,15 +84,13 @@ def main():
             password = arg
         if opt in ('-d', '--debug'):
             debug = True
-        if opt in ('-v', '--verbose'):
-            verbose = True
 
     if not cluster:
         usage("please provide a CLUSTER, or use -h for more help.")
 
     server, port = mbutil.hostport(cluster)
 
-    if verbose:
+    if debug:
         print "INFO: running command: %s" % cmd
 
     c = commands[cmd]()

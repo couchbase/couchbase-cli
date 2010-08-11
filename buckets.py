@@ -21,9 +21,7 @@ methods = {
 
 class Buckets:
     def __init__(self):
-        # defaults
         self.debug = False
-        self.verbose = False
         self.rest_cmd = rest_cmds['bucket-list']
         self.method = 'GET'
 
@@ -46,14 +44,10 @@ class Buckets:
                 output = a
             if o == '-s' or o == '--size':
                 cachesize = a
-            if o == '-v' or o == '--verbose':
-                self.verbose = True
 
         self.rest_cmd = rest_cmds[cmd]
 
-        rest = restclient.RestClient(server,
-                                     port,
-                                     {'debug':self.debug})
+        rest = restclient.RestClient(server, port, {'debug':self.debug})
 
         # get the parameters straight
 
@@ -66,21 +60,14 @@ class Buckets:
             if cmd == 'bucket-flush':
                 self.rest_cmd = self.rest_cmd + '/controller/doFlush'
 
-        opts = {'error_msg':"Unable to obtain bucket list"}
-        data = rest.restCmd(methods[cmd],
-                                self.rest_cmd,
-                                self.user,
-                                self.password,
-                                opts)
+        data = rest.restCmd(methods[cmd], self.rest_cmd,
+                            self.user, self.password, opts)
 
         if methods[cmd] == 'GET':
             if output == 'json':
                 print data
             else:
                 json = rest.getJson(data)
-                if self.verbose:
-                    print 'List of buckets within the server %s:%s' \
-                        % (server, port)
                 for bucket in json:
                     print '%s' % bucket['name']
         else:
