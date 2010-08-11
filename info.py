@@ -2,93 +2,34 @@
 # -*- coding: utf-8 -*-
 
 """
-  info class
-
-  This class implements methods that provide info about a
-  particular server
-
+  Provides info about a particular server.
 """
 
-import pprint
 from membase_info import usage
+
 import restclient
+import simplejson
 
 class Info:
-
     def __init__(self):
-        """
-      constructor
-    """
-        # defaults
         self.debug = False
-        self.verbose = False
-        self.method = 'GET'
-        self.info = 'all'
-        self.output = 'standard'
 
-    def runCmd(
-        self,
-        cmd,
-        server,
-        port,
-        user,
-        password,
-        opts,
-        ):
-
-        # defaults
-
-        standard_result = ''
-        self.user = user
-        self.password = password
-
-        # set standard opts
-
-        output= 'default'
+    def runCmd(self, cmd, server, port,
+               user, password, opts):
         for (o, a) in opts:
-            if o in ('-o', '--output'):
-                self.output = a
-            if o == '-v' or o == '--verbose':
-                self.verbose = True
             if o == '-d' or o == '--debug':
                 self.debug = True
 
-        # allow user to be lazy and not specify port
-
         rest = restclient.RestClient(server, port, {'debug':self.debug})
-        rest_uri = '/nodes/Self'
+        opts = {'error_msg': 'server-info error'}
 
-        # get the parameters straight
+        data = rest.restCmd('GET', '/nodes/self',
+                            user, password, opts)
 
-        opts = {'error_msg':'Unable to obtain server information'}
-        data = rest.restCmd('GET',
-                                rest_uri,
-                                self.user,
-                                self.password)
+        json = rest.getJson(data)
 
-        if self.output == 'json':
-            print data
-        else:
-            json = rest.getJson(data)
+        for x in ['license', 'licenseValid', 'licenseValidUntil']:
+            if json[x] != None:
+                del(json[x])
 
-            print "%s" % json['hostname']
-            print "version: %s" % json['version']
-            print "license: %s" % json['license']
-            print "licenseValid : %s" % json['licenseValid']
-            print "licenseUntil: %s" % json['licenseValidUntil']
-            print "os: %s" % json['os']
-            print "memoryQuota: %s" % json['memoryQuota']
-            print "ports:\n\tproxy: %s\n\tdirect: %s" % \
-                    (json['ports']['proxy'], json['ports']['direct'])
-            storage = json['storage']
-            for stype in storage:
-                if storage[stype]:
-                    sobj = storage[stype][0]
-                    print "%s:" % stype
-                    print "\tstate: %s" % sobj['state']
-                    print "\tusage: %d%%" % sobj['diskStats']['usagePercent']
-                    print "\tsize: %d" % sobj['diskStats']['sizeKBytes']
-                    print "\tpath: %s" % sobj['path']
-                    print "\tquota: %s" % sobj['quotaMb']
-
-
+        print simplejson.dumps(json, sort_keys=True, indent=2)
