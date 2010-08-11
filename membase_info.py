@@ -27,7 +27,7 @@ def short_usage():
 
 def usage(error_msg=''):
     if error_msg:
-        print "ERROR: %s\n" % error_msg
+        print "ERROR: %s" % error_msg
         sys.exit(2)
 
     print """membase - command-line cluster administration tool
