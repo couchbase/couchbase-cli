@@ -7,10 +7,11 @@ def commands_usage():
     return """
   server-list       list all servers in a cluster
   server-info       show details on one server
-  server-add        add a server to cluster
+  server-add        add one or more servers to the cluster
   rebalance         start a cluster rebalancing
   rebalance-stop    stop current cluster rebalancing
   rebalance-status  show status of current cluster rebalancing
+  failover          failover one or more servers
   bucket-list       list all buckets in a cluster
   bucket-flush      flush a given bucket
   help              show longer usage/help and examples
@@ -54,6 +55,9 @@ server-add OPTIONS:
 rebalance OPTIONS:
   --server-add*                     see server-add OPTIONS
   --server-remove=HOST[:PORT]       the server to be removed
+
+failover OPTIONS:
+  --server-failover=HOST[:PORT]     server to failover
 
 bucket-* OPTIONS:
   --buckets[=buckets]

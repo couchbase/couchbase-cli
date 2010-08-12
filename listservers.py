@@ -73,6 +73,7 @@ class ListServers:
 
     def printNodes(self, nodes):
         for node in nodes:
-            print '%s %s %s' % (node['otpNode'],
-                                node['status'],
-                                node['clusterMembership'])
+            print '%s %s %s %s' % (node['otpNode'],
+                                   node['hostname'],
+                                   node['status'],
+                                   node['clusterMembership'])

@@ -17,21 +17,19 @@ rest_cmds = {
     'rebalance'         :'/controller/rebalance',
     'rebalance-stop'    :'/controller/stopRebalance',
     'rebalance-status'  :'/pools/default/rebalanceProgress',
-    'eject-server'      :'/controller/ejectNode',
     'server-add'        :'/controller/addNode',
-    're-add-server'     :'/controller/addNode',
     'failover'          :'/controller/failOver',
 }
 
 server_no_remove = [
-    'server-add',
-    're-add-server',
-    'rebalance-status',
     'rebalance-stop',
+    'rebalance-status',
+    'server-add',
+    'failover'
 ]
 server_no_add = [
-    'rebalance-status',
     'rebalance-stop',
+    'rebalance-status',
     'failover',
 ]
 
@@ -64,8 +62,6 @@ class Node:
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
-        output_result = ''
-
         self.rest_cmd = rest_cmds[cmd]
         self.method = methods[cmd]
         self.server = server
@@ -78,13 +74,25 @@ class Node:
         if self.debug:
             print "INFO: servers %s" % servers
 
+        if cmd == 'server-add' and len(servers['add']) <= 0:
+            usage("please list one or more --server-add=HOST[:PORT];" +
+                  " or use -h for more help.")
+
         if cmd in ('server-add', 'rebalance'):
             self.addServers(servers['add'])
             if cmd == 'rebalance':
                 self.rebalance(servers)
-        elif cmd == 'rebalance-status':
+
+        if cmd == 'rebalance-status':
             output_result = self.rebalanceStatus()
             print output_result
+
+        if cmd == 'failover':
+            if len(servers['failover']) <= 0:
+                usage("please list one or more --server-failover=HOST[:PORT];" +
+                      " or use -h for more help.")
+
+            self.failover(servers)
 
     def processOpts(self, cmd, opts):
         """ Set standard opts.
@@ -93,7 +101,8 @@ class Node:
             """
         servers = {
             'add': {},
-            'remove': {}
+            'remove': {},
+            'failover': {}
         }
 
         # don't allow options that don't correspond to given commands
@@ -128,7 +137,11 @@ class Node:
                 servers['add'][server]['password'] = a
             elif o in ( "-r", "--server-remove"):
                 server = "%s:%d" % util.hostport(a)
-                servers['remove'][a] = True
+                servers['remove'][server] = True
+                server = None
+            elif o in ( "--server-failover"):
+                server = "%s:%d" % util.hostport(a)
+                servers['failover'][server] = True
                 server = None
             elif o in ('-o', '--output'):
                 if a == 'json':
@@ -150,7 +163,6 @@ class Node:
             print output_result
 
     def serverAdd(self, add_server, add_with_user, add_with_password):
-        opts = {}
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
@@ -159,8 +171,9 @@ class Node:
             rest.setParam('user', add_with_user)
             rest.setParam('password', add_with_password)
 
-        opts['error_msg'] = "unable to add %s" % add_server
-        opts['success_msg'] = "added %s" % add_server
+        opts = {}
+        opts['error_msg'] = "unable to server-add %s" % add_server
+        opts['success_msg'] = "server-add %s" % add_server
 
         output_result = rest.restCmd('POST',
                                      rest_cmds['server-add'],
@@ -169,8 +182,8 @@ class Node:
                                      opts)
         return output_result
 
-    def getNodeOtps(self, to_eject):
-        """ Obtains the list of known nodes to be passed to a rebalance
+    def getNodeOtps(self, to_eject=[], to_failover=[]):
+        """ Convert known nodes into otp node id's.
             """
         listservers = ListServers()
         known_nodes_list = listservers.getNodes(
@@ -178,32 +191,32 @@ class Node:
                                                     self.port,
                                                     self.user,
                                                     self.password))
-
-        eject_otps = []
         known_otps = []
+        eject_otps = []
+        failover_otps = []
 
         for node in known_nodes_list:
             known_otps.append(node['otpNode'])
             if node['hostname'] in to_eject:
                 eject_otps.append(node['otpNode'])
+            if node['hostname'] in to_failover:
+                failover_otps.append(node['otpNode'])
 
-        return({ 'ejectedNodes' : ','.join(eject_otps),
-                 'knownNodes'   : ','.join(known_otps) })
+        return (known_otps, eject_otps, failover_otps)
 
     def rebalance(self, servers):
-        opts = {}
-        nodes = self.getNodeOtps(servers['remove'])
+        known_otps, eject_otps, failover_otps = \
+            self.getNodeOtps(to_eject=servers['remove'])
 
-        # POST response will be handled except server-add because that is
-        # handled in a loop per server in command line list
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
-        rest.setParam('knownNodes', nodes['knownNodes'])
-        rest.setParam('ejectedNodes', nodes['ejectedNodes'])
+        rest.setParam('knownNodes', ','.join(known_otps))
+        rest.setParam('ejectedNodes', ','.join(eject_otps))
 
+        opts = {}
         opts['success_msg'] = 'rebalanced cluster'
-        opts['error_msg'] = 'unable to reblance cluster'
+        opts['error_msg'] = 'unable to rebalance cluster'
 
         output_result = rest.restCmd('POST',
                                      rest_cmds['rebalance'],
@@ -242,5 +255,28 @@ class Node:
 
         return json['status']
 
-    def setParam(self, param, value):
-        self.params[param] = value
+    def failover(self, servers):
+        known_otps, eject_otps, failover_otps = \
+            self.getNodeOtps(to_failover=servers['failover'])
+
+        if len(failover_otps) <= 0:
+            usage("specified servers are not part of the cluster: %s" %
+                  servers['failover'].keys())
+
+        for failover_otp in failover_otps:
+            rest = restclient.RestClient(self.server,
+                                         self.port,
+                                         {'debug':self.debug})
+            rest.setParam('otpNode', failover_otp)
+
+            opts = {}
+            opts['error_msg'] = "unable to failover %s" % failover_otp
+            opts['success_msg'] = "failover %s" % failover_otp
+
+            output_result = rest.restCmd('POST',
+                                         rest_cmds['failover'],
+                                         self.user,
+                                         self.password,
+                                         opts)
+            print output_result
+

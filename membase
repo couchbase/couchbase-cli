@@ -45,6 +45,7 @@ def main():
                 'server-add-username=',
                 'server-add-password=',
                 'server-remove=',
+                'server-failover=',
                 'version'
                 ])
     except getopt.GetoptError, err:
