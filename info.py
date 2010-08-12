@@ -5,7 +5,7 @@
   Provides info about a particular server.
 """
 
-from membase_info import usage
+from usage import usage
 
 import restclient
 import simplejson

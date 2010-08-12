@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from membase_info import usage
+from usage import usage
 
 import restclient
 
@@ -32,11 +32,10 @@ class Buckets:
 
         bucketname = ''
         cachesize = ''
-        standard_result = ''
+        output = 'default'
 
-        output= 'default'
         for (o, a) in opts:
-            if o == '-b' or o == '--buckets':
+            if o == '-b' or o == '--bucket':
                 bucketname = a
             if o == '-d' or o == '--debug':
                 self.debug = True

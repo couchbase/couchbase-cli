@@ -62,7 +62,7 @@ class RestClient:
             return "SUCCESS: %s" % opts['success_msg']
 
         if response.status == 401:
-            print 'ERROR: unable to access the REST API - check username and password!'
+            print 'ERROR: unable to access the REST API - please check your username (-u) and password (-p)'
             sys.exit(2)
 
         print 'ERROR: %s (%d) %s' % (opts['error_msg'],

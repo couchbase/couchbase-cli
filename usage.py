@@ -60,7 +60,7 @@ failover OPTIONS:
   --server-failover=HOST[:PORT]     server to failover
 
 bucket-* OPTIONS:
-  --buckets[=buckets]
+  --bucket=BUCKETNAME
 
 The default PORT number is 8080.
 

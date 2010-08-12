@@ -4,7 +4,7 @@
 import sys
 import restclient
 
-from membase_info import usage
+from usage import usage
 
 class ListServers:
     def __init__(self):
@@ -51,7 +51,6 @@ class ListServers:
         The reason for passing arguments which could be obtained
         from 'self' is because getData() must be callable externally
     """
-
         self.rest = restclient.RestClient(server, port,
                                           {'debug':self.debug})
         return self.rest.restCmd('GET', self.rest_cmd,
@@ -61,7 +60,6 @@ class ListServers:
         """
         Deserialize json into nodes.
     """
-
         json = self.rest.getJson(data)
         if type(json) == type(unicode()):
             self.error = json

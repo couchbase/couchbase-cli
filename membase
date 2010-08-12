@@ -46,6 +46,7 @@ def main():
                 'server-add-password=',
                 'server-remove=',
                 'server-failover=',
+                'bucket=',
                 'version'
                 ])
     except getopt.GetoptError, err:
