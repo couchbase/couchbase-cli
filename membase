@@ -47,6 +47,11 @@ def main():
                 'server-remove=',
                 'server-failover=',
                 'bucket=',
+                'bucket-port=',
+                'bucket-password=',
+                'bucket-ramsize=',
+                'bucket-hddsize=',
+                'bucket-replica=',
                 'version'
                 ])
     except getopt.GetoptError, err:
@@ -63,6 +68,7 @@ def main():
         'failover'          : node.Node,
         'bucket-list'       : buckets.Buckets,
         'bucket-create'     : buckets.Buckets,
+        'bucket-edit'       : buckets.Buckets,
         'bucket-delete'     : buckets.Buckets,
         'bucket-flush'      : buckets.Buckets
         }

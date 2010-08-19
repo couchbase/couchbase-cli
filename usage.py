@@ -13,6 +13,9 @@ def commands_usage():
   rebalance-status  show status of current cluster rebalancing
   failover          failover one or more servers
   bucket-list       list all buckets in a cluster
+  bucket-create     add a new bucket to the cluster
+  bucket-edit       modify an existing bucket
+  bucket-delete     delete an existing bucket
   bucket-flush      flush a given bucket
   help              show longer usage/help and examples
 """
@@ -60,7 +63,12 @@ failover OPTIONS:
   --server-failover=HOST[:PORT]     server to failover
 
 bucket-* OPTIONS:
-  --bucket=BUCKETNAME
+  --bucket=BUCKETNAME               bucket to act on
+  --bucket-port=PORT                supports ASCII protocol and is auth-less
+  --bucket-password=PASSWORD        standard port, exclusive with bucket-port
+  --bucket-ramsize=RAMSIZEMB        ram quota in MB
+  --bucket-hddsize=HDDSIZEGB        disk quota in GB
+  --bucket-replica=COUNT            replication count
 
 The default PORT number is 8080.
 
@@ -93,6 +101,26 @@ EXAMPLES:
 
   List buckets in a cluster:
     membase bucket-list -c 192.168.0.1:8080
+
+  Create a new dedicated port bucket:
+    membase bucket-create -c 192.168.0.1:8080 \\
+       --bucket=test_bucket \\
+       --bucket-port=11222 \\
+       --bucket-ramsize=200 \\
+       --bucket-hddsize=1 \\
+       --bucket-replica=1
+
+  Modify a dedicated port bucket:
+    membase bucket-edit -c 192.168.0.1:8080 \\
+       --bucket=test_bucket \\
+       --bucket-port=11222 \\
+       --bucket-ramsize=400 \\
+       --bucket-hddsize=1
+
+  Delete a bucket:
+    membase bucket-delete -c 192.168.0.1:8080 \\
+       --bucket=test_bucket
+
 """
 
     sys.exit(2)

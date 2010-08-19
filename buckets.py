@@ -10,11 +10,13 @@ rest_cmds = {
     'bucket-flush': '/pools/default/buckets/',
     'bucket-delete': '/pools/default/buckets/',
     'bucket-create': '/pools/default/buckets/',
+    'bucket-edit': '/pools/default/buckets/',
     }
 methods = {
     'bucket-list': 'GET',
     'bucket-delete': 'DELETE',
     'bucket-create': 'POST',
+    'bucket-edit': 'POST',
     'bucket-flush': 'POST',
     'bucket-stats': 'GET',
     }
@@ -31,18 +33,33 @@ class Buckets:
         self.password = password
 
         bucketname = ''
-        cachesize = ''
+        authtype = ''
+        bucketport = ''
+        bucketpassword = ''
+        bucketramsize = ''
+        buckethddsize = ''
+        bucketreplication = ''
         output = 'default'
 
         for (o, a) in opts:
             if o == '-b' or o == '--bucket':
                 bucketname = a
+            if o == '--bucket-port':
+                bucketport = a
+                authtype = 'none'
+            if o == '--bucket-password':
+                bucketpassword = a
+                authtype = 'sasl'
+            if o == '--bucket-ramsize':
+                bucketramsize = a
+            if o == '--bucket-hddsize':
+                buckethddsize = a
+            if o == '--bucket-replica':
+                bucketreplication = a
             if o == '-d' or o == '--debug':
                 self.debug = True
             if o in  ('-o', '--output'):
                 output = a
-            if o == '-s' or o == '--size':
-                cachesize = a
 
         self.rest_cmd = rest_cmds[cmd]
 
@@ -50,14 +67,29 @@ class Buckets:
 
         # get the parameters straight
 
-        if cmd in ('bucket-delete', 'bucket-create', 'bucket-flush'):
-            if len(bucketname):
+        if cmd in ('bucket-create', 'bucket-edit'):
+            if bucketname:
                 rest.setParam('name', bucketname)
-            if len(cachesize):
-                rest.setParam('cacheSize', cachesize)
+            if authtype:
+                rest.setParam('authType', authtype)
+            if bucketport:
+                rest.setParam('proxyPort', bucketport)
+            if bucketpassword:
+                rest.setParam('saslPassword', bucketpassword)
+            if bucketramsize:
+                rest.setParam('ramQuotaMB', bucketramsize)
+            if buckethddsize:
+                rest.setParam('hddQuotaGB', buckethddsize)
+            if bucketreplication:
+                rest.setParam('replicaNumber', bucketreplication)
+        if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):
             self.rest_cmd = self.rest_cmd + bucketname
-            if cmd == 'bucket-flush':
-                self.rest_cmd = self.rest_cmd + '/controller/doFlush'
+        if cmd == 'bucket-flush':
+            self.rest_cmd = self.rest_cmd + '/controller/doFlush'
+
+        opts = {}
+        opts['error_msg'] = "unable to %s" % cmd
+        opts['success_msg'] = "%s" % cmd
 
         data = rest.restCmd(methods[cmd], self.rest_cmd,
                             self.user, self.password, opts)

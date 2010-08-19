@@ -55,7 +55,7 @@ class RestClient:
                               'error_msg':'' }):
         """ parse response in standard way.
             """
-        if response.status == 200 or response.status == 204:
+        if response.status in [200, 201, 204, 302]:
             if method == 'GET':
                 return response.read()
 
@@ -101,6 +101,9 @@ class RestClient:
         self.bootStrap(headers)
 
         if method == 'POST':
+            encoded_params = urllib.urlencode(self.params)
+            headers['Content-type'] = 'application/x-www-form-urlencoded'
+        elif method == 'DELETE':
             encoded_params = urllib.urlencode(self.params)
             headers['Content-type'] = 'application/x-www-form-urlencoded'
         else:
