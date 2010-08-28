@@ -18,6 +18,7 @@ rest_cmds = {
     'rebalance-stop'    :'/controller/stopRebalance',
     'rebalance-status'  :'/pools/default/rebalanceProgress',
     'server-add'        :'/controller/addNode',
+    'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
 }
 
@@ -25,6 +26,7 @@ server_no_remove = [
     'rebalance-stop',
     'rebalance-status',
     'server-add',
+    'server-readd',
     'failover'
 ]
 server_no_add = [
@@ -41,8 +43,8 @@ methods = {
     'rebalance-status'  :'GET',
     'eject-server'      :'POST',
     'server-add'        :'POST',
+    'server-readd'      :'POST',
     'failover'          :'POST',
-    're-add-server'     :'POST',
 }
 
 # Map of HTTP success code, success message and error message for
@@ -74,8 +76,12 @@ class Node:
         if self.debug:
             print "INFO: servers %s" % servers
 
-        if cmd == 'server-add' and len(servers['add']) <= 0:
-            usage("please list one or more --server-add=HOST[:PORT];" +
+        if cmd == 'server-add' and not servers['add']:
+            usage("please list one or more --server-add=HOST[:PORT];"
+                  " or use -h for more help.")
+
+        if cmd == 'server-readd' and not servers['add']:
+            usage("please list one or more --server-add=HOST[:PORT];"
                   " or use -h for more help.")
 
         if cmd in ('server-add', 'rebalance'):
@@ -83,13 +89,16 @@ class Node:
             if cmd == 'rebalance':
                 self.rebalance(servers)
 
+        if cmd == 'server-readd':
+            self.reAddServers(servers)
+
         if cmd == 'rebalance-status':
             output_result = self.rebalanceStatus()
             print output_result
 
         if cmd == 'failover':
             if len(servers['failover']) <= 0:
-                usage("please list one or more --server-failover=HOST[:PORT];" +
+                usage("please list one or more --server-failover=HOST[:PORT];"
                       " or use -h for more help.")
 
             self.failover(servers)
@@ -127,12 +136,12 @@ class Node:
                 servers['add'][server] = { 'user':'', 'password':''}
             elif o == "--server-add-username":
                 if server is None:
-                    usage("please specify --server-add" +
+                    usage("please specify --server-add"
                           " before --server-add-username")
                 servers['add'][server]['user'] = a
             elif o == "--server-add-password":
                 if server is None:
-                    usage("please specify --server-add" +
+                    usage("please specify --server-add"
                           " before --server-add-password")
                 servers['add'][server]['password'] = a
             elif o in ( "-r", "--server-remove"):
@@ -182,7 +191,28 @@ class Node:
                                      opts)
         return output_result
 
-    def getNodeOtps(self, to_eject=[], to_failover=[]):
+    def reAddServers(self, servers):
+        known_otps, eject_otps, failover_otps, readd_otps = \
+            self.getNodeOtps(to_readd=servers['add'])
+
+        for readd_otp in readd_otps:
+            rest = restclient.RestClient(self.server,
+                                         self.port,
+                                         {'debug':self.debug})
+            rest.setParam('otpNode', readd_otp)
+
+            opts = {}
+            opts['error_msg'] = "unable to re-add %s" % readd_otp
+            opts['success_msg'] = "re-add %s" % readd_otp
+
+            output_result = rest.restCmd('POST',
+                                         rest_cmds['server-readd'],
+                                         self.user,
+                                         self.password,
+                                         opts)
+            print output_result
+
+    def getNodeOtps(self, to_eject=[], to_failover=[], to_readd=[]):
         """ Convert known nodes into otp node id's.
             """
         listservers = ListServers()
@@ -194,6 +224,7 @@ class Node:
         known_otps = []
         eject_otps = []
         failover_otps = []
+        readd_otps = []
 
         for node in known_nodes_list:
             known_otps.append(node['otpNode'])
@@ -201,11 +232,13 @@ class Node:
                 eject_otps.append(node['otpNode'])
             if node['hostname'] in to_failover:
                 failover_otps.append(node['otpNode'])
+            if node['hostname'] in to_readd:
+                readd_otps.append(node['otpNode'])
 
-        return (known_otps, eject_otps, failover_otps)
+        return (known_otps, eject_otps, failover_otps, readd_otps)
 
     def rebalance(self, servers):
-        known_otps, eject_otps, failover_otps = \
+        known_otps, eject_otps, failover_otps, readd_otps = \
             self.getNodeOtps(to_eject=servers['remove'])
 
         rest = restclient.RestClient(self.server,
@@ -256,7 +289,7 @@ class Node:
         return json['status']
 
     def failover(self, servers):
-        known_otps, eject_otps, failover_otps = \
+        known_otps, eject_otps, failover_otps, readd_otps = \
             self.getNodeOtps(to_failover=servers['failover'])
 
         if len(failover_otps) <= 0:

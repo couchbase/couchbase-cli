@@ -8,6 +8,7 @@ def commands_usage():
   server-list       list all servers in a cluster
   server-info       show details on one server
   server-add        add one or more servers to the cluster
+  server-readd      readd a server that was failed over
   rebalance         start a cluster rebalancing
   rebalance-stop    stop current cluster rebalancing
   rebalance-status  show status of current cluster rebalancing
@@ -49,6 +50,13 @@ OPTIONS:
   -d, --debug
 
 server-add OPTIONS:
+  --server-add=HOST[:PORT]          server to be added
+  --server-add-username=USERNAME    admin username for the
+                                    server to be added
+  --server-add-password=PASSWORD    admin password for the
+                                    server to be added
+
+server-readd OPTIONS:
   --server-add=HOST[:PORT]          server to be added
   --server-add-username=USERNAME    admin username for the
                                     server to be added

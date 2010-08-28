@@ -61,6 +61,7 @@ def main():
         'server-list'       : listservers.ListServers,
         'server-info'       : info.Info,
         'server-add'        : node.Node,
+        'server-readd'      : node.Node,
         'rebalance'         : node.Node,
         'rebalance-stop'    : node.Node,
         'rebalance-status'  : node.Node,
