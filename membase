@@ -47,6 +47,7 @@ def main():
                 'server-remove=',
                 'server-failover=',
                 'bucket=',
+                'bucket-type=',
                 'bucket-port=',
                 'bucket-password=',
                 'bucket-ramsize=',

@@ -33,6 +33,7 @@ class Buckets:
         self.password = password
 
         bucketname = ''
+        buckettype = ''
         authtype = ''
         bucketport = ''
         bucketpassword = ''
@@ -44,6 +45,8 @@ class Buckets:
         for (o, a) in opts:
             if o == '-b' or o == '--bucket':
                 bucketname = a
+            if o == '--bucket-type':
+                buckettype = a
             if o == '--bucket-port':
                 bucketport = a
                 authtype = 'none'
@@ -70,6 +73,8 @@ class Buckets:
         if cmd in ('bucket-create', 'bucket-edit'):
             if bucketname:
                 rest.setParam('name', bucketname)
+            if buckettype:
+                rest.setParam('bucketType', buckettype)
             if authtype:
                 rest.setParam('authType', authtype)
             if bucketport:

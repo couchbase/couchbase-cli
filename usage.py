@@ -72,6 +72,7 @@ failover OPTIONS:
 
 bucket-* OPTIONS:
   --bucket=BUCKETNAME               bucket to act on
+  --bucket-type=TYPE                memcached or membase
   --bucket-port=PORT                supports ASCII protocol and is auth-less
   --bucket-password=PASSWORD        standard port, exclusive with bucket-port
   --bucket-ramsize=RAMSIZEMB        ram quota in MB
@@ -110,13 +111,21 @@ EXAMPLES:
   List buckets in a cluster:
     membase bucket-list -c 192.168.0.1:8080
 
-  Create a new dedicated port bucket:
+  Create a new dedicated port membase bucket:
     membase bucket-create -c 192.168.0.1:8080 \\
        --bucket=test_bucket \\
+       --bucket-type=membase \\
        --bucket-port=11222 \\
        --bucket-ramsize=200 \\
        --bucket-hddsize=1 \\
        --bucket-replica=1
+
+  Create a new sasl memcached bucket:
+    membase bucket-create -c 192.168.0.1:8080 \\
+       --bucket=test_bucket \\
+       --bucket-type=memcached \\
+       --bucket-password=password \\
+       --bucket-ramsize=200
 
   Modify a dedicated port bucket:
     membase bucket-edit -c 192.168.0.1:8080 \\
