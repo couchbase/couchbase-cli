@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-def hostport(hoststring, default_port=8080):
+def hostport(hoststring, default_port=8091):
     """ finds the host and port given a host:port string """
     try:
         host, port = hoststring.split(':')

@@ -79,40 +79,40 @@ bucket-* OPTIONS:
   --bucket-hddsize=HDDSIZEGB        disk quota in GB
   --bucket-replica=COUNT            replication count
 
-The default PORT number is 8080.
+The default PORT number is 8091.
 
 EXAMPLES:
   List servers in a cluster:
-    membase server-list -c 192.168.0.1:8080
+    membase server-list -c 192.168.0.1:8091
 
   Server information:
-    membase server-info -c 192.168.0.1:8080
+    membase server-info -c 192.168.0.1:8091
 
   Add a node to a cluster, but do not rebalance:
-    membase server-add -c 192.168.0.1:8080 \\
-       --server-add=192.168.0.2:8080
+    membase server-add -c 192.168.0.1:8091 \\
+       --server-add=192.168.0.2:8091
 
   Add a node to a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8080 \\
-       --server-add=192.168.0.2:8080
+    membase rebalance -c 192.168.0.1:8091 \\
+       --server-add=192.168.0.2:8091
 
   Remove a node from a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8080 \\
-       --server-remove=192.168.0.2:8080
+    membase rebalance -c 192.168.0.1:8091 \\
+       --server-remove=192.168.0.2:8091
 
   Remove and add nodes from/to a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8080 \\
+    membase rebalance -c 192.168.0.1:8091 \\
       --server-remove=192.168.0.2 \\
       --server-add=192.168.0.4
 
   Stop the current rebalancing:
-    membase rebalance-stop -c 192.168.0.1:8080
+    membase rebalance-stop -c 192.168.0.1:8091
 
   List buckets in a cluster:
-    membase bucket-list -c 192.168.0.1:8080
+    membase bucket-list -c 192.168.0.1:8091
 
   Create a new dedicated port membase bucket:
-    membase bucket-create -c 192.168.0.1:8080 \\
+    membase bucket-create -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-type=membase \\
        --bucket-port=11222 \\
@@ -121,21 +121,21 @@ EXAMPLES:
        --bucket-replica=1
 
   Create a new sasl memcached bucket:
-    membase bucket-create -c 192.168.0.1:8080 \\
+    membase bucket-create -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-type=memcached \\
        --bucket-password=password \\
        --bucket-ramsize=200
 
   Modify a dedicated port bucket:
-    membase bucket-edit -c 192.168.0.1:8080 \\
+    membase bucket-edit -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-port=11222 \\
        --bucket-ramsize=400 \\
        --bucket-hddsize=1
 
   Delete a bucket:
-    membase bucket-delete -c 192.168.0.1:8080 \\
+    membase bucket-delete -c 192.168.0.1:8091 \\
        --bucket=test_bucket
 
 """
