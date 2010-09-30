@@ -38,7 +38,6 @@ class Buckets:
         bucketport = ''
         bucketpassword = ''
         bucketramsize = ''
-        buckethddsize = ''
         bucketreplication = ''
         output = 'default'
 
@@ -55,8 +54,6 @@ class Buckets:
                 authtype = 'sasl'
             if o == '--bucket-ramsize':
                 bucketramsize = a
-            if o == '--bucket-hddsize':
-                buckethddsize = a
             if o == '--bucket-replica':
                 bucketreplication = a
             if o == '-d' or o == '--debug':
@@ -83,8 +80,6 @@ class Buckets:
                 rest.setParam('saslPassword', bucketpassword)
             if bucketramsize:
                 rest.setParam('ramQuotaMB', bucketramsize)
-            if buckethddsize:
-                rest.setParam('hddQuotaGB', buckethddsize)
             if bucketreplication:
                 rest.setParam('replicaNumber', bucketreplication)
         if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):

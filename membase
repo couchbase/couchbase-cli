@@ -51,7 +51,6 @@ def main():
                 'bucket-port=',
                 'bucket-password=',
                 'bucket-ramsize=',
-                'bucket-hddsize=',
                 'bucket-replica=',
                 'version'
                 ])

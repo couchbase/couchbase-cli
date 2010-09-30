@@ -76,7 +76,6 @@ bucket-* OPTIONS:
   --bucket-port=PORT                supports ASCII protocol and is auth-less
   --bucket-password=PASSWORD        standard port, exclusive with bucket-port
   --bucket-ramsize=RAMSIZEMB        ram quota in MB
-  --bucket-hddsize=HDDSIZEGB        disk quota in GB
   --bucket-replica=COUNT            replication count
 
 The default PORT number is 8091.
@@ -117,7 +116,6 @@ EXAMPLES:
        --bucket-type=membase \\
        --bucket-port=11222 \\
        --bucket-ramsize=200 \\
-       --bucket-hddsize=1 \\
        --bucket-replica=1
 
   Create a new sasl memcached bucket:
@@ -131,8 +129,7 @@ EXAMPLES:
     membase bucket-edit -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-port=11222 \\
-       --bucket-ramsize=400 \\
-       --bucket-hddsize=1
+       --bucket-ramsize=400
 
   Delete a bucket:
     membase bucket-delete -c 192.168.0.1:8091 \\
