@@ -94,13 +94,22 @@ class Buckets:
         data = rest.restCmd(methods[cmd], self.rest_cmd,
                             self.user, self.password, opts)
 
-        if methods[cmd] == 'GET':
+        if cmd == "bucket-list":
             if output == 'json':
                 print data
             else:
                 json = rest.getJson(data)
                 for bucket in json:
                     print '%s' % bucket['name']
+                    print ' bucketType: %s' % bucket['bucketType']
+                    print ' authType: %s' % bucket['authType']
+                    if bucket['authType'] == "sasl":
+                        print ' saslPassword: %s' % bucket['saslPassword']
+                    else:
+                        print ' proxyPort: %s' % bucket['proxyPort']
+                    print ' numReplicas: %s' % bucket['replicaNumber']
+                    print ' ramQuota: %s' % bucket['quota']['ram']
+                    print ' ramUsed: %s' % bucket['basicStats']['memUsed']
         else:
             if output == 'json':
                 print rest.jsonMessage(data)
