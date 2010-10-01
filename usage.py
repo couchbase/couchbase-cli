@@ -13,6 +13,7 @@ def commands_usage():
   rebalance-stop    stop current cluster rebalancing
   rebalance-status  show status of current cluster rebalancing
   failover          failover one or more servers
+  cluster-init      set the username,password and port of the cluster
   bucket-list       list all buckets in a cluster
   bucket-create     add a new bucket to the cluster
   bucket-edit       modify an existing bucket
@@ -70,6 +71,11 @@ rebalance OPTIONS:
 failover OPTIONS:
   --server-failover=HOST[:PORT]     server to failover
 
+cluster-init OPTIONS:
+  --cluster-init-username=USER      new admin username
+  --cluster-init-password=PASSWORD  new admin password
+  --cluster-init-port=PORT          new cluster port (must be at least 6 characters)
+
 bucket-* OPTIONS:
   --bucket=BUCKETNAME               bucket to act on
   --bucket-type=TYPE                memcached or membase
@@ -106,6 +112,12 @@ EXAMPLES:
 
   Stop the current rebalancing:
     membase rebalance-stop -c 192.168.0.1:8091
+
+  Change the username, password and port:
+    membase cluster-init -c 192.168.0.1:8091 \\
+       --cluster-init-username=Administrator \\
+       --cluster-init-password=password \\
+       --cluster-init-port=8080
 
   List buckets in a cluster:
     membase bucket-list -c 192.168.0.1:8091

@@ -20,6 +20,7 @@ rest_cmds = {
     'server-add'        :'/controller/addNode',
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
+    'cluster-init'      :'/settings/web',
 }
 
 server_no_remove = [
@@ -45,6 +46,7 @@ methods = {
     'server-add'        :'POST',
     'server-readd'      :'POST',
     'failover'          :'POST',
+    'cluster-init'      :'POST',
 }
 
 # Map of HTTP success code, success message and error message for
@@ -61,6 +63,9 @@ class Node:
         self.password = ''
         self.params = {}
         self.output = 'standard'
+        self.password_new = None
+        self.username_new = None
+        self.port_new = None
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
@@ -102,6 +107,36 @@ class Node:
                       " or use -h for more help.")
 
             self.failover(servers)
+
+        if cmd == 'cluster-init':
+            self.clusterInit()
+
+
+    def clusterInit(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.port_new:
+            rest.setParam('port', self.port_new)
+        else:
+            rest.setParam('port', 'SAME')
+        rest.setParam('initStatus', 'done')
+        if self.username_new:
+            rest.setParam('username', self.username_new)
+        if self.password_new:
+            rest.setParam('password', self.password_new)
+
+        opts = {}
+        opts['error_msg'] = "unable to init %s" % self.server
+        opts['success_msg'] = "init %s" % self.server
+
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
 
     def processOpts(self, cmd, opts):
         """ Set standard opts.
@@ -159,6 +194,12 @@ class Node:
             elif o in ('-d', '--debug'):
                 self.debug = True
                 server = None
+            elif o in ('--cluster-init-password'):
+                self.password_new = a
+            elif o in ('--cluster-init-username'):
+                self.username_new = a
+            elif o in ('--cluster-init-port'):
+                self.port_new = a
 
         return servers
 
