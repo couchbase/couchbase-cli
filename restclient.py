@@ -55,7 +55,7 @@ class RestClient:
                               'error_msg':'' }):
         """ parse response in standard way.
             """
-        if response.status in [200, 201, 204, 302]:
+        if response.status in [200, 201, 202, 204, 302]:
             if method == 'GET':
                 return response.read()
 
