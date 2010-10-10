@@ -3,6 +3,30 @@ TMP_VER = $(TMP_DIR)/version_num.tmp
 
 default:
 
+
+PREFIX=/opt/membase/bin/cli
+${PREFIX}/%.py: %.py
+	cp $< $@
+
+${PREFIX}:; -@mkdir $@
+
+${PREFIX}/simplejson: simplejson
+	cp -r simplejson $@
+
+${PREFIX}/membase: ${PREFIX} membase
+	cp membase $@
+
+install: ${PREFIX} \
+         ${PREFIX}/buckets.py \
+         ${PREFIX}/info.py \
+         ${PREFIX}/listservers.py \
+         ${PREFIX}/membase \
+         ${PREFIX}/node.py \
+         ${PREFIX}/restclient.py \
+         ${PREFIX}/usage.py \
+         ${PREFIX}/util.py \
+         ${PREFIX}/simplejson
+
 clean:
 	rm *.pyc
 	rm membase*tar.gz
