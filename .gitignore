@@ -2,3 +2,17 @@
 *.pyc
 *.tar.gz
 tmp
+/Makefile
+/Makefile.in
+/aclocal.m4
+/autom4te.cache
+/config.log
+/config.status
+/config/install-sh
+/config/missing
+/configure
+/m4/version.m4
+/membase
+/python_wrapper
+/wrapper/wrapper
+/wrapper/membase
