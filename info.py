@@ -29,7 +29,7 @@ class Info:
         json = rest.getJson(data)
 
         for x in ['license', 'licenseValid', 'licenseValidUntil']:
-            if json[x] != None:
+            if x in json:
                 del(json[x])
 
         print simplejson.dumps(json, sort_keys=True, indent=2)
