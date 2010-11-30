@@ -2,11 +2,11 @@ Membase Command Line Tool Suit
 
 This package contains the command line tool set that performs
 the same actions to provide the user the same capabilities as
-the Northscale Membase Server web interface.
+the Membase Server web interface.
 
 Prerequisites
 
-If you have installed the full Northscale Membase Server, these 
+If you have installed the full Membase Server, these 
 tools will have all prerequisites required to run these tools.
 If you run these tools standalone, you will need:
 
@@ -22,5 +22,5 @@ How to use these tools
 
 
 ***
-Copyright (c) 2010, NorthScale, Inc.
+Copyright (c) 2010, Membase, Inc.
 
