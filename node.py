@@ -21,6 +21,7 @@ rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
     'cluster-init'      :'/settings/web',
+    'node-init'         :'/nodes/self/controller/settings',
 }
 
 server_no_remove = [
@@ -47,6 +48,7 @@ methods = {
     'server-readd'      :'POST',
     'failover'          :'POST',
     'cluster-init'      :'POST',
+    'node-init'         :'POST',
 }
 
 # Map of HTTP success code, success message and error message for
@@ -66,6 +68,8 @@ class Node:
         self.password_new = None
         self.username_new = None
         self.port_new = None
+        self.per_node_quota = None
+        self.data_path = None
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
@@ -111,6 +115,9 @@ class Node:
         if cmd == 'cluster-init':
             self.clusterInit()
 
+        if cmd == 'node-init':
+            self.nodeInit()
+
 
     def clusterInit(self):
         rest = restclient.RestClient(self.server,
@@ -125,6 +132,39 @@ class Node:
             rest.setParam('username', self.username_new)
         if self.password_new:
             rest.setParam('password', self.password_new)
+
+        opts = {}
+        opts['error_msg'] = "unable to init %s" % self.server
+        opts['success_msg'] = "init %s" % self.server
+
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+        # per node quota unfortunately runs against a different location
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.per_node_quota:
+            rest.setParam('memoryQuota', self.per_node_quota)
+
+        output_result = rest.restCmd(self.method,
+                                     '/pools/default',
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+
+    def nodeInit(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.data_path:
+            rest.setParam('path', self.data_path)
 
         opts = {}
         opts['error_msg'] = "unable to init %s" % self.server
@@ -200,6 +240,10 @@ class Node:
                 self.username_new = a
             elif o in ('--cluster-init-port'):
                 self.port_new = a
+            elif o in ('--cluster-init-ramsize'):
+                self.per_node_quota = a
+            elif o in ('--node-init-data-path'):
+                self.data_path = a
 
         return servers
 
