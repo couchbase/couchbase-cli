@@ -105,6 +105,10 @@ class Node:
             output_result = self.rebalanceStatus()
             print output_result
 
+        if cmd == 'rebalance-stop':
+            output_result = self.rebalanceStop()
+            print output_result
+
         if cmd == 'failover':
             if len(servers['failover']) <= 0:
                 usage("please list one or more --server-failover=HOST[:PORT];"
@@ -372,6 +376,23 @@ class Node:
             sys.exit(1)
 
         return json['status']
+
+    def rebalanceStop(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+
+        opts = {}
+        opts['success_msg'] = 'rebalance cluster stopped'
+        opts['error_msg'] = 'unable to stop rebalance'
+
+        output_result = rest.restCmd('POST',
+                                     rest_cmds['rebalance-stop'],
+                                     self.user,
+                                     self.password,
+                                     opts)
+        return output_result
+
 
     def failover(self, servers):
         known_otps, eject_otps, failover_otps, readd_otps = \
