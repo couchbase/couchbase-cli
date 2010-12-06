@@ -149,6 +149,16 @@ class Node:
         print output_result
 
         # per node quota unfortunately runs against a different location
+        if not self.per_node_quota:
+            return
+
+        if self.port_new:
+            self.port = self.port_new
+        if self.username_new:
+            self.user = self.username_new
+        if self.password_new:
+            self.password = self.password_new
+
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
