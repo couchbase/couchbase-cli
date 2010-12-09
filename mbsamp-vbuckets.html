@@ -1,0 +1,279 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Strict//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>mbsamp</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link type="text/css" rel="stylesheet" href="/static/reset.css"/>
+  <link type="text/css" rel="stylesheet" href="/static/screen.css"
+        media="screen, projection"/>
+  <script language="javascript" type="text/javascript"
+          src="/static/jquery-1.4.2.min.js"></script>
+  <style type="text/css">
+      .stage {
+        position: relative;
+        top: 100px;
+        -webkit-perspective: 800px;
+      }
+
+      .rotate {
+        -webkit-transform-style: preserve-3d;
+        -webkit-animation-name: x-wobble;
+        -webkit-animation-duration: 60s;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-timing-function: linear;
+      }
+
+      .ring {
+        margin: 0 auto;
+        width: 600px;
+        -webkit-transform-style: preserve-3d;
+        -webkit-animation-name: y-spin;
+        -webkit-animation-duration: 60s;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-timing-function: linear;
+      }
+
+      .ring > div:nth-child(odd) {
+        background-color: #666;
+      }
+
+      .ring > div:nth-child(even) {
+        background-color: #999;
+      }
+
+      .poster {
+        position: absolute;
+        left: 267px;
+        width: 66px;
+        height: 5px;
+        -webkit-border-radius: 5px;
+      }
+
+      .vbucket_column {
+        float: left;
+        position: relative;
+        margin: 10px 0;
+      }
+
+      .vbucket {
+        position: relative;
+        width: 1px;
+        margin: 2px 0px 0px 1px;
+        background-color: #666;
+        -webkit-transition: background-color 2s;
+      }
+
+      @-webkit-keyframes x-wobble {
+        0%    { -webkit-transform: rotateX(-3deg); }
+        50%   { -webkit-transform: rotateX(-12deg); }
+        100%  { -webkit-transform: rotateX(-3deg); }
+      }
+
+      @-webkit-keyframes y-spin {
+        0%    { -webkit-transform: rotateY(360deg); }
+        50%   { -webkit-transform: rotateY(180deg); }
+        100%  { -webkit-transform: rotateY(0deg); }
+      }
+
+      .active {
+        background-color: #0c3;
+      }
+      .pending {
+        background-color: #f33;
+      }
+      .replica {
+        background-color: #cc3;
+      }
+
+      #cycles {
+        position: absolute;
+        margin: 10px 10px 10px 10px;
+        right: 0;
+        bottom: 0;
+        color: #ddd;
+      }
+
+      ul.label {
+        position: absolute;
+        top: 15px;
+        background-color: none;
+      }
+      ul.label li {
+        height: 10px;
+        font-size: 8px;
+        color: #666;
+      }
+  </style>
+</head>
+<body>
+<div class="header">
+  <a href="/mbsamp.html">mbsamp</a> - membase sampling/profiling tools
+    [vbuckets]
+</div>
+<div class="main">
+  <p class="info">
+    Initial membase server target:
+    <span id="target_src">loading...</span>
+  </p>
+  <div class="stage">
+    <div class="rotate">
+      <div class="ring" id="ring0"></div>
+    </div>
+  </div>
+  <div id="cycles">...</div>
+</div>
+
+<script type="text/javascript">
+      NUM_VBUCKETS = 1024;
+      RING_RADIUS = 340;
+      POSTERS_PER_SERVER = 32;
+      VBUCKET_COLUMNS_PER_POSTER = NUM_VBUCKETS / POSTERS_PER_SERVER;
+
+      function vbucket_column(ringId, vbi, numServers,
+                              stateServersVBuckets) {
+        var vbucketId = "v" + vbi;
+        var rv = '<div class="vbucket_column ' + vbucketId + '">';
+        for (var i = 0; i < numServers; i++) {
+          var serverId = 's' + i;
+          var c = '';
+          if (stateServersVBuckets &&
+              stateServersVBuckets[i]) {
+             c = ' ' + stateServersVBuckets[i]["vb_" + vbi];
+          }
+          rv = rv + '<div id="' + ringId + '_' +
+                                  serverId + '_' +
+                                  vbucketId + '" ' +
+                      'style="height: 10px;" ' +
+                      'class="vbucket ' +
+                              serverId + ' ' +
+                              serverId + '_' + vbucketId + ' ' +
+                              vbucketId + c + '"></div>';
+        }
+        rv = rv + '</div>';
+        return rv;
+      }
+
+      var vbuckets = {};
+
+      function getVbuckets(ringIdServerId) {
+        if (vbuckets[ringIdServerId] != null) {
+          return vbuckets[ringIdServerId];
+        }
+        var a = vbuckets[ringIdServerId] = [];
+        for (var i = 0; i < NUM_VBUCKETS; i++) {
+           a[i] = $('#' + ringIdServerId + '_v' + i);
+        }
+        return a;
+      }
+
+      function setup_posters(ringId, servers, stateServersVBuckets) {
+        var ringEl = document.getElementById(ringId);
+        var label = document.getElementById(ringId + "_label");
+        if (label == null) {
+            label = document.createElement('ul');
+            label.id = ringId + "_label";
+            label.className = "label";
+            ringEl.appendChild(label);
+        }
+        label.innerHTML = "<li>" + servers.join("</li><li>") + "</li>";
+        var posterAngle = 360.0 / POSTERS_PER_SERVER;
+        for (var i = 0; i < POSTERS_PER_SERVER; i++) {
+          var posterId = ringId + "_poster" + i;
+          var poster = document.getElementById(posterId);
+          if (poster == null) {
+            poster = document.createElement('div');
+            poster.id = posterId;
+            poster.className = 'poster';
+            var transform = 'rotateY(' + (posterAngle * i) + 'deg) ' +
+                            'translateZ(' + RING_RADIUS + 'px)';
+            poster.style.webkitTransform = transform;
+            ringEl.appendChild(poster);
+          }
+          var h = '';
+          for (var j = 0; j < VBUCKET_COLUMNS_PER_POSTER; j++) {
+            var vbi = (i * VBUCKET_COLUMNS_PER_POSTER) + j;
+            h = h + vbucket_column(ringId, vbi, servers.length,
+                                   stateServersVBuckets);
+          }
+          poster.innerHTML = h;
+        }
+        vbuckets = {};
+      }
+
+      $(function() {
+        requestData();
+      })
+
+      var cycles = 0;
+
+      function processData(data) {
+        var servers = [];
+        var serversMap = {};
+        var stateServersVBuckets = [];
+
+        var targetSrc = data["target_src"];
+        if (targetSrc != null &&
+            data["samples"] != null &&
+            data["samples"]["RestConfigTask"] != null) {
+          var restConfigs = data["samples"]["RestConfigTask"][targetSrc];
+          if (restConfigs != null &&
+              restConfigs.length > 0) {
+            var nodes = restConfigs[restConfigs.length - 1];
+            if (nodes != null) {
+              for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                var host = node['hostname'].split(':')[0];
+                if (host != null) {
+                  var server = host + ':' + node['ports']['direct'];
+                  serversMap[server] = servers.length;
+                  servers[servers.length] = server;
+                }
+              }
+            }
+          }
+
+          var x = data.samples["direct-vbucket"];
+          if (x != null) {
+            for (var key in x) {
+              var server = key.split('-')[0];
+              if (serversMap[server] >= 0) {
+                var samples = x[key];
+                if (samples != null &&
+                    samples.length > 0) {
+                  var vbuckets = samples[samples.length - 1];
+                  if (vbuckets != null) {
+                    stateServersVBuckets[serversMap[server]] = vbuckets;
+                  }
+                }
+              }
+            }
+          }
+
+          if (servers.length > 0) {
+              setup_posters('ring0', servers, stateServersVBuckets);
+              $('#cycles').html(cycles++);
+          }
+        }
+
+        setTimeout("requestData()", 1000);
+      }
+
+      function requestData() {
+        $.ajax({ cache: false,
+                 type: "GET",
+                 url: "/vbuckets.json",
+                 dataType: "json",
+                 error: function(xhr, ajaxOptions, thrownError) {
+                   setTimeout("requestData()", 5000);
+                 },
+                 success: function(data) {
+                   $('#target').html(data.target);
+                   $('#target_src').html(data.target_src)
+                   processData(data);
+                 }
+               });
+      }
+</script>
+</body>
+</html>

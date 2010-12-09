@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Strict//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>mbsamp</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link type="text/css" rel="stylesheet" href="/static/reset.css"/>
+  <link type="text/css" rel="stylesheet" href="/static/screen.css"
+        media="screen, projection"/>
+  <script language="javascript" type="text/javascript"
+          src="/static/jquery-1.4.2.min.js"></script>
+</head>
+<body>
+<div class="header">
+  <a href="/mbsamp.html">mbsamp</a> - membase sampling/profiling tools
+</div>
+<div class="main">
+  <p class="info">
+    Initial membase server target:
+    <span id="target_src">loading...</span>
+  </p>
+  <ul>
+    <li><a href="mbsamp-vbuckets.html">vbuckets</a></li>
+    <li><a href="mbsamp-graphs.html">graphs</a></li>
+  </ul>
+</div>
+
+<script language="javascript" type="text/javascript">
+$(function() {
+      $.ajax({ cache: false,
+               type: "GET",
+               url: "/context.json",
+               dataType: "json",
+               error: function(xhr, ajaxOptions, thrownError) {
+                 alert(thrownError);
+               },
+               success: function(data) {
+                 $('#target').html(data.target);
+                 $('#target_src').html(data.target_src)
+               }
+             });
+});
+</script>
+
+</body>
+</html>

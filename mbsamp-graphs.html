@@ -1,0 +1,472 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Strict//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>mbsamp</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link type="text/css" rel="stylesheet" href="/static/reset.css"/>
+  <link type="text/css" rel="stylesheet" href="/static/screen.css"
+        media="screen, projection"/>
+  <script language="javascript" type="text/javascript"
+          src="/static/jquery-1.4.2.min.js"></script>
+  <style type="text/css">
+    .top {
+      top: 0;
+      width: 100%;
+      position: fixed;
+      background-color: white;
+      z-index: 10;
+    }
+    .play_pause {
+      padding-left: 10px;
+    }
+    .play_pause button {
+      margin: 0 0 0 0;
+    }
+    .controls {
+      margin: 20px 20px 5px 20px;
+      white-space: nowrap;
+    }
+    .main {
+      position: absolute;
+      top: 50px;
+    }
+    #cycles {
+      position: absolute;
+      margin: 10px 10px 10px 10px;
+      right: 0;
+      bottom: 0;
+      color: #ddd;
+    }
+    .stage {
+      padding: 10px 20px;
+    }
+    .gridarea {
+      font-size: 7pt;
+    }
+    .gridarea a {
+      color: black;
+    }
+    .gridarea table {
+      table-layout: fixed;
+    }
+    .gridarea th {
+      padding: 0 5px 0 5px;
+      white-space: nowrap;
+    }
+    .gridarea td {
+      position: relative;
+      width: 110px;
+      min-width: 110px;
+      border: 1px solid #aaa;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .gridarea td label {
+      display: block;
+      position: absolute;
+      padding-top: 2px;
+      width: 105px;
+      min-width: 105px;
+      text-align: right;
+      z-index: 1;
+    }
+    .gridarea td div {
+      float: left;
+      position: relative;
+      width: 3px;
+      height: 15px;
+      margin: 0;
+      padding: 0;
+      background-color: #aaeecc;
+    }
+    .gridarea tr.fail div {
+      background-color: #ee9999;
+    }
+  </style>
+</head>
+<div class="top">
+  <div class="header">
+    <a href="/mbsamp.html">mbsamp</a> - membase sampling/profiling tools
+      [graphs]
+  </div>
+  <div class="controls">
+    <p class="info">
+      Initial membase server target:
+      <span id="target_src">loading...</span>
+    </p>
+    <select class="addGraphOptions" id="addGraphOptions"></select>
+    <input class="addGraph" type="button" value="add graph"/>
+    <span class="play_pause">
+      <button onclick="onClickPlay()">&#x25B6;</button>
+      <button onclick="onClickPause()">&#x2759; &#x2759;</button>
+    </span>
+  </div>
+</div>
+<div class="main">
+  <div id="dbg" class="dbg"></div>
+
+  <div class="stage">
+    <div id="gridarea" class="gridarea"></div>
+  </div>
+</div>
+
+<div id="cycles">...</div>
+
+<script id="source" language="javascript" type="text/javascript">
+  var g_cycles = 0;
+  var g_graphs = [];
+  var g_context = null;
+  var g_nodes = null;
+  var g_kinds = null;
+
+  function dbg(msg) {
+    $('#dbg').text(msg);
+  }
+
+  var paused = false;
+
+  function onClickPlay() {
+    if (paused) {
+      paused = false;
+      pollLoop();
+      playLoop();
+    }
+  }
+
+  function onClickPause() {
+    paused = true;
+  }
+
+  $(function() {
+    $.ajax({ cache: false,
+             type: "GET",
+             url: "/context.json",
+             dataType: "json",
+             error: function(xhr, ajaxOptions, thrownError) {
+               alert(thrownError);
+             },
+             success: function(data) {
+               $('#target').html(data.target);
+               $('#target_src').html(data.target_src)
+               g_context = data;
+             }
+           });
+
+    pollLoop();
+    playLoop();
+  });
+
+  // Animation play and server poll loops.
+  //
+  var samples = []; // Key is "kind:src", value is array of samples.
+
+  var pollLoopInterval = 1000;
+  var playLoopInterval = 1000;
+  var playLoopWorkMax  = 1;
+
+  var BAR_HEIGHT = 15;
+  var MAX_SAMPLES = 40;
+
+  function initKinds(data) {
+    if (g_kinds == null) {
+      // Populate the kinds and keys from data rather than hardcoding.
+      //
+      g_kinds = {};
+      for (var kind in data.samples) {
+        if ((kind == 'direct-all' ||
+             kind == 'proxy') &&
+            g_kinds[kind] == null) {
+          for (var src in data['samples'][kind]) {
+            var samples = data['samples'][kind][src]
+            if (samples.length > 0) {
+              var sample = samples[samples.length - 1];
+              var keys = [];
+              for (var key in sample) {
+                if (key.indexOf('behavior') < 0) {
+                  keys.push(key);
+                }
+              }
+              g_kinds[kind] = keys.sort();
+            }
+            break;
+          }
+        }
+      }
+      var seen = {}
+      var s = [];
+      for (var kind in g_kinds) {
+        var keys = g_kinds[kind];
+        for (var i = 0; i < keys.length; i++) {
+          var name = kind + ':' + keys[i];
+          if (keys[i].length > 0 &&
+              !seen[name]) {
+            seen[name] = true;
+            s.push('<option value="' + name + '">' +
+                   name +
+                   '</option>');
+            if (false &&
+                name.indexOf('proxy') >= 0 &&
+                (name.indexOf('connect') > 0 ||
+                 name.indexOf('timeout') > 0 ||
+                 name.indexOf('paus') > 0)) {
+              addGraph(name);
+            }
+          }
+        }
+      }
+      $('#addGraphOptions').html(s.join(''));
+    }
+  }
+
+  function samplesReceived(data) {
+    if (data == null) {
+        return;
+    }
+
+    initKinds(data);
+
+    var targetSrc = data["target_src"];
+    if (targetSrc != null) {
+      var restConfigs = data["samples"]["RestConfigTask"][targetSrc];
+      if (restConfigs != null &&
+          restConfigs.length > 0) {
+        g_nodes = restConfigs[restConfigs.length - 1];
+      }
+    }
+
+    if (data.samples) {
+      var maxLen = 0;
+
+      // samples:
+      //   kind0:
+      //     src0: [sample, ...]
+      //     src1: [sample, ...]
+      //   kind1:
+      //     src0: [sample, ...]
+      //     src1: [sample, ...]
+      //
+      for (var kind in data.samples) {
+        var by_src = data.samples[kind];
+        for (var src in by_src) {
+          var arr = by_src[src];
+          var k_s = kind + ':' + src.split('-')[0];
+          var nxt = samples[k_s] = (samples[k_s] || []).concat(arr);
+          while (nxt.length > MAX_SAMPLES) {
+              nxt.shift();
+          }
+          if (nxt.length > maxLen) {
+            maxLen = nxt.length;
+          }
+          while (nxt.length < MAX_SAMPLES) {
+            nxt.unshift({});
+          }
+        }
+      }
+
+      playLoopInterval =
+        Math.max(20, Math.floor(pollLoopInterval / maxLen));
+
+      playLoopWorkMax =
+        Math.ceil(maxLen * (playLoopInterval / pollLoopInterval));
+    }
+  }
+
+  // Display for stats graphs.
+  //
+  function findMax(data, key, max) {
+    if (data != null) {
+      for (var i = 0; i < data.length; i++) {
+        var v = parseFloat(data[i][key]);
+        if (max < v) {
+            max = v;
+        }
+      }
+    }
+    return max;
+  }
+
+  function emitBar(data, key, max, out) {
+    if (data != null) {
+      if (max != 0) {
+        for (var i = 0; i < data.length; i++) {
+          var d = data[i][key];
+          if (d != null) {
+            var v = parseInt(data[i][key]);
+            var w = 1 + Math.floor((1.0 - (v / max)) * BAR_HEIGHT);
+            out.push('<div style="top:' + w + 'px;"></div>');
+          } else {
+            out.push('<div style="top:100px;"></div>');
+          }
+        }
+        return;
+      }
+    }
+    out.push('<div style="top:100px;"></div>');
+  }
+
+  function drawGraphs(nodes, names) {
+    if (nodes == null ||
+        names == null) {
+      return;
+    }
+
+    // kind0:host:port -> [sample, ...]
+    // kind1:host:port -> [sample, ...]
+    //
+    var drawCurr = samples || {};
+
+    var h = ['<table>'];
+
+    h.push('<tr><th></th>');
+    for (var j = 0; j < nodes.length; j++) {
+      var node = nodes[j];
+      h.push('<th><a href="http://');
+     h.push(node.hostname);
+     h.push('">');
+      h.push(node.hostname)
+      h.push('</a><br/>&nbsp;');
+      h.push(node.ports.proxy)
+      h.push('/');
+      h.push(node.ports.direct)
+      h.push('</th>');
+    }
+    h.push('</tr>');
+
+    var keySuffixes = [];
+    for (var j = 0; j < nodes.length; j++) {
+      var node = nodes[j];
+      var s = node.hostname.split(':')[0];
+      keySuffixes[j] = [ ':' + node.hostname,
+                         ':' + s + ':' + node.ports.proxy,
+                         ':' + s + ':' + node.ports.direct ];
+    }
+
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i];
+      var name_parts = name.split(':');
+      var kind = name_parts[0];
+      var key = name_parts[1];
+      if (name.indexOf('fail') < 0) {
+        h.push('<tr>');
+      } else {
+        h.push('<tr class="fail">');
+      }
+      h.push('<th>' + name + '</th>');
+      var max = 0;
+      for (var j = 0; j < nodes.length; j++) {
+        var node = nodes[j];
+        var a = null;
+        for (var k = 0; a == null && k < keySuffixes.length; k++) {
+          a = drawCurr[kind + keySuffixes[j][k]];
+        }
+        max = findMax(a, key, max);
+      }
+      for (var j = 0; j < nodes.length; j++) {
+        var node = nodes[j];
+        var a = null;
+        for (var k = 0; a == null && k < keySuffixes.length; k++) {
+          a = drawCurr[kind + keySuffixes[j][k]];
+        }
+        h.push('<td>');
+        h.push('<label>');
+        h.push(a != null && a.length > 0 ? a[a.length - 1][key] : "*");
+        h.push('</label>');
+        emitBar(a, key, max, h);
+        h.push('</td>');
+      }
+      h.push('</tr>');
+    }
+
+    h.push('</table>');
+
+    var ba = document.getElementById("gridarea");
+    ba.innerHTML = h.join('');
+  }
+
+  function playLoop() {
+    if (!paused) {
+      drawGraphs(g_nodes, g_graphs);
+      setTimeout(playLoop, playLoopInterval);
+    }
+  }
+
+  function pollLoop() {
+    $('#cycles').html(g_cycles++);
+
+    if (!paused) {
+      $.ajax({ cache: false,
+               type: "GET",
+               url: "/samples.json",
+               dataType: "json",
+               error: function() {
+                 setTimeout(pollLoop, pollLoopInterval * 10);
+               },
+               success: function(data) {
+                 samplesReceived(data);
+                 setTimeout(pollLoop, pollLoopInterval);
+               }
+             });
+    }
+  }
+
+  // Handle add-graph button click.
+  //
+  $("input.addGraph").click(function() {
+    var name = $('select.addGraphOptions').val();
+    addGraph(name);
+  });
+
+  function addGraph(name) {
+    for (var i = 0; i < g_graphs.length; i++) {
+      if (g_graphs[i] == name) {
+        return;
+      }
+    }
+
+    g_graphs.push(name);
+  }
+
+  g_graphs = ['direct-all:cmd_get',
+              'direct-all:cmd_set',
+              'direct-all:curr_items',
+              'direct-all:curr_items_tot',
+              'direct-all:mem_used',
+              'direct-all:ep_mem_high_wat',
+              'direct-all:ep_mem_low_wat',
+              'direct-all:ep_commit_num',
+              'direct-all:ep_commit_time',
+              'direct-all:ep_data_age',
+              'direct-all:ep_queue_size',
+              'direct-all:ep_flush_duration',
+              'direct-all:ep_flush_preempts',
+              'direct-all:ep_flusher_todo',
+              'direct-all:ep_kv_size',
+              'direct-all:ep_total_cache_size',
+              'direct-all:ep_total_persisted',
+              'direct-all:ep_io_write_bytes',
+              'direct-all:ep_io_num_write',
+              'direct-all:ep_io_read_bytes',
+              'direct-all:ep_io_num_read',
+              'direct-all:ep_bg_fetched',
+              'direct-all:ep_tap_bg_fetched',
+              'direct-all:ep_num_eject_failures',
+              'direct-all:ep_num_eject_replicas',
+              'direct-all:ep_num_value_ejects',
+              'direct-all:ep_num_not_my_vbuckets',
+              'direct-all:tap_mutation_sent',
+              'direct-all:tap_mutation_received',
+              'direct-all:tap_opaque_sent',
+              'direct-all:tap_opaque_received',
+              'direct-all:ep_num_active_non_resident',
+              'direct-all:ep_num_non_resident',
+              'direct-all:ep_pending_ops',
+              'direct-all:ep_pending_ops_max',
+              'direct-all:ep_item_begin_failed',
+              'direct-all:ep_item_commit_failed',
+              'direct-all:ep_item_flush_failed',
+              'direct-all:ep_vbucket_del_fail',
+  ];
+</script>
+</body>
+</html>

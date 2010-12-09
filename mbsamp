@@ -1,0 +1,561 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import time
+import socket
+import select
+import subprocess
+import simplejson
+
+import SimpleHTTPServer
+import SocketServer
+import urlparse
+import httplib
+
+import memcacheConstants
+import mc_bin_client
+
+SocketServer.TCPServer.allow_reuse_address = True
+
+def emit_task_data(task, task_data, cb_data, context):
+    print task.kind(), task.src, task_data
+
+# ------------------------------------------------------
+
+def nodeHostPort(node, kind='direct'):
+    return str(node['hostname'].split(':')[0]), str(node['ports'][kind])
+
+# ------------------------------------------------------
+
+def directStatsTask(context, args, cb=emit_task_data, cb_data=None):
+    node = args[0]
+    kind = args[1]
+    host, port = nodeHostPort(node)
+    return McBinStatsTask(context, host, int(port), kind,
+                          kind='direct-' + (kind or 'all'),
+                          cb=cb, cb_data=cb_data)
+
+def proxyStatsTask(context, args, cb=emit_task_data, cb_data=None):
+    node = args[0]
+    kind = args[1]
+    host, port = nodeHostPort(node, 'proxy')
+    return McAscStatsTask(context, host, int(port), kind,
+                          kind=kind.replace(' ', '-'),
+                          cb=cb, cb_data=cb_data)
+
+# ------------------------------------------------------
+
+class Task(object):
+    def kind(self):
+        return type(self).__name__
+
+    def close(self):
+        if self.fd:
+            self.fd.close()
+            self.fd = None
+
+    def done(self, data=None):
+        self.context.del_task(self)
+        if self.cb:
+            cb = self.cb
+            cb(self, data, self.cb_data, self.context)
+
+    def process(self, data):
+        return data
+
+class McBinTask(Task):
+    def __init__(self, context, host, port, op, sub, key='', multival=False,
+                 kind="McBinTask",
+                 cb=emit_task_data,
+                 cb_data=None):
+        self.context = context
+        self._kind = kind
+        self.src = "%s:%d-%d" % (host, port, op)
+        if sub:
+            self.src = self.src + '-' + sub
+        if key:
+            self.src = self.src + '-' + key
+        self.multival = multival
+        self.client = mc_bin_client.MemcachedClient(host=host, port=port)
+        self.fd = self.client.s
+        self.cb = cb
+        self.cb_data = cb_data
+
+        try:
+            self.client._sendCmd(op, sub, '', 0)
+        except:
+            self.done()
+
+    def kind(self):
+        return self._kind
+
+    def close(self):
+        if self.client:
+            self.client.close()
+            self.client = None
+            self.fd = None
+
+    def gather(self):
+        rv = {}
+        try:
+            done = False
+            while not done:
+                cmd, opaque, cas, klen, extralen, data = self.client._handleKeyedResponse(None)
+                if klen:
+                    key = data[0:klen]
+                    val = data[klen:]
+                    rv[key] = val
+                    try:
+                        rv[key] = int(rv[key])
+                    except:
+                        None
+                    if self.multival is False:
+                        done = True
+                else:
+                    done = True
+        except:
+            True
+
+        self.done(self.process(rv))
+
+class McBinStatsTask(McBinTask):
+    def __init__(self, context, host, port, sub,
+                 kind="McBinStatsTask",
+                 cb=emit_task_data,
+                 cb_data=None):
+        McBinTask.__init__(self, context, host, port,
+                           memcacheConstants.CMD_STAT, sub, multival=True,
+                           kind=kind,
+                           cb=cb, cb_data=cb_data)
+
+class McAscStatsTask(Task):
+    def __init__(self, context, host, port, cmd,
+                 kind="McAscStatsTask",
+                 cb=emit_task_data,
+                 cb_data=None):
+        self.context = context
+        self._kind = kind
+        self.buf = []
+        self.src = "%s:%s-%s" % (host, port, cmd)
+        self.fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.cb = cb
+        self.cb_data = cb_data
+
+        try:
+            self.fd.connect_ex((host, port))
+            self.fd.send("stats " + cmd + "\r\n")
+        except:
+            self.done()
+
+    def kind(self):
+        return self._kind
+
+    def gather(self):
+        try:
+            data = self.fd.recv(1)
+            if data:
+                self.buf.append(data)
+                if data != "\n" or len(self.buf) < 5 or ''.join(self.buf[-5:]) != "END\r\n":
+                    return # Need more data.
+                self.buf = self.buf[0:-5]
+        except:
+            self.done()
+            return
+
+        self.done(self.process(''.join(self.buf)))
+
+    def process(self, data):
+        rv = {}
+        for line in data.split('\r\n'):
+            if line.find('NULL') < 0: # Ignore all the NULL BUCKET noise.
+                key, spc, val = line.replace('STAT ', '').replace('\t', '').partition(' ')
+                if key:
+                    rv[key] = val
+                    try:
+                        rv[key] = int(val)
+                    except:
+                        None
+        return rv
+
+class CommandTask(Task):
+    def __init__(self, context, cmd,
+                 kind="CommandTask",
+                 cb=emit_task_data,
+                 cb_data=None, shell=False):
+        process = subprocess.Popen(cmd, shell=shell,
+                                   stdout=subprocess.PIPE)
+        self.context = context
+        self._kind = kind
+        self.buf = ""
+        self.src = ' '.join(cmd)
+        self.fd = process.stdout
+        self.cb = cb
+        self.cb_data = cb_data
+
+    def kind(self):
+        return self._kind
+
+    def gather(self):
+        data = self.fd.read(1)
+        if data:
+            self.buf = self.buf + data
+            return
+
+        self.done(self.process(self.buf))
+
+def RestConfigTask_prefix():
+    return '/pools/default/bucketsStreaming/'
+
+def RestConfigTask_src(rest_hp, bucket):
+    return rest_hp + '-' + RestConfigTask_prefix() + bucket
+
+class RestConfigTask(Task):
+    def __init__(self, context, rest_hp, bucket,
+                 cb=emit_task_data,
+                 cb_data=None,
+                 first=True):
+        self.context = context
+        self.rest_hp = rest_hp
+        self.bucket = bucket
+        self.first = first
+        self.buf = []
+        self.src = RestConfigTask_src(rest_hp, bucket)
+        self.cb = cb
+        self.cb_data = cb_data
+
+        try:
+            h = httplib.HTTPConnection(rest_hp)
+            h.request("GET", RestConfigTask_prefix() + bucket)
+            self.fd = h.getresponse().fp
+        except:
+            self.fd = None
+
+            if self.cb:
+                cb = self.cb
+                cb(self, None, self.cb_data, self.context)
+
+    def gather(self):
+        try:
+            data = self.fd.read(1)
+        except:
+            data = None
+
+        if data:
+            self.buf.append(data)
+            if data == "\n" and len(self.buf) >= 4 and ''.join(self.buf[-4:]) == "\n\n\n\n":
+                print self.kind(), self.src
+
+                buf = ''.join(self.buf)
+                self.buf = []
+
+                unused0, unused1, body = buf.partition('{')
+                body, unused0, unused1 = body.rpartition('}')
+
+                o = simplejson.loads('{' + body + '}')
+
+                self.context.add_sample(self.kind(), self.src, o['nodes'])
+
+                for n in o['nodes']:
+                    rest_hp = str(n['hostname'])
+                    if rest_hp == self.rest_hp:
+                        self.context.add_timer(Sampler(self.context, self, 1, directStatsTask, [n, '']))
+                        self.context.add_timer(Sampler(self.context, self, 1, directStatsTask, [n, 'dispatcher']))
+                        self.context.add_timer(Sampler(self.context, self, 1, directStatsTask, [n, 'tap']))
+                        self.context.add_timer(Sampler(self.context, self, 1, directStatsTask, [n, 'timings']))
+                        self.context.add_timer(Sampler(self.context, self, 1, directStatsTask, [n, 'vbucket']))
+                        self.context.add_timer(Sampler(self.context, self, 1, proxyStatsTask, [n, 'proxy']))
+                        self.context.add_timer(Sampler(self.context, self, 1, proxyStatsTask, [n, 'proxy timings']))
+                    elif self.first:
+                        self.context.add_task(RestConfigTask(self.context, rest_hp, self.bucket, first=False))
+            return
+
+        self.done(self.process(''.join(self.buf)))
+
+class WebServerTask(Task):
+    def __init__(self, context, port):
+        self.context = context
+        self.src = str(port)
+        self.fd = SocketServer.TCPServer(("", int(port)), WebServerHandler)
+
+    def gather(self):
+        self.fd.handle_request()
+
+class WebServerHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        path = urlparse.urlparse(self.path)
+        if path.path == "/" or path.path == "/index.html":
+            self.send_response(301)
+            self.send_header("Location", "/mbsamp.html")
+            self.end_headers()
+        if path.path == "/context.json":
+            return handle_context(self)
+        if path.path == "/vbuckets.json":
+            return handle_vbuckets(self)
+        if path.path == "/samples.json":
+            return handle_samples(self)
+        if path.path == "/peek":
+            return handle_peek(self)
+        if path.path == "/ping":
+            return handle_ping(self)
+
+        SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+
+# ------------------------------------------------------
+
+class Timer(object):
+    True
+
+class Sampler(Timer):
+    def __init__(self, context, parent_task, interval, cb, cb_data):
+        self.context = context
+        self.parent_task = parent_task
+        self.interval = interval
+        self.cb = cb
+        self.cb_data = cb_data
+
+    def process(self):
+        if self.parent_task is None or self.parent_task.fd:
+            cb = self.cb
+            task = cb(self.context, self.cb_data, samplerTaskCallback, self)
+            if task:
+                self.context.add_task(task)
+
+def samplerTaskCallback(task, task_data, sampler, context):
+    if task_data:
+        context.add_sample(task.kind(), task.src, task_data)
+    context.add_timer(sampler)
+
+# ------------------------------------------------------
+
+MAX_SAMPLES = 3
+
+class Context(object):
+    def __init__(self, target, target_src):
+        self.target = target
+        self.target_src = target_src
+        self.tasks = {} # Key is task.fd, value is task.
+        self.timers = []
+        self.timeout = 0.1
+        self.cycle = 0
+        self.now = self.start = time.time()
+
+        # Structured like...
+        #
+        #  {sample.kind -> {sample.src -> [val0, ... valN]}}
+        #
+        self.samples = {}
+
+    def add_timer(self, timer):
+        self.timers.append(timer)
+
+    def add_task(self, task):
+        if not task.fd:
+            return
+
+        for curr_task in self.tasks.values():
+            if curr_task.src == task.src:
+                return
+
+        self.tasks[task.fd] = task
+
+    def del_task(self, task):
+        if task.fd in self.tasks:
+            del self.tasks[task.fd]
+        task.close()
+
+    def add_sample(self, kind, src, sample):
+        if kind in self.samples:
+            by_src = self.samples[kind]
+        else:
+            by_src = self.samples[kind] = {}
+
+        if not by_src:
+            by_src = self.samples[kind] = {}
+
+        if src in by_src:
+            arr = by_src[src]
+        else:
+            arr = by_src[src] = []
+
+        if len(arr) > MAX_SAMPLES:
+            arr = arr[-MAX_SAMPLES:]
+
+        print "+++", self.now, kind, src, len(arr)
+        arr.append(sample)
+
+    def clear_samples(self, keep=[]):
+        prev = self.samples
+        self.samples = {}
+        for kind in keep:
+            self.samples[kind] = prev.get(kind, None)
+
+    def clip_samples(self, kind):
+        if kind in context.samples:
+            for src, samples in context.samples[kind].items():
+                if len(samples) > 1:
+                    context.samples[kind][src] = samples[-1:]
+
+    def loop(self):
+        while True:
+            input = self.tasks.keys()
+            if not input:
+                return "DONE"
+
+            iready, oready, eready = select.select(input, [], [], self.timeout)
+            if (not iready) and (not oready) and (not eready):
+                self.now = time.time()
+
+                prev = self.timers
+                self.timers = []
+
+                for timer in prev:
+                    if (self.cycle % timer.interval) == 0:
+                        timer.process()
+                    else:
+                        self.add_timer(timer) # Reschedule for next cycle.
+
+                self.cycle = self.cycle + 1
+
+            for s in iready:
+                task = self.tasks[s]
+                if task:
+                    task.gather()
+                else:
+                    s.close()
+
+# ------------------------------------------------------
+
+def json_header(req, context):
+    req.send_response(200)
+    req.send_header("Content-type", "text/x-json")
+    req.end_headers()
+    req.wfile.write('{"target":"' + context.target + '",' +
+                     '"target_src":"' + context.target_src + '"')
+
+def handle_context(req):
+    global context
+    json_header(req, context)
+    req.wfile.write('}')
+
+def handle_vbuckets(req):
+    global context
+    json_header(req, context)
+    req.wfile.write(',\n')
+    req.wfile.write('"samples":{\n')
+    if context.samples:
+        first = True
+        for k in 'RestConfigTask', 'direct-vbucket':
+            if k in context.samples:
+                if not first:
+                    req.wfile.write(',\n')
+                req.wfile.write('"' + k + '":\n')
+                req.wfile.write(simplejson.dumps(context.samples[k]))
+                first = False
+    req.wfile.write('\n}}')
+    context.clip_samples('direct-vbucket')
+
+def handle_samples(req):
+    global context
+    json_header(req, context)
+    if context.samples:
+        req.wfile.write(',\n')
+        req.wfile.write('"samples":\n')
+        req.wfile.write(simplejson.dumps(context.samples))
+    req.wfile.write('}')
+    context.clear_samples(keep=['RestConfigTask', 'direct-vbucket'])
+
+def handle_peek(req):
+    global context
+
+    parts = []
+    for kind, by_src in sorted(context.samples.items()):
+        for src, samples in sorted(by_src.items()):
+            parts.append(kind + '@')
+            parts.append(src + ' ')
+            parts.append(str(len(samples)))
+            parts.append('<br/>')
+
+    parts.append('<hr/>')
+    for kind, by_src in sorted(context.samples.items()):
+        for src, samples in sorted(by_src.items()):
+            parts.append('<h2>')
+            parts.append(kind + ' ')
+            parts.append(src + ' ')
+            parts.append(str(len(samples)))
+            parts.append('</h2>')
+            parts.append(simplejson.dumps(samples))
+
+    message = '<html><body>' + (''.join(parts)) + '</body></html>'
+    req.send_response(200)
+    req.end_headers()
+    req.wfile.write(message)
+
+def handle_ping(req):
+    path = urlparse.urlparse(req.path)
+    message_parts = [
+        '<h1>CLIENT VALUES:</h1>',
+        'client_address=%s (%s)' % (req.client_address,
+                                    req.address_string()),
+        'command=%s' % req.command,
+        'req.path=%s' % req.path,
+        'path.path=%s' % path.path,
+        'path.query=%s' % path.query,
+        'request_version=%s' % req.request_version,
+        '',
+        '<h1>SERVER VALUES:</h1>',
+        'server_version=%s' % req.server_version,
+        'sys_version=%s' % req.sys_version,
+        'protocol_version=%s' % req.protocol_version,
+        '',
+        ]
+    message_parts.append('<h1>HEADERS RECEIVED:</h1>')
+    for name, value in sorted(req.headers.items()):
+        message_parts.append('%s=%s' % (name, value.rstrip()))
+        message_parts.append('')
+    message = '<html><body>' + ('<br/>'.join(message_parts)) + '</body></html>'
+    req.send_response(200)
+    req.end_headers()
+    req.wfile.write(message)
+
+# ------------------------------------------------------
+
+def restTaskCreate(context, args, cb=emit_task_data, cb_data=None):
+    target = args[0]
+    bucket = args[1]
+    return RestConfigTask(context, target, bucket,
+                          cb=cb, cb_data=cb_data)
+
+def main(args):
+    global context
+
+    args = args + [None, None]
+
+    target = args[1] or '127.0.0.1:8091'
+    bucket = 'default'
+    listen = int(args[2] or '8011')
+
+    context = Context(target, RestConfigTask_src(target, bucket))
+    context.add_timer(Sampler(context, None, 1, restTaskCreate, [target, bucket]))
+    context.add_task(WebServerTask(context, listen))
+    context.loop()
+
+if __name__ == '__main__':
+    if '-h' in sys.argv or '-?' in sys.argv:
+        sys.exit("mbsamp - membase sampler/profiling tool\n"
+                 "\n"
+                 "usage:\n"
+                 "  mbsamp REST_HOST:REST_PORT [WEB_SERVER_PORT]\n"
+                 "\n"
+                 "  mbsamp will sample statistics from the membase cluster,\n"
+                 "  automatically discovering nodes from the initial node\n"
+                 "  at http://REST_HOST:REST_PORT\n"
+                 "\n"
+                 "  mbsamp will provide a web UI for you to view statistics\n"
+                 "  results at the given WEB_SERVER_PORT\n"
+                 "\n"
+                 "  default REST_HOST:REST_PORT is 127.0.0.1:8091\n"
+                 "  default WEB_SERVER_PORT for the web-based statistics UI is 8011\n")
+
+    main(sys.argv)
+

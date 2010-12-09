@@ -1,0 +1,32 @@
+body {
+  font-family: 'Lucida Grande', Verdana, Arial, sans-serif;
+  font-size: 8pt;
+  color: #333;
+  background-color: white;
+}
+
+.header {
+  background-color: #bcbcbc;
+  padding: 6px 20px 6px 20px;
+}
+
+.header a {
+  color: #333;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.main {
+  margin: 20px;
+}
+
+.info {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.dbg {
+  margin-top: 20px;
+  font-size: 6pt;
+}
+
