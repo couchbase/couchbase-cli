@@ -362,11 +362,17 @@ class Node:
 
         print "INFO: rebalancing",
 
-        while self.rebalanceStatus(prefix='\n') == 'running':
+        status, error = self.rebalanceStatus(prefix='\n')
+        while status == 'running':
             print ".",
             time.sleep(0.5)
+            status, error = self.rebalanceStatus(prefix='\n')
 
-        print '\n' + output_result
+        if error:
+            print '\n' + error
+            sys.exit(1)
+        else:
+            print '\n' + output_result
 
     def rebalanceStatus(self, prefix=''):
         rest = restclient.RestClient(self.server,
@@ -385,7 +391,12 @@ class Node:
             print prefix + ("ERROR: %s" % json[0])
             sys.exit(1)
 
-        return json['status']
+        if 'errorMessage' in json:
+            error_message = json['errorMessage']
+        else:
+            error_message = None
+
+        return json['status'],error_message
 
     def rebalanceStop(self):
         rest = restclient.RestClient(self.server,
