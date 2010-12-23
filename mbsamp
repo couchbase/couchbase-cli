@@ -153,12 +153,18 @@ class McAscStatsTask(Task):
 
     def gather(self):
         try:
-            data = self.fd.recv(1)
-            if data:
-                self.buf.append(data)
-                if data != "\n" or len(self.buf) < 5 or ''.join(self.buf[-5:]) != "END\r\n":
-                    return # Need more data.
-                self.buf = self.buf[0:-5]
+            done = False
+            while not done:
+                data = self.fd.recv(1)
+                if data:
+                    self.buf.append(data)
+                    if (data == "\n" and len(self.buf) >= 5 and
+                        self.buf[-5] == 'E' and ''.join(self.buf[-5:]) == "END\r\n"):
+                        done = True
+                        self.buf = self.buf[0:-5]
+                else:
+                    self.done()
+                    return
         except:
             self.done()
             return
@@ -328,7 +334,7 @@ def samplerTaskCallback(task, task_data, sampler, context):
 
 # ------------------------------------------------------
 
-MAX_SAMPLES = 3
+MAX_SAMPLES = 10
 
 class Context(object):
     def __init__(self, target, target_src):
@@ -381,7 +387,6 @@ class Context(object):
         if len(arr) > MAX_SAMPLES:
             arr = arr[-MAX_SAMPLES:]
 
-        print "+++", self.now, kind, src, len(arr)
         arr.append(sample)
 
     def clear_samples(self, keep=[]):
@@ -458,11 +463,19 @@ def handle_vbuckets(req):
 def handle_samples(req):
     global context
     json_header(req, context)
+    req.wfile.write(',\n')
+    req.wfile.write('"samples":{\n')
+    skip = ['direct-vbucket']
     if context.samples:
-        req.wfile.write(',\n')
-        req.wfile.write('"samples":\n')
-        req.wfile.write(simplejson.dumps(context.samples))
-    req.wfile.write('}')
+        first = True
+        for k in context.samples:
+            if not k in skip:
+                if not first:
+                    req.wfile.write(',\n')
+                req.wfile.write('"' + k + '":\n')
+                req.wfile.write(simplejson.dumps(context.samples[k]))
+                first = False
+    req.wfile.write('\n}}')
     context.clear_samples(keep=['RestConfigTask', 'direct-vbucket'])
 
 def handle_peek(req):

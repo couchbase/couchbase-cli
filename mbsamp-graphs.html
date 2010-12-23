@@ -23,13 +23,41 @@
     .play_pause button {
       margin: 0 0 0 0;
     }
+    body.paused button.play {
+      background-color: #b33;
+    }
     .controls {
       margin: 20px 20px 5px 20px;
       white-space: nowrap;
     }
     .main {
       position: absolute;
-      top: 50px;
+      top: 80px;
+    }
+    .timelineArea {
+      margin: 5px 20px 5px 20px;
+    }
+    .timeline div {
+      position: relative;
+      margin-top: 1px;
+      border-right: 1px solid #999;
+      width: 1px;
+      height: 30px;
+      float: left;
+      background-color: #6d6;
+    }
+    .timeline div:hover {
+      background-color: #999;
+    }
+    body.paused .timeline div:hover {
+      background-color: #000;
+    }
+    .timelineLabel {
+      margin: 3px 3px 0 3px;
+      font-size: 7pt;
+    }
+    .dbg {
+      clear: both;
     }
     #cycles {
       position: absolute;
@@ -39,30 +67,31 @@
       color: #ddd;
     }
     .stage {
-      padding: 10px 20px;
+      clear: both;
+      padding: 5px 20px;
     }
-    .gridarea {
+    .gridArea {
       font-size: 7pt;
     }
-    .gridarea a {
+    .gridArea a {
       color: black;
     }
-    .gridarea table {
+    .gridArea table {
       table-layout: fixed;
     }
-    .gridarea th {
+    .gridArea th {
       padding: 0 5px 0 5px;
       white-space: nowrap;
     }
-    .gridarea td {
+    .gridArea td {
       position: relative;
-      width: 110px;
-      min-width: 110px;
+      width: 120px;
+      min-width: 120px;
       border: 1px solid #aaa;
       overflow: hidden;
       white-space: nowrap;
     }
-    .gridarea td label {
+    .gridArea td label {
       display: block;
       position: absolute;
       padding-top: 2px;
@@ -70,8 +99,9 @@
       min-width: 105px;
       text-align: right;
       z-index: 1;
+      color: #777;
     }
-    .gridarea td div {
+    .gridArea td div {
       float: left;
       position: relative;
       width: 3px;
@@ -80,11 +110,15 @@
       padding: 0;
       background-color: #aaeecc;
     }
-    .gridarea tr.fail div {
+    .gridArea tr.fail div {
       background-color: #ee9999;
+    }
+    .gridArea .changed {
+      color: black;
     }
   </style>
 </head>
+<body id="body">
 <div class="top">
   <div class="header">
     <a href="/mbsamp.html">mbsamp</a> - membase sampling/profiling tools
@@ -98,27 +132,40 @@
     <select class="addGraphOptions" id="addGraphOptions"></select>
     <input class="addGraph" type="button" value="add graph"/>
     <span class="play_pause">
-      <button onclick="onClickPlay()">&#x25B6;</button>
-      <button onclick="onClickPause()">&#x2759; &#x2759;</button>
+      <button class="play" onclick="onClickPlay()">&#x25B6;</button>
     </span>
   </div>
 </div>
 <div class="main">
+  <div class="timelineArea">
+    <span class="timeline" id="timeline"></span>
+    <span class="timelineLabel" id="timelineLabel"></span>
+  </div>
   <div id="dbg" class="dbg"></div>
-
   <div class="stage">
-    <div id="gridarea" class="gridarea"></div>
+    <div id="gridArea" class="gridArea"></div>
   </div>
 </div>
 
 <div id="cycles">...</div>
 
 <script id="source" language="javascript" type="text/javascript">
+  var MAX_SAMPLES = 2000;
+  var MAX_BAR_SAMPLES = 40;
+  var BAR_HEIGHT = 15;
+
   var g_cycles = 0;
   var g_graphs = [];
   var g_context = null;
   var g_nodes = null;
   var g_kinds = null;
+  var g_curr = 0;
+  var g_currAmt = MAX_BAR_SAMPLES;
+  var g_currBase = 0;
+
+  var pollLoopInterval = 1000;
+  var playLoopInterval = 500;
+  var playLoopWorkMax  = 1;
 
   function dbg(msg) {
     $('#dbg').text(msg);
@@ -127,15 +174,22 @@
   var paused = false;
 
   function onClickPlay() {
-    if (paused) {
-      paused = false;
-      pollLoop();
-      playLoop();
+    paused = !paused;
+    if (!paused) {
+      g_curr = samplesLen - 1;
+      moveGraphCurr(0);
     }
+    pauseSync();
   }
 
-  function onClickPause() {
-    paused = true;
+  function pauseSync() {
+    if (!paused) {
+      pollLoop();
+      playLoop();
+      document.getElementById("body").className = "";
+    } else {
+      document.getElementById("body").className = "paused";
+    }
   }
 
   $(function() {
@@ -159,14 +213,8 @@
 
   // Animation play and server poll loops.
   //
-  var samples = []; // Key is "kind:src", value is array of samples.
-
-  var pollLoopInterval = 1000;
-  var playLoopInterval = 1000;
-  var playLoopWorkMax  = 1;
-
-  var BAR_HEIGHT = 15;
-  var MAX_SAMPLES = 40;
+  var samples = {}; // Key is "kind:src", value is array of samples.
+  var samplesLen = 0;
 
   function initKinds(data) {
     if (g_kinds == null) {
@@ -219,6 +267,8 @@
     }
   }
 
+  var EMPTY = {};
+
   function samplesReceived(data) {
     if (data == null) {
         return;
@@ -236,9 +286,11 @@
     }
 
     if (data.samples) {
-      var maxLen = 0;
+      var startLen = samplesLen;
+      var incomingLen = 0;
+      var shifts = 0;
 
-      // samples:
+      // data.samples:
       //   kind0:
       //     src0: [sample, ...]
       //     src1: [sample, ...]
@@ -251,50 +303,101 @@
         for (var src in by_src) {
           var arr = by_src[src];
           var k_s = kind + ':' + src.split('-')[0];
-          var nxt = samples[k_s] = (samples[k_s] || []).concat(arr);
+          var nxt = samples[k_s] = (samples[k_s] || []);
+          for (var i = 0; i < arr.length; i++) {
+            nxt.push(arr[i]);
+          }
+          shifts = Math.max(shifts, nxt.length - MAX_SAMPLES);
           while (nxt.length > MAX_SAMPLES) {
-              nxt.shift();
+            nxt.shift();
           }
-          if (nxt.length > maxLen) {
-            maxLen = nxt.length;
+          while (nxt.length < MAX_BAR_SAMPLES) {
+            nxt.unshift(EMPTY);
           }
-          while (nxt.length < MAX_SAMPLES) {
-            nxt.unshift({});
+          if (samplesLen < nxt.length) {
+            samplesLen = nxt.length;
+          }
+          if (incomingLen < arr.length) {
+            incomingLen = arr.length;
           }
         }
       }
 
+      var changedLen = Math.max(0, samplesLen - startLen);
+
       playLoopInterval =
-        Math.max(20, Math.floor(pollLoopInterval / maxLen));
+        Math.max(20, Math.ceil(pollLoopInterval / incomingLen));
 
       playLoopWorkMax =
-        Math.ceil(maxLen * (playLoopInterval / pollLoopInterval));
+        Math.max(0, Math.floor(incomingLen * (playLoopInterval / pollLoopInterval)));
+
+      moveGraphCurr(-shifts);
+      g_currBase = g_currBase + shifts;
+
+      var timeline = document.getElementById('timeline');
+      if (timeline != null) {
+        for (var i = 0; i < changedLen; i++) {
+          var t = document.createElement('div');
+          t.id = "timeline_" + (lastTimelineId++);
+          timeline.appendChild(t);
+          $('#' + t.id).click(onTimelineClick).mouseenter(onTimelineEnter);
+        }
+      }
+
+      var timelineLabel = document.getElementById('timelineLabel');
+      timelineLabel.innerHTML = g_currBase + samplesLen;
+    }
+  }
+
+  var lastTimelineId = 0;
+
+  function onTimelineClick(ev) {
+    paused = true;
+    pauseSync();
+    onTimelineEnter(ev);
+  }
+
+  function onTimelineEnter(ev) {
+    if (paused) {
+      var i = parseInt(ev.target.id.split('_')[1]);
+      g_curr = g_currBase + i;
+      drawGraphs(samples, g_nodes, g_graphs, g_curr, g_currAmt);
     }
   }
 
   // Display for stats graphs.
   //
-  function findMax(data, key, max) {
+  function findMax(data, key, max, start, amt) {
     if (data != null) {
-      for (var i = 0; i < data.length; i++) {
-        var v = parseFloat(data[i][key]);
-        if (max < v) {
+      var end = start + amt;
+      for (var i = start; i < data.length && i < end; i++) {
+        var v = data[i];
+        if (v != null) {
+          var v = parseFloat(v[key]);
+          if (max < v) {
             max = v;
+          }
         }
       }
     }
     return max;
   }
 
-  function emitBar(data, key, max, out) {
+  function emitBar(data, key, max, out, start, amt) {
     if (data != null) {
       if (max != 0) {
-        for (var i = 0; i < data.length; i++) {
-          var d = data[i][key];
+        var end = start + amt;
+        for (var i = start; i < data.length && i < end; i++) {
+          var d = data[i];
           if (d != null) {
-            var v = parseInt(data[i][key]);
-            var w = 1 + Math.floor((1.0 - (v / max)) * BAR_HEIGHT);
-            out.push('<div style="top:' + w + 'px;"></div>');
+            var d = d[key];
+            if (d != null) {
+              var v = parseFloat(d);
+              var w = 1 + Math.floor((1.0 - (v / max)) * BAR_HEIGHT);
+              out.push('<div style="top:' + w + 'px;"></div>');
+            } else {
+              out.push('<div style="top:100px;"></div>');
+            }
           } else {
             out.push('<div style="top:100px;"></div>');
           }
@@ -305,16 +408,15 @@
     out.push('<div style="top:100px;"></div>');
   }
 
-  function drawGraphs(nodes, names) {
+  // drawCurr...
+  //   kind0:host:port -> [sample, ...]
+  //   kind1:host:port -> [sample, ...]
+  //
+  function drawGraphs(drawCurr, nodes, names, drawCurrStart, drawCurrAmt) {
     if (nodes == null ||
         names == null) {
       return;
     }
-
-    // kind0:host:port -> [sample, ...]
-    // kind1:host:port -> [sample, ...]
-    //
-    var drawCurr = samples || {};
 
     var h = ['<table>'];
 
@@ -326,9 +428,11 @@
      h.push('">');
       h.push(node.hostname)
       h.push('</a><br/>&nbsp;');
-      h.push(node.ports.proxy)
-      h.push('/');
-      h.push(node.ports.direct)
+      if (node.ports != null) {
+        h.push(node.ports.proxy)
+        h.push('/');
+        h.push(node.ports.direct)
+      }
       h.push('</th>');
     }
     h.push('</tr>');
@@ -360,7 +464,7 @@
         for (var k = 0; a == null && k < keySuffixes.length; k++) {
           a = drawCurr[kind + keySuffixes[j][k]];
         }
-        max = findMax(a, key, max);
+        max = findMax(a, key, max, drawCurrStart, drawCurrAmt);
       }
       for (var j = 0; j < nodes.length; j++) {
         var node = nodes[j];
@@ -369,10 +473,22 @@
           a = drawCurr[kind + keySuffixes[j][k]];
         }
         h.push('<td>');
-        h.push('<label>');
-        h.push(a != null && a.length > 0 ? a[a.length - 1][key] : "*");
-        h.push('</label>');
-        emitBar(a, key, max, h);
+        if (a != null && a.length > 0) {
+          var c = Math.max(1, Math.min(drawCurrStart + drawCurrAmt, a.length));
+          var curr = a[c - 1][key];
+          var prev = a[c - 2];
+          if (prev != null &&
+              prev[key] != curr) {
+            h.push('<label class="changed">');
+          } else {
+            h.push('<label>');
+          }
+          h.push(curr);
+          h.push('</label>');
+        } else {
+          h.push('<label>*</label>');
+        }
+        emitBar(a, key, max, h, drawCurrStart, drawCurrAmt);
         h.push('</td>');
       }
       h.push('</tr>');
@@ -380,15 +496,23 @@
 
     h.push('</table>');
 
-    var ba = document.getElementById("gridarea");
+    var ba = document.getElementById("gridArea");
     ba.innerHTML = h.join('');
   }
 
   function playLoop() {
     if (!paused) {
-      drawGraphs(g_nodes, g_graphs);
+      drawGraphs(samples, g_nodes, g_graphs, g_curr, g_currAmt);
+      moveGraphCurr(playLoopWorkMax);
       setTimeout(playLoop, playLoopInterval);
     }
+  }
+
+  function moveGraphCurr(delta, bufferAmt) {
+    bufferAmt = bufferAmt || 1;
+    g_curr = g_curr + delta;
+    g_curr = Math.max(0, Math.min(g_curr,
+                                  samplesLen - MAX_BAR_SAMPLES - bufferAmt));
   }
 
   function pollLoop() {
@@ -453,13 +577,13 @@
               'direct-all:ep_num_eject_failures',
               'direct-all:ep_num_eject_replicas',
               'direct-all:ep_num_value_ejects',
-              'direct-all:ep_num_not_my_vbuckets',
               'direct-all:tap_mutation_sent',
               'direct-all:tap_mutation_received',
               'direct-all:tap_opaque_sent',
               'direct-all:tap_opaque_received',
-              'direct-all:ep_num_active_non_resident',
               'direct-all:ep_num_non_resident',
+              'direct-all:ep_num_active_non_resident',
+              'direct-all:ep_num_not_my_vbuckets',
               'direct-all:ep_pending_ops',
               'direct-all:ep_pending_ops_max',
               'direct-all:ep_item_begin_failed',
