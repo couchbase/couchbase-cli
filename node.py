@@ -6,6 +6,7 @@ import time
 import os
 import sys
 import util
+import socket
 
 from usage import usage
 from restclient import *
@@ -221,6 +222,8 @@ class Node:
 
         for o, a in opts:
             if o in ("-a", "--server-add"):
+                if a == "self":
+                    a = socket.gethostbyname(socket.getfqdn())
                 server = "%s:%d" % util.hostport(a)
                 servers['add'][server] = { 'user':'', 'password':''}
             elif o == "--server-add-username":
