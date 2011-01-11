@@ -366,7 +366,11 @@ class Node:
         while status == 'running':
             print ".",
             time.sleep(0.5)
-            status, error = self.rebalanceStatus(prefix='\n')
+            try:
+                status, error = self.rebalanceStatus(prefix='\n')
+            except socket.error:
+                time.sleep(2)
+                status, error = self.rebalanceStatus(prefix='\n')
 
         if error:
             print '\n' + error
