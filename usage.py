@@ -75,7 +75,7 @@ failover OPTIONS:
 cluster-init OPTIONS:
   --cluster-init-username=USER      new admin username
   --cluster-init-password=PASSWORD  new admin password
-  --cluster-init-port=PORT          new cluster port (must be at least 6 characters)
+  --cluster-init-port=PORT          new cluster REST/http port
   --cluster-init-ramsize=RAMSIZEMB  per node ram quota in MB
 
 node-init OPTIONS:
