@@ -154,7 +154,7 @@ class Node:
             return
 
         if self.port_new:
-            self.port = self.port_new
+            self.port = int(self.port_new)
         if self.username_new:
             self.user = self.username_new
         if self.password_new:
