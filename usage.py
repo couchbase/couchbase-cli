@@ -28,7 +28,7 @@ def short_usage():
     print ""
     print "CLUSTER is --cluster=HOST[:PORT] or -c HOST[:PORT]"
     print ""
-    print "COMMAND's include" + commands_usage()
+    print "COMMANDs include" + commands_usage()
 
     sys.exit(2)
 
