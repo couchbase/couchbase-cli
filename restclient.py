@@ -32,10 +32,10 @@ class RestClient:
         error_connect = "Unable to connect to %s" % self.server
         try:
             self.conn = httplib.HTTPConnection(server, port)
-        except httplib.HTTPException:
+        except httplib.NotConnected:
             print error_connect
             sys.exit(2)
-        except httplib.NotConnected:
+        except httplib.HTTPException:
             print error_connect
             sys.exit(2)
         except socket.error:
@@ -134,10 +134,10 @@ class RestClient:
         error_connect = "ERROR: unable to connect to %s:%d" % (self.server, self.port)
         try:
             self.conn.request(method, uri, encoded_params, headers)
-        except httplib.HTTPException:
+        except httplib.NotConnected:
             print error_connect
             sys.exit(2)
-        except httplib.NotConnected:
+        except httplib.HTTPException:
             print error_connect
             sys.exit(2)
         except socket.error:
