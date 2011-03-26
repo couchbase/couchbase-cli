@@ -26,9 +26,10 @@ PYTHON_TOOLS= wrapper/membase
 ${PYTHON_TOOLS}: wrapper/wrapper
 	cp $< $@
 
-BUILT_SOURCES = ${PYTHON_TOOLS}
 CLEANFILES = ${PYTHON_TOOLS}
 bin_SCRIPTS = ${PYTHON_TOOLS}
+
+EXTRA_DIST = $(nobase_pythonlib_DATA) $(pythonlib_SCRIPTS) docs LICENSE
 
 clean-local:
 	rm -f membase*tar.gz
