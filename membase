@@ -67,6 +67,7 @@ def main():
     commands = {
         'server-list'       : listservers.ListServers,
         'server-info'       : info.Info,
+        'server-eshell'     : info.Info,
         'server-add'        : node.Node,
         'server-readd'      : node.Node,
         'rebalance'         : node.Node,

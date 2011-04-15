@@ -9,6 +9,8 @@ from usage import usage
 
 import restclient
 import simplejson
+import subprocess
+import sys
 
 class Info:
     def __init__(self):
@@ -31,5 +33,8 @@ class Info:
         for x in ['license', 'licenseValid', 'licenseValidUntil']:
             if x in json:
                 del(json[x])
-
-        print simplejson.dumps(json, sort_keys=True, indent=2)
+        if cmd == 'server-eshell':
+            p = subprocess.call(['erl','-name','ctl@127.0.0.1',
+                '-setcookie',json['otpCookie'],'-hidden','-remsh',json['otpNode']])
+        else:
+            print simplejson.dumps(json, sort_keys=True, indent=2)
