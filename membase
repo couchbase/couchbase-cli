@@ -65,6 +65,7 @@ def main():
         usage(err)
 
     commands = {
+        'host-list'         : listservers.ListServers,
         'server-list'       : listservers.ListServers,
         'server-info'       : info.Info,
         'server-eshell'     : info.Info,

@@ -18,6 +18,7 @@ class ListServers:
 
     def runCmd(self, cmd, server, port,
                user, password, opts,):
+        self.cmd = cmd
         self.server = server
         self.port = port
         self.user = user
@@ -71,7 +72,10 @@ class ListServers:
 
     def printNodes(self, nodes):
         for node in nodes:
-            print '%s %s %s %s' % (node['otpNode'],
+            if self.cmd == "host-list":
+                print node['hostname']
+            else:
+                print '%s %s %s %s' % (node['otpNode'],
                                    node['hostname'],
                                    node['status'],
                                    node['clusterMembership'])
