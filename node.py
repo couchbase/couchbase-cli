@@ -135,8 +135,12 @@ class Node:
         rest.setParam('initStatus', 'done')
         if self.username_new:
             rest.setParam('username', self.username_new)
+        else:
+            rest.setParam('username', self.user)
         if self.password_new:
             rest.setParam('password', self.password_new)
+        else:
+            rest.setParam('password', self.password)
 
         opts = {}
         opts['error_msg'] = "unable to init %s" % self.server
@@ -251,15 +255,15 @@ class Node:
             elif o in ('-d', '--debug'):
                 self.debug = True
                 server = None
-            elif o in ('--cluster-init-password'):
+            elif o == '--cluster-init-password':
                 self.password_new = a
-            elif o in ('--cluster-init-username'):
+            elif o == '--cluster-init-username':
                 self.username_new = a
-            elif o in ('--cluster-init-port'):
+            elif o == '--cluster-init-port':
                 self.port_new = a
-            elif o in ('--cluster-init-ramsize'):
+            elif o == '--cluster-init-ramsize':
                 self.per_node_quota = a
-            elif o in ('--node-init-data-path'):
+            elif o == '--node-init-data-path':
                 self.data_path = a
 
         return servers
