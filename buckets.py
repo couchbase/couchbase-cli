@@ -75,6 +75,9 @@ class Buckets:
                         usage("default bucket must be on port 11211.")
                     if bucketpassword:
                         usage("default bucket should only have empty password.")
+                else:
+                    if bucketpassword and bucketport and bucketport != "11211":
+                        usage("a sasl bucket is supported only on port 11211.")
             if buckettype:
                 rest.setParam('bucketType', buckettype)
             if authtype:
