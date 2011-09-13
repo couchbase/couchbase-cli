@@ -70,6 +70,11 @@ class Buckets:
         if cmd in ('bucket-create', 'bucket-edit'):
             if bucketname:
                 rest.setParam('name', bucketname)
+                if bucketname == "default":
+                    if bucketport and bucketport != "11211":
+                        usage("default bucket must be on port 11211.")
+                    if bucketpassword:
+                        usage("default bucket should only have empty password.")
             if buckettype:
                 rest.setParam('bucketType', buckettype)
             if authtype:
