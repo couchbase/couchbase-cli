@@ -11,7 +11,7 @@ import listservers
 import buckets
 import node
 import info
-import util
+import util_cli as util
 
 from usage import usage, short_usage
 

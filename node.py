@@ -5,7 +5,7 @@
 import time
 import os
 import sys
-import util
+import util_cli as util
 import socket
 
 from usage import usage
