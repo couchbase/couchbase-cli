@@ -17,7 +17,7 @@ nobase_pythonlib_DATA= \
          simplejson/encoder.py \
          simplejson/scanner.py \
          usage.py \
-         util.py
+         util_cli.py
 
 pythonlib_SCRIPTS= membase
 
