@@ -34,11 +34,11 @@ class Buckets:
 
         bucketname = ''
         buckettype = ''
-        authtype = ''
-        bucketport = ''
+        authtype = 'sasl'
+        bucketport = '11211'
         bucketpassword = ''
         bucketramsize = ''
-        bucketreplication = ''
+        bucketreplication = '1'
         output = 'default'
 
         for (o, a) in opts:
@@ -48,10 +48,8 @@ class Buckets:
                 buckettype = a
             if o == '--bucket-port':
                 bucketport = a
-                authtype = 'none'
             if o == '--bucket-password':
                 bucketpassword = a
-                authtype = 'sasl'
             if o == '--bucket-ramsize':
                 bucketramsize = a
             if o == '--bucket-replica':
@@ -60,9 +58,7 @@ class Buckets:
                 self.debug = True
             if o in  ('-o', '--output'):
                 output = a
-
         self.rest_cmd = rest_cmds[cmd]
-
         rest = restclient.RestClient(server, port, {'debug':self.debug})
 
         # get the parameters straight
@@ -75,9 +71,14 @@ class Buckets:
                         usage("default bucket must be on port 11211.")
                     if bucketpassword:
                         usage("default bucket should only have empty password.")
+                    authtype = 'sasl'
                 else:
-                    if bucketpassword and bucketport and bucketport != "11211":
-                        usage("a sasl bucket is supported only on port 11211.")
+                    if bucketport == "11211":
+                        authtype = 'sasl'
+                    else:
+                        authtype = 'none'
+                        if bucketpassword:
+                            usage("a sasl bucket is supported only on port 11211.")
             if buckettype:
                 rest.setParam('bucketType', buckettype)
             if authtype:
@@ -98,7 +99,6 @@ class Buckets:
         opts = {}
         opts['error_msg'] = "unable to %s" % cmd
         opts['success_msg'] = "%s" % cmd
-
         data = rest.restCmd(methods[cmd], self.rest_cmd,
                             self.user, self.password, opts)
 
