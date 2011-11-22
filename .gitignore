@@ -15,4 +15,5 @@ tmp
 /membase
 /python_wrapper
 /wrapper/wrapper
+/wrapper/couchbase
 /wrapper/membase

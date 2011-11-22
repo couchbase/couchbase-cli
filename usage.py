@@ -24,7 +24,7 @@ def commands_usage():
 """
 
 def short_usage():
-    print "usage: membase COMMAND CLUSTER [OPTIONS]"
+    print "usage: couchbase COMMAND CLUSTER [OPTIONS]"
     print ""
     print "CLUSTER is --cluster=HOST[:PORT] or -c HOST[:PORT]"
     print ""
@@ -37,9 +37,9 @@ def usage(error_msg=''):
         print "ERROR: %s" % error_msg
         sys.exit(2)
 
-    print """membase - command-line cluster administration tool
+    print """couchbase - command-line cluster administration tool
 
-usage: membase COMMAND CLUSTER [OPTIONS]
+usage: couchbase COMMAND CLUSTER [OPTIONS]
 
 COMMAND:""" + commands_usage() + """
 CLUSTER:
@@ -93,47 +93,47 @@ The default PORT number is 8091.
 
 EXAMPLES:
   List servers in a cluster:
-    membase server-list -c 192.168.0.1:8091
+    couchbase server-list -c 192.168.0.1:8091
 
   Server information:
-    membase server-info -c 192.168.0.1:8091
+    couchbase server-info -c 192.168.0.1:8091
 
   Add a node to a cluster, but do not rebalance:
-    membase server-add -c 192.168.0.1:8091 \\
+    couchbase server-add -c 192.168.0.1:8091 \\
        --server-add=192.168.0.2:8091
 
   Add a node to a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8091 \\
+    couchbase rebalance -c 192.168.0.1:8091 \\
        --server-add=192.168.0.2:8091
 
   Remove a node from a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8091 \\
+    couchbase rebalance -c 192.168.0.1:8091 \\
        --server-remove=192.168.0.2:8091
 
   Remove and add nodes from/to a cluster and rebalance:
-    membase rebalance -c 192.168.0.1:8091 \\
+    couchbase rebalance -c 192.168.0.1:8091 \\
       --server-remove=192.168.0.2 \\
       --server-add=192.168.0.4
 
   Stop the current rebalancing:
-    membase rebalance-stop -c 192.168.0.1:8091
+    couchbase rebalance-stop -c 192.168.0.1:8091
 
   Change the username, password, port and ram quota:
-    membase cluster-init -c 192.168.0.1:8091 \\
+    couchbase cluster-init -c 192.168.0.1:8091 \\
        --cluster-init-username=Administrator \\
        --cluster-init-password=password \\
        --cluster-init-port=8080 \\
        --cluster-init-ramsize=300
 
   Change the data path:
-     membase node-init -c 192.168.0.1:8091 \\
+     couchbase node-init -c 192.168.0.1:8091 \\
        --node-init-data-path=/tmp
 
   List buckets in a cluster:
-    membase bucket-list -c 192.168.0.1:8091
+    couchbase bucket-list -c 192.168.0.1:8091
 
   Create a new dedicated port membase bucket:
-    membase bucket-create -c 192.168.0.1:8091 \\
+    couchbase bucket-create -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-type=membase \\
        --bucket-port=11222 \\
@@ -141,20 +141,20 @@ EXAMPLES:
        --bucket-replica=1
 
   Create a new sasl memcached bucket:
-    membase bucket-create -c 192.168.0.1:8091 \\
+    couchbase bucket-create -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-type=memcached \\
        --bucket-password=password \\
        --bucket-ramsize=200
 
   Modify a dedicated port bucket:
-    membase bucket-edit -c 192.168.0.1:8091 \\
+    couchbase bucket-edit -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-port=11222 \\
        --bucket-ramsize=400
 
   Delete a bucket:
-    membase bucket-delete -c 192.168.0.1:8091 \\
+    couchbase bucket-delete -c 192.168.0.1:8091 \\
        --bucket=test_bucket
 
 """
