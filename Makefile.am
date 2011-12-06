@@ -19,9 +19,9 @@ nobase_pythonlib_DATA= \
          usage.py \
          util_cli.py
 
-pythonlib_SCRIPTS= couchbase
+pythonlib_SCRIPTS= couchbase-cli
 
-PYTHON_TOOLS= wrapper/couchbase
+PYTHON_TOOLS= wrapper/couchbase-cli
 
 ${PYTHON_TOOLS}: wrapper/wrapper
 	cp $< $@
@@ -41,7 +41,7 @@ bdist:
 	rm -f ./membase-cli_*.tar.gz
 	rm -rf $(TMP_DIR)/membase-cli
 	mkdir -p $(TMP_DIR)/membase-cli/simplejson
-	cp couchbase *.py COPYING $(TMP_DIR)/membase-cli
+	cp couchbase-cli *.py COPYING $(TMP_DIR)/membase-cli
 	cp simplejson/*.py $(TMP_DIR)/membase-cli/simplejson
 	cp simplejson/LICENSE.txt $(TMP_DIR)/membase-cli/simplejson
 	(cd $(TMP_DIR); tar cf - membase-cli) | gzip -9 > membase-cli_`cat $(TMP_VER)`-`uname -s`.`uname -m`.tar.gz
