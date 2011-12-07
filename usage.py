@@ -24,7 +24,7 @@ def commands_usage():
 """
 
 def short_usage():
-    print "usage: couchbase COMMAND CLUSTER [OPTIONS]"
+    print "usage: couchbase-cli COMMAND CLUSTER [OPTIONS]"
     print ""
     print "CLUSTER is --cluster=HOST[:PORT] or -c HOST[:PORT]"
     print ""
@@ -37,9 +37,9 @@ def usage(error_msg=''):
         print "ERROR: %s" % error_msg
         sys.exit(2)
 
-    print """couchbase - command-line cluster administration tool
+    print """couchbase-cli - command-line cluster administration tool
 
-usage: couchbase COMMAND CLUSTER [OPTIONS]
+usage: couchbase-cli COMMAND CLUSTER [OPTIONS]
 
 COMMAND:""" + commands_usage() + """
 CLUSTER:
@@ -93,47 +93,47 @@ The default PORT number is 8091.
 
 EXAMPLES:
   List servers in a cluster:
-    couchbase server-list -c 192.168.0.1:8091
+    couchbase-cli server-list -c 192.168.0.1:8091
 
   Server information:
-    couchbase server-info -c 192.168.0.1:8091
+    couchbase-cli server-info -c 192.168.0.1:8091
 
   Add a node to a cluster, but do not rebalance:
-    couchbase server-add -c 192.168.0.1:8091 \\
+    couchbase-cli server-add -c 192.168.0.1:8091 \\
        --server-add=192.168.0.2:8091
 
   Add a node to a cluster and rebalance:
-    couchbase rebalance -c 192.168.0.1:8091 \\
+    couchbase-cli rebalance -c 192.168.0.1:8091 \\
        --server-add=192.168.0.2:8091
 
   Remove a node from a cluster and rebalance:
-    couchbase rebalance -c 192.168.0.1:8091 \\
+    couchbase-cli rebalance -c 192.168.0.1:8091 \\
        --server-remove=192.168.0.2:8091
 
   Remove and add nodes from/to a cluster and rebalance:
-    couchbase rebalance -c 192.168.0.1:8091 \\
+    couchbase-cli rebalance -c 192.168.0.1:8091 \\
       --server-remove=192.168.0.2 \\
       --server-add=192.168.0.4
 
   Stop the current rebalancing:
-    couchbase rebalance-stop -c 192.168.0.1:8091
+    couchbase-cli rebalance-stop -c 192.168.0.1:8091
 
   Change the username, password, port and ram quota:
-    couchbase cluster-init -c 192.168.0.1:8091 \\
+    couchbase-cli cluster-init -c 192.168.0.1:8091 \\
        --cluster-init-username=Administrator \\
        --cluster-init-password=password \\
        --cluster-init-port=8080 \\
        --cluster-init-ramsize=300
 
   Change the data path:
-     couchbase node-init -c 192.168.0.1:8091 \\
+     couchbase-cli node-init -c 192.168.0.1:8091 \\
        --node-init-data-path=/tmp
 
   List buckets in a cluster:
-    couchbase bucket-list -c 192.168.0.1:8091
+    couchbase-cli bucket-list -c 192.168.0.1:8091
 
   Create a new dedicated port membase bucket:
-    couchbase bucket-create -c 192.168.0.1:8091 \\
+    couchbase-cli bucket-create -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-type=membase \\
        --bucket-port=11222 \\
@@ -141,20 +141,20 @@ EXAMPLES:
        --bucket-replica=1
 
   Create a new sasl memcached bucket:
-    couchbase bucket-create -c 192.168.0.1:8091 \\
+    couchbase-cli bucket-create -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-type=memcached \\
        --bucket-password=password \\
        --bucket-ramsize=200
 
   Modify a dedicated port bucket:
-    couchbase bucket-edit -c 192.168.0.1:8091 \\
+    couchbase-cli bucket-edit -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-port=11222 \\
        --bucket-ramsize=400
 
   Delete a bucket:
-    couchbase bucket-delete -c 192.168.0.1:8091 \\
+    couchbase-cli bucket-delete -c 192.168.0.1:8091 \\
        --bucket=test_bucket
 
 """
