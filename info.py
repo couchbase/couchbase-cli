@@ -12,6 +12,8 @@ import simplejson
 import subprocess
 import sys
 
+from uuid import uuid1
+
 class Info:
     def __init__(self):
         self.debug = False
@@ -34,7 +36,8 @@ class Info:
             if x in json:
                 del(json[x])
         if cmd == 'server-eshell':
-            p = subprocess.call(['erl','-name','ctl@127.0.0.1',
+            name = 'ctl-%s' % str(uuid1())
+            p = subprocess.call(['erl','-name',name,
                 '-setcookie',json['otpCookie'],'-hidden','-remsh',json['otpNode']])
         else:
             print simplejson.dumps(json, sort_keys=True, indent=2)
