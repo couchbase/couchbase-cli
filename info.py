@@ -12,11 +12,16 @@ import simplejson
 import subprocess
 import sys
 
-from uuid import uuid1
+import string
+import random
 
 class Info:
     def __init__(self):
         self.debug = False
+
+    def _remoteShellName(self):
+        tmp = ''.join(random.choice(string.ascii_letters) for i in xrange(20))
+        return 'ctl-%s@127.0.0.1' % tmp
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
@@ -36,7 +41,7 @@ class Info:
             if x in json:
                 del(json[x])
         if cmd == 'server-eshell':
-            name = 'ctl-%s@127.0.0.1' % str(uuid1())
+            name = self._remoteShellName()
             p = subprocess.call(['erl','-name',name,
                 '-setcookie',json['otpCookie'],'-hidden','-remsh',json['otpNode']])
         else:
