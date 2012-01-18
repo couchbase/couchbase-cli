@@ -36,7 +36,7 @@ class Info:
             if x in json:
                 del(json[x])
         if cmd == 'server-eshell':
-            name = 'ctl-%s' % str(uuid1())
+            name = 'ctl-%s@127.0.0.1' % str(uuid1())
             p = subprocess.call(['erl','-name',name,
                 '-setcookie',json['otpCookie'],'-hidden','-remsh',json['otpNode']])
         else:
