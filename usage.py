@@ -83,7 +83,7 @@ node-init OPTIONS:
 
 bucket-* OPTIONS:
   --bucket=BUCKETNAME               bucket to act on
-  --bucket-type=TYPE                memcached or membase
+  --bucket-type=TYPE                memcached or couchbase
   --bucket-port=PORT                supports ASCII protocol and is auth-less
   --bucket-password=PASSWORD        standard port, exclusive with bucket-port
   --bucket-ramsize=RAMSIZEMB        ram quota in MB
@@ -132,10 +132,10 @@ EXAMPLES:
   List buckets in a cluster:
     couchbase-cli bucket-list -c 192.168.0.1:8091
 
-  Create a new dedicated port membase bucket:
+  Create a new dedicated port couchbase bucket:
     couchbase-cli bucket-create -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
-       --bucket-type=membase \\
+       --bucket-type=couchbase \\
        --bucket-port=11222 \\
        --bucket-ramsize=200 \\
        --bucket-replica=1
