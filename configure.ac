@@ -1,5 +1,5 @@
 # membase-cli
-# Copyright (C) 2010 Membase, INC
+# Copyright (C) 2010, 2011, 2012 Couchbase, Inc.
 # All rights reserved.
 #
 AC_PREREQ(2.59)
