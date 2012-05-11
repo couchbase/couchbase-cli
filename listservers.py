@@ -75,7 +75,11 @@ class ListServers:
             if self.cmd == "host-list":
                 print node['hostname']
             else:
+                if node.get('otpNode') is None:
+                    raise Exception("could not access node;" +
+                                    " please check your username (-u) and password (-p)")
+
                 print '%s %s %s %s' % (node['otpNode'],
-                                   node['hostname'],
-                                   node['status'],
-                                   node['clusterMembership'])
+                                       node['hostname'],
+                                       node['status'],
+                                       node['clusterMembership'])

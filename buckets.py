@@ -97,7 +97,7 @@ class Buckets:
             self.rest_cmd = self.rest_cmd + '/controller/doFlush'
 
         opts = {}
-        opts['error_msg'] = "unable to %s" % cmd
+        opts['error_msg'] = "unable to %s; please check your username (-u) and password (-p);" % cmd
         opts['success_msg'] = "%s" % cmd
         data = rest.restCmd(methods[cmd], self.rest_cmd,
                             self.user, self.password, opts)
