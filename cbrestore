@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+# -*-python-*-
+
+"""
+Restore tool for Couchbase.
+"""
+
+import pump_transfer
+import sys
+
+if __name__ == '__main__':
+    sys.exit(pump_transfer.Restore().main(sys.argv))

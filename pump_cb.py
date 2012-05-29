@@ -1,0 +1,128 @@
+#!/usr/bin/env python
+
+import ctypes
+import logging
+import socket
+import struct
+import time
+
+import pump
+import pump_mc
+
+import mc_bin_client
+import memcacheConstants
+
+class CBSink(pump_mc.MCSink):
+    """Smart client sink to couchbase cluster."""
+
+    def scatter_gather(self, mconns, batch):
+        if len(self.sink_map['buckets']) != 1:
+            return "error: CBSink.run() expected 1 bucket in sink_map", None
+
+        use_add = getattr(self.opts, "add", False)
+        vbuckets = batch.group_by(1) # 1 is index of vbucket_id in item tuple.
+        retry_batch = None
+
+        # Scatter or send phase.
+        for vbucket_id, items in vbuckets.iteritems():
+            rv, conn = self.find_conn(mconns, vbucket_id)
+            if rv != 0:
+                return rv, None
+            rv = self.send_items(conn, items, use_add)
+            if rv != 0:
+                return rv, None
+
+        # Yield to let other threads do stuff while server's processing.
+        time.sleep(0.01)
+
+        # Gather or recv phase.
+        for vbucket_id, items in vbuckets.iteritems():
+            rv, conn = self.find_conn(mconns, vbucket_id)
+            if rv != 0:
+                return rv, None
+            rv, retry = self.recv_items(conn, items)
+            if rv != 0:
+                return rv, None
+            if retry:
+                retry_batch = batch
+
+        return 0, retry_batch
+
+    def translate_cas(self, cas):
+        # TODO: (1) CBSink - use cas with SET-WITH-META.
+        return 0
+
+    @staticmethod
+    def can_handle(opts, spec):
+        return (spec.startswith("http://") or
+                spec.startswith("couchbase://"))
+
+    @staticmethod
+    def check(opts, spec, source_map):
+        rv, sink_map = pump.rest_couchbase(opts, spec)
+        if rv != 0:
+            return rv, None
+
+        # If there's only one bucket in the source_map, use that,
+        # if the called didn't specify a bucket_source.
+        source_bucket = getattr(opts, "bucket_source", None)
+        if (not source_bucket and
+            source_map and
+            source_map['buckets'] and
+            len(source_map['buckets']) == 1):
+            source_bucket = source_map['buckets'][0]['name']
+        if not source_bucket:
+            return "error: please specify a bucket_source", None
+        logging.debug("source_bucket: " + source_bucket)
+
+        # Default bucket_destination to the same as bucket_source.
+        sink_bucket = getattr(opts, "bucket_destination", None) or source_bucket
+        if not sink_bucket:
+            return "error: please specify a bucket_destination", None
+        logging.debug("sink_bucket: " + sink_bucket)
+
+        # Adjust sink_map['buckets'] to have only our sink_bucket.
+        sink_buckets = [bucket for bucket in sink_map['buckets']
+                        if bucket['name'] == sink_bucket]
+        if not sink_buckets:
+            return "error: missing bucket-destination: " + \
+                sink_bucket + " at destination: " + spec, None
+
+        sink_map['buckets'] = sink_buckets
+
+        return 0, sink_map
+
+    @staticmethod
+    def consume_config(opts, spec, bucket, config):
+        if config:
+            logging.warn("warning: cannot restore bucket configuration"
+                         " on a couchbase destination")
+        return 0
+
+    @staticmethod
+    def consume_design(opts, spec, bucket, design):
+        # TODO: (3) CBSink - consume_design()
+        # TODO: (3) CBSink - consume_design() optionally builds indexes
+        return 0
+
+    def find_conn(self, mconns, vbucket_id):
+        bucket = self.sink_map['buckets'][0]
+
+        vBucketMap = bucket['vBucketServerMap']['vBucketMap']
+        serverList = bucket['vBucketServerMap']['serverList']
+
+        # Primary server for a vbucket_id is the 0'th entry.
+        host_port = serverList[vBucketMap[vbucket_id][0]]
+
+        conn = mconns.get(host_port, None)
+        if not conn:
+            host, port = host_port.split(':')
+            user = bucket['name']
+            pswd = bucket['saslPassword']
+            rv, conn = CBSink.connect_mc(host, port, user, pswd)
+            if rv != 0:
+                logging.error("error: CBSink.connect() for send: " + rv)
+                return rv, None
+            mconns[host_port] = conn
+
+        return 0, conn

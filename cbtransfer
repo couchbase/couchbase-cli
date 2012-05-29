@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+# -*-python-*-
+
+"""
+Data transfer tool for Couchbase.
+"""
+
+import pump_transfer
+import sys
+
+if __name__ == '__main__':
+    sys.exit(pump_transfer.Transfer().main(sys.argv))
