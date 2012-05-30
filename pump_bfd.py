@@ -177,7 +177,7 @@ class BFDSink(BFD, Sink):
 
         db = None
 
-        while not self.cur['stop']:
+        while not self.ctl['stop']:
             batch, future = self.pull_next_batch()
             if not batch:
                 return self.future_done(future, 0)
