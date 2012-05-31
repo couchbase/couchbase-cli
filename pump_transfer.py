@@ -275,13 +275,12 @@ SINKS = [pump_bfd.BFDSink,
          pump_cb.CBSink,
          pump.StdOutSink]
 
-# TODO: (1) - stdin source (saved memcached ascii protocol)
-# TODO: (1) - stdout sink (saved memcached ascii protocol)
-# TODO: (1) - _all_docs?include_docs=true source
-# TODO: (1) - use QUIET commands
-# TODO: (1) - verify that nth replica got the item
-# TODO: (1) - ability to TAP a replica
-# TODO: (10) - incremental backup/restore
+# TODO: (1) pump_transfer - stdin source (saved memcached ascii protocol)
+# TODO: (1) pump_transfer - _all_docs?include_docs=true source
+# TODO: (1) pump_transfer - use QUIET commands
+# TODO: (1) pump_transfer - verify that nth replica got the item
+# TODO: (1) pump_transfer - ability to TAP a replica
+# TODO: (10) pump_transfer - incremental backup/restore
 
 if __name__ == '__main__':
     sys.exit(Transfer().main(sys.argv))

@@ -313,7 +313,6 @@ class EndPoint():
         self.ctl = ctl
         self.cur = cur
 
-        # TODO: (1) EndPoint - test key filtering.
         self.only_key_re = None
         k = getattr(opts, "key", None)
         if k:

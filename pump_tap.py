@@ -64,7 +64,6 @@ class TAPDumpSource(pump.Source):
                    batch.size() < batch_max_size and
                    batch.bytes < batch_max_bytes):
                 # TODO: (1) TAPDumpSource - provide_batch timeout on inactivity.
-                # TODO: (3) TAPDumpSource - provide_batch TAP backoff.
 
                 need_ack = False
 
@@ -117,6 +116,8 @@ class TAPDumpSource(pump.Source):
 
                     # Close the batch when there's an ACK handshake, so
                     # the server can concurrently send us the next batch.
+                    # If we are slow, our slow ACK's will naturally slow
+                    # down the server.
                     return 0, batch
 
         except EOFError:
