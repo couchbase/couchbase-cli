@@ -221,7 +221,7 @@ mms1.start()
 
 # ------------------------------------------------
 
-class TestPumpingStation(unittest.TestCase):
+class TestPumpingStationFind(unittest.TestCase):
 
     def setUp(self):
         self.find = pump.PumpingStation.find_handler
@@ -277,7 +277,7 @@ class TestPumpingStation(unittest.TestCase):
                                    pump_transfer.SINKS))
 
 
-class TestBackup(unittest.TestCase):
+class TestBackupParseSpec(unittest.TestCase):
 
     def setUp(self):
         mrs.reset()
@@ -491,6 +491,7 @@ class Worker(threading.Thread):
 
 
 class MCTestCase(unittest.TestCase):
+    """Provides memcached binary protocol helper methods."""
 
     def parse_msg(self, buf, magic_expected):
         head = buf[:memcacheConstants.MIN_RECV_PACKET]
@@ -1236,7 +1237,7 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
             client.go.set()
 
 
-class TestBFDSink(unittest.TestCase):
+class TestBFDSinkCheck(unittest.TestCase):
 
     def test_check(self):
         d = tempfile.mkdtemp()
