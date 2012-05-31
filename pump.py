@@ -21,7 +21,45 @@ LOGGING_FORMAT = '%(asctime)s: %(threadName)s %(message)s'
 
 NA = 'N/A'
 
-class PumpingStation:
+class ProgressReporter:
+    """Mixin to report progress"""
+
+    def report_init(self):
+        self.beg_time = time.time()
+        self.prev_time = self.beg_time
+        self.prev = collections.defaultdict(int)
+
+    def report(self, prefix=""):
+        if getattr(self, "source", None):
+            logging.info(prefix + "source : %s", self.source)
+        if getattr(self, "sink", None):
+            logging.info(prefix + "sink   : %s", self.sink)
+
+        cur_time = time.time()
+        delta = cur_time - self.prev_time
+        c, p = self.cur, self.prev
+        x = sorted([k for k in c.iterkeys() if "_sink_" in k])
+
+        width_k = max([10] + [len(k) for k in x])
+        width_v = max([10] + [len(str(c[k])) for k in x])
+        width_d = max([10] + [len(str(c[k] - p[k])) for k in x])
+        width_s = max([10] + [len("%0.1f" % ((c[k] - p[k]) / delta)) for k in x])
+        logging.info(prefix + " %s : %s | %s | %s",
+                     string.ljust("counter", width_k),
+                     string.rjust("total", width_v),
+                     string.rjust("last", width_d),
+                     string.rjust("per sec", width_s))
+        for k in x:
+            logging.info(prefix + " %s : %s | %s | %s",
+                         string.ljust(k, width_k),
+                         string.rjust(str(c[k]), width_v),
+                         string.rjust(str(c[k] - p[k]), width_d),
+                         string.rjust("%0.1f" % ((c[k] - p[k]) / delta), width_s))
+        self.prev_time = cur_time
+        self.prev = copy.copy(c)
+
+
+class PumpingStation(ProgressReporter):
     """Queues and watchdogs multiple pumps across concurrent workers."""
 
     def __init__(self, opts, source_class, source_spec, sink_class, sink_spec):
@@ -95,6 +133,7 @@ class PumpingStation:
 
             # Transfer bucket items with a Pump per source server.
             self.start_workers(len(source_nodes))
+            self.report_init()
 
             for source_node in sorted(source_nodes,
                                       key=lambda n: n.get('hostname', NA)):
@@ -105,6 +144,10 @@ class PumpingStation:
             # Don't use queue.join() as it eats Ctrl-C's.
             while self.queue.unfinished_tasks:
                 time.sleep(0.2)
+
+            logging.info("bucket: " + source_bucket['name'] +
+                         ", items transferred...")
+            self.report()
 
             rv = self.ctl['rv']
             if rv != 0:
@@ -176,7 +219,7 @@ class PumpingStation:
         return None
 
 
-class Pump:
+class Pump(ProgressReporter):
     """Moves batches of data from one Source to one Sink."""
 
     def __init__(self, opts, source, sink, source_map, sink_map, ctl, cur):
@@ -196,9 +239,7 @@ class Pump:
         report_dot = int(self.opts.extra.get("report_dot", 1000))
         report_full = int(self.opts.extra.get("report_full", 50000))
 
-        self.beg_time = time.time()
-        self.prev_time = self.beg_time
-        self.prev = collections.defaultdict(int)
+        self.report_init()
 
         n = 0
 
@@ -231,13 +272,14 @@ class Pump:
             n = n + 1
             if report_full > 0 and n % report_full == 0:
                 sys.stderr.write("\n")
-                self.report()
+                logging.info("  progress...")
+                self.report(prefix="  ")
             elif report_dot > 0 and n % report_dot == 0:
                 sys.stderr.write('.')
 
     def done(self, rv):
         logging.debug("  pump (%s->%s) done.", self.source, self.sink)
-        self.report()
+        self.report(prefix="  ")
 
         if (self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
             self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
@@ -245,34 +287,6 @@ class Pump:
             return "error: sink missing some source items: " + str(self.cur)
 
         return rv
-
-    def report(self):
-        logging.info("  progress...")
-        logging.info("  source : %s", self.source)
-        logging.info("  sink   : %s", self.sink)
-
-        cur_time = time.time()
-        delta = cur_time - self.prev_time
-        c, p = self.cur, self.prev
-        x = sorted([k for k in c.iterkeys() if "_sink_" in k])
-
-        width_k = max([10] + [len(k) for k in x])
-        width_v = max([10] + [len(str(c[k])) for k in x])
-        width_d = max([10] + [len(str(c[k] - p[k])) for k in x])
-        width_s = max([10] + [len("%0.1f" % ((c[k] - p[k]) / delta)) for k in x])
-        logging.info("   %s : %s | %s | %s",
-                     string.ljust("counter", width_k),
-                     string.rjust("total", width_v),
-                     string.rjust("last", width_d),
-                     string.rjust("per sec", width_s))
-        for k in x:
-            logging.info("   %s : %s | %s | %s",
-                         string.ljust(k, width_k),
-                         string.rjust(str(c[k]), width_v),
-                         string.rjust(str(c[k] - p[k]), width_d),
-                         string.rjust("%0.1f" % ((c[k] - p[k]) / delta), width_s))
-        self.prev_time = cur_time
-        self.prev = copy.copy(c)
 
 
 # --------------------------------------------------
