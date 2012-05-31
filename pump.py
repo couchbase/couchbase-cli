@@ -17,6 +17,8 @@ import urlparse
 import mc_bin_client
 import memcacheConstants
 
+# TODO: (1) optionally log into backup directory
+
 LOGGING_FORMAT = '%(asctime)s: %(threadName)s %(message)s'
 
 NA = 'N/A'
