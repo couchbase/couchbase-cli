@@ -197,7 +197,6 @@ class TAPDumpSource(pump.Source):
         while len(buf) < nbytes:
             data = None
             try:
-                # TODO: (1) TAPDumpSource - recv() tuning buffer size.
                 data = skt.recv(max(nbytes - len(buf), self.recv_min_bytes))
             except socket.timeout:
                 logging.error("error: recv socket.timeout")

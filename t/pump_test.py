@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+Unit tests for backup/restore/transfer/pump.
+"""
+
 import glob
 import os
 import Queue

@@ -222,7 +222,6 @@ class Restore(Transfer):
         # TODO: (1) cbrestore parameter --validate-only
         # TODO: (1) cbrestore parameter -H HOST, --host=HOST
         # TODO: (1) cbrestore parameter -p PORT, --port=PORT
-        # TODO: (1) cbrestore parameter from non-active vbucket / MB-4583.
         # TODO: (1) cbrestore parameter option to override expiration?
 
     def find_handlers(self, opts, source, sink):
@@ -279,7 +278,7 @@ SINKS = [pump_bfd.BFDSink,
 # TODO: (1) pump_transfer - _all_docs?include_docs=true source
 # TODO: (1) pump_transfer - use QUIET commands
 # TODO: (1) pump_transfer - verify that nth replica got the item
-# TODO: (1) pump_transfer - ability to TAP a replica
+# TODO: (1) pump_transfer - ability to TAP a non-active or replica vbucket / MB-4583
 # TODO: (10) pump_transfer - incremental backup/restore
 
 if __name__ == '__main__':
