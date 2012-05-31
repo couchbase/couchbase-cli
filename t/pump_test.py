@@ -921,6 +921,142 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
             client.close("close after sending chopped message")
             client.go.set()
 
+    def test_delete(self):
+        d = tempfile.mkdtemp()
+        mrs.reset(self, [({ 'command': 'GET',
+                            'path': '/pools/default/buckets'},
+                          { 'code': 200, 'message': self.json_2_nodes() })])
+
+        w = Worker(target=self.worker_delete)
+        w.start()
+
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        self.assertEqual(0, rv)
+
+        self.check_cbb_file_exists(d, num=2)
+
+        self.expect_backup_contents(d,
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "delete a\r\n"
+                                    "set b 0 12345 1\r\nB\r\n"
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "delete a\r\n"
+                                    "set b 0 12345 1\r\nB\r\n",
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B')])
+        w.join()
+        shutil.rmtree(d)
+
+    def worker_delete(self):
+        for mms in [mms0, mms1]:
+            client, req = mms.queue.get()
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, 'default', '')
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+            client.go.set()
+
+            client, req = mms.queue.get()
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_tap_connect(req)
+
+            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+                              0, 0, 0, 40302010, 0)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        123, 'a', 'A', ext, 789, 321))
+
+            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
+                              0, 0, 0)
+            client.client.send(self.req(CMD_TAP_DELETE,
+                                        111, 'a', '', ext, 777, 333))
+
+            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        1234, 'b', 'B', ext, 987, 4321))
+            client.go.set()
+
+            client, res = mms.queue.get()
+            cmd, vbucket_id, ext, key, val, opaque, cas = \
+                self.parse_res(res)
+            self.assertEqual(CMD_TAP_MUTATION, cmd)
+            self.assertEqual(0, vbucket_id)
+            self.assertEqual('', ext)
+            self.assertEqual('', key)
+            self.assertEqual(987, opaque)
+            self.assertEqual(0, cas)
+            self.assertEqual('', val)
+
+            client.close("close after ack received")
+            client.go.set()
+
+    def test_delete_ack(self):
+        d = tempfile.mkdtemp()
+        mrs.reset(self, [({ 'command': 'GET',
+                            'path': '/pools/default/buckets'},
+                          { 'code': 200, 'message': self.json_2_nodes() })])
+
+        w = Worker(target=self.worker_delete_ack)
+        w.start()
+
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        self.assertEqual(0, rv)
+
+        self.check_cbb_file_exists(d, num=2)
+
+        self.expect_backup_contents(d,
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "delete a\r\n"
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "delete a\r\n",
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '')])
+        w.join()
+        shutil.rmtree(d)
+
+    def worker_delete_ack(self):
+        # The last sent message is a TAP_DELETE with TAP_FLAG_ACK.
+        for mms in [mms0, mms1]:
+            client, req = mms.queue.get()
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, 'default', '')
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+            client.go.set()
+
+            client, req = mms.queue.get()
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_tap_connect(req)
+
+            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+                              0, 0, 0, 40302010, 0)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        123, 'a', 'A', ext, 789, 321))
+
+            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
+                              0, memcacheConstants.TAP_FLAG_ACK, 0)
+            client.client.send(self.req(CMD_TAP_DELETE,
+                                        111, 'a', '', ext, 777, 333))
+            client.go.set()
+
+            client, res = mms.queue.get()
+            cmd, vbucket_id, ext, key, val, opaque, cas = \
+                self.parse_res(res)
+            self.assertEqual(CMD_TAP_DELETE, cmd)
+            self.assertEqual(0, vbucket_id)
+            self.assertEqual('', ext)
+            self.assertEqual('', key)
+            self.assertEqual(777, opaque)
+            self.assertEqual(0, cas)
+            self.assertEqual('', val)
+
+            client.close("close after ack received")
+            client.go.set()
+
 
 class TestBFDSink(unittest.TestCase):
 
