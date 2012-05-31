@@ -369,6 +369,22 @@ class TestBackupParseSpec(unittest.TestCase):
         self.assertEqual("", path)
 
 
+class TestKeyFilter(unittest.TestCase):
+
+    def setUp(self):
+        mrs.reset()
+
+    def tearDown(self):
+        mrs.reset()
+
+    def test_bad_key_filter(self):
+        d = tempfile.mkdtemp()
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
+                                          "-k", "((**"])
+        self.assertNotEqual(0, rv)
+        shutil.rmtree(d)
+
+
 class TestTAPDumpSourceCheck(unittest.TestCase):
 
     def setUp(self):

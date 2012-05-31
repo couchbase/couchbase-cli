@@ -111,11 +111,17 @@ class PumpingStation(ProgressReporter):
 
     def check_endpoints(self):
         logging.debug("source_class: %s", self.source_class)
+        rv = self.source_class.check_base(self.opts, self.source_spec)
+        if rv != 0:
+            return rv, None, None
         rv, source_map = self.source_class.check(self.opts, self.source_spec)
         if rv != 0:
             return rv, None, None
 
         logging.debug("sink_class: %s", self.sink_class)
+        rv = self.sink_class.check_base(self.opts, self.sink_spec)
+        if rv != 0:
+            return rv, None, None
         rv, sink_map = self.sink_class.check(self.opts, self.sink_spec, source_map)
         if rv != 0:
             return rv, None, None
@@ -345,10 +351,19 @@ class EndPoint():
         self.only_key_re = None
         k = getattr(opts, "key", None)
         if k:
-            # TODO: (1) EndPoint - handle bad key regexp.
             self.only_key_re = re.compile(k)
 
         self.only_vbucket_id = getattr(opts, "id", None)
+
+    @staticmethod
+    def check_base(opts, spec):
+        k = getattr(opts, "key", None)
+        if k:
+            try:
+                re.compile(k)
+            except:
+                return "error: could not parse key regexp: " + k
+        return 0
 
     def __repr__(self):
         return "%s(%s@%s)" % \
