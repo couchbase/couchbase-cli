@@ -30,7 +30,6 @@ from memcacheConstants import CMD_TAP_DELETE
 # TODO: (1) Sink - run() test that key & val remains intact.
 # TODO: (1) Sink - run() test that flg remains intact.
 # TODO: (1) Sink - run() test that exp remains intact.
-# TODO: (1) TAPDumpSource - provide_batch passes FLUSH_ALL test.
 
 class MockHTTPServer(BaseHTTPServer.HTTPServer):
     """Subclass that remembers the rest_server; and, SO_REUSEADDR."""
@@ -1257,6 +1256,55 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
             client.close("close after ack received")
             client.go.set()
+
+    def test_flush_all(self):
+        d = tempfile.mkdtemp()
+        mrs.reset(self, [({ 'command': 'GET',
+                            'path': '/pools/default/buckets'},
+                          { 'code': 200, 'message': self.json_2_nodes() })])
+
+        w = Worker(target=self.worker_flush_all)
+        w.start()
+
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        self.assertEqual(0, rv)
+        self.check_cbb_file_exists(d, num=2)
+        self.expect_backup_contents(d,
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 40302010 0 1\r\nA\r\n",
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A')])
+        w.join()
+        shutil.rmtree(d)
+
+    def worker_flush_all(self):
+        for mms in [mms0, mms1]:
+            client, req = mms.queue.get()
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, 'default', '')
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+            client.go.set()
+
+            client, req = mms.queue.get()
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_tap_connect(req)
+
+            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+                              0, 0, 0, 40302010, 0)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        123, 'a', 'A', ext, 789, 321))
+
+            # After we send a flush-all, backup ignores the rest of the stream.
+
+            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
+                              0, 0, 0)
+            client.client.send(self.req(memcacheConstants.CMD_TAP_FLUSH,
+                                        111, 'a', '', ext, 777, 333))
+
+            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        1234, 'b', 'B', ext, 987, 4321))
 
 
 class TestBFDSinkCheck(unittest.TestCase):

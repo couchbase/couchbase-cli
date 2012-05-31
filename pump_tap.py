@@ -146,7 +146,6 @@ class TAPDumpSource(pump.Source):
                                                        self.opts.password) or "")
                 if sasl_user:
                     try:
-                        # TODO: (1) TAPDumpSource - handle failed SASL auth.
                         self.tap_conn.sasl_auth_plain(sasl_user, sasl_pswd)
                     except EOFError:
                         return "error: SASL auth failed: %s, user: %s" % \
