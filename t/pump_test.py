@@ -224,6 +224,15 @@ mms1.start()
 
 # ------------------------------------------------
 
+class Worker(threading.Thread):
+
+    def __init__(self, target):
+        threading.Thread.__init__(self, target=target, group=None)
+        self.daemon = True
+
+
+# ------------------------------------------------
+
 class TestPumpingStationFind(unittest.TestCase):
 
     def setUp(self):
@@ -502,15 +511,108 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
         self.assertEqual('b', map['buckets'][0]['name'])
 
 
-class Worker(threading.Thread):
+class TestBFDSinkCheck(unittest.TestCase):
 
-    def __init__(self, target):
-        threading.Thread.__init__(self, target=target, group=None)
-        self.daemon = True
+    def test_check(self):
+        d = tempfile.mkdtemp()
+        err, opts, source, backup_dir = \
+            pump_transfer.Backup().opt_parse(["cbbackup", "1", d])
+        self.assertEqual(d, backup_dir)
+        rv, map = pump_bfd.BFDSink.check(opts, backup_dir, None)
+        self.assertEqual(0, rv)
+        os.removedirs(d)
+
+    def test_check_parent_exists(self):
+        d = tempfile.mkdtemp()
+        dchild = d + "/child"
+        err, opts, source, backup_dir = \
+            pump_transfer.Backup().opt_parse(["cbbackup", "1", dchild])
+        self.assertEqual(dchild, backup_dir)
+        rv, map = pump_bfd.BFDSink.check(opts, backup_dir, None)
+        self.assertEqual(0, rv)
+        os.removedirs(d)
+
+    def test_check_missing(self):
+        d = "/dir/no/exist"
+        err, opts, source, backup_dir = \
+            pump_transfer.Backup().opt_parse(["cbbackup", "1", d])
+        self.assertEqual(d, backup_dir)
+        rv, map = pump_bfd.BFDSink.check(opts, backup_dir, None)
+        self.assertNotEqual(0, rv)
 
 
-class MCTestCase(unittest.TestCase):
+# ------------------------------------------------
+
+class BackupTestHelper(unittest.TestCase):
+    """Provides helper methods to check backup files."""
+
+    def expect_backup_contents(self, backup_dir,
+                               expected_memcached_stream=None,
+                               expected_items=None):
+        mock_stdout = MockStdOut()
+
+        t = pump_transfer.Transfer()
+        rv = t.main(["cbtransfer", backup_dir, "stdout:", "-t", "1"],
+                    opts_etc={"stdout": mock_stdout,
+                              "item_visitor": mock_stdout.item_visitor})
+        self.assertEqual(0, rv)
+
+        if expected_memcached_stream:
+            self.assertEqual(expected_memcached_stream,
+                             ''.join(mock_stdout.msgs))
+
+        if expected_items:
+            for idx, actual_item in enumerate(mock_stdout.items):
+                expected_item = expected_items[idx]
+                self.assertTrue(expected_item)
+
+                ecmd, evbucket_id, ekey, eflg, eexp, ecas, eval = \
+                    expected_item
+                acmd, avbucket_id, akey, aflg, aexp, acas, aval = \
+                    actual_item
+
+                self.assertEqual(ecmd, acmd)
+                self.assertEqual(evbucket_id, avbucket_id)
+                self.assertEqual(ekey, akey)
+                self.assertEqual(eflg, aflg)
+                self.assertEqual(eexp, aexp)
+                self.assertEqual(ecas, acas)
+                self.assertEqual(str(eval), str(aval))
+
+            self.assertEqual(len(expected_items), len(mock_stdout.items))
+
+    def check_cbb_file_exists(self, dir, num=1):
+        self.assertEqual(1, len(glob.glob(dir + "/bucket-*")))
+        self.assertEqual(num, len(glob.glob(dir + "/bucket-*/node-*")))
+        self.assertEqual(num, len(glob.glob(dir + "/bucket-*/node-*/data-0000.cbb")))
+
+
+class MCTestHelper(unittest.TestCase):
     """Provides memcached binary protocol helper methods."""
+
+    def setUp(self):
+        mrs.reset()
+        mms0.reset()
+        mms1.reset()
+
+    def tearDown(self):
+        mrs.reset()
+        mms0.reset()
+        mms1.reset()
+
+    def json_2_nodes(self):
+        j = SAMPLE_JSON_pools_default_buckets
+        j = j.replace("HOST0:8091", mrs.host_port())
+        j = j.replace("HOST1:8091", mrs.host + ":8091") # Assuming test won't contact 2nd REST server.
+        j = j.replace("HOST0:11210", mms0.host_port())
+        j = j.replace("HOST1:11210", mms1.host_port())
+        j = j.replace("HOST0", mms0.host)
+        j = j.replace("HOST1", mms1.host)
+        m = json.loads(j)
+        m[0]['nodes'][0]['ports']['direct'] = mms0.port
+        m[0]['nodes'][1]['ports']['direct'] = mms1.port
+        j = json.dumps(m)
+        return j
 
     def parse_msg(self, buf, magic_expected):
         head = buf[:memcacheConstants.MIN_RECV_PACKET]
@@ -598,37 +700,10 @@ class MCTestCase(unittest.TestCase):
         return self.res_header(cmd, vbucket_id, key, val, ext, opaque, cas,
                                dtype=dtype) + ext + key + val
 
-    def check_cbb_file_exists(self, dir, num=1):
-        self.assertEqual(1, len(glob.glob(dir + "/bucket-*")))
-        self.assertEqual(num, len(glob.glob(dir + "/bucket-*/node-*")))
-        self.assertEqual(num, len(glob.glob(dir + "/bucket-*/node-*/data-0000.cbb")))
 
+# ------------------------------------------------
 
-class TestTAPDumpSource(MCTestCase):
-
-    def setUp(self):
-        mrs.reset()
-        mms0.reset()
-        mms1.reset()
-
-    def tearDown(self):
-        mrs.reset()
-        mms0.reset()
-        mms1.reset()
-
-    def json_2_nodes(self):
-        j = SAMPLE_JSON_pools_default_buckets
-        j = j.replace("HOST0:8091", mrs.host_port())
-        j = j.replace("HOST1:8091", mrs.host + ":8091") # Assuming test won't contact 2nd REST server.
-        j = j.replace("HOST0:11210", mms0.host_port())
-        j = j.replace("HOST1:11210", mms1.host_port())
-        j = j.replace("HOST0", mms0.host)
-        j = j.replace("HOST1", mms1.host)
-        m = json.loads(j)
-        m[0]['nodes'][0]['ports']['direct'] = mms0.port
-        m[0]['nodes'][1]['ports']['direct'] = mms1.port
-        j = json.dumps(m)
-        return j
+class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
 
     def test_failed_auth(self):
         d = tempfile.mkdtemp()
@@ -714,42 +789,7 @@ class TestTAPDumpSource(MCTestCase):
             client.go.set()
 
 
-class TestTAPDumpSourceMutations(TestTAPDumpSource):
-
-    def expect_backup_contents(self, backup_dir,
-                               expected_memcached_stream=None,
-                               expected_items=None):
-        mock_stdout = MockStdOut()
-
-        t = pump_transfer.Transfer()
-        rv = t.main(["cbtransfer", backup_dir, "stdout:", "-t", "1"],
-                    opts_etc={"stdout": mock_stdout,
-                              "item_visitor": mock_stdout.item_visitor})
-        self.assertEqual(0, rv)
-
-        if expected_memcached_stream:
-            self.assertEqual(expected_memcached_stream,
-                             ''.join(mock_stdout.msgs))
-
-        if expected_items:
-            for idx, actual_item in enumerate(mock_stdout.items):
-                expected_item = expected_items[idx]
-                self.assertTrue(expected_item)
-
-                ecmd, evbucket_id, ekey, eflg, eexp, ecas, eval = \
-                    expected_item
-                acmd, avbucket_id, akey, aflg, aexp, acas, aval = \
-                    actual_item
-
-                self.assertEqual(ecmd, acmd)
-                self.assertEqual(evbucket_id, avbucket_id)
-                self.assertEqual(ekey, akey)
-                self.assertEqual(eflg, aflg)
-                self.assertEqual(eexp, aexp)
-                self.assertEqual(ecas, acas)
-                self.assertEqual(str(eval), str(aval))
-
-            self.assertEqual(len(expected_items), len(mock_stdout.items))
+class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_1_mutation(self):
         d = tempfile.mkdtemp()
@@ -1328,36 +1368,6 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
                               0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         1234, 'b', 'B', ext, 987, 4321))
-
-
-class TestBFDSinkCheck(unittest.TestCase):
-
-    def test_check(self):
-        d = tempfile.mkdtemp()
-        err, opts, source, backup_dir = \
-            pump_transfer.Backup().opt_parse(["cbbackup", "1", d])
-        self.assertEqual(d, backup_dir)
-        rv, map = pump_bfd.BFDSink.check(opts, backup_dir, None)
-        self.assertEqual(0, rv)
-        os.removedirs(d)
-
-    def test_check_parent_exists(self):
-        d = tempfile.mkdtemp()
-        dchild = d + "/child"
-        err, opts, source, backup_dir = \
-            pump_transfer.Backup().opt_parse(["cbbackup", "1", dchild])
-        self.assertEqual(dchild, backup_dir)
-        rv, map = pump_bfd.BFDSink.check(opts, backup_dir, None)
-        self.assertEqual(0, rv)
-        os.removedirs(d)
-
-    def test_check_missing(self):
-        d = "/dir/no/exist"
-        err, opts, source, backup_dir = \
-            pump_transfer.Backup().opt_parse(["cbbackup", "1", d])
-        self.assertEqual(d, backup_dir)
-        rv, map = pump_bfd.BFDSink.check(opts, backup_dir, None)
-        self.assertNotEqual(0, rv)
 
 
 # ------------------------------------------------------
