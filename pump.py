@@ -147,7 +147,8 @@ class PumpingStation:
                                       source_map, sink_map, self.ctl, curx),
                       source_map, sink_map, self.ctl, curx).run()
 
-            # TODO: (1) PumpingStation - incorporate curx into self.cur.
+            for k, v in curx.items():
+                self.cur[k] = self.cur.get(k, 0) + v
 
             logging.debug(" node: %s, done; rv: %s" % (hostname, rv))
             if self.ctl['rv'] == 0 and rv != 0:
