@@ -114,7 +114,7 @@ class MCSink(pump.Sink):
                     self.read_conn(conn)
 
                 if i != r_opaque:
-                    return "error: opaque mismatch: %s %s" % (i, opaque), None
+                    return "error: opaque mismatch: %s %s" % (i, r_opaque), None
 
                 if r_status == memcacheConstants.ERR_SUCCESS:
                     continue
