@@ -1057,6 +1057,88 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
             client.close("close after ack received")
             client.go.set()
 
+    def test_noop(self):
+        d = tempfile.mkdtemp()
+        mrs.reset(self, [({ 'command': 'GET',
+                            'path': '/pools/default/buckets'},
+                          { 'code': 200, 'message': self.json_2_nodes() })])
+
+        w = Worker(target=self.worker_noop)
+        w.start()
+
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        self.assertEqual(0, rv)
+
+        self.check_cbb_file_exists(d, num=2)
+
+        self.expect_backup_contents(d,
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "delete a\r\n"
+                                    "set b 0 12345 1\r\nB\r\n"
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "delete a\r\n"
+                                    "set b 0 12345 1\r\nB\r\n",
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B')])
+        w.join()
+        shutil.rmtree(d)
+
+    def worker_noop(self):
+        # Has CMD_NOOP's sprinkled amongst the stream.
+        for mms in [mms0, mms1]:
+            client, req = mms.queue.get()
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, 'default', '')
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+            client.go.set()
+
+            client, req = mms.queue.get()
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_tap_connect(req)
+
+            client.client.send(self.req(memcacheConstants.CMD_NOOP,
+                                        111, 'a', '', '', 777, 333))
+
+            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+                              0, 0, 0, 40302010, 0)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        123, 'a', 'A', ext, 789, 321))
+
+            client.client.send(self.req(memcacheConstants.CMD_NOOP,
+                                        111, 'a', '', '', 777, 333))
+
+            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
+                              0, 0, 0)
+            client.client.send(self.req(CMD_TAP_DELETE,
+                                        111, 'a', '', ext, 777, 333))
+
+            client.client.send(self.req(memcacheConstants.CMD_NOOP,
+                                        111, 'a', '', '', 777, 333))
+
+            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        1234, 'b', 'B', ext, 987, 4321))
+            client.go.set()
+
+            client, res = mms.queue.get()
+            cmd, vbucket_id, ext, key, val, opaque, cas = \
+                self.parse_res(res)
+            self.assertEqual(CMD_TAP_MUTATION, cmd)
+            self.assertEqual(0, vbucket_id)
+            self.assertEqual('', ext)
+            self.assertEqual('', key)
+            self.assertEqual(987, opaque)
+            self.assertEqual(0, cas)
+            self.assertEqual('', val)
+
+            client.close("close after ack received")
+            client.go.set()
+
 
 class TestBFDSink(unittest.TestCase):
 
