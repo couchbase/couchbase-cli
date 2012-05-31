@@ -76,20 +76,54 @@ class PumpingStation(ProgressReporter):
         self.cur = collections.defaultdict(int)
 
     def run(self):
-        logging.debug("source_class: %s", self.source_class)
-        rv, source_map = self.source_class.check(self.opts, self.source_spec)
-        if rv != 0:
-            return rv
-        logging.debug("sink_class: %s", self.sink_class)
-        rv, sink_map = self.sink_class.check(self.opts, self.sink_spec, source_map)
-        if rv != 0:
-            return rv
-
         # TODO: (6) PumpingStation - monitor source for topology changes.
         # TODO: (4) PumpingStation - retry/reconnect on err N times, M times / server.
         # TODO: (2) PumpingStation - track checksum in backup, used later at restore.
 
-        # Filter the source_buckets if a bucket_source was specified.
+        rv, source_map, sink_map = self.check_endpoints()
+        if rv != 0:
+            return rv
+
+        source_buckets = self.filter_source_buckets(source_map)
+        for source_bucket in sorted(source_buckets,
+                                    key=lambda b: b['name']):
+            logging.info("bucket: " + source_bucket['name'])
+
+            rv = self.transfer_bucket_config(source_bucket)
+            if rv != 0:
+                return rv
+
+            rv = self.transfer_bucket_items(source_bucket, source_map, sink_map)
+            if rv != 0:
+                return rv
+
+            rv = self.transfer_bucket_design(source_bucket)
+            if rv != 0:
+                return rv
+
+            # TODO: (5) PumpingStation - validate bucket transfers.
+
+        # TODO: (4) PumpingStation - validate source/sink maps were stable.
+
+        print "done"
+
+        return 0
+
+    def check_endpoints(self):
+        logging.debug("source_class: %s", self.source_class)
+        rv, source_map = self.source_class.check(self.opts, self.source_spec)
+        if rv != 0:
+            return rv, None, None
+
+        logging.debug("sink_class: %s", self.sink_class)
+        rv, sink_map = self.sink_class.check(self.opts, self.sink_spec, source_map)
+        if rv != 0:
+            return rv, None, None
+
+        return rv, source_map, sink_map
+
+    def filter_source_buckets(self, source_map):
+        """Filter the source_buckets if a bucket_source was specified."""
         source_buckets = source_map['buckets']
         logging.debug("source_buckets: " +
                       ",".join([n['name'] for n in source_buckets]))
@@ -101,83 +135,78 @@ class PumpingStation(ProgressReporter):
                               if b['name'] == bucket_source]
             logging.debug("source_buckets filtered: " +
                           ",".join([n['name'] for n in source_buckets]))
+        return source_buckets
 
-        for source_bucket in sorted(source_buckets, key=lambda b: b['name']):
-            logging.info("bucket: " + source_bucket['name'])
+    def filter_source_nodes(self, source_bucket, source_map):
+        """Filter the source_nodes if single_node was specified."""
+        source_nodes = source_bucket['nodes']
+        logging.debug(" source_nodes: " + ",".join([n.get('hostname', NA)
+                                                    for n in source_nodes]))
 
-            # Transfer bucket configuration (e.g., memory quota).
-            rv, source_config = \
-                self.source_class.provide_config(self.opts, self.source_spec,
-                                                 source_bucket)
-            if rv != 0:
-                return rv
+        single_node = getattr(self.opts, "single_node", None)
+        if single_node:
+            if not source_map.get('spec_parts'):
+                return "error: cannot support single_node from source: " + \
+                    self.source_spec
+            single_host, single_port, _, _, _ = source_map.get('spec_parts')
+            single_host_port = single_host + ':' + single_port
+            logging.debug(" single_host_port: " + single_host_port)
+            source_nodes = [n for n in source_nodes
+                            if n.get('hostname', NA) == single_host_port]
+            logging.debug(" source_nodes filtered: " +
+                          ",".join([n.get('hostname', NA)
+                                    for n in source_nodes]))
+        return source_nodes
+
+    def transfer_bucket_config(self, source_bucket):
+        """Transfer bucket configuration (e.g., memory quota)."""
+        rv, source_config = \
+            self.source_class.provide_config(self.opts, self.source_spec,
+                                             source_bucket)
+        if rv == 0:
             rv = self.sink_class.consume_config(self.opts, self.sink_spec,
                                                 source_bucket, source_config)
-            if rv != 0:
-                return rv
+        return rv
 
-            # Filter the source_nodes if single_node was specified.
-            source_nodes = source_bucket['nodes']
-            logging.debug(" source_nodes: " + ",".join([n.get('hostname', NA)
-                                                        for n in source_nodes]))
+    def transfer_bucket_items(self, source_bucket, source_map, sink_map):
+        source_nodes = self.filter_source_nodes(source_bucket, source_map)
 
-            single_node = getattr(self.opts, "single_node", None)
-            if single_node:
-                if not source_map.get('spec_parts'):
-                    return "error: cannot support single_node from source: " + \
-                        self.source_spec
-                single_host, single_port, _, _, _ = source_map.get('spec_parts')
-                single_host_port = single_host + ':' + single_port
-                logging.debug(" single_host_port: " + single_host_port)
-                source_nodes = [n for n in source_nodes
-                                if n.get('hostname', NA) == single_host_port]
-                logging.debug(" source_nodes filtered: " +
-                              ",".join([n.get('hostname', NA)
-                                        for n in source_nodes]))
+        # Transfer bucket items with a Pump per source server.
+        self.start_workers(len(source_nodes))
+        self.report_init()
 
-            # Transfer bucket items with a Pump per source server.
-            self.start_workers(len(source_nodes))
-            self.report_init()
+        for source_node in sorted(source_nodes,
+                                  key=lambda n: n.get('hostname', NA)):
+            logging.debug(" enqueueing node: " +
+                          source_node.get('hostname', NA))
+            self.queue.put((source_bucket, source_node, source_map, sink_map))
 
-            for source_node in sorted(source_nodes,
-                                      key=lambda n: n.get('hostname', NA)):
-                logging.debug(" enqueueing node: " +
-                              source_node.get('hostname', NA))
-                self.queue.put((source_bucket, source_node, source_map, sink_map))
+        # Don't use queue.join() as it eats Ctrl-C's.
+        while self.queue.unfinished_tasks:
+            time.sleep(0.2)
 
-            # Don't use queue.join() as it eats Ctrl-C's.
-            while self.queue.unfinished_tasks:
-                time.sleep(0.2)
+        rv = self.ctl['rv']
+        if rv != 0:
+            return rv
 
-            rv = self.ctl['rv']
-            if rv != 0:
-                return rv
-
-            sys.stdout.write("\n")
-            sys.stdout.write("bucket: " + source_bucket['name'] +
-                             ", items transferred...\n")
-            def emit(msg):
-                sys.stdout.write(msg + "\n")
-            self.report(emit=emit)
-
-            # Transfer bucket design (e.g., design docs, views).
-            rv, design = \
-                self.source_class.provide_design(self.opts, self.source_spec,
-                                                 source_bucket)
-            if rv != 0:
-                return rv
-            rv = self.sink_class.consume_design(self.opts, self.sink_spec,
-                                                source_bucket, design)
-            if rv != 0:
-                return rv
-
-            print "done"
-
-            # TODO: (5) PumpingStation - validate bucket transfers.
-
-        # TODO: (4) PumpingStation - validate source/sink maps were stable.
+        sys.stdout.write("\n")
+        sys.stdout.write("bucket: " + source_bucket['name'] +
+                         ", items transferred...\n")
+        def emit(msg):
+            sys.stdout.write(msg + "\n")
+        self.report(emit=emit)
 
         return 0
+
+    def transfer_bucket_design(self, source_bucket):
+        """Transfer bucket design (e.g., design docs, views)."""
+        rv, design = \
+            self.source_class.provide_design(self.opts, self.source_spec,
+                                             source_bucket)
+        if rv == 0:
+            rv = self.sink_class.consume_design(self.opts, self.sink_spec,
+                                                source_bucket, design)
+        return rv
 
     @staticmethod
     def run_worker(self, thread_index):
