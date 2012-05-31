@@ -1157,16 +1157,16 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
         self.expect_backup_contents(d,
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n"
-                                    "set b 0 12345 1\r\nB\r\n"
+                                    "set b 0 12345 0\r\n\r\n"
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n"
-                                    "set b 0 12345 1\r\nB\r\n",
+                                    "set b 0 12345 0\r\n\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B'),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, ''),
                                      (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B')])
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '')])
         w.join()
         shutil.rmtree(d)
 
@@ -1219,7 +1219,7 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
             ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
                               0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
             client.client.send(self.req(CMD_TAP_MUTATION,
-                                        1234, 'b', 'B', ext, 987, 4321))
+                                        1234, 'b', '', ext, 987, 4321))
             client.go.set()
 
             client, res = mms.queue.get()

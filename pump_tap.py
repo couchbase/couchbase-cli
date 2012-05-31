@@ -45,9 +45,6 @@ class TAPDumpSource(pump.Source):
         return 0, None
 
     def provide_batch(self):
-        # TODO: (1) TAPDumpSource - provide_batch test keys.
-        # TODO: (1) TAPDumpSource - provide_batch test values.
-        # TODO: (1) TAPDumpSource - provide_batch test zero-sized values.
         # TODO: (1) TAPDumpSource - provide_batch test flg/exp endianess.
 
         if self.tap_done:

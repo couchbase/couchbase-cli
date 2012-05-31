@@ -84,6 +84,7 @@ class PumpingStation(ProgressReporter):
 
         # TODO: (6) PumpingStation - monitor source for topology changes.
         # TODO: (4) PumpingStation - retry/reconnect on err N times, M times / server.
+        # TODO: (2) PumpingStation - track checksum in backup, used later at restore.
 
         # Filter the source_buckets if a bucket_source was specified.
         source_buckets = source_map['buckets']
