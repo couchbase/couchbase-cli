@@ -29,11 +29,14 @@ class ProgressReporter:
         self.prev_time = self.beg_time
         self.prev = collections.defaultdict(int)
 
-    def report(self, prefix=""):
+    def report(self, prefix="", emit=None):
+        if not emit:
+            emit = logging.info
+
         if getattr(self, "source", None):
-            logging.info(prefix + "source : %s", self.source)
+            emit(prefix + "source : %s" % (self.source))
         if getattr(self, "sink", None):
-            logging.info(prefix + "sink   : %s", self.sink)
+            emit(prefix + "sink   : %s" % (self.sink))
 
         cur_time = time.time()
         delta = cur_time - self.prev_time
@@ -44,17 +47,17 @@ class ProgressReporter:
         width_v = max([10] + [len(str(c[k])) for k in x])
         width_d = max([10] + [len(str(c[k] - p[k])) for k in x])
         width_s = max([10] + [len("%0.1f" % ((c[k] - p[k]) / delta)) for k in x])
-        logging.info(prefix + " %s : %s | %s | %s",
-                     string.ljust("counter", width_k),
-                     string.rjust("total", width_v),
-                     string.rjust("last", width_d),
-                     string.rjust("per sec", width_s))
+        emit(prefix + " %s : %s | %s | %s"
+             % (string.ljust("counter", width_k),
+                string.rjust("total", width_v),
+                string.rjust("last", width_d),
+                string.rjust("per sec", width_s)))
         for k in x:
-            logging.info(prefix + " %s : %s | %s | %s",
-                         string.ljust(k, width_k),
-                         string.rjust(str(c[k]), width_v),
-                         string.rjust(str(c[k] - p[k]), width_d),
-                         string.rjust("%0.1f" % ((c[k] - p[k]) / delta), width_s))
+            emit(prefix + " %s : %s | %s | %s"
+                 % (string.ljust(k, width_k),
+                    string.rjust(str(c[k]), width_v),
+                    string.rjust(str(c[k] - p[k]), width_d),
+                    string.rjust("%0.1f" % ((c[k] - p[k]) / delta), width_s)))
         self.prev_time = cur_time
         self.prev = copy.copy(c)
 
@@ -146,13 +149,16 @@ class PumpingStation(ProgressReporter):
             while self.queue.unfinished_tasks:
                 time.sleep(0.2)
 
-            logging.info("bucket: " + source_bucket['name'] +
-                         ", items transferred...")
-            self.report()
-
             rv = self.ctl['rv']
             if rv != 0:
                 return rv
+
+            sys.stdout.write("\n")
+            sys.stdout.write("bucket: " + source_bucket['name'] +
+                             ", items transferred...\n")
+            def emit(msg):
+                sys.stdout.write(msg + "\n")
+            self.report(emit=emit)
 
             # Transfer bucket design (e.g., design docs, views).
             rv, design = \
@@ -164,6 +170,8 @@ class PumpingStation(ProgressReporter):
                                                 source_bucket, design)
             if rv != 0:
                 return rv
+
+            print "done"
 
             # TODO: (5) PumpingStation - validate bucket transfers.
 
