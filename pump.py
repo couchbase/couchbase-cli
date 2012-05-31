@@ -501,11 +501,17 @@ class StdOutSink(Sink):
         use_add = bool(getattr(self.opts, "add", False))
 
         stdout = sys.stdout
+        item_visitor = None
+
         opts_etc = getattr(self.opts, "etc", None)
         if opts_etc:
             stdout = opts_etc.get("stdout", sys.stdout)
+            item_visitor = opts_etc.get("item_visitor", None)
 
         for item in batch.items:
+            if item_visitor:
+                item = item_visitor(item)
+
             cmd, vbucket_id, key, flg, exp, cas, val = item
 
             if cmd == memcacheConstants.CMD_TAP_MUTATION:

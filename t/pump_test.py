@@ -24,6 +24,9 @@ import pump_tap
 import mc_bin_client
 import memcacheConstants
 
+from memcacheConstants import CMD_TAP_MUTATION
+from memcacheConstants import CMD_TAP_DELETE
+
 # TODO: (1) Sink - run() test that key & val remains intact.
 # TODO: (1) Sink - run() test that flg remains intact.
 # TODO: (1) Sink - run() test that exp remains intact.
@@ -521,7 +524,7 @@ class MCTestCase(unittest.TestCase):
         self.assertEqual('PLAIN', key)
         self.assertEqual('\x00' + user + '\x00' + pswd, val)
         self.assertEqual(0, cas)
-        return cmd, vbucket_id, ext, key, val, opaque, cas, val
+        return cmd, vbucket_id, ext, key, val, opaque, cas
 
     def check_tap_connect(self, req):
         self.assertTrue(req)
@@ -541,9 +544,9 @@ class MCTestCase(unittest.TestCase):
         self.assertEqual(expect_val, val)
         self.assertEqual(0, cas)
 
-        return cmd, vbucket_id, ext, key, val, opaque, cas, val
+        return cmd, vbucket_id, ext, key, val, opaque, cas
 
-    def header(self, cmd, vbucket_id, key, val, ext, cas, opaque,
+    def header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
                dtype=0,
                fmt=memcacheConstants.REQ_PKT_FMT,
                magic=memcacheConstants.REQ_MAGIC_BYTE):
@@ -551,28 +554,28 @@ class MCTestCase(unittest.TestCase):
                            len(key), len(ext), dtype, vbucket_id,
                            len(key) + len(ext) + len(val), opaque, cas)
 
-    def req_header(self, cmd, vbucket_id, key, val, ext, cas, opaque,
+    def req_header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
                    dtype=0):
-        return self.header(cmd, vbucket_id, key, val, ext, cas, opaque,
+        return self.header(cmd, vbucket_id, key, val, ext, opaque, cas,
                            dtype=dtype,
                            fmt=memcacheConstants.REQ_PKT_FMT,
                            magic=memcacheConstants.REQ_MAGIC_BYTE)
 
-    def res_header(self, cmd, vbucket_id, key, val, ext, cas, opaque,
+    def res_header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
                    dtype=0):
-        return self.header(cmd, vbucket_id, key, val, ext, cas, opaque,
+        return self.header(cmd, vbucket_id, key, val, ext, opaque, cas,
                            dtype=dtype,
                            fmt=memcacheConstants.RES_PKT_FMT,
                            magic=memcacheConstants.RES_MAGIC_BYTE)
 
-    def req(self, cmd, vbucket_id, key, val, ext, cas, opaque,
+    def req(self, cmd, vbucket_id, key, val, ext, opaque, cas,
             dtype=0):
-        return self.req_header(cmd, vbucket_id, key, val, ext, cas, opaque,
+        return self.req_header(cmd, vbucket_id, key, val, ext, opaque, cas,
                                dtype=dtype) + ext + key + val
 
-    def res(self, cmd, vbucket_id, key, val, ext, cas, opaque,
+    def res(self, cmd, vbucket_id, key, val, ext, opaque, cas,
             dtype=0):
-        return self.res_header(cmd, vbucket_id, key, val, ext, cas, opaque,
+        return self.res_header(cmd, vbucket_id, key, val, ext, opaque, cas,
                                dtype=dtype) + ext + key + val
 
     def check_cbb_file_exists(self, dir, num=1):
@@ -651,9 +654,9 @@ class TestTAPDumpSource(MCTestCase):
     def worker_close_after_auth(self):
         for mms in [mms0, mms1]:
             client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _, _ = \
+            cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', 0, opaque))
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
             client.close("simulate failure right after auth")
             client.go.set()
 
@@ -679,13 +682,13 @@ class TestTAPDumpSource(MCTestCase):
     def worker_close_after_TAP_connect(self):
         for mms in [mms0, mms1]:
             client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _, _ = \
+            cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', 0, opaque))
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
             client.go.set()
 
             client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _, _ = \
+            cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
             client.close("simulate failure right after TAP connect")
             client.go.set()
@@ -693,13 +696,40 @@ class TestTAPDumpSource(MCTestCase):
 
 class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
-    def expect_backup_contents(self, backup_dir, contents):
+    def expect_backup_contents(self, backup_dir,
+                               expected_memcached_stream=None,
+                               expected_items=None):
         mock_stdout = MockStdOut()
-        rv = pump_transfer.Transfer().main(["cbtransfer", backup_dir, "stdout:",
-                                            "-t", "1"],
-                                           opts_etc={"stdout": mock_stdout})
+
+        t = pump_transfer.Transfer()
+        rv = t.main(["cbtransfer", backup_dir, "stdout:", "-t", "1"],
+                    opts_etc={"stdout": mock_stdout,
+                              "item_visitor": mock_stdout.item_visitor})
         self.assertEqual(0, rv)
-        self.assertEqual(contents, ''.join(mock_stdout.msgs))
+
+        if expected_memcached_stream:
+            self.assertEqual(expected_memcached_stream,
+                             ''.join(mock_stdout.msgs))
+
+        if expected_items:
+            for idx, actual_item in enumerate(mock_stdout.items):
+                expected_item = expected_items[idx]
+                self.assertTrue(expected_item)
+
+                ecmd, evbucket_id, ekey, eflg, eexp, ecas, eval = \
+                    expected_item
+                acmd, avbucket_id, akey, aflg, aexp, acas, aval = \
+                    actual_item
+
+                self.assertEqual(ecmd, acmd)
+                self.assertEqual(evbucket_id, avbucket_id)
+                self.assertEqual(ekey, akey)
+                self.assertEqual(eflg, aflg)
+                self.assertEqual(eexp, aexp)
+                self.assertEqual(ecas, acas)
+                self.assertEqual(str(eval), str(aval))
+
+            self.assertEqual(len(expected_items), len(mock_stdout.items))
 
     def test_1_mutation(self):
         d = tempfile.mkdtemp()
@@ -719,7 +749,6 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
         self.expect_backup_contents(d,
                                     "set a 0 0 1\r\nA\r\n"
                                     "set a 0 0 1\r\nA\r\n")
-
         w.join()
         shutil.rmtree(d)
 
@@ -727,29 +756,29 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
         # Sends one TAP_MUTATION with an ACK.
         for mms in [mms0, mms1]:
             client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _, _ = \
+            cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', 0, opaque))
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
             client.go.set()
 
             client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _, _ = \
+            cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
             ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
                               0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 0)
-            client.client.send(self.req(memcacheConstants.CMD_TAP_MUTATION,
-                                        123, 'a', 'A', ext, 0, 321))
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        123, 'a', 'A', ext, 789, 321))
             client.go.set()
 
             client, res = mms.queue.get()
             cmd, vbucket_id, ext, key, val, opaque, cas = \
                 self.parse_res(res)
-            self.assertEqual(memcacheConstants.CMD_TAP_MUTATION, cmd)
+            self.assertEqual(CMD_TAP_MUTATION, cmd)
             self.assertEqual(0, vbucket_id)
             self.assertEqual('', ext)
             self.assertEqual('', key)
-            self.assertEqual(opaque, 321)
+            self.assertEqual(789, opaque)
             self.assertEqual(0, cas)
             self.assertEqual('', val)
 
@@ -772,11 +801,14 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
         self.check_cbb_file_exists(d, num=2)
 
         self.expect_backup_contents(d,
-                                    "set a 0 0 1\r\nA\r\n"
-                                    "set b 0 0 1\r\nB\r\n"
-                                    "set a 0 0 1\r\nA\r\n"
-                                    "set b 0 0 1\r\nB\r\n")
-
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set b 0 12345 1\r\nB\r\n"
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set b 0 12345 1\r\nB\r\n",
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B')])
         w.join()
         shutil.rmtree(d)
 
@@ -784,34 +816,34 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
         # Sends two TAP_MUTATION's with an ACK on the last.
         for mms in [mms0, mms1]:
             client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _, _ = \
+            cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', 0, opaque))
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
             client.go.set()
 
             client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _, _ = \
+            cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
             ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, 0, 0, 0, 0)
-            client.client.send(self.req(memcacheConstants.CMD_TAP_MUTATION,
-                                        123, 'a', 'A', ext, 0, 321))
+                              0, 0, 0, 40302010, 0)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        123, 'a', 'A', ext, 789, 321))
 
             ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 0)
-            client.client.send(self.req(memcacheConstants.CMD_TAP_MUTATION,
-                                        1234, 'b', 'B', ext, 0, 4321))
+                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        1234, 'b', 'B', ext, 987, 4321))
             client.go.set()
 
             client, res = mms.queue.get()
             cmd, vbucket_id, ext, key, val, opaque, cas = \
                 self.parse_res(res)
-            self.assertEqual(memcacheConstants.CMD_TAP_MUTATION, cmd)
+            self.assertEqual(CMD_TAP_MUTATION, cmd)
             self.assertEqual(0, vbucket_id)
             self.assertEqual('', ext)
             self.assertEqual('', key)
-            self.assertEqual(opaque, 4321)
+            self.assertEqual(987, opaque)
             self.assertEqual(0, cas)
             self.assertEqual('', val)
 
@@ -837,7 +869,6 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
         self.expect_backup_contents(d,
                                     "set a 0 0 1\r\nA\r\n"
                                     "set a 0 0 1\r\nA\r\n")
-
         w.join()
         shutil.rmtree(d)
 
@@ -859,8 +890,9 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
         self.expect_backup_contents(d,
                                     "set a 0 0 1\r\nA\r\n"
-                                    "set a 0 0 1\r\nA\r\n")
-
+                                    "set a 0 0 1\r\nA\r\n",
+                                    [(CMD_TAP_MUTATION, 123, 'a', 0, 0, 321, 'A'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 0, 0, 321, 'A')])
         w.join()
         shutil.rmtree(d)
 
@@ -868,24 +900,24 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
         # Sends two TAP_MUTATION's, but second message is chopped.
         for mms in [mms0, mms1]:
             client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _, _ = \
+            cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', 0, opaque))
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
             client.go.set()
 
             client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _, _ = \
+            cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
             ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
                               0, 0, 0, 0, 0)
-            client.client.send(self.req(memcacheConstants.CMD_TAP_MUTATION,
-                                        123, 'a', 'A', ext, 0, 321))
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        123, 'a', 'A', ext, 987, 321))
 
             ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
                               0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 0)
-            client.client.send(self.req(memcacheConstants.CMD_TAP_MUTATION,
-                                        1234, 'b', 'B', ext, 0, 4321)[0:self.chop_at])
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        1234, 'b', 'B', ext, 789, 4321)[0:self.chop_at])
             client.close("close after sending chopped message")
             client.go.set()
 
@@ -1037,9 +1069,14 @@ SAMPLE_JSON_pools_default_buckets = """
 class MockStdOut:
     def __init__(self):
         self.msgs = []
+        self.items = []
 
     def write(self, m):
         self.msgs.append(str(m))
+
+    def item_visitor(self, item):
+        self.items.append(item)
+        return item
 
 
 if __name__ == '__main__':
