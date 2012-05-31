@@ -796,15 +796,17 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
+        # 0xfedcba01 == 4275878401, using high numbers to check endianess.
+        # 0xffeedd00 == 4293844224
         self.expect_backup_contents(d,
-                                    "set a 40302010 0 1\r\nA\r\n"
-                                    "set b 0 12345 1\r\nB\r\n"
-                                    "set a 40302010 0 1\r\nA\r\n"
-                                    "set b 0 12345 1\r\nB\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B')])
+                                    "set a 4275878401 0 1\r\nA\r\n"
+                                    "set b 0 4293844224 1\r\nB\r\n"
+                                    "set a 4275878401 0 1\r\nA\r\n"
+                                    "set b 0 4293844224 1\r\nB\r\n",
+                                    [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A'),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, 'B'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A'),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, 'B')])
         w.join()
         shutil.rmtree(d)
 
@@ -822,12 +824,12 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
                 self.check_tap_connect(req)
 
             ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, 0, 0, 40302010, 0)
+                              0, 0, 0, 0xfedcba01, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         123, 'a', 'A', ext, 789, 321))
 
             ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
+                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 0xffeedd00)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         1234, 'b', 'B', ext, 987, 4321))
             client.go.set()
@@ -858,11 +860,12 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d, "-k", "a"])
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
+        # 0xfedcba01 == 4275878401
         self.expect_backup_contents(d,
-                                    "set a 40302010 0 1\r\nA\r\n"
-                                    "set a 40302010 0 1\r\nA\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A')])
+                                    "set a 4275878401 0 1\r\nA\r\n"
+                                    "set a 4275878401 0 1\r\nA\r\n",
+                                    [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A')])
         w.join()
         shutil.rmtree(d)
 
