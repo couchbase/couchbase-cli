@@ -25,6 +25,8 @@ class TAPDumpSource(pump.Source):
         self.tap_conn = None
         self.tap_name = "".join(random.sample(string.letters, 16))
 
+        self.recv_min_bytes = int(getattr(opts, "recv_min_bytes", 4096))
+
     @staticmethod
     def can_handle(opts, spec):
         return (spec.startswith("http://") or
@@ -195,7 +197,7 @@ class TAPDumpSource(pump.Source):
             data = None
             try:
                 # TODO: (1) TAPDumpSource - recv() tuning buffer size.
-                data = skt.recv(max(nbytes - len(buf), 4096))
+                data = skt.recv(max(nbytes - len(buf), self.recv_min_bytes))
             except socket.timeout:
                 logging.error("error: recv socket.timeout")
             except Exception as e:
