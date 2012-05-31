@@ -73,9 +73,6 @@ class TAPDumpSource(pump.Source):
 
                 if (cmd == memcacheConstants.CMD_TAP_MUTATION or
                     cmd == memcacheConstants.CMD_TAP_DELETE):
-                    if self.skip(key, vbucket_id):
-                        continue
-
                     rv, eng_length, flags, ttl, flg, exp, need_ack = \
                         self.parse_tap_ext(ext)
                     if rv != 0:
@@ -88,9 +85,9 @@ class TAPDumpSource(pump.Source):
                         self.tap_done = True
                         break
 
-                    item = (cmd, vbucket_id, key, flg, exp, cas, val)
-
-                    batch.append(item, len(val))
+                    if not self.skip(key, vbucket_id):
+                        item = (cmd, vbucket_id, key, flg, exp, cas, val)
+                        batch.append(item, len(val))
                 elif cmd == memcacheConstants.CMD_TAP_OPAQUE:
                     if len(ext) > 0:
                         rv, eng_length, flags, ttl, flg, exp, need_ack = \

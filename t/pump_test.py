@@ -746,7 +746,6 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
         # Two BFD files should be created, with 1 item each.
         self.check_cbb_file_exists(d, num=2)
-
         self.expect_backup_contents(d,
                                     "set a 0 0 1\r\nA\r\n"
                                     "set a 0 0 1\r\nA\r\n")
@@ -797,10 +796,7 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-
-        # Two BFD files should be created, with 1 item each.
         self.check_cbb_file_exists(d, num=2)
-
         self.expect_backup_contents(d,
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "set b 0 12345 1\r\nB\r\n"
@@ -851,6 +847,42 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
             client.close("close after ack received")
             client.go.set()
 
+    def test_key_filter_some(self):
+        d = tempfile.mkdtemp()
+        mrs.reset(self, [({ 'command': 'GET',
+                            'path': '/pools/default/buckets'},
+                          { 'code': 200, 'message': self.json_2_nodes() })])
+
+        w = Worker(target=self.worker_2_mutation)
+        w.start()
+
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d, "-k", "a"])
+        self.assertEqual(0, rv)
+        self.check_cbb_file_exists(d, num=2)
+        self.expect_backup_contents(d,
+                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 40302010 0 1\r\nA\r\n",
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A')])
+        w.join()
+        shutil.rmtree(d)
+
+    def test_key_filter_everything(self):
+        d = tempfile.mkdtemp()
+        mrs.reset(self, [({ 'command': 'GET',
+                            'path': '/pools/default/buckets'},
+                          { 'code': 200, 'message': self.json_2_nodes() })])
+
+        w = Worker(target=self.worker_2_mutation)
+        w.start()
+
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d, "-k", "aaa"])
+        self.assertEqual(0, rv)
+        self.check_cbb_file_exists(d, num=2)
+        self.expect_backup_contents(d, "", [])
+        w.join()
+        shutil.rmtree(d)
+
     def test_2_mutation_chopped_header(self):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({ 'command': 'GET',
@@ -866,7 +898,6 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
         # Two BFD files should be created, with 1 item each.
         self.check_cbb_file_exists(d, num=2)
-
         self.expect_backup_contents(d,
                                     "set a 0 0 1\r\nA\r\n"
                                     "set a 0 0 1\r\nA\r\n")
@@ -888,7 +919,6 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
         # Two BFD files should be created, with 1 item each.
         self.check_cbb_file_exists(d, num=2)
-
         self.expect_backup_contents(d,
                                     "set a 0 0 1\r\nA\r\n"
                                     "set a 0 0 1\r\nA\r\n",
@@ -933,9 +963,7 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-
         self.check_cbb_file_exists(d, num=2)
-
         self.expect_backup_contents(d,
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n"
@@ -1005,9 +1033,7 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-
         self.check_cbb_file_exists(d, num=2)
-
         self.expect_backup_contents(d,
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n"
@@ -1069,9 +1095,7 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-
         self.check_cbb_file_exists(d, num=2)
-
         self.expect_backup_contents(d,
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n"
@@ -1151,9 +1175,7 @@ class TestTAPDumpSourceMutations(TestTAPDumpSource):
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-
         self.check_cbb_file_exists(d, num=2)
-
         self.expect_backup_contents(d,
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n"
