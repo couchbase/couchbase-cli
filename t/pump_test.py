@@ -4,6 +4,7 @@
 Unit tests for backup/restore/transfer/pump.
 """
 
+import collections
 import glob
 import os
 import Queue
@@ -28,13 +29,14 @@ import pump_tap
 import mc_bin_client
 import memcacheConstants
 
-from memcacheConstants import CMD_TAP_MUTATION
-from memcacheConstants import CMD_TAP_DELETE
+from memcacheConstants import *
 
 # TODO: (1) Sink - run() test that key & val remains intact.
 # TODO: (1) Sink - run() test that flg remains intact.
 # TODO: (1) Sink - run() test that exp remains intact.
 # TODO: (1) test - multiple buckets.
+# TODO: (1) test TAP ttl / time-to-live field.
+# TODO: (1) test TAP other TAP_FLAG's.
 
 class MockHTTPServer(BaseHTTPServer.HTTPServer):
     """Subclass that remembers the rest_server; and, SO_REUSEADDR."""
@@ -1375,45 +1377,95 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
 class TestRestore(MCTestHelper, BackupTestHelper):
 
-    def gen_backup(self):
-        items = [
-            [(0, 'a', 'A', 10, 1000, 0),
-             (1, 'b', 'B', 11, 1001, 0)],
-            [(900, 'x', 'X', 990, 9900, 0),
-             (901, 'y', 'Y', 991, 9901, 0)]
-            ]
+    def setUp(self):
+        MCTestHelper.setUp(self)
+        BackupTestHelper.setUp(self)
 
-        expected_backup_stdout = \
-            "set a 10 1000 1\r\nA\r\n" \
-            "set b 11 1001 1\r\nB\r\n" \
-            "set x 990 9900 1\r\nX\r\n" \
-            "set y 991 9901 1\r\nY\r\n"
+        # Cmds in order of restoration.
+        self.restored_cmds = []
+
+        # Map key is cmd key, value is list of item cmds received for that key.
+        self.restored_key_cmds = collections.defaultdict(list)
+
+        # Map key is cmd code (ex: CMD_SET), value is integer count.
+        self.restored_cmd_counts = collections.defaultdict(int)
+
+    def gen_backup(self,
+                   items_per_node=None,
+                   expected_backup_stdout=None,
+                   json=None,
+                   list_mms=None):
+        """Generate a backup file/directory so we can test restore.
+
+           The items is list of lists, with one list per fake,
+           mock node in the cluster."""
+
+        if not items_per_node:
+            items_per_node = [
+                # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+                [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 1000, 8000),
+                 (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 1001, 8001)],
+                [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 9900, 8800),
+                 (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 9901, 8801)]
+                ]
+            # 0xf1000000 == 4043309056
+            # 0xfe000000 == 4261412864
+            expected_backup_stdout = \
+                "set a 4043309056 1000 1\r\nA\r\n" \
+                "set b 4043309057 1001 1\r\nB\r\n" \
+                "set x 4261412864 9900 1\r\nX\r\n" \
+                "set y 4261412865 9901 1\r\nY\r\n"
+
+        if not json:
+            json = self.json_2_nodes()
+
+        if not list_mms:
+            list_mms = [mms0, mms1]
+
+        self.assertTrue(len(list_mms) <= len(items_per_node))
 
         d = tempfile.mkdtemp()
         mrs.reset(self, [({ 'command': 'GET',
                             'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+                          { 'code': 200,
+                            'message': json })])
 
-        workers = [ Worker(target=self.worker_gen_backup,
-                           args=[0, mms0, items[0]]),
-                    Worker(target=self.worker_gen_backup,
-                           args=[1, mms1, items[1]]) ]
-        for w in workers:
-            w.start()
+        workers = []
+        for idx, items in enumerate(items_per_node):
+            workers.append(Worker(target=self.worker_gen_backup,
+                                  args=[idx, list_mms[idx], items]))
+            workers[-1].start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
 
         self.check_cbb_file_exists(d, num=2)
         self.expect_backup_contents(d, expected_backup_stdout)
+
         for w in workers:
             w.join()
-        return d, sum([len(x) for x in items])
+        return d, items_per_node, self.flatten_items_per_node(items_per_node)
+
+    def flatten_items_per_node(self, items_per_node):
+        flattened = sum(items_per_node, [])
+
+        # Zero out the CAS value, since we currently use SET/ADD.
+        # TODO: (1) revisit CAS once we use SET_WITH_META/ADD_WITH_META.
+        arr = []
+
+        for item in flattened:
+            cmd_tap, vbucket_id, key, val, flg, exp, cas = item
+            arr.append((cmd_tap, vbucket_id, key, val, flg, exp, 0))
+
+        return arr
 
     def worker_gen_backup(self, idx, mms, items,
                           opaque_base=0,
                           bucket='default',
                           bucket_password=''):
+        """Represents a memcached server that provides items
+           for gen_backup."""
+
         client, req = mms.queue.get()
         cmd, _, _, _, _, opaque, _ = \
             self.check_auth(req, bucket, bucket_password)
@@ -1425,18 +1477,25 @@ class TestRestore(MCTestHelper, BackupTestHelper):
             self.check_tap_connect(req)
 
         for i, item in enumerate(items):
-            vbucket_id, key, val, flg, exp, cas = item
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, flg, exp)
-            client.client.send(self.req(CMD_TAP_MUTATION,
-                                        vbucket_id, key, val, ext,
+            cmd_tap, vbucket_id, key, val, flg, exp, cas = item
+            if cmd_tap == CMD_TAP_MUTATION:
+                ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+                                  0, memcacheConstants.TAP_FLAG_ACK, 0, flg, exp)
+            elif cmd_tap == CMD_TAP_DELETE:
+                ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
+                                  0, memcacheConstants.TAP_FLAG_ACK, 0)
+            else:
+                self.assertTrue(False,
+                                "unexpected cmd_tap: " + str(cmd_tap))
+
+            client.client.send(self.req(cmd_tap, vbucket_id, key, val, ext,
                                         i + opaque_base, cas))
             client.go.set()
 
             client, res = mms.queue.get()
             cmd, vbucket_id, ext, key, val, opaque, cas = \
                 self.parse_res(res)
-            self.assertEqual(CMD_TAP_MUTATION, cmd)
+            self.assertEqual(cmd_tap, cmd)
             self.assertEqual(0, vbucket_id)
             self.assertEqual('', ext)
             self.assertEqual('', key)
@@ -1456,31 +1515,12 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         mms0.reset()
         mms1.reset()
 
-    def test_restore(self):
-        d, num_cmds_backup = self.gen_backup()
+    def worker_restore(self, idx, mms, orig_items_total,
+                       bucket='default', bucket_password=''):
+        """Represents a mock memcached server during the restore phase
+           that just collects all received commands."""
 
-        self.reset_mock_cluster()
-
-        self.num_cmds_backup = num_cmds_backup
-        self.num_cmds_restored = 0
-
-        workers = [ Worker(target=self.worker_restore, args=[0, mms0]),
-                    Worker(target=self.worker_restore, args=[1, mms1]) ]
-        for w in workers:
-            w.start()
-
-        # Single threaded and batch_max_size of 1 for sanity.
-        rv = pump_transfer.Restore().main(["cbrestore", d, mrs.url(),
-                                           "-t", "1",
-                                           "-x", "batch_max_size=1"])
-        self.assertEqual(0, rv)
-
-        for w in workers:
-            w.join()
-        shutil.rmtree(d)
-
-    def worker_restore(self, idx, mms, bucket='default', bucket_password=''):
-        while self.num_cmds_restored < self.num_cmds_backup:
+        while len(self.restored_key_cmds) < orig_items_total:
             client, req = mms.queue.get()
             mms.queue.task_done()
 
@@ -1489,15 +1529,74 @@ class TestRestore(MCTestHelper, BackupTestHelper):
 
             cmd, vbucket_id, ext, key, val, opaque, cas = \
                 self.parse_req(req)
+            self.restored_cmd_counts[cmd] += 1
 
             if cmd == memcacheConstants.CMD_SASL_AUTH:
                 cmd, _, _, _, _, opaque, _ = \
                     self.check_auth(req, bucket, bucket_password)
             else:
-                self.num_cmds_restored += 1
+                if (cmd == memcacheConstants.CMD_SET or
+                    cmd == memcacheConstants.CMD_ADD):
+                    cmd_tap = CMD_TAP_MUTATION
+                    flg, exp = struct.unpack(SET_PKT_FMT, ext)
+                elif cmd == memcacheConstants.CMD_DELETE:
+                    cmd_tap = CMD_TAP_DELETE
+                    flg, exp = 0, 0
+                else:
+                    self.assertTrue(False,
+                                    "received unexpected restore cmd: " +
+                                    str(cmd) + " with key: " + key)
+
+                item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+                self.restored_cmds.append(item)
+                self.restored_key_cmds[key].append(item)
 
             client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
             client.go.set()
+
+    def check_restore_matches_backup(self, orig_items, orig_items_flattened,
+                                     expected_cmd_counts=2,
+                                     expected_sasl_counts=2):
+        self.assertEqual(len(orig_items_flattened),
+                         len(self.restored_cmds))
+        self.assertEqual(expected_cmd_counts,
+                         len(self.restored_cmd_counts))
+        self.assertEqual(expected_sasl_counts,
+                         self.restored_cmd_counts[CMD_SASL_AUTH])
+        self.assertEqual(sorted(orig_items_flattened),
+                         sorted(self.restored_cmds))
+
+    def check_restore(self, items_per_node):
+        d, orig_items, orig_items_flattened = \
+            self.gen_backup(items_per_node=items_per_node)
+
+        self.reset_mock_cluster()
+
+        # Two mock servers in the cluster.
+        workers = [ Worker(target=self.worker_restore,
+                           args=[0, mms0, len(orig_items_flattened)]),
+                    Worker(target=self.worker_restore,
+                           args=[1, mms1, len(orig_items_flattened)]) ]
+        for w in workers:
+            w.start()
+
+        # Single threaded and batch_max_size of 1 for sanity.
+        rv = pump_transfer.Restore().main(["cbrestore", d, mrs.url(),
+                                           "-t", "1",
+                                           "-x", "batch_max_size=1"])
+        self.assertEqual(0, rv)
+        self.check_restore_matches_backup(orig_items, orig_items_flattened)
+
+        for w in workers:
+            w.join()
+        shutil.rmtree(d)
+
+        return orig_items_flattened
+
+    def test_restore_simple(self):
+        source_items = self.check_restore(None)
+        self.assertEqual(len(source_items),
+                         self.restored_cmd_counts[CMD_SET])
 
 
 # ------------------------------------------------------
