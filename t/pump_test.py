@@ -179,8 +179,8 @@ class MockMemcachedSession(threading.Thread):
         self.loops_max = 10
         self.go = threading.Event()
 
-    def log(self, msg):
-        print self, self.server.port, msg
+    def log(self, message):
+        pass
 
     def run(self):
         input = [self.client]
