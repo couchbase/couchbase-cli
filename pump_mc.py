@@ -235,7 +235,7 @@ class MCSink(pump.Sink):
         elif cmd == memcacheConstants.CMD_DELETE:
             ext = ''
         else:
-            return "error: CBSink - unknown cmd for request: " + str(cmd), None
+            return "error: MCSink - unknown cmd for request: " + str(cmd), None
 
         hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, cas, opaque)
         return 0, (hdr, ext, key, val)

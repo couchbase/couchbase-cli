@@ -4,6 +4,7 @@
 Unit tests for backup/restore/transfer/pump.
 """
 
+import binascii
 import collections
 import glob
 import os
@@ -31,9 +32,6 @@ import memcacheConstants
 
 from memcacheConstants import *
 
-# TODO: (1) Sink - run() test that key & val remains intact.
-# TODO: (1) Sink - run() test that flg remains intact.
-# TODO: (1) Sink - run() test that exp remains intact.
 # TODO: (1) test - multiple buckets.
 # TODO: (1) test TAP ttl / time-to-live field.
 # TODO: (1) test TAP other TAP_FLAG's.
@@ -168,13 +166,16 @@ class MockMemcachedServer(threading.Thread):
 
 
 class MockMemcachedSession(threading.Thread):
-    def __init__(self, client, address, server, recv_len=1024):
+    def __init__(self, client, address, server, recv_len=None):
         threading.Thread.__init__(self)
         self.daemon = True
         self.server = server
         self.client = client
         self.address = address
         self.recv_len = recv_len
+        if not self.recv_len:
+            # Set this larger than our largest blob test value size.
+            self.recv_len = 40 * 1024 * 1024
         self.loops = 0 # Number of loops without progress.
         self.loops_max = 10
         self.go = threading.Event()
@@ -578,7 +579,7 @@ class BackupTestHelper(unittest.TestCase):
 
                 self.assertEqual(ecmd, acmd)
                 self.assertEqual(evbucket_id, avbucket_id)
-                self.assertEqual(ekey, akey)
+                self.assertEqual(str(ekey), str(akey))
                 self.assertEqual(eflg, aflg)
                 self.assertEqual(eexp, aexp)
                 self.assertEqual(ecas, acas)
@@ -1563,8 +1564,19 @@ class TestRestore(MCTestHelper, BackupTestHelper):
                          len(self.restored_cmd_counts))
         self.assertEqual(expected_sasl_counts,
                          self.restored_cmd_counts[CMD_SASL_AUTH])
-        self.assertEqual(sorted(orig_items_flattened),
-                         sorted(self.restored_cmds))
+
+        before = sorted(orig_items_flattened)
+        after = sorted(self.restored_cmds)
+
+        # Although we do a deep before and after comparison later,
+        # these separate length checks help the humans to debug.
+        #
+        self.assertEqual(len(before), len(after))
+
+        for i, before_item in enumerate(before):
+            self.assertEqual(len(before_item[3]), len(after[i][3]))
+
+        self.assertEqual(before, after)
 
     def check_restore(self, items_per_node,
                       expected_cmd_counts=2):
@@ -1640,6 +1652,27 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         self.assertEqual(CMD_TAP_MUTATION, self.restored_key_cmds['y'][0][0])
         self.assertEqual(CMD_TAP_DELETE, self.restored_key_cmds['y'][1][0])
         self.assertEqual(CMD_TAP_MUTATION, self.restored_key_cmds['y'][2][0])
+
+    def test_restore_blobs(self, large_blob_size=40000):
+        kb = binascii.a2b_hex('00ff010203040506070800')
+        vb = kb * 5
+
+        kx = binascii.a2b_hex('0000000000000000000000')
+        vx = ''.join(['\x00' for x in xrange(large_blob_size)])
+
+        items_per_node = [
+            # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_TAP_MUTATION, 1, kb, vb, 0, 0, 0)],
+            [(CMD_TAP_MUTATION, 900, kx, vx, 0, 0, 1)]
+            ]
+
+        source_items = self.check_restore(items_per_node,
+                                          expected_cmd_counts=2)
+        self.assertEqual(2, self.restored_cmd_counts[CMD_SET])
+        self.assertEqual(1, len(self.restored_key_cmds[kb]))
+        self.assertEqual(1, len(self.restored_key_cmds[kx]))
+        self.assertEqual(vb, self.restored_key_cmds[kb][0][3])
+        self.assertEqual(vx, self.restored_key_cmds[kx][0][3])
 
 
 # ------------------------------------------------------

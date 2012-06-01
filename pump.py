@@ -383,12 +383,12 @@ class EndPoint():
 
     def skip(self, key, vbucket_id):
         if (self.only_key_re and not re.search(self.only_key_re, key)):
-            logging.warn("skip item with key: " + str(key))
+            logging.warn("skipping item with key: " + str(key))
             return True
 
         if (self.only_vbucket_id is not None and
             self.only_vbucket_id != vbucket_id):
-            logging.warn("skip item of vbucket_id: " + str(vbucket_id))
+            logging.warn("skipping item of vbucket_id: " + str(vbucket_id))
             return True
 
         return False

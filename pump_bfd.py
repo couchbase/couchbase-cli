@@ -203,7 +203,9 @@ class BFDSink(BFD, Sink):
                                                 "error: BFDSink bad cmd: " +
                                                 str(cmd))
 
-                    c.execute(s, (cmd, vbucket_id, key, flg, exp, cas,
+                    c.execute(s, (cmd, vbucket_id,
+                                  sqlite3.Binary(key),
+                                  flg, exp, cas,
                                   sqlite3.Binary(val)))
 
                 db.commit()
@@ -304,7 +306,7 @@ def create_db(db_path, opts):
                   CREATE TABLE cbb_cmd
                      (cmd integer,
                       vbucket_id integer,
-                      key varchar(250), flg integer, exp integer, cas integer,
+                      key blob, flg integer, exp integer, cas integer,
                       val blob);
                   pragma user_version=%s;
                   COMMIT;
