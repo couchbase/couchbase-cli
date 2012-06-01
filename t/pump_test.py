@@ -1566,7 +1566,8 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         self.assertEqual(sorted(orig_items_flattened),
                          sorted(self.restored_cmds))
 
-    def check_restore(self, items_per_node):
+    def check_restore(self, items_per_node,
+                      expected_cmd_counts=2):
         d, orig_items, orig_items_flattened = \
             self.gen_backup(items_per_node=items_per_node)
 
@@ -1585,7 +1586,8 @@ class TestRestore(MCTestHelper, BackupTestHelper):
                                            "-t", "1",
                                            "-x", "batch_max_size=1"])
         self.assertEqual(0, rv)
-        self.check_restore_matches_backup(orig_items, orig_items_flattened)
+        self.check_restore_matches_backup(orig_items, orig_items_flattened,
+                                          expected_cmd_counts=expected_cmd_counts)
 
         for w in workers:
             w.join()
@@ -1597,6 +1599,47 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         source_items = self.check_restore(None)
         self.assertEqual(len(source_items),
                          self.restored_cmd_counts[CMD_SET])
+
+    def test_restore_big_expirations_and_CAS(self):
+        items_per_node = [
+            # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff)],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff)]
+            ]
+
+        source_items = self.check_restore(items_per_node)
+        self.assertEqual(len(source_items),
+                         self.restored_cmd_counts[CMD_SET])
+
+    def test_restore_deletes(self):
+        items_per_node = [
+            # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff),
+             (CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff)
+             ],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff),
+             (CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y-back', 123, 456, 40000 * 0xffffffff)
+             ]
+            ]
+
+        source_items = self.check_restore(items_per_node,
+                                          expected_cmd_counts=3)
+        self.assertEqual(5, self.restored_cmd_counts[CMD_SET])
+        self.assertEqual(2, self.restored_cmd_counts[CMD_DELETE])
+        self.assertEqual(2, len(self.restored_key_cmds['a']))
+        self.assertEqual(1, len(self.restored_key_cmds['b']))
+        self.assertEqual(1, len(self.restored_key_cmds['x']))
+        self.assertEqual(3, len(self.restored_key_cmds['y']))
+        self.assertEqual(CMD_TAP_MUTATION, self.restored_key_cmds['a'][0][0])
+        self.assertEqual(CMD_TAP_DELETE, self.restored_key_cmds['a'][1][0])
+        self.assertEqual(CMD_TAP_MUTATION, self.restored_key_cmds['y'][0][0])
+        self.assertEqual(CMD_TAP_DELETE, self.restored_key_cmds['y'][1][0])
+        self.assertEqual(CMD_TAP_MUTATION, self.restored_key_cmds['y'][2][0])
 
 
 # ------------------------------------------------------
