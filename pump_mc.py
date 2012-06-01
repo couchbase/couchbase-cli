@@ -22,6 +22,9 @@ class MCSink(pump.Sink):
 
         self.init_worker(MCSink.run)
 
+    def close(self):
+        self.push_next_batch(None, None)
+
     @staticmethod
     def run(self):
         """Worker thread to asynchronously store batches into sink."""
@@ -31,14 +34,18 @@ class MCSink(pump.Sink):
         while not self.ctl['stop']:
             batch, future = self.pull_next_batch()
             if not batch:
-                return self.future_done(future, 0)
+                self.future_done(future, 0)
+                self.close_mconns(mconns)
+                return
 
             backoff = 0.1 # Reset backoff after a good batch.
 
             while batch:  # Loop in case retry is required.
                 rv, batch = self.scatter_gather(mconns, batch)
                 if rv != 0:
-                    return self.future_done(future, rv)
+                    self.future_done(future, rv)
+                    self.close_mconns(mconns)
+                    return
 
                 if batch:
                     # TODO: (1) MCSink - run() retry less than whole batch.
@@ -51,6 +58,12 @@ class MCSink(pump.Sink):
                     time.sleep(backoff)
 
             self.future_done(future, 0)
+
+        self.close_mconns(mconns)
+
+    def close_mconns(self, mconns):
+        for k, conn in mconns.items():
+            conn.close()
 
     def scatter_gather(self, mconns, batch):
         use_add = bool(getattr(self.opts, "add", False))

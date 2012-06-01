@@ -323,7 +323,12 @@ class Pump(ProgressReporter):
             elif report_dot > 0 and n % report_dot == 0:
                 sys.stderr.write('.')
 
+        return self.done(0)
+
     def done(self, rv):
+        self.source.close()
+        self.sink.close()
+
         logging.debug("  pump (%s->%s) done.", self.source, self.sink)
         self.report(prefix="  ")
 
@@ -372,6 +377,9 @@ class EndPoint():
             (self.spec,
              self.source_bucket.get('name', ''),
              self.source_node.get('hostname', ''))
+
+    def close(self):
+        pass
 
     def skip(self, key, vbucket_id):
         if (self.only_key_re and not re.search(self.only_key_re, key)):
@@ -469,8 +477,9 @@ class Sink(EndPoint):
         if rv != 0:
             logging.error("error: async/future operation: %s on sink: %s" %
                           (rv, self))
-        future.done_rv = rv
-        future.done.set()
+        if future:
+            future.done_rv = rv
+            future.done.set()
 
 
 # --------------------------------------------------
