@@ -34,6 +34,7 @@ from memcacheConstants import CMD_TAP_DELETE
 # TODO: (1) Sink - run() test that key & val remains intact.
 # TODO: (1) Sink - run() test that flg remains intact.
 # TODO: (1) Sink - run() test that exp remains intact.
+# TODO: (1) test - multiple buckets.
 
 class MockHTTPServer(BaseHTTPServer.HTTPServer):
     """Subclass that remembers the rest_server; and, SO_REUSEADDR."""
@@ -109,6 +110,7 @@ class MockRESTServer(threading.Thread):
                 httpd.handle_request()
             except:
                 print "  MockRESTServer: exception"
+                self.stop = True
 
         if httpd.socket:
             httpd.socket.close()
@@ -131,9 +133,8 @@ class MockMemcachedServer(threading.Thread):
         self.backlog = 5
         self.reset()
 
-    def reset(self, test=None, expects=[]):
+    def reset(self, test=None):
         self.test = test
-        self.expects = expects
         self.sessions = {}
         self.queue = Queue.Queue(1000)
 
@@ -177,7 +178,7 @@ class MockMemcachedSession(threading.Thread):
         self.go = threading.Event()
 
     def log(self, msg):
-        print "  MockMemcachedSession", self.server.port, msg
+        print self, self.server.port, msg
 
     def run(self):
         input = [self.client]
@@ -185,7 +186,7 @@ class MockMemcachedSession(threading.Thread):
         self.loops = 0
 
         while (self.client and self.loops < self.loops_max):
-            self.log("MockMemcachedSession loops (" + str(self.loops) + ")")
+            self.log("loops (" + str(self.loops) + ")")
             self.loops = self.loops + 1
 
             iready, oready, eready = select.select(input, [], [], 1)
@@ -210,10 +211,12 @@ class MockMemcachedSession(threading.Thread):
         return self.close()
 
     def close(self, msg=None):
-        self.log("MockMemcachedSession close: " + (msg or ''))
+        self.log("close: " + (msg or ''))
         if self.client:
             self.client.close()
         self.client = None
+
+        self.server.queue.put((None, None))
 
 
 mms0 = MockMemcachedServer(18092)
@@ -226,8 +229,8 @@ mms1.start()
 
 class Worker(threading.Thread):
 
-    def __init__(self, target):
-        threading.Thread.__init__(self, target=target, group=None)
+    def __init__(self, target, args=[]):
+        threading.Thread.__init__(self, target=target, args=args, group=None)
         self.daemon = True
 
 
