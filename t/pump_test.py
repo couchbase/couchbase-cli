@@ -1373,6 +1373,133 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                         1234, 'b', 'B', ext, 987, 4321))
 
 
+class TestRestore(MCTestHelper, BackupTestHelper):
+
+    def gen_backup(self):
+        items = [
+            [(0, 'a', 'A', 10, 1000, 0),
+             (1, 'b', 'B', 11, 1001, 0)],
+            [(900, 'x', 'X', 990, 9900, 0),
+             (901, 'y', 'Y', 991, 9901, 0)]
+            ]
+
+        expected_backup_stdout = \
+            "set a 10 1000 1\r\nA\r\n" \
+            "set b 11 1001 1\r\nB\r\n" \
+            "set x 990 9900 1\r\nX\r\n" \
+            "set y 991 9901 1\r\nY\r\n"
+
+        d = tempfile.mkdtemp()
+        mrs.reset(self, [({ 'command': 'GET',
+                            'path': '/pools/default/buckets'},
+                          { 'code': 200, 'message': self.json_2_nodes() })])
+
+        workers = [ Worker(target=self.worker_gen_backup,
+                           args=[0, mms0, items[0]]),
+                    Worker(target=self.worker_gen_backup,
+                           args=[1, mms1, items[1]]) ]
+        for w in workers:
+            w.start()
+
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        self.assertEqual(0, rv)
+
+        self.check_cbb_file_exists(d, num=2)
+        self.expect_backup_contents(d, expected_backup_stdout)
+        for w in workers:
+            w.join()
+        return d, sum([len(x) for x in items])
+
+    def worker_gen_backup(self, idx, mms, items,
+                          opaque_base=0,
+                          bucket='default',
+                          bucket_password=''):
+        client, req = mms.queue.get()
+        cmd, _, _, _, _, opaque, _ = \
+            self.check_auth(req, bucket, bucket_password)
+        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+        client.go.set()
+
+        client, req = mms.queue.get()
+        cmd, _, _, _, _, opaque, _ = \
+            self.check_tap_connect(req)
+
+        for i, item in enumerate(items):
+            vbucket_id, key, val, flg, exp, cas = item
+            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+                              0, memcacheConstants.TAP_FLAG_ACK, 0, flg, exp)
+            client.client.send(self.req(CMD_TAP_MUTATION,
+                                        vbucket_id, key, val, ext,
+                                        i + opaque_base, cas))
+            client.go.set()
+
+            client, res = mms.queue.get()
+            cmd, vbucket_id, ext, key, val, opaque, cas = \
+                self.parse_res(res)
+            self.assertEqual(CMD_TAP_MUTATION, cmd)
+            self.assertEqual(0, vbucket_id)
+            self.assertEqual('', ext)
+            self.assertEqual('', key)
+            self.assertEqual(i + opaque_base, opaque)
+            self.assertEqual(0, cas)
+            self.assertEqual('', val)
+
+        client.close("close after last ack received")
+        client.go.set()
+
+    def reset_mock_cluster(self, rest_msgs=None):
+        mrs.reset(self,
+                  rest_msgs or
+                  [({ 'command': 'GET',
+                      'path': '/pools/default/buckets'},
+                    { 'code': 200, 'message': self.json_2_nodes() })])
+        mms0.reset()
+        mms1.reset()
+
+    def test_restore(self):
+        d, num_cmds_backup = self.gen_backup()
+
+        self.reset_mock_cluster()
+
+        self.num_cmds_backup = num_cmds_backup
+        self.num_cmds_restored = 0
+
+        workers = [ Worker(target=self.worker_restore, args=[0, mms0]),
+                    Worker(target=self.worker_restore, args=[1, mms1]) ]
+        for w in workers:
+            w.start()
+
+        # Single threaded and batch_max_size of 1 for sanity.
+        rv = pump_transfer.Restore().main(["cbrestore", d, mrs.url(),
+                                           "-t", "1",
+                                           "-x", "batch_max_size=1"])
+        self.assertEqual(0, rv)
+
+        for w in workers:
+            w.join()
+        shutil.rmtree(d)
+
+    def worker_restore(self, idx, mms, bucket='default', bucket_password=''):
+        while self.num_cmds_restored < self.num_cmds_backup:
+            client, req = mms.queue.get()
+            mms.queue.task_done()
+
+            if not client or not req:
+                return
+
+            cmd, vbucket_id, ext, key, val, opaque, cas = \
+                self.parse_req(req)
+
+            if cmd == memcacheConstants.CMD_SASL_AUTH:
+                cmd, _, _, _, _, opaque, _ = \
+                    self.check_auth(req, bucket, bucket_password)
+            else:
+                self.num_cmds_restored += 1
+
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+            client.go.set()
+
+
 # ------------------------------------------------------
 
 SAMPLE_JSON_pools = """
