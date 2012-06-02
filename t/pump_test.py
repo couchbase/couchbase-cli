@@ -35,6 +35,18 @@ from memcacheConstants import *
 # TODO: (1) test - multiple buckets.
 # TODO: (1) test TAP ttl / time-to-live field.
 # TODO: (1) test TAP other TAP_FLAG's.
+# TODO: (1) test large clusters.
+# TODO: (1) test large unbalanced clusters.
+# TODO: (1) test multiple threads.
+# TODO: (1) test num threads > num servers.
+# TODO: (1) test num threads < num servers.
+# TODO: (1) test num items > batch max size.
+# TODO: (1) test item sizes > batch max bytes.
+# TODO: (1) test BACKOFF.
+# TODO: (1) test NOT_MY_VBUCKET.
+# TODO: (1) test server node dying.
+# TODO: (1) test server node hiccup.
+# TODO: (1) test server not enough disk space.
 
 class MockHTTPServer(BaseHTTPServer.HTTPServer):
     """Subclass that remembers the rest_server; and, SO_REUSEADDR."""
