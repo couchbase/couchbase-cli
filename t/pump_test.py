@@ -166,16 +166,12 @@ class MockMemcachedServer(threading.Thread):
 
 
 class MockMemcachedSession(threading.Thread):
-    def __init__(self, client, address, server, recv_len=None):
+    def __init__(self, client, address, server):
         threading.Thread.__init__(self)
         self.daemon = True
         self.server = server
         self.client = client
         self.address = address
-        self.recv_len = recv_len
-        if not self.recv_len:
-            # Set this larger than our largest blob test value size.
-            self.recv_len = 40 * 1024 * 1024
         self.loops = 0 # Number of loops without progress.
         self.loops_max = 10
         self.go = threading.Event()
@@ -188,6 +184,8 @@ class MockMemcachedSession(threading.Thread):
 
         self.loops = 0
 
+        buf = ''
+
         while (self.client and self.loops < self.loops_max):
             self.log("loops (" + str(self.loops) + ")")
             self.loops = self.loops + 1
@@ -198,15 +196,27 @@ class MockMemcachedSession(threading.Thread):
 
             if len(iready) > 0:
                 self.log("recv...")
-                data = self.client.recv(self.recv_len)
-                if data and len(data) > 0:
-                    self.loops = 0
-                    self.log("recv done: " + data)
-                    self.server.queue.put((self, data))
-                    self.go.wait()
-                    self.go.clear()
-                else:
+
+                pkt, buf = self.recv(self.client,
+                                     memcacheConstants.MIN_RECV_PACKET, buf)
+                if not pkt:
                     return self.close("recv no data")
+
+                magic, cmd, keylen, extlen, dtype, vbucket_id, datalen, opaque, cas = \
+                    struct.unpack(memcacheConstants.REQ_PKT_FMT, pkt)
+                if (magic != memcacheConstants.REQ_MAGIC_BYTE and
+                    magic != memcacheConstants.RES_MAGIC_BYTE):
+                    raise Exception("unexpected recv magic: " + str(magic))
+
+                data, buf = self.recv(self.client, datalen, buf)
+
+                # print cmd, vbucket_id, extlen, keylen, data, cas, opaque
+
+                self.loops = 0
+                self.log("recv done: %s %s" % (cmd, vbucket_id))
+                self.server.queue.put((self, pkt + data))
+                self.go.wait()
+                self.go.clear()
 
         if self.loops >= self.loops_max:
             return self.close("loops too long")
@@ -220,6 +230,22 @@ class MockMemcachedSession(threading.Thread):
         self.client = None
 
         self.server.queue.put((None, None))
+
+    def recv(self, skt, nbytes, buf):
+        while len(buf) < nbytes:
+            data = None
+            try:
+                data = skt.recv(max(nbytes - len(buf), 4096))
+            except socket.timeout:
+                logging.error("error: recv socket.timeout")
+            except Exception as e:
+                logging.error("error: recv exception: " + str(e))
+
+            if not data:
+                return None, ''
+            buf += data
+
+        return buf[:nbytes], buf[nbytes:]
 
 
 mms0 = MockMemcachedServer(18092)
@@ -1673,6 +1699,12 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         self.assertEqual(1, len(self.restored_key_cmds[kx]))
         self.assertEqual(vb, self.restored_key_cmds[kb][0][3])
         self.assertEqual(vx, self.restored_key_cmds[kx][0][3])
+
+    def test_restore_1M_blob(self):
+        self.test_restore_blobs(large_blob_size=1 * 1024 * 1024)
+
+    def test_restore_30M_blob(self):
+        self.test_restore_blobs(large_blob_size=30 * 1024 * 1024)
 
 
 # ------------------------------------------------------
