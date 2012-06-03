@@ -1562,36 +1562,37 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         while len(self.restored_key_cmds) < orig_items_total:
             client, req = mms.queue.get()
             mms.queue.task_done()
-
             if not client or not req:
                 return
+            self.handle_mc_req(client, req, bucket, bucket_password)
 
-            cmd, vbucket_id, ext, key, val, opaque, cas = \
-                self.parse_req(req)
-            self.restored_cmd_counts[cmd] += 1
+    def handle_mc_req(self, client, req, bucket, bucket_password):
+        cmd, vbucket_id, ext, key, val, opaque, cas = \
+            self.parse_req(req)
+        self.restored_cmd_counts[cmd] += 1
 
-            if cmd == memcacheConstants.CMD_SASL_AUTH:
-                cmd, _, _, _, _, opaque, _ = \
-                    self.check_auth(req, bucket, bucket_password)
+        if cmd == memcacheConstants.CMD_SASL_AUTH:
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, bucket, bucket_password)
+        else:
+            if (cmd == memcacheConstants.CMD_SET or
+                cmd == memcacheConstants.CMD_ADD):
+                cmd_tap = CMD_TAP_MUTATION
+                flg, exp = struct.unpack(SET_PKT_FMT, ext)
+            elif cmd == memcacheConstants.CMD_DELETE:
+                cmd_tap = CMD_TAP_DELETE
+                flg, exp = 0, 0
             else:
-                if (cmd == memcacheConstants.CMD_SET or
-                    cmd == memcacheConstants.CMD_ADD):
-                    cmd_tap = CMD_TAP_MUTATION
-                    flg, exp = struct.unpack(SET_PKT_FMT, ext)
-                elif cmd == memcacheConstants.CMD_DELETE:
-                    cmd_tap = CMD_TAP_DELETE
-                    flg, exp = 0, 0
-                else:
-                    self.assertTrue(False,
-                                    "received unexpected restore cmd: " +
-                                    str(cmd) + " with key: " + key)
+                self.assertTrue(False,
+                                "received unexpected restore cmd: " +
+                                str(cmd) + " with key: " + key)
 
-                item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-                self.restored_cmds.append(item)
-                self.restored_key_cmds[key].append(item)
+            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(item)
+            self.restored_key_cmds[key].append(item)
 
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+        client.go.set()
 
     def check_restore_matches_backup(self, orig_items, orig_items_flattened,
                                      expected_cmd_counts=2,
