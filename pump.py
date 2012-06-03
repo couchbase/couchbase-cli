@@ -332,9 +332,10 @@ class Pump(ProgressReporter):
         logging.debug("  pump (%s->%s) done.", self.source, self.sink)
         self.report(prefix="  ")
 
-        if (self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
-            self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
-            self.cur['tot_source_batch'] != self.cur['tot_sink_batch']):
+        if (rv == 0 and
+            (self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
+             self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
+             self.cur['tot_source_batch'] != self.cur['tot_sink_batch'])):
             return "error: sink missing some source items: " + str(self.cur)
 
         return rv
@@ -475,7 +476,7 @@ class Sink(EndPoint):
     def future_done(self, future, rv):
         """Worker calls this method to finish a batch/future."""
         if rv != 0:
-            logging.error("error: async/future operation: %s on sink: %s" %
+            logging.error("error: async operation: %s on sink: %s" %
                           (rv, self))
         if future:
             future.done_rv = rv

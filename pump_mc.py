@@ -147,9 +147,8 @@ class MCSink(pump.Sink):
                 elif r_status == memcacheConstants.ERR_NOT_MY_VBUCKET:
                     msg = ("error: NOT_MY_VBUCKET;"
                            " perhaps the cluster was rebalancing;"
-                           " vbucket_id: %s key: %s spec: %s error: %s"
-                           " host_port: %s") % (vbucket_id, key,
-                                                self.spec, e, host_port)
+                           " vbucket_id: %s, key: %s, spec: %s, host:port: %s:%s"
+                           % (vbucket_id, key, self.spec, conn.host, conn.port))
                     return msg, None
                 else:
                     return "error: MCSink MC error: " + str(r_status), None

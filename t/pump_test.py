@@ -7,6 +7,7 @@ Unit tests for backup/restore/transfer/pump.
 import binascii
 import collections
 import glob
+import logging
 import os
 import Queue
 import select
@@ -43,7 +44,6 @@ from memcacheConstants import *
 # TODO: (1) test num items > batch max size.
 # TODO: (1) test item sizes > batch max bytes.
 # TODO: (1) test BACKOFF.
-# TODO: (1) test NOT_MY_VBUCKET.
 # TODO: (1) test server node dying.
 # TODO: (1) test server node hiccup.
 # TODO: (1) test server not enough disk space.
@@ -749,6 +749,9 @@ class MCTestHelper(unittest.TestCase):
 
 class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
 
+    # TODO: (1) test rejected SASL AUTH during backup.
+    # TODO: (1) test rejected SASL AUTH during restore.
+
     def test_failed_auth(self):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({ 'command': 'GET',
@@ -1414,7 +1417,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                         1234, 'b', 'B', ext, 987, 4321))
 
 
-class TestRestore(MCTestHelper, BackupTestHelper):
+class RestoreTestHelper:
 
     def setUp(self):
         MCTestHelper.setUp(self)
@@ -1564,7 +1567,8 @@ class TestRestore(MCTestHelper, BackupTestHelper):
             mms.queue.task_done()
             if not client or not req:
                 return
-            self.handle_mc_req(client, req, bucket, bucket_password)
+            if not self.handle_mc_req(client, req, bucket, bucket_password):
+                return
 
     def handle_mc_req(self, client, req, bucket, bucket_password):
         cmd, vbucket_id, ext, key, val, opaque, cas = \
@@ -1594,17 +1598,19 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
 
-    def check_restore_matches_backup(self, orig_items, orig_items_flattened,
+        return True
+
+    def check_restore_matches_backup(self, expected_items,
                                      expected_cmd_counts=2,
                                      expected_sasl_counts=2):
-        self.assertEqual(len(orig_items_flattened),
+        self.assertEqual(len(expected_items),
                          len(self.restored_cmds))
         self.assertEqual(expected_cmd_counts,
                          len(self.restored_cmd_counts))
         self.assertEqual(expected_sasl_counts,
                          self.restored_cmd_counts[CMD_SASL_AUTH])
 
-        before = sorted(orig_items_flattened)
+        before = sorted(expected_items)
         after = sorted(self.restored_cmds)
 
         # Although we do a deep before and after comparison later,
@@ -1618,9 +1624,13 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         self.assertEqual(before, after)
 
     def check_restore(self, items_per_node,
-                      expected_cmd_counts=2):
+                      expected_cmd_counts=2,
+                      expected_items=None):
         d, orig_items, orig_items_flattened = \
             self.gen_backup(items_per_node=items_per_node)
+
+        if not expected_items:
+            expected_items = orig_items_flattened
 
         self.reset_mock_cluster()
 
@@ -1637,7 +1647,7 @@ class TestRestore(MCTestHelper, BackupTestHelper):
                                            "-t", "1",
                                            "-x", "batch_max_size=1"])
         self.assertEqual(0, rv)
-        self.check_restore_matches_backup(orig_items, orig_items_flattened,
+        self.check_restore_matches_backup(expected_items,
                                           expected_cmd_counts=expected_cmd_counts)
 
         for w in workers:
@@ -1645,6 +1655,12 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         shutil.rmtree(d)
 
         return orig_items_flattened
+
+
+class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
+
+    def setUp(self):
+        RestoreTestHelper.setUp(self)
 
     def test_restore_simple(self):
         source_items = self.check_restore(None)
@@ -1717,7 +1733,112 @@ class TestRestore(MCTestHelper, BackupTestHelper):
         self.test_restore_blobs(large_blob_size=1 * 1024 * 1024)
 
     def test_restore_30M_blob(self):
+        # TODO: (1) restore 30M blob test is slow - inefficient buf growth.
         self.test_restore_blobs(large_blob_size=30 * 1024 * 1024)
+
+
+class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
+
+    def setUp(self):
+        RestoreTestHelper.setUp(self)
+
+        self.reqs_after_respond_with_not_my_vbucket = None
+
+        self.items_per_node = [
+            # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000)],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000)]
+            ]
+
+    def handle_mc_req(self, client, req, bucket, bucket_password):
+        """Sends many NOT_MY_VBUCKET to test retries."""
+
+        client.reqs = getattr(client, "reqs", 0) + 1
+
+        cmd, vbucket_id, ext, key, val, opaque, cas = \
+            self.parse_req(req)
+        self.restored_cmd_counts[cmd] += 1
+
+        print cmd, vbucket_id, ext, key, val, opaque, cas
+
+        if client.reqs >= self.reqs_after_respond_with_not_my_vbucket:
+            client.client.send(self.res(cmd, ERR_NOT_MY_VBUCKET,
+                                        '', '', '', opaque, 0))
+            client.go.set()
+            return True
+
+        elif cmd == memcacheConstants.CMD_SASL_AUTH:
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, bucket, bucket_password)
+        else:
+            if (cmd == memcacheConstants.CMD_SET or
+                cmd == memcacheConstants.CMD_ADD):
+                cmd_tap = CMD_TAP_MUTATION
+                flg, exp = struct.unpack(SET_PKT_FMT, ext)
+            elif cmd == memcacheConstants.CMD_DELETE:
+                cmd_tap = CMD_TAP_DELETE
+                flg, exp = 0, 0
+            else:
+                self.assertTrue(False,
+                                "received unexpected restore cmd: " +
+                                str(cmd) + " with key: " + key)
+
+            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(item)
+            self.restored_key_cmds[key].append(item)
+
+        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+        client.go.set()
+
+        return True
+
+    def go(self, reqs_after_respond_with_not_my_vbucket,
+           threads=4,
+           batch_max_size=1):
+        d, orig_items, orig_items_flattened = \
+            self.gen_backup(items_per_node=self.items_per_node)
+
+        self.reset_mock_cluster()
+
+        self.reqs_after_respond_with_not_my_vbucket = \
+            reqs_after_respond_with_not_my_vbucket
+
+        # Two mock servers in the cluster.
+        workers = [ Worker(target=self.worker_restore,
+                           args=[0, mms0, len(orig_items_flattened)]),
+                    Worker(target=self.worker_restore,
+                           args=[1, mms1, len(orig_items_flattened)]) ]
+        for w in workers:
+            w.start()
+
+        rv = pump_transfer.Restore().main(["cbrestore", d, mrs.url(),
+                                           "-t", str(threads),
+                                           "-x",
+                                           "batch_max_size=%s" % (batch_max_size)])
+        self.assertNotEqual(0, rv)
+
+        print rv
+
+        for w in workers:
+            w.join()
+        shutil.rmtree(d)
+
+    def test_immediate_not_my_vbucket_during_restore(self):
+        self.go(2)
+
+    def test_later_not_my_vbucket_during_restore(self):
+        self.go(3)
+
+    def test_immediate_not_my_vbucket_during_restore_1T(self):
+        self.go(2, threads=1)
+
+    def test_immediate_not_my_vbucket_during_restore_5T(self):
+        self.go(2, threads=5)
+
+    def test_immediate_not_my_vbucket_during_restore_5B(self):
+        self.go(2, batch_max_size=5)
 
 
 # ------------------------------------------------------
