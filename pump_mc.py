@@ -48,8 +48,6 @@ class MCSink(pump.Sink):
                     return
 
                 if batch:
-                    # TODO: (1) MCSink - run() retry less than whole batch.
-
                     self.cur["tot_sink_retry_batch"] = \
                         self.cur.get("tot_sink_retry_batch", 0) + 1
 

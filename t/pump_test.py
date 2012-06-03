@@ -38,7 +38,6 @@ from memcacheConstants import *
 # TODO: (1) test TAP other TAP_FLAG's.
 # TODO: (1) test large clusters.
 # TODO: (1) test large unbalanced clusters.
-# TODO: (1) test BACKOFF.
 # TODO: (1) test server node dying.
 # TODO: (1) test server node hiccup.
 # TODO: (1) test server not enough disk space.
@@ -1814,7 +1813,7 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
             ]
 
     def handle_mc_req(self, client, req, bucket, bucket_password):
-        """Sends many NOT_MY_VBUCKET to test retries."""
+        """Sends NOT_MY_VBUCKET to test topology change detection."""
 
         client.reqs = getattr(client, "reqs", 0) + 1
 
@@ -1895,6 +1894,105 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
 
     def test_immediate_not_my_vbucket_during_restore_5B(self):
         self.go(2, batch_max_size=5)
+
+
+class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
+
+    def setUp(self):
+        RestoreTestHelper.setUp(self)
+
+        self.reqs_after_respond_with_backoff = None
+
+        self.items_per_node = [
+            # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000)],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000)]
+            ]
+
+    def handle_mc_req(self, client, req, bucket, bucket_password):
+        """Sends backoff responses to test retries."""
+
+        client.reqs = getattr(client, "reqs", 0) + 1
+
+        cmd, vbucket_id, ext, key, val, opaque, cas = \
+            self.parse_req(req)
+
+        if (self.reqs_after_respond_with_backoff and
+            self.reqs_after_respond_with_backoff <= client.reqs):
+            self.reqs_after_respond_with_backoff = None
+            client.client.send(self.res(cmd, self.backoff_err,
+                                        '', '', '', opaque, 0))
+            client.go.set()
+            return True
+
+        self.restored_cmd_counts[cmd] += 1
+
+        if cmd == memcacheConstants.CMD_SASL_AUTH:
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, bucket, bucket_password)
+        else:
+            if (cmd == memcacheConstants.CMD_SET or
+                cmd == memcacheConstants.CMD_ADD):
+                cmd_tap = CMD_TAP_MUTATION
+                flg, exp = struct.unpack(SET_PKT_FMT, ext)
+            elif cmd == memcacheConstants.CMD_DELETE:
+                cmd_tap = CMD_TAP_DELETE
+                flg, exp = 0, 0
+            else:
+                self.assertTrue(False,
+                                "received unexpected restore cmd: " +
+                                str(cmd) + " with key: " + key)
+
+            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(item)
+            self.restored_key_cmds[key].append(item)
+
+        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+        client.go.set()
+        return True
+
+    def go(self, reqs_after_respond_with_backoff,
+           threads=1,
+           batch_max_size=1):
+        d, orig_items, orig_items_flattened = \
+            self.gen_backup(items_per_node=self.items_per_node)
+
+        self.reset_mock_cluster()
+
+        self.reqs_after_respond_with_backoff = \
+            reqs_after_respond_with_backoff
+
+        # Two mock servers in the cluster.
+        workers = [ Worker(target=self.worker_restore,
+                           args=[0, mms0, len(orig_items_flattened)]),
+                    Worker(target=self.worker_restore,
+                           args=[1, mms1, len(orig_items_flattened)]) ]
+        for w in workers:
+            w.start()
+
+        rv = pump_transfer.Restore().main(["cbrestore", d, mrs.url(),
+                                           "-t", str(threads),
+                                           "-x",
+                                           "batch_max_size=%s" % (batch_max_size)])
+        self.assertEqual(0, rv)
+
+        for w in workers:
+            w.join()
+        shutil.rmtree(d)
+
+    def test_etmpfail_during_restore(self):
+        self.backoff_err = ERR_ETMPFAIL
+        self.go(3)
+
+    def test_earlier_etmpfail_during_restore(self):
+        self.backoff_err = ERR_ETMPFAIL
+        self.go(2)
+
+    def test_ebusy_during_restore(self):
+        self.backoff_err = ERR_EBUSY
+        self.go(3)
 
 
 class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
