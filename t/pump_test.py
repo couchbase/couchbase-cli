@@ -1792,7 +1792,6 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.test_restore_blobs(large_blob_size=1 * 1024 * 1024)
 
     def test_restore_30M_blob(self):
-        # TODO: (1) restore 30M blob test is slow - inefficient buf growth.
         self.test_restore_blobs(large_blob_size=30 * 1024 * 1024)
 
     def test_restore_batch_max_bytes(self):

@@ -197,7 +197,10 @@ class TAPDumpSource(pump.Source):
         return buf, cmd, errcode, opaque, cas, keylen, extlen, data
 
     def recv(self, skt, nbytes, buf):
-        while len(buf) < nbytes:
+        recv_arr = [ buf ]
+        recv_tot = len(buf) # In bytes.
+
+        while recv_tot < nbytes:
             data = None
             try:
                 data = skt.recv(max(nbytes - len(buf), self.recv_min_bytes))
@@ -209,9 +212,12 @@ class TAPDumpSource(pump.Source):
             if not data:
                 return None, ''
 
-            buf += data
+            recv_arr.append(data)
+            recv_tot += len(data)
 
-        return buf[:nbytes], buf[nbytes:]
+        joined = ''.join(recv_arr)
+
+        return joined[:nbytes], joined[nbytes:]
 
     @staticmethod
     def encode_tap_connect_opts(opts, backfill=False):
