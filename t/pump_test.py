@@ -747,16 +747,13 @@ class MCTestHelper(unittest.TestCase):
 
 class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
 
-    # TODO: (1) test rejected SASL AUTH during backup.
-    # TODO: (1) test rejected SASL AUTH during restore.
-
-    def test_failed_auth(self):
+    def test_close_at_auth(self):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({ 'command': 'GET',
                             'path': '/pools/default/buckets'},
                           { 'code': 200, 'message': self.json_2_nodes() })])
 
-        w = Worker(target=self.worker_failed_auth)
+        w = Worker(target=self.worker_close_at_auth)
         w.start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
@@ -765,11 +762,35 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         w.join()
         shutil.rmtree(d)
 
-    def worker_failed_auth(self):
+    def worker_close_at_auth(self):
         for mms in [mms0, mms1]:
             client, req = mms.queue.get()
             self.assertTrue(req)
             client.close("simulate auth fail by closing conn")
+            client.go.set()
+
+    def test_rejected_auth(self):
+        d = tempfile.mkdtemp()
+        mrs.reset(self, [({ 'command': 'GET',
+                            'path': '/pools/default/buckets'},
+                          { 'code': 200, 'message': self.json_2_nodes() })])
+
+        w = Worker(target=self.worker_rejected_auth)
+        w.start()
+
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        self.assertNotEqual(0, rv)
+
+        w.join()
+        shutil.rmtree(d)
+
+    def worker_rejected_auth(self):
+        for mms in [mms0, mms1]:
+            client, req = mms.queue.get()
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, 'default', '')
+            client.client.send(self.res(cmd, ERR_AUTH_ERROR,
+                                        '', '', '', opaque, 0))
             client.go.set()
 
     def test_close_after_auth(self):
@@ -1665,6 +1686,8 @@ class RestoreTestHelper:
 
 class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
+    # TODO: (1) test rejected SASL AUTH during restore.
+
     def setUp(self):
         RestoreTestHelper.setUp(self)
 
@@ -1800,8 +1823,6 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
             self.parse_req(req)
         self.restored_cmd_counts[cmd] += 1
 
-        print cmd, vbucket_id, ext, key, val, opaque, cas
-
         if client.reqs >= self.reqs_after_respond_with_not_my_vbucket:
             client.client.send(self.res(cmd, ERR_NOT_MY_VBUCKET,
                                         '', '', '', opaque, 0))
@@ -1857,8 +1878,6 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
                                            "-x",
                                            "batch_max_size=%s" % (batch_max_size)])
         self.assertNotEqual(0, rv)
-
-        print rv
 
         for w in workers:
             w.join()

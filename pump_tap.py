@@ -149,6 +149,9 @@ class TAPDumpSource(pump.Source):
                     try:
                         self.tap_conn.sasl_auth_plain(sasl_user, sasl_pswd)
                     except EOFError:
+                        return "error: SASL auth error: %s, user: %s" % \
+                            (host, sasl_user), None
+                    except mc_bin_client.MemcachedError:
                         return "error: SASL auth failed: %s, user: %s" % \
                             (host, sasl_user), None
 
