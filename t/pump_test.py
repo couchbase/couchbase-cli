@@ -33,13 +33,11 @@ import memcacheConstants
 
 from memcacheConstants import *
 
-# TODO: (1) test - multiple buckets.
+# TODO: (1) test multiple buckets.
 # TODO: (1) test TAP ttl / time-to-live field.
 # TODO: (1) test TAP other TAP_FLAG's.
 # TODO: (1) test large clusters.
 # TODO: (1) test large unbalanced clusters.
-# TODO: (1) test num items > batch max size.
-# TODO: (1) test item sizes > batch max bytes.
 # TODO: (1) test BACKOFF.
 # TODO: (1) test server node dying.
 # TODO: (1) test server node hiccup.
@@ -199,9 +197,12 @@ class MockMemcachedSession(threading.Thread):
             self.log("loops (" + str(self.loops) + ")")
             self.loops = self.loops + 1
 
-            iready, oready, eready = select.select(input, [], [], 1)
-            if len(eready) > 0:
-                return self.close("select eready")
+            if not buf:
+                iready, oready, eready = select.select(input, [], [], 1)
+                if len(eready) > 0:
+                    return self.close("select eready")
+            else:
+                iready = input
 
             if len(iready) > 0:
                 self.log("recv...")
@@ -1624,7 +1625,9 @@ class RestoreTestHelper:
                       expected_cmd_counts=2,
                       expected_items=None,
                       threads=1,
-                      batch_max_size=1):
+                      batch_max_size=1,
+                      batch_max_bytes=400000,
+                      more_args=[]):
         d, orig_items, orig_items_flattened = \
             self.gen_backup(items_per_node=items_per_node)
 
@@ -1641,11 +1644,14 @@ class RestoreTestHelper:
         for w in workers:
             w.start()
 
-        # Single threaded and batch_max_size of 1 for sanity.
-        rv = pump_transfer.Restore().main(["cbrestore", d, mrs.url(),
-                                           "-t", str(threads),
-                                           "-x",
-                                           "batch_max_size=%s" % (batch_max_size)])
+        restore_args = ["cbrestore", d, mrs.url(),
+                        "-t", str(threads),
+                        "-x",
+                        "batch_max_size=%s,batch_max_bytes=%s" %
+                        (batch_max_size, batch_max_bytes)] + \
+                        more_args
+
+        rv = pump_transfer.Restore().main(restore_args)
         self.assertEqual(0, rv)
         self.check_restore_matches_backup(expected_items,
                                           expected_cmd_counts=expected_cmd_counts)
@@ -1667,21 +1673,32 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.assertEqual(len(source_items),
                          self.restored_cmd_counts[CMD_SET])
 
-    def test_restore_simple_2T(self):
-        source_items = self.check_restore(None,
-                                          threads=2)
+    def test_restore_simple_2threads(self):
+        source_items = self.check_restore(None, threads=2)
         self.assertEqual(len(source_items),
                          self.restored_cmd_counts[CMD_SET])
 
-    def test_restore_simple_4T(self):
-        source_items = self.check_restore(None,
-                                          threads=4)
+    def test_restore_simple_4threads(self):
+        source_items = self.check_restore(None, threads=4)
         self.assertEqual(len(source_items),
                          self.restored_cmd_counts[CMD_SET])
 
-    def test_restore_simple_4T(self):
+    def test_restore_simple_2batch(self):
         source_items = self.check_restore(None,
-                                          threads=4)
+                                          batch_max_size=2)
+        self.assertEqual(len(source_items),
+                         self.restored_cmd_counts[CMD_SET])
+
+    def test_restore_simple_8batch(self):
+        source_items = self.check_restore(None,
+                                          batch_max_size=8)
+        self.assertEqual(len(source_items),
+                         self.restored_cmd_counts[CMD_SET])
+
+    def test_restore_simple_4thread_8batch(self):
+        source_items = self.check_restore(None,
+                                          threads=4,
+                                          batch_max_size=8)
         self.assertEqual(len(source_items),
                          self.restored_cmd_counts[CMD_SET])
 
@@ -1726,7 +1743,7 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.assertEqual(CMD_TAP_DELETE, self.restored_key_cmds['y'][1][0])
         self.assertEqual(CMD_TAP_MUTATION, self.restored_key_cmds['y'][2][0])
 
-    def test_restore_blobs(self, large_blob_size=40000):
+    def test_restore_blobs(self, large_blob_size=40000, batch_max_bytes=400000):
         kb = binascii.a2b_hex('00ff010203040506070800')
         vb = kb * 5
 
@@ -1740,7 +1757,8 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             ]
 
         source_items = self.check_restore(items_per_node,
-                                          expected_cmd_counts=2)
+                                          expected_cmd_counts=2,
+                                          batch_max_bytes=batch_max_bytes)
         self.assertEqual(2, self.restored_cmd_counts[CMD_SET])
         self.assertEqual(1, len(self.restored_key_cmds[kb]))
         self.assertEqual(1, len(self.restored_key_cmds[kx]))
@@ -1753,6 +1771,9 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
     def test_restore_30M_blob(self):
         # TODO: (1) restore 30M blob test is slow - inefficient buf growth.
         self.test_restore_blobs(large_blob_size=30 * 1024 * 1024)
+
+    def test_restore_batch_max_bytes(self):
+        self.test_restore_blobs(large_blob_size=40000, batch_max_bytes=100)
 
 
 class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):

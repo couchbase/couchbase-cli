@@ -154,6 +154,7 @@ class MCSink(pump.Sink):
                     return "error: MCSink MC error: " + str(r_status), None
 
             except Exception as e:
+                logging.error("MCSink exception: %s", e)
                 return "error: MCSink exception: " + str(e), None
 
         return 0, retry
