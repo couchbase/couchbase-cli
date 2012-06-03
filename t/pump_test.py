@@ -2065,6 +2065,68 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         return True
 
 
+class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
+
+    def setUp(self):
+        RestoreTestHelper.setUp(self)
+
+    def test_restore_all_deletes(self):
+        """Test restoring DELETE's against a cluster that doesn't
+           have any of the items for attempted DELETION."""
+
+        items_per_node = [
+            # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff)],
+            [(CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff)]
+            ]
+
+        source_items = self.check_restore(items_per_node,
+                                          expected_cmd_counts=2,
+                                          expected_items=[])
+        self.assertEqual(2, self.restored_cmd_counts[CMD_DELETE])
+        self.assertEqual(1, len(self.restored_key_cmds['a']))
+        self.assertEqual(1, len(self.restored_key_cmds['y']))
+        self.assertEqual(CMD_TAP_DELETE, self.restored_key_cmds['a'][0][0])
+        self.assertEqual(CMD_TAP_DELETE, self.restored_key_cmds['y'][0][0])
+
+    def handle_mc_req(self, client, req, bucket, bucket_password):
+        """Sends ERR_KEY_ENOENT for DELETE commands."""
+
+        client.reqs = getattr(client, "reqs", 0) + 1
+
+        cmd, vbucket_id, ext, key, val, opaque, cas = \
+            self.parse_req(req)
+        self.restored_cmd_counts[cmd] += 1
+
+        status = 0
+
+        if cmd == memcacheConstants.CMD_SASL_AUTH:
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, bucket, bucket_password)
+        else:
+            if (cmd == memcacheConstants.CMD_SET or
+                cmd == memcacheConstants.CMD_ADD):
+                cmd_tap = CMD_TAP_MUTATION
+                flg, exp = struct.unpack(SET_PKT_FMT, ext)
+            elif cmd == memcacheConstants.CMD_DELETE:
+                cmd_tap = CMD_TAP_DELETE
+                flg, exp = 0, 0
+                status = ERR_KEY_ENOENT
+            else:
+                self.assertTrue(False,
+                                "received unexpected restore cmd: " +
+                                str(cmd) + " with key: " + key)
+
+            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(item)
+            self.restored_key_cmds[key].append(item)
+
+        client.client.send(self.res(cmd, status,
+                                    '', '', '', opaque, 0))
+        client.go.set()
+        return True
+
+
 # ------------------------------------------------------
 
 SAMPLE_JSON_pools = """
