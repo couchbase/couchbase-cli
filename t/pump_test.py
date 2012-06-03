@@ -38,9 +38,6 @@ from memcacheConstants import *
 # TODO: (1) test TAP other TAP_FLAG's.
 # TODO: (1) test large clusters.
 # TODO: (1) test large unbalanced clusters.
-# TODO: (1) test multiple threads.
-# TODO: (1) test num threads > num servers.
-# TODO: (1) test num threads < num servers.
 # TODO: (1) test num items > batch max size.
 # TODO: (1) test item sizes > batch max bytes.
 # TODO: (1) test BACKOFF.
@@ -1625,7 +1622,9 @@ class RestoreTestHelper:
 
     def check_restore(self, items_per_node,
                       expected_cmd_counts=2,
-                      expected_items=None):
+                      expected_items=None,
+                      threads=1,
+                      batch_max_size=1):
         d, orig_items, orig_items_flattened = \
             self.gen_backup(items_per_node=items_per_node)
 
@@ -1644,8 +1643,9 @@ class RestoreTestHelper:
 
         # Single threaded and batch_max_size of 1 for sanity.
         rv = pump_transfer.Restore().main(["cbrestore", d, mrs.url(),
-                                           "-t", "1",
-                                           "-x", "batch_max_size=1"])
+                                           "-t", str(threads),
+                                           "-x",
+                                           "batch_max_size=%s" % (batch_max_size)])
         self.assertEqual(0, rv)
         self.check_restore_matches_backup(expected_items,
                                           expected_cmd_counts=expected_cmd_counts)
@@ -1664,6 +1664,24 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
     def test_restore_simple(self):
         source_items = self.check_restore(None)
+        self.assertEqual(len(source_items),
+                         self.restored_cmd_counts[CMD_SET])
+
+    def test_restore_simple_2T(self):
+        source_items = self.check_restore(None,
+                                          threads=2)
+        self.assertEqual(len(source_items),
+                         self.restored_cmd_counts[CMD_SET])
+
+    def test_restore_simple_4T(self):
+        source_items = self.check_restore(None,
+                                          threads=4)
+        self.assertEqual(len(source_items),
+                         self.restored_cmd_counts[CMD_SET])
+
+    def test_restore_simple_4T(self):
+        source_items = self.check_restore(None,
+                                          threads=4)
         self.assertEqual(len(source_items),
                          self.restored_cmd_counts[CMD_SET])
 
