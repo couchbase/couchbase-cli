@@ -1527,11 +1527,7 @@ class RestoreTestHelper:
         """Represents a memcached server that provides items
            for gen_backup."""
 
-        client, req = mms.queue.get()
-        cmd, _, _, _, _, opaque, _ = \
-            self.check_auth(req, bucket, bucket_password)
-        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-        client.go.set()
+        self.worker_gen_backup_auth(mms, bucket, bucket_password)
 
         client, req = mms.queue.get()
         cmd, _, _, _, _, opaque, _ = \
@@ -1565,6 +1561,13 @@ class RestoreTestHelper:
             self.assertEqual('', val)
 
         client.close("close after last ack received")
+        client.go.set()
+
+    def worker_gen_backup_auth(self, mms, bucket, bucket_password):
+        client, req = mms.queue.get()
+        cmd, _, _, _, _, opaque, _ = \
+            self.check_auth(req, bucket, bucket_password)
+        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
 
     def reset_mock_cluster(self, rest_msgs=None):
@@ -1616,7 +1619,6 @@ class RestoreTestHelper:
 
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
-
         return True
 
     def check_restore_matches_backup(self, expected_items,
@@ -1685,8 +1687,6 @@ class RestoreTestHelper:
 
 
 class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
-
-    # TODO: (1) test rejected SASL AUTH during restore.
 
     def setUp(self):
         RestoreTestHelper.setUp(self)
@@ -1851,7 +1851,6 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
 
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
-
         return True
 
     def go(self, reqs_after_respond_with_not_my_vbucket,
@@ -1897,6 +1896,76 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
 
     def test_immediate_not_my_vbucket_during_restore_5B(self):
         self.go(2, batch_max_size=5)
+
+
+class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
+
+    def setUp(self):
+        RestoreTestHelper.setUp(self)
+
+    def test_rejected_auth(self):
+        self.items_per_node = [
+            # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000)],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000)]
+            ]
+
+        d, orig_items, orig_items_flattened = \
+            self.gen_backup(items_per_node=self.items_per_node)
+
+        self.reset_mock_cluster()
+
+        # Two mock servers in the cluster.
+        workers = [ Worker(target=self.worker_restore,
+                           args=[0, mms0, len(orig_items_flattened)]),
+                    Worker(target=self.worker_restore,
+                           args=[1, mms1, len(orig_items_flattened)]) ]
+        for w in workers:
+            w.start()
+
+        rv = pump_transfer.Restore().main(["cbrestore", d, mrs.url()])
+        self.assertNotEqual(0, rv)
+
+        for w in workers:
+            w.join()
+        shutil.rmtree(d)
+
+    def handle_mc_req(self, client, req, bucket, bucket_password):
+        cmd, vbucket_id, ext, key, val, opaque, cas = \
+            self.parse_req(req)
+        self.restored_cmd_counts[cmd] += 1
+
+        if cmd == memcacheConstants.CMD_SASL_AUTH:
+            cmd, _, _, _, _, opaque, _ = \
+                self.check_auth(req, bucket, bucket_password)
+            # Even though cbrestore sent the right SASL AUTH info,
+            # let's reject them for testing.
+            client.client.send(self.res(cmd, ERR_AUTH_ERROR,
+                                        '', '', '', opaque, 0))
+            client.go.set()
+            return True
+        else:
+            if (cmd == memcacheConstants.CMD_SET or
+                cmd == memcacheConstants.CMD_ADD):
+                cmd_tap = CMD_TAP_MUTATION
+                flg, exp = struct.unpack(SET_PKT_FMT, ext)
+            elif cmd == memcacheConstants.CMD_DELETE:
+                cmd_tap = CMD_TAP_DELETE
+                flg, exp = 0, 0
+            else:
+                self.assertTrue(False,
+                                "received unexpected restore cmd: " +
+                                str(cmd) + " with key: " + key)
+
+            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(item)
+            self.restored_key_cmds[key].append(item)
+
+        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+        client.go.set()
+        return True
 
 
 # ------------------------------------------------------

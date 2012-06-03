@@ -225,7 +225,14 @@ class MCSink(pump.Sink):
     def connect_mc(host, port, user, pswd):
         mc = mc_bin_client.MemcachedClient(host, int(port))
         if user:
-            mc.sasl_auth_plain(str(user), str(pswd))
+            try:
+                mc.sasl_auth_plain(str(user), str(pswd))
+            except EOFError:
+                return "error: SASL auth error: %s:%s, user: %s" % \
+                    (host, port, user), None
+            except mc_bin_client.MemcachedError:
+                return "error: SASL auth failed: %s:%s, user: %s" % \
+                    (host, port, user), None
         return 0, mc
 
     def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, opaque):
