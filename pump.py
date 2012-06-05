@@ -669,7 +669,7 @@ def rest_request(host, port, user, pswd, path, method='GET', body=''):
         " - please check your URL and server; status: " + str(resp.status), \
         None, None
 
-def rest_headers(user, pswd, headers={}):
+def rest_headers(user, pswd, headers={'Content-Type': 'application/json'}):
     if user:
         auth = 'Basic ' + \
             string.strip(base64.encodestring(user + ':' + (pswd or '')))

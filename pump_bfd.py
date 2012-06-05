@@ -25,6 +25,12 @@ class BFD:
     def node_name(self):
         return self.source_node['hostname']
 
+    @staticmethod
+    def design_path(spec, bucket_name):
+        return os.path.normpath(spec) + \
+            '/bucket-' + urllib.quote_plus(bucket_name) + \
+            '/design.json'
+
     def db_dir(self):
         return os.path.normpath(self.spec) + \
             '/bucket-' + urllib.quote_plus(self.bucket_name()) + \
@@ -32,6 +38,7 @@ class BFD:
 
     def db_path(self):
         return self.db_dir() + "/data-0000.cbb"
+
 
 # --------------------------------------------------
 
@@ -96,7 +103,16 @@ class BFDSource(BFD, Source):
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
-        # TODO: (3) BFDSource - provide_design implementation.
+        fname = BFD.design_path(source_spec, source_bucket['name'])
+        if os.path.exists(fname):
+            try:
+                f = open(fname, 'r')
+                d = f.read()
+                f.close()
+                return 0, d
+            except IOError as e:
+                return ("error: could not read design: %s" +
+                        "; exception: %s") % (fname, e), None
         return 0, None
 
     def provide_batch(self):
@@ -264,7 +280,16 @@ class BFDSink(BFD, Sink):
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_design):
-        # TODO: (4) BFDSink - consume_design.
+        if source_design:
+            fname = BFD.design_path(sink_spec,
+                                    source_bucket['name'])
+            try:
+                f = open(fname, 'w')
+                f.write(source_design)
+                f.close()
+            except IOError as e:
+                return ("error: could not write design: %s" +
+                        "; exception: %s") % (fname, e), None
         return 0
 
     def consume_batch_async(self, batch):
@@ -279,7 +304,7 @@ class BFDSink(BFD, Sink):
         """Make directories, if not already, with structure like...
            <spec>/
              bucket-<BUCKETNAME>/
-               design.cbb
+               design.json
                node-<NODE>/
                  data-<XXXX>.cbb
         """

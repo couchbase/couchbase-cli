@@ -43,8 +43,36 @@ class TAPDumpSource(pump.Source):
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
-        # TODO: (4) TAPDumpSource - provide_design implementation.
-        return 0, None
+        source_nodes = source_bucket['nodes']
+        if not source_nodes:
+            return "error: no design source_nodes", None
+
+        spec_parts = source_map.get('spec_parts')
+        if not spec_parts:
+            return "error: no design spec_parts", None
+
+        single_host, single_port, _, _, _ = spec_parts
+        single_host_port = single_host + ':' + single_port
+
+        source_nodes = filter(lambda n: n.get('hostname') == single_host_port,
+                              source_nodes)
+        if not source_nodes:
+            return "error: no design source node: " + single_host_port, None
+
+        couch_api_base = source_nodes[0].get('couchApiBase')
+        if not couch_api_base:
+            return 0, None # No couchApiBase; probably not 2.0.
+
+        ddocs_url = couch_api_base + "/_all_docs"
+        ddocs_qry = "?startkey=\"_design/\"&endkey=\"_design0\"&include_docs=true"
+
+        host, port, user, pswd, path = \
+            pump.parse_spec(opts, ddocs_url, 8092)
+
+        err, ddocs_json, ddocs = \
+            pump.rest_request_json(host, int(port), user, pswd, path + ddocs_qry)
+
+        return 0, ddocs_json
 
     def provide_batch(self):
         if self.tap_done:

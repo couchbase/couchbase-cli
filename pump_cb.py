@@ -2,6 +2,7 @@
 
 import ctypes
 import logging
+import simplejson as json
 import socket
 import struct
 import time
@@ -103,9 +104,74 @@ class CBSink(pump_mc.MCSink):
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_design):
-        # TODO: (3) CBSink - consume_design()
-        # TODO: (3) CBSink - consume_design() optionally builds indexes
-        return 0
+        if not source_design:
+            return 0
+
+        try:
+            sd = json.loads(source_design)
+        except ValueError as e:
+            return "error: could not parse source design; exception: %s" % (e)
+        if not sd:
+            return "error: could not parse source design"
+
+        if (not sink_map['buckets'] or
+            len(sink_map['buckets']) != 1 or
+            not sink_map['buckets'][0] or
+            not sink_map['buckets'][0]['name']):
+            return "error: design sink incorrect sink_map bucket"
+
+        spec_parts = pump.parse_spec(opts, sink_spec, 8091)
+        if not spec_parts:
+            return "error: design sink no spec_parts: " + sink_spec
+
+        sink_host, sink_port, _, _, _ = spec_parts
+        sink_host_port = sink_host + ':' + sink_port
+
+        sink_nodes = sink_map['buckets'][0]['nodes']
+        if not sink_nodes:
+            return "error: design sink_nodes missing"
+
+        sink_nodes = filter(lambda n: n.get('hostname') == sink_host_port,
+                            sink_nodes)
+        if not sink_nodes:
+            return "error: design sink node missing: " + sink_host_port
+
+        couch_api_base = sink_nodes[0].get('couchApiBase')
+        if not couch_api_base:
+            return "error: cannot restore bucket design" \
+                " on a couchbase cluster that does not support couch API;" \
+                " the couchbase cluster may be an older, pre-2.0 version;" \
+                " please check your cluster URL: " + sink_spec
+
+        host, port, user, pswd, path = \
+            pump.parse_spec(opts, couch_api_base, 8092)
+
+        for row in sd['rows']:
+            logging.debug("design_doc row: " + str(row))
+
+            id = row['id']
+            logging.debug("design_doc id: " + id + " at: " + path + "/" + id)
+
+            if '_rev' in row['doc']:
+                del row['doc']['_rev']
+
+            doc = json.dumps(row['doc'])
+            logging.debug("design_doc: " + doc)
+
+            try:
+                err, conn, response = \
+                    pump.rest_request(host, int(port), user, pswd,
+                                      path + "/" + id, method='PUT', body=doc)
+                if conn:
+                    conn.close()
+                if err:
+                    return ("error: could not restore design doc id: %s" +
+                            "; response: %s; err: %s") % (id, response, err)
+            except Exception as e:
+                return "error: design sink exception: %s" % (e)
+
+            logging.debug("design_doc created at: " + path + "/" + id)
+
 
     def find_conn(self, mconns, vbucket_id):
         bucket = self.sink_map['buckets'][0]
