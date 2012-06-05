@@ -124,17 +124,10 @@ class CBSink(pump_mc.MCSink):
         if not spec_parts:
             return "error: design sink no spec_parts: " + sink_spec
 
-        sink_host, sink_port, _, _, _ = spec_parts
-        sink_host_port = sink_host + ':' + sink_port
-
-        sink_nodes = sink_map['buckets'][0]['nodes']
+        sink_nodes = pump.filter_bucket_nodes(sink_map['buckets'][0],
+                                              spec_parts)
         if not sink_nodes:
-            return "error: design sink_nodes missing"
-
-        sink_nodes = filter(lambda n: n.get('hostname') == sink_host_port,
-                            sink_nodes)
-        if not sink_nodes:
-            return "error: design sink node missing: " + sink_host_port
+            return "error: design sink nodes missing"
 
         couch_api_base = sink_nodes[0].get('couchApiBase')
         if not couch_api_base:

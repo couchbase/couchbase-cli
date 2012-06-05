@@ -146,24 +146,19 @@ class PumpingStation(ProgressReporter):
         return source_buckets
 
     def filter_source_nodes(self, source_bucket, source_map):
-        """Filter the source_nodes if single_node was specified."""
-        source_nodes = source_bucket['nodes']
+        """Filter the source_bucket's nodes if single_node was specified."""
+        if getattr(self.opts, "single_node", None):
+            if not source_map.get('spec_parts'):
+                return ("error: no single_node from source: %s" +
+                        "; the source may not support the --single-node flag") % \
+                        (self.source_spec)
+            source_nodes = filter_bucket_nodes(source_bucket,
+                                               source_map.get('spec_parts'))
+        else:
+            source_nodes = source_bucket['nodes']
+
         logging.debug(" source_nodes: " + ",".join([n.get('hostname', NA)
                                                     for n in source_nodes]))
-
-        single_node = getattr(self.opts, "single_node", None)
-        if single_node:
-            if not source_map.get('spec_parts'):
-                return "error: cannot support single_node from source: " + \
-                    self.source_spec
-            single_host, single_port, _, _, _ = source_map.get('spec_parts')
-            single_host_port = single_host + ':' + single_port
-            logging.debug(" single_host_port: " + single_host_port)
-            source_nodes = [n for n in source_nodes
-                            if n.get('hostname', NA) == single_host_port]
-            logging.debug(" source_nodes filtered: " +
-                          ",".join([n.get('hostname', NA)
-                                    for n in source_nodes]))
         return source_nodes
 
     def transfer_bucket_config(self, source_bucket, source_map, sink_map):
@@ -734,3 +729,8 @@ def rest_couchbase(opts, spec):
                 'rest_data': rest_data,
                 'spec_parts' : spec_parts }
 
+def filter_bucket_nodes(bucket, spec_parts):
+    host, port = spec_parts[:2]
+    host_port = host + ':' + str(port)
+    return filter(lambda n: n.get('hostname') == host_port,
+                  bucket['nodes'])
