@@ -38,13 +38,13 @@ clean-local:
 bdist:
 	test -d $(TMP_DIR) || mkdir $(TMP_DIR)
 	git describe | sed s/-/_/g > $(TMP_VER)
-	rm -f ./membase-cli_*.tar.gz
-	rm -rf $(TMP_DIR)/membase-cli
-	mkdir -p $(TMP_DIR)/membase-cli/simplejson
-	cp couchbase-cli *.py COPYING $(TMP_DIR)/membase-cli
-	cp simplejson/*.py $(TMP_DIR)/membase-cli/simplejson
-	cp simplejson/LICENSE.txt $(TMP_DIR)/membase-cli/simplejson
-	(cd $(TMP_DIR); tar cf - membase-cli) | gzip -9 > membase-cli_`cat $(TMP_VER)`-`uname -s`.`uname -m`.tar.gz
-	echo created membase-cli_`cat $(TMP_VER)`-`uname -s`.`uname -m`.tar.gz
+	rm -f ./couchbase-cli_*.tar.gz
+	rm -rf $(TMP_DIR)/couchbase-cli
+	mkdir -p $(TMP_DIR)/couchbase-cli/simplejson
+	cp couchbase-cli *.py LICENSE $(TMP_DIR)/couchbase-cli
+	cp simplejson/*.py $(TMP_DIR)/couchbase-cli/simplejson
+	cp simplejson/LICENSE.txt $(TMP_DIR)/couchbase-cli/simplejson
+	(cd $(TMP_DIR); tar cf - couchbase-cli) | gzip -9 > couchbase-cli_`cat $(TMP_VER)`-`uname -s`.`uname -m`.tar.gz
+	echo created couchbase-cli_`cat $(TMP_VER)`-`uname -s`.`uname -m`.tar.gz
 	rm -rf $(TMP_DIR)
 
