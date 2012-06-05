@@ -643,16 +643,16 @@ def parse_spec(opts, spec, port):
 
     return host, port, username, password, p.path
 
-def rest_connect(host, port, user, pswd, path):
-    logging.debug("rest_connect: %s@%s:%s%s" % (user, host, port, path))
+def rest_request(host, port, user, pswd, path, method='GET', body=''):
+    logging.debug("rest_request: %s@%s:%s%s" % (user, host, port, path))
 
     conn = httplib.HTTPConnection(host, port)
     try:
-        conn.request('GET', path, '', rest_headers(user, pswd))
-    except:
+        conn.request(method, path, body, rest_headers(user, pswd))
+    except Exception as e:
         return "error: could not access REST API: " + host + ":" + str(port) + \
-            " - please check source URL, username (-u) and password (-p)", \
-            None, None
+            " - please check source URL, username (-u) and password (-p), " + \
+            str(e), None, None
 
     resp = conn.getresponse()
     if resp.status in [200, 201, 202, 204, 302]:
@@ -666,7 +666,7 @@ def rest_connect(host, port, user, pswd, path):
             None, None
 
     return "error: unable to access REST API" \
-        " - please check your URL and server", \
+        " - please check your URL and server; status: " + str(resp.status), \
         None, None
 
 def rest_headers(user, pswd, headers={}):
@@ -675,6 +675,20 @@ def rest_headers(user, pswd, headers={}):
             string.strip(base64.encodestring(user + ':' + (pswd or '')))
         headers['Authorization'] = auth
     return headers
+
+def rest_request_json(host, port, user, pswd, path):
+    err, conn, rest_json = rest_request(host, port, user, pswd, path)
+    if err:
+        return err, None, None
+    if conn:
+        conn.close()
+    try:
+        return None, rest_json, json.loads(rest_json)
+    except ValueError as e:
+        return ("error: could not decode JSON from REST API: %s:%s%s" +
+                "; exception: %s" +
+                "; please check URL, username (-u) and password (-p)") % \
+                (host, port, path, e), None, None
 
 def rest_couchbase(opts, spec):
     spec = spec.replace('couchbase://', 'http://')
@@ -685,16 +699,9 @@ def rest_couchbase(opts, spec):
     if not path or path == '/':
         path = '/pools/default/buckets'
 
-    err, conn, rest_json = rest_connect(host, port, user, pswd, path)
+    err, rest_json, rest_data = rest_request_json(host, int(port), user, pswd, path)
     if err:
         return err, None
-    if conn:
-        conn.close()
-    try:
-        rest_data = json.loads(rest_json)
-    except:
-        return "error: could not decode JSON from REST API: " + spec + \
-            " - please check URL, username (-u) and password (-p)", None
 
     if type(rest_data) == type([]):
         rest_buckets = rest_data
