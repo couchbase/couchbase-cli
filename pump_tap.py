@@ -37,12 +37,12 @@ class TAPDumpSource(pump.Source):
         return pump.rest_couchbase(opts, spec)
 
     @staticmethod
-    def provide_config(opts, spec, bucket):
+    def provide_config(opts, source_spec, source_bucket, source_map):
         # TODO: (4) TAPDumpSource - provide_config implementation.
         return 0, None
 
     @staticmethod
-    def provide_design(opts, spec, bucket):
+    def provide_design(opts, source_spec, source_bucket, source_map):
         # TODO: (4) TAPDumpSource - provide_design implementation.
         return 0, None
 

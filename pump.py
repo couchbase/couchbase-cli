@@ -91,7 +91,7 @@ class PumpingStation(ProgressReporter):
                                     key=lambda b: b['name']):
             logging.info("bucket: " + source_bucket['name'])
 
-            rv = self.transfer_bucket_config(source_bucket)
+            rv = self.transfer_bucket_config(source_bucket, source_map, sink_map)
             if rv != 0:
                 return rv
 
@@ -99,7 +99,7 @@ class PumpingStation(ProgressReporter):
             if rv != 0:
                 return rv
 
-            rv = self.transfer_bucket_design(source_bucket)
+            rv = self.transfer_bucket_design(source_bucket, source_map, sink_map)
             if rv != 0:
                 return rv
 
@@ -166,14 +166,16 @@ class PumpingStation(ProgressReporter):
                                     for n in source_nodes]))
         return source_nodes
 
-    def transfer_bucket_config(self, source_bucket):
+    def transfer_bucket_config(self, source_bucket, source_map, sink_map):
         """Transfer bucket configuration (e.g., memory quota)."""
         rv, source_config = \
             self.source_class.provide_config(self.opts, self.source_spec,
-                                             source_bucket)
+                                             source_bucket, source_map)
         if rv == 0:
-            rv = self.sink_class.consume_config(self.opts, self.sink_spec,
-                                                source_bucket, source_config)
+            rv = self.sink_class.consume_config(self.opts,
+                                                self.sink_spec, sink_map,
+                                                source_bucket, source_map,
+                                                source_config)
         return rv
 
     def transfer_bucket_items(self, source_bucket, source_map, sink_map):
@@ -206,14 +208,16 @@ class PumpingStation(ProgressReporter):
 
         return 0
 
-    def transfer_bucket_design(self, source_bucket):
+    def transfer_bucket_design(self, source_bucket, source_map, sink_map):
         """Transfer bucket design (e.g., design docs, views)."""
-        rv, design = \
+        rv, source_design = \
             self.source_class.provide_design(self.opts, self.source_spec,
-                                             source_bucket)
+                                             source_bucket, source_map)
         if rv == 0:
-            rv = self.sink_class.consume_design(self.opts, self.sink_spec,
-                                                source_bucket, design)
+            rv = self.sink_class.consume_design(self.opts,
+                                                self.sink_spec, sink_map,
+                                                source_bucket, source_map,
+                                                source_design)
         return rv
 
     @staticmethod
@@ -411,11 +415,11 @@ class Source(EndPoint):
         assert False, "unimplemented"
 
     @staticmethod
-    def provide_config(opts, spec, bucket):
+    def provide_config(opts, source_spec, source_bucket, source_map):
         assert False, "unimplemented"
 
     @staticmethod
-    def provide_design(opts, spec, bucket):
+    def provide_design(opts, source_spec, source_bucket, source_map):
         assert False, "unimplemented"
 
     def provide_batch(self):
@@ -437,11 +441,13 @@ class Sink(EndPoint):
         assert False, "unimplemented"
 
     @staticmethod
-    def consume_config(opts, spec, bucket, config):
+    def consume_config(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_config):
         assert False, "unimplemented"
 
     @staticmethod
-    def consume_design(opts, spec, bucket, design):
+    def consume_design(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_design):
         assert False, "unimplemented"
 
     def consume_batch_async(self, batch):
@@ -548,15 +554,17 @@ class StdOutSink(Sink):
         return 0, None
 
     @staticmethod
-    def consume_config(opts, spec, bucket, config):
-        if config:
+    def consume_config(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_config):
+        if source_config:
             logging.warn("warning: cannot restore bucket configuration"
                          " on a stdout destination")
         return 0
 
     @staticmethod
-    def consume_design(opts, spec, bucket, design):
-        if design:
+    def consume_design(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_design):
+        if source_design:
             logging.warn("warning: cannot restore bucket design"
                          " on a stdout destination")
         return 0

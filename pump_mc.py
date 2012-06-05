@@ -197,15 +197,17 @@ class MCSink(pump.Sink):
         return 0, None
 
     @staticmethod
-    def consume_config(opts, spec, bucket, config):
-        if config:
+    def consume_config(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_config):
+        if source_config:
             logging.warn("warning: cannot restore bucket configuration"
                          " on a memached destination")
         return 0
 
     @staticmethod
-    def consume_design(opts, spec, bucket, design):
-        if design:
+    def consume_design(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_design):
+        if source_design:
             logging.warn("warning: cannot restore bucket design"
                          " on a memached destination")
         return 0

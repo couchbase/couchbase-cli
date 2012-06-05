@@ -90,12 +90,12 @@ class BFDSource(BFD, Source):
                     'buckets': buckets }
 
     @staticmethod
-    def provide_config(opts, spec, bucket):
+    def provide_config(opts, source_spec, source_bucket, source_map):
         # TODO: (3) BFDSource - provide_config implementation.
         return 0, None
 
     @staticmethod
-    def provide_design(opts, spec, bucket):
+    def provide_design(opts, source_spec, source_bucket, source_map):
         # TODO: (3) BFDSource - provide_design implementation.
         return 0, None
 
@@ -256,12 +256,14 @@ class BFDSink(BFD, Sink):
         return 0, None
 
     @staticmethod
-    def consume_config(opts, spec, bucket, config):
+    def consume_config(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_config):
         # TODO: (4) BFDSink - consume_config.
         return 0
 
     @staticmethod
-    def consume_design(opts, spec, bucket, design):
+    def consume_design(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_design):
         # TODO: (4) BFDSink - consume_design.
         return 0
 
