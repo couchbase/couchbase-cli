@@ -192,8 +192,10 @@ class PumpingStation(ProgressReporter):
             self.queue.put((source_bucket, source_node, source_map, sink_map))
 
         # Don't use queue.join() as it eats Ctrl-C's.
+        s = 0.05
         while self.queue.unfinished_tasks:
-            time.sleep(0.2)
+            time.sleep(s)
+            s = min(1.0, s + 0.01)
 
         rv = self.ctl['rv']
         if rv != 0:
