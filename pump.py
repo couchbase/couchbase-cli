@@ -63,6 +63,19 @@ class ProgressReporter:
         self.prev_time = cur_time
         self.prev = copy.copy(c)
 
+    def bar(self, current, total):
+        if not total:
+            return '.'
+        if sys.platform.lower().startswith('win'):
+            cr = "\r\n"
+        else:
+            cr = chr(27) + "[A\n"
+        pct = float(current) / total
+        max_hash = 20
+        num_hash = int(round(pct * max_hash))
+        return ("  [%s%s] %0.1f%% (%s/%s items)%s" %
+                ('#' * num_hash, ' ' * (max_hash - num_hash),
+                 100.0 * pct, current, total, cr))
 
 class PumpingStation(ProgressReporter):
     """Queues and watchdogs multiple pumps across concurrent workers."""
@@ -332,15 +345,13 @@ class Pump(ProgressReporter):
 
             n = n + 1
             if report_full > 0 and n % report_full == 0:
-                sys.stderr.write("\n")
-                if self.ctl['tot_item']:
-                    pct = (self.ctl['run_item'] * 100.0 /
-                           self.ctl['tot_item'])
-                    sys.stderr.write("%0.1f%%\n" % (pct))
+                if self.opts.verbose > 0:
+                    sys.stderr.write("\n")
                 logging.info("  progress...")
                 self.report(prefix="  ")
             elif report_dot > 0 and n % report_dot == 0:
-                sys.stderr.write('.')
+                sys.stderr.write(self.bar(self.ctl['run_item'],
+                                          self.ctl['tot_item']))
 
         return self.done(0)
 

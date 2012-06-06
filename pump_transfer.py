@@ -137,7 +137,7 @@ class Transfer:
         return {
             "batch_max_size":  (1000,   "max # items per batch"),
             "batch_max_bytes": (400000, "max # of item value bytes per batch"),
-            "report_dot":      (50,     "# batches before emitting a dot (.)"),
+            "report_dot":      (5,      "# batches before emitting a dot (.)"),
             "report_full":     (2000,   "# batches before emitting progress info"),
             "recv_min_bytes":  (4096,   "amount of bytes for every recv() call")
             }
