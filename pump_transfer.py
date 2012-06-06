@@ -180,7 +180,7 @@ class Backup(Transfer):
 class Restore(Transfer):
     """Entry point for 2.0 cbrestore."""
 
-    # TODO: (1) Restore - opt_parse handle 1.8 backwards compatiable args.
+    # TODO: (1) Restore - opt_parse handle 1.8 backwards compatible args.
 
     def __init__(self):
         self.name = "cbrestore"
@@ -275,7 +275,6 @@ SINKS = [pump_bfd.BFDSink,
          pump.StdOutSink]
 
 # TODO: (1) pump_transfer - stdin source (saved memcached ascii protocol)
-# TODO: (1) pump_transfer - _all_docs?include_docs=true source
 # TODO: (1) pump_transfer - use QUIET commands
 # TODO: (1) pump_transfer - verify that nth replica got the item
 # TODO: (1) pump_transfer - ability to TAP a non-active or replica vbucket / MB-4583

@@ -495,7 +495,6 @@ class Batch:
         self.source = source
         self.items = []
         self.bytes = 0
-        self.stats = {} # TODO: (1) Batch - record stats.
 
     def append(self, item, num_bytes):
         self.items.append(item)
