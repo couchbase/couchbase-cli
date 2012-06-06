@@ -31,13 +31,15 @@ class BFD:
             '/bucket-' + urllib.quote_plus(bucket_name) + \
             '/design.json'
 
-    def db_dir(self):
-        return os.path.normpath(self.spec) + \
-            '/bucket-' + urllib.quote_plus(self.bucket_name()) + \
-            '/node-' + urllib.quote_plus(self.node_name())
+    @staticmethod
+    def db_dir(spec, bucket_name, node_name):
+        return os.path.normpath(spec) + \
+            '/bucket-' + urllib.quote_plus(bucket_name) + \
+            '/node-' + urllib.quote_plus(node_name)
 
-    def db_path(self):
-        return self.db_dir() + "/data-0000.cbb"
+    @staticmethod
+    def db_path(spec, bucket_name, node_name):
+        return BFD.db_dir(spec, bucket_name, node_name) + "/data-0000.cbb"
 
 
 # --------------------------------------------------
@@ -90,8 +92,6 @@ class BFDSource(BFD, Source):
                     return "error: node_name too short: " + node_dir, None
 
                 bucket['nodes'].append({ 'hostname': node_name })
-
-        # TODO: (1) BFDSource - grab counts (num items, etc) for estimates.
 
         return 0, { 'spec': spec,
                     'buckets': buckets }
@@ -169,7 +169,27 @@ class BFDSource(BFD, Source):
         return 0, batch
 
     def connect_db(self):
-        return connect_db(self.db_path(), self.opts, CBB_VERSION)
+        return connect_db(BFD.db_path(self.spec,
+                                      self.bucket_name(),
+                                      self.node_name()),
+                          self.opts, CBB_VERSION)
+
+    @staticmethod
+    def total_items(opts, source_bucket, source_node, source_map):
+        rv, db = connect_db(BFD.db_path(source_map['spec'],
+                                        source_bucket['name'],
+                                        source_node['hostname']),
+                            opts, CBB_VERSION)
+        if rv != 0:
+            return rv, None
+
+        cur = db.cursor()
+        cur.execute("SELECT COUNT(*) FROM cbb_cmd;")
+        tot = cur.fetchone()[0]
+        cur.close()
+        db.close()
+
+        return 0, tot
 
 
 # --------------------------------------------------
@@ -297,8 +317,14 @@ class BFDSink(BFD, Sink):
         return self.push_next_batch(batch, SinkBatchFuture(self, batch))
 
     def create_db(self):
-        self.mkdirs()
-        return create_db(self.db_path(), self.opts)
+        rv = self.mkdirs()
+        if rv != 0:
+            return rv, None
+
+        return create_db(BFD.db_path(self.spec,
+                                     self.bucket_name(),
+                                     self.node_name()),
+                         self.opts)
 
     def mkdirs(self):
         """Make directories, if not already, with structure like...
@@ -312,10 +338,18 @@ class BFDSink(BFD, Sink):
 
         spec = os.path.normpath(self.spec)
         if not os.path.isdir(spec):
-            os.mkdir(spec)
+            try:
+                os.mkdir(spec)
+            except OSError as e:
+                return "error: could not mkdir: %s; exception: %s" % (spec, e)
 
-        if not os.path.isdir(self.db_dir()):
-            os.makedirs(self.db_dir())
+        d = BFD.db_dir(self.spec, self.bucket_name(), self.node_name())
+        if not os.path.isdir(d):
+            try:
+                os.makedirs(d)
+            except OSError as e:
+                return "error: could not mkdirs: %s; exception: %s" % (d, e)
+        return 0
 
 
 # --------------------------------------------------

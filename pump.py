@@ -46,7 +46,7 @@ class ProgressReporter:
         x = sorted([k for k in c.iterkeys() if "_sink_" in k])
 
         width_k = max([10] + [len(k) for k in x])
-        width_v = max([10] + [len(str(c[k])) for k in x])
+        width_v = max([20] + [len(str(c[k])) for k in x])
         width_d = max([10] + [len(str(c[k] - p[k])) for k in x])
         width_s = max([10] + [len("%0.1f" % ((c[k] - p[k]) / delta)) for k in x])
         emit(prefix + " %s : %s | %s | %s"
@@ -180,11 +180,23 @@ class PumpingStation(ProgressReporter):
         self.start_workers(len(source_nodes))
         self.report_init()
 
+        self.ctl['run_item'] = 0
+        self.ctl['tot_item'] = 0
+
         for source_node in sorted(source_nodes,
                                   key=lambda n: n.get('hostname', NA)):
             logging.debug(" enqueueing node: " +
                           source_node.get('hostname', NA))
             self.queue.put((source_bucket, source_node, source_map, sink_map))
+
+            rv, tot = self.source_class.total_items(self.opts,
+                                                    source_bucket,
+                                                    source_node,
+                                                    source_map)
+            if rv != 0:
+                return rv
+            if tot:
+                self.ctl['tot_item'] += tot
 
         # Don't use queue.join() as it eats Ctrl-C's.
         s = 0.05
@@ -305,6 +317,8 @@ class Pump(ProgressReporter):
                 self.cur['tot_sink_item'] += future.batch.size()
                 self.cur['tot_sink_byte'] += future.batch.bytes
 
+                self.ctl['run_item'] += future.batch.size()
+
             if not batch:
                 return self.done(0)
 
@@ -319,6 +333,10 @@ class Pump(ProgressReporter):
             n = n + 1
             if report_full > 0 and n % report_full == 0:
                 sys.stderr.write("\n")
+                if self.ctl['tot_item']:
+                    pct = (self.ctl['run_item'] * 100.0 /
+                           self.ctl['tot_item'])
+                    sys.stderr.write("%0.1f%%\n" % (pct))
                 logging.info("  progress...")
                 self.report(prefix="  ")
             elif report_dot > 0 and n % report_dot == 0:
@@ -421,6 +439,10 @@ class Source(EndPoint):
 
     def provide_batch(self):
         assert False, "unimplemented"
+
+    @staticmethod
+    def total_items(opts, source_bucket, source_node, source_map):
+        return 0, None # Subclasses can return estimate # items.
 
 
 class Sink(EndPoint):

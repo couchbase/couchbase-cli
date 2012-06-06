@@ -278,4 +278,9 @@ class TAPDumpSource(pump.Source):
 
         return 0, eng_length, flags, ttl, flg, exp, need_ack
 
-
+    @staticmethod
+    def total_items(opts, source_bucket, source_node, source_map):
+        i = source_node.get("interestingStats", None)
+        if i:
+            return 0, i.get("curr_items", None)
+        return 0, None
