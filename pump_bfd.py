@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import copy
 import glob
 import logging
 import os
@@ -8,6 +9,7 @@ import simplejson as json
 import sqlite3
 import sys
 import time
+import types
 import urllib
 
 import memcacheConstants
@@ -332,11 +334,14 @@ class BFDSink(BFD, Sink):
         try:
             cur = db.cursor()
             cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("source_bucket.json", json.dumps(self.source_bucket)))
+                        ("source_bucket.json",
+                         json.dumps(cleanse(self.source_bucket))))
             cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("source_node.json", json.dumps(self.source_node)))
+                        ("source_node.json",
+                         json.dumps(cleanse(self.source_node))))
             cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("source_map.json", json.dumps(self.source_map)))
+                        ("source_map.json",
+                         json.dumps(cleanse(self.source_map))))
             cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
                         ("start.datetime", time.strftime("%Y/%m/%d-%H:%M:%S")))
             db.commit()
@@ -423,3 +428,20 @@ def connect_db(db_path, opts, version):
 
     except Exception as e:
         return "error: connect_db exception: " + str(e), None
+
+def cleanse(d):
+    """Elide passwords from hierarchy of dict/list's."""
+    return cleanse_helper(copy.deepcopy(d))
+
+def cleanse_helper(d):
+    """Recursively, destructively elide passwords from hierarchy of dict/list's."""
+    if type(d) == types.ListType:
+        for x in d:
+            cleanse_helper(x)
+    elif type(d) == types.DictType:
+        for k, v in d.iteritems():
+            if "assword" in k:
+                d[k] = '<...ELIDED...>'
+            else:
+                d[k] = cleanse_helper(v)
+    return d

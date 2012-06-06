@@ -728,7 +728,8 @@ def rest_couchbase(opts, spec):
     if not path or path == '/':
         path = '/pools/default/buckets'
 
-    err, rest_json, rest_data = rest_request_json(host, int(port), user, pswd, path)
+    err, rest_json, rest_data = \
+        rest_request_json(host, int(port), user, pswd, path)
     if err:
         return err, None
 
@@ -757,8 +758,6 @@ def rest_couchbase(opts, spec):
 
     return 0, { 'spec': spec,
                 'buckets': buckets,
-                'rest_json': rest_json,
-                'rest_data': rest_data,
                 'spec_parts' : spec_parts }
 
 def filter_bucket_nodes(bucket, spec_parts):
