@@ -18,6 +18,7 @@ import struct
 import tempfile
 import threading
 import time
+import types
 import unittest
 import BaseHTTPServer
 
@@ -58,6 +59,15 @@ class MockRESTHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """Checks that requests match the expected requests."""
 
     def do_GET(self):
+        self.do_request()
+
+    def do_PUT(self):
+        self.do_request()
+
+    def do_POST(self):
+        self.do_request()
+
+    def do_request(self):
         test = self.server.rest_server.test
         assert test, \
             "missing a test for incoming REST request: " + \
@@ -72,9 +82,19 @@ class MockRESTHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         request, response = expects[0]
         self.server.rest_server.expects = expects[1:]
 
+        # Might be callback-based request handler.
+        if (type(request) == types.FunctionType or
+            type(request) == types.MethodType):
+            return request(self, request, response)
+
         # Test the expected request.
         assert self.command == request['command']
         assert self.path == request['path'], self.path + " != " + request['path']
+
+        # Might be callback-based response handler.
+        if (type(response) == types.FunctionType or
+            type(response) == types.MethodType):
+            return response(self, request, response)
 
         # Send the pre-canned response.
         if response['code'] != 200:
@@ -122,8 +142,11 @@ class MockRESTServer(threading.Thread):
             httpd.socket.close()
 
 
-mrs = MockRESTServer(18091)
+mrs = MockRESTServer(18091) # Mock REST / ns_server server.
 mrs.start()
+
+mcs = MockRESTServer(18092) # Mock couchDB API server.
+mcs.start()
 
 # ------------------------------------------------
 
@@ -257,10 +280,10 @@ class MockMemcachedSession(threading.Thread):
         return buf[:nbytes], buf[nbytes:]
 
 
-mms0 = MockMemcachedServer(18092)
+mms0 = MockMemcachedServer(18080)
 mms0.start()
 
-mms1 = MockMemcachedServer(18093)
+mms1 = MockMemcachedServer(18081)
 mms1.start()
 
 # ------------------------------------------------
@@ -1504,6 +1527,7 @@ class RestoreTestHelper:
 
         for w in workers:
             w.join()
+
         return d, items_per_node, self.flatten_items_per_node(items_per_node)
 
     def flatten_items_per_node(self, items_per_node):
@@ -1569,12 +1593,15 @@ class RestoreTestHelper:
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
 
-    def reset_mock_cluster(self, rest_msgs=None):
+    def reset_mock_cluster(self, rest_msgs=None, json=None):
+        if not json:
+            json = self.json_2_nodes()
+
         mrs.reset(self,
                   rest_msgs or
                   [({ 'command': 'GET',
                       'path': '/pools/default/buckets'},
-                    { 'code': 200, 'message': self.json_2_nodes() })])
+                    { 'code': 200, 'message': json })])
         mms0.reset()
         mms1.reset()
 
@@ -1678,11 +1705,16 @@ class RestoreTestHelper:
         self.check_restore_matches_backup(expected_items,
                                           expected_cmd_counts=expected_cmd_counts)
 
-        for w in workers:
-            w.join()
+        self.check_restore_wait_for_workers(workers)
         shutil.rmtree(d)
 
         return orig_items_flattened
+
+    def check_restore_wait_for_workers(self, workers):
+        """Test subclasses may override this method, in case there are more
+           complex wait conditions during restore testing."""
+        for w in workers:
+            w.join()
 
 
 class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
@@ -2127,6 +2159,106 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         return True
 
 
+class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
+
+    def setUp(self):
+        RestoreTestHelper.setUp(self)
+        self.mcs_events = []
+        self.mcs_event = threading.Event()
+        self.mcs_event.clear()
+        mcs.reset()
+
+    def test_ddoc_backup_restore(self):
+        source_items = self.check_restore(None)
+        self.assertEqual(len(source_items),
+                         self.restored_cmd_counts[CMD_SET])
+
+    def gen_backup(self,
+                   items_per_node=None,
+                   expected_backup_stdout=None,
+                   json=None,
+                   list_mms=None):
+        ddocs_qry = "?startkey=\"_design/\"&endkey=\"_design0\"&include_docs=true"
+
+        mcs.reset(self,
+                  [({ 'command': 'GET',
+                      'path': '/default/_all_docs' + ddocs_qry },
+                    self.on_all_docs)])
+
+        rv = RestoreTestHelper.gen_backup(self,
+                                          items_per_node=items_per_node,
+                                          expected_backup_stdout=expected_backup_stdout,
+                                          json=json,
+                                          list_mms=list_mms)
+
+        print "waiting for mcs all_docs..."
+        self.mcs_event.wait()
+        self.mcs_event.clear()
+        print "waiting for mcs all_docs... done"
+        self.assertTrue("all_docs" in self.mcs_events)
+
+        return rv
+
+    def json_2_nodes(self):
+        json = MCTestHelper.json_2_nodes(self)
+        json = json.replace('CAPIk0', 'couchApiBase')
+        json = json.replace('CAPIv0', "http://%s/default" % (mcs.host_port()))
+        return json
+
+    def on_all_docs(self, req, _1, _2):
+        print "on_all_docs", req.command, req.path
+        ok = """{"total_rows":1,"offset":0,
+                 "rows":[
+                  {"id":"_design/dev_dd0",
+                   "key":"_design/dev_dd0",
+                   "value":{"rev":"7-aa4defd3"},
+                   "doc":{
+                     "_id":"_design/dev_dd0",
+                     "_rev":"7-aa4defd3",
+                     "views":{
+                       "view0":{
+                         "map":"function (doc) {\\n  emit(doc._id, null);\\n}"
+                       }
+                     }
+                   }}]}"""
+        req.send_response(200)
+        req.send_header("Content-Type", 'application/json')
+        req.end_headers()
+        req.wfile.write(ok)
+
+        self.mcs_events.append("all_docs")
+        self.mcs_event.set()
+
+    def reset_mock_cluster(self):
+        mcs.reset(self,
+                  [({ 'command': 'PUT',
+                      'path': '/default/_design/dev_dd0' },
+                    self.on_ddoc_put)])
+
+        RestoreTestHelper.reset_mock_cluster(self)
+
+    def on_ddoc_put(self, req, _1, _2):
+        ok = """{"ok":true,
+                 "id":"_design/example",
+                 "rev":"1-230141dfa7e07c3dbfef0789bf11773a"}"""
+        req.send_response(200)
+        req.send_header("Content-Type", 'application/json')
+        req.end_headers()
+        req.wfile.write(ok)
+
+        self.mcs_events.append("ddocs_put")
+        self.mcs_event.set()
+
+    def check_restore_wait_for_workers(self, workers):
+        RestoreTestHelper.check_restore_wait_for_workers(self, workers)
+
+        print "waiting for mcs ddocs_put..."
+        self.mcs_event.wait()
+        self.mcs_event.clear()
+        print "waiting for mcs ddocs_put... done"
+        self.assertTrue("ddocs_put" in self.mcs_events)
+
+
 # ------------------------------------------------------
 
 SAMPLE_JSON_pools = """
@@ -2213,6 +2345,7 @@ SAMPLE_JSON_pools_default_buckets = """
      "clusterCompatibility":1,
      "version":"1.8.0r-55-g80f24f2-enterprise",
      "os":"x86_64-unknown-linux-gnu",
+     "CAPIk0":"CAPIv0",
      "ports":{"proxy":11211,"direct":11210}},
     {"systemStats":{"cpu_utilization_rate":0.49875311720698257,"swap_total":1073737728,"swap_used":0},
      "interestingStats":{"curr_items":0,"curr_items_tot":0,"vb_replica_curr_items":0},
@@ -2225,6 +2358,7 @@ SAMPLE_JSON_pools_default_buckets = """
      "clusterCompatibility":1,
      "version":"1.8.0r-55-g80f24f2-enterprise",
      "os":"x86_64-unknown-linux-gnu",
+     "CAPIk1":"CAPIv1",
      "ports":{"proxy":11211,"direct":11210}}],
    "stats":{"uri":"/pools/default/buckets/default/stats",
             "directoryURI":"/pools/default/buckets/default/statsDirectory",

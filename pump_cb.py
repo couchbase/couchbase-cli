@@ -64,8 +64,8 @@ class CBSink(pump_mc.MCSink):
         if rv != 0:
             return rv, None
 
-        # If there's only one bucket in the source_map, use that,
-        # if the called didn't specify a bucket_source.
+        # If the caller didn't specify a bucket_source and
+        # there's only one bucket in the source_map, use that.
         source_bucket = getattr(opts, "bucket_source", None)
         if (not source_bucket and
             source_map and
@@ -165,6 +165,8 @@ class CBSink(pump_mc.MCSink):
 
             logging.debug("design_doc created at: " + path + "/" + id)
 
+
+        return 0
 
     def find_conn(self, mconns, vbucket_id):
         bucket = self.sink_map['buckets'][0]

@@ -63,6 +63,10 @@ class TAPDumpSource(pump.Source):
 
         err, ddocs_json, ddocs = \
             pump.rest_request_json(host, int(port), user, pswd, path + ddocs_qry)
+        if err:
+            return err, None
+
+        # TODO: (2) TAPDumpSource - handle design docs with attachments.
 
         return 0, ddocs_json
 
