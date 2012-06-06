@@ -4,15 +4,17 @@ import glob
 import logging
 import os
 import re
+import simplejson as json
 import sqlite3
 import sys
+import time
 import urllib
 
 import memcacheConstants
 
 from pump import Source, Sink, Batch, SinkBatchFuture
 
-CBB_VERSION = 2000 # sqlite pragma user version.
+CBB_VERSION = 2001 # sqlite pragma user version.
 
 # TODO: (2) BFD - split *.cbb files when they get too big.
 
@@ -313,7 +315,6 @@ class BFDSink(BFD, Sink):
         return 0
 
     def consume_batch_async(self, batch):
-        # TODO: (1) BFDSink - store counts like num items, sizes, etc.
         return self.push_next_batch(batch, SinkBatchFuture(self, batch))
 
     def create_db(self):
@@ -321,10 +322,30 @@ class BFDSink(BFD, Sink):
         if rv != 0:
             return rv, None
 
-        return create_db(BFD.db_path(self.spec,
-                                     self.bucket_name(),
-                                     self.node_name()),
-                         self.opts)
+        rv, db = create_db(BFD.db_path(self.spec,
+                                       self.bucket_name(),
+                                       self.node_name()),
+                           self.opts)
+        if rv != 0:
+            return rv, None
+
+        try:
+            cur = db.cursor()
+            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
+                        ("source_bucket.json", json.dumps(self.source_bucket)))
+            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
+                        ("source_node.json", json.dumps(self.source_node)))
+            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
+                        ("source_map.json", json.dumps(self.source_map)))
+            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
+                        ("start.datetime", time.strftime("%Y/%m/%d-%H:%M:%S")))
+            db.commit()
+        except sqlite3.Error as e:
+            return "error: create_db error: " + str(e), None
+        except Exception as e:
+            return "error: create_db exception: " + str(e), None
+
+        return 0, db
 
     def mkdirs(self):
         """Make directories, if not already, with structure like...
@@ -368,6 +389,9 @@ def create_db(db_path, opts):
                      (cmd integer,
                       vbucket_id integer,
                       key blob, flg integer, exp integer, cas integer,
+                      val blob);
+                  CREATE TABLE cbb_meta
+                     (key text,
                       val blob);
                   pragma user_version=%s;
                   COMMIT;
