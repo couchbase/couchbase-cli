@@ -30,12 +30,13 @@ class Transfer:
             "%prog [options] source destination\n\n" \
             "Transfer couchbase cluster data from source to destination.\n\n" \
             "Examples:\n" \
-            "  %prog http://HOST:8091 /backups/backup-20120512\n" \
-            "  %prog /backups/backup-20120512 http://HOST:8091\n" \
-            "  %prog /backups/backup-20120512 couchbase://HOST:8091\n" \
-            "  %prog /backups/backup-20120512 memcached://HOST:11211\n" \
-            "  %prog http://SOURCE:8091 http://DESTINATION:8091\n" \
-            "  %prog /backups/backup-20120512 stdout: -t 1"
+            "  %prog http://SOURCE:8091 /backups/backup-42\n" \
+            "  %prog /backups/backup-42 http://DEST:8091\n" \
+            "  %prog /backups/backup-42 couchbase://DEST:8091\n" \
+            "  %prog /backups/backup-42 memcached://DEST:11211\n" \
+            "  %prog /backups/backup-42 stdout:\n" \
+            "  %prog http://SOURCE:8091 http://DEST:8091\n" \
+            "  %prog http://SOURCE:8091 stdout:"
 
     def main(self, argv, opts_etc=None):
         if threading.current_thread().name == "MainThread":
@@ -153,8 +154,8 @@ class Backup(Transfer):
             "%prog [options] source backup_dir\n\n" \
             "Online/offline backup of a couchbase cluster or server node.\n\n" \
             "Examples:\n" \
-            "  %prog http://HOST:8091 /backups/backup-20120512\n" \
-            "  %prog couchbase://HOST:8091 /backups/backup-20120512"
+            "  %prog http://HOST:8091 /backups/backup-42\n" \
+            "  %prog couchbase://HOST:8091 /backups/backup-42"
 
     def opt_parser_options(self, p):
         p.add_option("-b", "--bucket-source",
@@ -186,12 +187,13 @@ class Restore(Transfer):
             "Restores a single couchbase bucket.\n\n" \
             "Please first create the destination / bucket before restoring.\n\n" \
             "Examples:\n" \
-            "  %prog /backups/backup-20120512 http://HOST:8091 \\\n" \
+            "  %prog /backups/backup-42 http://HOST:8091 \\\n" \
             "    --bucket=default\n" \
-            "  %prog /backups/backup-20120512 couchbase://HOST:8091 \\\n" \
+            "  %prog /backups/backup-42 couchbase://HOST:8091 \\\n" \
             "    --bucket=default\n" \
-            "  %prog /backups/backup-20120512 memcached://HOST:11211 \\\n" \
-            "    --bucket=sessions"
+            "  %prog /backups/backup-42 memcached://HOST:11211 \\\n" \
+            "    --bucket=sessions\n" \
+            "  %prog /backups/backup-42 stdout:"
 
     def opt_parser_options(self, p):
         p.add_option("-a", "--add",
