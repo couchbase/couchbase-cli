@@ -311,8 +311,8 @@ class Pump(ProgressReporter):
 
         # TODO: (2) Pump - timeouts when providing/consuming/waiting.
 
-        report_dot = int(self.opts.extra.get("report_dot", 1000))
-        report_full = int(self.opts.extra.get("report_full", 50000))
+        report = int(self.opts.extra.get("report", 5))
+        report_full = int(self.opts.extra.get("report_full", 2000))
 
         self.report_init()
 
@@ -352,7 +352,7 @@ class Pump(ProgressReporter):
                     sys.stderr.write("\n")
                 logging.info("  progress...")
                 self.report(prefix="  ")
-            elif report_dot > 0 and n % report_dot == 0:
+            elif report > 0 and n % report == 0:
                 sys.stderr.write(self.bar(self.ctl['run_item'],
                                           self.ctl['tot_item']))
 
