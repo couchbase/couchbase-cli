@@ -2230,14 +2230,16 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.mcs_event.set()
 
     def reset_mock_cluster(self):
+        print "reset_mock_cluster..."
         mcs.reset(self,
                   [({ 'command': 'PUT',
                       'path': '/default/_design/dev_dd0' },
                     self.on_ddoc_put)])
-
         RestoreTestHelper.reset_mock_cluster(self)
+        print "reset_mock_cluster... done"
 
     def on_ddoc_put(self, req, _1, _2):
+        print "on_ddoc_put..."
         ok = """{"ok":true,
                  "id":"_design/example",
                  "rev":"1-230141dfa7e07c3dbfef0789bf11773a"}"""
@@ -2246,8 +2248,11 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         req.end_headers()
         req.wfile.write(ok)
 
+        time.sleep(0.01) # See: http://stackoverflow.com/questions/383738
+
         self.mcs_events.append("ddocs_put")
         self.mcs_event.set()
+        print "on_ddoc_put... done"
 
     def check_restore_wait_for_workers(self, workers):
         RestoreTestHelper.check_restore_wait_for_workers(self, workers)

@@ -161,10 +161,10 @@ class CBSink(pump_mc.MCSink):
                     return ("error: could not restore design doc id: %s" +
                             "; response: %s; err: %s") % (id, response, err)
             except Exception as e:
-                return "error: design sink exception: %s" % (e)
+                return ("error: design sink exception: %s" +
+                        "; couch_api_base: %s") % (e, couch_api_base)
 
             logging.debug("design_doc created at: " + path + "/" + id)
-
 
         return 0
 
