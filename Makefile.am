@@ -7,19 +7,25 @@ default:
 pythonlibdir=$(libdir)/python
 nobase_pythonlib_DATA= \
          buckets.py \
+         cluster_stats.py \
+         collector.py \
+         diskqueue_stats.py \
          info.py \
          listservers.py \
          node.py \
+         node_stats.py \
+         processor.py \
          restclient.py \
          simplejson/LICENSE.txt \
          simplejson/__init__.py \
          simplejson/decoder.py \
          simplejson/encoder.py \
          simplejson/scanner.py \
+         stats_buffer.py \
          usage.py \
          util_cli.py
 
-pythonlib_SCRIPTS= couchbase-cli
+pythonlib_SCRIPTS= couchbase-cli cbclusterstats
 
 PYTHON_TOOLS= wrapper/couchbase-cli
 

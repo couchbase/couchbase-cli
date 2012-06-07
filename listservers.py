@@ -34,7 +34,9 @@ class ListServers:
                             self.port,
                             self.user,
                             self.password)
-        if (self.output == 'json'):
+        if (self.output == 'return'):
+            return self.getNodes(data)
+        elif (self.output == 'json'):
             print data
         else:
             # obtain dict of nodes. If not dict, is error message

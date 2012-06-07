@@ -1,0 +1,86 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+import getopt
+import sys
+import os
+import traceback
+import copy
+import logging
+
+import collector
+import stats_buffer
+import util
+
+import processor
+
+log = logging.getLogger('cbclusterstats')
+log.setLevel(logging.INFO)
+log.addHandler(logging.StreamHandler())
+
+def parse_opt():
+    (cluster, user, password, txtfile) = ('', '', '', 'clusterstats.txt')
+
+    try:
+        (opts, _args) = getopt.getopt(sys.argv[1:],
+                                      'c:dp:u:o:', [
+                'cluster=',
+                'debug',
+                'password=',
+                'user=',
+                'txt=',
+                ])
+    except getopt.GetoptError, err:
+        usage(err)
+
+    for (opt, arg) in opts:
+        if opt in ('-c', '--cluster'):
+            cluster = arg
+        if opt in ('-u', '--user'):
+            user = arg
+        if opt in ('-p', '--password'):
+            password = arg
+        if opt in ('-d', '--debug'):
+            log.setLevel(logging.DEBUG)
+        if opt in ('-o', '--output'):
+            txtfile = arg
+
+    if not cluster or not user or not password:
+        usage()
+    return (cluster, user, password, txtfile, opts)
+
+def usage(error_msg=''):
+    if error_msg:
+        print "ERROR: %s" % error_msg
+        sys.exit(2)
+
+    print """cbclusterstats - cluster key performance indicator stats
+
+usage: cbclusterstats CLUSTER USERNAME PASSWORD OPTIONS
+
+CLUSTER:
+  --cluster=HOST[:PORT] or -c HOST[:PORT] Default port is 8091
+USERNAME:
+  -u USERNAME, --user=USERNAME      admin username of the cluster
+PASSWORD:
+  -p PASSWORD, --password=PASSWORD  admin password of the cluster
+OPTIONS:
+  -o FILENAME, --output=FILENAME    Default output filename is 'clusterstats.txt'
+  -d, --debug
+
+"""
+    sys.exit(2)
+
+def main():
+    (cluster, user, password, txtfile, opts) = parse_opt()
+    #make snapshot for the current cluster status
+    retriever = collector.StatsCollector(log)
+    retriever.collect_data(cluster, user, password, opts)
+
+    #analyze the snapshot and historic data
+    performer = processor.StatsAnalyzer(log)
+    performer.run_analysis()
+    performer.run_report(txtfile)
+
+if __name__ == '__main__':
+    main()

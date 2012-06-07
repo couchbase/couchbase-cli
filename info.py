@@ -33,7 +33,9 @@ class Info:
         for x in ['license', 'licenseValid', 'licenseValidUntil']:
             if x in json:
                 del(json[x])
-        if cmd == 'server-eshell':
+        if cmd == 'get-server-info':
+            return json
+        elif cmd == 'server-eshell':
             p = subprocess.call(['erl','-name','ctl@127.0.0.1',
                 '-setcookie',json['otpCookie'],'-hidden','-remsh',json['otpNode']])
         else:

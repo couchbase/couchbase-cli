@@ -11,6 +11,9 @@ rest_cmds = {
     'bucket-delete': '/pools/default/buckets/',
     'bucket-create': '/pools/default/buckets/',
     'bucket-edit': '/pools/default/buckets/',
+    'bucket-get': '/pools/default/buckets',
+    'bucket-stats': '/pools/default/buckets/{0}/stats?zoom=hour',
+    'bucket-node-stats': '/pools/default/buckets/{0}/stats/{1}?zoom={2}'
     }
 methods = {
     'bucket-list': 'GET',
@@ -18,7 +21,9 @@ methods = {
     'bucket-create': 'POST',
     'bucket-edit': 'POST',
     'bucket-flush': 'POST',
+    'bucket-get': 'GET',
     'bucket-stats': 'GET',
+    'bucket-node-stats': 'GET',
     }
 
 class Buckets:
@@ -102,7 +107,9 @@ class Buckets:
         data = rest.restCmd(methods[cmd], self.rest_cmd,
                             self.user, self.password, opts)
 
-        if cmd == "bucket-list":
+        if cmd in ("bucket-get", "bucket-stats", "bucket-node-stats"):
+            return rest.getJson(data)
+        elif cmd == "bucket-list":
             if output == 'json':
                 print data
             else:
@@ -123,3 +130,40 @@ class Buckets:
                 print rest.jsonMessage(data)
             else:
                 print data
+
+class BucketStats:
+    def __init__(self, bucket_name):
+        self.debug = False
+        self.rest_cmd = rest_cmds['bucket-stats'].format(bucket_name)
+        self.method = 'GET'
+
+    def runCmd(self, cmd, server, port,
+               user, password, opts):
+        opts = {}
+        opts['error_msg'] = "unable to %s" % cmd
+        opts['success_msg'] = "%s" % cmd
+
+        #print server, port, cmd, self.rest_cmd
+        rest = restclient.RestClient(server, port, {'debug':self.debug})
+        data = rest.restCmd(methods[cmd], self.rest_cmd,
+                            user, password, opts)
+        return rest.getJson(data)
+
+class BucketNodeStats:
+    def __init__(self, bucket_name, stat_name, scale):
+        self.debug = False
+        self.rest_cmd = rest_cmds['bucket-node-stats'].format(bucket_name, stat_name, scale)
+        self.method = 'GET'
+        #print self.rest_cmd
+
+    def runCmd(self, cmd, server, port,
+               user, password, opts):
+        opts = {}
+        opts['error_msg'] = "unable to %s" % cmd
+        opts['success_msg'] = "%s" % cmd
+
+        #print server, port, cmd, self.rest_cmd
+        rest = restclient.RestClient(server, port, {'debug':self.debug})
+        data = rest.restCmd(methods[cmd], self.rest_cmd,
+                            user, password, opts)
+        return rest.getJson(data)
