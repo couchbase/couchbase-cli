@@ -86,10 +86,6 @@ class Transfer:
         p = optparse.OptionParser(usage=self.usage,
                                   epilog=opt_extra_help(self.opt_extra_defaults()))
         self.opt_parser_options(p)
-
-        # TODO: (1) parameter --username from env.
-        # TODO: (1) parameter --password from env.
-
         return p
 
     def opt_parser_options(self, p):
@@ -102,7 +98,6 @@ class Transfer:
                              destination bucket name; this allows you to transfer
                              to a different bucket; defaults to the same as the
                              bucket-source""")
-
         self.opt_parser_options_common(p)
 
     def opt_parser_options_common(self, p):

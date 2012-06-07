@@ -663,15 +663,17 @@ def parse_spec(opts, spec, port):
     if not netloc: # When urlparse() can't parse non-http URI's.
         netloc = spec.split('://')[-1].split('/')[0]
 
-    list = netloc.split('@')
-    host = (list[-1] + ":" + str(port)).split(':')[0]
-    port = (list[-1] + ":" + str(port)).split(':')[1]
+    pair = netloc.split('@') # [ "user:pwsd", "host:port" ].
+    host = (pair[-1] + ":" + str(port)).split(':')[0]
+    port = (pair[-1] + ":" + str(port)).split(':')[1]
 
     username = opts.username
     password = opts.password
-    if len(list) > 1:
-        username = username or (list[0] + ':').split(':')[0]
-        password = password or (list[0] + ':').split(':')[1]
+    if len(pair) > 1:
+        username = username or (pair[0] + ':').split(':')[0] \
+            or os.environ['CB_REST_USERNAME'] or ''
+        password = password or (pair[0] + ':').split(':')[1] \
+            or os.environ['CB_REST_PASSWORD'] or ''
 
     return host, port, username, password, p.path
 

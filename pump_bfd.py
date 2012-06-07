@@ -358,10 +358,7 @@ class BFDSink(BFD, Sink):
              bucket-<BUCKETNAME>/
                design.json
                node-<NODE>/
-                 data-<XXXX>.cbb
-        """
-        # TODO: (1) BFDSink - handle dry-run for mkdirs().
-
+                 data-<XXXX>.cbb"""
         spec = os.path.normpath(self.spec)
         if not os.path.isdir(spec):
             try:
