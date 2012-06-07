@@ -92,12 +92,16 @@ class PumpingStation(ProgressReporter):
 
     def run(self):
         # TODO: (6) PumpingStation - monitor source for topology changes.
-        # TODO: (4) PumpingStation - retry/reconnect on err N times, M times / server.
-        # TODO: (2) PumpingStation - track checksum in backup, used later at restore.
+        # TODO: (4) PumpingStation - retry on err N times, M times / server.
+        # TODO: (2) PumpingStation - track checksum in backup, for later restore.
 
         rv, source_map, sink_map = self.check_endpoints()
         if rv != 0:
             return rv
+
+        if self.opts.dry_run:
+            print "done, but no data written due to dry-run"
+            return 0
 
         source_buckets = self.filter_source_buckets(source_map)
         for source_bucket in sorted(source_buckets,
@@ -121,7 +125,6 @@ class PumpingStation(ProgressReporter):
         # TODO: (4) PumpingStation - validate source/sink maps were stable.
 
         print "done"
-
         return 0
 
     def check_endpoints(self):

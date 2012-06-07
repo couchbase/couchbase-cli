@@ -2259,6 +2259,26 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.assertTrue("ddocs_put" in self.mcs_events)
 
 
+class TestBackupDryRun(MCTestHelper, BackupTestHelper):
+
+    def test_dry_run(self):
+        d = tempfile.mkdtemp()
+        mrs.reset(self, [({ 'command': 'GET',
+                            'path': '/pools/default/buckets'},
+                          { 'code': 200, 'message': self.json_2_nodes() })])
+
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
+                                          "--dry-run"])
+        self.assertEqual(0, rv)
+
+        self.assertEqual(0, len(glob.glob(d + "/bucket-*")))
+        self.assertEqual(0, len(glob.glob(d + "/bucket-*/design.json")))
+        self.assertEqual(0, len(glob.glob(d + "/bucket-*/node-*")))
+        self.assertEqual(0, len(glob.glob(d + "/bucket-*/node-*/data-*.cbb")))
+
+        shutil.rmtree(d)
+
+
 # ------------------------------------------------------
 
 SAMPLE_JSON_pools = """
