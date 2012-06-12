@@ -253,9 +253,9 @@ class BFDSink(BFD, Sink):
                 self.future_done(future, 0) # No return to keep looping.
 
             except sqlite3.Error as e:
-                return self.future_done(future, "error: db error: " + e)
+                return self.future_done(future, "error: db error: " + str(e))
             except Exception as e:
-                return self.future_done(future, "error: db exception: " + e)
+                return self.future_done(future, "error: db exception: " + str(e))
 
     @staticmethod
     def can_handle(opts, spec):
