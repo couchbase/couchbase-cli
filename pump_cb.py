@@ -174,6 +174,11 @@ class CBSink(pump_mc.MCSink):
         vBucketMap = bucket['vBucketServerMap']['vBucketMap']
         serverList = bucket['vBucketServerMap']['serverList']
 
+        if vbucket_id > len(vBucketMap):
+            return "error: map missing vbucket_id: " + str(vbucket_id) + \
+                "; perhaps your source does not have vbuckets" + \
+                "; if so, try using moxi (HOST:11211) as a destination", None
+
         # Primary server for a vbucket_id is the 0'th entry.
         host_port = serverList[vBucketMap[vbucket_id][0]]
 

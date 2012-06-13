@@ -36,7 +36,8 @@ class Transfer:
             "  %prog /backups/backup-42 memcached://DEST:11211\n" \
             "  %prog /backups/backup-42 stdout:\n" \
             "  %prog http://SOURCE:8091 http://DEST:8091\n" \
-            "  %prog http://SOURCE:8091 stdout:"
+            "  %prog http://SOURCE:8091 stdout:\n" \
+            "  %prog stdin: http://DEST:8091"
 
     def main(self, argv, opts_etc=None):
         if threading.current_thread().name == "MainThread":
@@ -265,7 +266,8 @@ def opt_extra_help(extra_defaults):
 
 SOURCES = [pump_bfd.BFDSource,
            pump_mbf.MBFSource,
-           pump_tap.TAPDumpSource]
+           pump_tap.TAPDumpSource,
+           pump.StdInSource]
 
 SINKS = [pump_bfd.BFDSink,
          pump_mc.MCSink,

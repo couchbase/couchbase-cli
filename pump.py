@@ -569,6 +569,90 @@ class SinkBatchFuture:
 
 # --------------------------------------------------
 
+class StdInSource(Source):
+    """Reads batches from stdin in memcached ascii protocol."""
+
+    def __init__(self, opts, spec, source_bucket, source_node,
+                 source_map, sink_map, ctl, cur):
+        Source.__init__(self, opts, spec, source_bucket, source_node,
+                        source_map, sink_map, ctl, cur)
+
+        self.f = sys.stdin
+
+    @staticmethod
+    def can_handle(opts, spec):
+        return spec.startswith("stdin:")
+
+    @staticmethod
+    def check(opts, spec):
+        return 0, {'spec': spec,
+                   'buckets': [{'name': 'stdin:',
+                                'nodes': [{'hostname': 'N/A'}]}] }
+
+    @staticmethod
+    def provide_config(opts, source_spec, source_bucket, source_map):
+        return 0, None
+
+    @staticmethod
+    def provide_design(opts, source_spec, source_bucket, source_map):
+        return 0, None
+
+    def provide_batch(self):
+        batch = Batch(self)
+
+        batch_max_size = self.opts.extra['batch_max_size']
+        batch_max_bytes = self.opts.extra['batch_max_bytes']
+
+        vbucket_id = 0x0000ffff
+
+        while (self.f and
+               batch.size() < batch_max_size and
+               batch.bytes < batch_max_bytes):
+            line = self.f.readline()
+            if not line:
+                self.f = None
+                return 0, batch
+
+            parts = line.split(' ')
+            if not parts:
+                return "error: read empty line", None
+            elif parts[0] == 'set' or parts[0] == 'add':
+                if len(parts) != 5:
+                    return "error: length of set/add line: " + line, None
+                cmd = memcacheConstants.CMD_TAP_MUTATION
+                key = parts[1]
+                flg = int(parts[2])
+                exp = int(parts[3])
+                num = int(parts[4])
+                cas = 0
+                if num > 0:
+                    val = self.f.read(num)
+                    if len(val) != num:
+                        return "error: value read failed at: " + line, None
+                else:
+                    val = ''
+                end = self.f.read(2) # Read '\r\n'.
+                if len(end) != 2:
+                    return "error: value end read failed at: " + line, None
+
+                item = (cmd, vbucket_id, key, flg, exp, cas, val)
+                batch.append(item, len(val))
+            elif parts[0] == 'delete':
+                if len(parts) != 2:
+                    return "error: length of delete line: " + line, None
+                cmd = memcacheConstants.CMD_TAP_DELETE
+                key = parts[1]
+                item = (cmd, vbucket_id, key, 0, 0, 0, '')
+                batch.append(item, 0)
+            else:
+                return "error: expected set/add/delete but got: " + line, None
+
+        if batch.size() <= 0:
+            return 0, None
+
+        return 0, batch
+
+
 class StdOutSink(Sink):
     """Emits batches to stdout in memcached ascii protocol."""
 
