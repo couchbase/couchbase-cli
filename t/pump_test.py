@@ -303,7 +303,7 @@ class TestPumpingStationFind(unittest.TestCase):
         self.find = pump.PumpingStation.find_handler
 
     def test_find_handlers(self):
-        self.assertEqual(3, len(pump_transfer.SOURCES))
+        self.assertEqual(4, len(pump_transfer.SOURCES))
         self.assertEqual(4, len(pump_transfer.SINKS))
         self.assertEqual(pump_tap.TAPDumpSource,
                          self.find(None,
@@ -2099,7 +2099,7 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         return True
 
 
-class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
+class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
     def setUp(self):
         RestoreTestHelper.setUp(self)
