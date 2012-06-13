@@ -459,7 +459,7 @@ class TestKeyFilter(unittest.TestCase):
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
                                           "-k", "((**"])
         self.assertNotEqual(0, rv)
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
 
 class TestTAPDumpSourceCheck(unittest.TestCase):
@@ -785,7 +785,7 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         self.assertNotEqual(0, rv)
 
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_close_at_auth(self):
         for mms in [mms0, mms1]:
@@ -807,7 +807,7 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         self.assertNotEqual(0, rv)
 
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_rejected_auth(self):
         for mms in [mms0, mms1]:
@@ -833,7 +833,7 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         self.check_cbb_file_exists(d, num_buckets=0)
 
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_close_after_auth(self):
         for mms in [mms0, mms1]:
@@ -859,7 +859,7 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         self.check_cbb_file_exists(d, num_buckets=0)
 
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_close_after_TAP_connect(self):
         for mms in [mms0, mms1]:
@@ -896,7 +896,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                     "set a 0 0 1\r\nA\r\n"
                                     "set a 0 0 1\r\nA\r\n")
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_1_mutation(self):
         # Sends one TAP_MUTATION with an ACK.
@@ -956,7 +956,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                      (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A'),
                                      (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, 'B')])
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_2_mutation(self):
         # Sends two TAP_MUTATION's with an ACK on the last.
@@ -1015,7 +1015,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                     [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A'),
                                      (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A')])
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def test_key_filter_everything(self):
         d = tempfile.mkdtemp()
@@ -1031,7 +1031,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.check_cbb_file_exists(d, num=2)
         self.expect_backup_contents(d, "", [])
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def test_2_mutation_chopped_header(self):
         d = tempfile.mkdtemp()
@@ -1053,7 +1053,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                     "set a 0 0 1\r\nA\r\n"
                                     "set a 0 0 1\r\nA\r\n")
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def test_2_mutation_chopped_body(self):
         d = tempfile.mkdtemp()
@@ -1077,7 +1077,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         #                             "set a 0 0 1\r\nA\r\n",
         #                             [(CMD_TAP_MUTATION, 123, 'a', 0, 0, 321, 'A')])
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_2_chopped(self):
         # Sends two TAP_MUTATION's, but second message is chopped.
@@ -1130,7 +1130,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
                                      (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B')])
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_delete(self):
         for mms in [mms0, mms1]:
@@ -1196,7 +1196,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                      (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '')])
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_delete_ack(self):
         # The last sent message is a TAP_DELETE with TAP_FLAG_ACK.
@@ -1262,7 +1262,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
                                      (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B')])
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_noop(self):
         # Has CMD_NOOP's sprinkled amongst the stream.
@@ -1342,7 +1342,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
                                      (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '')])
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_tap_cmd_opaque(self):
         # Has CMD_TAP_OPAQUE's sprinkled amongst the stream.
@@ -1428,7 +1428,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
                                      (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A')])
         w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def worker_flush_all(self):
         for mms in [mms0, mms1]:
@@ -1708,7 +1708,7 @@ class RestoreTestHelper:
                                           expected_cmd_counts=expected_cmd_counts)
 
         self.check_restore_wait_for_workers(workers)
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
         return orig_items_flattened
 
@@ -1912,7 +1912,7 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
 
         for w in workers:
             w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def test_immediate_not_my_vbucket_during_restore(self):
         self.go(2)
@@ -2014,7 +2014,7 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         for w in workers:
             w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def test_etmpfail_during_restore(self):
         self.backoff_err = ERR_ETMPFAIL
@@ -2061,7 +2061,7 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         for w in workers:
             w.join()
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
     def handle_mc_req(self, client, req, bucket, bucket_password):
         cmd, vbucket_id, ext, key, val, opaque, cas = \
@@ -2283,7 +2283,7 @@ class TestBackupDryRun(MCTestHelper, BackupTestHelper):
         self.assertEqual(0, len(glob.glob(d + "/bucket-*/node-*")))
         self.assertEqual(0, len(glob.glob(d + "/bucket-*/node-*/data-*.cbb")))
 
-        shutil.rmtree(d)
+        shutil.rmtree(d, ignore_errors=True)
 
 
 # ------------------------------------------------------
