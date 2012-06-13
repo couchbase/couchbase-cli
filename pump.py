@@ -635,15 +635,17 @@ class StdInSource(Source):
                 if len(end) != 2:
                     return "error: value end read failed at: " + line, None
 
-                item = (cmd, vbucket_id, key, flg, exp, cas, val)
-                batch.append(item, len(val))
+                if not self.skip(key, vbucket_id):
+                    item = (cmd, vbucket_id, key, flg, exp, cas, val)
+                    batch.append(item, len(val))
             elif parts[0] == 'delete':
                 if len(parts) != 2:
                     return "error: length of delete line: " + line, None
                 cmd = memcacheConstants.CMD_TAP_DELETE
                 key = parts[1]
-                item = (cmd, vbucket_id, key, 0, 0, 0, '')
-                batch.append(item, 0)
+                if not self.skip(key, vbucket_id):
+                    item = (cmd, vbucket_id, key, 0, 0, 0, '')
+                    batch.append(item, 0)
             else:
                 return "error: expected set/add/delete but got: " + line, None
 
@@ -704,6 +706,8 @@ class StdOutSink(Sink):
                 item = item_visitor(item)
 
             cmd, vbucket_id, key, flg, exp, cas, val = item
+            if self.skip(key, vbucket_id):
+                continue
 
             if cmd == memcacheConstants.CMD_TAP_MUTATION:
                 # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
