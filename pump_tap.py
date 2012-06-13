@@ -7,6 +7,7 @@ import re
 import socket
 import string
 import struct
+import time
 
 import mc_bin_client
 import memcacheConstants
@@ -24,6 +25,7 @@ class TAPDumpSource(pump.Source):
         self.tap_done = False
         self.tap_conn = None
         self.tap_name = "".join(random.sample(string.letters, 16))
+        self.ack_last = False # True when the last TAP msg had TAP_FLAG_ACK.
 
         self.recv_min_bytes = int(getattr(opts, "recv_min_bytes", 4096))
 
@@ -71,13 +73,38 @@ class TAPDumpSource(pump.Source):
         return 0, ddocs_json
 
     def provide_batch(self):
-        if self.tap_done:
-            return 0, None
+        cur_sleep = 0.2
+        cur_retry = 0
+        max_retry = self.opts.extra['max_retry']
 
-        rv, tap_conn = self.get_tap_conn()
-        if rv != 0:
-            return rv, None
+        while True:
+            if self.tap_done:
+                return 0, None
 
+            rv, tap_conn = self.get_tap_conn()
+            if rv != 0:
+                self.tap_done = True
+                return rv, None
+
+            rv, batch = self.provide_batch_actual(tap_conn)
+            if rv == 0:
+                return rv, batch
+
+            if self.tap_conn:
+                self.tap_conn.close()
+                self.tap_conn = None
+
+            if cur_retry >= max_retry:
+                self.tap_done = True
+                return rv, batch
+
+            logging.warn("backoff: %s, sleeping: %s, on error: %s" %
+                         (cur_retry, cur_sleep, rv))
+            time.sleep(cur_sleep)
+            cur_sleep = min(cur_sleep * 2, 20) # Max backoff sleep 20 seconds.
+            cur_retry = cur_retry + 1
+
+    def provide_batch_actual(self, tap_conn):
         batch = pump.Batch(self)
 
         batch_max_size = self.opts.extra['batch_max_size']
@@ -99,14 +126,12 @@ class TAPDumpSource(pump.Source):
                     rv, eng_length, flags, ttl, flg, exp, need_ack = \
                         self.parse_tap_ext(ext)
                     if rv != 0:
-                        logging.warn("stopping:"
-                                     " received partial message;"
+                        logging.warn("warning: partial TAP message received;"
                                      " perhaps some item(s) not transferred;"
                                      " key: %s, cmd %s, vbucket_id %s"
                                      % (key, pump.CMD_STR.get(cmd, cmd),
                                         vbucket_id))
-                        self.tap_done = True
-                        break
+                        return rv, batch
 
                     if not self.skip(key, vbucket_id):
                         item = (cmd, vbucket_id, key, flg, exp, cas, val)
@@ -116,11 +141,9 @@ class TAPDumpSource(pump.Source):
                         rv, eng_length, flags, ttl, flg, exp, need_ack = \
                             self.parse_tap_ext(ext)
                         if rv != 0:
-                            logging.warn("stopping:"
-                                         " received partial TAP_OPAQUE msg;"
+                            logging.warn("warning: partial TAP_OPAQUE;"
                                          " perhaps some item(s) missed")
-                            self.tap_done = True
-                            break
+                            return rv, batch
                 elif cmd == memcacheConstants.CMD_NOOP:
                     continue # NOOP's are ignorable; used to keep conn alive.
                 elif cmd == memcacheConstants.CMD_TAP_FLUSH:
@@ -128,12 +151,12 @@ class TAPDumpSource(pump.Source):
                     self.tap_done = True
                     break
                 else:
-                    logging.warn("stopping: unexpected, saw " +
-                                 str(pump.CMD_STR.get(cmd, cmd)))
-                    self.tap_done = True
-                    break
+                    s = str(pump.CMD_STR.get(cmd, cmd))
+                    logging.warn("warning: unexpected TAP message: " + s)
+                    return "unexpected TAP message: " + s, batch
 
                 if need_ack:
+                    self.ack_last = True
                     tap_conn._sendMsg(cmd, '', '', opaque, vbucketId=0,
                                       fmt=memcacheConstants.RES_PKT_FMT,
                                       magic=memcacheConstants.RES_MAGIC_BYTE)
@@ -144,8 +167,15 @@ class TAPDumpSource(pump.Source):
                     # down the server.
                     return 0, batch
 
+                self.ack_last = False
+
         except EOFError:
-            self.tap_done = True
+            if batch.size() <= 0 and self.ack_last:
+                # A closed conn after an ACK means clean end of TAP dump.
+                self.tap_done = True
+
+        if batch.size() <= 0:
+            return 0, None
 
         return 0, batch
 
@@ -271,7 +301,8 @@ class TAPDumpSource(pump.Source):
             eng_length, flags, ttl, flg, exp = \
                 struct.unpack(memcacheConstants.TAP_MUTATION_PKT_FMT, ext)
         else:
-            return "error: unexpected tap ext length: " + str(len(ext)), \
+            return "error: unexpected TAP msg length: " + str(len(ext)) + \
+                "; message/connection was chopped off", \
                 0, 0, 0, 0, 0, False
 
         need_ack = flags & memcacheConstants.TAP_FLAG_ACK

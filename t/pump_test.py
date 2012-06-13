@@ -645,10 +645,13 @@ class BackupTestHelper(unittest.TestCase):
 
             self.assertEqual(len(expected_items), len(mock_stdout.items))
 
-    def check_cbb_file_exists(self, dir, num=1):
-        self.assertEqual(1, len(glob.glob(dir + "/bucket-*")))
-        self.assertEqual(num, len(glob.glob(dir + "/bucket-*/node-*")))
-        self.assertEqual(num, len(glob.glob(dir + "/bucket-*/node-*/data-0000.cbb")))
+    def check_cbb_file_exists(self, dir, num=1, num_buckets=1):
+        self.assertEqual(num_buckets,
+                         len(glob.glob(dir + "/bucket-*")))
+        self.assertEqual(num_buckets * num,
+                         len(glob.glob(dir + "/bucket-*/node-*")))
+        self.assertEqual(num_buckets * num,
+                         len(glob.glob(dir + "/bucket-*/node-*/data-0000.cbb")))
 
 
 class MCTestHelper(unittest.TestCase):
@@ -827,9 +830,7 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
 
-        # Some empty BFD files should be created after good SASL auth,
-        # even though this test closes TAP connections right away.
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num_buckets=0)
 
         w.join()
         shutil.rmtree(d)
@@ -852,12 +853,10 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         w = Worker(target=self.worker_close_after_TAP_connect)
         w.start()
 
-        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
+                                          "-x", "max_retry=0"])
         self.assertEqual(0, rv)
-
-        # Some empty BFD files should be created,
-        # even though this test closes after TAP connect attempt.
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num_buckets=0)
 
         w.join()
         shutil.rmtree(d)
@@ -941,7 +940,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         w = Worker(target=self.worker_2_mutation)
         w.start()
 
-        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
+                                          "-x", "max_retry=0"])
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
         # 0xfedcba01 == 4275878401, using high numbers to check endianess.
@@ -1043,7 +1043,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         w = Worker(target=self.worker_2_chopped)
         w.start()
 
-        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
+                                          "-x", "max_retry=0"])
         self.assertEqual(0, rv)
 
         # Two BFD files should be created, with 1 item each.
@@ -1064,16 +1065,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         w = Worker(target=self.worker_2_chopped)
         w.start()
 
-        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
-        self.assertEqual(0, rv)
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
+                                          "-x", "max_retry=0,batch_max_size=1"])
+        self.assertNotEqual(0, rv)
 
         # Two BFD files should be created, with 1 item each.
         self.check_cbb_file_exists(d, num=2)
-        self.expect_backup_contents(d,
-                                    "set a 0 0 1\r\nA\r\n"
-                                    "set a 0 0 1\r\nA\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 0, 0, 321, 'A'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 0, 0, 321, 'A')])
+
+        # We can't depend on deterministic backup when messages are chopped.
+        # self.expect_backup_contents(d,
+        #                             "set a 0 0 1\r\nA\r\n",
+        #                             [(CMD_TAP_MUTATION, 123, 'a', 0, 0, 321, 'A')])
         w.join()
         shutil.rmtree(d)
 
