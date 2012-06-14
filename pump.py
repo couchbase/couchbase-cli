@@ -13,6 +13,7 @@ import sys
 import threading
 import time
 import urlparse
+import zlib
 
 import mc_bin_client
 import memcacheConstants
@@ -545,11 +546,17 @@ class Batch:
     def item(self, i):
         return self.items[i]
 
-    def group_by(self, index):
-        """Returns dict of value->[items] grouped by each item's value."""
+    def group_by_vbucket_id(self, vbuckets_num):
+        """Returns dict of vbucket_id->[items] grouped by item's vbucket_id."""
         g = collections.defaultdict(list)
         for item in self.items:
-            g[item[index]].append(item)
+            cmd, vbucket_id, key, flg, exp, cas, val = item
+            if vbucket_id == 0x0000ffff:
+                # Special case when the source did not supply a vbucket_id
+                # (such as stdin source), so we calculate it.
+                vbucket_id = (zlib.crc32(key) >> 16) & (vbuckets_num - 1)
+                item = (cmd, vbucket_id, key, flg, exp, cas, val)
+            g[vbucket_id].append(item)
         return g
 
 

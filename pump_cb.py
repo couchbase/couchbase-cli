@@ -17,12 +17,14 @@ class CBSink(pump_mc.MCSink):
     """Smart client sink to couchbase cluster."""
 
     def scatter_gather(self, mconns, batch):
-        if len(self.sink_map['buckets']) != 1:
+        sink_map_buckets = self.sink_map['buckets']
+        if len(sink_map_buckets) != 1:
             return "error: CBSink.run() expected 1 bucket in sink_map", None
 
         use_add = getattr(self.opts, "add", False)
-        vbuckets = batch.group_by(1) # 1 is index of vbucket_id in item tuple.
         retry_batch = None
+        vbuckets_num = len(sink_map_buckets[0]['vBucketServerMap']['vBucketMap'])
+        vbuckets = batch.group_by_vbucket_id(vbuckets_num)
 
         # Scatter or send phase.
         for vbucket_id, items in vbuckets.iteritems():
