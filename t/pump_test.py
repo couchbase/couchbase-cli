@@ -1487,7 +1487,8 @@ class RestoreTestHelper:
                    items_per_node=None,
                    expected_backup_stdout=None,
                    json=None,
-                   list_mms=None):
+                   list_mms=None,
+                   more_args=[]):
         """Generate a backup file/directory so we can test restore.
 
            The items is list of lists, with one list per fake,
@@ -1529,7 +1530,7 @@ class RestoreTestHelper:
                                   args=[idx, list_mms[idx], items]))
             workers[-1].start()
 
-        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
+        rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d] + more_args)
         self.assertEqual(0, rv)
 
         self.check_cbb_file_exists(d, num=2)
@@ -2292,6 +2293,36 @@ class TestBackupDryRun(MCTestHelper, BackupTestHelper):
         self.assertEqual(0, len(glob.glob(d + "/bucket-*/node-*/data-*.cbb")))
 
         shutil.rmtree(d, ignore_errors=True)
+
+
+class TestCBBMaxSize(MCTestHelper, BackupTestHelper, RestoreTestHelper):
+
+    def setUp(self):
+        RestoreTestHelper.setUp(self)
+
+    def gen_backup(self,
+                   items_per_node=None,
+                   expected_backup_stdout=None,
+                   json=None,
+                   list_mms=None,
+                   more_args=[]):
+        more_args = more_args + ["-x", "cbb_max_mb=0.0000001,batch_max_size=1"]
+        return RestoreTestHelper.gen_backup(self,
+                                            items_per_node=items_per_node,
+                                            expected_backup_stdout=expected_backup_stdout,
+                                            json=json,
+                                            list_mms=list_mms,
+                                            more_args=more_args)
+
+    def test_cbb_max_size(self):
+        source_items = self.check_restore(None)
+        self.assertEqual(len(source_items),
+                         self.restored_cmd_counts[CMD_SET])
+
+    def check_cbb_file_exists(self, d, num=1):
+        self.assertEqual(1, len(glob.glob(d + "/bucket-*")))
+        self.assertEqual(2, len(glob.glob(d + "/bucket-*/node-*")))
+        self.assertEqual(4, len(glob.glob(d + "/bucket-*/node-*/data-*.cbb")))
 
 
 # ------------------------------------------------------

@@ -7,6 +7,7 @@ import os
 import re
 import simplejson as json
 import sqlite3
+import string
 import sys
 import time
 import types
@@ -17,8 +18,6 @@ import memcacheConstants
 from pump import Source, Sink, Batch, SinkBatchFuture
 
 CBB_VERSION = 2001 # sqlite pragma user version.
-
-# TODO: (2) BFD - split *.cbb files when they get too big.
 
 class BFD:
     """Mixin for backup-file/directory EndPoint helper methods."""
@@ -42,8 +41,9 @@ class BFD:
             '/node-' + urllib.quote_plus(node_name)
 
     @staticmethod
-    def db_path(spec, bucket_name, node_name):
-        return BFD.db_dir(spec, bucket_name, node_name) + "/data-0000.cbb"
+    def db_path(spec, bucket_name, node_name, num):
+        return BFD.db_dir(spec, bucket_name, node_name) + \
+            "/data-%s.cbb" % (string.rjust(str(num), 4, '0'))
 
 
 # --------------------------------------------------
@@ -56,8 +56,9 @@ class BFDSource(BFD, Source):
         Source.__init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur)
 
+        self.done = False
+        self.files = None
         self.cursor_db = None
-        self.cursor_done = False
 
     @staticmethod
     def can_handle(opts, spec):
@@ -120,7 +121,7 @@ class BFDSource(BFD, Source):
         return 0, None
 
     def provide_batch(self):
-        if self.cursor_done:
+        if self.done:
             return 0, None
 
         batch = Batch(self)
@@ -130,22 +131,32 @@ class BFDSource(BFD, Source):
 
         s = "SELECT cmd, vbucket_id, key, flg, exp, cas, val FROM cbb_cmd"
 
+        if self.files is None: # None != [], as self.files will shrink to [].
+            g = glob.glob(BFD.db_dir(self.spec,
+                                     self.bucket_name(),
+                                     self.node_name()) + "/data-*.cbb")
+            self.files = sorted(g)
         try:
-            if self.cursor_db is None:
-                rv, db = self.connect_db()
-                if rv != 0:
-                    return rv, None
-
-                cursor = db.cursor()
-                cursor.execute(s)
-
-                self.cursor_db = (cursor, db)
-
-            cursor, db = self.cursor_db
-
-            while (not self.cursor_done and
+            while (not self.done and
                    batch.size() < batch_max_size and
                    batch.bytes < batch_max_bytes):
+                if self.cursor_db is None:
+                    if not self.files:
+                        self.done = True
+                        return 0, batch
+
+                    rv, db = connect_db(self.files[0], self.opts, CBB_VERSION)
+                    if rv != 0:
+                        return rv, None
+                    self.files = self.files[1:]
+
+                    cursor = db.cursor()
+                    cursor.execute(s)
+
+                    self.cursor_db = (cursor, db)
+
+                cursor, db = self.cursor_db
+
                 row = cursor.fetchone()
                 if row:
                     vbucket_id = row[1]
@@ -157,43 +168,40 @@ class BFDSource(BFD, Source):
 
                     batch.append(row, len(val))
                 else:
-                    self.cursor_done = True
                     if self.cursor_db:
                         self.cursor_db[0].close()
                         self.cursor_db[1].close()
                     self.cursor_db = None
 
-        except Exception:
-            self.cursor_done = True
+            return 0, batch
+
+        except Exception as e:
+            self.done = True
             if self.cursor_db:
                 self.cursor_db[0].close()
                 self.cursor_db[1].close()
             self.cursor_db = None
 
-        return 0, batch
-
-    def connect_db(self):
-        return connect_db(BFD.db_path(self.spec,
-                                      self.bucket_name(),
-                                      self.node_name()),
-                          self.opts, CBB_VERSION)
+            return "error: exception reading backup file: " + str(e), None
 
     @staticmethod
     def total_items(opts, source_bucket, source_node, source_map):
-        rv, db = connect_db(BFD.db_path(source_map['spec'],
-                                        source_bucket['name'],
-                                        source_node['hostname']),
-                            opts, CBB_VERSION)
-        if rv != 0:
-            return rv, None
+        t = 0
+        g = glob.glob(BFD.db_dir(source_map['spec'],
+                                 source_bucket['name'],
+                                 source_node['hostname']) + "/data-*.cbb")
+        for x in sorted(g):
+            rv, db = connect_db(x, opts, CBB_VERSION)
+            if rv != 0:
+                return rv, None
 
-        cur = db.cursor()
-        cur.execute("SELECT COUNT(*) FROM cbb_cmd;")
-        tot = cur.fetchone()[0]
-        cur.close()
-        db.close()
+            cur = db.cursor()
+            cur.execute("SELECT COUNT(*) FROM cbb_cmd;")
+            t = t + cur.fetchone()[0]
+            cur.close()
+            db.close()
 
-        return 0, tot
+        return 0, t
 
 
 # --------------------------------------------------
@@ -211,19 +219,27 @@ class BFDSink(BFD, Sink):
     @staticmethod
     def run(self):
         """Worker thread to asynchronously store incoming batches into db."""
-
         s = "INSERT INTO cbb_cmd (cmd, vbucket_id, key, flg, exp, cas, val)" \
             " VALUES (?, ?, ?, ?, ?, ?, ?)"
-
         db = None
+        cbb = 0       # Current cbb file NUM, like data-NUM.cbb.
+        cbb_bytes = 0 # Current cbb item value bytes total.
+        cbb_max_bytes = \
+            self.opts.extra.get("cbb_max_mb", 100000) * 1024 * 1024
 
         while not self.ctl['stop']:
             batch, future = self.pull_next_batch()
             if not batch:
                 return self.future_done(future, 0)
 
+            if db and cbb_bytes >= cbb_max_bytes:
+                db.close()
+                db = None
+                cbb += 1
+                cbb_bytes = 0
+
             if not db:
-                rv, db = self.create_db()
+                rv, db = self.create_db(cbb)
                 if rv != 0:
                     return self.future_done(future, rv)
 
@@ -247,6 +263,7 @@ class BFDSink(BFD, Sink):
                                   sqlite3.Binary(key),
                                   flg, exp, cas,
                                   sqlite3.Binary(val)))
+                    cbb_bytes += len(val)
 
                 db.commit()
 
@@ -260,10 +277,8 @@ class BFDSink(BFD, Sink):
     @staticmethod
     def can_handle(opts, spec):
         spec = os.path.normpath(spec)
-
-        # TODO: (1) BFDSink - can_handle() needs tighter implementation.
-
-        return ((os.path.isdir(spec) == True) or
+        return ((os.path.isdir(spec) == True and
+                 len(glob.glob(spec + "/bucket-*/node-*/data-*.cbb")) <= 0) or
                 (os.path.exists(spec) == False and
                  os.path.isdir(os.path.dirname(spec)) == True))
 
@@ -319,14 +334,14 @@ class BFDSink(BFD, Sink):
     def consume_batch_async(self, batch):
         return self.push_next_batch(batch, SinkBatchFuture(self, batch))
 
-    def create_db(self):
+    def create_db(self, num):
         rv = self.mkdirs()
         if rv != 0:
             return rv, None
 
         rv, db = create_db(BFD.db_path(self.spec,
                                        self.bucket_name(),
-                                       self.node_name()),
+                                       self.node_name(), num),
                            self.opts)
         if rv != 0:
             return rv, None

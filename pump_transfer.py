@@ -134,6 +134,7 @@ class Transfer:
         return {
             "batch_max_size":  (1000,   "max # items per batch"),
             "batch_max_bytes": (400000, "max # of item value bytes per batch"),
+            "cbb_max_mb":      (100000, "max # of item value MB per *.cbb file"),
             "max_retry":       (10,     "max # of sequential retries"),
             "report":          (5,      "# batches before updating progress bar"),
             "report_full":     (2000,   "# batches before emitting progress info"),
@@ -253,7 +254,7 @@ def opt_parse_extra(extra, extra_defaults):
     for k, v in extra_in.iteritems():
         if k and not extra_defaults.get(k):
             sys.exit("error: unknown extra option: " + k)
-    return dict([(k, int(extra_in.get(k, extra_defaults[k][0])))
+    return dict([(k, float(extra_in.get(k, extra_defaults[k][0])))
                  for k in extra_defaults.iterkeys()])
 
 def opt_extra_help(extra_defaults):
@@ -274,7 +275,6 @@ SINKS = [pump_bfd.BFDSink,
          pump_cb.CBSink,
          pump.StdOutSink]
 
-# TODO: (1) pump_transfer - stdin source (saved memcached ascii protocol)
 # TODO: (1) pump_transfer - use QUIET commands
 # TODO: (1) pump_transfer - verify that nth replica got the item
 # TODO: (1) pump_transfer - ability to TAP a non-active or replica vbucket / MB-4583
