@@ -61,8 +61,8 @@ class BFDSource(BFD, Source):
 
     @staticmethod
     def can_handle(opts, spec):
-        # TODO: (1) BFDSource - better can_handle() checking.
-        return os.path.isdir(spec)
+        return (os.path.isdir(spec) and
+                glob.glob(spec + "/bucket-*/node-*/data-*.cbb"))
 
     @staticmethod
     def check(opts, spec):

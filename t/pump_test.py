@@ -330,13 +330,21 @@ class TestPumpingStationFind(unittest.TestCase):
 
     def test_find_bfd_handlers(self):
         d = tempfile.mkdtemp()
-        self.assertEqual(pump_bfd.BFDSource,
+        self.assertEqual(None,
                          self.find(None, d,
                                    pump_transfer.SOURCES))
         self.assertEqual(pump_bfd.BFDSink,
                          self.find(None, d,
                                    pump_transfer.SINKS))
-        os.removedirs(d)
+        os.makedirs(d + "/bucket-foo/node-bar")
+        self.assertEqual(None,
+                         self.find(None, d,
+                                   pump_transfer.SOURCES))
+        open(d + "/bucket-foo/node-bar/data-0000.cbb", "w")
+        self.assertEqual(pump_bfd.BFDSource,
+                         self.find(None, d,
+                                   pump_transfer.SOURCES))
+        shutil.rmtree(d, ignore_errors=True)
 
     def test_find_more_handlers(self):
         self.assertEqual(None,
