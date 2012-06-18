@@ -277,8 +277,7 @@ class BFDSink(BFD, Sink):
     @staticmethod
     def can_handle(opts, spec):
         spec = os.path.normpath(spec)
-        return ((os.path.isdir(spec) == True and
-                 len(glob.glob(spec + "/bucket-*/node-*/data-*.cbb")) <= 0) or
+        return (os.path.isdir(spec) or
                 (os.path.exists(spec) == False and
                  os.path.isdir(os.path.dirname(spec)) == True))
 
