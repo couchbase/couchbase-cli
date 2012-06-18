@@ -31,7 +31,7 @@ class CBSink(pump_mc.MCSink):
             rv, conn = self.find_conn(mconns, vbucket_id)
             if rv != 0:
                 return rv, None
-            rv = self.send_items(conn, items, use_add)
+            rv = self.send_items(conn, items, use_add, vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None
 
@@ -43,7 +43,7 @@ class CBSink(pump_mc.MCSink):
             rv, conn = self.find_conn(mconns, vbucket_id)
             if rv != 0:
                 return rv, None
-            rv, retry = self.recv_items(conn, items)
+            rv, retry = self.recv_items(conn, items, vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None
             if retry:

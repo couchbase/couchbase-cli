@@ -87,19 +87,22 @@ class MCSink(pump.Sink):
 
         return rv, None
 
-    def send_items(self, conn, items, use_add):
+    def send_items(self, conn, items, use_add, vbucket_id=None):
         m = []
 
         for i, item in enumerate(items):
-            cmd, vbucket_id, key, flg, exp, cas, val = item
-            if self.skip(key, vbucket_id):
+            cmd, vbucket_id_item, key, flg, exp, cas, val = item
+            if vbucket_id is not None:
+                vbucket_id_item = vbucket_id
+
+            if self.skip(key, vbucket_id_item):
                 continue
 
             rv, cmd = self.translate_cmd(cmd, use_add)
             if rv != 0:
                 return rv
 
-            rv, req = self.cmd_request(cmd, vbucket_id, key, val,
+            rv, req = self.cmd_request(cmd, vbucket_id_item, key, val,
                                        ctypes.c_uint32(flg).value,
                                        exp, self.translate_cas(cas), i)
             if rv != 0:
@@ -112,12 +115,15 @@ class MCSink(pump.Sink):
 
         return 0
 
-    def recv_items(self, conn, items):
+    def recv_items(self, conn, items, vbucket_id=None):
         retry = False
 
         for i, item in enumerate(items):
-            cmd, vbucket_id, key, flg, exp, cas, val = item
-            if self.skip(key, vbucket_id):
+            cmd, vbucket_id_item, key, flg, exp, cas, val = item
+            if vbucket_id is not None:
+                vbucket_id_item = vbucket_id
+
+            if self.skip(key, vbucket_id_item):
                 continue
 
             try:
@@ -146,7 +152,8 @@ class MCSink(pump.Sink):
                     msg = ("error: NOT_MY_VBUCKET;"
                            " perhaps the cluster was rebalancing;"
                            " vbucket_id: %s, key: %s, spec: %s, host:port: %s:%s"
-                           % (vbucket_id, key, self.spec, conn.host, conn.port))
+                           % (vbucket_id_item, key, self.spec,
+                              conn.host, conn.port))
                     return msg, None
                 else:
                     return "error: MCSink MC error: " + str(r_status), None
