@@ -588,7 +588,7 @@ class StdInSource(Source):
 
     @staticmethod
     def can_handle(opts, spec):
-        return spec.startswith("stdin:")
+        return spec.startswith("stdin:") or spec == "-"
 
     @staticmethod
     def check(opts, spec):
@@ -672,7 +672,7 @@ class StdOutSink(Sink):
 
     @staticmethod
     def can_handle(opts, spec):
-        if spec.startswith("stdout:"):
+        if spec.startswith("stdout:") or spec == "-":
             opts.threads = 1 # Force 1 thread to not overlap stdout.
             return True
         return False
