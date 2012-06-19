@@ -26,6 +26,8 @@ class TAPDumpSource(pump.Source):
         self.tap_conn = None
         self.tap_name = "".join(random.sample(string.letters, 16))
         self.ack_last = False # True when the last TAP msg had TAP_FLAG_ACK.
+        self.cmd_last = None
+        self.num_item = 0
 
         self.recv_min_bytes = int(getattr(opts, "recv_min_bytes", 4096))
 
@@ -136,6 +138,7 @@ class TAPDumpSource(pump.Source):
                     if not self.skip(key, vbucket_id):
                         item = (cmd, vbucket_id, key, flg, exp, cas, val)
                         batch.append(item, len(val))
+                        self.num_item += 1
                 elif cmd == memcacheConstants.CMD_TAP_OPAQUE:
                     if len(ext) > 0:
                         rv, eng_length, flags, ttl, flg, exp, need_ack = \
@@ -145,7 +148,15 @@ class TAPDumpSource(pump.Source):
                                          " perhaps some item(s) missed")
                             return rv, batch
                 elif cmd == memcacheConstants.CMD_NOOP:
-                    continue # NOOP's are ignorable; used to keep conn alive.
+                    # 1.8.x servers might not end the TAP dump on an empty bucket,
+                    # so we treat 2 NOOP's in a row as the end and proactively close.
+                    # Only do this when there've been no items to avoid closing
+                    # during a slow backfill.
+                    if (self.cmd_last == memcacheConstants.CMD_NOOP and
+                        self.num_item == 0 and
+                        batch.size() <= 0):
+                        self.tap_done = True
+                        return 0, batch
                 elif cmd == memcacheConstants.CMD_TAP_FLUSH:
                     logging.warn("stopping: saw CMD_TAP_FLUSH")
                     self.tap_done = True
@@ -168,6 +179,7 @@ class TAPDumpSource(pump.Source):
                     return 0, batch
 
                 self.ack_last = False
+                self.cmd_last = cmd
 
         except EOFError:
             if batch.size() <= 0 and self.ack_last:
@@ -311,6 +323,8 @@ class TAPDumpSource(pump.Source):
 
     @staticmethod
     def total_items(opts, source_bucket, source_node, source_map):
+        # TODO: (1) TAPDumpSource - total_items/interestingStats isn't per-bucket/per-node.
+        # This incorrectly returns node-level, not bucket-node-level curr_items.
         i = source_node.get("interestingStats", None)
         if i:
             return 0, i.get("curr_items", None)
