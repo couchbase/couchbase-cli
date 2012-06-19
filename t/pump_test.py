@@ -303,8 +303,14 @@ class TestPumpingStationFind(unittest.TestCase):
         self.find = pump.PumpingStation.find_handler
 
     def test_find_handlers(self):
-        self.assertEqual(4, len(pump_transfer.SOURCES))
-        self.assertTrue(len(pump_transfer.SINKS) in [4, 5])
+        try:
+            import couchstore
+            self.assertEqual(5, len(pump_transfer.SOURCES))
+            self.assertTrue(5, len(pump_transfer.SINKS))
+        except ImportError:
+            self.assertEqual(4, len(pump_transfer.SOURCES))
+            self.assertTrue(4, len(pump_transfer.SINKS))
+
         self.assertEqual(pump_tap.TAPDumpSource,
                          self.find(None,
                                    "http://HOST:8091/pools/default",

@@ -277,6 +277,7 @@ SINKS = [pump_bfd.BFDSink,
 
 try:
     import pump_sfd
+    SOURCES.append(pump_sfd.SFDSource)
     SINKS.append(pump_sfd.SFDSink)
 except ImportError as e:
     print "warning: could not import couchstore module" + \
