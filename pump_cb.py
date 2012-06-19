@@ -66,31 +66,22 @@ class CBSink(pump_mc.MCSink):
         if rv != 0:
             return rv, None
 
-        # If the caller didn't specify a bucket_source and
-        # there's only one bucket in the source_map, use that.
-        source_bucket = getattr(opts, "bucket_source", None)
-        if (not source_bucket and
-            source_map and
-            source_map['buckets'] and
-            len(source_map['buckets']) == 1):
-            source_bucket = source_map['buckets'][0]['name']
-        if not source_bucket:
-            return "error: please specify a bucket_source", None
-        logging.debug("source_bucket: " + source_bucket)
-
-        # Default bucket_destination to the same as bucket_source.
-        sink_bucket = getattr(opts, "bucket_destination", None) or source_bucket
-        if not sink_bucket:
-            return "error: please specify a bucket_destination", None
-        logging.debug("sink_bucket: " + sink_bucket)
+        rv, source_bucket_name = pump.find_source_bucket_name(opts, source_map)
+        if rv != 0:
+            return rv, None
+        rv, sink_bucket_name = pump.find_sink_bucket_name(opts, source_bucket_name)
+        if rv != 0:
+            return rv, None
 
         # Adjust sink_map['buckets'] to have only our sink_bucket.
         sink_buckets = [bucket for bucket in sink_map['buckets']
-                        if bucket['name'] == sink_bucket]
+                        if bucket['name'] == sink_bucket_name]
         if not sink_buckets:
-            return "error: missing bucket-destination: " + \
-                sink_bucket + " at destination: " + spec, None
-
+            return "error: missing bucket-destination: " + sink_bucket_name + \
+                " at destination: " + spec, None
+        if len(sink_buckets) != 1:
+            return "error: multiple buckets with name: " + sink_bucket_name + \
+                " at destination: " + spec, None
         sink_map['buckets'] = sink_buckets
 
         return 0, sink_map

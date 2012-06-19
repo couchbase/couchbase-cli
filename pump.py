@@ -868,3 +868,25 @@ def filter_bucket_nodes(bucket, spec_parts):
     host_port = host + ':' + str(port)
     return filter(lambda n: n.get('hostname') == host_port,
                   bucket['nodes'])
+
+def find_source_bucket_name(opts, source_map):
+    # If the caller didn't specify a bucket_source and
+    # there's only one bucket in the source_map, use that.
+    source_bucket = getattr(opts, "bucket_source", None)
+    if (not source_bucket and
+        source_map and
+        source_map['buckets'] and
+        len(source_map['buckets']) == 1):
+        source_bucket = source_map['buckets'][0]['name']
+    if not source_bucket:
+        return "error: please specify a bucket_source", None
+    logging.debug("source_bucket: " + source_bucket)
+    return 0, source_bucket
+
+def find_sink_bucket_name(opts, source_bucket):
+    # Default bucket_destination to the same as bucket_source.
+    sink_bucket = getattr(opts, "bucket_destination", None) or source_bucket
+    if not sink_bucket:
+        return "error: please specify a bucket_destination", None
+    logging.debug("sink_bucket: " + sink_bucket)
+    return 0, sink_bucket
