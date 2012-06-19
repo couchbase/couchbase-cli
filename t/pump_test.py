@@ -304,7 +304,7 @@ class TestPumpingStationFind(unittest.TestCase):
 
     def test_find_handlers(self):
         self.assertEqual(4, len(pump_transfer.SOURCES))
-        self.assertEqual(4, len(pump_transfer.SINKS))
+        self.assertTrue(len(pump_transfer.SINKS) in [4, 5])
         self.assertEqual(pump_tap.TAPDumpSource,
                          self.find(None,
                                    "http://HOST:8091/pools/default",

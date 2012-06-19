@@ -275,6 +275,15 @@ SINKS = [pump_bfd.BFDSink,
          pump_cb.CBSink,
          pump.StdOutSink]
 
+try:
+    import pump_sfd
+    SINKS.append(pump_sfd.SFDSink)
+except ImportError as e:
+    print "warning: could not import couchstore module" + \
+        "; accessing local couchbase server files will not work"
+
+
+# TODO: (1) pump_transfer - only load SFDSink if couchstore loads.
 # TODO: (1) pump_transfer - use QUIET commands
 # TODO: (1) pump_transfer - verify that nth replica got the item
 # TODO: (1) pump_transfer - ability to TAP a non-active or replica vbucket / MB-4583
