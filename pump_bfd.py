@@ -196,6 +196,7 @@ class BFDSource(BFD, Source):
                 return rv, None
 
             cur = db.cursor()
+            # TODO: (1) BFDSource - COUNT(*) is not indexed.
             cur.execute("SELECT COUNT(*) FROM cbb_cmd;")
             t = t + cur.fetchone()[0]
             cur.close()
