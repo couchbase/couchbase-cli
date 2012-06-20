@@ -685,7 +685,7 @@ class StdOutSink(Sink):
     def consume_config(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_config):
         if source_config:
-            logging.warn("warning: cannot restore bucket configuration"
+            logging.warn("warning: cannot save bucket configuration"
                          " on a stdout destination")
         return 0
 
@@ -693,7 +693,7 @@ class StdOutSink(Sink):
     def consume_design(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_design):
         if source_design:
-            logging.warn("warning: cannot restore bucket design"
+            logging.warn("warning: cannot save bucket design"
                          " on a stdout destination")
         return 0
 
