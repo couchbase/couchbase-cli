@@ -66,12 +66,18 @@ class MBFSource(Source):
 
     @staticmethod
     def version(db_file):
-        return int(MBFSource.run_sql(db_file, "PRAGMA user_version;")[0])
+        try:
+            return int(MBFSource.run_sql(db_file, "PRAGMA user_version;")[0])
+        except sqlite3.DatabaseError as e:
+            logging.error("error: could not access user_version from: %s" +
+                          "; exception: %s" +
+                          "; perhaps it is being used by another program" +
+                          " like couchbase-server", db_file, e)
+            return 0
 
     @staticmethod
     def db_files(spec):
-        # TODO: (1) MBFSource - need better db_filenames implementation.
-        return glob.glob(spec + "*")
+        return [spec] + glob.glob(spec + "-*.mb")
 
     @staticmethod
     def run_sql(db_file, sql):
