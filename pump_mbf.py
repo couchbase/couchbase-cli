@@ -34,8 +34,7 @@ class MBFSource(Source):
 
     @staticmethod
     def can_handle(opts, spec):
-        # TODO: (1) MBFSource - check that spec is sqlite master file.
-        return os.path.isfile(spec)
+        return os.path.isfile(spec) and MBFSource.version(spec) == 2
 
     @staticmethod
     def check(opts, spec):
