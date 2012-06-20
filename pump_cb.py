@@ -86,7 +86,8 @@ class CBSink(pump_mc.MCSink):
                         if bucket['name'] == sink_bucket_name]
         if not sink_buckets:
             return "error: missing bucket-destination: " + sink_bucket_name + \
-                " at destination: " + spec, None
+                " at destination: " + spec + \
+                "; perhaps your username/password is missing or incorrect", None
         if len(sink_buckets) != 1:
             return "error: multiple buckets with name: " + sink_bucket_name + \
                 " at destination: " + spec, None
