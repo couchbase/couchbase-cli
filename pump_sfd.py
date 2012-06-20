@@ -90,10 +90,22 @@ class SFDSource(pump.Source):
 
         for doc_info in store.changesSince(0):
             if not doc_info.deleted:
-                doc = doc_info.getContents()
+                try:
+                    doc_contents = doc_info.getContents()
+                except Exception as e:
+                    return ("error: could not read design doc: %s" +
+                            "; source_spec: %s; exception: %s") % \
+                            (doc_info.id, source_spec, e), None
+                try:
+                    doc = json.loads(doc_contents)
+                except ValueError as e:
+                    return ("error: could not parse design doc: %s" +
+                            "; source_spec: %s; exception: %s") % \
+                            (doc_info.id, source_spec, e), None
+
                 doc['id'] = doc.get('id', doc_info.id)
                 doc['_rev'] = doc.get('_rev', doc_info.revMeta)
-                rows.append(doc)
+                rows.append({'id': doc_info.id, 'doc': doc})
 
         store.close()
 
@@ -367,7 +379,7 @@ def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c
         return ("error: no single, latest couch file: %s" +
                 "; found: %s") % (glob_pattern, store_paths), None
     try:
-        return 0, couchstore.CouchStore(store_paths[0], mode)
+        return 0, couchstore.CouchStore(str(store_paths[0]), mode)
     except Exception as e:
         return ("error: could not open couchstore: " + store_paths[0] +
                 "; exception: " + str(e)), None
