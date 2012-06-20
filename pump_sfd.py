@@ -128,9 +128,7 @@ class SFDSource(pump.Source):
                 self.queue.put((0, abatch[0]))
                 abatch[0] = pump.Batch(self)
 
-        files = latest_couch_files(d + '/' + self.source_bucket['name'])
-
-        for f in files:
+        for f in latest_couch_files(d + '/' + self.source_bucket['name']):
             try:
                 store = couchstore.CouchStore(f, 'r')
             except Exception as e:
@@ -235,7 +233,49 @@ class SFDSink(pump.Sink):
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_design):
-        # TODO: (4) SFDSink - consume_design.
+        if not source_design:
+            return 0
+
+        try:
+            sd = json.loads(source_design)
+        except ValueError as e:
+            return "error: could not parse source_design: " + source_design
+
+        rv, d = data_dir(sink_spec)
+        if rv != 0:
+            return rv
+
+        bucket_dir = d + '/' + source_bucket['name']
+        if not os.path.isdir(bucket_dir):
+            os.mkdir(bucket_dir)
+
+        rv, store = open_latest_store(bucket_dir,
+                                      "master.couch.*",
+                                      "^(master)\\.couch\\.([0-9]+)$",
+                                      "master.couch.0")
+        if rv != 0:
+            return rv
+
+        bulk_keys = []
+        bulk_vals = []
+
+        for row in sd['rows']:
+            logging.debug("design_doc row: " + str(row))
+
+            d = couchstore.DocumentInfo(str(row['id']))
+            if '_rev' in row['doc']:
+                d.revMeta = str(row['doc']['_rev'])
+                del row['doc']['_rev']
+            d.contentType = couchstore.DocumentInfo.IS_JSON
+
+            bulk_keys.append(d)
+            bulk_vals.append(json.dumps(row['doc']))
+
+        if bulk_keys and bulk_vals:
+            store.saveMultiple(bulk_keys, bulk_vals)
+
+        store.commit()
+        store.close()
         return 0
 
     def consume_batch_async(self, batch):
@@ -275,7 +315,7 @@ class SFDSink(pump.Sink):
         if rv != 0:
             return rv, None
 
-        bucket_dir = d + '/' + str(self.source_bucket['name'])
+        bucket_dir = d + '/' + self.source_bucket['name']
         if not os.path.isdir(bucket_dir):
             try:
                 os.mkdir(bucket_dir)
@@ -283,8 +323,26 @@ class SFDSink(pump.Sink):
                 return "error: could not create bucket_dir: %s; exception: %s" % \
                     (bucket_dir, e), None
 
-        return 0, bucket_dir
+        return open_latest_store(bucket_dir,
+                                 "%s.couch.*" % (vbucket_id),
+                                 SFD_RE,
+                                 str(vbucket_id) + ".couch.0")
 
+
+def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name):
+    store_paths = latest_couch_files(bucket_dir,
+                                     glob_pattern=glob_pattern,
+                                     filter_re=filter_re)
+    if not store_paths:
+        store_paths = [ bucket_dir + '/' + default_name ]
+    if len(store_paths) != 1:
+        return ("error: no single, latest couch file: %s" +
+                "; found: %s") % (glob_pattern, store_paths), None
+    try:
+        return 0, couchstore.CouchStore(store_paths[0], 'c')
+    except Exception as e:
+        return ("error: could not open couchstore: " + store_path +
+                "; exception: " + str(e)), None
 
 def latest_couch_files(bucket_dir, glob_pattern='*.couch.*', filter_re=SFD_RE):
     """Given directory of *.couch.VER files, returns files with largest VER suffixes."""
