@@ -50,11 +50,6 @@ class Transfer:
         if opts_etc:
             opts.etc = opts_etc # Used for unit tests, etc.
 
-        if source == sink:
-            return "error: source and sink must be different;" \
-                " source: " + source + \
-                " sink: " + sink
-
         logging.info(self.name + "...")
         logging.info(" source : %s", source)
         logging.info(" sink   : %s", sink)
@@ -65,6 +60,10 @@ class Transfer:
             return "error: unknown type of source: " + source
         if not sink_class:
             return "error: unknown type of sink: " + sink
+
+        err = sink_class.check_source(opts, source_class, source, sink_class, sink)
+        if err:
+            return err
 
         try:
             return pump.PumpingStation(opts, source_class, source,

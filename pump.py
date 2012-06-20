@@ -491,6 +491,14 @@ class Sink(EndPoint):
         """Subclasses should return a SinkBatchFuture."""
         assert False, "unimplemented"
 
+    @staticmethod
+    def check_source(opts, source_class, source_spec, sink_class, sink_spec):
+        if source_spec == sink_spec:
+            return "error: source and sink must be different;" \
+                " source: " + source_spec + \
+                " sink: " + sink_spec
+        return None
+
     def init_worker(self, target):
         self.worker_go = threading.Event()
         self.worker_work = None # May be None or (batch, future) tuple.

@@ -61,6 +61,14 @@ class CBSink(pump_mc.MCSink):
                 spec.startswith("couchbase://"))
 
     @staticmethod
+    def check_source(opts, source_class, source_spec, sink_class, sink_spec):
+        if (source_spec.startswith("http://") or
+            source_spec.startswith("couchbase://")):
+            return None
+        return pump.Sink.check_source(opts, source_class, source_spec,
+                                      sink_class, sink_spec)
+
+    @staticmethod
     def check(opts, spec, source_map):
         rv, sink_map = pump.rest_couchbase(opts, spec)
         if rv != 0:
