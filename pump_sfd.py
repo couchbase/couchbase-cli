@@ -128,8 +128,7 @@ class SFDSource(pump.Source):
                 self.queue.put((0, abatch[0]))
                 abatch[0] = pump.Batch(self)
 
-        files = glob.glob(d + '/' + self.source_bucket['name'] + '/*.couch.*')
-        files = [f for f in files if re.match(SFD_RE, os.path.basename(f))]
+        files = latest_couch_files(d + '/' + self.source_bucket['name'])
 
         for f in files:
             try:
@@ -155,7 +154,6 @@ class SFDSink(pump.Sink):
                  source_map, sink_map, ctl, cur):
         pump.Sink.__init__(self, opts, spec, source_bucket, source_node,
                            source_map, sink_map, ctl, cur)
-
         self.init_worker(SFDSink.run)
 
     @staticmethod
@@ -255,14 +253,32 @@ class SFDSink(pump.Sink):
         if not os.path.isdir(bucket_dir):
             os.mkdir(bucket_dir)
 
-        # TODO: (1) SFDSink - open oldest *.couch.X file if it exists.
-        store_path = bucket_dir + '/' + str(vbucket_id) + ".couch.0"
+        glob_pattern = "(%s).couch.*" % (vbucket_id)
+        store_paths = latest_couch_files(bucket_dir, glob_pattern=glob_pattern)
+        if not store_paths:
+            store_paths = [bucket_dir + '/' + str(vbucket_id) + ".couch.0"]
+        if len(store_paths) != 1:
+            return ("error: no single, latest couch file for vbucket_id: %s" +
+                    "; found %s") % (vbucket_id, store_paths), None
         try:
-            return 0, couchstore.CouchStore(store_path, 'c')
+            return 0, couchstore.CouchStore(store_paths[0], 'c')
         except Exception as e:
             return "error: could not open couchstore: " + store_path + \
                 "; exception: " + str(e), None
 
+
+def latest_couch_files(bucket_dir, glob_pattern='*.couch.*', filter_re=SFD_RE):
+    """Given directory of *.couch.VER files, returns files with largest VER suffixes."""
+    files = glob.glob(bucket_dir + '/' + glob_pattern)
+    files = [f for f in files if re.match(filter_re, os.path.basename(f))]
+    matches = [(re.match(filter_re, os.path.basename(f)), f) for f in files]
+    latest = {}
+    for match, file in matches:
+        top, _ = latest.get(match.group(1), (-1, None))
+        cur = int(match.group(2))
+        if cur > top:
+            latest[match.group(1)] = (cur, file)
+    return sorted([file for top, file in latest.values()])
 
 def data_dir(spec):
     if not spec.startswith(SFD_SCHEME):
