@@ -20,7 +20,7 @@ import pump
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024
 SFD_REV_META = ">QII" # cas, exp, flg
-SFD_RE = '^([0-9]+)\.couch\.([0-9]+)$'
+SFD_RE = "^([0-9]+)\\.couch\\.([0-9]+)$"
 
 # TODO: (1) SFDSource - total_items.
 # TODO: (1) SFDSink - ensure right user for bucket_dir.
@@ -248,26 +248,42 @@ class SFDSink(pump.Sink):
         if vbucket_id >= SFD_VBUCKETS:
             return "error: vbucket_id too large: " + str(vbucket_id), None
 
+        return self.open_latest_store("%s.couch.*" % (vbucket_id), SFD_RE,
+                                      str(vbucket_id) + ".couch.0")
+
+    def open_latest_store(self, glob_pattern, filter_re, default_name):
+        rv, bucket_dir = self.find_bucket_dir()
+        if rv != 0:
+            return rv, None
+
+        store_paths = latest_couch_files(bucket_dir,
+                                         glob_pattern=glob_pattern,
+                                         filter_re=filter_re)
+        if not store_paths:
+            store_paths = [bucket_dir + '/' + default_name]
+        if len(store_paths) != 1:
+            return ("error: no single, latest couch file: %s" +
+                    "; found: %s") % (glob_pattern, store_paths), None
+        try:
+            return 0, couchstore.CouchStore(store_paths[0], 'c')
+        except Exception as e:
+            return ("error: could not open couchstore: " + store_path +
+                    "; exception: " + str(e)), None
+
+    def find_bucket_dir(self):
         rv, d = data_dir(self.spec)
         if rv != 0:
             return rv, None
 
         bucket_dir = d + '/' + str(self.source_bucket['name'])
         if not os.path.isdir(bucket_dir):
-            os.mkdir(bucket_dir)
+            try:
+                os.mkdir(bucket_dir)
+            except OSError as e:
+                return "error: could not create bucket_dir: %s; exception: %s" % \
+                    (bucket_dir, e), None
 
-        glob_pattern = "(%s).couch.*" % (vbucket_id)
-        store_paths = latest_couch_files(bucket_dir, glob_pattern=glob_pattern)
-        if not store_paths:
-            store_paths = [bucket_dir + '/' + str(vbucket_id) + ".couch.0"]
-        if len(store_paths) != 1:
-            return ("error: no single, latest couch file for vbucket_id: %s" +
-                    "; found %s") % (vbucket_id, store_paths), None
-        try:
-            return 0, couchstore.CouchStore(store_paths[0], 'c')
-        except Exception as e:
-            return "error: could not open couchstore: " + store_path + \
-                "; exception: " + str(e), None
+        return 0, bucket_dir
 
 
 def latest_couch_files(bucket_dir, glob_pattern='*.couch.*', filter_re=SFD_RE):
