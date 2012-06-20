@@ -179,8 +179,17 @@ class SFDSink(pump.Sink):
                     if self.skip(key, vbucket_id):
                         continue
 
+                    d = couchstore.DocumentInfo(str(key))
+                    d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg))
+
                     if cmd == memcacheConstants.CMD_TAP_MUTATION:
                         v = str(val)
+                        try:
+                            if (re.match('^\\s*{', v) and
+                                json.loads(v) is not None):
+                                d.contentType = couchstore.DocumentInfo.IS_JSON
+                        except ValueError:
+                            pass # NON_JSON is already the default contentType.
                     elif cmd == memcacheConstants.CMD_TAP_DELETE:
                         v = None
                     else:
@@ -189,12 +198,6 @@ class SFDSink(pump.Sink):
                         store.close()
                         return
 
-                    d = couchstore.DocumentInfo(str(key))
-                    d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg))
-                    if self.sink_map:
-                        # TODO: SFDSink - contentType IS_JSON/NON_JSON/INVALID.
-                        d.contentType = self.sink_map.get('contentType',
-                                                          DocumentInfo.NON_JSON)
                     bulk_keys.append(d)
                     bulk_vals.append(v)
 
