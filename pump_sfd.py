@@ -70,8 +70,34 @@ class SFDSource(pump.Source):
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
-        # TODO: (3) SFDSource - provide_design implementation.
-        return 0, None
+        rv, d = data_dir(source_spec)
+        if rv != 0:
+            return rv, None
+
+        bucket_dir = d + '/' + source_bucket['name']
+        if not os.path.isdir(bucket_dir):
+            return 0, None
+
+        rv, store = open_latest_store(bucket_dir,
+                                      "master.couch.*",
+                                      "^(master)\\.couch\\.([0-9]+)$",
+                                      "master.couch.0",
+                                      mode='r')
+        if rv != 0 or not store:
+            return rv, None
+
+        rows = []
+
+        for doc_info in store.changesSince(0):
+            if not doc_info.deleted:
+                doc = doc_info.getContents()
+                doc['id'] = doc.get('id', doc_info.id)
+                doc['_rev'] = doc.get('_rev', doc_info.revMeta)
+                rows.append(doc)
+
+        store.close()
+
+        return 0, json.dumps({'rows': rows})
 
     def provide_batch(self):
         if self.done:
@@ -111,8 +137,6 @@ class SFDSource(pump.Source):
                 if self.skip(key, vbucket_id):
                     return
 
-                # TODO: (1) SFDSource - handle contentType.
-
                 if doc_info.deleted:
                     cmd = memcacheConstants.CMD_TAP_DELETE
                 else:
@@ -135,6 +159,8 @@ class SFDSource(pump.Source):
                 self.queue.put(("error: could not open couchstore file: " + f +
                                 " exception: " + str(e), None))
                 return
+
+            # TODO: (1) SFDSource - validate _local/vbstate is active.
 
             vbucket_id = int(re.match(SFD_RE, os.path.basename(f)).group(1))
             store.forEachChange(0, change_callback)
@@ -329,19 +355,21 @@ class SFDSink(pump.Sink):
                                  str(vbucket_id) + ".couch.0")
 
 
-def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name):
+def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c'):
     store_paths = latest_couch_files(bucket_dir,
                                      glob_pattern=glob_pattern,
                                      filter_re=filter_re)
     if not store_paths:
+        if mode == 'r':
+            return 0, None
         store_paths = [ bucket_dir + '/' + default_name ]
     if len(store_paths) != 1:
         return ("error: no single, latest couch file: %s" +
                 "; found: %s") % (glob_pattern, store_paths), None
     try:
-        return 0, couchstore.CouchStore(store_paths[0], 'c')
+        return 0, couchstore.CouchStore(store_paths[0], mode)
     except Exception as e:
-        return ("error: could not open couchstore: " + store_path +
+        return ("error: could not open couchstore: " + store_paths[0] +
                 "; exception: " + str(e)), None
 
 def latest_couch_files(bucket_dir, glob_pattern='*.couch.*', filter_re=SFD_RE):
