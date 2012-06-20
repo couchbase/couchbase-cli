@@ -115,12 +115,10 @@ class SFDSource(pump.Source):
 
                 if doc_info.deleted:
                     cmd = memcacheConstants.CMD_TAP_DELETE
-                    flg, exp, cas = 0, 0, 0
-                    # TODO: (1) SFDSource - handle CAS while reading delete.
                 else:
                     cmd = memcacheConstants.CMD_TAP_MUTATION
-                    flg, exp, cas = struct.unpack(SFD_REV_META, doc_info.revMeta)
 
+                flg, exp, cas = struct.unpack(SFD_REV_META, doc_info.revMeta)
                 val = doc_info.getContents()
                 item = (cmd, vbucket_id, key, flg, exp, cas, val)
                 abatch[0].append(item, len(val))
@@ -173,6 +171,8 @@ class SFDSink(pump.Sink):
                 if rv != 0:
                     return self.future_done(future, rv)
 
+                # TODO: (1) SFDSink - update _local/vbstate doc.
+
                 bulk_keys = []
                 bulk_vals = []
 
@@ -182,23 +182,23 @@ class SFDSink(pump.Sink):
                         continue
 
                     if cmd == memcacheConstants.CMD_TAP_MUTATION:
-                        d = couchstore.DocumentInfo(str(key))
-                        d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg))
-                        if self.sink_map:
-                            # TODO: SFDSink - contentType IS_JSON/NON_JSON/INVALID.
-                            d.contentType = self.sink_map.get('contentType',
-                                                              DocumentInfo.NON_JSON)
-                        bulk_keys.append(d)
-                        bulk_vals.append(str(val))
+                        v = str(val)
                     elif cmd == memcacheConstants.CMD_TAP_DELETE:
-                        # TODO: SFDSink - need to store CAS with delete?
-                        bulk_keys.append(str(key))
-                        bulk_vals.append(None)
+                        v = None
                     else:
                         self.future_done(future,
                                          "error: SFDSink bad cmd: " + str(cmd))
                         store.close()
                         return
+
+                    d = couchstore.DocumentInfo(str(key))
+                    d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg))
+                    if self.sink_map:
+                        # TODO: SFDSink - contentType IS_JSON/NON_JSON/INVALID.
+                        d.contentType = self.sink_map.get('contentType',
+                                                          DocumentInfo.NON_JSON)
+                    bulk_keys.append(d)
+                    bulk_vals.append(v)
 
                 if bulk_keys and bulk_vals:
                     store.saveMultiple(bulk_keys, bulk_vals)
