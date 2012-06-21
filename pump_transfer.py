@@ -280,7 +280,7 @@ try:
     SINKS.append(pump_sfd.SFDSink)
 except ImportError as e:
     print "warning: could not import couchstore module" + \
-        "; accessing local couchbase server files will not work"
+        "; accessing local couchstore files will not work"
 
 
 # TODO: (1) pump_transfer - only load SFDSink if couchstore loads.
