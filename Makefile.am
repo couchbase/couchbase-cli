@@ -3,13 +3,21 @@ TMP_VER = $(TMP_DIR)/version_num.tmp
 
 default:
 
-
 pythonlibdir=$(libdir)/python
 nobase_pythonlib_DATA= \
          buckets.py \
          info.py \
          listservers.py \
+         mc_bin_client.py \
+         memcacheConstants.py \
          node.py \
+         pump.py \
+         pump_bfd.py \
+         pump_cb.py \
+         pump_mbf.py \
+         pump_mc.py \
+         pump_tap.py \
+         pump_transfer.py \
          restclient.py \
          simplejson/LICENSE.txt \
          simplejson/__init__.py \
@@ -19,9 +27,13 @@ nobase_pythonlib_DATA= \
          usage.py \
          util_cli.py
 
-pythonlib_SCRIPTS= couchbase-cli
+pythonlib_SCRIPTS= couchbase-cli cbbackup cbrestore cbtransfer
 
-PYTHON_TOOLS= wrapper/couchbase-cli
+PYTHON_TOOLS= \
+        wrapper/couchbase-cli \
+        wrapper/cbbackup \
+        wrapper/cbrestore \
+        wrapper/cbtransfer
 
 ${PYTHON_TOOLS}: wrapper/wrapper
 	cp $< $@
@@ -41,7 +53,7 @@ bdist:
 	rm -f ./couchbase-cli_*.tar.gz
 	rm -rf $(TMP_DIR)/couchbase-cli
 	mkdir -p $(TMP_DIR)/couchbase-cli/simplejson
-	cp couchbase-cli *.py LICENSE $(TMP_DIR)/couchbase-cli
+	cp $(pythonlib_SCRIPTS) *.py LICENSE $(TMP_DIR)/couchbase-cli
 	cp simplejson/*.py $(TMP_DIR)/couchbase-cli/simplejson
 	cp simplejson/LICENSE.txt $(TMP_DIR)/couchbase-cli/simplejson
 	(cd $(TMP_DIR); tar cf - couchbase-cli) | gzip -9 > couchbase-cli_`cat $(TMP_VER)`-`uname -s`.`uname -m`.tar.gz

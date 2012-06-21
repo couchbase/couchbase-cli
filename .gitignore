@@ -17,4 +17,7 @@ tmp
 /python_wrapper
 /wrapper/wrapper
 /wrapper/couchbase-cli
+/wrapper/cbbackup
+/wrapper/cbrestore
+/wrapper/cbtransfer
 /wrapper/membase
