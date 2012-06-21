@@ -325,6 +325,7 @@ class TAPDumpSource(pump.Source):
     def total_items(opts, source_bucket, source_node, source_map):
         # TODO: (1) TAPDumpSource - total_items/interestingStats isn't per-bucket/per-node.
         # This incorrectly returns node-level, not bucket-node-level curr_items.
+        # Instead see: http://NODE:8091/pools/default/buckets/default/stats/curr_items
         i = source_node.get("interestingStats", None)
         if i:
             return 0, i.get("curr_items", None)
