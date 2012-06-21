@@ -724,19 +724,22 @@ class StdOutSink(Sink):
             if self.skip(key, vbucket_id):
                 continue
 
-            if cmd == memcacheConstants.CMD_TAP_MUTATION:
-                # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
-                op = 'set'
-                if use_add:
-                    op = 'add'
-                stdout.write("%s %s %s %s %s\r\n" %
-                             (op, key, flg, exp, len(val)))
-                stdout.write(val)
-                stdout.write("\r\n")
-            elif cmd == memcacheConstants.CMD_TAP_DELETE:
-                stdout.write("delete %s\r\n" % (key))
-            else:
-                "error: StdOutSink - unknown cmd: " + str(cmd), None
+            try:
+                if cmd == memcacheConstants.CMD_TAP_MUTATION:
+                    # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
+                    op = 'set'
+                    if use_add:
+                        op = 'add'
+                    stdout.write("%s %s %s %s %s\r\n" %
+                                 (op, key, flg, exp, len(val)))
+                    stdout.write(val)
+                    stdout.write("\r\n")
+                elif cmd == memcacheConstants.CMD_TAP_DELETE:
+                    stdout.write("delete %s\r\n" % (key))
+                else:
+                    return "error: StdOutSink - unknown cmd: " + str(cmd), None
+            except IOError:
+                return "error: could not write to stdout", None
 
         future = SinkBatchFuture(self, batch)
         self.future_done(future, 0)
