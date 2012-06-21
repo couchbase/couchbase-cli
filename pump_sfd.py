@@ -77,11 +77,12 @@ class SFDSource(pump.Source):
         if not os.path.isdir(bucket_dir):
             return 0, None
 
-        rv, store = open_latest_store(bucket_dir,
-                                      "master.couch.*",
-                                      "^(master)\\.couch\\.([0-9]+)$",
-                                      "master.couch.0",
-                                      mode='r')
+        rv, store, store_path = \
+            open_latest_store(bucket_dir,
+                              "master.couch.*",
+                              "^(master)\\.couch\\.([0-9]+)$",
+                              "master.couch.0",
+                              mode='r')
         if rv != 0 or not store:
             return rv, None
 
@@ -193,6 +194,11 @@ class SFDSink(pump.Sink):
 
     @staticmethod
     def run(self):
+        destination_vbucket_state = \
+            getattr(self.opts, 'destination_vbucket_state', 'active')
+
+        vbucket_states = self.source_node.get('vbucket_states', {})
+
         while not self.ctl['stop']:
             batch, future = self.pull_next_batch()
             if not batch:
@@ -200,11 +206,12 @@ class SFDSink(pump.Sink):
 
             vbuckets = batch.group_by_vbucket_id(SFD_VBUCKETS)
             for vbucket_id, items in vbuckets.iteritems():
-                rv, store = self.open_store(vbucket_id)
+                checkpoint_id = 0
+                max_deleted_seqno = 0
+
+                rv, store, store_path = self.open_store(vbucket_id)
                 if rv != 0:
                     return self.future_done(future, rv)
-
-                # TODO: (1) SFDSink - update _local/vbstate doc.
 
                 bulk_keys = []
                 bulk_vals = []
@@ -236,17 +243,60 @@ class SFDSink(pump.Sink):
                     bulk_keys.append(d)
                     bulk_vals.append(v)
 
-                if bulk_keys and bulk_vals:
-                    store.saveMultiple(bulk_keys, bulk_vals)
+                try:
+                    if bulk_keys and bulk_vals:
+                        vm = vbucket_states.get(destination_vbucket_state, None)
+                        if vm:
+                            vi = vm.get(vbucket_id, None)
+                            if vi:
+                                c = vi.get("checkpoint_id", checkpoint_id)
+                                checkpoint_id = max(checkpoint_id, c)
+                                m = vi.get("max_deleted_seqno", max_deleted_seqno)
+                                max_deleted_seqno = max(max_deleted_seqno, m)
 
-                store.commit()
-                store.close()
+                        rv = self.save_vbucket_state(store, vbucket_id,
+                                                     destination_vbucket_state,
+                                                     checkpoint_id,
+                                                     max_deleted_seqno)
+                        if rv != 0:
+                            self.future_done(future, rv)
+                            store.close()
+                            return
+
+                        store.saveMultiple(bulk_keys, bulk_vals)
+
+                    store.commit()
+                    store.close()
+                except Exception as e:
+                    self.future_done(future,
+                                     "error: could not save couchstore data"
+                                     "; vbucket_id: %s; store_path: %s"
+                                     "; exception: %s"
+                                     % (vbucket_id, store_path, e))
+                    return
 
             self.future_done(future, 0) # No return to keep looping.
+
+    def save_vbucket_state(self, store, vbucket_id,
+                           state, checkpoint_id, max_deleted_seqno):
+        doc = json.dumps({'state': state,
+                          'checkpoint_id': checkpoint_id,
+                          'max_deleted_seqno': max_deleted_seqno})
+        try:
+            store.localDocs['_local/vbstate'] = doc
+        except Exception as e:
+            return "error: save_vbucket_state() failed: " + str(e)
+        return 0
 
     @staticmethod
     def can_handle(opts, spec):
         return spec.startswith(SFD_SCHEME)
+
+    @staticmethod
+    def check_base(opts, spec):
+        # Skip immediate superclass Sink.check_base(),
+        # since SFDSink can handle different vbucket states.
+        return pump.EndPoint.check_base(opts, spec)
 
     @staticmethod
     def check(opts, spec, source_map):
@@ -286,10 +336,11 @@ class SFDSink(pump.Sink):
         if not os.path.isdir(bucket_dir):
             os.mkdir(bucket_dir)
 
-        rv, store = open_latest_store(bucket_dir,
-                                      "master.couch.*",
-                                      "^(master)\\.couch\\.([0-9]+)$",
-                                      "master.couch.0")
+        rv, store, store_path = \
+            open_latest_store(bucket_dir,
+                              "master.couch.*",
+                              "^(master)\\.couch\\.([0-9]+)$",
+                              "master.couch.0")
         if rv != 0:
             return rv
 
@@ -323,7 +374,7 @@ class SFDSink(pump.Sink):
         # bucket_dir =>   default/
         # store_path =>     VBUCKET_ID.couch.COMPACTION_NUM
         if vbucket_id >= SFD_VBUCKETS:
-            return "error: vbucket_id too large: " + str(vbucket_id), None
+            return "error: vbucket_id too large: %s" % (vbucket_id), None, None
 
         return self.open_latest_store("%s.couch.*" % (vbucket_id), SFD_RE,
                                       str(vbucket_id) + ".couch.0")
@@ -331,7 +382,7 @@ class SFDSink(pump.Sink):
     def open_latest_store(self, glob_pattern, filter_re, default_name):
         rv, bucket_dir = self.find_bucket_dir()
         if rv != 0:
-            return rv, None
+            return rv, None, None
 
         store_paths = latest_couch_files(bucket_dir,
                                          glob_pattern=glob_pattern,
@@ -340,12 +391,12 @@ class SFDSink(pump.Sink):
             store_paths = [bucket_dir + '/' + default_name]
         if len(store_paths) != 1:
             return ("error: no single, latest couch file: %s" +
-                    "; found: %s") % (glob_pattern, store_paths), None
+                    "; found: %s") % (glob_pattern, store_paths), None, None
         try:
-            return 0, couchstore.CouchStore(store_paths[0], 'c')
+            return 0, couchstore.CouchStore(store_paths[0], 'c'), store_paths[0]
         except Exception as e:
-            return ("error: could not open couchstore: " + store_path +
-                    "; exception: " + str(e)), None
+            return ("error: could not open couchstore: %s; exception: %s"
+                    % (store_path, e)), None, None
 
     def find_bucket_dir(self):
         rv, d = data_dir(self.spec)
@@ -357,14 +408,10 @@ class SFDSink(pump.Sink):
             try:
                 os.mkdir(bucket_dir)
             except OSError as e:
-                return "error: could not create bucket_dir: %s; exception: %s" % \
-                    (bucket_dir, e), None
+                return ("error: could not create bucket_dir: %s; exception: %s"
+                        % (bucket_dir, e)), None
 
-        return open_latest_store(bucket_dir,
-                                 "%s.couch.*" % (vbucket_id),
-                                 SFD_RE,
-                                 str(vbucket_id) + ".couch.0")
-
+        return 0, bucket_dir
 
 def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c'):
     store_paths = latest_couch_files(bucket_dir,
@@ -378,10 +425,10 @@ def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c
         return ("error: no single, latest couch file: %s" +
                 "; found: %s") % (glob_pattern, store_paths), None
     try:
-        return 0, couchstore.CouchStore(str(store_paths[0]), mode)
+        return 0, couchstore.CouchStore(str(store_paths[0]), mode), store_paths[0]
     except Exception as e:
         return ("error: could not open couchstore: " + store_paths[0] +
-                "; exception: " + str(e)), None
+                "; exception: " + str(e)), None, store_paths[0]
 
 def latest_couch_files(bucket_dir, glob_pattern='*.couch.*', filter_re=SFD_RE):
     """Given directory of *.couch.VER files, returns files with largest VER suffixes."""

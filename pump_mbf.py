@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import collections
 import glob
 import logging
 import os
@@ -29,11 +30,17 @@ class MBFSource(Source):
                            `{0}`.vbucket_states as vb
                      WHERE kv.vbucket = vb.vbid
                        AND kv.vb_version = kv.vb_version
-                       AND vb.state like 'active'"""
+                       AND vb.state like '{1}'"""
 
     @staticmethod
     def can_handle(opts, spec):
         return os.path.isfile(spec) and MBFSource.version(spec) == 2
+
+    @staticmethod
+    def check_base(opts, spec):
+        # Skip immediate superclass Source.check_base(),
+        # since MBFSource can handle different vbucket states.
+        return pump.EndPoint.check_base(opts, spec)
 
     @staticmethod
     def check(opts, spec):
@@ -41,7 +48,8 @@ class MBFSource(Source):
         if not os.path.isfile(spec):
             return "error: backup_dir is not a file: " + spec, None
 
-        versions = MBFSource.db_file_versions(MBFSource.db_files(spec))
+        db_files = MBFSource.db_files(spec)
+        versions = MBFSource.db_file_versions(db_files)
         logging.debug(" MBFSource check db file versions: %s" % (versions))
         if max(versions.values()) < 2:
             err = ("error: wrong backup/db file versions;\n" +
@@ -51,9 +59,36 @@ class MBFSource(Source):
                    % (MBF_VERSION)
             return err, None
 
-        return 0, { 'spec': spec,
-                    'buckets': [ { 'name': os.path.basename(spec),
-                                   'nodes': [ { 'hostname': 'N/A' } ] } ] }
+        # Map of state string (e.g., 'active') to map of vbucket_id to info.
+        vbucket_states = collections.defaultdict(dict)
+        sql = """SELECT vbid, vb_version, state, checkpoint_id
+                   FROM vbucket_states"""
+        for db_file in [f for f in db_files if f.endswith(".mb")]:
+            try:
+                db = sqlite3.connect(db_file)
+                cur = db.cursor()
+                for row in cur.execute(sql):
+                    vbucket_id = row[0]
+                    state = row[2]
+                    vbucket_states[state][vbucket_id] = {
+                        'vbucket_id': vbucket_id,
+                        'vb_version': row[1],
+                        'state': state,
+                        'checkpoint_id': row[3]
+                        }
+                cur.close()
+                db.close()
+            except sqlite3.DatabaseError as e:
+                return ("error: could not access vbucket_states" +
+                        " on db_file: %s; exception: %s") % \
+                        (db_file, e), None
+
+        return 0, {'spec': spec,
+                   'buckets':
+                       [{'name': os.path.basename(spec),
+                         'nodes': [{'hostname': 'N/A',
+                                    'vbucket_states': vbucket_states
+                                    }]}]}
 
     @staticmethod
     def db_file_versions(db_files):
@@ -104,6 +139,9 @@ class MBFSource(Source):
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
 
+        source_vbucket_state = \
+            getattr(self.opts, 'source_vbucket_state', 'active')
+
         try:
             if self.cursor_todo is None:
                 rv, db, attached_dbs, table_dbs = self.connect_db()
@@ -117,7 +155,7 @@ class MBFSource(Source):
                     db.close()
                     return "error: no unique vbucket_states table", None
 
-                sql = self.s.format(state_db)
+                sql = self.s.format(state_db, source_vbucket_state)
 
                 kv_names = []
                 for kv_name, db_name in table_dbs.iteritems():

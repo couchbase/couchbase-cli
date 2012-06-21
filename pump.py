@@ -443,6 +443,16 @@ class Source(EndPoint):
         assert False, "unimplemented"
 
     @staticmethod
+    def check_base(opts, spec):
+        rv = EndPoint.check_base(opts, spec)
+        if rv != 0:
+            return rv
+        if getattr(opts, "source_vbucket_state", "active") != "active":
+            return ("error: only --source-vbucket-state=active" +
+                    " is supported by this source: %s") % (spec)
+        return 0
+
+    @staticmethod
     def check(opts, spec):
         """Subclasses can check preconditions before any pumping starts."""
         assert False, "unimplemented"
@@ -471,6 +481,16 @@ class Sink(EndPoint):
     @staticmethod
     def can_handle(opts, spec):
         assert False, "unimplemented"
+
+    @staticmethod
+    def check_base(opts, spec):
+        rv = EndPoint.check_base(opts, spec)
+        if rv != 0:
+            return rv
+        if getattr(opts, "destination_vbucket_state", "active") != "active":
+            return ("error: only --destination-vbucket-state=active" +
+                    " is supported by this destination: %s") % (spec)
+        return 0
 
     @staticmethod
     def check(opts, spec, source_map):
