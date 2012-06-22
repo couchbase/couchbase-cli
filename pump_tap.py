@@ -245,9 +245,19 @@ class TAPDumpSource(pump.Source):
         key = ''
         val = ''
         if data:
+            eng_length = 0
+
             ext = data[0:extlen]
-            key = data[extlen:extlen+keylen]
-            val = data[extlen+keylen:]
+            if extlen == 8:
+                eng_length, _flags, _ttl = \
+                    struct.unpack(memcacheConstants.TAP_GENERAL_PKT_FMT, ext)
+            elif extlen == 16:
+                eng_length, _flags, _ttl, _flg, _exp = \
+                    struct.unpack(memcacheConstants.TAP_MUTATION_PKT_FMT, ext)
+
+            key_start = extlen + eng_length
+            key = data[key_start:key_start + keylen]
+            val = data[key_start + keylen:]
 
         return cmd, opaque, cas, vbucket_id, key, ext, val
 
