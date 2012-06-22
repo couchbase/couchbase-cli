@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import math
 import itertools
 
@@ -97,4 +96,5 @@ def pretty_float(number, precision=2):
     return '%.*f' % (precision, number)
 
 def pretty_print(obj):
+    import simplejson as json
     return json.dumps(obj, indent=4, sort_keys=True)
