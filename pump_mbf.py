@@ -19,9 +19,8 @@ class MBFSource(Source):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
-        Source.__init__(self, opts, spec, source_bucket, source_node,
-                 source_map, sink_map, ctl, cur)
-
+        super(MBFSource, self).__init__(opts, spec, source_bucket, source_node,
+                                        source_map, sink_map, ctl, cur)
         self.cursor_todo = None
         self.cursor_done = False
 

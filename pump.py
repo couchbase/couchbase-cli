@@ -24,7 +24,7 @@ LOGGING_FORMAT = '%(asctime)s: %(threadName)s %(message)s'
 
 NA = 'N/A'
 
-class ProgressReporter:
+class ProgressReporter(object):
     """Mixin to report progress"""
 
     def report_init(self):
@@ -380,7 +380,7 @@ class Pump(ProgressReporter):
 
 # --------------------------------------------------
 
-class EndPoint():
+class EndPoint(object):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
@@ -536,7 +536,7 @@ class Sink(EndPoint):
 
 # --------------------------------------------------
 
-class Batch:
+class Batch(object):
     """Holds a batch of data being transfered from source to sink."""
 
     def __init__(self, source):
@@ -568,7 +568,7 @@ class Batch:
         return g
 
 
-class SinkBatchFuture:
+class SinkBatchFuture(object):
     """Future completion of a sink consuming a batch."""
 
     def __init__(self, sink, batch):
@@ -589,9 +589,8 @@ class StdInSource(Source):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
-        Source.__init__(self, opts, spec, source_bucket, source_node,
-                        source_map, sink_map, ctl, cur)
-
+        super(StdInSource, self).__init__(opts, spec, source_bucket, source_node,
+                                          source_map, sink_map, ctl, cur)
         self.f = sys.stdin
 
     @staticmethod
@@ -672,11 +671,6 @@ class StdInSource(Source):
 
 class StdOutSink(Sink):
     """Emits batches to stdout in memcached ascii protocol."""
-
-    def __init__(self, opts, spec, source_bucket, source_node,
-                 source_map, sink_map, ctl, cur):
-        Sink.__init__(self, opts, spec, source_bucket, source_node,
-                      source_map, sink_map, ctl, cur)
 
     @staticmethod
     def can_handle(opts, spec):

@@ -19,9 +19,8 @@ class TAPDumpSource(pump.Source):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
-        pump.Source.__init__(self, opts, spec, source_bucket, source_node,
-                             source_map, sink_map, ctl, cur)
-
+        super(TAPDumpSource, self).__init__(opts, spec, source_bucket, source_node,
+                                            source_map, sink_map, ctl, cur)
         self.tap_done = False
         self.tap_conn = None
         self.tap_name = "".join(random.sample(string.letters, 16))

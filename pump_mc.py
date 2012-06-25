@@ -17,9 +17,8 @@ class MCSink(pump.Sink):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
-        pump.Sink.__init__(self, opts, spec, source_bucket, source_node,
-                           source_map, sink_map, ctl, cur)
-
+        super(MCSink, self).__init__(opts, spec, source_bucket, source_node,
+                                     source_map, sink_map, ctl, cur)
         self.init_worker(MCSink.run)
 
     def close(self):

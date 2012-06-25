@@ -53,9 +53,8 @@ class BFDSource(BFD, Source):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
-        Source.__init__(self, opts, spec, source_bucket, source_node,
-                 source_map, sink_map, ctl, cur)
-
+        super(BFDSource, self).__init__(opts, spec, source_bucket, source_node,
+                                        source_map, sink_map, ctl, cur)
         self.done = False
         self.files = None
         self.cursor_db = None
@@ -212,9 +211,8 @@ class BFDSink(BFD, Sink):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
-        Sink.__init__(self, opts, spec, source_bucket, source_node,
-                 source_map, sink_map, ctl, cur)
-
+        super(BFDSink, self).__init__(opts, spec, source_bucket, source_node,
+                                      source_map, sink_map, ctl, cur)
         self.init_worker(BFDSink.run)
 
     @staticmethod
