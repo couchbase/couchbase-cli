@@ -478,6 +478,12 @@ class Sink(EndPoint):
 
     # TODO: (2) Sink handles filtered restore by data.
 
+    def __init__(self, opts, spec, source_bucket, source_node,
+                 source_map, sink_map, ctl, cur):
+        super(Sink, self).__init__(opts, spec, source_bucket, source_node,
+                                   source_map, sink_map, ctl, cur)
+        self.op = None
+
     @staticmethod
     def can_handle(opts, spec):
         assert False, "unimplemented"
@@ -490,6 +496,9 @@ class Sink(EndPoint):
         if getattr(opts, "destination_vbucket_state", "active") != "active":
             return ("error: only --destination-vbucket-state=active" +
                     " is supported by this destination: %s") % (spec)
+        if getattr(opts, "destination_operation", None) != None:
+            return ("error: --destination-operation" +
+                    " is not supported by this destination: %s") % (spec)
         return 0
 
     @staticmethod
@@ -518,6 +527,15 @@ class Sink(EndPoint):
                 " source: " + source_spec + \
                 " sink: " + sink_spec
         return None
+
+    def operation(self):
+        if not self.op:
+            self.op = getattr(self.opts, "destination_operation", None)
+            if not self.op:
+                self.op = "set"
+                if getattr(self.opts, "add", False):
+                    self.op = "add"
+        return self.op
 
     def init_worker(self, target):
         self.worker_go = threading.Event()
@@ -704,6 +722,21 @@ class StdOutSink(Sink):
         return 0, None
 
     @staticmethod
+    def check_base(opts, spec):
+        if getattr(opts, "destination_vbucket_state", "active") != "active":
+            return ("error: only --destination-vbucket-state=active" +
+                    " is supported by this destination: %s") % (spec)
+
+        op = getattr(opts, "destination_operation", None)
+        if not op in [None, 'set', 'add', 'get']:
+            return ("error: --destination-operation unsupported value: %s" +
+                    "; use set, add, get") % (op)
+
+        # Skip immediate superclass Sink.check_base(),
+        # since StdOutSink can handle different destination operations.
+        return EndPoint.check_base(opts, spec)
+
+    @staticmethod
     def consume_config(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_config):
         if source_config:
@@ -720,7 +753,8 @@ class StdOutSink(Sink):
         return 0
 
     def consume_batch_async(self, batch):
-        use_add = bool(getattr(self.opts, "add", False))
+        op = self.operation()
+        op_mutate = op in ['set', 'add']
 
         stdout = sys.stdout
         item_visitor = None
@@ -740,16 +774,18 @@ class StdOutSink(Sink):
 
             try:
                 if cmd == memcacheConstants.CMD_TAP_MUTATION:
-                    # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
-                    op = 'set'
-                    if use_add:
-                        op = 'add'
-                    stdout.write("%s %s %s %s %s\r\n" %
-                                 (op, key, flg, exp, len(val)))
-                    stdout.write(val)
-                    stdout.write("\r\n")
+                    if op_mutate:
+                        # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
+                        stdout.write("%s %s %s %s %s\r\n" %
+                                     (op, key, flg, exp, len(val)))
+                        stdout.write(val)
+                        stdout.write("\r\n")
+                    elif op == 'get':
+                        stdout.write("get %s\r\n" % (key))
+
                 elif cmd == memcacheConstants.CMD_TAP_DELETE:
-                    stdout.write("delete %s\r\n" % (key))
+                    if op_mutate:
+                        stdout.write("delete %s\r\n" % (key))
                 else:
                     return "error: StdOutSink - unknown cmd: " + str(cmd), None
             except IOError:

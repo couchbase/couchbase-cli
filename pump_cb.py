@@ -21,7 +21,6 @@ class CBSink(pump_mc.MCSink):
         if len(sink_map_buckets) != 1:
             return "error: CBSink.run() expected 1 bucket in sink_map", None
 
-        use_add = getattr(self.opts, "add", False)
         retry_batch = None
         vbuckets_num = len(sink_map_buckets[0]['vBucketServerMap']['vBucketMap'])
         vbuckets = batch.group_by_vbucket_id(vbuckets_num)
@@ -31,7 +30,8 @@ class CBSink(pump_mc.MCSink):
             rv, conn = self.find_conn(mconns, vbucket_id)
             if rv != 0:
                 return rv, None
-            rv = self.send_items(conn, items, use_add, vbucket_id=vbucket_id)
+            rv = self.send_items(conn, items, self.operation(),
+                                 vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None
 

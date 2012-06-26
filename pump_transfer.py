@@ -115,6 +115,10 @@ class Transfer:
                      help="""only transfer to destination vbuckets in this state,
                              such as 'active' (default) or 'replica',
                              if supported by the destination class""")
+        p.add_option("", "--destination-operation",
+                     action="store", type="string", default=None,
+                     help="""use a given operation (set, add, get) on the
+                             destination, if supported""")
 
     def opt_parser_options_common(self, p):
         p.add_option("-i", "--id",

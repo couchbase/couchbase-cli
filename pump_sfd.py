@@ -294,6 +294,10 @@ class SFDSink(pump.Sink):
 
     @staticmethod
     def check_base(opts, spec):
+        if getattr(opts, "destination_operation", None) != None:
+            return ("error: --destination-operation" +
+                    " is not supported by this destination: %s") % (spec)
+
         # Skip immediate superclass Sink.check_base(),
         # since SFDSink can handle different vbucket states.
         return pump.EndPoint.check_base(opts, spec)

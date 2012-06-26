@@ -25,6 +25,21 @@ class MCSink(pump.Sink):
         self.push_next_batch(None, None)
 
     @staticmethod
+    def check_base(opts, spec):
+        if getattr(opts, "destination_vbucket_state", "active") != "active":
+            return ("error: only --destination-vbucket-state=active" +
+                    " is supported by this destination: %s") % (spec)
+
+        op = getattr(opts, "destination_operation", None)
+        if not op in [None, 'set', 'add', 'get']:
+            return ("error: --destination-operation unsupported value: %s" +
+                    "; use set, add, get") % (op)
+
+        # Skip immediate superclass Sink.check_base(),
+        # since MCSink can handle different destination operations.
+        return pump.EndPoint.check_base(opts, spec)
+
+    @staticmethod
     def run(self):
         """Worker thread to asynchronously store batches into sink."""
 
@@ -63,8 +78,6 @@ class MCSink(pump.Sink):
             conn.close()
 
     def scatter_gather(self, mconns, batch):
-        use_add = bool(getattr(self.opts, "add", False))
-
         conn = mconns.get("conn")
         if not conn:
             rv, conn = self.connect()
@@ -75,7 +88,7 @@ class MCSink(pump.Sink):
         # TODO: (1) MCSink - run() handle --data parameter.
 
         # Scatter or send phase.
-        rv = self.send_items(conn, batch.items, use_add)
+        rv = self.send_items(conn, batch.items, self.operation())
         if rv != 0:
             return rv, None
 
@@ -86,7 +99,7 @@ class MCSink(pump.Sink):
 
         return rv, None
 
-    def send_items(self, conn, items, use_add, vbucket_id=None):
+    def send_items(self, conn, items, operation, vbucket_id=None):
         m = []
 
         for i, item in enumerate(items):
@@ -97,9 +110,14 @@ class MCSink(pump.Sink):
             if self.skip(key, vbucket_id_item):
                 continue
 
-            rv, cmd = self.translate_cmd(cmd, use_add)
+            rv, cmd = self.translate_cmd(cmd, operation)
             if rv != 0:
                 return rv
+
+            if cmd == memcacheConstants.CMD_GET:
+                val, flg, exp, cas = '', 0, 0, 0
+            if cmd == memcacheConstants.CMD_NOOP:
+                key, val, flg, exp, cas = '', '', 0, 0, 0
 
             rv, req = self.cmd_request(cmd, vbucket_id_item, key, val,
                                        ctypes.c_uint32(flg).value,
@@ -163,16 +181,22 @@ class MCSink(pump.Sink):
 
         return 0, retry
 
-    def translate_cmd(self, cmd, use_add):
+    def translate_cmd(self, cmd, op):
         if cmd == memcacheConstants.CMD_TAP_MUTATION:
-            if use_add:
+            if op == 'set':
+                return 0, memcacheConstants.CMD_SET
+            if op == 'add':
                 return 0, memcacheConstants.CMD_ADD
-            return 0, memcacheConstants.CMD_SET
+            if op == 'get':
+                return 0, memcacheConstants.CMD_GET
+            return "error: MCSink.translate_cmd, unsupported op: " + op, None
 
         if cmd == memcacheConstants.CMD_TAP_DELETE:
+            if op == 'get':
+                return 0, memcacheConstants.CMD_NOOP
             return 0, memcacheConstants.CMD_DELETE
 
-        return "error: MCSink - unknown cmd: " + str(cmd), None
+        return "error: MCSink - unknown cmd: %s, op: %s" % (cmd, op), None
 
     def translate_cas(self, cas):
         return 0 # Cannot force CAS using memcached SET/ADD commands.
@@ -245,7 +269,9 @@ class MCSink(pump.Sink):
         if (cmd == memcacheConstants.CMD_SET or
             cmd == memcacheConstants.CMD_ADD):
             ext = struct.pack(memcacheConstants.SET_PKT_FMT, flg, exp)
-        elif cmd == memcacheConstants.CMD_DELETE:
+        elif (cmd == memcacheConstants.CMD_DELETE or
+              cmd == memcacheConstants.CMD_GET or
+              cmd == memcacheConstants.CMD_NOOP):
             ext = ''
         else:
             return "error: MCSink - unknown cmd for request: " + str(cmd), None
