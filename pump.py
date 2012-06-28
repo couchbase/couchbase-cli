@@ -875,8 +875,8 @@ def filter_bucket_nodes(bucket, spec_parts):
                   bucket['nodes'])
 
 def find_source_bucket_name(opts, source_map):
-    # If the caller didn't specify a bucket_source and
-    # there's only one bucket in the source_map, use that.
+    """If the caller didn't specify a bucket_source and
+       there's only one bucket in the source_map, use that."""
     source_bucket = getattr(opts, "bucket_source", None)
     if (not source_bucket and
         source_map and
@@ -889,7 +889,7 @@ def find_source_bucket_name(opts, source_map):
     return 0, source_bucket
 
 def find_sink_bucket_name(opts, source_bucket):
-    # Default bucket_destination to the same as bucket_source.
+    """Default bucket_destination to the same as bucket_source."""
     sink_bucket = getattr(opts, "bucket_destination", None) or source_bucket
     if not sink_bucket:
         return "error: please specify a bucket_destination", None
