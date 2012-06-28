@@ -10,7 +10,6 @@ import sqlite3
 import string
 import sys
 import time
-import types
 import urllib
 
 import memcacheConstants
@@ -445,10 +444,10 @@ def cleanse(d):
 
 def cleanse_helper(d):
     """Recursively, destructively elide passwords from hierarchy of dict/list's."""
-    if type(d) == types.ListType:
+    if type(d) is list:
         for x in d:
             cleanse_helper(x)
-    elif type(d) == types.DictType:
+    elif type(d) is dict:
         for k, v in d.iteritems():
             if "assword" in k:
                 d[k] = '<...ELIDED...>'
