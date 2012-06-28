@@ -275,9 +275,8 @@ class BFDSink(BFD, Sink):
     @staticmethod
     def can_handle(opts, spec):
         spec = os.path.normpath(spec)
-        return (os.path.isdir(spec) or
-                (os.path.exists(spec) == False and
-                 os.path.isdir(os.path.dirname(spec)) == True))
+        return (os.path.isdir(spec) or (not os.path.exists(spec) and
+                                        os.path.isdir(os.path.dirname(spec))))
 
     @staticmethod
     def check(opts, spec, source_map):
@@ -292,7 +291,7 @@ class BFDSink(BFD, Sink):
                 return "error: backup directory is not a directory: " + spec, None
             if not os.access(spec, os.W_OK):
                 return "error: backup directory is not writable: " + spec, None
-            if len(os.listdir(spec)) != 0:
+            if len(os.listdir(spec)):
                 return "error: backup directory is not empty: " + spec, None
             return 0, None
 
