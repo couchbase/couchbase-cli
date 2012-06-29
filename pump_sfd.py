@@ -191,7 +191,7 @@ class SFDSource(pump.Source):
                 else:
                     cmd = memcacheConstants.CMD_TAP_MUTATION
 
-                flg, exp, cas = struct.unpack(SFD_REV_META, doc_info.revMeta)
+                cas, exp, flg = struct.unpack(SFD_REV_META, doc_info.revMeta)
                 val = doc_info.getContents()
                 item = (cmd, vbucket_id, key, flg, exp, cas, val)
                 abatch[0].append(item, len(val))
