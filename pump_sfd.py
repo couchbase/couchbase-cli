@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import collections
 import ctypes
 import glob
 import logging
@@ -54,13 +55,49 @@ class SFDSource(pump.Source):
             bucket_name = os.path.basename(os.path.dirname(bucket_dir))
             if not bucket_name:
                 return "error: bucket_name too short: " + bucket_dir, None
+            rv, v = SFDSource.vbucket_states(opts, spec, bucket_dir)
+            if rv != 0:
+                return rv, None
             buckets.append({'name': bucket_name,
-                            'nodes': [{'hostname': 'N/A'}]})
+                            'nodes': [{'hostname': 'N/A',
+                                       'vbucket_states': v}]})
 
         if not buckets:
             return "error: no bucket subdirectories at: " + d, None
 
         return 0, {'spec': spec, 'buckets': buckets}
+
+    @staticmethod
+    def vbucket_states(opts, spec, bucket_dir):
+        """Reads all the latest couchstore files in a directory, and returns
+           map of state string (e.g., 'active') to map of vbucket_id to doc."""
+        vbucket_states = collections.defaultdict(dict)
+
+        for f in latest_couch_files(bucket_dir):
+            vbucket_id = int(re.match(SFD_RE, os.path.basename(f)).group(1))
+            try:
+                store = couchstore.CouchStore(f, 'r')
+                try:
+                    doc_str = store.localDocs['_local/vbstate']
+                    if doc_str:
+                        doc = json.loads(doc_str)
+                        state = doc.get('state', None)
+                        if state:
+                            vbucket_states[state][vbucket_id] = doc
+                        else:
+                            return "error: missing vbucket_state from: %s" \
+                                % (f), None
+                except Exception as e:
+                    return ("error: could not read _local/vbstate from: %s" +
+                            "; exception: %s") % (f, e), None
+                store.close()
+            except Exception as e:
+                return ("error: could not read couchstore file: %s" +
+                        "; exception: %s") % (f, e), None
+
+        if vbucket_states:
+            return 0, vbucket_states
+        return "error: no vbucket_states in files: %s" % (bucket_dir), None
 
     @staticmethod
     def provide_config(opts, source_spec, source_bucket, source_map):
@@ -168,8 +205,8 @@ class SFDSource(pump.Source):
             try:
                 store = couchstore.CouchStore(f, 'r')
             except Exception as e:
-                self.queue.put(("error: could not open couchstore file: " + f +
-                                " exception: " + str(e), None))
+                self.queue.put(("error: could not open couchstore file: %s" +
+                                "; exception: %s") % (f, e), None)
                 return
 
             # TODO: (1) SFDSource - validate _local/vbstate is active.
@@ -423,16 +460,16 @@ def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c
                                      filter_re=filter_re)
     if not store_paths:
         if mode == 'r':
-            return 0, None
+            return 0, None, None
         store_paths = [ bucket_dir + '/' + default_name ]
     if len(store_paths) != 1:
-        return ("error: no single, latest couch file: %s" +
-                "; found: %s") % (glob_pattern, store_paths), None
+        return ("error: no single, latest couchstore file: %s" +
+                "; found: %s") % (glob_pattern, store_paths), None, None
     try:
         return 0, couchstore.CouchStore(str(store_paths[0]), mode), store_paths[0]
     except Exception as e:
-        return ("error: could not open couchstore: " + store_paths[0] +
-                "; exception: " + str(e)), None, store_paths[0]
+        return ("error: could not open couchstore file: %s" +
+                "; exception: %s") % (store_paths[0], e), None, store_paths[0]
 
 def latest_couch_files(bucket_dir, glob_pattern='*.couch.*', filter_re=SFD_RE):
     """Given directory of *.couch.VER files, returns files with largest VER suffixes."""
