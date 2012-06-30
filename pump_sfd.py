@@ -171,6 +171,27 @@ class SFDSource(pump.Source):
             self.queue.put((rv, None))
             return
 
+        source_vbucket_state = \
+            getattr(self.opts, 'source_vbucket_state', 'active')
+
+        source_nodes = self.source_bucket['nodes']
+        if len(source_nodes) != 1:
+            self.queue.put(("error: expected 1 node in source_bucket: %s"
+                            % (self.source_bucket['name']), None))
+            return
+
+        vbucket_states = source_nodes[0].get('vbucket_states', None)
+        if not vbucket_states:
+            self.queue.put(("error: missing vbucket_states in source_bucket: %s"
+                            % (self.source_bucket['name']), None))
+            return
+
+        vbuckets = vbucket_states.get(source_vbucket_state, None)
+        if vbuckets is None: # Empty dict is valid.
+            self.queue.put(("error: missing vbuckets in source_bucket: %s"
+                            % (self.source_bucket['name']), None))
+            return
+
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
 
@@ -178,7 +199,7 @@ class SFDSource(pump.Source):
         vbucket_id = None
 
         # Level of indirection since we can't use python 3 nonlocal statement.
-        abatch = [ pump.Batch(self) ]
+        abatch = [pump.Batch(self)]
 
         def change_callback(doc_info):
             if doc_info:
@@ -202,16 +223,17 @@ class SFDSource(pump.Source):
                 abatch[0] = pump.Batch(self)
 
         for f in latest_couch_files(d + '/' + self.source_bucket['name']):
+            vbucket_id = int(re.match(SFD_RE, os.path.basename(f)).group(1))
+            if not vbucket_id in vbuckets:
+                continue
+
             try:
                 store = couchstore.CouchStore(f, 'r')
             except Exception as e:
-                self.queue.put(("error: could not open couchstore file: %s" +
-                                "; exception: %s") % (f, e), None)
+                self.queue.put(("error: could not open couchstore file: %s"
+                                "; exception: %s" % (f, e), None))
                 return
 
-            # TODO: (1) SFDSource - validate _local/vbstate is active.
-
-            vbucket_id = int(re.match(SFD_RE, os.path.basename(f)).group(1))
             store.forEachChange(0, change_callback)
             store.close()
 
