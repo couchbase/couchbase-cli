@@ -6,11 +6,15 @@ default:
 pythonlibdir=$(libdir)/python
 nobase_pythonlib_DATA= \
          buckets.py \
+         cluster_stats.py \
+         collector.py \
+         diskqueue_stats.py \
          info.py \
          listservers.py \
          mc_bin_client.py \
          memcacheConstants.py \
          node.py \
+         node_stats.py \
          pump.py \
          pump_bfd.py \
          pump_cb.py \
@@ -18,16 +22,19 @@ nobase_pythonlib_DATA= \
          pump_mc.py \
          pump_tap.py \
          pump_transfer.py \
+         processor.py \
          restclient.py \
          simplejson/LICENSE.txt \
          simplejson/__init__.py \
          simplejson/decoder.py \
          simplejson/encoder.py \
          simplejson/scanner.py \
+         stats_buffer.py \
          usage.py \
          util_cli.py
 
-pythonlib_SCRIPTS= couchbase-cli cbbackup cbrestore cbtransfer
+
+pythonlib_SCRIPTS= couchbase-cli cbbackup cbrestore cbtransfer cbclusterstats
 
 PYTHON_TOOLS= \
         wrapper/couchbase-cli \

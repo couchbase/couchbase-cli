@@ -34,7 +34,9 @@ class ListServers:
                             self.port,
                             self.user,
                             self.password)
-        if (self.output == 'json'):
+        if (self.output == 'return'):
+            return self.getNodes(data)
+        elif (self.output == 'json'):
             print data
         else:
             # obtain dict of nodes. If not dict, is error message
@@ -75,7 +77,11 @@ class ListServers:
             if self.cmd == "host-list":
                 print node['hostname']
             else:
+                if node.get('otpNode') is None:
+                    raise Exception("could not access node;" +
+                                    " please check your username (-u) and password (-p)")
+
                 print '%s %s %s %s' % (node['otpNode'],
-                                   node['hostname'],
-                                   node['status'],
-                                   node['clusterMembership'])
+                                       node['hostname'],
+                                       node['status'],
+                                       node['clusterMembership'])

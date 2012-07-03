@@ -40,7 +40,10 @@ class Info:
         for x in ['license', 'licenseValid', 'licenseValidUntil']:
             if x in json:
                 del(json[x])
-        if cmd == 'server-eshell':
+
+        if cmd == 'get-server-info':
+            return json
+        elif cmd == 'server-eshell':
             name = self._remoteShellName()
             p = subprocess.call(['erl','-name',name,
                 '-setcookie',json['otpCookie'],'-hidden','-remsh',json['otpNode']])
