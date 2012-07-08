@@ -14,6 +14,8 @@ import memcacheConstants
 
 import pump
 
+# TODO: (1) TAPDumpSource - handle TAP_FLAG_NETWORK_BYTE_ORDER.
+
 class TAPDumpSource(pump.Source):
     """Can read from cluster/server/bucket via TAP dump."""
 
@@ -68,8 +70,6 @@ class TAPDumpSource(pump.Source):
             pump.rest_request_json(host, int(port), user, pswd, path + ddocs_qry)
         if err:
             return err, None
-
-        # TODO: (2) TAPDumpSource - handle design docs with attachments.
 
         return 0, ddocs_json
 
