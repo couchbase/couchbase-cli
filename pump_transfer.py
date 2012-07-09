@@ -100,6 +100,25 @@ class Transfer:
                              to a different bucket; defaults to the same as the
                              bucket-source""")
         self.opt_parser_options_common(p)
+        p.add_option("", "--single-node",
+                     action="store_true", default=False,
+                     help="""use a single server node from the source only,
+                             not all server nodes from the entire cluster;
+                             this single server node is defined by the source URL""")
+        p.add_option("", "--source-vbucket-state",
+                     action="store", type="string", default='active',
+                     help="""only transfer from source vbuckets in this state,
+                             such as 'active' (default) or 'replica',
+                             if supported by the source class""")
+        p.add_option("", "--destination-vbucket-state",
+                     action="store", type="string", default='active',
+                     help="""only transfer to destination vbuckets in this state,
+                             such as 'active' (default) or 'replica',
+                             if supported by the destination class""")
+        p.add_option("", "--destination-operation",
+                     action="store", type="string", default=None,
+                     help="""use a given operation (set, add, get) on the
+                             destination, if supported""")
 
     def opt_parser_options_common(self, p):
         p.add_option("-i", "--id",
@@ -154,7 +173,7 @@ class Backup(Transfer):
         self.sink_alias = "backup_dir"
         self.usage = \
             "%prog [options] source backup_dir\n\n" \
-            "Online/offline backup of a couchbase cluster or server node.\n\n" \
+            "Online backup of a couchbase cluster or server node.\n\n" \
             "Examples:\n" \
             "  %prog http://HOST:8091 /backups/backup-42\n" \
             "  %prog couchbase://HOST:8091 /backups/backup-42"
@@ -168,7 +187,6 @@ class Backup(Transfer):
                      help="""use a single server node from the source only,
                              not all server nodes from the entire cluster;
                              this single server node is defined by the source URL""")
-
         Transfer.opt_parser_options_common(self, p)
 
     def find_handlers(self, opts, source, sink):
@@ -194,8 +212,7 @@ class Restore(Transfer):
             "  %prog /backups/backup-42 couchbase://HOST:8091 \\\n" \
             "    --bucket=default\n" \
             "  %prog /backups/backup-42 memcached://HOST:11211 \\\n" \
-            "    --bucket=sessions\n" \
-            "  %prog /backups/backup-42 stdout:"
+            "    --bucket=sessions"
 
     def opt_parser_options(self, p):
         p.add_option("-a", "--add",
@@ -213,7 +230,6 @@ class Restore(Transfer):
                              destination bucket name; this allows you to restore
                              to a different bucket; defaults to the same as the
                              bucket-source""")
-
         Transfer.opt_parser_options_common(self, p)
 
         # TODO: (1) cbrestore parameter --create-design-docs=y|n
@@ -283,7 +299,6 @@ except ImportError as e:
         "; accessing local couchstore files will not work"
 
 
-# TODO: (1) pump_transfer - only load SFDSink if couchstore loads.
 # TODO: (1) pump_transfer - use QUIET commands
 # TODO: (1) pump_transfer - verify that nth replica got the item
 # TODO: (1) pump_transfer - ability to TAP a non-active or replica vbucket / MB-4583
