@@ -88,26 +88,26 @@ class MCSink(pump.Sink):
         # TODO: (1) MCSink - run() handle --data parameter.
 
         # Scatter or send phase.
-        rv = self.send_items(conn, batch.items, self.operation())
+        rv = self.send_msgs(conn, batch.msgs, self.operation())
         if rv != 0:
             return rv, None
 
         # Gather or recv phase.
-        rv, retry = self.recv_items(conn, batch.items)
+        rv, retry = self.recv_msgs(conn, batch.msgs)
         if retry:
             return rv, batch
 
         return rv, None
 
-    def send_items(self, conn, items, operation, vbucket_id=None):
+    def send_msgs(self, conn, msgs, operation, vbucket_id=None):
         m = []
 
-        for i, item in enumerate(items):
-            cmd, vbucket_id_item, key, flg, exp, cas, val = item
+        for i, msg in enumerate(msgs):
+            cmd, vbucket_id_msg, key, flg, exp, cas, val = msg
             if vbucket_id is not None:
-                vbucket_id_item = vbucket_id
+                vbucket_id_msg = vbucket_id
 
-            if self.skip(key, vbucket_id_item):
+            if self.skip(key, vbucket_id_msg):
                 continue
 
             rv, cmd = self.translate_cmd(cmd, operation)
@@ -119,7 +119,7 @@ class MCSink(pump.Sink):
             if cmd == memcacheConstants.CMD_NOOP:
                 key, val, flg, exp, cas = '', '', 0, 0, 0
 
-            rv, req = self.cmd_request(cmd, vbucket_id_item, key, val,
+            rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
                                        exp, self.translate_cas(cas), i)
             if rv != 0:
@@ -132,15 +132,15 @@ class MCSink(pump.Sink):
 
         return 0
 
-    def recv_items(self, conn, items, vbucket_id=None):
+    def recv_msgs(self, conn, msgs, vbucket_id=None):
         retry = False
 
-        for i, item in enumerate(items):
-            cmd, vbucket_id_item, key, flg, exp, cas, val = item
+        for i, msg in enumerate(msgs):
+            cmd, vbucket_id_msg, key, flg, exp, cas, val = msg
             if vbucket_id is not None:
-                vbucket_id_item = vbucket_id
+                vbucket_id_msg = vbucket_id
 
-            if self.skip(key, vbucket_id_item):
+            if self.skip(key, vbucket_id_msg):
                 continue
 
             try:
@@ -169,7 +169,7 @@ class MCSink(pump.Sink):
                     msg = ("error: NOT_MY_VBUCKET;"
                            " perhaps the cluster was rebalancing;"
                            " vbucket_id: %s, key: %s, spec: %s, host:port: %s:%s"
-                           % (vbucket_id_item, key, self.spec,
+                           % (vbucket_id_msg, key, self.spec,
                               conn.host, conn.port))
                     return msg, None
                 else:

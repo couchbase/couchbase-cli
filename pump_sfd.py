@@ -23,7 +23,7 @@ SFD_VBUCKETS = 1024
 SFD_REV_META = ">QII" # cas, exp, flg
 SFD_RE = "^([0-9]+)\\.couch\\.([0-9]+)$"
 
-# TODO: (1) SFDSource - total_items.
+# TODO: (1) SFDSource - total_msgs.
 # TODO: (1) SFDSink - ensure right user for bucket_dir.
 # TODO: (1) SFDSink - ensure right user for couchstore file.
 
@@ -214,8 +214,8 @@ class SFDSource(pump.Source):
 
                 cas, exp, flg = struct.unpack(SFD_REV_META, doc_info.revMeta)
                 val = doc_info.getContents()
-                item = (cmd, vbucket_id, key, flg, exp, cas, val)
-                abatch[0].append(item, len(val))
+                msg = (cmd, vbucket_id, key, flg, exp, cas, val)
+                abatch[0].append(msg, len(val))
 
             if (abatch[0].size() >= batch_max_size or
                 abatch[0].bytes >= batch_max_bytes):
@@ -264,7 +264,7 @@ class SFDSink(pump.Sink):
                 return self.future_done(future, 0)
 
             vbuckets = batch.group_by_vbucket_id(SFD_VBUCKETS)
-            for vbucket_id, items in vbuckets.iteritems():
+            for vbucket_id, msgs in vbuckets.iteritems():
                 checkpoint_id = 0
                 max_deleted_seqno = 0
 
@@ -275,8 +275,8 @@ class SFDSink(pump.Sink):
                 bulk_keys = []
                 bulk_vals = []
 
-                for i, item in enumerate(items):
-                    cmd, _vbucket_id, key, flg, exp, cas, val = item
+                for i, msg in enumerate(msgs):
+                    cmd, _vbucket_id, key, flg, exp, cas, val = msg
                     if self.skip(key, vbucket_id):
                         continue
 

@@ -150,9 +150,9 @@ class Transfer:
 
     def opt_extra_defaults(self):
         return {
-            "batch_max_size":  (1000,   "max # items per batch"),
-            "batch_max_bytes": (400000, "max # of item value bytes per batch"),
-            "cbb_max_mb":      (100000, "max # of item value MB per *.cbb file"),
+            "batch_max_size":  (1000,   "max # msgs per batch"),
+            "batch_max_bytes": (400000, "max # of msg value bytes per batch"),
+            "cbb_max_mb":      (100000, "max # of msg value MB per *.cbb file"),
             "max_retry":       (10,     "max # of sequential retries"),
             "report":          (5,      "# batches before updating progress bar"),
             "report_full":     (2000,   "# batches before emitting progress info"),
@@ -300,7 +300,7 @@ except ImportError as e:
 
 
 # TODO: (1) pump_transfer - use QUIET commands
-# TODO: (1) pump_transfer - verify that nth replica got the item
+# TODO: (1) pump_transfer - verify that nth replica got the msg
 # TODO: (1) pump_transfer - ability to TAP a non-active or replica vbucket / MB-4583
 # TODO: (10) pump_transfer - incremental backup/restore
 

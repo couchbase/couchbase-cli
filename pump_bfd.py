@@ -183,7 +183,7 @@ class BFDSource(BFD, Source):
             return "error: exception reading backup file: " + str(e), None
 
     @staticmethod
-    def total_items(opts, source_bucket, source_node, source_map):
+    def total_msgs(opts, source_bucket, source_node, source_map):
         t = 0
         g = glob.glob(BFD.db_dir(source_map['spec'],
                                  source_bucket['name'],
@@ -221,7 +221,7 @@ class BFDSink(BFD, Sink):
             " VALUES (?, ?, ?, ?, ?, ?, ?)"
         db = None
         cbb = 0       # Current cbb file NUM, like data-NUM.cbb.
-        cbb_bytes = 0 # Current cbb item value bytes total.
+        cbb_bytes = 0 # Current cbb msg value bytes total.
         cbb_max_bytes = \
             self.opts.extra.get("cbb_max_mb", 100000) * 1024 * 1024
 
@@ -246,7 +246,7 @@ class BFDSink(BFD, Sink):
 
                 for i in range(0, batch.size()):
                     cmd, vbucket_id, key, flg, exp, cas, val = \
-                        batch.item(i)
+                        batch.msg(i)
 
                     if self.skip(key, vbucket_id):
                         continue

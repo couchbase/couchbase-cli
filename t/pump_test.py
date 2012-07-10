@@ -626,28 +626,28 @@ class BackupTestHelper(unittest.TestCase):
 
     def expect_backup_contents(self, backup_dir,
                                expected_memcached_stream=None,
-                               expected_items=None):
+                               expected_msgs=None):
         mock_stdout = MockStdOut()
 
         t = pump_transfer.Transfer()
         rv = t.main(["cbtransfer", backup_dir, "stdout:", "-t", "1"],
                     opts_etc={"stdout": mock_stdout,
-                              "item_visitor": mock_stdout.item_visitor})
+                              "msg_visitor": mock_stdout.msg_visitor})
         self.assertEqual(0, rv)
 
         if expected_memcached_stream:
             self.assertEqual(expected_memcached_stream,
-                             ''.join(mock_stdout.msgs))
+                             ''.join(mock_stdout.writes))
 
-        if expected_items:
-            for idx, actual_item in enumerate(mock_stdout.items):
-                expected_item = expected_items[idx]
-                self.assertTrue(expected_item)
+        if expected_msgs:
+            for idx, actual_msg in enumerate(mock_stdout.msgs):
+                expected_msg = expected_msgs[idx]
+                self.assertTrue(expected_msg)
 
                 ecmd, evbucket_id, ekey, eflg, eexp, ecas, eval = \
-                    expected_item
+                    expected_msg
                 acmd, avbucket_id, akey, aflg, aexp, acas, aval = \
-                    actual_item
+                    actual_msg
 
                 self.assertEqual(ecmd, acmd)
                 self.assertEqual(evbucket_id, avbucket_id)
@@ -657,7 +657,7 @@ class BackupTestHelper(unittest.TestCase):
                 self.assertEqual(ecas, acas)
                 self.assertEqual(str(eval), str(aval))
 
-            self.assertEqual(len(expected_items), len(mock_stdout.items))
+            self.assertEqual(len(expected_msgs), len(mock_stdout.msgs))
 
     def check_cbb_file_exists(self, dir, num=1, num_buckets=1):
         self.assertEqual(num_buckets,
@@ -904,7 +904,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
 
-        # Two BFD files should be created, with 1 item each.
+        # Two BFD files should be created, with 1 msg each.
         self.check_cbb_file_exists(d, num=2)
         self.expect_backup_contents(d,
                                     "set a 0 0 1\r\nA\r\n"
@@ -1061,7 +1061,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                           "-x", "max_retry=0"])
         self.assertEqual(0, rv)
 
-        # Two BFD files should be created, with 1 item each.
+        # Two BFD files should be created, with 1 msg each.
         self.check_cbb_file_exists(d, num=2)
         self.expect_backup_contents(d,
                                     "set a 0 0 1\r\nA\r\n"
@@ -1083,7 +1083,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                           "-x", "max_retry=0,batch_max_size=1"])
         self.assertNotEqual(0, rv)
 
-        # Two BFD files should be created, with 1 item each.
+        # Two BFD files should be created, with 1 msg each.
         self.check_cbb_file_exists(d, num=2)
 
         # We can't depend on deterministic backup when messages are chopped.
@@ -1483,25 +1483,25 @@ class RestoreTestHelper:
         # Cmds in order of restoration.
         self.restored_cmds = []
 
-        # Map key is cmd key, value is list of item cmds received for that key.
+        # Map key is cmd key, value is list of msg cmds received for that key.
         self.restored_key_cmds = collections.defaultdict(list)
 
         # Map key is cmd code (ex: CMD_SET), value is integer count.
         self.restored_cmd_counts = collections.defaultdict(int)
 
     def gen_backup(self,
-                   items_per_node=None,
+                   msgs_per_node=None,
                    expected_backup_stdout=None,
                    json=None,
                    list_mms=None,
                    more_args=[]):
         """Generate a backup file/directory so we can test restore.
 
-           The items is list of lists, with one list per fake,
+           The msgs is list of lists, with one list per fake,
            mock node in the cluster."""
 
-        if not items_per_node:
-            items_per_node = [
+        if not msgs_per_node:
+            msgs_per_node = [
                 # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
                 [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 1000, 8000),
                  (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 1001, 8001)],
@@ -1522,7 +1522,7 @@ class RestoreTestHelper:
         if not list_mms:
             list_mms = [mms0, mms1]
 
-        self.assertTrue(len(list_mms) <= len(items_per_node))
+        self.assertTrue(len(list_mms) <= len(msgs_per_node))
 
         d = tempfile.mkdtemp()
         mrs.reset(self, [({ 'command': 'GET',
@@ -1531,9 +1531,9 @@ class RestoreTestHelper:
                             'message': json })])
 
         workers = []
-        for idx, items in enumerate(items_per_node):
+        for idx, msgs in enumerate(msgs_per_node):
             workers.append(Worker(target=self.worker_gen_backup,
-                                  args=[idx, list_mms[idx], items]))
+                                  args=[idx, list_mms[idx], msgs]))
             workers[-1].start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d] + more_args)
@@ -1545,26 +1545,26 @@ class RestoreTestHelper:
         for w in workers:
             w.join()
 
-        return d, items_per_node, self.flatten_items_per_node(items_per_node)
+        return d, msgs_per_node, self.flatten_msgs_per_node(msgs_per_node)
 
-    def flatten_items_per_node(self, items_per_node):
-        flattened = sum(items_per_node, [])
+    def flatten_msgs_per_node(self, msgs_per_node):
+        flattened = sum(msgs_per_node, [])
 
         # Zero out the CAS value, since we currently use SET/ADD.
         # TODO: (1) revisit CAS once we use SET_WITH_META/ADD_WITH_META.
         arr = []
 
-        for item in flattened:
-            cmd_tap, vbucket_id, key, val, flg, exp, cas = item
+        for msg in flattened:
+            cmd_tap, vbucket_id, key, val, flg, exp, cas = msg
             arr.append((cmd_tap, vbucket_id, key, val, flg, exp, 0))
 
         return arr
 
-    def worker_gen_backup(self, idx, mms, items,
+    def worker_gen_backup(self, idx, mms, msgs,
                           opaque_base=0,
                           bucket='default',
                           bucket_password=''):
-        """Represents a memcached server that provides items
+        """Represents a memcached server that provides msgs
            for gen_backup."""
 
         self.worker_gen_backup_auth(mms, bucket, bucket_password)
@@ -1573,8 +1573,8 @@ class RestoreTestHelper:
         cmd, _, _, _, _, opaque, _ = \
             self.check_tap_connect(req)
 
-        for i, item in enumerate(items):
-            cmd_tap, vbucket_id, key, val, flg, exp, cas = item
+        for i, msg in enumerate(msgs):
+            cmd_tap, vbucket_id, key, val, flg, exp, cas = msg
             if cmd_tap == CMD_TAP_MUTATION:
                 ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
                                   0, memcacheConstants.TAP_FLAG_ACK, 0, flg, exp)
@@ -1622,12 +1622,12 @@ class RestoreTestHelper:
         mms0.reset()
         mms1.reset()
 
-    def worker_restore(self, idx, mms, orig_items_total,
+    def worker_restore(self, idx, mms, orig_msgs_total,
                        bucket='default', bucket_password=''):
         """Represents a mock memcached server during the restore phase
            that just collects all received commands."""
 
-        while len(self.restored_key_cmds) < orig_items_total:
+        while len(self.restored_key_cmds) < orig_msgs_total:
             client, req = mms.queue.get()
             mms.queue.task_done()
             if not client or not req:
@@ -1656,25 +1656,25 @@ class RestoreTestHelper:
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            self.restored_cmds.append(item)
-            self.restored_key_cmds[key].append(item)
+            msg = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(msg)
+            self.restored_key_cmds[key].append(msg)
 
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
         return True
 
-    def check_restore_matches_backup(self, expected_items,
+    def check_restore_matches_backup(self, expected_msgs,
                                      expected_cmd_counts=2,
                                      expected_sasl_counts=2):
-        self.assertEqual(len(expected_items),
+        self.assertEqual(len(expected_msgs),
                          len(self.restored_cmds))
         self.assertEqual(expected_cmd_counts,
                          len(self.restored_cmd_counts))
         self.assertEqual(expected_sasl_counts,
                          self.restored_cmd_counts[CMD_SASL_AUTH])
 
-        before = sorted(expected_items)
+        before = sorted(expected_msgs)
         after = sorted(self.restored_cmds)
 
         # Although we do a deep before and after comparison later,
@@ -1682,31 +1682,31 @@ class RestoreTestHelper:
         #
         self.assertEqual(len(before), len(after))
 
-        for i, before_item in enumerate(before):
-            self.assertEqual(len(before_item[3]), len(after[i][3]))
+        for i, before_msg in enumerate(before):
+            self.assertEqual(len(before_msg[3]), len(after[i][3]))
 
         self.assertEqual(before, after)
 
-    def check_restore(self, items_per_node,
+    def check_restore(self, msgs_per_node,
                       expected_cmd_counts=2,
-                      expected_items=None,
+                      expected_msgs=None,
                       threads=1,
                       batch_max_size=1,
                       batch_max_bytes=400000,
                       more_args=[]):
-        d, orig_items, orig_items_flattened = \
-            self.gen_backup(items_per_node=items_per_node)
+        d, orig_msgs, orig_msgs_flattened = \
+            self.gen_backup(msgs_per_node=msgs_per_node)
 
-        if not expected_items:
-            expected_items = orig_items_flattened
+        if not expected_msgs:
+            expected_msgs = orig_msgs_flattened
 
         self.reset_mock_cluster()
 
         # Two mock servers in the cluster.
         workers = [ Worker(target=self.worker_restore,
-                           args=[0, mms0, len(orig_items_flattened)]),
+                           args=[0, mms0, len(orig_msgs_flattened)]),
                     Worker(target=self.worker_restore,
-                           args=[1, mms1, len(orig_items_flattened)]) ]
+                           args=[1, mms1, len(orig_msgs_flattened)]) ]
         for w in workers:
             w.start()
 
@@ -1719,13 +1719,13 @@ class RestoreTestHelper:
 
         rv = pump_transfer.Restore().main(restore_args)
         self.assertEqual(0, rv)
-        self.check_restore_matches_backup(expected_items,
+        self.check_restore_matches_backup(expected_msgs,
                                           expected_cmd_counts=expected_cmd_counts)
 
         self.check_restore_wait_for_workers(workers)
         shutil.rmtree(d, ignore_errors=True)
 
-        return orig_items_flattened
+        return orig_msgs_flattened
 
     def check_restore_wait_for_workers(self, workers):
         """Test subclasses may override this method, in case there are more
@@ -1740,41 +1740,41 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         RestoreTestHelper.setUp(self)
 
     def test_restore_simple(self):
-        source_items = self.check_restore(None)
-        self.assertEqual(len(source_items),
+        source_msgs = self.check_restore(None)
+        self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_simple_2threads(self):
-        source_items = self.check_restore(None, threads=2)
-        self.assertEqual(len(source_items),
+        source_msgs = self.check_restore(None, threads=2)
+        self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_simple_4threads(self):
-        source_items = self.check_restore(None, threads=4)
-        self.assertEqual(len(source_items),
+        source_msgs = self.check_restore(None, threads=4)
+        self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_simple_2batch(self):
-        source_items = self.check_restore(None,
+        source_msgs = self.check_restore(None,
                                           batch_max_size=2)
-        self.assertEqual(len(source_items),
+        self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_simple_8batch(self):
-        source_items = self.check_restore(None,
+        source_msgs = self.check_restore(None,
                                           batch_max_size=8)
-        self.assertEqual(len(source_items),
+        self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_simple_4thread_8batch(self):
-        source_items = self.check_restore(None,
+        source_msgs = self.check_restore(None,
                                           threads=4,
                                           batch_max_size=8)
-        self.assertEqual(len(source_items),
+        self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_big_expirations_and_CAS(self):
-        items_per_node = [
+        msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff),
              (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff)],
@@ -1782,12 +1782,12 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff)]
             ]
 
-        source_items = self.check_restore(items_per_node)
-        self.assertEqual(len(source_items),
+        source_msgs = self.check_restore(msgs_per_node)
+        self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_deletes(self):
-        items_per_node = [
+        msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff),
              (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff),
@@ -1800,8 +1800,8 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
              ]
             ]
 
-        source_items = self.check_restore(items_per_node,
-                                          expected_cmd_counts=3)
+        source_msgs = self.check_restore(msgs_per_node,
+                                         expected_cmd_counts=3)
         self.assertEqual(5, self.restored_cmd_counts[CMD_SET])
         self.assertEqual(2, self.restored_cmd_counts[CMD_DELETE])
         self.assertEqual(2, len(self.restored_key_cmds['a']))
@@ -1821,15 +1821,15 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         kx = binascii.a2b_hex('0000000000000000000000')
         vx = ''.join(['\x00' for x in xrange(large_blob_size)])
 
-        items_per_node = [
+        msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 1, kb, vb, 0, 0, 0)],
             [(CMD_TAP_MUTATION, 900, kx, vx, 0, 0, 1)]
             ]
 
-        source_items = self.check_restore(items_per_node,
-                                          expected_cmd_counts=2,
-                                          batch_max_bytes=batch_max_bytes)
+        source_msgs = self.check_restore(msgs_per_node,
+                                         expected_cmd_counts=2,
+                                         batch_max_bytes=batch_max_bytes)
         self.assertEqual(2, self.restored_cmd_counts[CMD_SET])
         self.assertEqual(1, len(self.restored_key_cmds[kb]))
         self.assertEqual(1, len(self.restored_key_cmds[kx]))
@@ -1853,7 +1853,7 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
 
         self.reqs_after_respond_with_not_my_vbucket = None
 
-        self.items_per_node = [
+        self.msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000),
              (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000)],
@@ -1892,9 +1892,9 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            self.restored_cmds.append(item)
-            self.restored_key_cmds[key].append(item)
+            msg = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(msg)
+            self.restored_key_cmds[key].append(msg)
 
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
@@ -1903,8 +1903,8 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
     def go(self, reqs_after_respond_with_not_my_vbucket,
            threads=4,
            batch_max_size=1):
-        d, orig_items, orig_items_flattened = \
-            self.gen_backup(items_per_node=self.items_per_node)
+        d, orig_msgs, orig_msgs_flattened = \
+            self.gen_backup(msgs_per_node=self.msgs_per_node)
 
         self.reset_mock_cluster()
 
@@ -1913,9 +1913,9 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
 
         # Two mock servers in the cluster.
         workers = [ Worker(target=self.worker_restore,
-                           args=[0, mms0, len(orig_items_flattened)]),
+                           args=[0, mms0, len(orig_msgs_flattened)]),
                     Worker(target=self.worker_restore,
-                           args=[1, mms1, len(orig_items_flattened)]) ]
+                           args=[1, mms1, len(orig_msgs_flattened)]) ]
         for w in workers:
             w.start()
 
@@ -1952,7 +1952,7 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         self.reqs_after_respond_with_backoff = None
 
-        self.items_per_node = [
+        self.msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000),
              (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000)],
@@ -1994,9 +1994,9 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            self.restored_cmds.append(item)
-            self.restored_key_cmds[key].append(item)
+            msg = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(msg)
+            self.restored_key_cmds[key].append(msg)
 
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
@@ -2005,8 +2005,8 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
     def go(self, reqs_after_respond_with_backoff,
            threads=1,
            batch_max_size=1):
-        d, orig_items, orig_items_flattened = \
-            self.gen_backup(items_per_node=self.items_per_node)
+        d, orig_msgs, orig_msgs_flattened = \
+            self.gen_backup(msgs_per_node=self.msgs_per_node)
 
         self.reset_mock_cluster()
 
@@ -2015,9 +2015,9 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         # Two mock servers in the cluster.
         workers = [ Worker(target=self.worker_restore,
-                           args=[0, mms0, len(orig_items_flattened)]),
+                           args=[0, mms0, len(orig_msgs_flattened)]),
                     Worker(target=self.worker_restore,
-                           args=[1, mms1, len(orig_items_flattened)]) ]
+                           args=[1, mms1, len(orig_msgs_flattened)]) ]
         for w in workers:
             w.start()
 
@@ -2050,7 +2050,7 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         RestoreTestHelper.setUp(self)
 
     def test_rejected_auth(self):
-        self.items_per_node = [
+        self.msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000),
              (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000)],
@@ -2058,16 +2058,16 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000)]
             ]
 
-        d, orig_items, orig_items_flattened = \
-            self.gen_backup(items_per_node=self.items_per_node)
+        d, orig_msgs, orig_msgs_flattened = \
+            self.gen_backup(msgs_per_node=self.msgs_per_node)
 
         self.reset_mock_cluster()
 
         # Two mock servers in the cluster.
         workers = [ Worker(target=self.worker_restore,
-                           args=[0, mms0, len(orig_items_flattened)]),
+                           args=[0, mms0, len(orig_msgs_flattened)]),
                     Worker(target=self.worker_restore,
-                           args=[1, mms1, len(orig_items_flattened)]) ]
+                           args=[1, mms1, len(orig_msgs_flattened)]) ]
         for w in workers:
             w.start()
 
@@ -2105,9 +2105,9 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            self.restored_cmds.append(item)
-            self.restored_key_cmds[key].append(item)
+            msg = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(msg)
+            self.restored_key_cmds[key].append(msg)
 
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
@@ -2121,17 +2121,17 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
     def test_restore_all_deletes(self):
         """Test restoring DELETE's against a cluster that doesn't
-           have any of the items for attempted DELETION."""
+           have any of the msgs for attempted DELETION."""
 
-        items_per_node = [
+        msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff)],
             [(CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff)]
             ]
 
-        source_items = self.check_restore(items_per_node,
-                                          expected_cmd_counts=2,
-                                          expected_items=[])
+        source_msgs = self.check_restore(msgs_per_node,
+                                         expected_cmd_counts=2,
+                                         expected_msgs=[])
         self.assertEqual(2, self.restored_cmd_counts[CMD_DELETE])
         self.assertEqual(1, len(self.restored_key_cmds['a']))
         self.assertEqual(1, len(self.restored_key_cmds['y']))
@@ -2166,9 +2166,9 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            item = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            self.restored_cmds.append(item)
-            self.restored_key_cmds[key].append(item)
+            msg = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            self.restored_cmds.append(msg)
+            self.restored_key_cmds[key].append(msg)
 
         client.client.send(self.res(cmd, status,
                                     '', '', '', opaque, 0))
@@ -2186,12 +2186,12 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         mcs.reset()
 
     def test_ddoc_backup_restore(self):
-        source_items = self.check_restore(None)
-        self.assertEqual(len(source_items),
+        source_msgs = self.check_restore(None)
+        self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def gen_backup(self,
-                   items_per_node=None,
+                   msgs_per_node=None,
                    expected_backup_stdout=None,
                    json=None,
                    list_mms=None):
@@ -2203,7 +2203,7 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                     self.on_all_docs)])
 
         rv = RestoreTestHelper.gen_backup(self,
-                                          items_per_node=items_per_node,
+                                          msgs_per_node=msgs_per_node,
                                           expected_backup_stdout=expected_backup_stdout,
                                           json=json,
                                           list_mms=list_mms)
@@ -2307,22 +2307,22 @@ class TestCBBMaxSize(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         RestoreTestHelper.setUp(self)
 
     def gen_backup(self,
-                   items_per_node=None,
+                   msgs_per_node=None,
                    expected_backup_stdout=None,
                    json=None,
                    list_mms=None,
                    more_args=[]):
         more_args = more_args + ["-x", "cbb_max_mb=0.0000001,batch_max_size=1"]
         return RestoreTestHelper.gen_backup(self,
-                                            items_per_node=items_per_node,
+                                            msgs_per_node=msgs_per_node,
                                             expected_backup_stdout=expected_backup_stdout,
                                             json=json,
                                             list_mms=list_mms,
                                             more_args=more_args)
 
     def test_cbb_max_size(self):
-        source_items = self.check_restore(None)
-        self.assertEqual(len(source_items),
+        source_msgs = self.check_restore(None)
+        self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def check_cbb_file_exists(self, d, num=1):
@@ -2449,15 +2449,15 @@ SAMPLE_JSON_pools_default_buckets = """
 
 class MockStdOut:
     def __init__(self):
+        self.writes = []
         self.msgs = []
-        self.items = []
 
     def write(self, m):
-        self.msgs.append(str(m))
+        self.writes.append(str(m))
 
-    def item_visitor(self, item):
-        self.items.append(item)
-        return item
+    def msg_visitor(self, msg):
+        self.msgs.append(msg)
+        return msg
 
 
 if __name__ == '__main__':

@@ -74,7 +74,7 @@ class ProgressReporter(object):
         pct = float(current) / total
         max_hash = 20
         num_hash = int(round(pct * max_hash))
-        return ("  [%s%s] %0.1f%% (%s/%s items)%s" %
+        return ("  [%s%s] %0.1f%% (%s/%s msgs)%s" %
                 ('#' * num_hash, ' ' * (max_hash - num_hash),
                  100.0 * pct, current, total, cr))
 
@@ -113,7 +113,7 @@ class PumpingStation(ProgressReporter):
             if rv != 0:
                 return rv
 
-            rv = self.transfer_bucket_items(source_bucket, source_map, sink_map)
+            rv = self.transfer_bucket_msgs(source_bucket, source_map, sink_map)
             if rv != 0:
                 return rv
 
@@ -190,15 +190,15 @@ class PumpingStation(ProgressReporter):
                                                 source_config)
         return rv
 
-    def transfer_bucket_items(self, source_bucket, source_map, sink_map):
+    def transfer_bucket_msgs(self, source_bucket, source_map, sink_map):
         source_nodes = self.filter_source_nodes(source_bucket, source_map)
 
-        # Transfer bucket items with a Pump per source server.
+        # Transfer bucket msgs with a Pump per source server.
         self.start_workers(len(source_nodes))
         self.report_init()
 
-        self.ctl['run_item'] = 0
-        self.ctl['tot_item'] = 0
+        self.ctl['run_msg'] = 0
+        self.ctl['tot_msg'] = 0
 
         for source_node in sorted(source_nodes,
                                   key=lambda n: n.get('hostname', NA)):
@@ -206,14 +206,14 @@ class PumpingStation(ProgressReporter):
                           source_node.get('hostname', NA))
             self.queue.put((source_bucket, source_node, source_map, sink_map))
 
-            rv, tot = self.source_class.total_items(self.opts,
-                                                    source_bucket,
-                                                    source_node,
-                                                    source_map)
+            rv, tot = self.source_class.total_msgs(self.opts,
+                                                   source_bucket,
+                                                   source_node,
+                                                   source_map)
             if rv != 0:
                 return rv
             if tot:
-                self.ctl['tot_item'] += tot
+                self.ctl['tot_msg'] += tot
 
         # Don't use queue.join() as it eats Ctrl-C's.
         s = 0.05
@@ -227,10 +227,10 @@ class PumpingStation(ProgressReporter):
 
         time.sleep(0.01) # Allows threads to update counters.
 
-        sys.stderr.write(self.bar(self.ctl['run_item'],
-                                  self.ctl['tot_item']) + "\n")
+        sys.stderr.write(self.bar(self.ctl['run_msg'],
+                                  self.ctl['tot_msg']) + "\n")
         sys.stderr.write("bucket: " + source_bucket['name'] +
-                         ", items transferred...\n")
+                         ", msgs transferred...\n")
         def emit(msg):
             sys.stderr.write(msg + "\n")
         self.report(emit=emit)
@@ -334,16 +334,16 @@ class Pump(ProgressReporter):
                     return self.done(rv)
 
                 self.cur['tot_sink_batch'] += 1
-                self.cur['tot_sink_item'] += future.batch.size()
+                self.cur['tot_sink_msg'] += future.batch.size()
                 self.cur['tot_sink_byte'] += future.batch.bytes
 
-                self.ctl['run_item'] += future.batch.size()
+                self.ctl['run_msg'] += future.batch.size()
 
             if not batch:
                 return self.done(0)
 
             self.cur['tot_source_batch'] += 1
-            self.cur['tot_source_item'] += batch.size()
+            self.cur['tot_source_msg'] += batch.size()
             self.cur['tot_source_byte'] += batch.bytes
 
             rv_future, future = self.sink.consume_batch_async(batch)
@@ -357,8 +357,8 @@ class Pump(ProgressReporter):
                 logging.info("  progress...")
                 self.report(prefix="  ")
             elif report > 0 and n % report == 0:
-                sys.stderr.write(self.bar(self.ctl['run_item'],
-                                          self.ctl['tot_item']))
+                sys.stderr.write(self.bar(self.ctl['run_msg'],
+                                          self.ctl['tot_msg']))
 
         return self.done(0)
 
@@ -373,7 +373,7 @@ class Pump(ProgressReporter):
             (self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
              self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
              self.cur['tot_source_batch'] != self.cur['tot_sink_batch'])):
-            return "error: sink missing some source items: " + str(self.cur)
+            return "error: sink missing some source msgs: " + str(self.cur)
 
         return rv
 
@@ -421,12 +421,12 @@ class EndPoint(object):
 
     def skip(self, key, vbucket_id):
         if (self.only_key_re and not re.search(self.only_key_re, key)):
-            logging.warn("skipping item with key: " + str(key))
+            logging.warn("skipping msg with key: " + str(key))
             return True
 
         if (self.only_vbucket_id is not None and
             self.only_vbucket_id != vbucket_id):
-            logging.warn("skipping item of vbucket_id: " + str(vbucket_id))
+            logging.warn("skipping msg of vbucket_id: " + str(vbucket_id))
             return True
 
         return False
@@ -469,8 +469,8 @@ class Source(EndPoint):
         assert False, "unimplemented"
 
     @staticmethod
-    def total_items(opts, source_bucket, source_node, source_map):
-        return 0, None # Subclasses can return estimate # items.
+    def total_msgs(opts, source_bucket, source_node, source_map):
+        return 0, None # Subclasses can return estimate # msgs.
 
 
 class Sink(EndPoint):
@@ -579,30 +579,30 @@ class Batch(object):
 
     def __init__(self, source):
         self.source = source
-        self.items = []
+        self.msgs = []
         self.bytes = 0
 
-    def append(self, item, num_bytes):
-        self.items.append(item)
+    def append(self, msg, num_bytes):
+        self.msgs.append(msg)
         self.bytes = self.bytes + num_bytes
 
     def size(self):
-        return len(self.items)
+        return len(self.msgs)
 
-    def item(self, i):
-        return self.items[i]
+    def msg(self, i):
+        return self.msgs[i]
 
     def group_by_vbucket_id(self, vbuckets_num):
-        """Returns dict of vbucket_id->[items] grouped by item's vbucket_id."""
+        """Returns dict of vbucket_id->[msgs] grouped by msg's vbucket_id."""
         g = collections.defaultdict(list)
-        for item in self.items:
-            cmd, vbucket_id, key, flg, exp, cas, val = item
+        for msg in self.msgs:
+            cmd, vbucket_id, key, flg, exp, cas, val = msg
             if vbucket_id == 0x0000ffff:
                 # Special case when the source did not supply a vbucket_id
                 # (such as stdin source), so we calculate it.
                 vbucket_id = (zlib.crc32(key) >> 16) & (vbuckets_num - 1)
-                item = (cmd, vbucket_id, key, flg, exp, cas, val)
-            g[vbucket_id].append(item)
+                msg = (cmd, vbucket_id, key, flg, exp, cas, val)
+            g[vbucket_id].append(msg)
         return g
 
 
@@ -688,16 +688,16 @@ class StdInSource(Source):
                     return "error: value end read failed at: " + line, None
 
                 if not self.skip(key, vbucket_id):
-                    item = (cmd, vbucket_id, key, flg, exp, cas, val)
-                    batch.append(item, len(val))
+                    msg = (cmd, vbucket_id, key, flg, exp, cas, val)
+                    batch.append(msg, len(val))
             elif parts[0] == 'delete':
                 if len(parts) != 2:
                     return "error: length of delete line: " + line, None
                 cmd = memcacheConstants.CMD_TAP_DELETE
                 key = parts[1]
                 if not self.skip(key, vbucket_id):
-                    item = (cmd, vbucket_id, key, 0, 0, 0, '')
-                    batch.append(item, 0)
+                    msg = (cmd, vbucket_id, key, 0, 0, 0, '')
+                    batch.append(msg, 0)
             else:
                 return "error: expected set/add/delete but got: " + line, None
 
@@ -757,18 +757,18 @@ class StdOutSink(Sink):
         op_mutate = op in ['set', 'add']
 
         stdout = sys.stdout
-        item_visitor = None
+        msg_visitor = None
 
         opts_etc = getattr(self.opts, "etc", None)
         if opts_etc:
             stdout = opts_etc.get("stdout", sys.stdout)
-            item_visitor = opts_etc.get("item_visitor", None)
+            msg_visitor = opts_etc.get("msg_visitor", None)
 
-        for item in batch.items:
-            if item_visitor:
-                item = item_visitor(item)
+        for msg in batch.msgs:
+            if msg_visitor:
+                msg = msg_visitor(msg)
 
-            cmd, vbucket_id, key, flg, exp, cas, val = item
+            cmd, vbucket_id, key, flg, exp, cas, val = msg
             if self.skip(key, vbucket_id):
                 continue
 

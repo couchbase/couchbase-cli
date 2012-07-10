@@ -28,7 +28,7 @@ class TAPDumpSource(pump.Source):
         self.tap_name = "".join(random.sample(string.letters, 16))
         self.ack_last = False # True when the last TAP msg had TAP_FLAG_ACK.
         self.cmd_last = None
-        self.num_item = 0
+        self.num_msg = 0
 
         self.recv_min_bytes = int(getattr(opts, "recv_min_bytes", 4096))
 
@@ -128,31 +128,31 @@ class TAPDumpSource(pump.Source):
                         self.parse_tap_ext(ext)
                     if rv != 0:
                         logging.warn("warning: partial TAP message received;"
-                                     " perhaps some item(s) not transferred;"
+                                     " perhaps some msg(s) not transferred;"
                                      " key: %s, cmd %s, vbucket_id %s"
                                      % (key, pump.CMD_STR.get(cmd, cmd),
                                         vbucket_id))
                         return rv, batch
 
                     if not self.skip(key, vbucket_id):
-                        item = (cmd, vbucket_id, key, flg, exp, cas, val)
-                        batch.append(item, len(val))
-                        self.num_item += 1
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, val)
+                        batch.append(msg, len(val))
+                        self.num_msg += 1
                 elif cmd == memcacheConstants.CMD_TAP_OPAQUE:
                     if len(ext) > 0:
                         rv, eng_length, flags, ttl, flg, exp, need_ack = \
                             self.parse_tap_ext(ext)
                         if rv != 0:
                             logging.warn("warning: partial TAP_OPAQUE;"
-                                         " perhaps some item(s) missed")
+                                         " perhaps some msg(s) missed")
                             return rv, batch
                 elif cmd == memcacheConstants.CMD_NOOP:
                     # 1.8.x servers might not end the TAP dump on an empty bucket,
                     # so we treat 2 NOOP's in a row as the end and proactively close.
-                    # Only do this when there've been no items to avoid closing
+                    # Only do this when there've been no msgs to avoid closing
                     # during a slow backfill.
                     if (self.cmd_last == memcacheConstants.CMD_NOOP and
-                        self.num_item == 0 and
+                        self.num_msg == 0 and
                         batch.size() <= 0):
                         self.tap_done = True
                         return 0, batch
@@ -331,8 +331,8 @@ class TAPDumpSource(pump.Source):
         return 0, eng_length, flags, ttl, flg, exp, need_ack
 
     @staticmethod
-    def total_items(opts, source_bucket, source_node, source_map):
-        # TODO: (1) TAPDumpSource - total_items/interestingStats isn't per-bucket/per-node.
+    def total_msgs(opts, source_bucket, source_node, source_map):
+        # TODO: (1) TAPDumpSource - total_msgs/interestingStats isn't per-bucket/per-node.
         # This incorrectly returns node-level, not bucket-node-level curr_items.
         # Instead see: http://NODE:8091/pools/default/buckets/default/stats/curr_items
         i = source_node.get("interestingStats", None)

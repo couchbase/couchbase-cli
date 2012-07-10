@@ -26,12 +26,12 @@ class CBSink(pump_mc.MCSink):
         vbuckets = batch.group_by_vbucket_id(vbuckets_num)
 
         # Scatter or send phase.
-        for vbucket_id, items in vbuckets.iteritems():
+        for vbucket_id, msgs in vbuckets.iteritems():
             rv, conn = self.find_conn(mconns, vbucket_id)
             if rv != 0:
                 return rv, None
-            rv = self.send_items(conn, items, self.operation(),
-                                 vbucket_id=vbucket_id)
+            rv = self.send_msgs(conn, msgs, self.operation(),
+                                vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None
 
@@ -39,11 +39,11 @@ class CBSink(pump_mc.MCSink):
         time.sleep(0.01)
 
         # Gather or recv phase.
-        for vbucket_id, items in vbuckets.iteritems():
+        for vbucket_id, msgs in vbuckets.iteritems():
             rv, conn = self.find_conn(mconns, vbucket_id)
             if rv != 0:
                 return rv, None
-            rv, retry = self.recv_items(conn, items, vbucket_id=vbucket_id)
+            rv, retry = self.recv_msgs(conn, msgs, vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None
             if retry:
