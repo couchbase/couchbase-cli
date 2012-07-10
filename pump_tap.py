@@ -332,10 +332,25 @@ class TAPDumpSource(pump.Source):
 
     @staticmethod
     def total_msgs(opts, source_bucket, source_node, source_map):
-        # TODO: (1) TAPDumpSource - total_msgs/interestingStats isn't per-bucket/per-node.
-        # This incorrectly returns node-level, not bucket-node-level curr_items.
-        # Instead see: http://NODE:8091/pools/default/buckets/default/stats/curr_items
-        i = source_node.get("interestingStats", None)
-        if i:
-            return 0, i.get("curr_items", None)
-        return 0, None
+        source_name = source_node.get("hostname", None)
+        if not source_name:
+            return 0, None
+
+        spec = source_map['spec']
+        name = source_bucket['name']
+        path = "/pools/default/buckets/%s/stats/curr_items" % (name)
+        host, port, user, pswd, _ = pump.parse_spec(opts, spec, 8091)
+        err, json, data = pump.rest_request_json(host, int(port),
+                                                 user, pswd, path)
+        if err:
+            return 0, None
+
+        nodeStats = data.get("nodeStats", None)
+        if not nodeStats:
+            return 0, None
+
+        curr_items = nodeStats.get(source_name, None)
+        if not curr_items:
+            return 0, None
+
+        return 0, curr_items[-1]

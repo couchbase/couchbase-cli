@@ -485,10 +485,14 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
         mrs.reset()
 
     def test_check(self):
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200,
-                            'message': SAMPLE_JSON_pools_default_buckets })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
@@ -510,10 +514,10 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
         self.assertTrue(map is None)
 
     def test_check_not_json(self):
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200,
-                            'message': "this is not JSON" })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200,
+                           'message': "this is not JSON"})])
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
@@ -524,10 +528,10 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
         self.assertTrue(map is None)
 
     def test_check_bad_json(self):
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200,
-                            'message': '["this":"is JSON but unexpected"]' })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200,
+                           'message': '["this":"is JSON but unexpected"]'})])
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
@@ -538,19 +542,27 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
         self.assertTrue(map is None)
 
     def test_check_multiple_buckets(self):
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200,
-                            'message': """[{"name":"a",
-                                            "bucketType":"membase",
-                                            "nodes":["fake-nodes-data"],
-                                            "nodeLocator":"vbucket",
-                                            "vBucketServerMap":{"fake":"map"}},
-                                           {"name":"b",
-                                            "bucketType":"membase",
-                                            "nodes":["fake-nodes-data"],
-                                            "nodeLocator":"vbucket",
-                                            "vBucketServerMap":{"fake":"map"}}]""" })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200,
+                           'message': """[{"name":"a",
+                                           "bucketType":"membase",
+                                           "nodes":["fake-nodes-data"],
+                                           "nodeLocator":"vbucket",
+                                           "vBucketServerMap":{"fake":"map"}},
+                                          {"name":"b",
+                                           "bucketType":"membase",
+                                           "nodes":["fake-nodes-data"],
+                                           "nodeLocator":"vbucket",
+                                           "vBucketServerMap":{"fake":"map"}}]"""}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/a/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/b/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
@@ -564,19 +576,23 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
         self.assertEqual('b', map['buckets'][1]['name'])
 
     def test_check_non_membase_bucket_type(self):
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200,
-                            'message': """[{"name":"a",
-                                            "bucketType":"not-membase-bucket-type",
-                                            "nodes":["fake-nodes-data"],
-                                            "nodeLocator":"vbucket",
-                                            "vBucketServerMap":{"fake":"map"}},
-                                           {"name":"b",
-                                            "bucketType":"membase",
-                                            "nodes":["fake-nodes-data"],
-                                            "nodeLocator":"vbucket",
-                                            "vBucketServerMap":{"fake":"map"}}]""" })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200,
+                           'message': """[{"name":"a",
+                                           "bucketType":"not-membase-bucket-type",
+                                           "nodes":["fake-nodes-data"],
+                                           "nodeLocator":"vbucket",
+                                           "vBucketServerMap":{"fake":"map"}},
+                                          {"name":"b",
+                                           "bucketType":"membase",
+                                           "nodes":["fake-nodes-data"],
+                                           "nodeLocator":"vbucket",
+                                           "vBucketServerMap":{"fake":"map"}}]"""}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/b/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
@@ -788,9 +804,17 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
 
     def test_close_at_auth(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes() }),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_close_at_auth)
         w.start()
@@ -810,9 +834,17 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
 
     def test_rejected_auth(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_rejected_auth)
         w.start()
@@ -834,9 +866,17 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
 
     def test_close_after_auth(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_close_after_auth)
         w.start()
@@ -860,9 +900,17 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
 
     def test_close_after_TAP_connect(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_close_after_TAP_connect)
         w.start()
@@ -894,9 +942,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_1_mutation(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_1_mutation)
         w.start()
@@ -947,9 +1003,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_2_mutation(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_2_mutation)
         w.start()
@@ -1012,9 +1076,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_key_filter_some(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_2_mutation)
         w.start()
@@ -1033,9 +1105,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_key_filter_everything(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_2_mutation)
         w.start()
@@ -1049,9 +1129,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_2_mutation_chopped_header(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         self.chop_at = 16 # Header length is 24 bytes.
         w = Worker(target=self.worker_2_chopped)
@@ -1071,9 +1159,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_2_mutation_chopped_body(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         self.chop_at = 26 # Header length is 24 bytes.
         w = Worker(target=self.worker_2_chopped)
@@ -1120,9 +1216,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_delete(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_delete)
         w.start()
@@ -1190,9 +1294,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_delete_ack(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_delete_ack)
         w.start()
@@ -1252,9 +1364,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_noop(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_noop)
         w.start()
@@ -1332,9 +1452,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_tap_cmd_opaque(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_tap_cmd_opaque)
         w.start()
@@ -1426,9 +1554,17 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def test_flush_all(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         w = Worker(target=self.worker_flush_all)
         w.start()
@@ -1525,10 +1661,18 @@ class RestoreTestHelper:
         self.assertTrue(len(list_mms) <= len(msgs_per_node))
 
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200,
-                            'message': json })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200,
+                           'message': json}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         workers = []
         for idx, msgs in enumerate(msgs_per_node):
@@ -1616,9 +1760,17 @@ class RestoreTestHelper:
 
         mrs.reset(self,
                   rest_msgs or
-                  [({ 'command': 'GET',
-                      'path': '/pools/default/buckets'},
-                    { 'code': 200, 'message': json })])
+                  [({'command': 'GET',
+                     'path': '/pools/default/buckets'},
+                    {'code': 200, 'message': json}),
+                   ({'command': 'GET',
+                     'path': '/pools/default/buckets/default/stats/curr_items'},
+                    {'code': 200,
+                     'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                   ({'command': 'GET',
+                     'path': '/pools/default/buckets/default/stats/curr_items'},
+                    {'code': 200,
+                     'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
         mms0.reset()
         mms1.reset()
 
@@ -2285,9 +2437,17 @@ class TestBackupDryRun(MCTestHelper, BackupTestHelper):
 
     def test_dry_run(self):
         d = tempfile.mkdtemp()
-        mrs.reset(self, [({ 'command': 'GET',
-                            'path': '/pools/default/buckets'},
-                          { 'code': 200, 'message': self.json_2_nodes() })])
+        mrs.reset(self, [({'command': 'GET',
+                           'path': '/pools/default/buckets'},
+                          {'code': 200, 'message': self.json_2_nodes()}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                          {'code': 200,
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
                                           "--dry-run"])
@@ -2445,6 +2605,10 @@ SAMPLE_JSON_pools_default_buckets = """
    "quota":{"ram":629145600,"rawRAM":314572800},
    "basicStats":{"quotaPercentUsed":8.601765950520834,"opsPerSec":0,"diskFetches":0,
                  "itemCount":0,"diskUsed":5117960,"memUsed":54117632}}]
+"""
+
+SAMPLE_JSON_pools_default_buckets_default_stats_curr_items = """
+{"samplesCount":60,"isPersistent":true,"lastTStamp":1341861910910.0,"interval":1000,"timestamp":[1341861852910.0,1341861853910.0,1341861854910.0,1341861855910.0,1341861856910.0,1341861857910.0,1341861858910.0,1341861859909.0,1341861860910.0,1341861861909.0,1341861862910.0,1341861863910.0,1341861864910.0,1341861865910.0,1341861866910.0,1341861867909.0,1341861868910.0,1341861869910.0,1341861870909.0,1341861871910.0,1341861872910.0,1341861873910.0,1341861874910.0,1341861875909.0,1341861876910.0,1341861877909.0,1341861878910.0,1341861879910.0,1341861880910.0,1341861881909.0,1341861882910.0,1341861883909.0,1341861884910.0,1341861885909.0,1341861886909.0,1341861887910.0,1341861888910.0,1341861889909.0,1341861890909.0,1341861891909.0,1341861892910.0,1341861893910.0,1341861894910.0,1341861895910.0,1341861896910.0,1341861897909.0,1341861898910.0,1341861899910.0,1341861900910.0,1341861901909.0,1341861902910.0,1341861903910.0,1341861904910.0,1341861905910.0,1341861906910.0,1341861907909.0,1341861908910.0,1341861909910.0,1341861910910.0],"nodeStats":{"10.3.121.192:8091":[24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954],"10.3.121.194:8091":[25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428]}}
 """
 
 class MockStdOut:
