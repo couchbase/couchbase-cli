@@ -16,7 +16,7 @@ import memcacheConstants
 
 from pump import Source, Sink, Batch, SinkBatchFuture
 
-CBB_VERSION = 2002 # sqlite pragma user version.
+CBB_VERSION = 2003 # sqlite pragma user version.
 
 class BFD:
     """Mixin for backup-file/directory EndPoint helper methods."""
@@ -127,7 +127,7 @@ class BFDSource(BFD, Source):
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
 
-        s = "SELECT cmd, vbucket_id, key, flg, exp, cas, meta, val FROM cbb_cmd"
+        s = "SELECT cmd, vbucket_id, key, flg, exp, cas, meta, val FROM cbb_msg"
 
         if self.files is None: # None != [], as self.files will shrink to [].
             g = glob.glob(BFD.db_dir(self.spec,
@@ -195,7 +195,7 @@ class BFDSource(BFD, Source):
 
             cur = db.cursor()
             # TODO: (1) BFDSource - COUNT(*) is not indexed.
-            cur.execute("SELECT COUNT(*) FROM cbb_cmd;")
+            cur.execute("SELECT COUNT(*) FROM cbb_msg;")
             t = t + cur.fetchone()[0]
             cur.close()
             db.close()
@@ -217,7 +217,7 @@ class BFDSink(BFD, Sink):
     @staticmethod
     def run(self):
         """Worker thread to asynchronously store incoming batches into db."""
-        s = "INSERT INTO cbb_cmd (cmd, vbucket_id, key, flg, exp, cas, meta, val)" \
+        s = "INSERT INTO cbb_msg (cmd, vbucket_id, key, flg, exp, cas, meta, val)" \
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         db = None
         cbb = 0       # Current cbb file NUM, like data-NUM.cbb.
@@ -398,7 +398,7 @@ def create_db(db_path, opts):
 
         db.executescript("""
                   BEGIN;
-                  CREATE TABLE cbb_cmd
+                  CREATE TABLE cbb_msg
                      (cmd integer,
                       vbucket_id integer,
                       key blob, flg integer, exp integer, cas integer,
