@@ -11,7 +11,7 @@ import sys
 
 import memcacheConstants
 
-from pump import Source, Batch
+from pump import EndPoint, Source, Batch
 
 MBF_VERSION = 2 # sqlite pragma user version for Couchbase 1.8.
 
@@ -25,7 +25,7 @@ class MBFSource(Source):
         self.cursor_todo = None
         self.cursor_done = False
 
-        self.s = """SELECT vbid, k, flags, exptime, v
+        self.s = """SELECT vbid, k, flags, exptime, cas, v
                       FROM `{{0}}`.`{{1}}` as kv,
                            `{0}`.vbucket_states as vb
                      WHERE kv.vbucket = vb.vbid
@@ -40,7 +40,7 @@ class MBFSource(Source):
     def check_base(opts, spec):
         # Skip immediate superclass Source.check_base(),
         # since MBFSource can handle different vbucket states.
-        return pump.EndPoint.check_base(opts, spec)
+        return EndPoint.check_base(opts, spec)
 
     @staticmethod
     def check(opts, spec):
@@ -76,12 +76,11 @@ class MBFSource(Source):
                         'state': state,
                         'checkpoint_id': row[3]
                         }
+            except sqlite3.DatabaseError as e:
+                pass # A missing vbucket_states table is expected.
+            finally:
                 cur.close()
                 db.close()
-            except sqlite3.DatabaseError as e:
-                return ("error: could not access vbucket_states" +
-                        " on db_file: %s; exception: %s") % \
-                        (db_file, e), None
 
         return 0, {'spec': spec,
                    'buckets':
@@ -206,13 +205,16 @@ class MBFSource(Source):
                     key = row[1]
                     flg = row[2]
                     exp = row[3]
-                    val = row[4]
+                    cas = row[4]
+                    val = row[5]
 
                     if self.skip(key, vbucket_id):
                         continue
 
+                    meta = ''
+
                     batch.append((memcacheConstants.CMD_TAP_MUTATION,
-                                  vbucket_id, key, flg, exp, 0, val), len(val))
+                                  vbucket_id, key, flg, exp, cas, meta, val), len(val))
                 else:
                     cursor.close()
                     self.cursor_todo = (db, sql, db_kv_names, None)
