@@ -16,7 +16,7 @@ import memcacheConstants
 
 from pump import Source, Sink, Batch, SinkBatchFuture
 
-CBB_VERSION = 2001 # sqlite pragma user version.
+CBB_VERSION = 2002 # sqlite pragma user version.
 
 class BFD:
     """Mixin for backup-file/directory EndPoint helper methods."""
@@ -127,7 +127,7 @@ class BFDSource(BFD, Source):
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
 
-        s = "SELECT cmd, vbucket_id, key, flg, exp, cas, val FROM cbb_cmd"
+        s = "SELECT cmd, vbucket_id, key, flg, exp, cas, meta, val FROM cbb_cmd"
 
         if self.files is None: # None != [], as self.files will shrink to [].
             g = glob.glob(BFD.db_dir(self.spec,
@@ -159,7 +159,7 @@ class BFDSource(BFD, Source):
                 if row:
                     vbucket_id = row[1]
                     key = row[2]
-                    val = row[6]
+                    val = row[7]
 
                     if self.skip(key, vbucket_id):
                         continue
@@ -217,8 +217,8 @@ class BFDSink(BFD, Sink):
     @staticmethod
     def run(self):
         """Worker thread to asynchronously store incoming batches into db."""
-        s = "INSERT INTO cbb_cmd (cmd, vbucket_id, key, flg, exp, cas, val)" \
-            " VALUES (?, ?, ?, ?, ?, ?, ?)"
+        s = "INSERT INTO cbb_cmd (cmd, vbucket_id, key, flg, exp, cas, meta, val)" \
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         db = None
         cbb = 0       # Current cbb file NUM, like data-NUM.cbb.
         cbb_bytes = 0 # Current cbb msg value bytes total.
@@ -245,7 +245,7 @@ class BFDSink(BFD, Sink):
                 c = db.cursor()
 
                 for i in range(0, batch.size()):
-                    cmd, vbucket_id, key, flg, exp, cas, val = \
+                    cmd, vbucket_id, key, flg, exp, cas, meta, val = \
                         batch.msg(i)
 
                     if self.skip(key, vbucket_id):
@@ -259,7 +259,7 @@ class BFDSink(BFD, Sink):
 
                     c.execute(s, (cmd, vbucket_id,
                                   sqlite3.Binary(key),
-                                  flg, exp, cas,
+                                  flg, exp, cas, meta,
                                   sqlite3.Binary(val)))
                     cbb_bytes += len(val)
 
@@ -402,7 +402,7 @@ def create_db(db_path, opts):
                      (cmd integer,
                       vbucket_id integer,
                       key blob, flg integer, exp integer, cas integer,
-                      val blob);
+                      meta blob, val blob);
                   CREATE TABLE cbb_meta
                      (key text,
                       val blob);

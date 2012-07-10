@@ -134,8 +134,10 @@ class TAPDumpSource(pump.Source):
                                         vbucket_id))
                         return rv, batch
 
+                    meta = ''
+
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, val)
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                 elif cmd == memcacheConstants.CMD_TAP_OPAQUE:

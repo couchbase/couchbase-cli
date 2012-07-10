@@ -596,12 +596,12 @@ class Batch(object):
         """Returns dict of vbucket_id->[msgs] grouped by msg's vbucket_id."""
         g = collections.defaultdict(list)
         for msg in self.msgs:
-            cmd, vbucket_id, key, flg, exp, cas, val = msg
+            cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
             if vbucket_id == 0x0000ffff:
                 # Special case when the source did not supply a vbucket_id
                 # (such as stdin source), so we calculate it.
                 vbucket_id = (zlib.crc32(key) >> 16) & (vbuckets_num - 1)
-                msg = (cmd, vbucket_id, key, flg, exp, cas, val)
+                msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
             g[vbucket_id].append(msg)
         return g
 
@@ -676,7 +676,6 @@ class StdInSource(Source):
                 flg = int(parts[2])
                 exp = int(parts[3])
                 num = int(parts[4])
-                cas = 0
                 if num > 0:
                     val = self.f.read(num)
                     if len(val) != num:
@@ -688,7 +687,7 @@ class StdInSource(Source):
                     return "error: value end read failed at: " + line, None
 
                 if not self.skip(key, vbucket_id):
-                    msg = (cmd, vbucket_id, key, flg, exp, cas, val)
+                    msg = (cmd, vbucket_id, key, flg, exp, 0, '', val)
                     batch.append(msg, len(val))
             elif parts[0] == 'delete':
                 if len(parts) != 2:
@@ -696,7 +695,7 @@ class StdInSource(Source):
                 cmd = memcacheConstants.CMD_TAP_DELETE
                 key = parts[1]
                 if not self.skip(key, vbucket_id):
-                    msg = (cmd, vbucket_id, key, 0, 0, 0, '')
+                    msg = (cmd, vbucket_id, key, 0, 0, 0, '', '')
                     batch.append(msg, 0)
             else:
                 return "error: expected set/add/delete but got: " + line, None
@@ -768,7 +767,7 @@ class StdOutSink(Sink):
             if msg_visitor:
                 msg = msg_visitor(msg)
 
-            cmd, vbucket_id, key, flg, exp, cas, val = msg
+            cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
             if self.skip(key, vbucket_id):
                 continue
 

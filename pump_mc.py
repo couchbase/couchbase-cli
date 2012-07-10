@@ -103,7 +103,7 @@ class MCSink(pump.Sink):
         m = []
 
         for i, msg in enumerate(msgs):
-            cmd, vbucket_id_msg, key, flg, exp, cas, val = msg
+            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 
@@ -121,7 +121,7 @@ class MCSink(pump.Sink):
 
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
-                                       exp, self.translate_cas(cas), i)
+                                       exp, self.translate_cas(cas), meta, i)
             if rv != 0:
                 return rv
 
@@ -136,7 +136,7 @@ class MCSink(pump.Sink):
         retry = False
 
         for i, msg in enumerate(msgs):
-            cmd, vbucket_id_msg, key, flg, exp, cas, val = msg
+            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 
@@ -265,7 +265,7 @@ class MCSink(pump.Sink):
                     (host, port, user), None
         return 0, mc
 
-    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, opaque):
+    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque):
         if (cmd == memcacheConstants.CMD_SET or
             cmd == memcacheConstants.CMD_ADD):
             ext = struct.pack(memcacheConstants.SET_PKT_FMT, flg, exp)

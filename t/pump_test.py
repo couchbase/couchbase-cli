@@ -660,9 +660,9 @@ class BackupTestHelper(unittest.TestCase):
                 expected_msg = expected_msgs[idx]
                 self.assertTrue(expected_msg)
 
-                ecmd, evbucket_id, ekey, eflg, eexp, ecas, eval = \
+                ecmd, evbucket_id, ekey, eflg, eexp, ecas, emeta, eval = \
                     expected_msg
-                acmd, avbucket_id, akey, aflg, aexp, acas, aval = \
+                acmd, avbucket_id, akey, aflg, aexp, acas, ameta, aval = \
                     actual_msg
 
                 self.assertEqual(ecmd, acmd)
@@ -671,6 +671,7 @@ class BackupTestHelper(unittest.TestCase):
                 self.assertEqual(eflg, aflg)
                 self.assertEqual(eexp, aexp)
                 self.assertEqual(ecas, acas)
+                self.assertEqual(emeta, ameta)
                 self.assertEqual(str(eval), str(aval))
 
             self.assertEqual(len(expected_msgs), len(mock_stdout.msgs))
@@ -1029,10 +1030,10 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                     "set b 0 4293844224 1\r\nB\r\n"
                                     "set a 4275878401 0 1\r\nA\r\n"
                                     "set b 0 4293844224 1\r\nB\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A'),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, 'B'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A'),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, 'B')])
+                                    [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A'),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, '', 'B'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A'),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, '', 'B')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1098,8 +1099,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.expect_backup_contents(d,
                                     "set a 4275878401 0 1\r\nA\r\n"
                                     "set a 4275878401 0 1\r\nA\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, 'A')])
+                                    [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1185,7 +1186,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         # We can't depend on deterministic backup when messages are chopped.
         # self.expect_backup_contents(d,
         #                             "set a 0 0 1\r\nA\r\n",
-        #                             [(CMD_TAP_MUTATION, 123, 'a', 0, 0, 321, 'A')])
+        #                             [(CMD_TAP_MUTATION, 123, 'a', 0, 0, 321, '', 'A')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1241,12 +1242,12 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 1\r\nB\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B')])
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', 'B'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', 'B')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1317,10 +1318,10 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                     "delete a\r\n"
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '')])
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', '')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1389,12 +1390,12 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 1\r\nB\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, 'B')])
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', 'B'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', 'B')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1477,12 +1478,12 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 0\r\n\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, ''),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '')])
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', ''),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
+                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
+                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', '')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1575,8 +1576,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.expect_backup_contents(d,
                                     "set a 40302010 0 1\r\nA\r\n"
                                     "set a 40302010 0 1\r\nA\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, 'A')])
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
+                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1639,10 +1640,10 @@ class RestoreTestHelper:
         if not msgs_per_node:
             msgs_per_node = [
                 # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-                [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 1000, 8000),
-                 (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 1001, 8001)],
-                [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 9900, 8800),
-                 (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 9901, 8801)]
+                [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 1000, 8000, ''),
+                 (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 1001, 8001, '')],
+                [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 9900, 8800, ''),
+                 (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 9901, 8801, '')]
                 ]
             # 0xf1000000 == 4043309056
             # 0xfe000000 == 4261412864
@@ -1699,8 +1700,8 @@ class RestoreTestHelper:
         arr = []
 
         for msg in flattened:
-            cmd_tap, vbucket_id, key, val, flg, exp, cas = msg
-            arr.append((cmd_tap, vbucket_id, key, val, flg, exp, 0))
+            cmd_tap, vbucket_id, key, val, flg, exp, cas, meta = msg
+            arr.append((cmd_tap, vbucket_id, key, val, flg, exp, 0, meta))
 
         return arr
 
@@ -1718,7 +1719,7 @@ class RestoreTestHelper:
             self.check_tap_connect(req)
 
         for i, msg in enumerate(msgs):
-            cmd_tap, vbucket_id, key, val, flg, exp, cas = msg
+            cmd_tap, vbucket_id, key, val, flg, exp, cas, meta = msg
             if cmd_tap == CMD_TAP_MUTATION:
                 ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
                                   0, memcacheConstants.TAP_FLAG_ACK, 0, flg, exp)
@@ -1808,7 +1809,8 @@ class RestoreTestHelper:
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            msg = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            meta = ''
+            msg = (cmd_tap, vbucket_id, key, val, flg, exp, cas, meta)
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
@@ -1928,10 +1930,10 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
     def test_restore_big_expirations_and_CAS(self):
         msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff)],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff),
-             (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff)]
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff, '')],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff, ''),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, '')]
             ]
 
         source_msgs = self.check_restore(msgs_per_node)
@@ -1941,14 +1943,14 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
     def test_restore_deletes(self):
         msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff),
-             (CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff)
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff, ''),
+             (CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff, '')
              ],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff),
-             (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff),
-             (CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff),
-             (CMD_TAP_MUTATION, 901, 'y', 'Y-back', 123, 456, 40000 * 0xffffffff)
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff, ''),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, ''),
+             (CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff, ''),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y-back', 123, 456, 40000 * 0xffffffff, '')
              ]
             ]
 
@@ -1975,8 +1977,8 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_MUTATION, 1, kb, vb, 0, 0, 0)],
-            [(CMD_TAP_MUTATION, 900, kx, vx, 0, 0, 1)]
+            [(CMD_TAP_MUTATION, 1, kb, vb, 0, 0, 0, '')],
+            [(CMD_TAP_MUTATION, 900, kx, vx, 0, 0, 1, '')]
             ]
 
         source_msgs = self.check_restore(msgs_per_node,
@@ -2007,10 +2009,10 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
 
         self.msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000)],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000),
-             (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000)]
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, '')],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
             ]
 
     def handle_mc_req(self, client, req, bucket, bucket_password):
@@ -2106,10 +2108,10 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         self.msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000)],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000),
-             (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000)]
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, '')],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
             ]
 
     def handle_mc_req(self, client, req, bucket, bucket_password):
@@ -2204,10 +2206,10 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
     def test_rejected_auth(self):
         self.msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000)],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000),
-             (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000)]
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, '')],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
+             (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
             ]
 
         d, orig_msgs, orig_msgs_flattened = \
@@ -2277,8 +2279,8 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff)],
-            [(CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff)]
+            [(CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff, '')],
+            [(CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff, '')]
             ]
 
         source_msgs = self.check_restore(msgs_per_node,
@@ -2318,7 +2320,8 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            msg = (cmd_tap, vbucket_id, key, val, flg, exp, cas)
+            meta = ''
+            msg = (cmd_tap, vbucket_id, key, val, flg, exp, cas, meta)
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 

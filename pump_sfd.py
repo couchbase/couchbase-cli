@@ -21,6 +21,7 @@ import pump
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024
 SFD_REV_META = ">QII" # cas, exp, flg
+SFD_REV_SEQ = ">Q"
 SFD_RE = "^([0-9]+)\\.couch\\.([0-9]+)$"
 
 # TODO: (1) SFDSource - total_msgs.
@@ -213,8 +214,9 @@ class SFDSource(pump.Source):
                     cmd = memcacheConstants.CMD_TAP_MUTATION
 
                 cas, exp, flg = struct.unpack(SFD_REV_META, doc_info.revMeta)
+                meta = struct.pack(SFD_REV_SEQ, doc_info.revSequence)
                 val = doc_info.getContents()
-                msg = (cmd, vbucket_id, key, flg, exp, cas, val)
+                msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
                 abatch[0].append(msg, len(val))
 
             if (abatch[0].size() >= batch_max_size or
@@ -276,12 +278,13 @@ class SFDSink(pump.Sink):
                 bulk_vals = []
 
                 for i, msg in enumerate(msgs):
-                    cmd, _vbucket_id, key, flg, exp, cas, val = msg
+                    cmd, _vbucket_id, key, flg, exp, cas, meta, val = msg
                     if self.skip(key, vbucket_id):
                         continue
 
                     d = couchstore.DocumentInfo(str(key))
                     d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg))
+                    d.revSequence = struct.unpack(SFD_REV_SEQ, meta)
 
                     if cmd == memcacheConstants.CMD_TAP_MUTATION:
                         v = str(val)
