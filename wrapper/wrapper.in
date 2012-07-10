@@ -9,4 +9,12 @@ else
    PYTHONPATH=$root:${PYTHONPATH}
 fi
 export PYTHONPATH
+
+if test -z "${LD_LIBRARY_PATH}"; then
+   LD_LIBRARY_PATH=@prefix@/lib
+else
+   LD_LIBRARY_PATH=@prefix@/lib:${LD_LIBRARY_PATH}
+fi
+export LD_LIBRARY_PATH
+
 exec $root/`basename $0` "$@"
