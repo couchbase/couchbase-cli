@@ -46,18 +46,18 @@ class ProgressReporter(object):
         c, p = self.cur, self.prev
         x = sorted([k for k in c.iterkeys() if "_sink_" in k])
 
-        width_k = max([10] + [len(k) for k in x])
+        width_k = max([5] + [len(k.replace("tot_sink_", "")) for k in x])
         width_v = max([20] + [len(str(c[k])) for k in x])
         width_d = max([10] + [len(str(c[k] - p[k])) for k in x])
         width_s = max([10] + [len("%0.1f" % ((c[k] - p[k]) / delta)) for k in x])
         emit(prefix + " %s : %s | %s | %s"
-             % (string.ljust("counter", width_k),
+             % (string.ljust("", width_k),
                 string.rjust("total", width_v),
                 string.rjust("last", width_d),
                 string.rjust("per sec", width_s)))
         for k in x:
             emit(prefix + " %s : %s | %s | %s"
-                 % (string.ljust(k, width_k),
+                 % (string.ljust(k.replace("tot_sink_", ""), width_k),
                     string.rjust(str(c[k]), width_v),
                     string.rjust(str(c[k] - p[k]), width_d),
                     string.rjust("%0.1f" % ((c[k] - p[k]) / delta), width_s)))
