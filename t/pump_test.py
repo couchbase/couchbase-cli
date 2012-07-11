@@ -671,7 +671,7 @@ class BackupTestHelper(unittest.TestCase):
                 self.assertEqual(eflg, aflg)
                 self.assertEqual(eexp, aexp)
                 self.assertEqual(ecas, acas)
-                self.assertEqual(emeta, ameta)
+                self.assertEqual(str(emeta), str(ameta))
                 self.assertEqual(str(eval), str(aval))
 
             self.assertEqual(len(expected_msgs), len(mock_stdout.msgs))

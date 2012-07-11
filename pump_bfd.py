@@ -259,7 +259,8 @@ class BFDSink(BFD, Sink):
 
                     c.execute(s, (cmd, vbucket_id,
                                   sqlite3.Binary(key),
-                                  flg, exp, cas, meta,
+                                  flg, exp, cas,
+                                  sqlite3.Binary(meta),
                                   sqlite3.Binary(val)))
                     cbb_bytes += len(val)
 
