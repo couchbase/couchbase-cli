@@ -242,7 +242,7 @@ class TAPDumpSource(pump.Source):
             need_ack = flags & memcacheConstants.TAP_FLAG_ACK
 
             meta_start = extlen
-            key_start = extlen + metalen
+            key_start = meta_start + metalen
             val_start = key_start + keylen
 
             meta = data[meta_start:key_start]
