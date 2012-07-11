@@ -51,10 +51,6 @@ class CBSink(pump_mc.MCSink):
 
         return 0, retry_batch
 
-    def translate_cas(self, cas):
-        # TODO: (1) CBSink - use cas with SET-WITH-META.
-        return 0
-
     @staticmethod
     def can_handle(opts, spec):
         return (spec.startswith("http://") or

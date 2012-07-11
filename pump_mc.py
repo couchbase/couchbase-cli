@@ -11,6 +11,20 @@ import mc_bin_client
 import memcacheConstants
 import pump
 
+OP_MAP = {
+    'get': memcacheConstants.CMD_GET,
+    'set': memcacheConstants.CMD_SET,
+    'add': memcacheConstants.CMD_ADD,
+    'delete': memcacheConstants.CMD_DELETE,
+    }
+
+OP_MAP_WITH_META = {
+    'get': memcacheConstants.CMD_GET,
+    'set': memcacheConstants.CMD_SET_WITH_META,
+    'add': memcacheConstants.CMD_ADD_WITH_META,
+    'delete': memcacheConstants.CMD_DELETE_WITH_META
+    }
+
 class MCSink(pump.Sink):
     """Dumb client sink using binary memcached protocol.
        Used when moxi or memcached is destination."""
@@ -19,6 +33,11 @@ class MCSink(pump.Sink):
                  source_map, sink_map, ctl, cur):
         super(MCSink, self).__init__(opts, spec, source_bucket, source_node,
                                      source_map, sink_map, ctl, cur)
+
+        self.op_map = OP_MAP
+        if opts.extra.get("try_xwm", 1):
+            self.op_map = OP_MAP_WITH_META
+
         self.init_worker(MCSink.run)
 
     def close(self):
@@ -110,7 +129,7 @@ class MCSink(pump.Sink):
             if self.skip(key, vbucket_id_msg):
                 continue
 
-            rv, cmd = self.translate_cmd(cmd, operation)
+            rv, cmd = self.translate_cmd(cmd, operation, meta)
             if rv != 0:
                 return rv
 
@@ -121,7 +140,7 @@ class MCSink(pump.Sink):
 
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
-                                       exp, self.translate_cas(cas), meta, i)
+                                       exp, cas, meta, i)
             if rv != 0:
                 return rv
 
@@ -172,6 +191,16 @@ class MCSink(pump.Sink):
                            % (vbucket_id_msg, key, self.spec,
                               conn.host, conn.port))
                     return msg, None
+                elif r_status == mmecacheConstants.ERR_UNKNOWN_COMMAND:
+                    if self.op_map == OP_MAP:
+                        if not retry:
+                            return "error: unknown command: %s" % (r_cmd), None
+                    else:
+                        if not retry:
+                            logging.warn("destination does not take XXX-WITH-META"
+                                         " commands; will use META-less commands")
+                        self.op_map = OP_MAP
+                        retry = True
                 else:
                     return "error: MCSink MC error: " + str(r_status), None
 
@@ -181,25 +210,23 @@ class MCSink(pump.Sink):
 
         return 0, retry
 
-    def translate_cmd(self, cmd, op):
+    def translate_cmd(self, cmd, op, meta):
+        if len(str(meta)) <= 0:
+            # The source gave no meta, so use regular commands.
+            self.op_map = OP_MAP
+
         if cmd == memcacheConstants.CMD_TAP_MUTATION:
-            if op == 'set':
-                return 0, memcacheConstants.CMD_SET
-            if op == 'add':
-                return 0, memcacheConstants.CMD_ADD
-            if op == 'get':
-                return 0, memcacheConstants.CMD_GET
+            m = self.op_map.get(op, None)
+            if m:
+                return 0, m
             return "error: MCSink.translate_cmd, unsupported op: " + op, None
 
         if cmd == memcacheConstants.CMD_TAP_DELETE:
             if op == 'get':
                 return 0, memcacheConstants.CMD_NOOP
-            return 0, memcacheConstants.CMD_DELETE
+            return 0, self.op_map['delete']
 
         return "error: MCSink - unknown cmd: %s, op: %s" % (cmd, op), None
-
-    def translate_cas(self, cas):
-        return 0 # Cannot force CAS using memcached SET/ADD commands.
 
     def append_req(self, m, req):
         hdr, ext, key, val = req
@@ -266,8 +293,12 @@ class MCSink(pump.Sink):
         return 0, mc
 
     def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque):
-        if (cmd == memcacheConstants.CMD_SET or
-            cmd == memcacheConstants.CMD_ADD):
+        if (cmd == memcacheConstants.CMD_SET_WITH_META or
+            cmd == memcacheConstants.CMD_ADD_WITH_META or
+            cmd == memcacheConstants.CMD_DELETE_WITH_META):
+            ext = struct.pack(">IIQ", flg, exp, cas) + str(meta)
+        elif (cmd == memcacheConstants.CMD_SET or
+              cmd == memcacheConstants.CMD_ADD):
             ext = struct.pack(memcacheConstants.SET_PKT_FMT, flg, exp)
         elif (cmd == memcacheConstants.CMD_DELETE or
               cmd == memcacheConstants.CMD_GET or
@@ -276,7 +307,7 @@ class MCSink(pump.Sink):
         else:
             return "error: MCSink - unknown cmd for request: " + str(cmd), None
 
-        hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, cas, opaque)
+        hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque)
         return 0, (hdr, ext, key, val)
 
     def cmd_header(self, cmd, vbucket_id, key, val, ext, cas, opaque,

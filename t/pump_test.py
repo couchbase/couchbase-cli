@@ -1695,10 +1695,7 @@ class RestoreTestHelper:
     def flatten_msgs_per_node(self, msgs_per_node):
         flattened = sum(msgs_per_node, [])
 
-        # Zero out the CAS value, since we currently use SET/ADD.
-        # TODO: (1) revisit CAS once we use SET_WITH_META/ADD_WITH_META.
         arr = []
-
         for msg in flattened:
             cmd_tap, vbucket_id, key, val, flg, exp, cas, meta = msg
             arr.append((cmd_tap, vbucket_id, key, val, flg, exp, 0, meta))
