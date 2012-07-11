@@ -117,37 +117,20 @@ class TAPDumpSource(pump.Source):
                    batch.bytes < batch_max_bytes):
                 # TODO: (1) TAPDumpSource - provide_batch timeout on inactivity.
 
-                need_ack = False
-
-                cmd, opaque, cas, vbucket_id, key, ext, val = \
-                    self.read_tap_conn(tap_conn)
+                rv, cmd, vbucket_id, key, flg, exp, cas, meta, val, \
+                    opaque, need_ack = self.read_tap_conn(tap_conn)
+                if rv != 0:
+                    self.tap_done = True
+                    return rv, batch
 
                 if (cmd == memcacheConstants.CMD_TAP_MUTATION or
                     cmd == memcacheConstants.CMD_TAP_DELETE):
-                    rv, eng_length, flags, ttl, flg, exp, need_ack = \
-                        self.parse_tap_ext(ext)
-                    if rv != 0:
-                        logging.warn("warning: partial TAP message received;"
-                                     " perhaps some msg(s) not transferred;"
-                                     " key: %s, cmd %s, vbucket_id %s"
-                                     % (key, pump.CMD_STR.get(cmd, cmd),
-                                        vbucket_id))
-                        return rv, batch
-
-                    meta = ''
-
                     if not self.skip(key, vbucket_id):
                         msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                 elif cmd == memcacheConstants.CMD_TAP_OPAQUE:
-                    if len(ext) > 0:
-                        rv, eng_length, flags, ttl, flg, exp, need_ack = \
-                            self.parse_tap_ext(ext)
-                        if rv != 0:
-                            logging.warn("warning: partial TAP_OPAQUE;"
-                                         " perhaps some msg(s) missed")
-                            return rv, batch
+                    pass
                 elif cmd == memcacheConstants.CMD_NOOP:
                     # 1.8.x servers might not end the TAP dump on an empty bucket,
                     # so we treat 2 NOOP's in a row as the end and proactively close.
@@ -238,29 +221,37 @@ class TAPDumpSource(pump.Source):
         return 0, self.tap_conn
 
     def read_tap_conn(self, tap_conn):
-        buf, cmd, vbucket_id, opaque, cas, keylen, extlen, data = \
+        buf, cmd, vbucket_id, opaque, cas, keylen, extlen, data, datalen = \
             self.recv_msg(tap_conn.s, getattr(tap_conn, 'buf', ''))
         tap_conn.buf = buf
 
-        ext = ''
-        key = ''
-        val = ''
-        if data:
-            eng_length = 0
+        rv = 0
+        metalen = flags = ttl = flg = exp = 0
+        meta = key = val = ext = ''
+        need_ack = False
 
+        if data:
             ext = data[0:extlen]
             if extlen == 8:
-                eng_length, _flags, _ttl = \
+                metalen, flags, ttl = \
                     struct.unpack(memcacheConstants.TAP_GENERAL_PKT_FMT, ext)
             elif extlen == 16:
-                eng_length, _flags, _ttl, _flg, _exp = \
+                metalen, flags, ttl, flg, exp = \
                     struct.unpack(memcacheConstants.TAP_MUTATION_PKT_FMT, ext)
 
-            key_start = extlen + eng_length
-            key = data[key_start:key_start + keylen]
-            val = data[key_start + keylen:]
+            need_ack = flags & memcacheConstants.TAP_FLAG_ACK
 
-        return cmd, opaque, cas, vbucket_id, key, ext, val
+            meta_start = extlen
+            key_start = extlen + metalen
+            val_start = key_start + keylen
+
+            meta = data[meta_start:key_start]
+            key = data[key_start:val_start]
+            val = data[val_start:]
+        elif datalen:
+            rv = "error: could not read full TAP message body"
+
+        return rv, cmd, vbucket_id, key, flg, exp, cas, meta, val, opaque, need_ack
 
     def recv_msg(self, sock, buf):
         pkt, buf = self.recv(sock, memcacheConstants.MIN_RECV_PACKET, buf)
@@ -271,7 +262,7 @@ class TAPDumpSource(pump.Source):
         if magic != memcacheConstants.REQ_MAGIC_BYTE:
             raise Exception("unexpected recv_msg magic: " + str(magic))
         data, buf = self.recv(sock, datalen, buf)
-        return buf, cmd, errcode, opaque, cas, keylen, extlen, data
+        return buf, cmd, errcode, opaque, cas, keylen, extlen, data, datalen
 
     def recv(self, skt, nbytes, buf):
         recv_arr = [ buf ]
@@ -314,23 +305,6 @@ class TAPDumpSource(pump.Source):
                 val.append(opts[op])
 
         return struct.pack(">I", header), ''.join(val)
-
-    def parse_tap_ext(self, ext):
-        if len(ext) == 8:
-            flg = exp = 0
-            eng_length, flags, ttl = \
-                struct.unpack(memcacheConstants.TAP_GENERAL_PKT_FMT, ext)
-        elif len(ext) == 16:
-            eng_length, flags, ttl, flg, exp = \
-                struct.unpack(memcacheConstants.TAP_MUTATION_PKT_FMT, ext)
-        else:
-            return "error: unexpected TAP msg length: " + str(len(ext)) + \
-                "; message/connection was chopped off", \
-                0, 0, 0, 0, 0, False
-
-        need_ack = flags & memcacheConstants.TAP_FLAG_ACK
-
-        return 0, eng_length, flags, ttl, flg, exp, need_ack
 
     @staticmethod
     def total_msgs(opts, source_bucket, source_node, source_map):
