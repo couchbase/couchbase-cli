@@ -40,7 +40,8 @@ PYTHON_TOOLS= \
         wrapper/couchbase-cli \
         wrapper/cbbackup \
         wrapper/cbrestore \
-        wrapper/cbtransfer
+        wrapper/cbtransfer \
+        wrapper/cbclusterstats
 
 ${PYTHON_TOOLS}: wrapper/wrapper
 	cp $< $@
