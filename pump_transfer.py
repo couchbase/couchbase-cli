@@ -19,9 +19,6 @@ from pump import PumpingStation
 class Transfer:
     """Base class for 2.0 Backup/Restore/Transfer."""
 
-    # TODO: (2) upgrade 1.8 files to 2.0 server files.
-    # TODO: (2) convert backup files to server-file/directory format.
-
     def __init__(self):
         self.name = "cbtransfer"
         self.source_alias = "source"
