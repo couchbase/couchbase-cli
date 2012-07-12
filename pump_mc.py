@@ -310,7 +310,11 @@ class MCSink(pump.Sink):
         if (cmd == memcacheConstants.CMD_SET_WITH_META or
             cmd == memcacheConstants.CMD_ADD_WITH_META or
             cmd == memcacheConstants.CMD_DELETE_WITH_META):
-            ext = struct.pack(">IIQ", flg, exp, cas) + str(meta)
+            if meta:
+                ext = (struct.pack(">II", flg, exp) + str(meta) +
+                       struct.pack(">Q", cas))
+            else:
+                ext = struct.pack(">IIQQ", flg, exp, 0, cas)
         elif (cmd == memcacheConstants.CMD_SET or
               cmd == memcacheConstants.CMD_ADD):
             ext = struct.pack(memcacheConstants.SET_PKT_FMT, flg, exp)
