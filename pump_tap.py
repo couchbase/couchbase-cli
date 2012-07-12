@@ -190,20 +190,19 @@ class TAPDumpSource(pump.Source):
                 return "error: could not connect to memcached: " + \
                     host + ":" + str(port), None
 
-            if self.source_bucket.get("authType", None) == "sasl":
-                sasl_user = str(self.source_bucket.get("name",
-                                                       self.opts.username) or "")
-                sasl_pswd = str(self.source_bucket.get("saslPassword",
-                                                       self.opts.password) or "")
-                if sasl_user:
-                    try:
-                        self.tap_conn.sasl_auth_plain(sasl_user, sasl_pswd)
-                    except EOFError:
-                        return "error: SASL auth error: %s:%s, user: %s" % \
-                            (host, port, sasl_user), None
-                    except mc_bin_client.MemcachedError:
-                        return "error: SASL auth failed: %s:%s, user: %s" % \
-                            (host, port, sasl_user), None
+            sasl_user = str(self.source_bucket.get("name",
+                                                   self.opts.username) or "")
+            sasl_pswd = str(self.source_bucket.get("saslPassword",
+                                                   self.opts.password) or "")
+            if sasl_user:
+                try:
+                    self.tap_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                except EOFError:
+                    return "error: SASL auth error: %s:%s, user: %s" % \
+                        (host, port, sasl_user), None
+                except mc_bin_client.MemcachedError:
+                    return "error: SASL auth failed: %s:%s, user: %s" % \
+                        (host, port, sasl_user), None
 
             # We explicitly do not use TAP_FLAG_REGISTERED_CLIENT,
             # as that is for checkpoint/incremental backup only.
