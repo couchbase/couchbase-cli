@@ -905,9 +905,10 @@ def rest_couchbase(opts, spec):
 
     for bucket in rest_buckets:
         if not (bucket and
-                bucket['name'] and bucket['bucketType'] and
-                bucket['nodes'] and bucket['nodeLocator'] and
-                bucket['vBucketServerMap']):
+                bucket.get('name', None) and
+                bucket.get('bucketType', None) and
+                bucket.get('nodes', None) and
+                bucket.get('nodeLocator', None)):
             return "error: unexpected JSON value from: " + spec + \
                 " - did you provide the right source URL?", None
 
