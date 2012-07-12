@@ -284,7 +284,8 @@ class SFDSink(pump.Sink):
 
                     d = couchstore.DocumentInfo(str(key))
                     d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg))
-                    d.revSequence = struct.unpack(SFD_REV_SEQ, meta)
+                    if meta:
+                        d.revSequence = struct.unpack(SFD_REV_SEQ, meta)
 
                     if cmd == memcacheConstants.CMD_TAP_MUTATION:
                         v = str(val)
