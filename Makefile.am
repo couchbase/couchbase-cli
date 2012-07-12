@@ -20,6 +20,7 @@ nobase_pythonlib_DATA= \
          pump_cb.py \
          pump_mbf.py \
          pump_mc.py \
+         pump_sfd.py \
          pump_tap.py \
          pump_transfer.py \
          processor.py \
