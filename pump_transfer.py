@@ -154,7 +154,8 @@ class Transfer:
             "report":          (5,      "# batches before updating progress bar"),
             "report_full":     (2000,   "# batches before emitting progress info"),
             "recv_min_bytes":  (4096,   "amount of bytes for every recv() call"),
-            "try_xwm":         (1,      "1 to first try XXX-WITH-META commands")
+            "try_xwm":         (1,      "1 to first try XXX-WITH-META commands"),
+            "nmv_retry":       (1,      "1 to retry after NOT_MY_VBUCKET replies")
             }
 
     def find_handlers(self, opts, source, sink):

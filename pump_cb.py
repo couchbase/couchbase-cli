@@ -91,6 +91,13 @@ class CBSink(pump_mc.MCSink):
 
         return 0, sink_map
 
+    def refresh_sink_map(self):
+        """Grab a new vbucket-server-map."""
+        rv, new_sink_map = CBSink.check(self.opts, self.spec, self.source_map)
+        if rv == 0:
+            self.sink_map = new_sink_map
+        return rv
+
     @staticmethod
     def consume_config(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_config):

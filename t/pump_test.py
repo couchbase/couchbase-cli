@@ -2070,10 +2070,10 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
         for w in workers:
             w.start()
 
-        rv = pump_transfer.Restore().main(["cbrestore", d, mrs.url(),
-                                           "-t", str(threads),
-                                           "-x",
-                                           "batch_max_size=%s" % (batch_max_size)])
+        rv = pump_transfer.Restore().main([
+                "cbrestore", d, mrs.url(),
+                "-t", str(threads),
+                "-x", "nmv_retry=0,batch_max_size=%s" % (batch_max_size)])
         self.assertNotEqual(0, rv)
 
         for w in workers:

@@ -152,6 +152,7 @@ class MCSink(pump.Sink):
         return 0
 
     def recv_msgs(self, conn, msgs, vbucket_id=None):
+        refresh = False
         retry = False
 
         for i, msg in enumerate(msgs):
@@ -185,12 +186,19 @@ class MCSink(pump.Sink):
                     retry = True # Retry the whole batch again next time.
                     continue     # But, finish recv'ing current batch.
                 elif r_status == memcacheConstants.ERR_NOT_MY_VBUCKET:
-                    msg = ("error: NOT_MY_VBUCKET;"
-                           " perhaps the cluster was rebalancing;"
+                    msg = ("received NOT_MY_VBUCKET;"
+                           " perhaps the cluster is/was rebalancing;"
                            " vbucket_id: %s, key: %s, spec: %s, host:port: %s:%s"
                            % (vbucket_id_msg, key, self.spec,
                               conn.host, conn.port))
-                    return msg, None
+                    if self.opts.extra.get("nmv_retry", 1):
+                        logging.warn("warning: " + msg)
+                        refresh = True
+                        retry = True
+                        self.cur["tot_sink_not_my_vbucket"] = \
+                            self.cur.get("tot_sink_not_my_vbucket", 0) + 1
+                    else:
+                        return "error: " + msg, None
                 elif r_status == mmecacheConstants.ERR_UNKNOWN_COMMAND:
                     if self.op_map == OP_MAP:
                         if not retry:
@@ -207,6 +215,9 @@ class MCSink(pump.Sink):
             except Exception as e:
                 logging.error("MCSink exception: %s", e)
                 return "error: MCSink exception: " + str(e), None
+
+        if refresh:
+            self.refresh_sink_map()
 
         return 0, retry
 
@@ -252,6 +263,9 @@ class MCSink(pump.Sink):
             return rv, None
         conn.close()
         return 0, None
+
+    def refresh_sink_map(self):
+        return 0
 
     @staticmethod
     def consume_config(opts, sink_spec, sink_map,
