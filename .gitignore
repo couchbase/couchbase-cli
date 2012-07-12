@@ -20,4 +20,5 @@ tmp
 /wrapper/cbbackup
 /wrapper/cbrestore
 /wrapper/cbtransfer
+/wrapper/cbclusterstats
 /wrapper/membase
