@@ -312,9 +312,9 @@ class SFDSink(pump.Sink):
                         if vm:
                             vi = vm.get(vbucket_id, None)
                             if vi:
-                                c = vi.get("checkpoint_id", checkpoint_id)
+                                c = int(vi.get("checkpoint_id", checkpoint_id))
                                 checkpoint_id = max(checkpoint_id, c)
-                                m = vi.get("max_deleted_seqno", max_deleted_seqno)
+                                m = int(vi.get("max_deleted_seqno", max_deleted_seqno))
                                 max_deleted_seqno = max(max_deleted_seqno, m)
 
                         rv = self.save_vbucket_state(store, vbucket_id,
@@ -343,8 +343,8 @@ class SFDSink(pump.Sink):
     def save_vbucket_state(self, store, vbucket_id,
                            state, checkpoint_id, max_deleted_seqno):
         doc = json.dumps({'state': state,
-                          'checkpoint_id': checkpoint_id,
-                          'max_deleted_seqno': max_deleted_seqno})
+                          'checkpoint_id': str(checkpoint_id),
+                          'max_deleted_seqno': str(max_deleted_seqno)})
         try:
             store.localDocs['_local/vbstate'] = doc
         except Exception as e:
