@@ -199,7 +199,7 @@ class MCSink(pump.Sink):
                             self.cur.get("tot_sink_not_my_vbucket", 0) + 1
                     else:
                         return "error: " + msg, None
-                elif r_status == mmecacheConstants.ERR_UNKNOWN_COMMAND:
+                elif r_status == memcacheConstants.ERR_UNKNOWN_COMMAND:
                     if self.op_map == OP_MAP:
                         if not retry:
                             return "error: unknown command: %s" % (r_cmd), None
