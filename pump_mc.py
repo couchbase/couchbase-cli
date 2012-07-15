@@ -311,7 +311,10 @@ class MCSink(pump.Sink):
             cmd == memcacheConstants.CMD_ADD_WITH_META or
             cmd == memcacheConstants.CMD_DELETE_WITH_META):
             if meta:
-                ext = (struct.pack(">II", flg, exp) + str(meta) +
+                seq_no = str(meta)
+                if len(seq_no) > 8:
+                    seq_no = seq_no[0:8]
+                ext = (struct.pack(">II", flg, exp) + seq_no +
                        struct.pack(">Q", cas))
             else:
                 ext = struct.pack(">IIQQ", flg, exp, 0, cas)
