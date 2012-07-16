@@ -407,7 +407,7 @@ class SFDSink(pump.Sink):
             open_latest_store(bucket_dir,
                               "master.couch.*",
                               "^(master)\\.couch\\.([0-9]+)$",
-                              "master.couch.0")
+                              "master.couch.1")
         if rv != 0:
             return rv
 
@@ -444,7 +444,7 @@ class SFDSink(pump.Sink):
             return "error: vbucket_id too large: %s" % (vbucket_id), None, None
 
         return self.open_latest_store("%s.couch.*" % (vbucket_id), SFD_RE,
-                                      str(vbucket_id) + ".couch.0")
+                                      str(vbucket_id) + ".couch.1")
 
     def open_latest_store(self, glob_pattern, filter_re, default_name):
         rv, bucket_dir = self.find_bucket_dir()
