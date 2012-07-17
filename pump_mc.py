@@ -314,6 +314,9 @@ class MCSink(pump.Sink):
                 seq_no = str(meta)
                 if len(seq_no) > 8:
                     seq_no = seq_no[0:8]
+                if len(seq_no) < 8:
+                    # The seq_no might be 32-bits from 2.0DP4, so pad with 0x00's.
+                    seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + seq_no)[-8:]
                 ext = (struct.pack(">II", flg, exp) + seq_no +
                        struct.pack(">Q", cas))
             else:
