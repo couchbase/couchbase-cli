@@ -2,10 +2,8 @@
 
 import bson
 import os
-import Queue
 import simplejson as json
 import struct
-import threading
 
 import memcacheConstants
 import pump
