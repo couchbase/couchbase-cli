@@ -3,6 +3,7 @@
 import csv
 import os
 import simplejson as json
+import sys
 
 import memcacheConstants
 import pump
@@ -82,3 +83,63 @@ class CSVSource(pump.Source):
             return 0, None
         return 0, batch
 
+
+class CSVSink(pump.Sink):
+    """Emits batches to stdout in CSV format."""
+
+    def __init__(self, opts, spec, source_bucket, source_node,
+                 source_map, sink_map, ctl, cur):
+        super(CSVSink, self).__init__(opts, spec, source_bucket, source_node,
+                                      source_map, sink_map, ctl, cur)
+        self.writer = None
+
+    @staticmethod
+    def can_handle(opts, spec):
+        if spec == "csv:":
+            opts.threads = 1 # Force 1 thread to not overlap stdout.
+            return True
+        return False
+
+    @staticmethod
+    def check(opts, spec, source_map):
+        return 0, None
+
+    @staticmethod
+    def consume_config(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_config):
+        if source_config:
+            logging.warn("warning: cannot save bucket configuration"
+                         " on a CSV destination")
+        return 0
+
+    @staticmethod
+    def consume_design(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_design):
+        if source_design:
+            logging.warn("warning: cannot save bucket design"
+                         " on a CSV destination")
+        return 0
+
+    def consume_batch_async(self, batch):
+        if not self.writer:
+            self.writer = csv.writer(sys.stdout)
+            self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value'])
+
+        for msg in batch.msgs:
+            cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
+            if self.skip(key, vbucket_id):
+                continue
+
+            try:
+                if cmd == memcacheConstants.CMD_TAP_MUTATION:
+                    self.writer.writerow([key, flg, exp, cas, val])
+                elif cmd == memcacheConstants.CMD_TAP_DELETE:
+                    pass
+                else:
+                    return "error: CSVSink - unknown cmd: " + str(cmd), None
+            except IOError:
+                return "error: could not write csv to stdout", None
+
+        future = pump.SinkBatchFuture(self, batch)
+        self.future_done(future, 0)
+        return 0, future

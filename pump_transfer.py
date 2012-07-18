@@ -289,6 +289,7 @@ SOURCES = [pump_bfd.BFDSource,
 SINKS = [pump_bfd.BFDSink,
          pump_mc.MCSink,
          pump_cb.CBSink,
+         pump_csv.CSVSink,
          pump.StdOutSink]
 
 try:
