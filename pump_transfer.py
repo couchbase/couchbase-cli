@@ -293,7 +293,7 @@ try:
     import pump_sfd
     SOURCES.append(pump_sfd.SFDSource)
     SINKS.append(pump_sfd.SFDSink)
-except ImportError as e:
+except ImportError:
     print "warning: could not import couchstore module" + \
         "; accessing local couchstore files will not work"
 
