@@ -303,14 +303,21 @@ class TestPumpingStationFind(unittest.TestCase):
         self.find = pump.PumpingStation.find_handler
 
     def test_find_handlers(self):
+        extra_sources = 0
+        extra_sinks = 0
         try:
             import couchstore
-            import bson
-            self.assertEqual(6, len(pump_transfer.SOURCES))
-            self.assertTrue(5, len(pump_transfer.SINKS))
+            extra_sources = extra_sources + 1
+            extra_sinks = extra_sinks + 1
         except ImportError:
-            self.assertEqual(4, len(pump_transfer.SOURCES))
-            self.assertTrue(4, len(pump_transfer.SINKS))
+            pass
+        try:
+            import bson
+            extra_sources = extra_sources + 1
+        except ImportError:
+            pass
+        self.assertEqual(5 + extra_sources, len(pump_transfer.SOURCES))
+        self.assertTrue(5 + extra_sinks, len(pump_transfer.SINKS))
 
         self.assertEqual(pump_tap.TAPDumpSource,
                          self.find(None,
