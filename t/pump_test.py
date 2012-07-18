@@ -305,7 +305,8 @@ class TestPumpingStationFind(unittest.TestCase):
     def test_find_handlers(self):
         try:
             import couchstore
-            self.assertEqual(5, len(pump_transfer.SOURCES))
+            import bson
+            self.assertEqual(6, len(pump_transfer.SOURCES))
             self.assertTrue(5, len(pump_transfer.SINKS))
         except ImportError:
             self.assertEqual(4, len(pump_transfer.SOURCES))

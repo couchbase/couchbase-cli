@@ -297,6 +297,12 @@ except ImportError:
     print "warning: could not import couchstore module" + \
         "; accessing local couchstore files will not work"
 
+try:
+    import pump_bson
+    SOURCES.append(pump_bson.BSONSource)
+except ImportError:
+    pass
+
 
 # TODO: (1) pump_transfer - use QUIET commands
 # TODO: (1) pump_transfer - verify that nth replica got the msg
