@@ -43,7 +43,7 @@ class CSVSource(pump.Source):
 
         if not self.r:
             try:
-                self.r = csv.reader(open(self.spec, 'r'))
+                self.r = csv.reader(open(self.spec, 'rU'))
                 self.fields = self.r.next()
                 if not 'id' in self.fields:
                     return ("error: no 'id' field in 1st line of csv: %s" %
