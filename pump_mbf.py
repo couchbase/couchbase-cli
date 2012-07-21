@@ -122,10 +122,6 @@ class MBFSource(Source):
         return rv
 
     @staticmethod
-    def provide_config(opts, source_spec, source_bucket, source_map):
-        return 0, None
-
-    @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
         return 0, None
 

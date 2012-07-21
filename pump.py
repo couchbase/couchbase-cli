@@ -109,10 +109,6 @@ class PumpingStation(ProgressReporter):
                                     key=lambda b: b['name']):
             logging.info("bucket: " + source_bucket['name'])
 
-            rv = self.transfer_bucket_config(source_bucket, source_map, sink_map)
-            if rv != 0:
-                return rv
-
             rv = self.transfer_bucket_msgs(source_bucket, source_map, sink_map)
             if rv != 0:
                 return rv
@@ -177,18 +173,6 @@ class PumpingStation(ProgressReporter):
         logging.debug(" source_nodes: " + ",".join([n.get('hostname', NA)
                                                     for n in source_nodes]))
         return source_nodes
-
-    def transfer_bucket_config(self, source_bucket, source_map, sink_map):
-        """Transfer bucket configuration (e.g., memory quota)."""
-        rv, source_config = \
-            self.source_class.provide_config(self.opts, self.source_spec,
-                                             source_bucket, source_map)
-        if rv == 0:
-            rv = self.sink_class.consume_config(self.opts,
-                                                self.sink_spec, sink_map,
-                                                source_bucket, source_map,
-                                                source_config)
-        return rv
 
     def transfer_bucket_msgs(self, source_bucket, source_map, sink_map):
         source_nodes = self.filter_source_nodes(source_bucket, source_map)
@@ -458,10 +442,6 @@ class Source(EndPoint):
         assert False, "unimplemented"
 
     @staticmethod
-    def provide_config(opts, source_spec, source_bucket, source_map):
-        assert False, "unimplemented"
-
-    @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
         assert False, "unimplemented"
 
@@ -504,11 +484,6 @@ class Sink(EndPoint):
     @staticmethod
     def check(opts, spec, source_map):
         """Subclasses can check preconditions before any pumping starts."""
-        assert False, "unimplemented"
-
-    @staticmethod
-    def consume_config(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_config):
         assert False, "unimplemented"
 
     @staticmethod
@@ -642,10 +617,6 @@ class StdInSource(Source):
                                 'nodes': [{'hostname': 'N/A'}]}] }
 
     @staticmethod
-    def provide_config(opts, source_spec, source_bucket, source_map):
-        return 0, None
-
-    @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
         return 0, None
 
@@ -734,14 +705,6 @@ class StdOutSink(Sink):
         # Skip immediate superclass Sink.check_base(),
         # since StdOutSink can handle different destination operations.
         return EndPoint.check_base(opts, spec)
-
-    @staticmethod
-    def consume_config(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_config):
-        if source_config:
-            logging.warn("warning: cannot save bucket configuration"
-                         " on a stdout destination")
-        return 0
 
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,

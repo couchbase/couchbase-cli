@@ -30,10 +30,6 @@ class CSVSource(pump.Source):
                                 'nodes': [{'hostname': 'N/A'}]}]}
 
     @staticmethod
-    def provide_config(opts, source_spec, source_bucket, source_map):
-        return 0, None
-
-    @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
         return 0, None
 
@@ -103,14 +99,6 @@ class CSVSink(pump.Sink):
     @staticmethod
     def check(opts, spec, source_map):
         return 0, None
-
-    @staticmethod
-    def consume_config(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_config):
-        if source_config:
-            logging.warn("warning: cannot save bucket configuration"
-                         " on a CSV destination")
-        return 0
 
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,

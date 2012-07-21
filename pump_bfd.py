@@ -100,11 +100,6 @@ class BFDSource(BFD, Source):
                     'buckets': buckets }
 
     @staticmethod
-    def provide_config(opts, source_spec, source_bucket, source_map):
-        # TODO: (3) BFDSource - provide_config implementation.
-        return 0, None
-
-    @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
         fname = BFD.design_path(source_spec, source_bucket['name'])
         if os.path.exists(fname):
@@ -306,12 +301,6 @@ class BFDSink(BFD, Sink):
         if not os.access(parent_dir, os.W_OK):
             return "error: parent directory is not writable: " + parent_dir, None
         return 0, None
-
-    @staticmethod
-    def consume_config(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_config):
-        # TODO: (4) BFDSink - consume_config.
-        return 0
 
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,

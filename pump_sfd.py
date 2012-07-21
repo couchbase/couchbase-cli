@@ -101,11 +101,6 @@ class SFDSource(pump.Source):
         return "error: no vbucket_states in files: %s" % (bucket_dir), None
 
     @staticmethod
-    def provide_config(opts, source_spec, source_bucket, source_map):
-        # TODO: (3) SFDSource - provide_config implementation.
-        return 0, None
-
-    @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
         rv, d = data_dir(source_spec)
         if rv != 0:
@@ -377,12 +372,6 @@ class SFDSink(pump.Sink):
         if not os.access(dir, os.W_OK):
             return "error: directory is not writable: " + dir, None
         return 0, None
-
-    @staticmethod
-    def consume_config(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_config):
-        # TODO: (4) SFDSink - consume_config.
-        return 0
 
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,
