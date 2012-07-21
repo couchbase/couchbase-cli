@@ -1935,9 +1935,9 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
     def test_restore_big_expirations_and_CAS(self):
         msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff, ''),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff, '')],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff, ''),
+            [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 0xf6f2aeabb0ca78b4L, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 0xeeeeddddffffffffL, '')],
+            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 0xffffffffffffffff, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, '')]
             ]
 

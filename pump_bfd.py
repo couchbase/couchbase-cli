@@ -16,7 +16,7 @@ import memcacheConstants
 
 from pump import Source, Sink, Batch, SinkBatchFuture
 
-CBB_VERSION = 2003 # sqlite pragma user version.
+CBB_VERSION = 2004 # sqlite pragma user version.
 
 class BFD:
     """Mixin for backup-file/directory EndPoint helper methods."""
@@ -159,7 +159,10 @@ class BFDSource(BFD, Source):
                     if self.skip(key, vbucket_id):
                         continue
 
-                    batch.append(row, len(val))
+                    msg = (row[0], row[1], row[2], row[3], row[4],
+                           int(row[5]), # CAS as 64-bit integer not string.
+                           row[6], row[7])
+                    batch.append(msg, len(val))
                 else:
                     if self.cursor_db:
                         self.cursor_db[0].close()
@@ -254,7 +257,7 @@ class BFDSink(BFD, Sink):
 
                     c.execute(s, (cmd, vbucket_id,
                                   sqlite3.Binary(key),
-                                  flg, exp, cas,
+                                  flg, exp, str(cas),
                                   sqlite3.Binary(meta),
                                   sqlite3.Binary(val)))
                     cbb_bytes += len(val)
@@ -386,12 +389,14 @@ def create_db(db_path, opts):
         if rv != 0:
             return rv, None
 
+        # The cas column is type text, not integer, because sqlite
+        # integer is 63-bits instead of 64-bits.
         db.executescript("""
                   BEGIN;
                   CREATE TABLE cbb_msg
                      (cmd integer,
                       vbucket_id integer,
-                      key blob, flg integer, exp integer, cas integer,
+                      key blob, flg integer, exp integer, cas text,
                       meta blob, val blob);
                   CREATE TABLE cbb_meta
                      (key text,
