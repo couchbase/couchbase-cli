@@ -109,7 +109,7 @@ class CBSink(pump_mc.MCSink):
         except ValueError as e:
             return "error: could not parse source design; exception: %s" % (e)
         if not sd:
-            return "error: could not parse source design"
+            return 0
 
         if (not sink_map['buckets'] or
             len(sink_map['buckets']) != 1 or
@@ -136,7 +136,7 @@ class CBSink(pump_mc.MCSink):
         host, port, user, pswd, path = \
             pump.parse_spec(opts, couch_api_base, 8092)
 
-        for row in sd['rows']:
+        for row in sd:
             logging.debug("design_doc row: " + str(row))
 
             id = row['id']

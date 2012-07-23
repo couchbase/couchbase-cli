@@ -46,6 +46,7 @@ class TAPDumpSource(pump.Source):
         spec_parts = source_map.get('spec_parts')
         if not spec_parts:
             return "error: no design spec_parts", None
+        host, port, user, pswd, path = spec_parts
 
         source_nodes = pump.filter_bucket_nodes(source_bucket, spec_parts)
         if not source_nodes:
@@ -55,16 +56,14 @@ class TAPDumpSource(pump.Source):
         if not couch_api_base:
             return 0, None # No couchApiBase; probably not 2.0.
 
-        ddocs_url = couch_api_base + "/_all_docs"
-        ddocs_qry = "?startkey=\"_design/\"&endkey=\"_design0\"&include_docs=true"
-
-        host, port, user, pswd, path = \
-            pump.parse_spec(opts, ddocs_url, 8092)
-
         err, ddocs_json, ddocs = \
-            pump.rest_request_json(host, int(port), user, pswd, path + ddocs_qry,
+            pump.rest_request_json(host, int(port), user, pswd,
+                                   "/pools/default/buckets/%s/ddocs" %
+                                   (source_bucket['name']),
                                    reason="provide_design")
         if err:
+            if "response: 404" in err: # A 404/not-found likely means 2.0-DP4.
+                return 0, None
             return err, None
 
         return 0, ddocs_json

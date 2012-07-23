@@ -1639,7 +1639,8 @@ class RestoreTestHelper:
                    expected_backup_stdout=None,
                    json=None,
                    list_mms=None,
-                   more_args=[]):
+                   more_args=[],
+                   more_mrs_expect=[]):
         """Generate a backup file/directory so we can test restore.
 
            The msgs is list of lists, with one list per fake,
@@ -1681,7 +1682,8 @@ class RestoreTestHelper:
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})] + \
+                      more_mrs_expect)
 
         workers = []
         for idx, msgs in enumerate(msgs_per_node):
@@ -2355,18 +2357,16 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                    expected_backup_stdout=None,
                    json=None,
                    list_mms=None):
-        ddocs_qry = "?startkey=\"_design/\"&endkey=\"_design0\"&include_docs=true"
-
-        mcs.reset(self,
-                  [({ 'command': 'GET',
-                      'path': '/default/_all_docs' + ddocs_qry },
-                    self.on_all_docs)])
+        mcs.reset(self)
 
         rv = RestoreTestHelper.gen_backup(self,
                                           msgs_per_node=msgs_per_node,
                                           expected_backup_stdout=expected_backup_stdout,
                                           json=json,
-                                          list_mms=list_mms)
+                                          list_mms=list_mms,
+                                          more_mrs_expect=[({'command': 'GET',
+                                                             'path': '/pools/default/buckets/default/ddocs'},
+                                                            self.on_all_docs)])
 
         print "waiting for mcs all_docs..."
         self.mcs_event.wait()
@@ -2384,8 +2384,7 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
     def on_all_docs(self, req, _1, _2):
         print "on_all_docs", req.command, req.path
-        ok = """{"total_rows":1,"offset":0,
-                 "rows":[
+        ok = """[
                   {"id":"_design/dev_dd0",
                    "key":"_design/dev_dd0",
                    "value":{"rev":"7-aa4defd3"},
@@ -2397,7 +2396,7 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                          "map":"function (doc) {\\n  emit(doc._id, null);\\n}"
                        }
                      }
-                   }}]}"""
+                   }}]"""
         req.send_response(200)
         req.send_header("Content-Type", 'application/json')
         req.end_headers()
