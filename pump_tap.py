@@ -62,7 +62,8 @@ class TAPDumpSource(pump.Source):
             pump.parse_spec(opts, ddocs_url, 8092)
 
         err, ddocs_json, ddocs = \
-            pump.rest_request_json(host, int(port), user, pswd, path + ddocs_qry)
+            pump.rest_request_json(host, int(port), user, pswd, path + ddocs_qry,
+                                   reason="provide_design")
         if err:
             return err, None
 
@@ -311,7 +312,8 @@ class TAPDumpSource(pump.Source):
         path = "/pools/default/buckets/%s/stats/curr_items" % (name)
         host, port, user, pswd, _ = pump.parse_spec(opts, spec, 8091)
         err, json, data = pump.rest_request_json(host, int(port),
-                                                 user, pswd, path)
+                                                 user, pswd, path,
+                                                 reason="total_msgs")
         if err:
             return 0, None
 

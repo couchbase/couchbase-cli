@@ -798,16 +798,20 @@ def parse_spec(opts, spec, port):
 
     return host, port, username, password, p.path
 
-def rest_request(host, port, user, pswd, path, method='GET', body=''):
-    logging.debug("rest_request: %s@%s:%s%s" % (user, host, port, path))
+def rest_request(host, port, user, pswd, path, method='GET', body='', reason=''):
+    if reason:
+        reason = "; reason: %s" % (reason)
+
+    logging.debug("rest_request: %s@%s:%s%s%s" % (user, host, port, path, reason))
 
     conn = httplib.HTTPConnection(host, port)
     try:
         conn.request(method, path, body, rest_headers(user, pswd))
     except Exception as e:
-        return "error: could not access REST API: " + host + ":" + str(port) + \
-            " - please check source URL, username (-u) and password (-p), " + \
-            str(e), None, None
+        return ("error: could not access REST API: %s:%s%s" +
+                "; please check source URL, username (-u) and password (-p)" +
+                "; exception: %s%s") % \
+                (host, port, path, e, reason), None, None
 
     resp = conn.getresponse()
     if resp.status in [200, 201, 202, 204, 302]:
@@ -816,13 +820,14 @@ def rest_request(host, port, user, pswd, path, method='GET', body=''):
     conn.close()
 
     if resp.status == 401:
-        return "error: unable to access REST API" \
-            " - please check the username (-u) and password (-p)", \
-            None, None
+        return ("error: unable to access REST API: %s:%s%s" +
+                "; please check source URL, username (-u) and password (-p)%s") % \
+                (host, port, path, reason), None, None
 
-    return "error: unable to access REST API" \
-        " - please check your URL and server; status: " + str(resp.status), \
-        None, None
+    return ("error: unable to access REST API: %s:%s%s" +
+            "; please check source URL, username (-u) and password (-p)" +
+            "; response: %s%s") % \
+            (host, port, path, resp.status, reason), None, None
 
 def rest_headers(user, pswd, headers={'Content-Type': 'application/json'}):
     if user:
@@ -831,8 +836,9 @@ def rest_headers(user, pswd, headers={'Content-Type': 'application/json'}):
         headers['Authorization'] = auth
     return headers
 
-def rest_request_json(host, port, user, pswd, path):
-    err, conn, rest_json = rest_request(host, port, user, pswd, path)
+def rest_request_json(host, port, user, pswd, path, reason=''):
+    err, conn, rest_json = rest_request(host, port, user, pswd, path,
+                                        reason=reason)
     if err:
         return err, None, None
     if conn:

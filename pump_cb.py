@@ -151,7 +151,8 @@ class CBSink(pump_mc.MCSink):
             try:
                 err, conn, response = \
                     pump.rest_request(host, int(port), user, pswd,
-                                      path + "/" + id, method='PUT', body=doc)
+                                      path + "/" + id, method='PUT', body=doc,
+                                      reason="consume_design")
                 if conn:
                     conn.close()
                 if err:
