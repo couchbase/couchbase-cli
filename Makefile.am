@@ -17,7 +17,9 @@ nobase_pythonlib_DATA= \
          node_stats.py \
          pump.py \
          pump_bfd.py \
+         pump_bson.py \
          pump_cb.py \
+         pump_csv.py \
          pump_mbf.py \
          pump_mc.py \
          pump_sfd.py \
