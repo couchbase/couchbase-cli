@@ -49,7 +49,7 @@ class TAPDumpSource(pump.Source):
 
         source_nodes = pump.filter_bucket_nodes(source_bucket, spec_parts)
         if not source_nodes:
-            return "error: no design source node: " + single_host_port, None
+            return "error: no design source node; spec_parts: " + str(spec_parts), None
 
         couch_api_base = source_nodes[0].get('couchApiBase')
         if not couch_api_base:
