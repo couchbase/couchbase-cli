@@ -42,7 +42,7 @@ class BSONSource(pump.Source):
         if not self.f:
             try:
                 self.f = open(self.spec.replace(BSON_SCHEME, ""))
-            except IOError as e:
+            except IOError, e:
                 return "error: could not open bson: %s; exception: %s" % \
                     (self.spec, e), None
 

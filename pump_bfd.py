@@ -108,7 +108,7 @@ class BFDSource(BFD, Source):
                 d = f.read()
                 f.close()
                 return 0, d
-            except IOError as e:
+            except IOError, e:
                 return ("error: could not read design: %s" +
                         "; exception: %s") % (fname, e), None
         return 0, None
@@ -171,7 +171,7 @@ class BFDSource(BFD, Source):
 
             return 0, batch
 
-        except Exception as e:
+        except Exception, e:
             self.done = True
             if self.cursor_db:
                 self.cursor_db[0].close()
@@ -266,9 +266,9 @@ class BFDSink(BFD, Sink):
 
                 self.future_done(future, 0) # No return to keep looping.
 
-            except sqlite3.Error as e:
+            except sqlite3.Error, e:
                 return self.future_done(future, "error: db error: " + str(e))
-            except Exception as e:
+            except Exception, e:
                 return self.future_done(future, "error: db exception: " + str(e))
 
     @staticmethod
@@ -315,7 +315,7 @@ class BFDSink(BFD, Sink):
                 f = open(fname, 'w')
                 f.write(source_design)
                 f.close()
-            except IOError as e:
+            except IOError, e:
                 return ("error: could not write design: %s" +
                         "; exception: %s") % (fname, e), None
         return 0
@@ -349,9 +349,9 @@ class BFDSink(BFD, Sink):
             cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
                         ("start.datetime", time.strftime("%Y/%m/%d-%H:%M:%S")))
             db.commit()
-        except sqlite3.Error as e:
+        except sqlite3.Error, e:
             return "error: create_db error: " + str(e), None
-        except Exception as e:
+        except Exception, e:
             return "error: create_db exception: " + str(e), None
 
         return 0, db
@@ -367,14 +367,14 @@ class BFDSink(BFD, Sink):
         if not os.path.isdir(spec):
             try:
                 os.mkdir(spec)
-            except OSError as e:
+            except OSError, e:
                 return "error: could not mkdir: %s; exception: %s" % (spec, e)
 
         d = BFD.db_dir(self.spec, self.bucket_name(), self.node_name())
         if not os.path.isdir(d):
             try:
                 os.makedirs(d)
-            except OSError as e:
+            except OSError, e:
                 return "error: could not mkdirs: %s; exception: %s" % (d, e)
         return 0
 
@@ -407,7 +407,7 @@ def create_db(db_path, opts):
 
         return 0, db
 
-    except Exception as e:
+    except Exception, e:
         return "error: create_db exception: " + str(e), None
 
 def connect_db(db_path, opts, version):
@@ -429,7 +429,7 @@ def connect_db(db_path, opts, version):
 
         return 0, db
 
-    except Exception as e:
+    except Exception, e:
         return "error: connect_db exception: " + str(e), None
 
 def cleanse(d):

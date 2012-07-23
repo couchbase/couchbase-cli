@@ -47,7 +47,7 @@ class CSVSource(pump.Source):
             except StopIteration:
                 return ("error: could not read 1st line of csv: %s" %
                         (self.spec)), None
-            except IOError as e:
+            except IOError, e:
                 return ("error: could not open csv: %s; exception: %s" %
                         (self.spec, e)), None
 

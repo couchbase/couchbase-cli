@@ -76,7 +76,7 @@ class MBFSource(Source):
                         'state': state,
                         'checkpoint_id': row[3]
                         }
-            except sqlite3.DatabaseError as e:
+            except sqlite3.DatabaseError, e:
                 pass # A missing vbucket_states table is expected.
             finally:
                 cur.close()
@@ -100,7 +100,7 @@ class MBFSource(Source):
     def version(db_file):
         try:
             return int(MBFSource.run_sql(db_file, "PRAGMA user_version;")[0])
-        except sqlite3.DatabaseError as e:
+        except sqlite3.DatabaseError, e:
             logging.error("error: could not access user_version from: %s" +
                           "; exception: %s" +
                           "; perhaps it is being used by another program" +
@@ -216,7 +216,7 @@ class MBFSource(Source):
                     self.cursor_todo = (db, sql, db_kv_names, None)
                     break # Close the batch; next pass hits new db_name/kv_name.
 
-        except Exception as e:
+        except Exception, e:
             self.cursor_done = True
             self.cursor_todo = None
             return "error: MBFSource exception: " + str(e), None

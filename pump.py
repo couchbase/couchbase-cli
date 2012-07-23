@@ -807,7 +807,7 @@ def rest_request(host, port, user, pswd, path, method='GET', body='', reason='')
     conn = httplib.HTTPConnection(host, port)
     try:
         conn.request(method, path, body, rest_headers(user, pswd))
-    except Exception as e:
+    except Exception, e:
         return ("error: could not access REST API: %s:%s%s" +
                 "; please check source URL, username (-u) and password (-p)" +
                 "; exception: %s%s") % \
@@ -845,7 +845,7 @@ def rest_request_json(host, port, user, pswd, path, reason=''):
         conn.close()
     try:
         return None, rest_json, json.loads(rest_json)
-    except ValueError as e:
+    except ValueError, e:
         return ("error: could not decode JSON from REST API: %s:%s%s" +
                 "; exception: %s" +
                 "; please check URL, username (-u) and password (-p)") % \

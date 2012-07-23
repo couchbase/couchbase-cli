@@ -106,7 +106,7 @@ class CBSink(pump_mc.MCSink):
 
         try:
             sd = json.loads(source_design)
-        except ValueError as e:
+        except ValueError, e:
             return "error: could not parse source design; exception: %s" % (e)
         if not sd:
             return 0
@@ -158,7 +158,7 @@ class CBSink(pump_mc.MCSink):
                 if err:
                     return ("error: could not restore design doc id: %s" +
                             "; response: %s; err: %s") % (id, response, err)
-            except Exception as e:
+            except Exception, e:
                 return ("error: design sink exception: %s" +
                         "; couch_api_base: %s") % (e, couch_api_base)
 
