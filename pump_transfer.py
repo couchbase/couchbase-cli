@@ -7,6 +7,15 @@ import os
 import sys
 import threading
 
+try:
+    import sqlite3
+except ImportError:
+    msg = "error: could not import sqlite3 module"
+    if sys.version_info[0] < 2 or sys.version_info[1] < 6:
+        msg = msg + "; later versions of python (>= 2.6)" + \
+            " ship the required versions of the sqlite3 module"
+    sys.exit(msg)
+
 import pump
 import pump_bfd
 import pump_csv
