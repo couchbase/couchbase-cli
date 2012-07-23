@@ -217,11 +217,11 @@ class Restore(Transfer):
             "Please first create the destination / bucket before restoring.\n\n" \
             "Examples:\n" \
             "  %prog /backups/backup-42 http://HOST:8091 \\\n" \
-            "    --bucket=default\n" \
+            "    --bucket-source=default\n" \
             "  %prog /backups/backup-42 couchbase://HOST:8091 \\\n" \
-            "    --bucket=default\n" \
+            "    --bucket-source=default\n" \
             "  %prog /backups/backup-42 memcached://HOST:11211 \\\n" \
-            "    --bucket=sessions"
+            "    --bucket-source=sessions --bucket-destination=sessions2"
 
     def opt_parser_options(self, p):
         p.add_option("-a", "--add",
