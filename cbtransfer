@@ -5,6 +5,13 @@
 Data transfer tool for Couchbase.
 """
 
+try:
+    import pump_sfd
+except ImportError:
+    print "warning: could not import couchstore module" \
+        "; accessing local couchstore-files:// will not work" \
+        "; please check your PYTHONPATH and LD_LIBRARY_PATH"
+
 import pump_transfer
 import sys
 import os

@@ -306,8 +306,7 @@ try:
     SOURCES.append(pump_sfd.SFDSource)
     SINKS.append(pump_sfd.SFDSink)
 except ImportError:
-    print "warning: could not import couchstore module" + \
-        "; accessing local couchstore files will not work"
+    pass
 
 try:
     import pump_bson
