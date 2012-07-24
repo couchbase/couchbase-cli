@@ -4,6 +4,7 @@ import base64
 import logging
 import random
 import re
+import simplejson as json
 import socket
 import string
 import struct
@@ -61,9 +62,20 @@ class TAPDumpSource(pump.Source):
                                    "/pools/default/buckets/%s/ddocs" %
                                    (source_bucket['name']),
                                    reason="provide_design")
+        if err and "response: 404" in err: # A 404/not-found likely means 2.0-DP4.
+            ddocs_json = None
+            ddocs_url = couch_api_base + "/_all_docs"
+            ddocs_qry = "?startkey=\"_design/\"&endkey=\"_design0\"&include_docs=true"
+
+            host, port, user, pswd, path = \
+                pump.parse_spec(opts, ddocs_url, 8092)
+            err, rs_json, rs = \
+                pump.rest_request_json(host, int(port), user, pswd,
+                                       path + ddocs_qry,
+                                       reason="provide_design-2.0DP4")
+            if not err and rs and rs.get('rows'):
+                ddocs_json = json.dumps(rs.get('rows'))
         if err:
-            if "response: 404" in err: # A 404/not-found likely means 2.0-DP4.
-                return 0, None
             return err, None
 
         return 0, ddocs_json
