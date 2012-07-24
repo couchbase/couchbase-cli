@@ -232,7 +232,7 @@ class Restore(Transfer):
                      action="store", type="string", default=None,
                      help="""single bucket from the backup_dir to restore;
                              if the backup_dir only contains a single bucket,
-                              then that bucket will be automatically used""")
+                             then that bucket will be automatically used""")
         p.add_option("-B", "--bucket-destination",
                      action="store", type="string", default=None,
                      help="""when --bucket-source is specified, overrides the
