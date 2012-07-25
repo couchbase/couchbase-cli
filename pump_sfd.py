@@ -432,27 +432,12 @@ class SFDSink(pump.Sink):
         if vbucket_id >= SFD_VBUCKETS:
             return "error: vbucket_id too large: %s" % (vbucket_id), None, None
 
-        return self.open_latest_store("%s.couch.*" % (vbucket_id), SFD_RE,
-                                      str(vbucket_id) + ".couch.1")
-
-    def open_latest_store(self, glob_pattern, filter_re, default_name):
         rv, bucket_dir = self.find_bucket_dir()
         if rv != 0:
             return rv, None, None
 
-        store_paths = latest_couch_files(bucket_dir,
-                                         glob_pattern=glob_pattern,
-                                         filter_re=filter_re)
-        if not store_paths:
-            store_paths = [bucket_dir + '/' + default_name]
-        if len(store_paths) != 1:
-            return ("error: no single, latest couch file: %s" +
-                    "; found: %s") % (glob_pattern, store_paths), None, None
-        try:
-            return 0, couchstore.CouchStore(store_paths[0], 'c'), store_paths[0]
-        except Exception as e:
-            return ("error: could not open couchstore: %s; exception: %s"
-                    % (store_path, e)), None, None
+        return open_latest_store(bucket_dir, "%s.couch.*" % (vbucket_id), SFD_RE,
+                                 str(vbucket_id) + ".couch.1", mode='c')
 
     def find_bucket_dir(self):
         rv, d = data_dir(self.spec)
@@ -476,7 +461,7 @@ def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c
     if not store_paths:
         if mode == 'r':
             return 0, None, None
-        store_paths = [ bucket_dir + '/' + default_name ]
+        store_paths = [bucket_dir + '/' + default_name]
     if len(store_paths) != 1:
         return ("error: no single, latest couchstore file: %s" +
                 "; found: %s") % (glob_pattern, store_paths), None, None
@@ -484,7 +469,7 @@ def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c
         return 0, couchstore.CouchStore(str(store_paths[0]), mode), store_paths[0]
     except Exception as e:
         return ("error: could not open couchstore file: %s" +
-                "; exception: %s") % (store_paths[0], e), None, store_paths[0]
+                "; exception: %s") % (store_paths[0], e), None, None
 
 def latest_couch_files(bucket_dir, glob_pattern='*.couch.*', filter_re=SFD_RE):
     """Given directory of *.couch.VER files, returns files with largest VER suffixes."""
