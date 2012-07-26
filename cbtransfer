@@ -7,6 +7,12 @@ Data transfer tool for Couchbase.
 
 import pump_transfer
 import sys
+import os
 
 if __name__ == '__main__':
+    if os.name == 'nt':
+        mydir = os.path.dirname(sys.argv[0])
+        bin_dir = os.path.join(mydir, '..')
+        path = [mydir, bin_dir, os.environ['PATH']]
+        os.environ['PATH'] = ';'.join(path)
     sys.exit(pump_transfer.Transfer().main(sys.argv))
