@@ -5,19 +5,25 @@
 Data transfer tool for Couchbase.
 """
 
+import os
+import platform
+import sys
+
 try:
     import pump_sfd
 except ImportError:
-    print "warning: could not import couchstore module" \
-        "; accessing local couchstore-files:// will not work" \
-        "; please check your PYTHONPATH and LD_LIBRARY_PATH"
+    if platform.system() == "Windows":
+        p = "PATH"
+    else:
+        p = "LD_LIBRARY_PATH"
+    print ("warning: could not import couchstore module"
+           "; accessing local couchstore-files:// will not work"
+           "; please check your PYTHONPATH and %s environment variables" % (p))
 
 import pump_transfer
-import sys
-import os
 
 if __name__ == '__main__':
-    if os.name == 'nt':
+    if platform.system() == 'Windows':
         mydir = os.path.dirname(sys.argv[0])
         bin_dir = os.path.join(mydir, '..')
         path = [mydir, bin_dir, os.environ['PATH']]
