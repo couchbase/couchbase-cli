@@ -40,7 +40,14 @@ class TAPDumpSource(pump.Source):
 
     @staticmethod
     def check(opts, spec):
-        return pump.rest_couchbase(opts, spec)
+        err, map = pump.rest_couchbase(opts, spec)
+        if err:
+            return err, map
+        if not map or not map.get('buckets'):
+            return ("error: no buckets at source: %s;"
+                    " please check your username/password to the cluster" %
+                    (spec)), None
+        return 0, map
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
