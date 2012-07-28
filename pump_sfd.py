@@ -88,11 +88,11 @@ class SFDSource(pump.Source):
                         else:
                             return "error: missing vbucket_state from: %s" \
                                 % (f), None
-                except Exception as e:
+                except Exception, e:
                     return ("error: could not read _local/vbstate from: %s" +
                             "; exception: %s") % (f, e), None
                 store.close()
-            except Exception as e:
+            except Exception, e:
                 return ("error: could not read couchstore file: %s" +
                         "; exception: %s") % (f, e), None
 
@@ -125,13 +125,13 @@ class SFDSource(pump.Source):
             if not doc_info.deleted:
                 try:
                     doc_contents = doc_info.getContents()
-                except Exception as e:
+                except Exception, e:
                     return ("error: could not read design doc: %s" +
                             "; source_spec: %s; exception: %s") % \
                             (doc_info.id, source_spec, e), None
                 try:
                     doc = json.loads(doc_contents)
-                except ValueError as e:
+                except ValueError, e:
                     return ("error: could not parse design doc: %s" +
                             "; source_spec: %s; exception: %s") % \
                             (doc_info.id, source_spec, e), None
@@ -226,7 +226,7 @@ class SFDSource(pump.Source):
 
             try:
                 store = couchstore.CouchStore(f, 'r')
-            except Exception as e:
+            except Exception, e:
                 self.queue.put(("error: could not open couchstore file: %s"
                                 "; exception: %s" % (f, e), None))
                 return
@@ -325,7 +325,7 @@ class SFDSink(pump.Sink):
 
                     store.commit()
                     store.close()
-                except Exception as e:
+                except Exception, e:
                     self.future_done(future,
                                      "error: could not save couchstore data"
                                      "; vbucket_id: %s; store_path: %s"
@@ -342,7 +342,7 @@ class SFDSink(pump.Sink):
                           'max_deleted_seqno': str(max_deleted_seqno)})
         try:
             store.localDocs['_local/vbstate'] = doc
-        except Exception as e:
+        except Exception, e:
             return "error: save_vbucket_state() failed: " + str(e)
         return 0
 
@@ -381,7 +381,7 @@ class SFDSink(pump.Sink):
 
         try:
             sd = json.loads(source_design)
-        except ValueError as e:
+        except ValueError, e:
             return "error: could not parse source_design: " + source_design
 
         rv, d = data_dir(sink_spec)
@@ -448,7 +448,7 @@ class SFDSink(pump.Sink):
         if not os.path.isdir(bucket_dir):
             try:
                 os.mkdir(bucket_dir)
-            except OSError as e:
+            except OSError, e:
                 return ("error: could not create bucket_dir: %s; exception: %s"
                         % (bucket_dir, e)), None
 
@@ -467,7 +467,7 @@ def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c
                 "; found: %s") % (glob_pattern, store_paths), None, None
     try:
         return 0, couchstore.CouchStore(str(store_paths[0]), mode), store_paths[0]
-    except Exception as e:
+    except Exception, e:
         return ("error: could not open couchstore file: %s" +
                 "; exception: %s") % (store_paths[0], e), None, None
 

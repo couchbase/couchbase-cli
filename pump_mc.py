@@ -212,7 +212,7 @@ class MCSink(pump.Sink):
                 else:
                     return "error: MCSink MC error: " + str(r_status), None
 
-            except Exception as e:
+            except Exception, e:
                 logging.error("MCSink exception: %s", e)
                 return "error: MCSink exception: " + str(e), None
 
@@ -368,7 +368,7 @@ class MCSink(pump.Sink):
                 data = skt.recv(max(nbytes - len(buf), 4096))
             except socket.timeout:
                 logging.error("error: recv socket.timeout")
-            except Exception as e:
+            except Exception, e:
                 logging.error("error: recv exception: " + str(e))
 
             if not data:

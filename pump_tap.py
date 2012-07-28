@@ -300,7 +300,7 @@ class TAPDumpSource(pump.Source):
                 data = skt.recv(max(nbytes - len(buf), self.recv_min_bytes))
             except socket.timeout:
                 logging.error("error: recv socket.timeout")
-            except Exception as e:
+            except Exception, e:
                 logging.error("error: recv exception: " + str(e))
 
             if not data:
