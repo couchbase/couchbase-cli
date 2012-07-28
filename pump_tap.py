@@ -166,9 +166,22 @@ class TAPDumpSource(pump.Source):
 
                 if need_ack:
                     self.ack_last = True
-                    tap_conn._sendMsg(cmd, '', '', opaque, vbucketId=0,
-                                      fmt=memcacheConstants.RES_PKT_FMT,
-                                      magic=memcacheConstants.RES_MAGIC_BYTE)
+                    try:
+                        tap_conn._sendMsg(cmd, '', '', opaque, vbucketId=0,
+                                          fmt=memcacheConstants.RES_PKT_FMT,
+                                          magic=memcacheConstants.RES_MAGIC_BYTE)
+                    except socket.error:
+                        self.tap_done = True
+                        return ("error: socket.error on send();"
+                                " perhaps the source server: %s was rebalancing"
+                                " or had connectivity/server problems" %
+                                (self.source_node['hostname'])), batch
+                    except EOFError:
+                        self.tap_done = True
+                        return ("error: EOFError on socket send();"
+                                " perhaps the source server: %s was rebalancing"
+                                " or had connectivity/server problems" %
+                                (self.source_node['hostname'])), batch
 
                     # Close the batch when there's an ACK handshake, so
                     # the server can concurrently send us the next batch.
