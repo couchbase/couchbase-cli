@@ -44,7 +44,7 @@ class TAPDumpSource(pump.Source):
         if err:
             return err, map
         if not map or not map.get('buckets'):
-            return ("error: no buckets at source: %s;"
+            return ("error: no TAP'able buckets at source: %s;"
                     " please check your username/password to the cluster" %
                     (spec)), None
         return 0, map

@@ -105,6 +105,15 @@ class PumpingStation(ProgressReporter):
             return 0
 
         source_buckets = self.filter_source_buckets(source_map)
+        if not source_buckets:
+            bucket_source = getattr(self.opts, "bucket_source", None)
+            if bucket_source:
+                return ("error: there is no bucket: %s at source: %s" %
+                        (bucket_source, self.source_spec))
+            else:
+                return ("error: no transferrable buckets at source: %s" %
+                        (self.source_spec))
+
         for source_bucket in sorted(source_buckets,
                                     key=lambda b: b['name']):
             logging.info("bucket: " + source_bucket['name'])
