@@ -123,6 +123,8 @@ class CSVSink(pump.Sink):
                     self.writer.writerow([key, flg, exp, cas, val])
                 elif cmd == memcacheConstants.CMD_TAP_DELETE:
                     pass
+                elif cmd == memcacheConstants.CMD_GET:
+                    pass
                 else:
                     return "error: CSVSink - unknown cmd: " + str(cmd), None
             except IOError:

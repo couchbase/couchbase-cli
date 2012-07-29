@@ -177,7 +177,8 @@ class MCSink(pump.Sink):
                                  (self.spec, key))
                     continue
                 elif r_status == memcacheConstants.ERR_KEY_ENOENT:
-                    if cmd != memcacheConstants.CMD_TAP_DELETE:
+                    if (cmd != memcacheConstants.CMD_TAP_DELETE and
+                        cmd != memcacheConstants.CMD_GET):
                         logging.warn("item not found: %s, key: %s" %
                                      (self.spec, key))
                     continue
@@ -236,6 +237,9 @@ class MCSink(pump.Sink):
             if op == 'get':
                 return 0, memcacheConstants.CMD_NOOP
             return 0, self.op_map['delete']
+
+        if cmd == memcacheConstants.CMD_GET:
+            return 0, cmd
 
         return "error: MCSink - unknown cmd: %s, op: %s" % (cmd, op), None
 

@@ -753,10 +753,11 @@ class StdOutSink(Sink):
                         stdout.write("\r\n")
                     elif op == 'get':
                         stdout.write("get %s\r\n" % (key))
-
                 elif cmd == memcacheConstants.CMD_TAP_DELETE:
                     if op_mutate:
                         stdout.write("delete %s\r\n" % (key))
+                elif cmd == memcacheConstants.CMD_GET:
+                    stdout.write("get %s\r\n" % (key))
                 else:
                     return "error: StdOutSink - unknown cmd: " + str(cmd), None
             except IOError:
