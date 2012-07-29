@@ -316,7 +316,7 @@ class TestPumpingStationFind(unittest.TestCase):
             extra_sources = extra_sources + 1
         except ImportError:
             pass
-        self.assertEqual(5 + extra_sources, len(pump_transfer.SOURCES))
+        self.assertEqual(6 + extra_sources, len(pump_transfer.SOURCES))
         self.assertTrue(5 + extra_sinks, len(pump_transfer.SINKS))
 
         self.assertEqual(pump_tap.TAPDumpSource,
