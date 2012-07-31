@@ -243,8 +243,8 @@ class MBFSource(Source):
                 table_dbs.setdefault(table_name, []).append(db_name)
             cursor.close()
 
-        if not [True for table_name in table_dbs.keys()
-                if 'kv_' in table_name]:
+        if not filter(lambda table_name: table_name.startswith("kv_"),
+                      table_dbs):
             db.close()
             return "error: no kv data was found;" + \
                 " check if db files are correct", None, None, None
