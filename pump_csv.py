@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import csv
+import logging
 import os
 import simplejson as json
 import sys
