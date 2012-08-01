@@ -19,7 +19,7 @@ class CBSink(pump_mc.MCSink):
     def scatter_gather(self, mconns, batch):
         sink_map_buckets = self.sink_map['buckets']
         if len(sink_map_buckets) != 1:
-            return "error: CBSink.run() expected 1 bucket in sink_map", None
+            return "error: CBSink.run() expected 1 bucket in sink_map", None, None
 
         vbuckets_num = len(sink_map_buckets[0]['vBucketServerMap']['vBucketMap'])
         vbuckets = batch.group_by_vbucket_id(vbuckets_num)
@@ -28,11 +28,11 @@ class CBSink(pump_mc.MCSink):
         for vbucket_id, msgs in vbuckets.iteritems():
             rv, conn = self.find_conn(mconns, vbucket_id)
             if rv != 0:
-                return rv, None
+                return rv, None, None
             rv = self.send_msgs(conn, msgs, self.operation(),
                                 vbucket_id=vbucket_id)
             if rv != 0:
-                return rv, None
+                return rv, None, None
 
         # Yield to let other threads do stuff while server's processing.
         time.sleep(0.01)
@@ -44,10 +44,10 @@ class CBSink(pump_mc.MCSink):
         for vbucket_id, msgs in vbuckets.iteritems():
             rv, conn = self.find_conn(mconns, vbucket_id)
             if rv != 0:
-                return rv, None
+                return rv, None, None
             rv, retry, refresh = self.recv_msgs(conn, msgs, vbucket_id=vbucket_id)
             if rv != 0:
-                return rv, None
+                return rv, None, None
             if retry:
                 retry_batch = batch
             if refresh:
@@ -56,7 +56,7 @@ class CBSink(pump_mc.MCSink):
         if need_refresh:
             self.refresh_sink_map()
 
-        return 0, retry_batch
+        return 0, retry_batch, retry_batch and not need_refresh
 
     @staticmethod
     def can_handle(opts, spec):

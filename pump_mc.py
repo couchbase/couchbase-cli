@@ -74,7 +74,7 @@ class MCSink(pump.Sink):
             backoff = 0.1 # Reset backoff after a good batch.
 
             while batch:  # Loop in case retry is required.
-                rv, batch = self.scatter_gather(mconns, batch)
+                rv, batch, need_backoff = self.scatter_gather(mconns, batch)
                 if rv != 0:
                     self.future_done(future, rv)
                     self.close_mconns(mconns)
@@ -84,6 +84,7 @@ class MCSink(pump.Sink):
                     self.cur["tot_sink_retry_batch"] = \
                         self.cur.get("tot_sink_retry_batch", 0) + 1
 
+                if need_backoff:
                     backoff = min(backoff * 2.0, 10.0)
                     logging.warn("backing off, secs: %s" % (backoff))
                     time.sleep(backoff)
@@ -109,16 +110,16 @@ class MCSink(pump.Sink):
         # Scatter or send phase.
         rv = self.send_msgs(conn, batch.msgs, self.operation())
         if rv != 0:
-            return rv, None
+            return rv, None, None
 
         # Gather or recv phase.
         rv, retry, refresh = self.recv_msgs(conn, batch.msgs)
         if refresh:
             self.refresh_sink_map()
         if retry:
-            return rv, batch
+            return rv, batch, True
 
-        return rv, None
+        return rv, None, None
 
     def send_msgs(self, conn, msgs, operation, vbucket_id=None):
         m = []
