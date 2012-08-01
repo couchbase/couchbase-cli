@@ -21,7 +21,6 @@ class CBSink(pump_mc.MCSink):
         if len(sink_map_buckets) != 1:
             return "error: CBSink.run() expected 1 bucket in sink_map", None
 
-        retry_batch = None
         vbuckets_num = len(sink_map_buckets[0]['vBucketServerMap']['vBucketMap'])
         vbuckets = batch.group_by_vbucket_id(vbuckets_num)
 
@@ -38,16 +37,24 @@ class CBSink(pump_mc.MCSink):
         # Yield to let other threads do stuff while server's processing.
         time.sleep(0.01)
 
+        retry_batch = None
+        need_refresh = False
+
         # Gather or recv phase.
         for vbucket_id, msgs in vbuckets.iteritems():
             rv, conn = self.find_conn(mconns, vbucket_id)
             if rv != 0:
                 return rv, None
-            rv, retry = self.recv_msgs(conn, msgs, vbucket_id=vbucket_id)
+            rv, retry, refresh = self.recv_msgs(conn, msgs, vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None
             if retry:
                 retry_batch = batch
+            if refresh:
+                need_refresh = True
+
+        if need_refresh:
+            self.refresh_sink_map()
 
         return 0, retry_batch
 
@@ -93,6 +100,7 @@ class CBSink(pump_mc.MCSink):
 
     def refresh_sink_map(self):
         """Grab a new vbucket-server-map."""
+        logging.warn("refreshing sink map: %s" % (self.spec))
         rv, new_sink_map = CBSink.check(self.opts, self.spec, self.source_map)
         if rv == 0:
             self.sink_map = new_sink_map

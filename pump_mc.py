@@ -84,7 +84,7 @@ class MCSink(pump.Sink):
                     self.cur["tot_sink_retry_batch"] = \
                         self.cur.get("tot_sink_retry_batch", 0) + 1
 
-                    backoff = backoff * 2.0
+                    backoff = min(backoff * 2.0, 10.0)
                     logging.warn("backing off, secs: %s" % (backoff))
                     time.sleep(backoff)
 
@@ -112,7 +112,9 @@ class MCSink(pump.Sink):
             return rv, None
 
         # Gather or recv phase.
-        rv, retry = self.recv_msgs(conn, batch.msgs)
+        rv, retry, refresh = self.recv_msgs(conn, batch.msgs)
+        if refresh:
+            self.refresh_sink_map()
         if retry:
             return rv, batch
 
@@ -168,7 +170,7 @@ class MCSink(pump.Sink):
                     self.read_conn(conn)
 
                 if i != r_opaque:
-                    return "error: opaque mismatch: %s %s" % (i, r_opaque), None
+                    return "error: opaque mismatch: %s %s" % (i, r_opaque), None, None
 
                 if r_status == memcacheConstants.ERR_SUCCESS:
                     continue
@@ -199,11 +201,11 @@ class MCSink(pump.Sink):
                         self.cur["tot_sink_not_my_vbucket"] = \
                             self.cur.get("tot_sink_not_my_vbucket", 0) + 1
                     else:
-                        return "error: " + msg, None
+                        return "error: " + msg, None, None
                 elif r_status == memcacheConstants.ERR_UNKNOWN_COMMAND:
                     if self.op_map == OP_MAP:
                         if not retry:
-                            return "error: unknown command: %s" % (r_cmd), None
+                            return "error: unknown command: %s" % (r_cmd), None, None
                     else:
                         if not retry:
                             logging.warn("destination does not take XXX-WITH-META"
@@ -211,16 +213,13 @@ class MCSink(pump.Sink):
                         self.op_map = OP_MAP
                         retry = True
                 else:
-                    return "error: MCSink MC error: " + str(r_status), None
+                    return "error: MCSink MC error: " + str(r_status), None, None
 
             except Exception, e:
                 logging.error("MCSink exception: %s", e)
-                return "error: MCSink exception: " + str(e), None
+                return "error: MCSink exception: " + str(e), None, None
 
-        if refresh:
-            self.refresh_sink_map()
-
-        return 0, retry
+        return 0, retry, refresh
 
     def translate_cmd(self, cmd, op, meta):
         if len(str(meta)) <= 0:
