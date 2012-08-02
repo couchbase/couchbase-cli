@@ -1,4 +1,4 @@
-Couchbase Command Line Tool Suit
+Couchbase Command Line Tools
 
 This package contains the command line tool set that performs
 the same actions to provide the user the same capabilities as
@@ -12,14 +12,6 @@ If you run these tools standalone, you will need:
 
 * Python 2.6 or greater
 * Command shell such as bash
-
-Installation
-...
-
-How to use these tools
-...
-
-
 
 ***
 Copyright (c) 2010, 2011, 2012, Couchbase, Inc.
