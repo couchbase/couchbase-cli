@@ -899,9 +899,7 @@ def rest_couchbase(opts, spec):
             logging.warn("skipping bucket that is not a couchbase-bucket: " +
                          bucket['name'])
 
-    return 0, { 'spec': spec,
-                'buckets': buckets,
-                'spec_parts' : spec_parts }
+    return 0, {'spec': spec, 'buckets': buckets, 'spec_parts': spec_parts}
 
 def filter_bucket_nodes(bucket, spec_parts):
     host, port = spec_parts[:2]
