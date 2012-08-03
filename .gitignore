@@ -2,6 +2,7 @@
 *.pyc
 *.tar.gz
 tmp
+.idea
 /Makefile
 /Makefile.in
 /aclocal.m4
