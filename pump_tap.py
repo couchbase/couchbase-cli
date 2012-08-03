@@ -76,8 +76,9 @@ class TAPDumpSource(pump.Source):
 
             host, port, user, pswd, path = \
                 pump.parse_spec(opts, ddocs_url, 8092)
+            # Not using user/pwd as 2.0-DP4 CAPI did not support auth.
             err, rs_json, rs = \
-                pump.rest_request_json(host, int(port), user, pswd,
+                pump.rest_request_json(host, int(port), None, None,
                                        path + ddocs_qry,
                                        reason="provide_design-2.0DP4")
             if not err and rs and rs.get('rows'):

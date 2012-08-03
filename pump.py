@@ -839,7 +839,9 @@ def rest_request(host, port, user, pswd, path, method='GET', body='', reason='')
             "; response: %s%s") % \
             (host, port, path, resp.status, reason), None, None
 
-def rest_headers(user, pswd, headers={'Content-Type': 'application/json'}):
+def rest_headers(user, pswd, headers=None):
+    if not headers:
+        headers = {'Content-Type': 'application/json'}
     if user:
         auth = 'Basic ' + \
             string.strip(base64.encodestring(user + ':' + (pswd or '')))
