@@ -169,7 +169,7 @@ class ItemGrowth:
             for node, vals in nodeStats.iteritems():
                 a, b = util.linreg(timestamps, vals)
                 if b < 1:
-                   trend.append((node, 0))
+                    trend.append((node, 0))
                 else:
                     start_val = b
                     end_val = a * timestamps[-1] + b
@@ -247,7 +247,7 @@ class EPEnginePerformance:
                                 num_error.append({"node":node, "value": (key, value)})
                             else:
                                 if value > accessor["threshold"]:
-                                     num_error.append({"node":node, "value": (key, value)})
+                                    num_error.append({"node":node, "value": (key, value)})
             if len(num_error) > 0:
                 result[bucket] = {"error" : num_error}
         return result

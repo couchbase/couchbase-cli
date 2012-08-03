@@ -17,8 +17,8 @@ from usage import usage, short_usage
 
 def main():
     for x in sys.argv:
-       if x in ('-h', '--help', 'help'):
-           usage()
+        if x in ('-h', '--help', 'help'):
+            usage()
 
     if len(sys.argv) <= 2:
         short_usage()
