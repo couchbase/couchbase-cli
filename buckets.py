@@ -4,6 +4,8 @@
 from usage import usage
 
 import restclient
+from timeout import timed_out
+
 
 rest_cmds = {
     'bucket-list': '/pools/default/buckets',
@@ -32,6 +34,7 @@ class Buckets:
         self.rest_cmd = rest_cmds['bucket-list']
         self.method = 'GET'
 
+    @timed_out(60)
     def runCmd(self, cmd, server, port,
                user, password, opts):
         self.user = user

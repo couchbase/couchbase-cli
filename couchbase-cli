@@ -7,13 +7,15 @@ couchbase-cli - command-line cluster administration tool
 
 import getopt
 import sys
+
 import listservers
 import buckets
 import node
 import info
 import util_cli as util
-
 from usage import usage, short_usage
+from timeout import TimeoutException
+
 
 def main():
     for x in sys.argv:
@@ -114,6 +116,9 @@ def main():
 
     try:
         c.runCmd(cmd, server, port, user, password, opts)
+    except TimeoutException, err:
+        print "TIMED OUT: command: %s: %s:%d, %s" % (cmd, server, port, err)
+        sys.exit(1)
     except Exception, err:
         print "ERROR: command: %s: %s:%d, %s" % (cmd, server, port, err)
         sys.exit(1)
