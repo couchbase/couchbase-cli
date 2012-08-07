@@ -147,19 +147,32 @@ class CBSink(pump_mc.MCSink):
         for row in sd:
             logging.debug("design_doc row: " + str(row))
 
-            id = row['id']
+            doc = row.get('doc', None)
+            if not doc:
+                return "error: missing design doc in row: %s" % (row)
+
+            if 'json' in doc and 'meta' in doc:
+                js = doc['json']
+                id = doc['meta'].get('id', None)
+                if not id:
+                    return "error: missing id for design doc: %s" % (row)
+            else:
+                # Handle design-doc from 2.0DP4.
+                js = doc
+                if '_rev' in js:
+                    del js['_rev']
+                id = row.get('id', None)
+                if not id:
+                    return "error: missing id for row: %s" % (row)
+
+            js_doc = json.dumps(js)
+            logging.debug("design_doc: " + js_doc)
             logging.debug("design_doc id: " + id + " at: " + path + "/" + id)
-
-            if '_rev' in row['doc']:
-                del row['doc']['_rev']
-
-            doc = json.dumps(row['doc'])
-            logging.debug("design_doc: " + doc)
 
             try:
                 err, conn, response = \
                     pump.rest_request(host, int(port), user, pswd,
-                                      path + "/" + id, method='PUT', body=doc,
+                                      path + "/" + id, method='PUT', body=js_doc,
                                       reason="consume_design")
                 if conn:
                     conn.close()

@@ -2384,19 +2384,21 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
     def on_all_docs(self, req, _1, _2):
         print "on_all_docs", req.command, req.path
-        ok = """[
-                  {"id":"_design/dev_dd0",
-                   "key":"_design/dev_dd0",
-                   "value":{"rev":"7-aa4defd3"},
-                   "doc":{
-                     "_id":"_design/dev_dd0",
-                     "_rev":"7-aa4defd3",
-                     "views":{
-                       "view0":{
-                         "map":"function (doc) {\\n  emit(doc._id, null);\\n}"
+        ok = """{"rows": [
+                  {"doc":{
+                     "json": {
+                       "_id":"_design/dev_dd0",
+                       "views":{
+                         "view0":{
+                           "map":"function (doc) {\\n  emit(doc._id, null);\\n}"
+                         }
                        }
+                     },
+                     "meta": {
+                       "id":"_design/dev_dd0",
+                       "rev":"7-aa4defd3"
                      }
-                   }}]"""
+                   }}]}"""
         req.send_response(200)
         req.send_header("Content-Type", 'application/json')
         req.end_headers()
