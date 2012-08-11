@@ -150,7 +150,10 @@ class MCSink(pump.Sink):
             self.append_req(m, req)
 
         if m:
-            conn.s.send(''.join(m))
+            try:
+                conn.s.send(''.join(m))
+            except socket.error, e:
+                return "error: conn.send() exception: %s" % (e)
 
         return 0
 
