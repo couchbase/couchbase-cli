@@ -303,6 +303,9 @@ class MCSink(pump.Sink):
             except mc_bin_client.MemcachedError:
                 return "error: SASL auth failed: %s:%s, user: %s" % \
                     (host, port, user), None
+            except socket.error:
+                return "error: SASL auth exception: %s:%s, user: %s" % \
+                    (host, port, user), None
         return 0, mc
 
     def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque):
