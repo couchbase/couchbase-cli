@@ -239,9 +239,9 @@ class TAPDumpSource(pump.Source):
             #
             ext, val = \
                 TAPDumpSource.encode_tap_connect_opts({
-                    # TODO: (1) TAPDumpSource - validate TAP_FLAG_XXX usage.
                     memcacheConstants.TAP_FLAG_DUMP: '',
                     memcacheConstants.TAP_FLAG_SUPPORT_ACK: '',
+                    memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER: ''
                     })
 
             self.tap_conn._sendCmd(memcacheConstants.CMD_TAP_CONNECT,
