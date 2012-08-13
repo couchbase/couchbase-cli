@@ -137,12 +137,13 @@ class SFDSource(pump.Source):
                             (doc_info.id, source_spec, e), None
 
                 doc['id'] = doc.get('id', doc_info.id)
-                doc['_rev'] = doc.get('_rev', doc_info.revMeta)
+                doc['_rev'] = doc.get('_rev', doc_info.revSequence)
+
                 rows.append({'id': doc_info.id, 'doc': doc})
 
         store.close()
 
-        return 0, json.dumps({'rows': rows})
+        return 0, json.dumps(rows)
 
     def provide_batch(self):
         if self.done:
