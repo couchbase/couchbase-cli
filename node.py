@@ -341,7 +341,10 @@ class Node:
             if node['hostname'] in to_eject:
                 eject_otps.append(node['otpNode'])
             if node['hostname'] in to_failover:
-                failover_otps.append(node['otpNode'])
+                if node['clusterMembership'] != 'active':
+                    raise Exception('node %s is not active' % node['hostname'])
+                else:
+                    failover_otps.append(node['otpNode'])
             if node['hostname'] in to_readd:
                 readd_otps.append(node['otpNode'])
 
