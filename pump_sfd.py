@@ -205,12 +205,13 @@ class SFDSource(pump.Source):
 
                 if doc_info.deleted:
                     cmd = memcacheConstants.CMD_TAP_DELETE
+                    val = ''
                 else:
                     cmd = memcacheConstants.CMD_TAP_MUTATION
+                    val = doc_info.getContents()
 
                 cas, exp, flg = struct.unpack(SFD_REV_META, doc_info.revMeta)
                 meta = struct.pack(SFD_REV_SEQ, doc_info.revSequence)
-                val = doc_info.getContents()
                 msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
                 abatch[0].append(msg, len(val))
 
