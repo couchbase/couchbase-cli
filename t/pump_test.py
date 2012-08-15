@@ -270,7 +270,7 @@ class MockMemcachedSession(threading.Thread):
                 data = skt.recv(max(nbytes - len(buf), 4096))
             except socket.timeout:
                 logging.error("error: recv socket.timeout")
-            except Exception as e:
+            except Exception, e:
                 logging.error("error: recv exception: " + str(e))
 
             if not data:
