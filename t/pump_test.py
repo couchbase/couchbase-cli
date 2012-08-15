@@ -43,11 +43,12 @@ from memcacheConstants import *
 # TODO: (1) test server node hiccup.
 # TODO: (1) test server not enough disk space.
 
+
 class MockHTTPServer(BaseHTTPServer.HTTPServer):
     """Subclass that remembers the rest_server; and, SO_REUSEADDR."""
 
     def __init__(self, host_port, handler, rest_server):
-        self.rest_server = rest_server # Instance of MockRESTServer.
+        self.rest_server = rest_server  # Instance of MockRESTServer.
         BaseHTTPServer.HTTPServer.__init__(self, host_port, handler)
 
     def server_bind(self):
@@ -83,8 +84,8 @@ class MockRESTHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.server.rest_server.expects = expects[1:]
 
         # Might be callback-based request handler.
-        if (type(request) == types.FunctionType or
-            type(request) == types.MethodType):
+        if (isinstance(request, types.FunctionType) or
+                isinstance(request, types.MethodType)):
             return request(self, request, response)
 
         # Test the expected request.
@@ -92,8 +93,8 @@ class MockRESTHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         assert self.path == request['path'], self.path + " != " + request['path']
 
         # Might be callback-based response handler.
-        if (type(response) == types.FunctionType or
-            type(response) == types.MethodType):
+        if (isinstance(response, types.FunctionType) or
+                isinstance(response, types.MethodType)):
             return response(self, request, response)
 
         # Send the pre-canned response.
@@ -142,13 +143,14 @@ class MockRESTServer(threading.Thread):
             httpd.socket.close()
 
 
-mrs = MockRESTServer(18091) # Mock REST / ns_server server.
+mrs = MockRESTServer(18091)  # Mock REST / ns_server server.
 mrs.start()
 
-mcs = MockRESTServer(18092) # Mock couchDB API server.
+mcs = MockRESTServer(18092)  # Mock couchDB API server.
 mcs.start()
 
 # ------------------------------------------------
+
 
 class MockMemcachedServer(threading.Thread):
 
@@ -201,7 +203,7 @@ class MockMemcachedSession(threading.Thread):
         self.server = server
         self.client = client
         self.address = address
-        self.loops = 0 # Number of loops without progress.
+        self.loops = 0  # Number of loops without progress.
         self.loops_max = 10
         self.go = threading.Event()
 
@@ -237,7 +239,7 @@ class MockMemcachedSession(threading.Thread):
                 magic, cmd, keylen, extlen, dtype, vbucket_id, datalen, opaque, cas = \
                     struct.unpack(memcacheConstants.REQ_PKT_FMT, pkt)
                 if (magic != memcacheConstants.REQ_MAGIC_BYTE and
-                    magic != memcacheConstants.RES_MAGIC_BYTE):
+                        magic != memcacheConstants.RES_MAGIC_BYTE):
                     raise Exception("unexpected recv magic: " + str(magic))
 
                 data, buf = self.recv(self.client, datalen, buf)
@@ -287,6 +289,7 @@ mms1 = MockMemcachedServer(18081)
 mms1.start()
 
 # ------------------------------------------------
+
 
 class Worker(threading.Thread):
 
@@ -709,7 +712,7 @@ class MCTestHelper(unittest.TestCase):
     def json_2_nodes(self):
         j = SAMPLE_JSON_pools_default_buckets
         j = j.replace("HOST0:8091", mrs.host_port())
-        j = j.replace("HOST1:8091", mrs.host + ":8091") # Assuming test won't contact 2nd REST server.
+        j = j.replace("HOST1:8091", mrs.host + ":8091")  # Assuming test won't contact 2nd REST server.
         j = j.replace("HOST0:11210", mms0.host_port())
         j = j.replace("HOST1:11210", mms1.host_port())
         j = j.replace("HOST0", mms0.host)
@@ -732,8 +735,8 @@ class MCTestHelper(unittest.TestCase):
         val = ''
         if data:
             ext = data[0:extlen]
-            key = data[extlen:extlen+keylen]
-            val = data[extlen+keylen:]
+            key = data[extlen:extlen + keylen]
+            val = data[extlen + keylen:]
         return cmd, vbucket_id, ext, key, val, opaque, cas
 
     def parse_req(self, buf):
@@ -766,10 +769,10 @@ class MCTestHelper(unittest.TestCase):
                 memcacheConstants.TAP_FLAG_DUMP: '',
                 memcacheConstants.TAP_FLAG_SUPPORT_ACK: '',
                 memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER: '',
-                })
+            })
 
         self.assertEqual(expect_ext, ext)
-        self.assertTrue(key) # Expecting non-empty TAP name.
+        self.assertTrue(key)  # Expecting non-empty TAP name.
         self.assertEqual(expect_val, val)
         self.assertEqual(0, cas)
 
@@ -816,7 +819,7 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes() }),
+                          {'code': 200, 'message': self.json_2_nodes()}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
@@ -1151,7 +1154,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                           {'code': 200,
                            'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
-        self.chop_at = 16 # Header length is 24 bytes.
+        self.chop_at = 16  # Header length is 24 bytes.
         w = Worker(target=self.worker_2_chopped)
         w.start()
 
@@ -1181,7 +1184,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                           {'code': 200,
                            'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
 
-        self.chop_at = 26 # Header length is 24 bytes.
+        self.chop_at = 26  # Header length is 24 bytes.
         w = Worker(target=self.worker_2_chopped)
         w.start()
 
@@ -1654,7 +1657,7 @@ class RestoreTestHelper:
                  (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 1001, 8001, '')],
                 [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 9900, 8800, ''),
                  (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 9901, 8801, '')]
-                ]
+            ]
             # 0xf1000000 == 4043309056
             # 0xfe000000 == 4261412864
             expected_backup_stdout = \
@@ -1683,7 +1686,7 @@ class RestoreTestHelper:
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})] + \
+                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})] +
                       more_mrs_expect)
 
         workers = []
@@ -1806,7 +1809,7 @@ class RestoreTestHelper:
                 self.check_auth(req, bucket, bucket_password)
         else:
             if (cmd == memcacheConstants.CMD_SET or
-                cmd == memcacheConstants.CMD_ADD):
+                    cmd == memcacheConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd == memcacheConstants.CMD_DELETE:
@@ -1865,10 +1868,10 @@ class RestoreTestHelper:
         self.reset_mock_cluster()
 
         # Two mock servers in the cluster.
-        workers = [ Worker(target=self.worker_restore,
-                           args=[0, mms0, len(orig_msgs_flattened)]),
-                    Worker(target=self.worker_restore,
-                           args=[1, mms1, len(orig_msgs_flattened)]) ]
+        workers = [Worker(target=self.worker_restore,
+                          args=[0, mms0, len(orig_msgs_flattened)]),
+                   Worker(target=self.worker_restore,
+                          args=[1, mms1, len(orig_msgs_flattened)])]
         for w in workers:
             w.start()
 
@@ -1917,21 +1920,17 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_simple_2batch(self):
-        source_msgs = self.check_restore(None,
-                                          batch_max_size=2)
+        source_msgs = self.check_restore(None, batch_max_size=2)
         self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_simple_8batch(self):
-        source_msgs = self.check_restore(None,
-                                          batch_max_size=8)
+        source_msgs = self.check_restore(None, batch_max_size=8)
         self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
     def test_restore_simple_4thread_8batch(self):
-        source_msgs = self.check_restore(None,
-                                          threads=4,
-                                          batch_max_size=8)
+        source_msgs = self.check_restore(None, threads=4, batch_max_size=8)
         self.assertEqual(len(source_msgs),
                          self.restored_cmd_counts[CMD_SET])
 
@@ -1942,7 +1941,7 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
              (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 0xeeeeddddffffffffL, '')],
             [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 0xffffffffffffffff, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, '')]
-            ]
+        ]
 
         source_msgs = self.check_restore(msgs_per_node)
         self.assertEqual(len(source_msgs),
@@ -1960,7 +1959,7 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
              (CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y-back', 123, 456, 40000 * 0xffffffff, '')
              ]
-            ]
+        ]
 
         source_msgs = self.check_restore(msgs_per_node,
                                          expected_cmd_counts=3)
@@ -1987,7 +1986,7 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 1, kb, vb, 0, 0, 0, '')],
             [(CMD_TAP_MUTATION, 900, kx, vx, 0, 0, 1, '')]
-            ]
+        ]
 
         source_msgs = self.check_restore(msgs_per_node,
                                          expected_cmd_counts=2,
@@ -2021,7 +2020,7 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
              (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, '')],
             [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
-            ]
+        ]
 
     def handle_mc_req(self, client, req, bucket, bucket_password):
         """Sends NOT_MY_VBUCKET to test topology change detection."""
@@ -2043,7 +2042,7 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
                 self.check_auth(req, bucket, bucket_password)
         else:
             if (cmd == memcacheConstants.CMD_SET or
-                cmd == memcacheConstants.CMD_ADD):
+                    cmd == memcacheConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd == memcacheConstants.CMD_DELETE:
@@ -2074,17 +2073,17 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
             reqs_after_respond_with_not_my_vbucket
 
         # Two mock servers in the cluster.
-        workers = [ Worker(target=self.worker_restore,
-                           args=[0, mms0, len(orig_msgs_flattened)]),
-                    Worker(target=self.worker_restore,
-                           args=[1, mms1, len(orig_msgs_flattened)]) ]
+        workers = [Worker(target=self.worker_restore,
+                          args=[0, mms0, len(orig_msgs_flattened)]),
+                   Worker(target=self.worker_restore,
+                          args=[1, mms1, len(orig_msgs_flattened)])]
         for w in workers:
             w.start()
 
         rv = pump_transfer.Restore().main([
-                "cbrestore", d, mrs.url(),
-                "-t", str(threads),
-                "-x", "nmv_retry=0,batch_max_size=%s" % (batch_max_size)])
+            "cbrestore", d, mrs.url(),
+            "-t", str(threads),
+            "-x", "nmv_retry=0,batch_max_size=%s" % (batch_max_size)])
         self.assertNotEqual(0, rv)
 
         for w in workers:
@@ -2120,7 +2119,7 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
              (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, '')],
             [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
-            ]
+        ]
 
     def handle_mc_req(self, client, req, bucket, bucket_password):
         """Sends backoff responses to test retries."""
@@ -2131,7 +2130,7 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             self.parse_req(req)
 
         if (self.reqs_after_respond_with_backoff and
-            self.reqs_after_respond_with_backoff <= client.reqs):
+                self.reqs_after_respond_with_backoff <= client.reqs):
             self.reqs_after_respond_with_backoff = None
             client.client.send(self.res(cmd, self.backoff_err,
                                         '', '', '', opaque, 0))
@@ -2145,7 +2144,7 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                 self.check_auth(req, bucket, bucket_password)
         else:
             if (cmd == memcacheConstants.CMD_SET or
-                cmd == memcacheConstants.CMD_ADD):
+                    cmd == memcacheConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd == memcacheConstants.CMD_DELETE:
@@ -2176,10 +2175,10 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             reqs_after_respond_with_backoff
 
         # Two mock servers in the cluster.
-        workers = [ Worker(target=self.worker_restore,
-                           args=[0, mms0, len(orig_msgs_flattened)]),
-                    Worker(target=self.worker_restore,
-                           args=[1, mms1, len(orig_msgs_flattened)]) ]
+        workers = [Worker(target=self.worker_restore,
+                          args=[0, mms0, len(orig_msgs_flattened)]),
+                   Worker(target=self.worker_restore,
+                          args=[1, mms1, len(orig_msgs_flattened)])]
         for w in workers:
             w.start()
 
@@ -2218,7 +2217,7 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
              (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, '')],
             [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
-            ]
+        ]
 
         d, orig_msgs, orig_msgs_flattened = \
             self.gen_backup(msgs_per_node=self.msgs_per_node)
@@ -2226,10 +2225,10 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.reset_mock_cluster()
 
         # Two mock servers in the cluster.
-        workers = [ Worker(target=self.worker_restore,
-                           args=[0, mms0, len(orig_msgs_flattened)]),
-                    Worker(target=self.worker_restore,
-                           args=[1, mms1, len(orig_msgs_flattened)]) ]
+        workers = [Worker(target=self.worker_restore,
+                          args=[0, mms0, len(orig_msgs_flattened)]),
+                   Worker(target=self.worker_restore,
+                          args=[1, mms1, len(orig_msgs_flattened)])]
         for w in workers:
             w.start()
 
@@ -2256,7 +2255,7 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             return True
         else:
             if (cmd == memcacheConstants.CMD_SET or
-                cmd == memcacheConstants.CMD_ADD):
+                    cmd == memcacheConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd == memcacheConstants.CMD_DELETE:
@@ -2289,7 +2288,7 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff, '')],
             [(CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff, '')]
-            ]
+        ]
 
         source_msgs = self.check_restore(msgs_per_node,
                                          expected_cmd_counts=2,
@@ -2316,7 +2315,7 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                 self.check_auth(req, bucket, bucket_password)
         else:
             if (cmd == memcacheConstants.CMD_SET or
-                cmd == memcacheConstants.CMD_ADD):
+                    cmd == memcacheConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd == memcacheConstants.CMD_DELETE:
@@ -2411,8 +2410,8 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
     def reset_mock_cluster(self):
         print "reset_mock_cluster..."
         mcs.reset(self,
-                  [({ 'command': 'PUT',
-                      'path': '/default/_design/dev_dd0' },
+                  [({'command': 'PUT',
+                     'path': '/default/_design/dev_dd0'},
                     self.on_ddoc_put)])
         RestoreTestHelper.reset_mock_cluster(self)
         print "reset_mock_cluster... done"
@@ -2427,7 +2426,7 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         req.end_headers()
         req.wfile.write(ok)
 
-        time.sleep(0.01) # See: http://stackoverflow.com/questions/383738
+        time.sleep(0.01)  # See: http://stackoverflow.com/questions/383738
 
         self.mcs_events.append("ddocs_put")
         self.mcs_event.set()
@@ -2620,6 +2619,7 @@ SAMPLE_JSON_pools_default_buckets = """
 SAMPLE_JSON_pools_default_buckets_default_stats_curr_items = """
 {"samplesCount":60,"isPersistent":true,"lastTStamp":1341861910910.0,"interval":1000,"timestamp":[1341861852910.0,1341861853910.0,1341861854910.0,1341861855910.0,1341861856910.0,1341861857910.0,1341861858910.0,1341861859909.0,1341861860910.0,1341861861909.0,1341861862910.0,1341861863910.0,1341861864910.0,1341861865910.0,1341861866910.0,1341861867909.0,1341861868910.0,1341861869910.0,1341861870909.0,1341861871910.0,1341861872910.0,1341861873910.0,1341861874910.0,1341861875909.0,1341861876910.0,1341861877909.0,1341861878910.0,1341861879910.0,1341861880910.0,1341861881909.0,1341861882910.0,1341861883909.0,1341861884910.0,1341861885909.0,1341861886909.0,1341861887910.0,1341861888910.0,1341861889909.0,1341861890909.0,1341861891909.0,1341861892910.0,1341861893910.0,1341861894910.0,1341861895910.0,1341861896910.0,1341861897909.0,1341861898910.0,1341861899910.0,1341861900910.0,1341861901909.0,1341861902910.0,1341861903910.0,1341861904910.0,1341861905910.0,1341861906910.0,1341861907909.0,1341861908910.0,1341861909910.0,1341861910910.0],"nodeStats":{"10.3.121.192:8091":[24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954],"10.3.121.194:8091":[25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428]}}
 """
+
 
 class MockStdOut:
     def __init__(self):
