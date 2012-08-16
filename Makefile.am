@@ -34,6 +34,7 @@ nobase_pythonlib_DATA= \
          simplejson/encoder.py \
          simplejson/scanner.py \
          stats_buffer.py \
+         timeout.py \
          usage.py \
          util_cli.py
 
