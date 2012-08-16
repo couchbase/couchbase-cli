@@ -16,9 +16,11 @@ except ImportError:
         p = "PATH"
     else:
         p = "LD_LIBRARY_PATH"
-    print ("warning: could not import couchstore module"
-           "; accessing local couchstore-files:// will not work"
-           "; please check your PYTHONPATH and %s environment variables" % (p))
+    for x in sys.argv:
+        if x.startswith("couchstore-files://"):
+            sys.exit("error: could not import couchstore module"
+                     "; directly accessing local couchstore-files:// will not work"
+                     "; please check your PYTHONPATH and %s environment variables" % (p))
 
 import pump_transfer
 
