@@ -233,6 +233,9 @@ class TAPDumpSource(pump.Source):
                 except mc_bin_client.MemcachedError:
                     return "error: SASL auth failed: %s:%s, user: %s" % \
                         (host, port, sasl_user), None
+                except socket.error:
+                    return "error: SASL auth socket error: %s:%s, user: %s" % \
+                        (host, port, sasl_user), None
 
             # We explicitly do not use TAP_FLAG_REGISTERED_CLIENT,
             # as that is for checkpoint/incremental backup only.
