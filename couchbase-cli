@@ -119,6 +119,9 @@ def main():
     except TimeoutException, err:
         print "TIMED OUT: command: %s: %s:%d, %s" % (cmd, server, port, err)
         sys.exit(1)
+    except KeyboardInterrupt:
+        print "INTERRUPTED: command: %s: %s:%d" % (cmd, server, port)
+        sys.exit(1)
     except Exception, err:
         print "ERROR: command: %s: %s:%d, %s" % (cmd, server, port, err)
         sys.exit(1)
