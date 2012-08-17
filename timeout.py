@@ -63,6 +63,9 @@ def timed_out(timeout=60):
             timer.start()
             signal.signal(signal.SIGABRT, handle_signal)
 
-            return function(*args, **kargs)
+            try:
+                return function(*args, **kargs)
+            finally:
+                timer.cancel()
         return wrapper
     return decorator
