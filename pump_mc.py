@@ -189,7 +189,8 @@ class MCSink(pump.Sink):
                                      (self.spec, key))
                     continue
                 elif (r_status == memcacheConstants.ERR_ETMPFAIL or
-                      r_status == memcacheConstants.ERR_EBUSY):
+                      r_status == memcacheConstants.ERR_EBUSY or
+                      r_status == memcacheConstants.ERR_ENOMEM):
                     retry = True # Retry the whole batch again next time.
                     continue     # But, finish recv'ing current batch.
                 elif r_status == memcacheConstants.ERR_NOT_MY_VBUCKET:
