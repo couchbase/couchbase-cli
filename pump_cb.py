@@ -144,6 +144,10 @@ class CBSink(pump_mc.MCSink):
         host, port, user, pswd, path = \
             pump.parse_spec(opts, couch_api_base, 8092)
 
+        if user is None:
+            user = spec_parts[2] # Default to the main REST user/pwsd.
+            pswd = spec_parts[3]
+
         for row in sd:
             logging.debug("design_doc row: " + str(row))
 
