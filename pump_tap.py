@@ -60,7 +60,7 @@ class TAPDumpSource(pump.Source):
         if not source_nodes:
             if spec_parts[0] not in ['localhost', '127.0.0.1']:
                 return ("error: no design source node; spec_parts: %s" %
-                        (spec_parts), None)
+                        (spec_parts,), None)
             else:
                 source_nodes = source_bucket['nodes']
 
