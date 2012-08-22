@@ -5,13 +5,29 @@ import glob
 import logging
 import os
 import re
-import sqlite3
 import subprocess
 import sys
 
 import memcacheConstants
 
 from pump import EndPoint, Source, Batch
+
+MIN_SQLITE_VERSION = '3.7'
+
+import_stmts = (
+    'from pysqlite2 import dbapi2 as sqlite3',
+    'import sqlite3',
+)
+for status, stmt in enumerate(import_stmts):
+    try:
+        exec stmt
+        if sqlite3.sqlite_version >= MIN_SQLITE_VERSION:
+            status = 0
+            break
+    except ImportError:
+        pass
+if status:
+    sys.exit("Error: could not import required version of sqlite3 module")
 
 MBF_VERSION = 2 # sqlite pragma user version for Couchbase 1.8.
 

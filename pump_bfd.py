@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import simplejson as json
-import sqlite3
 import string
 import sys
 import time
@@ -15,6 +14,19 @@ import urllib
 import memcacheConstants
 
 from pump import Source, Sink, Batch, SinkBatchFuture
+
+import_stmts = (
+    'from pysqlite2 import dbapi2 as sqlite3',
+    'import sqlite3',
+)
+for status, stmt in enumerate(import_stmts):
+    try:
+        exec stmt
+        break
+    except ImportError:
+        status = None
+if status is None:
+    sys.exit("Error: could not import sqlite3 module")
 
 CBB_VERSION = 2004 # sqlite pragma user version.
 

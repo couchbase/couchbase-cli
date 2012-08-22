@@ -7,15 +7,6 @@ import os
 import sys
 import threading
 
-try:
-    import sqlite3
-except ImportError:
-    msg = "error: could not import sqlite3 module"
-    if sys.version_info[0] < 2 or sys.version_info[1] < 6:
-        msg = msg + "; later versions of python (>= 2.6)" + \
-            " ship the required versions of the sqlite3 module"
-    sys.exit(msg)
-
 import pump
 import pump_bfd
 import pump_csv
@@ -26,6 +17,19 @@ import pump_mc
 import pump_tap
 
 from pump import PumpingStation
+
+import_stmts = (
+    'from pysqlite2 import dbapi2 as sqlite3',
+    'import sqlite3',
+)
+for status, stmt in enumerate(import_stmts):
+    try:
+        exec stmt
+        break
+    except ImportError:
+        status = None
+if status is None:
+    sys.exit("Error: could not import sqlite3 module")
 
 class Transfer:
     """Base class for 2.0 Backup/Restore/Transfer."""
