@@ -41,11 +41,7 @@ class Transfer:
             "  %prog http://SOURCE:8091 /backups/backup-42\n" \
             "  %prog /backups/backup-42 http://DEST:8091\n" \
             "  %prog /backups/backup-42 couchbase://DEST:8091\n" \
-            "  %prog /backups/backup-42 memcached://DEST:11211\n" \
-            "  %prog /backups/backup-42 stdout:\n" \
-            "  %prog http://SOURCE:8091 http://DEST:8091\n" \
-            "  %prog http://SOURCE:8091 stdout:\n" \
-            "  %prog stdin: http://DEST:8091"
+            "  %prog http://SOURCE:8091 http://DEST:8091"
 
     def main(self, argv, opts_etc=None):
         if threading.current_thread().name == "MainThread":
