@@ -129,8 +129,9 @@ class CBSink(pump_mc.MCSink):
         if not spec_parts:
             return "error: design sink no spec_parts: " + sink_spec
 
-        sink_nodes = pump.filter_bucket_nodes(sink_map['buckets'][0],
-                                              spec_parts)
+        sink_bucket = sink_map['buckets'][0]
+        sink_nodes = pump.filter_bucket_nodes(sink_bucket, spec_parts) or \
+            sink_bucket['nodes']
         if not sink_nodes:
             return "error: design sink nodes missing"
 
