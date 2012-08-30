@@ -76,11 +76,10 @@ class MBFSource(Source):
                         'state': state,
                         'checkpoint_id': row[3]
                         }
-            except sqlite3.DatabaseError, e:
-                pass # A missing vbucket_states table is expected.
-            finally:
                 cur.close()
                 db.close()
+            except sqlite3.DatabaseError, e:
+                pass # A missing vbucket_states table is expected.
 
         return 0, {'spec': spec,
                    'buckets':
