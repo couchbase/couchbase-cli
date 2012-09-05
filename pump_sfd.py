@@ -124,7 +124,7 @@ class SFDSource(pump.Source):
         for doc_info in store.changesSince(0):
             if not doc_info.deleted:
                 try:
-                    doc_contents = doc_info.getContents()
+                    doc_contents = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
                 except Exception, e:
                     return ("error: could not read design doc: %s" +
                             "; source_spec: %s; exception: %s") % \
@@ -209,7 +209,7 @@ class SFDSource(pump.Source):
                     val = ''
                 else:
                     cmd = memcacheConstants.CMD_TAP_MUTATION
-                    val = doc_info.getContents()
+                    val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
 
                 cas, exp, flg = struct.unpack(SFD_REV_META, doc_info.revMeta)
                 meta = struct.pack(SFD_REV_SEQ, doc_info.revSequence)
@@ -323,7 +323,8 @@ class SFDSink(pump.Sink):
                             store.close()
                             return
 
-                        store.saveMultiple(bulk_keys, bulk_vals)
+                        store.saveMultiple(bulk_keys, bulk_vals,
+                                           options=couchstore.CouchStore.COMPRESS)
 
                     store.commit()
                     store.close()
@@ -418,7 +419,7 @@ class SFDSink(pump.Sink):
             bulk_vals.append(json.dumps(row['doc']))
 
         if bulk_keys and bulk_vals:
-            store.saveMultiple(bulk_keys, bulk_vals)
+            store.saveMultiple(bulk_keys, bulk_vals) # TODO: Compress ddocs?
 
         store.commit()
         store.close()
