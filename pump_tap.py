@@ -307,7 +307,13 @@ class TAPDumpSource(pump.Source):
             except socket.timeout:
                 logging.error("error: recv socket.timeout")
             except Exception, e:
-                logging.error("error: recv exception: " + str(e))
+                msg = str(e)
+                if msg.find("Connection reset by peer") >= 0:
+                    logging.error("error: recv exception: " + \
+                        "%s, %s may be inactive" % (msg, self.source_node["hostname"]))
+                else:
+                    logging.error("error: recv exception: " + str(e))
+
 
             if not data:
                 return None, ''
