@@ -10,7 +10,6 @@ import logging
 
 import collector
 import stats_buffer
-import util
 
 import processor
 
