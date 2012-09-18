@@ -1,0 +1,124 @@
+#!/usr/bin/env python
+# -*-python-*-
+
+"""
+Workload generator tool for Couchbase 2.0.
+"""
+
+import pump_transfer
+import pump
+import pump_gen
+import sys
+import optparse
+
+class WorkloadGen(pump_transfer.Transfer):
+    """Entry point for 2.0 cbworkloadgen."""
+
+    def __init__(self):
+        self.name = "cbworkloadgen"
+        self.source_alias = "generator"
+        self.sink_alias = "destination"
+
+        self.usage = \
+            "%prog [options]\n\n" \
+            "Generate workload to destination.\n\n" \
+            "Examples:\n" \
+            "  %prog -n localhost:8091\n" \
+            "  %prog -n 10.3.121.192:8091 -r .9 -i 100000 \\\n" \
+            "         -s 100 -b my-other-bucket --threads=10\n\n"
+
+    def main(self, argv):
+
+        src, sink, common_opts = self.opt_construct(argv)
+
+        local_args = [argv[0]]
+        local_args.append(src)
+        local_args.append(sink)
+        for k, v in common_opts.iteritems():
+            local_args.append(v[0])
+            local_args.append(v[1])
+
+        pump_transfer.Transfer.main(self, local_args)
+
+    def opt_construct(self, argv):
+        gen_opts = {"ratio_sets": "ratio-sets",
+                    "exit_after_creates" : "exit-after-creates",
+                    "max_items" : "max-items",
+                    "size" : "min-value-size",
+                    "prefix" : "prefix",
+                   }
+
+        sink_opts = {"node" : "http://"}
+
+        common_opts = {"bucket" : ["-B", None],
+                       "threads" : ["-t", None],
+                       "username" : ["-u", None],
+                       "password" : ["-p", None],
+                      }
+
+        p = optparse.OptionParser(usage=self.usage)
+        self.add_parser_options(p)
+        opts, rest = p.parse_args(argv[1:])
+
+        gen_str = "gen:"
+        for key in gen_opts.iterkeys():
+            val = getattr(opts, key, None)
+            if val:
+                gen_str += gen_opts[key] + "=" + str(val) + ","
+        if gen_str[-1] == ",":
+            gen_str = gen_str[:-1]
+
+        sink_str = ""
+        for key in sink_opts.iterkeys():
+            val = getattr(opts, key, None)
+            if val:
+                sink_str += sink_opts[key] + val
+
+        for key in common_opts.iterkeys():
+            val = getattr(opts, key, None)
+            if val:
+                common_opts[key][1] = str(val)
+
+        return gen_str, sink_str, common_opts
+
+    def add_parser_options(self, p):
+        p.add_option("-r", "--ratio-sets",
+                     action="store", type="float", default=.95,
+                     help="""set/get operation ratio""")
+        p.add_option("-n", "--node", type="string", default="127.0.0.1:8091",
+                    help="node's ns_server ip:port")
+        p.add_option("-b", "--bucket",
+                     action="store", type="string", default="default",
+                     help="""insert data to a different bucket other than default """)
+        p.add_option("-i", "--max-items",
+                    action="store", type="int", default=10000,
+                    help="""number of items to be inserted""")
+        p.add_option("-s", "--size",
+                    action="store", type="int", default=10,
+                    help="""minimum value size""")
+        p.add_option("-P", "--prefix",
+                    action="store", type="string", default="",
+                    help="""prefix to use for memcached keys or json ids""")
+        p.add_option("-e", "--exit-after-creates",
+                    action="store", type="int", default=1,
+                    help="""exit after creating items""")
+        p.add_option("-u", "--username",
+                     action="store", type="string", default=None,
+                     help="REST username for cluster or server node")
+        p.add_option("-p", "--password",
+                     action="store", type="string", default=None,
+                     help="REST password for cluster or server node")
+        p.add_option("-t", "--threads",
+                     action="store", type="int", default=4,
+                     help="""number of concurrent workers""")
+        p.add_option("-v", "--verbose",
+                     action="count", default=0,
+                     help="verbose logging; more -v's provide more verbosity")
+        return p
+
+
+    def find_handlers(self, opts, source, sink):
+        return pump_gen.GenSource, pump.PumpingStation.find_handler(opts, sink, pump_transfer.SINKS)
+
+if __name__ == '__main__':
+    sys.exit(WorkloadGen().main(sys.argv))
