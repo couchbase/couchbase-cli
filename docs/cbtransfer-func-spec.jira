@@ -1,0 +1,184 @@
+{toc}
+
+h1. 2.0 cbtransfer functional spec
+
+h2. CHANGES
+
+* 2012/08/06 - cbtransfer moved from /opt/couchbase/bin/tools to /opt/couchbase/bin due to windows packaging.
+
+h2. cbtransfer
+
+{code}
+    /opt/couchbase/bin/cbtransfer [options] <source> <destination>
+{code}
+
+The cbtransfer tool is the underlying, generic data transfer tool that
+cbbackup, cbrestore, recovery and data format upgrades are built upon.
+It is like a lightweight "ETL" (extract-transform-load) tool that can
+move data from a source to a destination.  The source and destination
+parameters kind of look like URL's or files, where different URL
+schemes/prefixes and/or file suffixes are parsed by cbtransfer to
+invoke the right source-handler and destination-handler code.
+
+(We might not initially, publicly promote or document cbtransfer, to
+limit the QE testing matrix, especially those items in the
+"experimental for 2.0" status.)
+
+h3. cbtransfer source schemes
+
+Different sources schemes that are supported by cbtransfer include...
+
+|| scheme || source of data || status ||
+| http://HOST:PORT | an online couchbase server, via TAP protocol | available in 2.0 |
+| couchbase://HOST:PORT | an online couchbase server, via TAP protocol; that is, an alias or equivalent to http://HOST:PORT | available in 2.0 |
+| BACKUP_DIR | 2.0 couchbase backup directory | available in 2.0 |
+| stdin: | standard input, memcached ascii format | experimental for 2.0 |
+| \- | standard input, memcached ascii format, or an alias or equivalent to stdin: | experimental for 2.0 |
+| FILE.csv | used to import data from MySQL or any comma-separated-values file (Excel CSV encoding format) | experimental for 2.0 |
+| couchstore-files://COUCHSTORE_BUCKET_PARENT_DIR | used during data recovery; the source of data is 2.0 couchstore (\*.couch.\*) files | available in 2.0 |
+| 1.8_COUCHBASE_BUCKET_MASTER_DB_SQLITE_FILE | used during upgrade; the source of data is 1.8 couchbase sqlite (/opt/couchbase/var/lib/couchbase/data/default-data/default) files | available in 2.0 |
+| bson://PATH_TO_BSON_FILE | used to import data from MongoDB | experimental for 2.0 |
+| gen:KEY_VALUE_PARAMS | used to generate simple GET/SET workload | experimental for 2.0 |
+
+h3. cbtransfer destination schemes
+
+Different destination schemes that are supported by cbtransfer include...
+
+|| scheme || destination of data || status ||
+| http://HOST:PORT | an online couchbase server | available in 2.0 |
+| couchbase://HOST:PORT | an online couchbase server, or an alias or equivalent to http://HOST:PORT | available in 2.0 |
+| BACKUP_DIR | 2.0 couchbase backup directory | available in 2.0 |
+| memcached://HOST:PORT | memcached or moxi server (memcached binary protocol) | experimental for 2.0 |
+| stdout: | standard out, memcached ascii format | experimental for 2.0 |
+| \- | standard out, memcached ascii format, or an alias or equivalent to stdout: | experimental for 2.0 |
+| FILE.csv | used to export data to MySQL or any comma-separated-values file (Excel CSV encoding format) | experimental for 2.0 |
+| couchstore-files://COUCHSTORE_BUCKET_PARENT_DIR | used during upgrade; destination will be 2.0 couchstore (\*.couch.\*) files | available in 2.0 |
+
+h2. data recovery
+
+Imagine a server died, but you still had access to its database files.  You would like
+to recover data from those database files.  To do so, use cbtransfer....
+{code}
+    /opt/couchbase/bin/cbtransfer \
+       couchstore-files://COUCHSTORE_BUCKET_DIR \
+       couchbase://HOST:PORT \
+       --bucket-destination=DESTINATION_BUCKET
+
+    /opt/couchbase/bin/cbtransfer \
+       couchstore-files:///opt/couchbase/var/lib/couchbase/data/default \
+       couchbase://10.5.3.121:8091 \
+       --bucket-destination=foo
+{code}
+
+You can also transfer data to any other destination supported by cbtransfer...
+{code}
+    /opt/couchbase/bin/cbtransfer \
+       couchstore-files:///opt/couchbase/var/lib/couchbase/data/default \
+       stdout:
+{code}
+
+h2. CSV import/export
+
+h3. CSV import
+
+When importing a CSV file...
+{code}
+  ./cbtransfer my-data.csv couchbase://HOST:PORT -B my-bucket
+{code}
+
+The first line in the CSV describes the fields of each document.  The
+CSV value escaping rules follow Microsoft Excel CSV escaping rules.
+Additionally, one field (or column) must be an 'id' column.  For
+example...
+{code}
+id,friend
+alice,bob
+charles,bob
+doug,bob
+bob,"zeus the ""god of lightning"""
+yancy,"zeus,with,commas"
+{code}
+
+Some example documents that would be created would be...
+{code}
+{ "id": "alice",
+  "friend", "bob" }
+
+...
+
+{ "id": "yancy",
+  "friend", "zeus,with,commas" }
+{code}
+
+h3. CSV export
+
+When exporting into CSV file format...
+{code}
+  ./cbtransfer couchbase://HOST:8091 my-export.csv -b default
+{code}
+
+The resulting my-export.csv file would have its first line look like
+(along with some sample data)...
+{code}
+id,flags,expiration,cas,value
+alice,0,0,230402938409,bob
+charles,0,0,203984387943,bob
+...
+{code}
+
+h2. simple workload generation
+
+The cbtransfer tool supports the "gen:" source, which is a
+mcsoda-inspired simple workload generator.
+{code}
+./cbtransfer gen:[KEY=VALUE[,KEY=VALUE]] destination
+{code}
+
+The KEY=VALUE settings are comma-separated.
+
+Example...
+{code}
+./cbtransfer gen: http://10.3.121.192:8091
+{code}
+
+To see what it's generating, you could use stdout as your destination...
+{code}
+./cbtransfer gen: stdout:
+{code}
+
+The workload generation algorithm is functional (in the mathematical
+sense), in that invoking cbtransfer multiple times with the same
+parameters will always generate the same sequence of GET/SET commands
+and sequence of keys.
+
+A more advanced example...
+{code}
+./cbtransfer gen:max-items=50000,min-value-size=10,exit-after-creates=1,prefix=steve1-,ratio-sets=1.0 \
+                      http://10.3.121.192:8091 -B my-other-bucket --threads=10
+{code}
+
+The valid KEY=VALUE configuration parameters and their default settings are...
+{code}
+  exit-after-creates=0      # Use 1 to exit after max-items are all created.
+  max-items=10000           # Maximum number of items to create and access.
+  min-value-size=10         # In bytes.
+  prefix=                   # A prefix of 'x' would mean keys that look like 'x0', 'x1', 'x2', etc.
+  ratio-sets=0.05           # Percentage of SET commands (versus GET commands). 1.0 means 100% SET's.
+{code}
+
+The above follow mcsoda semantics.
+
+Additionally, advanced KEY=VALUE configuration parameters, which can
+be used to tweak the starting-point of the algorithm, are...
+{code}
+  cur-ops=0
+  cur-gets=0
+  cur-sets=0
+  cur-items=0
+{code}
+
+For example, you might run it once with
+gen:exit-after-creates=1,ratio-sets=1.0,max-items=10000000 to
+initially load or populate data.  Then, later runs can use
+gen:cur-items=10000000 to skip right past the initial data loading
+phase.

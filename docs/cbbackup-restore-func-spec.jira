@@ -1,0 +1,397 @@
+{toc}
+
+h1. 2.0 backup/restore functional spec
+
+In general, the 2.0 backup/restore command-line parameters try to stay
+compatible with the 1.8 backup/restore command-line parameters.  New
+2.0 flags are marked below.
+
+h2. cbbackup
+
+{code}
+    /opt/couchbase/bin/cbbackup [options] <source> <backup_dir>
+{code}
+
+h3. parameter: source
+
+The source can be a URL (like, http://HOST:8091) to backup a Couchbase
+cluster with TAP dump (1.8 or 2.0).  Or, the source can be a local
+bucket data directory (for 2.0) to backup the bucket data from a
+single server node.
+
+{code}
+    # Local 2.0 data file access, single server node backup, XXX bucket only.
+    # Does not backup bucket configuration nor design docs.
+    #
+    # Of note, if you're passing in a local bucket data directory for
+    # the source parameter, you are NOT backing up a cluster.
+    # Instead, you are backing up the bucket data from a single node only.
+    #
+    ./cbbackup couchstore-files:///opt/couchbase/var/lib/couchbase/data/XXX /backup-XXX/2012-05-10
+
+    # TAP-based backup of all server nodes, all buckets.
+    # This will also backup design docs.
+    #
+    ./cbbackup http://Administrator:password@HOST:8091 /backup-cluster/2012-05-10
+
+    # TAP-based backup of all server nodes, XXX bucket only.
+    # This will also backup design docs.
+    #
+    ./cbbackup --bucket-source=XXX http://Administrator:password@HOST:8091 /backup-XXX/2012-05-10
+
+    # TAP-based backup of just server node HOST, XXX bucket only.
+    # This will also backup design docs.
+    #
+    ./cbbackup --bucket-source=XXX --single-node http://Administrator:password@HOST:8091 /backup-XXX/2012-05-10
+
+    # You can use couchbase:// instead of http:// for clarity.
+    # They are equivalent or aliases.
+    #
+    ./cbbackup couchbase://Administrator:password@HOST:8091 /backup-cluster/2012-05-10
+{code}
+
+When the source parameter is a local bucket data directory, cbbackup
+will look for key files in the bucket data directory to double-check
+that it's a correct 2.0 bucket data directory.
+
+h3. parameter: backup_dir
+
+The backup_dir should either be empty or not created yet (but its
+parent directory should exist).  The cbbackup tool will create the
+backup_dir if needed.
+
+The backup_dir is created on the local filesystem (which of course can
+be a network drive).  To be clear, the backup_dir is NOT created on
+the remote couchbase server node.
+
+h3. cbbackup options
+
+{code}
+    -b BUCKET, --bucket-source=BUCKET (*NEW*)
+                        single bucket from source to backup
+    -k KEY, --key=KEY   allow only items with keys that match a regexp (*NEW*)
+    -u USERNAME, --username=USERNAME (*NEW*)
+                        REST username for cluster or server node
+    -p PASSWORD, --password=PASSWORD (*NEW*)
+                        REST password for cluster or server node
+    --single-node (*NEW*)
+                        use a single server node from the source only,
+                        not all server nodes from the entire cluster;
+                        this single server node is defined by the source URL
+{code}
+
+Currently (2.0), key filtering via the --key=KEY parameter is done on the client-side,
+not on the server-side.  For example, you might have a really tight key filter that
+just gets a single item -- but the cbbackup tool will TAP all items and "throw away"
+the filtered out items.
+
+h3. cbbackup common options
+
+{code}
+    -h, --help          show this help message and exit
+    -n, --dry-run (*NEW*)
+                        no actual work; just validate parameters, files,
+                        connectivity and configurations
+    -t THREADS, --threads=THREADS (*NEW*)
+                        number of concurrent workers
+    -v, --verbose (*NEW*)
+                        verbose logging; more -v's provide more verbosity
+{code}
+
+h3. more cbbackup example scenarios
+
+* I want to backup all the buckets from a remote, online cluster and the
+backup files will be created on my local box.
+{code}
+./cbbackup http://HOST:8091 /backups/backup-20120501 \
+  -u Administrator -p password
+{code}
+* I want to backup a remote, online cluster, but just a single
+BUCKET's data only (not every bucket), and the backup files
+will be created on my local box.
+{code}
+./cbbackup http://HOST:8091 /backups/backup-20120501 \
+  -u Administrator -p password \
+  -b default
+{code}
+* I want to backup all the buckets from a remote, online server node, but just
+the data from that single server node (not the whole cluster), and the
+backup files will be created on my local box.
+{code}
+./cbbackup http://HOST:8091 /backups/backup-20120501 \
+  -u Administrator -p password \
+  --single-node
+{code}
+* I want to backup a single bucket from a remote, online server node, but just
+the bucket's data from that single server node (not the whole
+cluster), and the backup files will be created on my local box.
+{code}
+./cbbackup http://HOST:8091 /backups/backup-20120501 \
+  -u Administrator -p password \
+  --single-node \
+  -b default
+{code}
+* I want to backup a single bucket on a remote, online server node, but just
+the bucket's data from that single server node (not the whole
+cluster), and the backup files will be created on the
+remote server node.
+{code}
+ssh USER@HOST
+sudo su - couchbase
+cd /opt/couchbase/bin
+./cbbackup http://127.0.0.1:8091 /mnt/backup-20120501 \
+  -u Administrator -p password \
+  --single-node \
+  -b default
+
+# Or, to use direct local file access (faster!)...
+
+ssh USER@HOST
+sudo su - couchbase
+cd /opt/couchbase/bin
+./cbbackup couchstore-files:///opt/couchbase/var/lib/couchbase/data/default /mnt/backup-20120501
+{code}
+** Note that you had ssh onto the remote server node first,
+because cbbackup always creates its backup files on that the box
+that it's run on.
+** To backup a cluster, where backup files live on each node,
+just do the previous "manually" in a FOR loop across every node.
+* I want to backup a single bucket on a remote, *offline* server node, but just
+the bucket's data from that single server node (not the whole
+cluster), and the backup files will be created on the
+remote server node.
+{code}
+ssh USER@HOST
+sudo su - couchbase
+cd /opt/couchbase/bin
+./cbbackup \
+  couchstore-files:///opt/couchbase/var/lib/couchbase/data/default \
+  /mnt/backup-20120501
+
+-or *faster* direct copying of files-
+
+ssh USER@HOST
+sudo su - couchbase
+cd /opt/couchbase/bin
+cp -R /opt/couchbase/var/lib/couchbase/data/default \
+      /mnt/copy-20120501
+{code}
+** Note that you could only use the direct local file access variant
+of cbbackup.
+** Or, you could have just cp'ed or tarball'ed up the data directory, too,
+and not actually needed to use cbbackup.  This can be much faster,
+and direct file copying should work even when the server node is
+online.  Direct file copying, however, can only be directly restored against
+an offline destination cluster that has the same topology (number of nodes)
+where the files need to be carefully copied to the right nodes where the
+cluster has the same vbucket map.
+** Using cbbackup, however, transforms the data into the backup_dir
+file format that allows for partial data restores (e.g., filtering by
+key, vbucket_id; set-vs-add semantics, etc) to an online destination
+cluster using cbrestore, where the destination cluster may have a different
+topology.
+** Additionally using cbbackup of couchstore-files:// instead of direct
+file copying will reduce the file size -- in essence performing a form
+of compaction.
+
+h2. cbrestore
+
+{code}
+    /opt/couchbase/bin/cbrestore [options] <backup_dir> <destination>
+{code}
+
+The cbrestore tools restores a single bucket's data from a previous
+backup_dir to a destination couchbase cluster.  The destination
+cluster must be online, and the destination bucket must have been
+already created before running cbrestore.
+
+Note that a backup_dir might contain items from multiple buckets,
+because cbbackup might have be run against a multi-bucket cluster.  To
+restore every bucket, then, cbrestore must be run multiple times, once
+for every bucket in the backup_dir.
+
+h3. parameter: backup_dir
+
+This is the backup_dir from a previous cbbackup run.
+
+h3. parameter: destination
+
+The parameter destination allows the user to specify the target
+cluster for a restore.  It should be a REST URL to a couchbase
+cluster.
+
+Examples...
+
+{code}
+    # Restore bucket XXX to a cluster, via built-in couchbase smart
+    # client.  Bucket XXX must be already created and configured
+    # on the destination cluster.  The destination cluster must
+    # be online.  Restore is via an embedded couchbase smart
+    # client...
+    #
+    ./cbrestore \
+        /backups/backup-2012-05-10 \
+        http://Administrator:password@HOST:8091 \
+        --bucket-source=XXX
+
+    ./cbrestore \
+        /backups/backup-2012-05-10 \
+        http://Administrator:password@HOST:8091 \
+        -b XXX
+
+    # To restore via a moxi server (or, to a binary-protocol
+    # memcached server), use a memcached:// kind of URL...
+    #
+    ./cbrestore \
+        /backups/backup-2012-05-10 \
+        memcached://HOST:11211 \
+        -b XXX
+{code}
+
+h3. cbrestore options
+
+{code}
+    -a, --add             use add instead of set to avoid overwriting
+                          existing items.
+    -b BUCKET, --bucket-source=BUCKET (*NEW*)
+                          single bucket from the backup_dir to restore;
+                          if the backup_dir only contains a single bucket,
+                          then that bucket will be automatically used
+    -B BUCKET, --bucket-destination=BUCKET (*NEW*)
+                          when --bucket-source is specified, overrides the
+                          destination bucket name; this allows you to restore
+                          to a different bucket; defaults to the same as the
+                          bucket-source
+    -d DATA, --data=DATA  Server side value to match (circa 2012/09/12: --data flag NOT YET IMPLEMENTED)
+    -i ID, --id=ID        allow only items that match a vbucketID
+    -k KEY, --key=KEY     allow only items with keys that match a regexp
+    -u USERNAME, --username=USERNAME
+                          REST username for cluster or server node
+    -P PASSWORD, --password=PASSWORD
+                          REST username for cluster or server node
+{code}
+
+h3. cbrestore common options
+
+{code}
+    -h, --help          show this help message and exit
+    -n, --dry-run (*NEW*)
+                        no actual work; just validate parameters, files,
+                        connectivity and configurations
+    -t THREADS, --threads=THREADS (*NEW*)
+                        number of concurrent workers
+    -v, --verbose (*NEW*)
+                        verbose logging; more -v's provide more verbosity
+{code}
+
+h3. more cbrestore example scenarios
+
+* I want to restore bucket XXX on a remote, online cluster from
+a backup_dir that's on my local box.
+{code}
+./cbrestore /backups/backup-20120501 http://Administrator:password@HOST:8091 \
+  --bucket-source=XXX
+
+./cbrestore /backups/backup-20120501 http://Administrator:password@HOST:8091 \
+  -b XXX
+{code}
+* I want to restore bucket XXX on a remote, online cluster from
+a backup_dir that's on my local box, but the destination bucket was
+actually created as YYY.
+{code}
+./cbrestore /backups/backup-20120501 http://Administrator:password@HOST:8091 \
+  -b XXX \
+  -B YYY
+
+-or-
+
+./cbrestore /backups/backup-20120501 http://Administrator:password@HOST:8091 \
+  --bucket-source=XXX \
+  --bucket-destination=YYY
+{code}
+
+h2. cbtransfer
+
+The cbbackup/cbrestore tools are just edge cases of the more generic
+cbtransfer tool.  Please see the cbtransfer-func-spec.jira for more
+information.
+
+h2. threading
+
+The cbbackup/cbrestore/cbtransfer tools support an optional -t or
+--threads parameter to control the concurrency of the program.  The
+max concurrency, however, is limited by the actual number of nodes or
+servers in the cluster.  That is, the tools will not create more
+connections than the number of servers, as data needs to be transfered
+in ordered, sequential fashion.
+
+For example, backing up a 2 node cluster will not create more than 2
+client connections, even though you might specify --threads=100.
+
+h2. authentication/authorization
+
+If you're just doing cbbackup/cbrestore/cbtransfer against only the
+default bucket, you don't need to supply a username or password.
+
+However, if you have a multiple-bucket configuration or don't have a
+default bucket, you MUST supply a REST administrator username &
+password (so that the tools can successfully retrieve information on
+all buckets).  Otherwise, the couchbase server just returns
+information on the default bucket only.
+
+There are three ways to specify username & password.
+* Command-line flags: \--username=USERNAME (or -u USERNAME) and \--password=PASSWORD (or -p PASSWORD)
+* In-line in a URL: http://USERNAME:PASSWORD@HOST:PORT
+* Environment variables: CB_REST_USERNAME and CB_REST_PASSWORD
+** Environment variables do not show up on ps or top output.
+
+h2. errors
+
+The final errors may change -- these are representative of the kinds
+of error cases to consider...
+
+* destination path already contains a backup
+* source path incorrect
+* could not create backup directory
+* could not connect to backup source
+* could not connect to restore destination
+* wrong user (please use couchbase user)
+* cluster is still running
+* not enough backup disk space based on estimates
+* not enough restore disk space based on estimates
+* out of disk space
+* backup is corrupted
+* lost connection
+
+h2. seqNumber, revId metadata
+
+TAP-based backup will backup engine-specific metadata including the
+seqNumber and revId and NRU information.  However, SET-WITH-META-based
+restore will restore only the seqNumber and revID (CAS), but not
+restore the NRU information.  NRU means (roughly) "near recently
+used".
+
+A regular SET-based restore (not using SET-WITH-META) would not
+restore any seqNumber or revId or CAS information.
+
+h2. avoiding SET-WITH-META
+
+Perhaps you're trying to restore to a server that does not support
+SET-WITH-META.  (Please see the server compatibility information
+below.)
+
+In that case, you can use the extra "-x try_xwm=0" option to force the
+cbrestore/cbtransfer tool to _not_ use SET-WITH-META (or, any
+xxx-WITH-META protocol).  Instead, the cbrestore/cbtransfer tool will
+use just plain SET protocol, which should work with 1.8 and 2.0DP4.
+
+h2. using GET instead of SET/SET-WITH-META
+
+During a cbtransfer, instead of using mutation operations (SET/ADD or
+SET-WITH-META/ADD-WITH-META), cbtransfer can support using GET as the
+operation, via the "--destination-operation=get" parameter.
+
+This can be useful to bring "hot" items into memory, as the sequence
+of messages in a TAP-dump-based backup file are ordered by in-memory
+items coming first.
+
