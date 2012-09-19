@@ -68,7 +68,7 @@ class ProgressReporter(object):
         if not total:
             return '.'
         if sys.platform.lower().startswith('win'):
-            cr = "\r\n"
+            cr = "\r"
         else:
             cr = chr(27) + "[A\n"
         pct = float(current) / total
