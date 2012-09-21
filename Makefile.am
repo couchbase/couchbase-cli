@@ -39,14 +39,15 @@ nobase_pythonlib_DATA= \
          util_cli.py
 
 
-pythonlib_SCRIPTS= couchbase-cli cbbackup cbrestore cbtransfer cbclusterstats
+pythonlib_SCRIPTS= couchbase-cli cbbackup cbrestore cbtransfer cbclusterstats cbworkloadgen
 
 PYTHON_TOOLS= \
         wrapper/couchbase-cli \
         wrapper/cbbackup \
         wrapper/cbrestore \
         wrapper/cbtransfer \
-        wrapper/cbclusterstats
+        wrapper/cbclusterstats \
+        wrapper/cbworkloadgen
 
 ${PYTHON_TOOLS}: wrapper/wrapper
 	cp $< $@
