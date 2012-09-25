@@ -901,6 +901,12 @@ def rest_couchbase(opts, spec):
             logging.warn("skipping bucket that is not a couchbase-bucket: " +
                          bucket['name'])
 
+    if user is None or pswd is None:
+        # Check if we have buckets other than the default one
+        if len(rest_buckets) > 0:
+            if len(rest_buckets) > 1 or rest_buckets[0].get('name', None) != "default":
+                return "error: REST username (-u) and password (-p) are required " + \
+                       "to access all bucket(s)", None
     return 0, {'spec': spec, 'buckets': buckets, 'spec_parts': spec_parts}
 
 def filter_bucket_nodes(bucket, spec_parts):
