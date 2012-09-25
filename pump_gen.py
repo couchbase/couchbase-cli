@@ -123,6 +123,7 @@ class GenSource(pump.Source):
     def total_msgs(opts, source_bucket, source_node, source_map):
         """Returns max-items only if exit-after-creates was specified.
            Else, total msgs is unknown as GenSource does not stop generating."""
-        if source_map['cfg']['exit-after-creates']:
-            return 0, source_map['cfg']['max-items']
+        if source_map['cfg']['exit-after-creates'] and source_map['cfg']['ratio-sets'] > 0:
+            total_ops = source_map['cfg']['max-items'] / source_map['cfg']['ratio-sets']
+            return 0, int(total_ops)
         return 0, None
