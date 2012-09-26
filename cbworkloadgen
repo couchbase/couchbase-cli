@@ -85,27 +85,35 @@ class WorkloadGen(pump_transfer.Transfer):
     def add_parser_options(self, p):
         p.add_option("-r", "--ratio-sets",
                      action="store", type="float", default=.95,
+                     metavar=".95",
                      help="""set/get operation ratio""")
         p.add_option("-n", "--node", type="string", default="127.0.0.1:8091",
-                    help="node's ns_server ip:port")
+                     metavar="127.0.0.1:8091",
+                     help="node's ns_server ip:port")
         p.add_option("-b", "--bucket",
                      action="store", type="string", default="default",
+                     metavar="default",
                      help="""insert data to a different bucket other than default """)
         p.add_option("-i", "--max-items",
-                    action="store", type="int", default=10000,
-                    help="""number of items to be inserted""")
+                     action="store", type="int", default=10000,
+                     metavar="10000",
+                     help="""number of items to be inserted""")
         p.add_option("-s", "--size",
-                    action="store", type="int", default=10,
-                    help="""minimum value size""")
+                     action="store", type="int", default=10,
+                     metavar="10",
+                     help="""minimum value size""")
         p.add_option("-P", "--prefix",
-                    action="store", type="string", default="",
-                    help="""prefix to use for memcached keys or json ids""")
+                     action="store", type="string", default="pymc",
+                     metavar="pymc",
+                     help="""prefix to use for memcached keys or json ids""")
         p.add_option("-j", "--json",
                      action="store", type="int", default=0,
+                     metavar="0",
                      help="""insert json data""")
         p.add_option("-e", "--exit-after-creates",
-                    action="store", type="int", default=1,
-                    help="""exit after creating items""")
+                     action="store", type="int", default=1,
+                     metavar="1",
+                     help="""exit after creating items""")
         p.add_option("-u", "--username",
                      action="store", type="string", default=None,
                      help="REST username for cluster or server node")
@@ -114,6 +122,7 @@ class WorkloadGen(pump_transfer.Transfer):
                      help="REST password for cluster or server node")
         p.add_option("-t", "--threads",
                      action="store", type="int", default=4,
+                     metavar="4",
                      help="""number of concurrent workers""")
         p.add_option("-v", "--verbose",
                      action="count", default=0,
