@@ -42,7 +42,7 @@ class WorkloadGen(pump_transfer.Transfer):
 
     def opt_construct(self, argv):
         gen_opts = {"ratio_sets": "ratio-sets",
-                    "exit_after_creates" : "exit-after-creates",
+                    "loop" : "exit-after-creates",
                     "max_items" : "max-items",
                     "size" : "min-value-size",
                     "prefix" : "prefix",
@@ -64,11 +64,12 @@ class WorkloadGen(pump_transfer.Transfer):
         gen_str = "gen:"
         for key in gen_opts.iterkeys():
             val = getattr(opts, key, None)
-            if val:
+            if val is not None:
+                if key in ("loop", "json"):
+                    val = int(val)
                 gen_str += gen_opts[key] + "=" + str(val) + ","
         if gen_str[-1] == ",":
             gen_str = gen_str[:-1]
-
         sink_str = ""
         for key in sink_opts.iterkeys():
             val = getattr(opts, key, None)
@@ -102,18 +103,16 @@ class WorkloadGen(pump_transfer.Transfer):
                      action="store", type="int", default=10,
                      metavar="10",
                      help="""minimum value size""")
-        p.add_option("-P", "--prefix",
+        p.add_option("--prefix",
                      action="store", type="string", default="pymc",
                      metavar="pymc",
                      help="""prefix to use for memcached keys or json ids""")
         p.add_option("-j", "--json",
-                     action="store", type="int", default=0,
-                     metavar="0",
+                     action="store_true", default=False,
                      help="""insert json data""")
-        p.add_option("-e", "--exit-after-creates",
-                     action="store", type="int", default=1,
-                     metavar="1",
-                     help="""exit after creating items""")
+        p.add_option("-l", "--loop",
+                     action="store_false", default=True,
+                     help="""loop forever until interrupted by users""")
         p.add_option("-u", "--username",
                      action="store", type="string", default=None,
                      help="REST username for cluster or server node")
