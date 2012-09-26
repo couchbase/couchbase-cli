@@ -46,6 +46,7 @@ class WorkloadGen(pump_transfer.Transfer):
                     "max_items" : "max-items",
                     "size" : "min-value-size",
                     "prefix" : "prefix",
+                    "json" : "json",
                    }
 
         sink_opts = {"node" : "http://"}
@@ -99,6 +100,9 @@ class WorkloadGen(pump_transfer.Transfer):
         p.add_option("-P", "--prefix",
                     action="store", type="string", default="",
                     help="""prefix to use for memcached keys or json ids""")
+        p.add_option("-j", "--json",
+                     action="store", type="int", default=0,
+                     help="""insert json data""")
         p.add_option("-e", "--exit-after-creates",
                     action="store", type="int", default=1,
                     help="""exit after creating items""")

@@ -3,7 +3,6 @@
 import memcacheConstants
 import pump
 
-
 class GenSource(pump.Source):
     """Generates simple SET/GET workload, useful for basic testing.
        Examples:
@@ -51,7 +50,8 @@ class GenSource(pump.Source):
                'max-items': 10000,
                'min-value-size': 10,
                'prefix': "",
-               'ratio-sets': 0.05}
+               'ratio-sets': 0.05,
+               'json': 0}
         for kv in spec[len("gen:"):].split(','):
             if kv:
                 k = kv.split('=')[0].strip()
@@ -81,8 +81,14 @@ class GenSource(pump.Source):
         max_items = cfg['max-items']
         ratio_sets = cfg['ratio-sets']
         exit_after_creates = cfg['exit-after-creates']
+        json = cfg['json']
         if not self.body:
-            self.body = "0" * cfg['min-value-size']
+            min_value_body = "0" * cfg['min-value-size']
+            if json:
+                self.body = '{"name": "%s%s", "age": %s, "index": %s,' + \
+                            ' "min_value_size": "%s"}' % min_value_body
+            else:
+                self.body = min_value_body
 
         batch = pump.Batch(self)
 
@@ -108,8 +114,12 @@ class GenSource(pump.Source):
                 key = self.cur_gets % self.cur_items
             self.cur_ops = self.cur_ops + 1
 
-            msg = (cmd, vbucket_id, prefix + str(key), flg, exp, cas, '', self.body)
-            batch.append(msg, len(self.body))
+            if json:
+                value = self.body % (prefix, key, key % 101, key)
+            else:
+                value = self.body
+            msg = (cmd, vbucket_id, prefix + str(key), flg, exp, cas, '', value)
+            batch.append(msg, len(value))
 
             if exit_after_creates and self.cur_items >= max_items:
                 self.done = True
