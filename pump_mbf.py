@@ -45,7 +45,7 @@ class MBFSource(Source):
                       FROM `{{0}}`.`{{1}}` as kv,
                            `{0}`.vbucket_states as vb
                      WHERE kv.vbucket = vb.vbid
-                       AND kv.vb_version = kv.vb_version
+                       AND kv.vb_version = vb.vb_version
                        AND vb.state like '{1}'"""
 
     @staticmethod
