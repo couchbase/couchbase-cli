@@ -120,8 +120,8 @@ class WorkloadGen(pump_transfer.Transfer):
                      action="store", type="string", default=None,
                      help="REST password for cluster or server node")
         p.add_option("-t", "--threads",
-                     action="store", type="int", default=4,
-                     metavar="4",
+                     action="store", type="int", default=1,
+                     metavar="1",
                      help="""number of concurrent workers""")
         p.add_option("-v", "--verbose",
                      action="count", default=0,
