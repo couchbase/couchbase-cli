@@ -29,14 +29,19 @@ class WorkloadGen(pump_transfer.Transfer):
 
     def main(self, argv):
 
-        src, sink, common_opts = self.opt_construct(argv)
+        src, sink, common_opts, count_opts = self.opt_construct(argv)
 
         local_args = [argv[0]]
         local_args.append(src)
         local_args.append(sink)
-        for k, v in common_opts.iteritems():
+        for v in common_opts.itervalues():
             local_args.append(v[0])
             local_args.append(v[1])
+
+        for v in count_opts.itervalues():
+            if v[1] is not None:
+                for i in range(v[1]):
+                    local_args.append(v[0])
 
         pump_transfer.Transfer.main(self, local_args)
 
@@ -56,6 +61,8 @@ class WorkloadGen(pump_transfer.Transfer):
                        "username" : ["-u", None],
                        "password" : ["-p", None],
                       }
+
+        count_opts = {"verbose" : ["-v", None]}
 
         p = optparse.OptionParser(usage=self.usage)
         self.add_parser_options(p)
@@ -81,7 +88,12 @@ class WorkloadGen(pump_transfer.Transfer):
             if val:
                 common_opts[key][1] = str(val)
 
-        return gen_str, sink_str, common_opts
+        for key in count_opts.iterkeys():
+            val = getattr(opts, key, None)
+            if val:
+                count_opts[key][1] = int(val)
+
+        return gen_str, sink_str, common_opts, count_opts
 
     def add_parser_options(self, p):
         p.add_option("-r", "--ratio-sets",
