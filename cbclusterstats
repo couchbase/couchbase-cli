@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import getopt
+from optparse import OptionParser
 import sys
 import logging
 
@@ -12,58 +12,39 @@ log = logging.getLogger('cbclusterstats')
 log.setLevel(logging.INFO)
 log.addHandler(logging.StreamHandler())
 
+
 def parse_opt():
-    (cluster, user, password, txtfile) = ('', '', '', 'clusterstats.txt')
+    usage = "usage: %prog CLUSTER USERNAME PASSWORD OPTIONS"
 
-    try:
-        (opts, _args) = getopt.getopt(sys.argv[1:],
-                                      'c:dp:u:o:', [
-                'cluster=',
-                'debug',
-                'password=',
-                'user=',
-                'txt=',
-                ])
-    except getopt.GetoptError, err:
-        usage(err)
+    parser = OptionParser(usage)
 
-    for (opt, arg) in opts:
-        if opt in ('-c', '--cluster'):
-            cluster = arg
-        if opt in ('-u', '--user'):
-            user = arg
-        if opt in ('-p', '--password'):
-            password = arg
-        if opt in ('-d', '--debug'):
-            log.setLevel(logging.DEBUG)
-        if opt in ('-o', '--output'):
-            txtfile = arg
+    parser.add_option('-c', '--cluster', dest='cluster', default='',
+                      help='default port is 8091',
+                      metavar='HOST[:PORT]')
+    parser.add_option('-u', '--user', dest='user', default='',
+                      help='admin username of the cluster',
+                      metavar='USERNAME')
+    parser.add_option('-p', '--password', dest='password', default='',
+                      help='admin password of the cluster',
+                      metavar='PASSWORD')
+    parser.add_option('-o', '--output', dest='txtfile', default='clusterstats.txt',
+                      help='default output filename is "clusterstats.txt"',
+                      metavar='FILENAME')
+    parser.add_option('-d', '--debug', dest='debug', default=False,
+                      action="store_true")
 
-    if not cluster or not user or not password:
-        usage()
-    return (cluster, user, password, txtfile, opts)
+    options, args = parser.parse_args()
 
-def usage(error_msg=''):
-    if error_msg:
-        print "ERROR: %s" % error_msg
+    if options.debug:
+        log.setLevel(logging.DEBUG)
+
+    if not options.cluster or not options.user or not options.password:
+        parser.print_help()
         sys.exit(2)
 
-    print """cbclusterstats - cluster key performance indicator stats
+    return options.cluster, options.user, options.password, options.txtfile, \
+        args
 
-usage: cbclusterstats CLUSTER USERNAME PASSWORD OPTIONS
-
-CLUSTER:
-  --cluster=HOST[:PORT] or -c HOST[:PORT] Default port is 8091
-USERNAME:
-  -u USERNAME, --user=USERNAME      admin username of the cluster
-PASSWORD:
-  -p PASSWORD, --password=PASSWORD  admin password of the cluster
-OPTIONS:
-  -o FILENAME, --output=FILENAME    Default output filename is 'clusterstats.txt'
-  -d, --debug
-
-"""
-    sys.exit(2)
 
 def main():
     (cluster, user, password, txtfile, opts) = parse_opt()
