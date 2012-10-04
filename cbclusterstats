@@ -3,14 +3,9 @@
 
 import getopt
 import sys
-import os
-import traceback
-import copy
 import logging
 
 import collector
-import stats_buffer
-
 import processor
 
 log = logging.getLogger('cbclusterstats')
