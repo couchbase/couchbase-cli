@@ -238,6 +238,33 @@ class MBFSource(Source):
 
         return 0, batch
 
+    @staticmethod
+    def total_msgs(opts, source_bucket, source_node, source_map):
+        total = None
+
+        vb_state = getattr(opts, "source_vbucket_state", None)
+        if vb_state not in ["active", "replica"]:
+            return 0, total
+
+        try:
+            spec = source_map['spec']
+            db = sqlite3.connect(spec)
+            cursor = db.cursor()
+
+            stmt = "SELECT value FROM stats_snap where name like 'vb_%s_curr_items'" % vb_state
+            cursor.execute(stmt)
+            row = cursor.fetchone()
+            if row:
+                #Either we can find the stats in the first row, or we don't.
+                total = int(str(row[0]))
+
+            cursor.close()
+            db.close()
+        except Exception,e:
+            pass
+
+        return 0, total
+
     def connect_db(self):
         db = sqlite3.connect(':memory:')
         logging.debug("  MBFSource connect_db: %s" % self.spec)
