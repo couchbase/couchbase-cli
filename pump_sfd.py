@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import collections
 import glob
 import logging
 import os
@@ -13,6 +12,7 @@ import threading
 import couchstore
 import memcacheConstants
 import pump
+from cbcollections import defaultdict
 
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024
@@ -68,7 +68,7 @@ class SFDSource(pump.Source):
     def vbucket_states(opts, spec, bucket_dir):
         """Reads all the latest couchstore files in a directory, and returns
            map of state string (e.g., 'active') to map of vbucket_id to doc."""
-        vbucket_states = collections.defaultdict(dict)
+        vbucket_states = defaultdict(dict)
 
         for f in latest_couch_files(bucket_dir):
             vbucket_id = int(re.match(SFD_RE, os.path.basename(f)).group(1))

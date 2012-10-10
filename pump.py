@@ -2,7 +2,6 @@
 
 import base64
 import copy
-import collections
 import httplib
 import logging
 import Queue
@@ -16,6 +15,7 @@ import urlparse
 import zlib
 
 import memcacheConstants
+from cbcollections import defaultdict
 
 # TODO: (1) optionally log into backup directory
 
@@ -29,7 +29,7 @@ class ProgressReporter(object):
     def report_init(self):
         self.beg_time = time.time()
         self.prev_time = self.beg_time
-        self.prev = collections.defaultdict(int)
+        self.prev = defaultdict(int)
 
     def report(self, prefix="", emit=None):
         if not emit:
@@ -88,7 +88,7 @@ class PumpingStation(ProgressReporter):
         self.sink_spec = sink_spec
         self.queue = None
         self.ctl = { 'stop': False, 'rv': 0 }
-        self.cur = collections.defaultdict(int)
+        self.cur = defaultdict(int)
 
     def run(self):
         # TODO: (6) PumpingStation - monitor source for topology changes.
@@ -250,7 +250,7 @@ class PumpingStation(ProgressReporter):
             hostname = source_node.get('hostname', NA)
             logging.debug(" node: %s" % (hostname))
 
-            curx = collections.defaultdict(int)
+            curx = defaultdict(int)
 
             rv = Pump(self.opts,
                       self.source_class(self.opts, self.source_spec,
@@ -577,7 +577,7 @@ class Batch(object):
 
     def group_by_vbucket_id(self, vbuckets_num):
         """Returns dict of vbucket_id->[msgs] grouped by msg's vbucket_id."""
-        g = collections.defaultdict(list)
+        g = defaultdict(list)
         for msg in self.msgs:
             cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
             if vbucket_id == 0x0000ffff:

@@ -5,7 +5,6 @@ Unit tests for backup/restore/transfer/pump.
 """
 
 import binascii
-import collections
 import glob
 import logging
 import os
@@ -33,6 +32,7 @@ import mc_bin_client
 import memcacheConstants
 
 from memcacheConstants import *
+from cbcollections import defaultdict
 
 # TODO: (1) test multiple buckets.
 # TODO: (1) test TAP ttl / time-to-live field.
@@ -1633,10 +1633,10 @@ class RestoreTestHelper:
         self.restored_cmds = []
 
         # Map key is cmd key, value is list of msg cmds received for that key.
-        self.restored_key_cmds = collections.defaultdict(list)
+        self.restored_key_cmds = defaultdict(list)
 
         # Map key is cmd code (ex: CMD_SET), value is integer count.
-        self.restored_cmd_counts = collections.defaultdict(int)
+        self.restored_cmd_counts = defaultdict(int)
 
     def gen_backup(self,
                    msgs_per_node=None,

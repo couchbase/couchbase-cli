@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import collections
 import glob
 import logging
 import os
 import sys
 
 import memcacheConstants
+from cbcollections import defaultdict
 
 from pump import EndPoint, Source, Batch
 
@@ -74,7 +74,7 @@ class MBFSource(Source):
             return err, None
 
         # Map of state string (e.g., 'active') to map of vbucket_id to info.
-        vbucket_states = collections.defaultdict(dict)
+        vbucket_states = defaultdict(dict)
         sql = """SELECT vbid, vb_version, state, checkpoint_id
                    FROM vbucket_states"""
         for db_file in [f for f in db_files if f.endswith(".mb")]:
