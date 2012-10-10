@@ -47,8 +47,8 @@ class Transfer:
             "  %prog http://SOURCE:8091 http://DEST:8091"
 
     def main(self, argv, opts_etc=None):
-        if threading.current_thread().name == "MainThread":
-            threading.current_thread().name = "mt"
+        if threading.currentThread().getName() == "MainThread":
+            threading.currentThread().setName("mt")
 
         err, opts, source, sink = self.opt_parse(argv)
         if err:

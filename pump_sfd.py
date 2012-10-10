@@ -146,7 +146,7 @@ class SFDSource(pump.Source):
             return 0, None
 
         if not self.queue:
-            name = "c" + threading.current_thread().name[1:]
+            name = "c" + threading.currentThread().getName()[1:]
             self.queue = Queue.Queue(2)
             self.thread = threading.Thread(target=self.loader, name=name)
             self.thread.daemon = True

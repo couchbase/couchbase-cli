@@ -524,7 +524,7 @@ class Sink(EndPoint):
         self.worker_go = threading.Event()
         self.worker_work = None # May be None or (batch, future) tuple.
         self.worker = threading.Thread(target=target, args=(self,),
-                                       name="s" + threading.current_thread().name[1:])
+                                       name="s" + threading.currentThread().getName()[1:])
         self.worker.daemon = True
         self.worker.start()
 
