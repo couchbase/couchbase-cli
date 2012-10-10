@@ -40,11 +40,11 @@ class MBFSource(Source):
         self.cursor_done = False
 
         self.s = """SELECT vbid, k, flags, exptime, cas, v
-                      FROM `{{0}}`.`{{1}}` as kv,
-                           `{0}`.vbucket_states as vb
+                      FROM `%%s`.`%%s` as kv,
+                           `%s`.vbucket_states as vb
                      WHERE kv.vbucket = vb.vbid
                        AND kv.vb_version = vb.vb_version
-                       AND vb.state like '{1}'"""
+                       AND vb.state like '%s'"""
 
     @staticmethod
     def can_handle(opts, spec):
@@ -163,15 +163,14 @@ class MBFSource(Source):
                     db.close()
                     return "error: no unique vbucket_states table", None
 
-                sql = self.s.format(state_db, source_vbucket_state)
-
+                sql = self.s % (state_db, source_vbucket_state)
                 kv_names = []
                 for kv_name, db_name in table_dbs.iteritems():
                     if (self.opts.id is None and
                         not kv_name.startswith('kv_')):
                         continue
                     if (self.opts.id is not None and
-                        kv_name != "kv_{0}".format(self.opts.id)):
+                        kv_name != "kv_%s" % (self.opts.id) ):
                         continue
                     kv_names.append(kv_name)
 
@@ -204,7 +203,7 @@ class MBFSource(Source):
                                   (db_name, kv_name))
 
                     cursor = db.cursor()
-                    cursor.execute(sql.format(db_name, kv_name))
+                    cursor.execute(sql % (db_name, kv_name))
 
                     self.cursor_todo = (db, sql, db_kv_names, cursor)
 
@@ -270,7 +269,7 @@ class MBFSource(Source):
         db_files = MBFSource.db_files(self.spec)
         logging.debug("  MBFSource db_files: %s" % db_files)
 
-        attached_dbs = ["db{0}".format(i) for i in xrange(len(db_files))]
+        attached_dbs = ["db%s" % (i) for i in xrange(len(db_files))]
         db.executemany("attach ? as ?", zip(db_files, attached_dbs))
 
         # Find all tables, filling a table_name => db_name map.
