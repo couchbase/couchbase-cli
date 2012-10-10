@@ -4,11 +4,9 @@
 import sys
 import traceback
 import copy
-import logging
 
 import listservers
 import buckets
-import node
 import info
 import util_cli as util
 import mc_bin_client

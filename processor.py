@@ -1,5 +1,4 @@
 import datetime
-import logging
 import util_cli as util
 import sys
 

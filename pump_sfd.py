@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 
 import collections
-import ctypes
 import glob
 import logging
 import os
 import Queue
 import re
-import socket
 import simplejson as json
 import struct
-import sys
 import threading
-import time
 
 import couchstore
 import memcacheConstants

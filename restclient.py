@@ -14,7 +14,6 @@ import base64
 import simplejson as json
 import string
 
-from StringIO import StringIO
 
 class RestClient:
     def __init__(self, server, port, opts= {}):

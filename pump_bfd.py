@@ -4,7 +4,6 @@ import copy
 import glob
 import logging
 import os
-import re
 import simplejson as json
 import string
 import sys

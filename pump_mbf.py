@@ -4,8 +4,6 @@ import collections
 import glob
 import logging
 import os
-import re
-import subprocess
 import sys
 
 import memcacheConstants

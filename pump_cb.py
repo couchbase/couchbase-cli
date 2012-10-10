@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 
-import ctypes
 import logging
 import simplejson as json
-import socket
-import struct
 import time
 
 import pump
 import pump_mc
 
-import mc_bin_client
-import memcacheConstants
 
 class CBSink(pump_mc.MCSink):
     """Smart client sink to couchbase cluster."""

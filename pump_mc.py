@@ -4,7 +4,6 @@ import ctypes
 import logging
 import socket
 import struct
-import sys
 import time
 
 import mc_bin_client

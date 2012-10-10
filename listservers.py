@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import sys
 import restclient
 
-from usage import usage
 
 class ListServers:
     def __init__(self):

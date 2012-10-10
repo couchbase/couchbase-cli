@@ -5,8 +5,6 @@ Binary memcached test client.
 Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 """
 
-import sys
-import time
 import hmac
 import socket
 import random
@@ -15,8 +13,7 @@ import exceptions
 
 from memcacheConstants import REQ_MAGIC_BYTE, RES_MAGIC_BYTE
 from memcacheConstants import REQ_PKT_FMT, RES_PKT_FMT, MIN_RECV_PACKET
-from memcacheConstants import SET_PKT_FMT, DEL_PKT_FMT, INCRDECR_RES_FMT
-from memcacheConstants import TOUCH_PKT_FMT, GAT_PKT_FMT, GETL_PKT_FMT
+from memcacheConstants import SET_PKT_FMT, INCRDECR_RES_FMT
 import memcacheConstants
 
 class MemcachedError(exceptions.Exception):

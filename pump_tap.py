@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-import base64
 import logging
 import random
-import re
 import simplejson as json
 import socket
 import string

@@ -5,12 +5,9 @@
   Provides info about a particular server.
 """
 
-from usage import usage
-
 import restclient
 import simplejson
 import subprocess
-import sys
 
 import string
 import random

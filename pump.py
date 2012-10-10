@@ -15,7 +15,6 @@ import time
 import urlparse
 import zlib
 
-import mc_bin_client
 import memcacheConstants
 
 # TODO: (1) optionally log into backup directory
