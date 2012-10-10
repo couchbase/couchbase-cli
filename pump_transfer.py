@@ -91,8 +91,9 @@ class Transfer:
         return None, opts, rest[0], rest[1]
 
     def opt_parser(self):
-        p = optparse.OptionParser(usage=self.usage,
-                                  epilog=opt_extra_help(self.opt_extra_defaults()))
+        p = optparse.OptionParser(usage=self.usage)
+        opt_extra_help(p, self.opt_extra_defaults())
+
         self.opt_parser_options(p)
         return p
 
@@ -281,11 +282,14 @@ def opt_parse_extra(extra, extra_defaults):
     return dict([(k, float(extra_in.get(k, extra_defaults[k][0])))
                  for k in extra_defaults.iterkeys()])
 
-def opt_extra_help(extra_defaults):
-    return "Available extra config parameters (-x): " + \
-        "; ".join(["%s=%s (%s)" %
-                   (k, extra_defaults[k][0], extra_defaults[k][1])
-                   for k in sorted(extra_defaults.iterkeys())])
+def opt_extra_help(parser, extra_defaults):
+    extra_help = "; ".join(["%s=%s (%s)" %
+                           (k, extra_defaults[k][0], extra_defaults[k][1])
+                           for k in sorted(extra_defaults.iterkeys())])
+
+    group = optparse.OptionGroup(parser, "Available extra config parameters (-x)",
+                        extra_help)
+    parser.add_option_group(group)
 
 # --------------------------------------------------
 
