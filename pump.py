@@ -530,7 +530,7 @@ class Sink(EndPoint):
 
     def push_next_batch(self, batch, future):
         """Push batch/future to worker."""
-        if not self.worker.is_alive():
+        if not self.worker.isAlive():
             return "error: cannot use a dead worker", None
 
         self.worker_work = (batch, future)
