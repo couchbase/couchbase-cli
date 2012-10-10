@@ -10,7 +10,7 @@ from cbcollections import defaultdict
 
 from pump import EndPoint, Source, Batch
 
-MIN_SQLITE_VERSION = '3.7'
+MIN_SQLITE_VERSION = '3.3'
 
 import_stmts = (
     'from pysqlite2 import dbapi2 as sqlite3',
