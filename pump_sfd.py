@@ -14,6 +14,8 @@ import memcacheConstants
 import pump
 from cbcollections import defaultdict
 
+from cbqueue import PumpQueue
+
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024
 SFD_REV_META = ">QII" # cas, exp, flg

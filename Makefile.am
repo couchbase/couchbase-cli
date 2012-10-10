@@ -7,6 +7,7 @@ pythonlibdir=$(libdir)/python
 nobase_pythonlib_DATA= \
          buckets.py \
          cbcollections.py \
+         cbqueue.py \
          cluster_stats.py \
          collector.py \
          diskqueue_stats.py \

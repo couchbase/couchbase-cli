@@ -8,7 +8,6 @@ import binascii
 import glob
 import logging
 import os
-import Queue
 import select
 import simplejson as json
 import shutil
@@ -33,6 +32,7 @@ import memcacheConstants
 
 from memcacheConstants import *
 from cbcollections import defaultdict
+from cbqueue import PumpQueue
 
 # TODO: (1) test multiple buckets.
 # TODO: (1) test TAP ttl / time-to-live field.
@@ -167,7 +167,7 @@ class MockMemcachedServer(threading.Thread):
     def reset(self, test=None):
         self.test = test
         self.sessions = {}
-        self.queue = Queue.Queue(1000)
+        self.queue = PumpQueue(1000)
 
     def host_port(self):
         return self.host + ":" + str(self.port)

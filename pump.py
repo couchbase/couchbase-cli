@@ -4,7 +4,6 @@ import base64
 import copy
 import httplib
 import logging
-import Queue
 import re
 import simplejson as json
 import string
@@ -16,6 +15,8 @@ import zlib
 
 import memcacheConstants
 from cbcollections import defaultdict
+
+from cbqueue import PumpQueue
 
 # TODO: (1) optionally log into backup directory
 
@@ -274,7 +275,8 @@ class PumpingStation(ProgressReporter):
         if self.queue:
             return
 
-        self.queue = Queue.Queue(queue_size)
+        self.queue = PumpQueue(queue_size)
+
         threads = [threading.Thread(target=PumpingStation.run_worker,
                                     name="w" + str(i), args=(self, i))
                    for i in range(self.opts.threads)]
