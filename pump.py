@@ -790,7 +790,8 @@ def parse_spec(opts, spec, port):
     p = urlparse.urlparse(spec)
 
     # Example netloc: Administrator:password@HOST:8091
-    netloc = p.netloc
+    #ParseResult tuple(scheme, netloc, path, params, query, fragment)
+    netloc = p[1]
 
     if not netloc: # When urlparse() can't parse non-http URI's.
         netloc = spec.split('://')[-1].split('/')[0]
@@ -807,7 +808,7 @@ def parse_spec(opts, spec, port):
         password = password or (pair[0] + ':').split(':')[1] \
             or os.environ['CB_REST_PASSWORD'] or ''
 
-    return host, port, username, password, p.path
+    return host, port, username, password, p[2]
 
 def rest_request(host, port, user, pswd, path, method='GET', body='', reason=''):
     if reason:
