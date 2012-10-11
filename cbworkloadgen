@@ -43,7 +43,7 @@ class WorkloadGen(pump_transfer.Transfer):
                 for i in range(v[1]):
                     local_args.append(v[0])
 
-        pump_transfer.Transfer.main(self, local_args)
+        return pump_transfer.Transfer.main(self, local_args)
 
     def opt_construct(self, argv):
         gen_opts = {"ratio_sets": "ratio-sets",
@@ -145,4 +145,4 @@ class WorkloadGen(pump_transfer.Transfer):
         return pump_gen.GenSource, pump.PumpingStation.find_handler(opts, sink, pump_transfer.SINKS)
 
 if __name__ == '__main__':
-    sys.exit(WorkloadGen().main(sys.argv))
+    pump_transfer.exit_handler(WorkloadGen().main(sys.argv))

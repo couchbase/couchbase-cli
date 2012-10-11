@@ -5,6 +5,7 @@ import logging
 import optparse
 import sys
 import threading
+import os
 
 import pump
 import pump_bfd
@@ -29,6 +30,13 @@ for status, stmt in enumerate(import_stmts):
         status = None
 if status is None:
     sys.exit("Error: could not import sqlite3 module")
+
+def exit_handler(err):
+    if err:
+        sys.stderr.write(err + "\n")
+        os._exit(1)
+    else:
+        os._exit(0)
 
 class Transfer:
     """Base class for 2.0 Backup/Restore/Transfer."""

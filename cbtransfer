@@ -30,4 +30,4 @@ if __name__ == '__main__':
         bin_dir = os.path.join(mydir, '..')
         path = [mydir, bin_dir, os.environ['PATH']]
         os.environ['PATH'] = ';'.join(path)
-    sys.exit(pump_transfer.Transfer().main(sys.argv))
+    pump_transfer.exit_handler(pump_transfer.Transfer().main(sys.argv))
