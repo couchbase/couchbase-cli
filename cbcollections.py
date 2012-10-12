@@ -14,4 +14,5 @@ class defaultdict(dict):
             try:
                 return super(defaultdict, self).__getitem__(key)
             except KeyError:
-                return self.default_factory()
+                self[key] = self.default_factory()
+                return self[key]
