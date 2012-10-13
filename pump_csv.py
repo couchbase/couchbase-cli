@@ -9,6 +9,15 @@ import sys
 import memcacheConstants
 import pump
 
+def number_try_parse(str):
+    for func in (int, float):
+        try:
+            return func(str)
+        except ValueError:
+            pass
+
+    return str
+
 class CSVSource(pump.Source):
     """Reads csv file, where first line is field names and one field
        should be 'id'."""
@@ -68,7 +77,10 @@ class CSVSource(pump.Source):
                 vals = self.r.next()
                 doc = {}
                 for i, field in enumerate(self.fields):
-                    doc[field] = vals[i]
+                    if field == 'id':
+                        doc[field] = vals[i]
+                    else:
+                        doc[field] = number_try_parse(vals[i])
                 doc_json = json.dumps(doc)
                 msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc_json)
                 batch.append(msg, len(doc))
