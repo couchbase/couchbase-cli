@@ -33,7 +33,7 @@ if status is None:
 
 def exit_handler(err):
     if err:
-        sys.stderr.write(err + "\n")
+        sys.stderr.write(str(err) + "\n")
         os._exit(1)
     else:
         os._exit(0)
