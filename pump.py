@@ -12,7 +12,8 @@ import threading
 import time
 import urlparse
 import zlib
-
+import platform
+import subprocess
 import memcacheConstants
 from cbcollections import defaultdict
 
@@ -913,9 +914,29 @@ def rest_couchbase(opts, spec):
 
 def filter_bucket_nodes(bucket, spec_parts):
     host, port = spec_parts[:2]
+    if host in ['localhost', '127.0.0.1']:
+        host = get_ip()
     host_port = host + ':' + str(port)
     return filter(lambda n: n.get('hostname') == host_port,
                   bucket['nodes'])
+
+def get_ip():
+    ip = None
+    try:
+        f = open('/opt/couchbase/var/lib/couchbase/ip', 'r')
+        ip = string.strip(f.read())
+        if ip and ip.find('@'):
+            ip = ip.split('@')[1]
+        f.close()
+    except:
+        pass
+    if not ip or not len(ip):
+        if platform.system() == 'Windows':
+            ip = subprocess.Popen("ip_addr.bat",
+                                  stdout=subprocess.PIPE).communicate()[0]
+        else:
+            ip = '127.0.0.1'
+    return ip
 
 def find_source_bucket_name(opts, source_map):
     """If the caller didn't specify a bucket_source and
