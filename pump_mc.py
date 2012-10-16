@@ -1,14 +1,27 @@
 #!/usr/bin/env python
 
-import ctypes
 import logging
 import socket
 import struct
 import time
+import sys
 
 import mc_bin_client
 import memcacheConstants
 import pump
+
+try:
+    import ctypes
+except ImportError:
+    cb_path = '/opt/couchbase/lib/python'
+    while cb_path in sys.path:
+        sys.path.remove(cb_path)
+    try:
+        import ctypes
+    except ImportError:
+        sys.exit('error: could not import ctypes module')
+    else:
+        sys.path.insert(0, cb_path)
 
 OP_MAP = {
     'get': memcacheConstants.CMD_GET,
