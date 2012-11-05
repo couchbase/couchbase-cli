@@ -10,6 +10,8 @@ import pump
 import pump_gen
 import sys
 import optparse
+import platform
+import os
 
 class WorkloadGen(pump_transfer.Transfer):
     """Entry point for 2.0 cbworkloadgen."""
@@ -145,4 +147,8 @@ class WorkloadGen(pump_transfer.Transfer):
         return pump_gen.GenSource, pump.PumpingStation.find_handler(opts, sink, pump_transfer.SINKS)
 
 if __name__ == '__main__':
+    if platform.system() == "Windows":
+        python_lib = os.path.join(os.path.dirname(sys.argv[0]), '..')
+        sys.path.append(python_lib)
+
     pump_transfer.exit_handler(WorkloadGen().main(sys.argv))
