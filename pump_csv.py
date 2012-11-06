@@ -78,13 +78,16 @@ class CSVSource(pump.Source):
                 vals = self.r.next()
                 doc = {}
                 for i, field in enumerate(self.fields):
+                    if i >= len(vals):
+                        continue
                     if field == 'id':
                         doc[field] = vals[i]
                     else:
                         doc[field] = number_try_parse(vals[i])
-                doc_json = json.dumps(doc)
-                msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc_json)
-                batch.append(msg, len(doc))
+                if doc['id']:
+                    doc_json = json.dumps(doc)
+                    msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc_json)
+                    batch.append(msg, len(doc))
             except StopIteration:
                 self.done = True
                 self.r = None
