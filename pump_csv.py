@@ -101,10 +101,11 @@ class CSVSink(pump.Sink):
         super(CSVSink, self).__init__(opts, spec, source_bucket, source_node,
                                       source_map, sink_map, ctl, cur)
         self.writer = None
+        self.fields = None
 
     @staticmethod
     def can_handle(opts, spec):
-        if spec == "csv:":
+        if spec.startswith("csv:") or spec.startswith("csv-json:"):
             opts.threads = 1 # Force 1 thread to not overlap stdout.
             return True
         return False
@@ -123,8 +124,22 @@ class CSVSink(pump.Sink):
 
     def consume_batch_async(self, batch):
         if not self.writer:
-            self.writer = csv.writer(sys.stdout)
-            self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value'])
+            if self.spec.startswith("csv-json:"):
+                if len(batch.msgs) <= 0:
+                    future = pump.SinkBatchFuture(self, batch)
+                    self.future_done(future, 0)
+                    return 0, future
+
+                cmd, vbucket_id, key, flg, exp, cas, meta, val = batch.msgs[0]
+                doc = json.loads(val)
+                self.fields = sorted(doc.keys())
+                if 'id' not in self.fields:
+                    self.fields = ['id'] + self.fields
+                self.writer = csv.writer(sys.stdout)
+                self.writer.writerow(self.fields)
+            else:
+                self.writer = csv.writer(sys.stdout)
+                self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value'])
 
         for msg in batch.msgs:
             cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
@@ -133,7 +148,21 @@ class CSVSink(pump.Sink):
 
             try:
                 if cmd == memcacheConstants.CMD_TAP_MUTATION:
-                    self.writer.writerow([key, flg, exp, cas, val])
+                    if self.fields and val and len(val) > 0:
+                        try:
+                            row = []
+                            doc = json.loads(val)
+                            if type(doc) == dict:
+                                for field in self.fields:
+                                    if field == 'id':
+                                        row.append(key)
+                                    else:
+                                        row.append(doc[field])
+                                self.writer.writerow(row)
+                        except ValueError:
+                            pass
+                    else:
+                        self.writer.writerow([key, flg, exp, cas, val])
                 elif cmd == memcacheConstants.CMD_TAP_DELETE:
                     pass
                 elif cmd == memcacheConstants.CMD_GET:
