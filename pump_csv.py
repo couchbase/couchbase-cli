@@ -9,14 +9,15 @@ import sys
 import memcacheConstants
 import pump
 
-def number_try_parse(str):
+def number_try_parse(s):
     for func in (int, float):
         try:
-            return func(str)
+            v = func(s)
+            if s == str(v):
+                return v
         except ValueError:
             pass
-
-    return str
+    return s
 
 class CSVSource(pump.Source):
     """Reads csv file, where first line is field names and one field
