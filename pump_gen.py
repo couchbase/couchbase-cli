@@ -86,7 +86,7 @@ class GenSource(pump.Source):
             min_value_body = "0" * cfg['min-value-size']
             if json:
                 self.body = '{"name": "%s%s", "age": %s, "index": %s,' + \
-                            ' "min_value_size": "%s"}' % min_value_body
+                            ' "body": "%s"}' % min_value_body
             else:
                 self.body = min_value_body
 
