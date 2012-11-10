@@ -209,6 +209,7 @@ class TAPDumpSource(pump.Source):
         if not self.tap_conn:
             host = self.source_node['hostname'].split(':')[0]
             port = self.source_node['ports']['direct']
+            version = self.source_node['version'] # Ex: '2.0.0-1944-rel-community' or '1.8.1-937-rel-community'.
 
             logging.debug("  TAPDumpSource connecting mc: " +
                           host + ":" + str(port))
@@ -238,12 +239,14 @@ class TAPDumpSource(pump.Source):
             # We explicitly do not use TAP_FLAG_REGISTERED_CLIENT,
             # as that is for checkpoint/incremental backup only.
             #
-            ext, val = \
-                TAPDumpSource.encode_tap_connect_opts({
-                    memcacheConstants.TAP_FLAG_DUMP: '',
-                    memcacheConstants.TAP_FLAG_SUPPORT_ACK: '',
-                    memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER: ''
-                    })
+            tap_opts = {memcacheConstants.TAP_FLAG_DUMP: '',
+                        memcacheConstants.TAP_FLAG_SUPPORT_ACK: ''}
+
+            self.tap_conn.tap_fix_flag_byteorder = version.split(".") >= ["2", "0", "0"]
+            if self.tap_conn.tap_fix_flag_byteorder:
+                tap_opts[memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
+
+            ext, val = TAPDumpSource.encode_tap_connect_opts(tap_opts)
 
             self.tap_conn._sendCmd(memcacheConstants.CMD_TAP_CONNECT,
                                    self.tap_name, val, 0, ext)
@@ -268,6 +271,8 @@ class TAPDumpSource(pump.Source):
             elif extlen == 16:
                 metalen, flags, ttl, flg, exp = \
                     struct.unpack(memcacheConstants.TAP_MUTATION_PKT_FMT, ext)
+                if not tap_conn.tap_fix_flag_byteorder:
+                    flg = socket.ntohl(flg)
 
             need_ack = flags & memcacheConstants.TAP_FLAG_ACK
 
