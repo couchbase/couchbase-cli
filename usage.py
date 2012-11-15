@@ -100,11 +100,15 @@ EXAMPLES:
 
   Add a node to a cluster, but do not rebalance:
     couchbase-cli server-add -c 192.168.0.1:8091 \\
-       --server-add=192.168.0.2:8091
+       --server-add=192.168.0.2:8091 \\
+       --server-add-username=Administrator \\
+       --server-add-password=password
 
   Add a node to a cluster and rebalance:
     couchbase-cli rebalance -c 192.168.0.1:8091 \\
-       --server-add=192.168.0.2:8091
+       --server-add=192.168.0.2:8091 \\
+       --server-add-username=Administrator \\
+       --server-add-password=password
 
   Remove a node from a cluster and rebalance:
     couchbase-cli rebalance -c 192.168.0.1:8091 \\
@@ -113,7 +117,9 @@ EXAMPLES:
   Remove and add nodes from/to a cluster and rebalance:
     couchbase-cli rebalance -c 192.168.0.1:8091 \\
       --server-remove=192.168.0.2 \\
-      --server-add=192.168.0.4
+      --server-add=192.168.0.4 \\
+      --server-add-username=Administrator \\
+      --server-add-password=password
 
   Stop the current rebalancing:
     couchbase-cli rebalance-stop -c 192.168.0.1:8091
