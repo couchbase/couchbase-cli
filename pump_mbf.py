@@ -4,11 +4,23 @@ import glob
 import logging
 import os
 import sys
-
+import socket
 import memcacheConstants
 from cbcollections import defaultdict
 
 from pump import EndPoint, Source, Batch
+try:
+    import ctypes
+except ImportError:
+    cb_path = '/opt/couchbase/lib/python'
+    while cb_path in sys.path:
+        sys.path.remove(cb_path)
+    try:
+        import ctypes
+    except ImportError:
+        sys.exit('error: could not import ctypes module')
+    else:
+        sys.path.insert(0, cb_path)
 
 MIN_SQLITE_VERSION = '3.3'
 
@@ -220,7 +232,7 @@ class MBFSource(Source):
                         continue
 
                     meta = ''
-
+                    flg = socket.ntohl(ctypes.c_uint32(flg).value)
                     batch.append((memcacheConstants.CMD_TAP_MUTATION,
                                   vbucket_id, key, flg, exp, cas, meta, val), len(val))
                 else:
