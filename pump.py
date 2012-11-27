@@ -826,13 +826,13 @@ def rest_request(host, port, user, pswd, path, method='GET', body='', reason='',
     try:
         header = rest_headers(user, pswd, headers)
         conn.request(method, path, body, header)
+        resp = conn.getresponse()
     except Exception, e:
         return ("error: could not access REST API: %s:%s%s" +
                 "; please check source URL, username (-u) and password (-p)" +
                 "; exception: %s%s") % \
                 (host, port, path, e, reason), None, None
 
-    resp = conn.getresponse()
     if resp.status in [200, 201, 202, 204, 302]:
         return None, conn, resp.read()
 
