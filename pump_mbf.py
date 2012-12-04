@@ -89,23 +89,23 @@ class MBFSource(Source):
         vbucket_states = defaultdict(dict)
         sql = """SELECT vbid, vb_version, state, checkpoint_id
                    FROM vbucket_states"""
-        for db_file in [f for f in db_files if f.endswith(".mb")]:
-            try:
-                db = sqlite3.connect(db_file)
-                cur = db.cursor()
-                for row in cur.execute(sql):
-                    vbucket_id = row[0]
-                    state = row[2]
-                    vbucket_states[state][vbucket_id] = {
-                        'vbucket_id': vbucket_id,
-                        'vb_version': row[1],
-                        'state': state,
-                        'checkpoint_id': row[3]
-                        }
-                cur.close()
-                db.close()
-            except sqlite3.DatabaseError, e:
-                pass # A missing vbucket_states table is expected.
+        db_file = spec
+        try:
+            db = sqlite3.connect(db_file)
+            cur = db.cursor()
+            for row in cur.execute(sql):
+                vbucket_id = row[0]
+                state = str(row[2])
+                vbucket_states[state][vbucket_id] = {
+                    'vbucket_id': vbucket_id,
+                    'vb_version': row[1],
+                    'state': state,
+                    'checkpoint_id': row[3]
+                    }
+            cur.close()
+            db.close()
+        except sqlite3.DatabaseError, e:
+            pass # A missing vbucket_states table is expected.
 
         return 0, {'spec': spec,
                    'buckets':
