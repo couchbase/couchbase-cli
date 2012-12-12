@@ -51,12 +51,8 @@ class MBFSource(Source):
         self.cursor_todo = None
         self.cursor_done = False
 
-        self.s = """SELECT vbid, k, flags, exptime, cas, v
-                      FROM `%%s`.`%%s` as kv,
-                           `%s`.vbucket_states as vb
-                     WHERE kv.vbucket = vb.vbid
-                       AND kv.vb_version = vb.vb_version
-                       AND vb.state like '%s'"""
+        self.s = """SELECT vbucket, k, flags, exptime, cas, v, vb_version
+                      FROM `%s`.`%s`"""
 
     @staticmethod
     def can_handle(opts, spec):
@@ -164,7 +160,7 @@ class MBFSource(Source):
 
         try:
             if self.cursor_todo is None:
-                rv, db, attached_dbs, table_dbs = self.connect_db()
+                rv, db, attached_dbs, table_dbs, vbucket_states = self.connect_db()
                 if rv != 0:
                     return rv, None
 
@@ -175,7 +171,6 @@ class MBFSource(Source):
                     db.close()
                     return "error: no unique vbucket_states table", None
 
-                sql = self.s % (state_db, source_vbucket_state)
                 kv_names = []
                 for kv_name, db_name in table_dbs.iteritems():
                     if (self.opts.id is None and
@@ -192,9 +187,9 @@ class MBFSource(Source):
                     for db_name in sorted(table_dbs[kv_name]):
                         db_kv_names.append((db_name, kv_name))
 
-                self.cursor_todo = (db, sql, db_kv_names, None)
+                self.cursor_todo = (db, db_kv_names, None, vbucket_states)
 
-            db, sql, db_kv_names, cursor = self.cursor_todo
+            db, db_kv_names, cursor, vbucket_states = self.cursor_todo
             if not db:
                 self.cursor_done = True
                 self.cursor_todo = None
@@ -211,13 +206,15 @@ class MBFSource(Source):
                         break
 
                     db_name, kv_name = db_kv_names.pop()
+                    vbucket_id = int(kv_name.split('_')[-1])
+                    if not vbucket_states[source_vbucket_state].has_key(vbucket_id):
+                        break
+
                     logging.debug("  MBFSource db/kv table: %s/%s" %
                                   (db_name, kv_name))
-
                     cursor = db.cursor()
-                    cursor.execute(sql % (db_name, kv_name))
-
-                    self.cursor_todo = (db, sql, db_kv_names, cursor)
+                    cursor.execute(self.s % (db_name, kv_name))
+                    self.cursor_todo = (db, db_kv_names, cursor, vbucket_states)
 
                 row = cursor.fetchone()
                 if row:
@@ -227,8 +224,12 @@ class MBFSource(Source):
                     exp = row[3]
                     cas = row[4]
                     val = row[5]
+                    version = int(row[6])
 
                     if self.skip(key, vbucket_id):
+                        continue
+
+                    if version != vbucket_states[source_vbucket_state][vbucket_id]:
                         continue
 
                     meta = ''
@@ -237,7 +238,7 @@ class MBFSource(Source):
                                   vbucket_id, key, flg, exp, cas, meta, val), len(val))
                 else:
                     cursor.close()
-                    self.cursor_todo = (db, sql, db_kv_names, None)
+                    self.cursor_todo = (db, db_kv_names, None, vbucket_states)
                     break # Close the batch; next pass hits new db_name/kv_name.
 
         except Exception, e:
@@ -275,6 +276,23 @@ class MBFSource(Source):
         return 0, total
 
     def connect_db(self):
+        #Build vbucket state hash table
+        vbucket_states = defaultdict(dict)
+        sql = """SELECT vbid, vb_version, state FROM vbucket_states"""
+        try:
+            db = sqlite3.connect(self.spec)
+            cur = db.cursor()
+            for row in cur.execute(sql):
+                vbucket_id = int(row[0])
+                vb_version = int(row[1])
+                state = str(row[2])
+                vbucket_states[state][vbucket_id] = vb_version
+            cur.close()
+            db.close()
+        except sqlite3.DatabaseError, e:
+            return "error: no vbucket_states table was found;" + \
+                   " check if db files are correct", None, None, None
+
         db = sqlite3.connect(':memory:')
         logging.debug("  MBFSource connect_db: %s" % self.spec)
 
@@ -301,4 +319,4 @@ class MBFSource(Source):
                 " check if db files are correct", None, None, None
 
         logging.debug("  MBFSource total # tables: %s" % len(table_dbs))
-        return 0, db, attached_dbs, table_dbs
+        return 0, db, attached_dbs, table_dbs, vbucket_states
