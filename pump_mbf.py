@@ -4,11 +4,23 @@ import glob
 import logging
 import os
 import sys
-
+import socket
 import memcacheConstants
 from cbcollections import defaultdict
 
 from pump import EndPoint, Source, Batch
+try:
+    import ctypes
+except ImportError:
+    cb_path = '/opt/couchbase/lib/python'
+    while cb_path in sys.path:
+        sys.path.remove(cb_path)
+    try:
+        import ctypes
+    except ImportError:
+        sys.exit('error: could not import ctypes module')
+    else:
+        sys.path.insert(0, cb_path)
 
 MIN_SQLITE_VERSION = '3.3'
 
@@ -77,23 +89,23 @@ class MBFSource(Source):
         vbucket_states = defaultdict(dict)
         sql = """SELECT vbid, vb_version, state, checkpoint_id
                    FROM vbucket_states"""
-        for db_file in [f for f in db_files if f.endswith(".mb")]:
-            try:
-                db = sqlite3.connect(db_file)
-                cur = db.cursor()
-                for row in cur.execute(sql):
-                    vbucket_id = row[0]
-                    state = row[2]
-                    vbucket_states[state][vbucket_id] = {
-                        'vbucket_id': vbucket_id,
-                        'vb_version': row[1],
-                        'state': state,
-                        'checkpoint_id': row[3]
-                        }
-                cur.close()
-                db.close()
-            except sqlite3.DatabaseError, e:
-                pass # A missing vbucket_states table is expected.
+        db_file = spec
+        try:
+            db = sqlite3.connect(db_file)
+            cur = db.cursor()
+            for row in cur.execute(sql):
+                vbucket_id = row[0]
+                state = str(row[2])
+                vbucket_states[state][vbucket_id] = {
+                    'vbucket_id': vbucket_id,
+                    'vb_version': row[1],
+                    'state': state,
+                    'checkpoint_id': row[3]
+                    }
+            cur.close()
+            db.close()
+        except sqlite3.DatabaseError, e:
+            pass # A missing vbucket_states table is expected.
 
         return 0, {'spec': spec,
                    'buckets':
@@ -220,7 +232,7 @@ class MBFSource(Source):
                         continue
 
                     meta = ''
-
+                    flg = socket.ntohl(ctypes.c_uint32(flg).value)
                     batch.append((memcacheConstants.CMD_TAP_MUTATION,
                                   vbucket_id, key, flg, exp, cas, meta, val), len(val))
                 else:
