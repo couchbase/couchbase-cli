@@ -10,6 +10,12 @@ import pump_mc
 
 class CBSink(pump_mc.MCSink):
     """Smart client sink to couchbase cluster."""
+    def __init__(self, opts, spec, source_bucket, source_node,
+                 source_map, sink_map, ctl, cur):
+        super(CBSink, self).__init__(opts, spec, source_bucket, source_node,
+                                     source_map, sink_map, ctl, cur)
+
+        self.rehash = opts.extra.get("rehash", 0)
 
     def scatter_gather(self, mconns, batch):
         sink_map_buckets = self.sink_map['buckets']
@@ -17,7 +23,7 @@ class CBSink(pump_mc.MCSink):
             return "error: CBSink.run() expected 1 bucket in sink_map", None, None
 
         vbuckets_num = len(sink_map_buckets[0]['vBucketServerMap']['vBucketMap'])
-        vbuckets = batch.group_by_vbucket_id(vbuckets_num)
+        vbuckets = batch.group_by_vbucket_id(vbuckets_num, self.rehash)
 
         # Scatter or send phase.
         for vbucket_id, msgs in vbuckets.iteritems():

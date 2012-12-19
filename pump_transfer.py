@@ -174,7 +174,8 @@ class Transfer:
             "report_full":     (2000,   "# batches before emitting progress info"),
             "recv_min_bytes":  (4096,   "amount of bytes for every recv() call"),
             "try_xwm":         (1,      "1 to first try XXX-WITH-META commands"),
-            "nmv_retry":       (1,      "1 to retry after NOT_MY_VBUCKET replies")
+            "nmv_retry":       (1,      "1 to retry after NOT_MY_VBUCKET replies"),
+            "rehash":          (0,      "1 to rehash vbucket id when transfering")
             }
 
     def find_handlers(self, opts, source, sink):

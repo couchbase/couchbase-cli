@@ -246,6 +246,7 @@ class SFDSink(pump.Sink):
                  source_map, sink_map, ctl, cur):
         super(SFDSink, self).__init__(opts, spec, source_bucket, source_node,
                                       source_map, sink_map, ctl, cur)
+        self.rehash = opts.extra.get("rehash", 0)
         self.init_worker(SFDSink.run)
 
     @staticmethod
@@ -260,7 +261,7 @@ class SFDSink(pump.Sink):
             if not batch:
                 return self.future_done(future, 0)
 
-            vbuckets = batch.group_by_vbucket_id(SFD_VBUCKETS)
+            vbuckets = batch.group_by_vbucket_id(SFD_VBUCKETS, self.rehash)
             for vbucket_id, msgs in vbuckets.iteritems():
                 checkpoint_id = 0
                 max_deleted_seqno = 0
