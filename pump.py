@@ -102,7 +102,7 @@ class PumpingStation(ProgressReporter):
             return rv
 
         if self.opts.dry_run:
-            sys.stderr.write("done, but no data written due to dry-run\n")
+            sys.stdout.write("done, but no data written due to dry-run\n")
             return 0
 
         source_buckets = self.filter_source_buckets(source_map)
@@ -131,7 +131,7 @@ class PumpingStation(ProgressReporter):
 
         # TODO: (4) PumpingStation - validate source/sink maps were stable.
 
-        sys.stderr.write("done\n")
+        sys.stdout.write("done\n")
         return 0
 
     def check_endpoints(self):
@@ -221,12 +221,12 @@ class PumpingStation(ProgressReporter):
 
         time.sleep(0.01) # Allows threads to update counters.
 
-        sys.stderr.write(self.bar(self.ctl['run_msg'],
+        sys.stdout.write(self.bar(self.ctl['run_msg'],
                                   self.ctl['tot_msg']) + "\n")
-        sys.stderr.write("bucket: " + source_bucket['name'] +
+        sys.stdout.write("bucket: " + source_bucket['name'] +
                          ", msgs transferred...\n")
         def emit(msg):
-            sys.stderr.write(msg + "\n")
+            sys.stdout.write(msg + "\n")
         self.report(emit=emit)
 
         return 0
@@ -348,11 +348,11 @@ class Pump(ProgressReporter):
             n = n + 1
             if report_full > 0 and n % report_full == 0:
                 if self.opts.verbose > 0:
-                    sys.stderr.write("\n")
+                    sys.stdout.write("\n")
                 logging.info("  progress...")
                 self.report(prefix="  ")
             elif report > 0 and n % report == 0:
-                sys.stderr.write(self.bar(self.ctl['run_msg'],
+                sys.stdout.write(self.bar(self.ctl['run_msg'],
                                           self.ctl['tot_msg']))
 
         return self.done(0)
