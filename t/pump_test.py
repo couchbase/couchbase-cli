@@ -4,6 +4,7 @@
 Unit tests for backup/restore/transfer/pump.
 """
 
+import sys
 import binascii
 import glob
 import logging
