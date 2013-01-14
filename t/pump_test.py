@@ -765,12 +765,13 @@ class MCTestHelper(unittest.TestCase):
         self.assertEqual(memcacheConstants.CMD_TAP_CONNECT, cmd)
         self.assertEqual(0, vbucket_id)
 
+        version = json.loads(SAMPLE_JSON_pools_default)["nodes"][0]["version"]
+        tap_opts = {memcacheConstants.TAP_FLAG_DUMP: '',
+                    memcacheConstants.TAP_FLAG_SUPPORT_ACK: ''}
+        if version.split(".") >= ["2", "0", "0"]:
+            tap_opts[memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
         expect_ext, expect_val = \
-            pump_tap.TAPDumpSource.encode_tap_connect_opts({
-                memcacheConstants.TAP_FLAG_DUMP: '',
-                memcacheConstants.TAP_FLAG_SUPPORT_ACK: '',
-                memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER: '',
-            })
+            pump_tap.TAPDumpSource.encode_tap_connect_opts(tap_opts)
 
         self.assertEqual(expect_ext, ext)
         self.assertTrue(key)  # Expecting non-empty TAP name.
