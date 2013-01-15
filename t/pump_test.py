@@ -578,6 +578,7 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
+        opts.username = opts.password = ''
         self.assertEqual(mrs.url(), source)
         self.assertEqual("2", backup_dir)
         rv, map = pump_tap.TAPDumpSource.check(opts, source)
@@ -608,6 +609,7 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
+        opts.username = opts.password = ''
         self.assertEqual(mrs.url(), source)
         self.assertEqual("2", backup_dir)
         rv, map = pump_tap.TAPDumpSource.check(opts, source)
