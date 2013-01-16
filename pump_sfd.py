@@ -281,7 +281,13 @@ class SFDSink(pump.Sink):
                     d = couchstore.DocumentInfo(str(key))
                     d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg))
                     if meta:
-                        d.revSequence = struct.unpack(SFD_REV_SEQ, meta)
+                        if len(meta) > 8:
+                            meta = meta[0:8]
+                        if len(meta) < 8:
+                            meta = ('\x00\x00\x00\x00\x00\x00\x00\x00' + meta)[-8:]
+                        d.revSequence, = struct.unpack(SFD_REV_SEQ, meta)
+                    else:
+                        d.revSequence = 1
 
                     if cmd == memcacheConstants.CMD_TAP_MUTATION:
                         v = str(val)
@@ -405,20 +411,21 @@ class SFDSink(pump.Sink):
         bulk_keys = []
         bulk_vals = []
 
-        for row in sd['rows']:
-            logging.debug("design_doc row: " + str(row))
+        if sd:
+            for row in sd['rows']:
+                logging.debug("design_doc row: " + str(row))
 
-            d = couchstore.DocumentInfo(str(row['id']))
-            if '_rev' in row['doc']:
-                d.revMeta = str(row['doc']['_rev'])
-                del row['doc']['_rev']
-            d.contentType = couchstore.DocumentInfo.IS_JSON
+                d = couchstore.DocumentInfo(str(row['id']))
+                if '_rev' in row['doc']:
+                    d.revMeta = str(row['doc']['_rev'])
+                    del row['doc']['_rev']
+                d.contentType = couchstore.DocumentInfo.IS_JSON
 
-            bulk_keys.append(d)
-            bulk_vals.append(json.dumps(row['doc']))
+                bulk_keys.append(d)
+                bulk_vals.append(json.dumps(row['doc']))
 
-        if bulk_keys and bulk_vals:
-            store.saveMultiple(bulk_keys, bulk_vals) # TODO: Compress ddocs?
+            if bulk_keys and bulk_vals:
+                store.saveMultiple(bulk_keys, bulk_vals) # TODO: Compress ddocs?
 
         store.commit()
         store.close()
