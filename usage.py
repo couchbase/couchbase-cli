@@ -88,6 +88,7 @@ bucket-* OPTIONS:
   --bucket-password=PASSWORD        standard port, exclusive with bucket-port
   --bucket-ramsize=RAMSIZEMB        ram quota in MB
   --bucket-replica=COUNT            replication count
+  --wait                            wait for bucket create to be complete before returning
 
 The default PORT number is 8091.
 
@@ -139,6 +140,15 @@ EXAMPLES:
        --bucket-port=11222 \\
        --bucket-ramsize=200 \\
        --bucket-replica=1
+
+  Create a couchbase bucket and wait for bucket ready:
+    couchbase-cli bucket-create -c 192.168.0.1:8091 \\
+       --bucket=test_bucket \\
+       --bucket-type=couchbase \\
+       --bucket-port=11222 \\
+       --bucket-ramsize=200 \\
+       --bucket-replica=1 \\
+       --wait
 
   Create a new sasl memcached bucket:
     couchbase-cli bucket-create -c 192.168.0.1:8091 \\

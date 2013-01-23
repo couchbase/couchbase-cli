@@ -59,6 +59,7 @@ def main():
                 'bucket-password=',
                 'bucket-ramsize=',
                 'bucket-replica=',
+                'wait',
                 'version'
                 ])
     except getopt.GetoptError, err:
