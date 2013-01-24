@@ -172,7 +172,6 @@ class TAPDumpSource(pump.Source):
                                           fmt=memcacheConstants.RES_PKT_FMT,
                                           magic=memcacheConstants.RES_MAGIC_BYTE)
                     except socket.error:
-                        self.tap_done = True
                         return ("error: socket.error on send();"
                                 " perhaps the source server: %s was rebalancing"
                                 " or had connectivity/server problems" %
