@@ -135,12 +135,30 @@ class Buckets:
                     print ' ramQuota: %s' % bucket['quota']['ram']
                     print ' ramUsed: %s' % bucket['basicStats']['memUsed']
         elif cmd == "bucket-create" and wait_for_bucket_ready:
-            timeout_in_seconds = 120
-            self.rest_cmd = rest_cmds['bucket-info'] % bucketname
-            start = time.time()
             rest_query = restclient.RestClient(server, port, {'debug':self.debug})
+            timeout_in_seconds = 120
+            start = time.time()
+            # Make sure the bucket exists before querying its status
+            bucket_exist = False
+            while (time.time() - start) <= timeout_in_seconds and not bucket_exist:
+                buckets = rest_query.restCmd('GET', rest_cmds['bucket-list'],
+                                             self.user, self.password, opts)
+                for bucket in rest_query.getJson(buckets):
+                    if bucket["name"] == bucketname:
+                        bucket_exist = True
+                        break
+                if not bucket_exist:
+                    sys.stderr.write(".")
+                    time.sleep(2)
+
+            if not bucket_exist:
+                print "\nFail to create bucket '%s' within %s seconds" %\
+                      (bucketname, timeout_in_seconds)
+                return False
+
+            #Query status for all bucket nodes
             while (time.time() - start) <= timeout_in_seconds:
-                bucket_info = rest_query.restCmd('GET', self.rest_cmd,
+                bucket_info = rest_query.restCmd('GET', rest_cmds['bucket-info'] % bucketname,
                                                  self.user, self.password, opts)
                 json = rest_query.getJson(bucket_info)
                 all_node_ready = True
@@ -157,7 +175,9 @@ class Buckets:
                 else:
                     sys.stderr.write(".")
                     time.sleep(2)
-            print "\nFail to create bucket within %s seconds" % timeout_in_seconds
+
+            print "\nBucket '%s' is created but not ready to use within %s seconds" %\
+                 (bucketname, timeout_in_seconds)
             return False
         else:
             if output == 'json':
