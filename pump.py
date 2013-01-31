@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import base64
 import copy
 import httplib
@@ -578,12 +579,12 @@ class Batch(object):
     def msg(self, i):
         return self.msgs[i]
 
-    def group_by_vbucket_id(self, vbuckets_num):
+    def group_by_vbucket_id(self, vbuckets_num, rehash=0):
         """Returns dict of vbucket_id->[msgs] grouped by msg's vbucket_id."""
         g = defaultdict(list)
         for msg in self.msgs:
             cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
-            if vbucket_id == 0x0000ffff:
+            if vbucket_id == 0x0000ffff or rehash == 1:
                 # Special case when the source did not supply a vbucket_id
                 # (such as stdin source), so we calculate it.
                 vbucket_id = (zlib.crc32(key) >> 16) & (vbuckets_num - 1)

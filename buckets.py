@@ -5,7 +5,8 @@ from usage import usage
 
 import restclient
 from timeout import timed_out
-
+import time
+import sys
 
 rest_cmds = {
     'bucket-list': '/pools/default/buckets',
@@ -15,7 +16,8 @@ rest_cmds = {
     'bucket-edit': '/pools/default/buckets/',
     'bucket-get': '/pools/default/buckets',
     'bucket-stats': '/pools/default/buckets/{0}/stats?zoom=hour',
-    'bucket-node-stats': '/pools/default/buckets/{0}/stats/{1}?zoom={2}'
+    'bucket-node-stats': '/pools/default/buckets/{0}/stats/{1}?zoom={2}',
+    'bucket-info': '/pools/default/buckets/%s',
     }
 methods = {
     'bucket-list': 'GET',
@@ -25,7 +27,7 @@ methods = {
     'bucket-flush': 'POST',
     'bucket-get': 'GET',
     'bucket-stats': 'GET',
-    'bucket-node-stats': 'GET',
+    'bucket-node-stats': 'GET'
     }
 
 class Buckets:
@@ -48,6 +50,7 @@ class Buckets:
         bucketramsize = ''
         bucketreplication = '1'
         output = 'default'
+        wait_for_bucket_ready = False
 
         for (o, a) in opts:
             if o == '-b' or o == '--bucket':
@@ -66,6 +69,9 @@ class Buckets:
                 self.debug = True
             if o in  ('-o', '--output'):
                 output = a
+            if o == '--wait':
+                wait_for_bucket_ready = True
+
         self.rest_cmd = rest_cmds[cmd]
         rest = restclient.RestClient(server, port, {'debug':self.debug})
 
@@ -128,6 +134,51 @@ class Buckets:
                     print ' numReplicas: %s' % bucket['replicaNumber']
                     print ' ramQuota: %s' % bucket['quota']['ram']
                     print ' ramUsed: %s' % bucket['basicStats']['memUsed']
+        elif cmd == "bucket-create" and wait_for_bucket_ready:
+            rest_query = restclient.RestClient(server, port, {'debug':self.debug})
+            timeout_in_seconds = 120
+            start = time.time()
+            # Make sure the bucket exists before querying its status
+            bucket_exist = False
+            while (time.time() - start) <= timeout_in_seconds and not bucket_exist:
+                buckets = rest_query.restCmd('GET', rest_cmds['bucket-list'],
+                                             self.user, self.password, opts)
+                for bucket in rest_query.getJson(buckets):
+                    if bucket["name"] == bucketname:
+                        bucket_exist = True
+                        break
+                if not bucket_exist:
+                    sys.stderr.write(".")
+                    time.sleep(2)
+
+            if not bucket_exist:
+                print "\nFail to create bucket '%s' within %s seconds" %\
+                      (bucketname, timeout_in_seconds)
+                return False
+
+            #Query status for all bucket nodes
+            while (time.time() - start) <= timeout_in_seconds:
+                bucket_info = rest_query.restCmd('GET', rest_cmds['bucket-info'] % bucketname,
+                                                 self.user, self.password, opts)
+                json = rest_query.getJson(bucket_info)
+                all_node_ready = True
+                for node in json["nodes"]:
+                    if node["status"] != "healthy":
+                        all_node_ready = False
+                        break
+                if all_node_ready:
+                    if output == 'json':
+                        print rest.jsonMessage(data)
+                    else:
+                        print data
+                    return True
+                else:
+                    sys.stderr.write(".")
+                    time.sleep(2)
+
+            print "\nBucket '%s' is created but not ready to use within %s seconds" %\
+                 (bucketname, timeout_in_seconds)
+            return False
         else:
             if output == 'json':
                 print rest.jsonMessage(data)

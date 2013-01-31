@@ -4,6 +4,7 @@
 Unit tests for backup/restore/transfer/pump.
 """
 
+import sys
 import binascii
 import glob
 import logging
@@ -577,6 +578,7 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
+        opts.username = opts.password = ''
         self.assertEqual(mrs.url(), source)
         self.assertEqual("2", backup_dir)
         rv, map = pump_tap.TAPDumpSource.check(opts, source)
@@ -607,6 +609,7 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
+        opts.username = opts.password = ''
         self.assertEqual(mrs.url(), source)
         self.assertEqual("2", backup_dir)
         rv, map = pump_tap.TAPDumpSource.check(opts, source)
@@ -675,6 +678,7 @@ class BackupTestHelper(unittest.TestCase):
                     expected_msg
                 acmd, avbucket_id, akey, aflg, aexp, acas, ameta, aval = \
                     actual_msg
+                eflg = socket.ntohl(eflg)
 
                 self.assertEqual(ecmd, acmd)
                 self.assertEqual(evbucket_id, avbucket_id)
@@ -764,12 +768,13 @@ class MCTestHelper(unittest.TestCase):
         self.assertEqual(memcacheConstants.CMD_TAP_CONNECT, cmd)
         self.assertEqual(0, vbucket_id)
 
+        version = json.loads(SAMPLE_JSON_pools_default)["nodes"][0]["version"]
+        tap_opts = {memcacheConstants.TAP_FLAG_DUMP: '',
+                    memcacheConstants.TAP_FLAG_SUPPORT_ACK: ''}
+        if version.split(".") >= ["2", "0", "0"]:
+            tap_opts[memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
         expect_ext, expect_val = \
-            pump_tap.TAPDumpSource.encode_tap_connect_opts({
-                memcacheConstants.TAP_FLAG_DUMP: '',
-                memcacheConstants.TAP_FLAG_SUPPORT_ACK: '',
-                memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER: '',
-            })
+            pump_tap.TAPDumpSource.encode_tap_connect_opts(tap_opts)
 
         self.assertEqual(expect_ext, ext)
         self.assertTrue(key)  # Expecting non-empty TAP name.
@@ -1035,12 +1040,12 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
                                           "-x", "max_retry=0"])
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
-        # 0xfedcba01 == 4275878401, using high numbers to check endianess.
+        # 0xfedcba01 == 4275878401 == 29023486L, using high numbers to check endianess.
         # 0xffeedd00 == 4293844224
         self.expect_backup_contents(d,
-                                    "set a 4275878401 0 1\r\nA\r\n"
+                                    "set a 29023486 0 1\r\nA\r\n"
                                     "set b 0 4293844224 1\r\nB\r\n"
-                                    "set a 4275878401 0 1\r\nA\r\n"
+                                    "set a 29023486 0 1\r\nA\r\n"
                                     "set b 0 4293844224 1\r\nB\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A'),
                                      (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, '', 'B'),
@@ -1107,10 +1112,10 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d, "-k", "a"])
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
-        # 0xfedcba01 == 4275878401
+        # 0xfedcba01 == 4275878401 == 29023486L
         self.expect_backup_contents(d,
-                                    "set a 4275878401 0 1\r\nA\r\n"
-                                    "set a 4275878401 0 1\r\nA\r\n",
+                                    "set a 29023486 0 1\r\nA\r\n"
+                                    "set a 29023486 0 1\r\nA\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A'),
                                      (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A')])
         w.join()
@@ -1248,10 +1253,10 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
         self.expect_backup_contents(d,
-                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 1\r\nB\r\n"
-                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 1\r\nB\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
@@ -1326,9 +1331,9 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
         self.expect_backup_contents(d,
-                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
-                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
@@ -1396,10 +1401,10 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
         self.expect_backup_contents(d,
-                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 1\r\nB\r\n"
-                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 1\r\nB\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
@@ -1484,10 +1489,10 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
         self.expect_backup_contents(d,
-                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 0\r\n\r\n"
-                                    "set a 40302010 0 1\r\nA\r\n"
+                                    "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 0\r\n\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
@@ -1586,8 +1591,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.assertEqual(0, rv)
         self.check_cbb_file_exists(d, num=2)
         self.expect_backup_contents(d,
-                                    "set a 40302010 0 1\r\nA\r\n"
-                                    "set a 40302010 0 1\r\nA\r\n",
+                                    "set a 3136644610 0 1\r\nA\r\n"
+                                    "set a 3136644610 0 1\r\nA\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
                                      (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A')])
         w.join()
@@ -1658,13 +1663,13 @@ class RestoreTestHelper:
                 [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 9900, 8800, ''),
                  (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 9901, 8801, '')]
             ]
-            # 0xf1000000 == 4043309056
-            # 0xfe000000 == 4261412864
+            # 0xf1000000 == 4043309056 == 241L
+            # 0xfe000000 == 4261412864 == 254L
             expected_backup_stdout = \
-                "set a 4043309056 1000 1\r\nA\r\n" \
-                "set b 4043309057 1001 1\r\nB\r\n" \
-                "set x 4261412864 9900 1\r\nX\r\n" \
-                "set y 4261412865 9901 1\r\nY\r\n"
+                "set a 241 1000 1\r\nA\r\n" \
+                "set b 16777457 1001 1\r\nB\r\n" \
+                "set x 254 9900 1\r\nX\r\n" \
+                "set y 16777470 9901 1\r\nY\r\n"
 
         if not json:
             json = self.json_2_nodes()
@@ -1712,6 +1717,7 @@ class RestoreTestHelper:
         arr = []
         for msg in flattened:
             cmd_tap, vbucket_id, key, val, flg, exp, cas, meta = msg
+            flg = socket.ntohl(flg)
             arr.append((cmd_tap, vbucket_id, key, val, flg, exp, 0, meta))
 
         return arr
