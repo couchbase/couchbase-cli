@@ -152,19 +152,20 @@ class CSVSink(pump.Sink):
 
             try:
                 if cmd == couchbaseConstants.CMD_TAP_MUTATION:
-                    if self.fields and val and len(val) > 0:
-                        try:
-                            row = []
-                            doc = json.loads(val)
-                            if type(doc) == dict:
-                                for field in self.fields:
-                                    if field == 'id':
-                                        row.append(key)
-                                    else:
-                                        row.append(doc[field])
-                                self.writer.writerow(row)
-                        except ValueError:
-                            pass
+                    if self.fields:
+                        if val and len(val) > 0:
+                            try:
+                                row = []
+                                doc = json.loads(val)
+                                if type(doc) == dict:
+                                    for field in self.fields:
+                                        if field == 'id':
+                                            row.append(key)
+                                        else:
+                                            row.append(doc[field])
+                                    self.writer.writerow(row)
+                            except ValueError:
+                                pass
                     else:
                         self.writer.writerow([key, flg, exp, cas, val])
                 elif cmd == couchbaseConstants.CMD_TAP_DELETE:
