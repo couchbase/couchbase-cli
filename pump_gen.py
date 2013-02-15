@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import memcacheConstants
+import couchbaseConstants
 import pump
 
 class GenSource(pump.Source):
@@ -102,7 +102,7 @@ class GenSource(pump.Source):
                batch.bytes < batch_max_bytes):
             if ratio_sets >= float(self.cur_sets) / float(self.cur_ops or 1):
                 self.cur_sets = self.cur_sets + 1
-                cmd = memcacheConstants.CMD_TAP_MUTATION
+                cmd = couchbaseConstants.CMD_TAP_MUTATION
                 if self.cur_items < max_items:
                     key = self.cur_items
                     self.cur_items = self.cur_items + 1
@@ -110,7 +110,7 @@ class GenSource(pump.Source):
                     key = self.cur_sets % self.cur_items
             else:
                 self.cur_gets = self.cur_gets + 1
-                cmd = memcacheConstants.CMD_GET
+                cmd = couchbaseConstants.CMD_GET
                 key = self.cur_gets % self.cur_items
             self.cur_ops = self.cur_ops + 1
 

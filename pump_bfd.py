@@ -10,7 +10,7 @@ import sys
 import time
 import urllib
 
-import memcacheConstants
+import couchbaseConstants
 
 from pump import Source, Sink, Batch, SinkBatchFuture
 
@@ -260,8 +260,8 @@ class BFDSink(BFD, Sink):
                     if self.skip(key, vbucket_id):
                         continue
 
-                    if (cmd != memcacheConstants.CMD_TAP_MUTATION and
-                        cmd != memcacheConstants.CMD_TAP_DELETE):
+                    if (cmd != couchbaseConstants.CMD_TAP_MUTATION and
+                        cmd != couchbaseConstants.CMD_TAP_DELETE):
                         return self.future_done(future,
                                                 "error: BFDSink bad cmd: " +
                                                 str(cmd))

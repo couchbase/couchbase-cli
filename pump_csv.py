@@ -6,7 +6,7 @@ import os
 import simplejson as json
 import sys
 
-import memcacheConstants
+import couchbaseConstants
 import pump
 
 def number_try_parse(s):
@@ -67,7 +67,7 @@ class CSVSource(pump.Source):
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
 
-        cmd = memcacheConstants.CMD_TAP_MUTATION
+        cmd = couchbaseConstants.CMD_TAP_MUTATION
         vbucket_id = 0x0000ffff
         cas, exp, flg = 0, 0, 0
 
@@ -151,7 +151,7 @@ class CSVSink(pump.Sink):
                 continue
 
             try:
-                if cmd == memcacheConstants.CMD_TAP_MUTATION:
+                if cmd == couchbaseConstants.CMD_TAP_MUTATION:
                     if self.fields and val and len(val) > 0:
                         try:
                             row = []
@@ -167,9 +167,9 @@ class CSVSink(pump.Sink):
                             pass
                     else:
                         self.writer.writerow([key, flg, exp, cas, val])
-                elif cmd == memcacheConstants.CMD_TAP_DELETE:
+                elif cmd == couchbaseConstants.CMD_TAP_DELETE:
                     pass
-                elif cmd == memcacheConstants.CMD_GET:
+                elif cmd == couchbaseConstants.CMD_GET:
                     pass
                 else:
                     return "error: CSVSink - unknown cmd: " + str(cmd), None

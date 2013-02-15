@@ -203,7 +203,7 @@ EXTRA_HDR_FMTS={
 EXTRA_HDR_SIZES=dict(
     [(k, struct.calcsize(v)) for (k,v) in EXTRA_HDR_FMTS.items()])
 
-# Kept for backwards compatibility with existing mc_bin_client users.
+# Kept for backwards compatibility with existing cb_bin_client users.
 
 ERR_UNKNOWN_CMD = 0x81
 ERR_NOT_FOUND = 0x1

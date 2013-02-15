@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 import socket
-import memcacheConstants
+import couchbaseConstants
 from cbcollections import defaultdict
 
 from pump import EndPoint, Source, Batch
@@ -234,7 +234,7 @@ class MBFSource(Source):
 
                     meta = ''
                     flg = socket.ntohl(ctypes.c_uint32(flg).value)
-                    batch.append((memcacheConstants.CMD_TAP_MUTATION,
+                    batch.append((couchbaseConstants.CMD_TAP_MUTATION,
                                   vbucket_id, key, flg, exp, cas, meta, val), len(val))
                 else:
                     cursor.close()

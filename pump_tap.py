@@ -8,8 +8,8 @@ import string
 import struct
 import time
 
-import mc_bin_client
-import memcacheConstants
+import cb_bin_client
+import couchbaseConstants
 
 import pump
 
@@ -138,25 +138,25 @@ class TAPDumpSource(pump.Source):
                     self.tap_done = True
                     return rv, batch
 
-                if (cmd == memcacheConstants.CMD_TAP_MUTATION or
-                    cmd == memcacheConstants.CMD_TAP_DELETE):
+                if (cmd == couchbaseConstants.CMD_TAP_MUTATION or
+                    cmd == couchbaseConstants.CMD_TAP_DELETE):
                     if not self.skip(key, vbucket_id):
                         msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
                         batch.append(msg, len(val))
                         self.num_msg += 1
-                elif cmd == memcacheConstants.CMD_TAP_OPAQUE:
+                elif cmd == couchbaseConstants.CMD_TAP_OPAQUE:
                     pass
-                elif cmd == memcacheConstants.CMD_NOOP:
+                elif cmd == couchbaseConstants.CMD_NOOP:
                     # 1.8.x servers might not end the TAP dump on an empty bucket,
                     # so we treat 2 NOOP's in a row as the end and proactively close.
                     # Only do this when there've been no msgs to avoid closing
                     # during a slow backfill.
-                    if (self.cmd_last == memcacheConstants.CMD_NOOP and
+                    if (self.cmd_last == couchbaseConstants.CMD_NOOP and
                         self.num_msg == 0 and
                         batch.size() <= 0):
                         self.tap_done = True
                         return 0, batch
-                elif cmd == memcacheConstants.CMD_TAP_FLUSH:
+                elif cmd == couchbaseConstants.CMD_TAP_FLUSH:
                     logging.warn("stopping: saw CMD_TAP_FLUSH")
                     self.tap_done = True
                     break
@@ -169,8 +169,8 @@ class TAPDumpSource(pump.Source):
                     self.ack_last = True
                     try:
                         tap_conn._sendMsg(cmd, '', '', opaque, vbucketId=0,
-                                          fmt=memcacheConstants.RES_PKT_FMT,
-                                          magic=memcacheConstants.RES_MAGIC_BYTE)
+                                          fmt=couchbaseConstants.RES_PKT_FMT,
+                                          magic=couchbaseConstants.RES_MAGIC_BYTE)
                     except socket.error:
                         return ("error: socket.error on send();"
                                 " perhaps the source server: %s was rebalancing"
@@ -213,7 +213,7 @@ class TAPDumpSource(pump.Source):
             logging.debug("  TAPDumpSource connecting mc: " +
                           host + ":" + str(port))
 
-            self.tap_conn = mc_bin_client.MemcachedClient(host, port)
+            self.tap_conn = cb_bin_client.MemcachedClient(host, port)
             if not self.tap_conn:
                 return "error: could not connect to memcached: " + \
                     host + ":" + str(port), None
@@ -228,7 +228,7 @@ class TAPDumpSource(pump.Source):
                 except EOFError:
                     return "error: SASL auth error: %s:%s, user: %s" % \
                         (host, port, sasl_user), None
-                except mc_bin_client.MemcachedError:
+                except cb_bin_client.MemcachedError:
                     return "error: SASL auth failed: %s:%s, user: %s" % \
                         (host, port, sasl_user), None
                 except socket.error:
@@ -238,16 +238,16 @@ class TAPDumpSource(pump.Source):
             # We explicitly do not use TAP_FLAG_REGISTERED_CLIENT,
             # as that is for checkpoint/incremental backup only.
             #
-            tap_opts = {memcacheConstants.TAP_FLAG_DUMP: '',
-                        memcacheConstants.TAP_FLAG_SUPPORT_ACK: ''}
+            tap_opts = {couchbaseConstants.TAP_FLAG_DUMP: '',
+                        couchbaseConstants.TAP_FLAG_SUPPORT_ACK: ''}
 
             self.tap_conn.tap_fix_flag_byteorder = version.split(".") >= ["2", "0", "0"]
             if self.tap_conn.tap_fix_flag_byteorder:
-                tap_opts[memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
+                tap_opts[couchbaseConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
 
             ext, val = TAPDumpSource.encode_tap_connect_opts(tap_opts)
 
-            self.tap_conn._sendCmd(memcacheConstants.CMD_TAP_CONNECT,
+            self.tap_conn._sendCmd(couchbaseConstants.CMD_TAP_CONNECT,
                                    self.tap_name, val, 0, ext)
 
         return 0, self.tap_conn
@@ -266,14 +266,14 @@ class TAPDumpSource(pump.Source):
             ext = data[0:extlen]
             if extlen == 8:
                 metalen, flags, ttl = \
-                    struct.unpack(memcacheConstants.TAP_GENERAL_PKT_FMT, ext)
+                    struct.unpack(couchbaseConstants.TAP_GENERAL_PKT_FMT, ext)
             elif extlen == 16:
                 metalen, flags, ttl, flg, exp = \
-                    struct.unpack(memcacheConstants.TAP_MUTATION_PKT_FMT, ext)
+                    struct.unpack(couchbaseConstants.TAP_MUTATION_PKT_FMT, ext)
                 if not tap_conn.tap_fix_flag_byteorder:
                     flg = socket.ntohl(flg)
 
-            need_ack = flags & memcacheConstants.TAP_FLAG_ACK
+            need_ack = flags & couchbaseConstants.TAP_FLAG_ACK
 
             meta_start = extlen
             key_start = meta_start + metalen
@@ -288,12 +288,12 @@ class TAPDumpSource(pump.Source):
         return rv, cmd, vbucket_id, key, flg, exp, cas, meta, val, opaque, need_ack
 
     def recv_msg(self, sock, buf):
-        pkt, buf = self.recv(sock, memcacheConstants.MIN_RECV_PACKET, buf)
+        pkt, buf = self.recv(sock, couchbaseConstants.MIN_RECV_PACKET, buf)
         if not pkt:
             raise EOFError()
         magic, cmd, keylen, extlen, dtype, errcode, datalen, opaque, cas = \
-            struct.unpack(memcacheConstants.REQ_PKT_FMT, pkt)
-        if magic != memcacheConstants.REQ_MAGIC_BYTE:
+            struct.unpack(couchbaseConstants.REQ_PKT_FMT, pkt)
+        if magic != couchbaseConstants.REQ_MAGIC_BYTE:
             raise Exception("unexpected recv_msg magic: " + str(magic))
         data, buf = self.recv(sock, datalen, buf)
         return buf, cmd, errcode, opaque, cas, keylen, extlen, data, datalen
@@ -334,10 +334,10 @@ class TAPDumpSource(pump.Source):
 
         for op in sorted(opts.keys()):
             header |= op
-            if op in memcacheConstants.TAP_FLAG_TYPES:
-                val.append(struct.pack(memcacheConstants.TAP_FLAG_TYPES[op],
+            if op in couchbaseConstants.TAP_FLAG_TYPES:
+                val.append(struct.pack(couchbaseConstants.TAP_FLAG_TYPES[op],
                                        opts[op]))
-            elif backfill and op == memcacheConstants.TAP_FLAG_CHECKPOINT:
+            elif backfill and op == couchbaseConstants.TAP_FLAG_CHECKPOINT:
                 if opts[op][2] >= 0:
                     val.append(struct.pack(">HHQ",
                                            opts[op][0], opts[op][1], opts[op][2]))
