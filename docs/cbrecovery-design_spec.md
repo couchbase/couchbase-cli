@@ -2,16 +2,7 @@ cbrecovery command usage
 ========================
 
 
-        cbrecovery
-        -n  --node-source,
-                     type="string", default="127.0.0.1:8091",
-                     metavar="127.0.0.1:8091",
-                     help="source cluster to recover data from"
-
-        -N  --node-destination,
-                     type="string", default="127.0.0.1:8091",
-                     metavar="127.0.0.1:8091",
-                     help="destination cluster to recover data to"
+        cbrecovery [options] source destination
 
         -b  --bucket-source
                      type="string", default="default",
@@ -42,6 +33,14 @@ cbrecovery command usage
         -l  --vbucket-list
                      type="string", default=None,
                      help="""transmit data only from specified vbuckets"""
+
+        -a  --add-node
+                    type="string", default=None,
+                    help="Add new node to cluster for data recovery"
+
+        -r  --remove-node
+                    type="string", default=None,
+                    help="Remove failover node"
 
         -v  --verbose
                      action="count", default=0,
