@@ -2,7 +2,16 @@ cbrecovery command usage
 ========================
 
 
-        cbrecovery [options] source destination
+        cbrecovery [options] restore_from restore_to
+
+        where
+        restore_from source cluster to restore data from
+                     such as http://10.1.2.3:8091
+
+        restore_to   destination cluster to restore data to
+                     such as http://10.3.4.5:8091
+
+        options are:
 
         -b  --bucket-source
                      type="string", default="default",
@@ -59,7 +68,8 @@ New REST API proposal for cbrecovery tool
 
 > POST
 > /pools/default/buckets/bucket_name/replaceNode
-> add=<newnode>&remove=<oldnode>
+> 
+> add=newnode&remove=oldnode
 
 *ok*: 202
 
@@ -75,6 +85,7 @@ New REST API proposal for cbrecovery tool
 
 > POST
 > /pools/default/buckets/bucket_name/changeVbucketStates
+>
 > vbucket=500&vbucket=612&vbucket=712&state=replica
 
 ok: 202
@@ -89,9 +100,12 @@ error:
 
 > POST
 > /pools/default/buckets/bucket_name/changeVbucketStates
+>
 > vbucket=500&vbucket=612&vbucket=712&state=active
 
- - update vbucketmap
+ 
+
+- update vbucketmap
 
 > post
 > /pools/default/buckets/<bucket_name>/updateVbucketMap
@@ -101,6 +115,27 @@ ok: 202
 error:
 
 410: update failure
+
+Main control function:
+----------------------
+
+    def main():
+        #analysis arguments and options
+        opt_construct(argv)
+
+        #pre transfer phase
+        1. retrieve missing vbucket list: /pools/default/buckets/%s/vbucketsMissing
+        2. replace failover node with new node: /pools/default/buckets/%s/replaceNode
+        3. change missing vbucket states to replica: /pools/default/buckets/%s/changeVbucketStates
+
+        #pump_transfer.main()
+
+        #post transfer phase
+        1. change vbucket stats from replica to active: /pools/default/buckets/%s/changeVbucketStates
+        2. update vbucketmap: /pools/default/buckets/%s/updateVbucketMap
+
+    def find_handlers(self, opts, source, sink):
+       return pump_tap.TAPDumpSource, pump_tap.TapSink
 
 
 Tap Source extension:
@@ -137,3 +172,4 @@ TapSink will subclass from pump_mc.CBSink with the following overwriting functio
         conn._sendCmd(memcacheConstants.CMD_TAP_CONNECT,
                      self.tap_name, val, 0, ext)
         return rv, conn
+
