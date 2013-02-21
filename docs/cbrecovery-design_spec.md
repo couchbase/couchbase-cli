@@ -39,18 +39,6 @@ cbrecovery command usage
                      type="string", default=None,
                      help="REST password for destination cluster or server node"
 
-        -l  --vbucket-list
-                     type="string", default=None,
-                     help="""transmit data only from specified vbuckets"""
-
-        -a  --add-node
-                    type="string", default=None,
-                    help="Add new node to cluster for data recovery"
-
-        -r  --remove-node
-                    type="string", default=None,
-                    help="Remove failover node"
-
         -v  --verbose
                      action="count", default=0,
                      help="verbose logging; more -v's provide more verbosity"
@@ -58,81 +46,78 @@ cbrecovery command usage
 New REST API proposal for cbrecovery tool
 ----------------------------------------
 
- - Retrieve missing vbucket list
+ - Recovery begin
 
 > GET
-> /pools/default/buckets/bucket_name/vbucketsMissing
-> [500, 612, 712]
-
- - Add replacement node to cluster
-
-> POST
-> /pools/default/buckets/bucket_name/replaceNode
+> /pools/default/buckets/bucket_name/beginRecovery
 > 
-> add=newnode&remove=oldnode
+> {"node1": [200, 201, 340],
+>  "node2": [102, 521, 900, 904]
+> }
+
 
 *ok*: 202
 
 *error*:
 
-401: node is not found
+401: cannot start a data recovery.
 
-402: node exists already
+402: no data missing in active vbuckets
 
-403: node is still in active mode, you have to failover it first
-
- - set vbucket state from missing to replica
+ - Vbucket data recovery complete
 
 > POST
-> /pools/default/buckets/bucket_name/changeVbucketStates
+> /pools/default/buckets/bucket_name/commitVbucketRecovery
 >
-> vbucket=500&vbucket=612&vbucket=712&state=replica
+> vbucket=200
+>
 
-ok: 202
+*ok* 202
 
-error:
+*error*:
 
-410: vbucket is not found
+401: vbucket doesn't exist
 
-411: state is not valid, it has to be active, replica, pending or dead
+402: vbucket is not in recovery mode
 
- - set vbucket state from replica to active
+- Recovery end
 
 > POST
-> /pools/default/buckets/bucket_name/changeVbucketStates
+> /pools/default/buckets/bucket_name/endRecovery
 >
-> vbucket=500&vbucket=612&vbucket=712&state=active
 
- 
+*ok*: 202
 
-- update vbucketmap
+*error*:
+
+401: cluster is not in recovery mode
+
+
+- Recovery abort
 
 > post
-> /pools/default/buckets/<bucket_name>/updateVbucketMap
+> /pools/default/buckets/<bucket_name>/abortRecovery
 
-ok: 202
+*ok*: 202
 
-error:
+*error*:
 
-410: update failure
+401: cluster is not in recovery mode
 
 Main control function:
 ----------------------
 
-    def main():
-        #analysis arguments and options
-        opt_construct(argv)
+    main()
+    #analysis arguments and options
+    opt_construct(argv)
 
-        #pre transfer phase
-        1. retrieve missing vbucket list: /pools/default/buckets/%s/vbucketsMissing
-        2. replace failover node with new node: /pools/default/buckets/%s/replaceNode
-        3. change missing vbucket states to replica: /pools/default/buckets/%s/changeVbucketStates
+    #pre transfer phase
+     1. begin recovery: /pools/default/buckets/%s/beginRecovery
 
-        #pump_transfer.main()
+    #pump_transfer.main()
 
-        #post transfer phase
-        1. change vbucket stats from replica to active: /pools/default/buckets/%s/changeVbucketStates
-        2. update vbucketmap: /pools/default/buckets/%s/updateVbucketMap
+    #post transfer phase
+     1. end recovery: /pools/default/buckets/%s/endRecovery
 
     def find_handlers(self, opts, source, sink):
        return pump_tap.TAPDumpSource, pump_tap.TapSink
@@ -173,3 +158,16 @@ TapSink will subclass from pump_mc.CBSink with the following overwriting functio
                      self.tap_name, val, 0, ext)
         return rv, conn
 
+  - sendMsg(vbucket_id)
+       rv = super(Tapsink, self).sendMsg(conn, msgs, self.operation(),
+                                         vbucket_id=vbucket_id)
+       #send vbucket recovery commit msg
+
+cbrecovery tool reentry
+-----------------------
+
+ - cbrecovery can be interrupted any time during data transferring, it can be restarted again.
+   Data will be retrieved again for the vbucket which is interrupted during last last run.
+ - Everytime cbrecovery will retrieve a vbucket list which has data missing.
+ - data will be transferred vbucket by vbucket. A commit message will be sent out after all messages
+   for the vbucket are transferred.
