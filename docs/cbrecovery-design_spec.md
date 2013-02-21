@@ -158,10 +158,11 @@ TapSink will subclass from pump_mc.CBSink with the following overwriting functio
                      self.tap_name, val, 0, ext)
         return rv, conn
 
-  - sendMsg(vbucket_id)
-       rv = super(Tapsink, self).sendMsg(conn, msgs, self.operation(),
+ - sendMsg(vbucket_id)
+
+        rv = super(Tapsink, self).sendMsg(conn, msgs, self.operation(),
                                          vbucket_id=vbucket_id)
-       #send vbucket recovery commit msg
+        #send vbucket recovery commit msg
 
 cbrecovery tool reentry
 -----------------------
