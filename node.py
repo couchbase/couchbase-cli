@@ -71,6 +71,7 @@ class Node:
         self.port_new = None
         self.per_node_quota = None
         self.data_path = None
+        self.index_path = None
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
@@ -183,7 +184,10 @@ class Node:
                                      self.port,
                                      {'debug':self.debug})
         if self.data_path:
-            rest.setParam('path', self.data_path)
+            rest.setParam('db_path', self.data_path)
+
+        if self.index_path:
+            rest.setParam('index_path', self.index_path)
 
         opts = {}
         opts['error_msg'] = "unable to init %s" % self.server
@@ -265,7 +269,8 @@ class Node:
                 self.per_node_quota = a
             elif o == '--node-init-data-path':
                 self.data_path = a
-
+            elif o == '--node-init-index-path':
+                self.index_path = a
         return servers
 
     def addServers(self, servers):

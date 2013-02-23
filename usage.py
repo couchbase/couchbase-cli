@@ -80,6 +80,7 @@ cluster-init OPTIONS:
 
 node-init OPTIONS:
   --node-init-data-path=PATH        per node path to store data
+  --node-init-index-path=PATH       per node path to store index
 
 bucket-* OPTIONS:
   --bucket=BUCKETNAME               bucket to act on
