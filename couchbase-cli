@@ -55,13 +55,19 @@ def main():
                 'cluster-init-ramsize=',
                 'node-init=',
                 'node-init-data-path=',
+                'node-init-index-path=',
                 'bucket=',
                 'bucket-type=',
                 'bucket-port=',
                 'bucket-password=',
                 'bucket-ramsize=',
                 'bucket-replica=',
+                'enable-flush=',
+                'enable-index-replica=',
                 'wait',
+                'force',
+                'data-only',
+                'view-only',
                 'version'
                 ])
     except getopt.GetoptError, err:
@@ -85,7 +91,8 @@ def main():
         'bucket-create'     : buckets.Buckets,
         'bucket-edit'       : buckets.Buckets,
         'bucket-delete'     : buckets.Buckets,
-        'bucket-flush'      : buckets.Buckets
+        'bucket-flush'      : buckets.Buckets,
+        'bucket-compact'    : buckets.Buckets,
         }
 
     cmd = sys.argv[1]

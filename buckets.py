@@ -15,9 +15,10 @@ rest_cmds = {
     'bucket-create': '/pools/default/buckets/',
     'bucket-edit': '/pools/default/buckets/',
     'bucket-get': '/pools/default/buckets',
-    'bucket-stats': '/pools/default/buckets/{0}/stats?zoom=hour',
-    'bucket-node-stats': '/pools/default/buckets/{0}/stats/{1}?zoom={2}',
-    'bucket-info': '/pools/default/buckets/%s'
+    'bucket-stats': '/pools/default/buckets/%s/stats?zoom=hour',
+    'bucket-node-stats': '/pools/default/buckets/%s/stats/%s?zoom=%s',
+    'bucket-info': '/pools/default/buckets/%s',
+    'bucket-compact': '/pools/default/buckets/',
     }
 methods = {
     'bucket-list': 'GET',
@@ -27,7 +28,8 @@ methods = {
     'bucket-flush': 'POST',
     'bucket-get': 'GET',
     'bucket-stats': 'GET',
-    'bucket-node-stats': 'GET'
+    'bucket-node-stats': 'GET',
+    'bucket-compact': 'POST',
     }
 
 class Buckets:
@@ -54,6 +56,8 @@ class Buckets:
         enable_flush = None
         enable_index_replica = None
         force = False
+        compact_data_only = False
+        compact_view_only = False
 
         for (o, a) in opts:
             if o in ('-b', '--bucket'):
@@ -80,6 +84,10 @@ class Buckets:
                 wait_for_bucket_ready = True
             elif o == '--force':
                 force = True
+            elif o == '--data-only':
+                compact_data_only = True
+            elif o == '--view-only':
+                compact_view_only = True
 
         self.rest_cmd = rest_cmds[cmd]
         rest = restclient.RestClient(server, port, {'debug':self.debug})
@@ -133,6 +141,17 @@ class Buckets:
                     return False
             else:
                 print "Database data will be purged from disk ..."
+        elif cmd == 'bucket-compact':
+            if compact_data_only and compact_view_only:
+                print "You cannot compact data only and view only at the same time."
+                return False
+            elif compact_data_only:
+                self.rest_cmd = self.rest_cmd + '/controller/compactDatabases'
+            elif compact_view_only:
+                self.compact_view(rest, server, port, bucketname)
+                return True
+            else:
+                self.rest_cmd = self.rest_cmd + '/controller/compactBucket'
 
         opts = {}
         opts['error_msg'] = "unable to %s; please check your username (-u) and password (-p);" % cmd
@@ -209,10 +228,26 @@ class Buckets:
             else:
                 print data
 
+    def compact_view(self, rest, server, port, bucket_name):
+        opts = {}
+        opts['error_msg'] = "unable to compact view; please check your username (-u) and password (-p);"
+        opts['success_msg'] = "compact view for bucket"
+
+        rest_query = restclient.RestClient(server, port, {'debug':self.debug})
+        rest_cmd = '/pools/default/buckets/%s/ddocs' % bucket_name
+        ddoc_info = rest_query.restCmd('GET', rest_cmd,
+                                       self.user, self.password, opts)
+        json = rest_query.getJson(ddoc_info)
+        for row in json["rows"]:
+            cmd = row["controllers"]["compact"]
+            data = rest.restCmd('POST', cmd,
+                                self.user, self.password, opts)
+            print data
+
 class BucketStats:
     def __init__(self, bucket_name):
         self.debug = False
-        self.rest_cmd = rest_cmds['bucket-stats'].format(bucket_name)
+        self.rest_cmd = rest_cmds['bucket-stats'] % bucket_name
         self.method = 'GET'
 
     def runCmd(self, cmd, server, port,
@@ -230,7 +265,7 @@ class BucketStats:
 class BucketNodeStats:
     def __init__(self, bucket_name, stat_name, scale):
         self.debug = False
-        self.rest_cmd = rest_cmds['bucket-node-stats'].format(bucket_name, stat_name, scale)
+        self.rest_cmd = rest_cmds['bucket-node-stats'] % (bucket_name, stat_name, scale)
         self.method = 'GET'
         #print self.rest_cmd
 

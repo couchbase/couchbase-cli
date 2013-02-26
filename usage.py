@@ -20,6 +20,7 @@ def commands_usage():
   bucket-edit       modify an existing bucket
   bucket-delete     delete an existing bucket
   bucket-flush      flush all data from disk for a given bucket
+  bucket-compact    compact database and index data
   help              show longer usage/help and examples
 """
 
@@ -93,6 +94,9 @@ bucket-* OPTIONS:
   --enable-index-replica=[0|1]      enable/disable index replicas
   --wait                            wait for bucket create to be complete before returning
   --force                           force to execute command without asking for confirmation
+  --data-only                       compact datbase data only
+  --view-only                       compact view data only
+
 
 The default PORT number is 8091.
 
@@ -180,6 +184,20 @@ EXAMPLES:
   Flush a bucket:
     coucbase-cli bucket-flush -c 192.168.0.1:8091 \\
        --force
+
+  Compact a bucket for both data and view
+    couchbase-cli bucket-compact -c 192.168.0.1:8091 \\
+        --bucket=test_bucket
+
+  Compact a bucket for data only
+    couchbase-cli bucket-compact -c 192.168.0.1:8091 \\
+        --bucket=test_bucket \\
+        --data-only
+
+  Compact a bucket for view only
+    couchbase-cli bucket-compact -c 192.168.0.1:8091 \\
+        --bucket=test_bucket \\
+        --view-only
 """
 
     sys.exit(2)
