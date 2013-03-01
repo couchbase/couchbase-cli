@@ -22,7 +22,12 @@ rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
     'cluster-init'      :'/settings/web',
+    'cluster-edit'      :'/settings/web',
     'node-init'         :'/nodes/self/controller/settings',
+    'setting-compaction'    :'/controller/setAutoCompaction',
+    'setting-notification'  :'/settings/stats',
+    'setting-autofailover'  :'/settings/autoFailover',
+    'setting-alert'         :'/settings/alerts'
 }
 
 server_no_remove = [
@@ -49,8 +54,15 @@ methods = {
     'server-readd'      :'POST',
     'failover'          :'POST',
     'cluster-init'      :'POST',
+    'cluster-edit'      :'POST',
     'node-init'         :'POST',
+    'setting-compaction'    :'POST',
+    'setting-notification'  :'POST',
+    'setting-autofailover'  :'POST',
+    'setting-alert'         :'POST',
 }
+
+bool_to_str = lambda value: str(bool(value)).lower()
 
 # Map of HTTP success code, success message and error message for
 # handling HTTP response properly
@@ -72,6 +84,21 @@ class Node:
         self.per_node_quota = None
         self.data_path = None
         self.index_path = None
+        self.enable_auto_failover = None
+        self.enable_notification = None
+        self.autofailover_timeout = None
+        self.enable_email_alert = None
+
+        #compaction related settings
+        self.compaction_db_percentage = None
+        self.compaction_db_size = None
+        self.compaction_view_percentage = None
+        self.compaction_view_size = None
+        self.compaction_period_from = None
+        self.compaction_period_to = None
+        self.enable_compaction_abort = None
+        self.enable_compaction_parallel = None
+
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
@@ -81,7 +108,6 @@ class Node:
         self.port = int(port)
         self.user = user
         self.password = password
-
         servers = self.processOpts(cmd, opts)
 
         if self.debug:
@@ -118,12 +144,23 @@ class Node:
 
             self.failover(servers)
 
-        if cmd == 'cluster-init':
+        if cmd in ('cluster-init', 'cluster-edit'):
             self.clusterInit()
 
         if cmd == 'node-init':
             self.nodeInit()
 
+        if cmd == 'setting-compaction':
+            self.compaction()
+
+        if cmd == 'setting-notification':
+            self.notification()
+
+        if cmd == 'setting-alert':
+            self.alert()
+
+        if cmd == 'setting-autofailover':
+            self.autofailover()
 
     def clusterInit(self):
         rest = restclient.RestClient(self.server,
@@ -143,9 +180,10 @@ class Node:
         else:
             rest.setParam('password', self.password)
 
-        opts = {}
-        opts['error_msg'] = "unable to init %s" % self.server
-        opts['success_msg'] = "init %s" % self.server
+        opts = {
+            "error_msg": "unable to init %s" % self.server,
+            "success_msg": "init %s" % self.server
+        }
 
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
@@ -189,9 +227,10 @@ class Node:
         if self.index_path:
             rest.setParam('index_path', self.index_path)
 
-        opts = {}
-        opts['error_msg'] = "unable to init %s" % self.server
-        opts['success_msg'] = "init %s" % self.server
+        opts = {
+            "error_msg": "unable to init %s" % self.server,
+            "success_msg": "init %s" % self.server
+        }
 
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
@@ -200,6 +239,121 @@ class Node:
                                      opts)
         print output_result
 
+    def compaction(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+
+        if self.compaction_db_percentage:
+            rest.setParam('databaseFragmentationThreshold[percentage]', self.compaction_db_percentage)
+        if self.compaction_db_size:
+            self.compaction_db_size = int(self.compaction_db_size) * 1024**2
+            rest.setParam('databaseFragmentationThreshold[size]', self.compaction_db_size)
+        if self.compaction_view_percentage:
+            rest.setParam('viewFragmentationThreshold[percentage]', self.compaction_view_percentage)
+        if self.compaction_view_size:
+            self.compaction_view_size = int(self.compaction_view_size) * 1024**2
+            rest.setParam('viewFragmentationThreshold[size]', self.compaction_view_size)
+        if self.compaction_period_from:
+            hour, minute = self.compaction_period_from.split(':')
+            if (int(hour) not in range(24)) or (int(minute) not in range(60)):
+                print "ERROR: invalid hour or minute value for compaction period"
+                return
+            else:
+                rest.setParam('allowedTimePeriod[fromHour]', int(hour))
+                rest.setParam('allowedTimePeriod[fromMinute]', int(minute))
+        if self.compaction_period_to:
+            hour, minute = self.compaction_period_to.split(':')
+            if (int(hour) not in range(24)) or (int(minute) not in range(60)):
+                print "ERROR: invalid hour or minute value for compaction"
+                return
+            else:
+                rest.setParam('allowedTimePeriod[toHour]', hour)
+                rest.setParam('allowedTimePeriod[toMinute]', minute)
+        if self.enable_compaction_abort:
+            rest.setParam('allowedTimePeriod[abortOutside]', self.enable_compaction_abort)
+        if self.enable_compaction_parallel:
+            rest.setParam('parallelDBAndViewCompaction', self.enable_compaction_parallel)
+        else:
+            self.enable_compaction_parallel = bool_to_str(0)
+            rest.setParam('parallelDBAndViewCompaction', self.enable_compaction_parallel)
+
+        if self.compaction_period_from and self.compaction_period_to:
+            if self.compaction_period_from >= self.compaction_period_to:
+                print "ERROR: compaction from time period cannot be late than to time period"
+                return
+
+        opts = {
+            "error_msg": "unable to set compaction settings",
+            "success_msg": "set compaction settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def notification(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.enable_notification:
+            rest.setParam('sendStats', self.enable_notification)
+
+        opts = {
+            "error_msg": "unable to set notification settings",
+            "success_msg": "set notification settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def alert(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.enable_email_alert:
+            rest.setParam('enabled', self.enable_email_alert)
+
+        opts = {
+            "error_msg": "unable to set alert settings",
+            "success_msg": "set alert settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def autofailover(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.autofailover_timeout:
+            if int(self.autofailover_timeout) < 30:
+                print "ERROR: Timeout value must be larger than 30 second."
+                return
+            else:
+                rest.setParam('timeout', self.autofailover_timeout)
+
+        if self.enable_auto_failover:
+            rest.setParam('enabled', self.enable_auto_failover)
+
+        opts = {
+            "error_msg": "unable to set auto failover settings",
+            "success_msg": "set auto failover settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
 
     def processOpts(self, cmd, opts):
         """ Set standard opts.
@@ -227,7 +381,6 @@ class Node:
                     usage(usage_msg)
 
         server = None
-
         for o, a in opts:
             if o in ("-a", "--server-add"):
                 if a == "self":
@@ -259,18 +412,43 @@ class Node:
             elif o in ('-d', '--debug'):
                 self.debug = True
                 server = None
-            elif o == '--cluster-init-password':
+            elif o in ('--cluster-init-password', '--cluster-password'):
                 self.password_new = a
-            elif o == '--cluster-init-username':
+            elif o in ('--cluster-init-username', '--cluster-username'):
                 self.username_new = a
-            elif o == '--cluster-init-port':
+            elif o in ('--cluster-init-port', '--cluster-port'):
                 self.port_new = a
-            elif o == '--cluster-init-ramsize':
+            elif o in ('--cluster-init-ramsize', '--cluster-ramsize'):
                 self.per_node_quota = a
+            elif o == '--enable-auto-failover':
+                self.enable_auto_failover = bool_to_str(a)
+            elif o == '--enable-notification':
+                self.enable_notification = bool_to_str(a)
+            elif o == '--auto-failover-timeout':
+                self.autofailover_timeout = a
+            elif o == '--compaction-db-percentage':
+                self.compaction_db_percentage = a
+            elif o == '--compaction-db-size':
+                self.compaction_db_size = a
+            elif o == '--compaction-view-percentage':
+                self.compaction_view_percentage = a
+            elif o == '--compaction-view-size':
+                self.compaction_view_size = a
+            elif o == '--compaction-period-from':
+                self.compaction_period_from = a
+            elif o == '--compaction-period-to':
+                self.compaction_period_to = a
+            elif o == '--enable-compaction-abort':
+                self.enable_compaction_abort = bool_to_str(a)
+            elif o == '--enable-compaction-parallel':
+                self.enable_compaction_parallel = bool_to_str(a)
+            elif o == '--enable-email-alert':
+                self.enable_email_alert = bool_to_str(a)
             elif o == '--node-init-data-path':
                 self.data_path = a
             elif o == '--node-init-index-path':
                 self.index_path = a
+
         return servers
 
     def addServers(self, servers):

@@ -5,23 +5,28 @@ import sys
 
 def commands_usage():
     return """
-  server-list       list all servers in a cluster
-  server-info       show details on one server
-  server-add        add one or more servers to the cluster
-  server-readd      readd a server that was failed over
-  rebalance         start a cluster rebalancing
-  rebalance-stop    stop current cluster rebalancing
-  rebalance-status  show status of current cluster rebalancing
-  failover          failover one or more servers
-  cluster-init      set the username,password and port of the cluster
-  node-init         set node specific parameters
-  bucket-list       list all buckets in a cluster
-  bucket-create     add a new bucket to the cluster
-  bucket-edit       modify an existing bucket
-  bucket-delete     delete an existing bucket
-  bucket-flush      flush all data from disk for a given bucket
-  bucket-compact    compact database and index data
-  help              show longer usage/help and examples
+  server-list           list all servers in a cluster
+  server-info           show details on one server
+  server-add            add one or more servers to the cluster
+  server-readd          readd a server that was failed over
+  rebalance             start a cluster rebalancing
+  rebalance-stop        stop current cluster rebalancing
+  rebalance-status      show status of current cluster rebalancing
+  failover              failover one or more servers
+  cluster-init          set the username,password and port of the cluster
+  cluster-edit          modify cluster settings
+  node-init             set node specific parameters
+  bucket-list           list all buckets in a cluster
+  bucket-create         add a new bucket to the cluster
+  bucket-edit           modify an existing bucket
+  bucket-delete         delete an existing bucket
+  bucket-flush          flush all data from disk for a given bucket
+  bucket-compact        compact database and index data
+  setting-compaction    set auto compaction settings
+  setting-notification  set notification settings
+  setting-alert         set email alert settings
+  setting-autofailover  set auto failover settings
+  help                  show longer usage/help and examples
 """
 
 def short_usage():
@@ -73,11 +78,11 @@ rebalance OPTIONS:
 failover OPTIONS:
   --server-failover=HOST[:PORT]     server to failover
 
-cluster-init OPTIONS:
-  --cluster-init-username=USER      new admin username
-  --cluster-init-password=PASSWORD  new admin password
-  --cluster-init-port=PORT          new cluster REST/http port
-  --cluster-init-ramsize=RAMSIZEMB  per node ram quota in MB
+cluster-* OPTIONS:
+  --cluster-username=USER           new admin username
+  --cluster-password=PASSWORD       new admin password
+  --cluster-port=PORT               new cluster REST/http port
+  --cluster-ramsize=RAMSIZEMB       per node ram quota in MB
 
 node-init OPTIONS:
   --node-init-data-path=PATH        per node path to store data
@@ -97,6 +102,25 @@ bucket-* OPTIONS:
   --data-only                       compact datbase data only
   --view-only                       compact view data only
 
+setting-compacttion OPTIONS:
+  --compaction-db-percentage=PERCENTAGE     at which point database compaction is triggered
+  --compaction-db-size=SIZE[MB]             at which point database compaction is triggered
+  --compaction-view-percentage=PERCENTAGE   at which point view compaction is triggered
+  --compaction-view-size=SIZE[MB]           at which point view compaction is triggered
+  --compaction-period-from=HH:MM            allow compaction time period from
+  --compaction-period-to=HH:MM              allow compaction time period to
+  --enable-compaction-abort=[0|1]           allow compaction abort when time expires
+  --enable-compaction-parallel=[0|1]        allow parallel compaction for database and view
+
+setting-notification OPTIONS:
+  --enable-notification=[0|1]               allow notification
+
+setting-alert OPTIONS:
+  --enable-email-alert=[0|1]                allow email alert
+
+setting-autofailover OPTIONS:
+  --enable-auto-failover=[0|1]              allow auto failover
+  --auto-failover-timeout=TIMEOUT (>=30)    specify timeout that expires to trigger auto failover
 
 The default PORT number is 8091.
 
