@@ -2,63 +2,54 @@
 
     couchbase-cli COMMAND
     COMMAND:
-    bucket-purge             purge all bucket data from disk
+    bucket-flush             flush all bucket data from disk
     bucket-compact           compact bucket database and index data
-    bucket-cancel-compaction stop compaction process
-    bucket-observe-diskqueue wait for disk queue draining complete
-
     cluster-edit             modify cluster wide settings
-
     xdcr-setup               create/edit/delete remote cluster connection
     xdcr-replicate           create/delete replication session
+    setting-compaction       set auto compaction settings
+    setting-notification     set notification settings
+    setting-alert            set email alert settings
+    setting-autofailover     set auto failover settings
+    setting-xdcr             set xdcr related settings
 
 **Newly added options for existed commands**
 
     bucket-create
-    --enable-purge=[0|1]            enable/disable purge [MB-7235]
+    --enable-flush=[0|1]            enable/disable flush [MB-7235]
     --enable-replica-index=[0|1]    enable index replication
 
     node-init
     --node-init-index-path=<path>   specify index path [MB-7323/MB-7372]
 
-    cluster-init
+    cluster-init / cluster-edit
     --cluster-username=Administrator        same as cluster-init-username
     --cluster-password=Password             same as cluster-init-password
     --cluster-port=8080                     same as cluster-init-port
     --cluster-ramsize=300                   same as cluster-init-ramsize
-    --cluster-enable-autofailover=[0|1]     enable/disable auto failover
-    --cluster-enable-notification=[0|1]     enable software update notification
-    --cluster-autofailover-timeout=30       specify timeout value to trigger autofailover
-    --cluster-compaction-db-percentage=30   specify percentage at which point db compaction is triggered
-    --cluster-compaction-db-size            specify db size at which point compaction is triggered
-    --cluster-compaction-view-percentage=30 specify percentage at which point view compaction is triggered
-    --cluster-compaction-period-from[hh:mm] start time for compaction period
-    --cluster-compaction-period-to[hh:mm]   stop time for compaction period
-    --cluster-enable-compaction-abort=[0|1] allow to abort compaction if run time exceeds period
-    --cluster-enable-compaction-parallel=[0|1]  allow to process database and view compaction in parallel
 
-    cluster-
+
  - **Enable/Disable bucket flush**
 
-Extend option for bucket-create / bucket-edit with --enable-purge
+Extend option for bucket-create / bucket-edit with --enable-flush
 
-    couchbase-cli bucket-create --enable-purge=[0|1]
+    couchbase-cli bucket-create --enable-flush=[0|1]
 
-where 1 means to enable purging and 0 means to disable purging. Default is 0.
+where 1 means to enable flush and 0 means to disable flush. Default is 0.
 
- - **Bucket purge command**
+ - **Bucket flush command**
 
 Flush all data under a bucket when flush option is enabled. By default, a confirmation question will be asked before proceeding.
 
-    couchbase-cli bucket-purge [bucket-* OPTIONS] --force
+    couchbase-cli bucket-flush [bucket-* OPTIONS] --force
 
 /pools/default/buckets/default/controller/doFlush
 
-    --force         purge bucket data without confirmation
+    --force        flush bucket data without confirmation
 
 Success:  Bucket flushing is successful
 
-Fail :  You have to use bucket-edit to enable purge option first before running purging request.
+Fail :  You have to use bucket-edit to enable flush option first before running flushing request.
 
  - **Enable bucket replica index**
 
@@ -74,19 +65,13 @@ Note, this option won't be changed after the bucket is created. So you won't see
 Compact all bucket data including datdabase and view index
 
     couchbase-cli bucket-compact [bucket-* OPTIONS]
-    --data-only     compact database only
-    --view-only     compact view only
+    --data-only     compact database data only
+    --view-only     compact view data only
 
 /pools/default/buckets/default/controller/compactBucket
 
 Compact bucket database data only
 /pools/default/buckets/default/controller/compactDatabases
-
- - **Cancel compact operation for a bucket**
-
-    couchbase-cli bucket-cancel-compact [bucket-* OPTIONS]
-
-/pools/default/buckets/default/controller/cancelBucketCompactiond
 
  - **Cluster edit command**
 
@@ -96,16 +81,7 @@ c
     --cluster-username=USER                 admin username
     --cluster-password=password             admin password
     --cluster-port=PORT                     new cluster REST/http PORT
-    --cluster-enable-autofailover=[0|1]     enable/disable auto failover
-    --cluster-enable-notification=[0|1]     enable software update notification
-    --cluster-autofailover-timeout=30       specify timeout value to trigger autofailover
-    --cluster-compaction-db-percentage=30   specify percentage at which point db compaction is triggered
-    --cluster-compaction-db-size            specify db size at which point compaction is triggered
-    --cluster-compaction-view-percentage=30 specify percentage at which point view compaction is triggered
-    --cluster-compaction-period-from[hh:mm] start time for compaction period
-    --cluster-compaction-period-to[hh:mm]   stop time for compaction period
-    --cluster-enable-compaction-abort=[0|1] allow to abort compaction if run time exceeds period
-    --cluster-enable-compaction-parallel=[0|1]  allow to process database and view compaction in parallel
+    --cluster-ramsize=RAMSIZE               set cluster ramsize
 
  - **Set index-path for node**
 
@@ -113,13 +89,43 @@ Extend node-init option with --node-init-index-path
 
     couchbase-cli node-init --node-init-index-path=PATH
 
+ - **Compaction settings**
+
+A new setting-compaction cmd for compaction related settings
+
+    setting-compacttion OPTIONS:
+
+    --compaction-db-percentage=PERCENTAGE     at which point database compaction is triggered
+    --compaction-db-size=SIZE[MB]             at which point database compaction is triggered
+    --compaction-view-percentage=PERCENTAGE   at which point view compaction is triggered
+    --compaction-view-size=SIZE[MB]           at which point view compaction is triggered
+    --compaction-period-from=HH:MM            allow compaction time period from
+    --compaction-period-to=HH:MM              allow compaction time period to
+    --enable-compaction-abort=[0|1]           allow compaction abort when time expires
+    --enable-compaction-parallel=[0|1]        allow parallel compaction for database and view
+
+
  - **Enable/disable auto failover**
 
-Extend cluster-init option with --cluster-init-enable-autofailover
+A new setting-autofailover command is used for auto failover settings
 
-    couchbase-cli cluster-init --cluster-init-enable-autofailover [cluster-init OPTIONS]
+    setting-autofailover OPTIONS
+    --enable-auto-failover=[0|1]            allow auto failover
+    --auto-failover-timeout=TIMEOUT (>=30)  specify timeout that expires to trigger auto failover
 
-By default, it is false, i.e. --cluster-init-enable-autofailover is not specified
+ - **Enable/disable notification**
+
+A new setting-notificaiton is used for notification settings
+
+    setting-notification OPTIONS
+    --enable-notification=[0|1]   allow software update notification
+
+ - **Enable/disable notification**
+
+A new setting-alert is used for email alert settings
+
+    setting-alert OPTIONS
+    --enable-email-alert=[0|1]   allow email alerts
 
  - **XDCR setup**
 
@@ -148,10 +154,78 @@ Create a new replication session
     --xdcr-replicate-from-bucket
     --xdcr-replicate-to-cluster
     --xdcr-replicate-to-bucket
-    --xdcr-replicate-type = "continuous"
+
 
 Cancel/stop replication
 
     couchbase-cli xdcr-replicate --delete
     --xdcr-replication-id <session_id>
+
+ - **Cluster setting management**
+
+setting-compacttion OPTIONS:
+
+      --compaction-db-percentage=PERCENTAGE     at which point database compaction is triggered
+      --compaction-db-size=SIZE[MB]             at which point database compaction is triggered
+      --compaction-view-percentage=PERCENTAGE   at which point view compaction is triggered
+      --compaction-view-size=SIZE[MB]           at which point view compaction is triggered
+      --compaction-period-from=HH:MM            allow compaction time period from
+      --compaction-period-to=HH:MM              allow compaction time period to
+      --enable-compaction-abort=[0|1]           allow compaction abort when time expires
+      --enable-compaction-parallel=[0|1]        allow parallel compaction for database and view
+
+setting-notification OPTIONS:
+
+      --enable-notification=[0|1]               allow notification
+
+setting-alert OPTIONS:
+
+      --enable-email-alert=[0|1]                allow email alert
+      --email-recipients=RECIPIENT              email recipents, separate addresses with , or ;
+      --email-sender=SENDER                     sender email address
+      --email-user=USER                         email server username
+      --email-password=PWD                      email server password
+      --email-host=HOST                         email server host
+      --email-port=PORT                         email server port
+      --enable-email-encrypt=[0|1]              email encrypt
+      --alert-auto-failover-node                node was auto failover
+      --alert-auto-failover-max-reached         maximum number of auto failover nodes was reached
+      --alert-auto-failover-node-down           node wasn't auto failover as other nodes are down at the same time\\
+      --alert-auto-failover-cluster-small       node wasn't auto fail over as cluster was too small
+      --alert-ip-changed                        node ip address has changed unexpectedly
+      --alert-disk-space                        disk space used for persistent storgage has reached at least 90% capacity
+      --alert-meta-overhead                     metadata overhead is more than 50%
+      --alert-meta-oom                          bucket memory on a node is entirely used for metadata
+      --alert-write-failed                      writing data to disk for a specific bucket has failed
+
+setting-autofailover OPTIONS:
+
+      --enable-auto-failover=[0|1]              allow auto failover
+      --auto-failover-timeout=TIMEOUT (>=30)    specify timeout that expires to trigger auto failover
+
+setting-xdcr OPTIONS:
+
+      --max-concurrent-reps=[32]             maximum concurrent replications per bucket, 8 to 256.
+      --checkpoint-interval=[1800]           intervals between checkpoints, 60 to 14400 seconds.
+      --worker-batch-size=[500]              doc batch size, 500 to 10000.
+      --doc-batch-size=[2048]KB              document batching size, 10 to 100000 KB
+      --failure-restart-interval=[30]        interval for restarting failed xdcr, 1 to 300 seconds
+
+xdcr-setup OPTIONS:
+
+      --create                               create a new xdcr configuration
+      --edit                                 modify existed xdcr configuration
+      --delete                               delete existed xdcr configuration
+      --xdcr-cluster-name=CLUSTERNAME        cluster name
+      --xdcr-hostname=HOSTNAME               remote host name to connect to
+      --xdcr-username=USERNAME               remote cluster admin username
+      --xdcr-password=PASSWORD               remtoe cluster admin password
+
+xdcr-replicate OPTIONS:
+
+      --create                               create and start a new replication
+      --delete                               stop and cancel a replication
+      --xdcr-from-bucket=BUCKET              local bucket name to replicate from
+      --xdcr-clucter-name=CLUSTERNAME        remote cluster to replicate to
+      --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
 
