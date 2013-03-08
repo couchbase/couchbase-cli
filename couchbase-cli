@@ -101,6 +101,22 @@ def main():
                 'worker-batch-size='
                 'doc-batch-size=',
                 'failure-restart-interval=',
+                'email-recipients=',
+                'email-sender=',
+                'email-user=',
+                'email-password=',
+                'email-host=',
+                'email-port=',
+                'enable-email-encrypt=',
+                'alert-auto-failover-node',
+                'alert-auto-failover-max-reached',
+                'alert-auto-failover-node-down',
+                'alert-auto-failover-cluster-small',
+                'alert-ip-changed',
+                'alert-disk-space',
+                'alert-meta-overhead',
+                'alert-meta-oom',
+                'alert-write-failed'
                 ])
     except getopt.GetoptError, err:
         usage(err)

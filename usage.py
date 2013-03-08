@@ -120,6 +120,22 @@ setting-notification OPTIONS:
 
 setting-alert OPTIONS:
   --enable-email-alert=[0|1]                allow email alert
+  --email-recipients=RECIPIENT              email recipents, separate addresses with , or ;
+  --email-sender=SENDER                     sender email address
+  --email-user=USER                         email server username
+  --email-password=PWD                      email server password
+  --email-host=HOST                         email server host
+  --email-port=PORT                         email server port
+  --enable-email-encrypt=[0|1]              email encrypt
+  --alert-auto-failover-node                node was auto failover
+  --alert-auto-failover-max-reached         maximum number of auto failover nodes was reached
+  --alert-auto-failover-node-down           node wasn't auto failover as other nodes are down at the same time
+  --alert-auto-failover-cluster-small       node wasn't auto fail over as cluster was too small
+  --alert-ip-changed                        node ip address has changed unexpectedly
+  --alert-disk-space                        disk space used for persistent storgage has reached at least 90% capacity
+  --alert-meta-overhead                     metadata overhead is more than 50%
+  --alert-meta-oom                          bucket memory on a node is entirely used for metadata
+  --alert-write-failed                      writing data to disk for a specific bucket has failed
 
 setting-autofailover OPTIONS:
   --enable-auto-failover=[0|1]              allow auto failover
