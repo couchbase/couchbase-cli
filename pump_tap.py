@@ -12,6 +12,21 @@ import cb_bin_client
 import couchbaseConstants
 
 import pump
+import pump_mc
+import pump_cb
+
+try:
+    import ctypes
+except ImportError:
+    cb_path = '/opt/couchbase/lib/python'
+    while cb_path in sys.path:
+        sys.path.remove(cb_path)
+    try:
+        import ctypes
+    except ImportError:
+        sys.exit('error: could not import ctypes module')
+    else:
+        sys.path.insert(0, cb_path)
 
 # TODO: (1) TAPDumpSource - handle TAP_FLAG_NETWORK_BYTE_ORDER.
 
@@ -30,6 +45,7 @@ class TAPDumpSource(pump.Source):
         self.num_msg = 0
 
         self.recv_min_bytes = int(getattr(opts, "recv_min_bytes", 4096))
+        self.vbucket_list = getattr(opts, "vbucket_list", None)
 
     @staticmethod
     def can_handle(opts, spec):
@@ -245,7 +261,10 @@ class TAPDumpSource(pump.Source):
             if self.tap_conn.tap_fix_flag_byteorder:
                 tap_opts[couchbaseConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
 
-            ext, val = TAPDumpSource.encode_tap_connect_opts(tap_opts)
+            if self.vbucket_list:
+                tap_opts[couchbaseConstants.TAP_FLAG_LIST_VBUCKETS] = ''
+
+            ext, val = TAPDumpSource.encode_tap_connect_opts(tap_opts, vblist=self.vbucket_list)
 
             self.tap_conn._sendCmd(couchbaseConstants.CMD_TAP_CONNECT,
                                    self.tap_name, val, 0, ext)
@@ -272,9 +291,7 @@ class TAPDumpSource(pump.Source):
                     struct.unpack(couchbaseConstants.TAP_MUTATION_PKT_FMT, ext)
                 if not tap_conn.tap_fix_flag_byteorder:
                     flg = socket.ntohl(flg)
-
             need_ack = flags & couchbaseConstants.TAP_FLAG_ACK
-
             meta_start = extlen
             key_start = meta_start + metalen
             val_start = key_start + keylen
@@ -328,10 +345,9 @@ class TAPDumpSource(pump.Source):
         return joined[:nbytes], joined[nbytes:]
 
     @staticmethod
-    def encode_tap_connect_opts(opts, backfill=False):
+    def encode_tap_connect_opts(opts, backfill=False, vblist=None):
         header = 0
         val = []
-
         for op in sorted(opts.keys()):
             header |= op
             if op in couchbaseConstants.TAP_FLAG_TYPES:
@@ -341,6 +357,11 @@ class TAPDumpSource(pump.Source):
                 if opts[op][2] >= 0:
                     val.append(struct.pack(">HHQ",
                                            opts[op][0], opts[op][1], opts[op][2]))
+            elif vblist and op == couchbaseConstants.TAP_FLAG_LIST_VBUCKETS:
+                vblist = vblist[1:-1].split(",")
+                val.append(struct.pack(">H", len(vblist)))
+                for v in vblist:
+                    val.append(struct.pack(">H", int(v)))
             else:
                 val.append(opts[op])
 
@@ -354,6 +375,12 @@ class TAPDumpSource(pump.Source):
 
         spec = source_map['spec']
         name = source_bucket['name']
+        vbuckets_num = len(source_bucket['vBucketServerMap']['vBucketMap'])
+        if not vbuckets_num:
+            return 0, None
+
+        vbucket_list = getattr(opts, "vbucket_list", None)
+
         path = "/pools/default/buckets/%s/stats/curr_items" % (name)
         host, port, user, pswd, _ = pump.parse_spec(opts, spec, 8091)
         err, json, data = pump.rest_request_json(host, int(port),
@@ -371,3 +398,125 @@ class TAPDumpSource(pump.Source):
             return 0, None
 
         return 0, curr_items[-1]
+
+class TapSink(pump_cb.CBSink):
+    """Smart client using tap protocol to steam data to couchbase cluster."""
+    def __init__(self, opts, spec, source_bucket, source_node,
+                 source_map, sink_map, ctl, cur):
+        super(TapSink, self).__init__(opts, spec, source_bucket, source_node,
+                                     source_map, sink_map, ctl, cur)
+
+        self.tap_flags = couchbaseConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER
+
+    @staticmethod
+    def check_base(opts, spec):
+        #Overwrite CBSink.check_base() to allow replica vbucket state
+
+        op = getattr(opts, "destination_operation", None)
+        if op not in [None, 'set', 'add', 'get']:
+            return ("error: --destination-operation unsupported value: %s" +
+                    "; use set, add, get") % op
+
+        return pump.EndPoint.check_base(opts, spec)
+
+    def scatter_gather(self, mconns, batch):
+        sink_map_buckets = self.sink_map['buckets']
+        if len(sink_map_buckets) != 1:
+            return "error: CBSink.run() expected 1 bucket in sink_map", None, None
+
+        vbuckets_num = len(sink_map_buckets[0]['vBucketServerMap']['vBucketMap'])
+        vbuckets = batch.group_by_vbucket_id(vbuckets_num, self.rehash)
+
+        # Scatter or send phase.
+        for vbucket_id, msgs in vbuckets.iteritems():
+            rv, conn = self.find_conn(mconns, vbucket_id)
+            if rv != 0:
+                return rv, None, None
+            rv = self.send_msgs(conn, msgs, self.operation(),
+                                vbucket_id=vbucket_id)
+            if rv != 0:
+                return rv, None, None
+        # Yield to let other threads do stuff while server's processing.
+        time.sleep(0.01)
+
+        # No need for Gather or recv phase
+        return 0, None, None
+
+    def send_msgs(self, conn, msgs, operation, vbucket_id=None):
+        m = []
+        for i, msg in enumerate(msgs):
+            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg
+            if vbucket_id is not None:
+                vbucket_id_msg = vbucket_id
+
+            if self.skip(key, vbucket_id_msg):
+                continue
+
+            if cmd == couchbaseConstants.CMD_GET:
+                val, flg, exp, cas = '', 0, 0, 0
+            if cmd == couchbaseConstants.CMD_NOOP:
+                key, val, flg, exp, cas = '', '', 0, 0, 0
+
+            rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
+                                       ctypes.c_uint32(flg).value,
+                                       exp, cas, meta, i)
+            if rv != 0:
+                return rv
+            self.append_req(m, req)
+        if m:
+            try:
+                conn.s.send(''.join(m))
+            except socket.error, e:
+                return "error: conn.send() exception: %s" % (e)
+
+        return 0
+
+    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque):
+        if meta:
+            seq_no = str(meta)
+            if len(seq_no) > 8:
+                seq_no = seq_no[0:8]
+            if len(seq_no) < 8:
+                # The seq_no might be 32-bits from 2.0DP4, so pad with 0x00's.
+                seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + seq_no)[-8:]
+            check_seqno, = struct.unpack(">Q", seq_no)
+            if not check_seqno:
+                seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + 1)[-8:]
+        else:
+            seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + 1)[-8:]
+        metalen = len(str(seq_no))
+        ttl = -1
+        if cmd == couchbaseConstants.CMD_TAP_MUTATION:
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
+                              metalen,
+                              self.tap_flags,
+                              ttl, flg, exp)
+        elif cmd == couchbaseConstants.CMD_TAP_DELETE:
+            ext = struct.pack(couchbaseConstants.TAP_GENERAL_PKT_FMT,
+                              metalen,
+                              self.tap_flags, ttl)
+        else:
+            return "error: MCSink - unknown tap cmd for request: " + str(cmd), None
+
+        hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque, metalen)
+        return 0, (hdr, ext, seq_no, key, val)
+
+    def cmd_header(self, cmd, vbucket_id, key, val, ext, cas, opaque, metalen,
+                   dtype=0,
+                   fmt=couchbaseConstants.REQ_PKT_FMT,
+                   magic=couchbaseConstants.REQ_MAGIC_BYTE):
+        return struct.pack(fmt, magic, cmd,
+                           len(key), len(ext), dtype, vbucket_id,
+                           metalen + len(key) + len(val) + len(ext), opaque, cas)
+
+    def append_req(self, m, req):
+        hdr, ext, seq_no, key, val = req
+        m.append(hdr)
+        if ext:
+            m.append(ext)
+        if seq_no:
+            m.append(seq_no)
+        if key:
+            m.append(str(key))
+        if val:
+            m.append(str(val))

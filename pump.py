@@ -120,13 +120,19 @@ class PumpingStation(ProgressReporter):
                                     key=lambda b: b['name']):
             logging.info("bucket: " + source_bucket['name'])
 
-            rv = self.transfer_bucket_msgs(source_bucket, source_map, sink_map)
-            if rv != 0:
-                return rv
+            if not self.opts.extra.get("design_doc_only", 0):
+                rv = self.transfer_bucket_msgs(source_bucket, source_map, sink_map)
+                if rv != 0:
+                    return rv
+            else:
+                sys.stderr.write("transfer design doc only. bucket msgs will be skipped.\n")
 
-            rv = self.transfer_bucket_design(source_bucket, source_map, sink_map)
-            if rv != 0:
-                return rv
+            if not self.opts.extra.get("data_only", 0):
+                rv = self.transfer_bucket_design(source_bucket, source_map, sink_map)
+                if rv != 0:
+                    return rv
+            else:
+                sys.stderr.write("transfer data only. bucket design docs will be skipped.\n")
 
             # TODO: (5) PumpingStation - validate bucket transfers.
 
@@ -815,9 +821,7 @@ def parse_spec(opts, spec, port):
 def rest_request(host, port, user, pswd, path, method='GET', body='', reason=''):
     if reason:
         reason = "; reason: %s" % (reason)
-
     logging.debug("rest_request: %s@%s:%s%s%s" % (user, host, port, path, reason))
-
     conn = httplib.HTTPConnection(host, port)
     try:
         conn.request(method, path, body, rest_headers(user, pswd))
