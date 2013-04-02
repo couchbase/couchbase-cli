@@ -3,7 +3,6 @@
 import glob
 import logging
 import os
-import Queue
 import re
 import simplejson as json
 import struct
@@ -149,7 +148,7 @@ class SFDSource(pump.Source):
 
         if not self.queue:
             name = "c" + threading.currentThread().getName()[1:]
-            self.queue = Queue.Queue(2)
+            self.queue = PumpQueue(2)
             self.thread = threading.Thread(target=self.loader, name=name)
             self.thread.daemon = True
             self.thread.start()
