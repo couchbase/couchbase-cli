@@ -26,6 +26,9 @@ def commands_usage():
   setting-notification  set notification settings
   setting-alert         set email alert settings
   setting-autofailover  set auto failover settings
+  setting-xdcr          set xdcr related settings
+  xdcr-setup            set up XDCR connection
+  xdcr-replicate        xdcr operations
   help                  show longer usage/help and examples
 """
 
@@ -121,6 +124,29 @@ setting-alert OPTIONS:
 setting-autofailover OPTIONS:
   --enable-auto-failover=[0|1]              allow auto failover
   --auto-failover-timeout=TIMEOUT (>=30)    specify timeout that expires to trigger auto failover
+
+setting-xdcr OPTIONS:
+  --max-concurrent-reps=[32]             maximum concurrent replications per bucket, 8 to 256.
+  --checkpoint-interval=[1800]           intervals between checkpoints, 60 to 14400 seconds.
+  --worker-batch-size=[500]              doc batch size, 500 to 10000.
+  --doc-batch-size=[2048]KB              document batching size, 10 to 100000 KB
+  --failure-restart-interval=[30]        interval for restarting failed xdcr, 1 to 300 seconds
+
+xdcr-setup OPTIONS:
+  --create                               create a new xdcr configuration
+  --edit                                 modify existed xdcr configuration
+  --delete                               delete existed xdcr configuration
+  --xdcr-cluster-name=CLUSTERNAME        cluster name
+  --xdcr-hostname=HOSTNAME               remote host name to connect to
+  --xdcr-username=USERNAME               remote cluster admin username
+  --xdcr-password=PASSWORD               remtoe cluster admin password
+
+xdcr-replicate OPTIONS:
+  --create                               create and start a new replication
+  --delete                               stop and cancel a replication
+  --xdcr-from-bucket=BUCKET              local bucket name to replicate from
+  --xdcr-clucter-name=CLUSTERNAME        remote cluster to replicate to
+  --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
 
 The default PORT number is 8091.
 
@@ -222,6 +248,30 @@ EXAMPLES:
     couchbase-cli bucket-compact -c 192.168.0.1:8091 \\
         --bucket=test_bucket \\
         --view-only
+
+  Create a XDCR remote cluster
+    couchbase-cli xdcr-setup -c 192.168.0.1:8091 \\
+        --create \\
+        --xdcr-cluster-name=test \\
+        --xdcr-hostname=10.1.2.3:8091 \\
+        --xdcr-username=Administrator \\
+        --xdcr-password=password
+
+  Delete a XDCR remote cluster
+    couchbase-cli xdcr-delete -c 192.168.0.1:8091 \\
+        --xdcr-cluster-name=test
+
+  Start a replication stream
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --create \\
+        --xdcr-cluster-name=test \\
+        --xdcr-from-bucket=default \\
+        --xdcr-to-bucket=default1
+
+  Delete a replication stream
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --delete \\
+        --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
 """
 
     sys.exit(2)

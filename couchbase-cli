@@ -11,6 +11,7 @@ import sys
 import listservers
 import buckets
 import node
+import xdcr
 import info
 import util_cli as util
 from usage import usage, short_usage
@@ -84,7 +85,22 @@ def main():
                 'force',
                 'data-only',
                 'view-only',
-                'version'
+                'version',
+                'xdcr-cluster-name=',
+                'xdcr-hostname=',
+                'xdcr-username=',
+                'xdcr-password=',
+                'xdcr-from-bucket=',
+                'xdcr-to-bucket=',
+                'xdcr-replicator=',
+                'create',
+                'edit',
+                'delete',
+                'max-concurrent-reps=',
+                'checkpoint-interval=',
+                'worker-batch-size='
+                'doc-batch-size=',
+                'failure-restart-interval=',
                 ])
     except getopt.GetoptError, err:
         usage(err)
@@ -114,6 +130,9 @@ def main():
         'setting-notification'  : node.Node,
         'setting-autofailover'  : node.Node,
         'setting-alert'         : node.Node,
+        'setting-xdcr'          : xdcr.XDCR,
+        'xdcr-setup'            : xdcr.XDCR,
+        'xdcr-replicate'        : xdcr.XDCR,
         }
 
     cmd = sys.argv[1]
