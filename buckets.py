@@ -17,7 +17,7 @@ rest_cmds = {
     'bucket-get': '/pools/default/buckets',
     'bucket-stats': '/pools/default/buckets/{0}/stats?zoom=hour',
     'bucket-node-stats': '/pools/default/buckets/{0}/stats/{1}?zoom={2}',
-    'bucket-info': '/pools/default/buckets/%s',
+    'bucket-info': '/pools/default/buckets/%s'
     }
 methods = {
     'bucket-list': 'GET',
@@ -53,6 +53,7 @@ class Buckets:
         wait_for_bucket_ready = False
         enable_flush = None
         enable_index_replica = None
+        force = False
 
         for (o, a) in opts:
             if o in ('-b', '--bucket'):
@@ -77,6 +78,8 @@ class Buckets:
                 enable_replica_index = a
             elif o == '--wait':
                 wait_for_bucket_ready = True
+            elif o == '--force':
+                force = True
 
         self.rest_cmd = rest_cmds[cmd]
         rest = restclient.RestClient(server, port, {'debug':self.debug})
@@ -114,11 +117,22 @@ class Buckets:
             if enable_flush:
                 rest.setParam('flushEnabled', enable_flush)
             if enable_replica_index:
-                rest.setParam('replicaIndex', enable_index_replica
+                rest.setParam('replicaIndex', enable_index_replica)
         if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):
             self.rest_cmd = self.rest_cmd + bucketname
         if cmd == 'bucket-flush':
             self.rest_cmd = self.rest_cmd + '/controller/doFlush'
+            if not force:
+                question = "Running this command will totally PURGE database data from disk." + \
+                           "Do you really want to do it? (Yes/No)"
+                confirm = raw_input(question)
+                if confirm in ('Y', 'Yes'):
+                    print "Database data will be purged from disk ..."
+                else:
+                    print "Database data will not be purged. Done."
+                    return False
+            else:
+                print "Database data will be purged from disk ..."
 
         opts = {}
         opts['error_msg'] = "unable to %s; please check your username (-u) and password (-p);" % cmd

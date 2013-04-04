@@ -19,7 +19,7 @@ def commands_usage():
   bucket-create     add a new bucket to the cluster
   bucket-edit       modify an existing bucket
   bucket-delete     delete an existing bucket
-  bucket-flush      flush a given bucket
+  bucket-flush      flush all data from disk for a given bucket
   help              show longer usage/help and examples
 """
 
@@ -92,6 +92,7 @@ bucket-* OPTIONS:
   --enable-flush=[0|1]              enable/disable flush
   --enable-index-replica=[0|1]      enable/disable index replicas
   --wait                            wait for bucket create to be complete before returning
+  --force                           force to execute command without asking for confirmation
 
 The default PORT number is 8091.
 
@@ -176,6 +177,9 @@ EXAMPLES:
     couchbase-cli bucket-delete -c 192.168.0.1:8091 \\
        --bucket=test_bucket
 
+  Flush a bucket:
+    coucbase-cli bucket-flush -c 192.168.0.1:8091 \\
+       --force
 """
 
     sys.exit(2)
