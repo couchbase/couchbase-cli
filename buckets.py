@@ -51,25 +51,31 @@ class Buckets:
         bucketreplication = '1'
         output = 'default'
         wait_for_bucket_ready = False
+        enable_flush = None
+        enable_index_replica = None
 
         for (o, a) in opts:
-            if o == '-b' or o == '--bucket':
+            if o in ('-b', '--bucket'):
                 bucketname = a
-            if o == '--bucket-type':
+            elif o == '--bucket-type':
                 buckettype = a
-            if o == '--bucket-port':
+            elif o == '--bucket-port':
                 bucketport = a
-            if o == '--bucket-password':
+            elif o == '--bucket-password':
                 bucketpassword = a
-            if o == '--bucket-ramsize':
+            elif o == '--bucket-ramsize':
                 bucketramsize = a
-            if o == '--bucket-replica':
+            elif o == '--bucket-replica':
                 bucketreplication = a
-            if o == '-d' or o == '--debug':
+            elif o == '-d' or o == '--debug':
                 self.debug = True
-            if o in  ('-o', '--output'):
+            elif o in ('-o', '--output'):
                 output = a
-            if o == '--wait':
+            elif o == '--enable-flush':
+                enable_flush = a
+            elif o == '--enable-index-replica':
+                enable_replica_index = a
+            elif o == '--wait':
                 wait_for_bucket_ready = True
 
         self.rest_cmd = rest_cmds[cmd]
@@ -105,6 +111,10 @@ class Buckets:
                 rest.setParam('ramQuotaMB', bucketramsize)
             if bucketreplication:
                 rest.setParam('replicaNumber', bucketreplication)
+            if enable_flush:
+                rest.setParam('flushEnabled', enable_flush)
+            if enable_replica_index:
+                rest.setParam('replicaIndex', enable_index_replica
         if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):
             self.rest_cmd = self.rest_cmd + bucketname
         if cmd == 'bucket-flush':

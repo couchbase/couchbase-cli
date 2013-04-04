@@ -88,6 +88,8 @@ bucket-* OPTIONS:
   --bucket-password=PASSWORD        standard port, exclusive with bucket-port
   --bucket-ramsize=RAMSIZEMB        ram quota in MB
   --bucket-replica=COUNT            replication count
+  --enable-flush=[0|1]              enable/disable flush
+  --enable-index-replica=[0|1]      enable/disable index replicas
   --wait                            wait for bucket create to be complete before returning
 
 The default PORT number is 8091.
