@@ -818,13 +818,14 @@ def parse_spec(opts, spec, port):
 
     return host, port, username, password, p[2]
 
-def rest_request(host, port, user, pswd, path, method='GET', body='', reason=''):
+def rest_request(host, port, user, pswd, path, method='GET', body='', reason='', headers=None):
     if reason:
         reason = "; reason: %s" % (reason)
     logging.debug("rest_request: %s@%s:%s%s%s" % (user, host, port, path, reason))
     conn = httplib.HTTPConnection(host, port)
     try:
-        conn.request(method, path, body, rest_headers(user, pswd))
+        header = rest_headers(user, pswd, headers)
+        conn.request(method, path, body, header)
     except Exception, e:
         return ("error: could not access REST API: %s:%s%s" +
                 "; please check source URL, username (-u) and password (-p)" +
@@ -836,7 +837,6 @@ def rest_request(host, port, user, pswd, path, method='GET', body='', reason='')
         return None, conn, resp.read()
 
     conn.close()
-
     if resp.status == 401:
         return ("error: unable to access REST API: %s:%s%s" +
                 "; please check source URL, username (-u) and password (-p)%s") % \
