@@ -20,7 +20,7 @@ from timeout import TimeoutException
 
 def main():
     for x in sys.argv:
-        if x in ('-h', '--help', 'help'):
+        if x in ('-h', '-H', '--help', 'help'):
             usage()
 
     if len(sys.argv) <= 2:
