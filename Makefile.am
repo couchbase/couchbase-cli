@@ -38,7 +38,8 @@ nobase_pythonlib_DATA= \
          stats_buffer.py \
          timeout.py \
          usage.py \
-         util_cli.py
+         util_cli.py \
+         xdcr.py
 
 
 pythonlib_SCRIPTS= couchbase-cli \
