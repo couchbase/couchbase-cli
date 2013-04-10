@@ -99,6 +99,8 @@ class CSVSource(pump.Source):
 
 class CSVSink(pump.Sink):
     """Emits batches to stdout in CSV format."""
+    CSV_SCHEME = "csv:"
+    CSV_JSON_SCHEME = "csv-json:"
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
@@ -107,15 +109,31 @@ class CSVSink(pump.Sink):
         self.writer = None
         self.fields = None
 
+
     @staticmethod
     def can_handle(opts, spec):
-        if spec.startswith("csv:") or spec.startswith("csv-json:"):
+        if spec.startswith(CSVSink.CSV_SCHEME) or spec.startswith(CSVSink.CSV_JSON_SCHEME):
             opts.threads = 1 # Force 1 thread to not overlap stdout.
             return True
         return False
 
     @staticmethod
     def check(opts, spec, source_map):
+        if spec.endswith(".csv"):
+            if spec.startswith(CSVSink.CSV_JSON_SCHEME):
+                targetpath = spec[len(CSVSink.CSV_JSON_SCHEME):]
+            else:
+                targetpath = spec[len(CSVSink.CSV_SCHEME):]
+            targetpath = os.path.normpath(targetpath)
+
+            # Create all parent directories if necessary.
+            upperdirs = os.path.dirname(targetpath)
+            if upperdirs and not os.path.exists(upperdirs):
+                try:
+                    os.makedirs(upperdirs)
+                except:
+                    return "Cannot create output file:%s" % targetpath, None
+
         return 0, None
 
     @staticmethod
@@ -128,7 +146,8 @@ class CSVSink(pump.Sink):
 
     def consume_batch_async(self, batch):
         if not self.writer:
-            if self.spec.startswith("csv-json:"):
+            csvfile = sys.stdout
+            if self.spec.startswith(CSVSink.CSV_JSON_SCHEME):
                 if len(batch.msgs) <= 0:
                     future = pump.SinkBatchFuture(self, batch)
                     self.future_done(future, 0)
@@ -139,10 +158,22 @@ class CSVSink(pump.Sink):
                 self.fields = sorted(doc.keys())
                 if 'id' not in self.fields:
                     self.fields = ['id'] + self.fields
-                self.writer = csv.writer(sys.stdout)
+                if self.spec.endswith(".csv"):
+                    try:
+                        csvfile = open(self.spec[len(CSVSink.CSV_JSON_SCHEME):], "wb")
+                    except IOError, e:
+                        return ("error: could not write csv to file:%s" % \
+                               self.spec[len(CSVSink.CSV_JSON_SCHEME):]), None
+                self.writer = csv.writer(csvfile)
                 self.writer.writerow(self.fields)
             else:
-                self.writer = csv.writer(sys.stdout)
+                if self.spec.endswith(".csv"):
+                    try:
+                        csvfile = open(self.spec[len(CSVSink.CSV_SCHEME):], "wb")
+                    except IOError, e:
+                        return ("error: could not write csv to file:%s" % \
+                               self.spec[len(CSVSink.CSV_SCHEME):]), None
+                self.writer = csv.writer(csvfile)
                 self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value'])
 
         for msg in batch.msgs:
