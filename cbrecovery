@@ -117,6 +117,9 @@ class Recovery(pump_transfer.Transfer):
         if not self.sink_bucket:
             return "Should specify destionation bucket for restore"
 
+        if opts.dry_run:
+            return 0
+
         host, port, user, pwd, path = \
             pump.parse_spec(opts, sink, 8091)
 
