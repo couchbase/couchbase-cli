@@ -361,6 +361,8 @@ class TAPDumpSource(pump.Source):
                 vblist = vblist[1:-1].split(",")
                 val.append(struct.pack(">H", len(vblist)))
                 for v in vblist:
+                    if v.find("@"):
+                        v = v[1:-1].split("@")[0]
                     val.append(struct.pack(">H", int(v)))
             else:
                 val.append(opts[op])
@@ -407,6 +409,7 @@ class TapSink(pump_cb.CBSink):
                                      source_map, sink_map, ctl, cur)
 
         self.tap_flags = couchbaseConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER
+        self.vbucket_list = getattr(opts, "vbucket_list", None)
 
     @staticmethod
     def check_base(opts, spec):
@@ -441,6 +444,44 @@ class TapSink(pump_cb.CBSink):
 
         # No need for Gather or recv phase
         return 0, None, None
+
+    def find_conn(self, mconns, vbucket_id):
+        if not self.vbucket_list:
+            return super(TapSink, self).find_conn(mconns, vbucket_id)
+
+        if str(vbucket_id) not in self.vbucket_list:
+            return "error: unexpected vbucket id:" + str(vbucket_id), None
+
+        bucket = self.sink_map['buckets'][0]
+        serverList = bucket['vBucketServerMap']['serverList']
+        if serverList:
+            port_number = serverList[0].split(":")[-1]
+        else:
+            port_number = 11210
+
+        vblist = self.vbucket_list[1:-1].split(",")
+        conn = None
+        for v in vblist:
+            if v.find("@"):
+                #vbucket associated with host as 'vbucket_id@hostname'
+                vbucket, node = v[1:-1].split("@")
+                if int(vbucket) == int(vbucket_id):
+                    host_port = "%s:%s" % (node, port_number)
+                    conn = mconns.get(host_port, None)
+                    if not conn:
+                        host, port = host_port.split(':')
+                        user = bucket['name']
+                        pswd = bucket['saslPassword']
+                        rv, conn = TapSink.connect_mc(host, port, user, pswd)
+                        if rv != 0:
+                            logging.error("error: CBSink.connect() for send: " + rv)
+                            return rv, None
+                        mconns[host_port] = conn
+                    break
+            elif int(v) == int(vbucket_id):
+                #no host associated with vbucket, reuse existed vbucket map
+                return super(TapSink, self).find_conn(mconns, vbucket_id)
+        return 0, conn
 
     def send_msgs(self, conn, msgs, operation, vbucket_id=None):
         m = []

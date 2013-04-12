@@ -26,7 +26,7 @@ class Recovery(pump_transfer.Transfer):
         self.name = "cbrecovery"
         self.source_alias = "cluster to recover from"
         self.sink_alias = "cluster to recover to"
-        self.vbucket_list = []
+        self.recovery_map = None
         self.recovery_uuid = None
         self.sink_bucket = None
         self.source_bucket = None
@@ -66,10 +66,8 @@ class Recovery(pump_transfer.Transfer):
         if err:
             return err
 
-        if self.vbucket_list:
-            argv.append("--vbucket-list")
-            argv.append(str(self.vbucket_list))
-            logging.error("Missing vbuckets to be recovered:%s", str(self.vbucket_list))
+        if self.recovery_map:
+            logging.error("Missing vbuckets to be recovered:%s", json.dumps(self.recovery_map))
         else:
             logging.info("No missing vbuckets to be recovered.")
             return 0
@@ -77,14 +75,17 @@ class Recovery(pump_transfer.Transfer):
         #only care about data recovery
         argv.append("--extra")
         argv.append("data_only=1")
-        for vbucket in self.vbucket_list:
-            temp_argv = copy.deepcopy(argv)
-            temp_argv.append("--vbucket-list")
-            temp_argv.append(str([vbucket]))
-            err = pump_transfer.Transfer.main(self, temp_argv)
-            if err:
-                return err
-            self.post_transfer(opts, source, sink, vbucket)
+
+        for i, node in enumerate(self.recovery_map):
+            nodename = node["node"].split("@")[-1]
+            for vbucket in node["vbuckets"]:
+                temp_argv = copy.deepcopy(argv)
+                temp_argv.append("--vbucket-list")
+                temp_argv.append(str(["%s@%s" % (vbucket, nodename)]))
+                err = pump_transfer.Transfer.main(self, temp_argv)
+                if err:
+                    return err
+                self.post_transfer(opts, source, sink, vbucket)
 
         return 0
 
@@ -100,22 +101,15 @@ class Recovery(pump_transfer.Transfer):
             pump.rest_request(host, int(port), user, pwd,
                               url, method='POST', reason='start_recovery')
         if err:
-            self.explain_error(err, cmd)
+            self.explain_error(err, err_map)
             return err
-
         response = json.loads(response)
         recoveryMap = response.get('recoveryMap', None)
         if not recoveryMap:
             return "Missing recovery map from response"
-
+        else:
+            self.recovery_map = recoveryMap
         self.recovery_uuid = response.get('uuid', None)
-
-        for i, node in enumerate(recoveryMap):
-            for vbucket in node["vbuckets"]:
-                self.vbucket_list.append(vbucket)
-
-        if not self.vbucket_list:
-            return "No missing vbucket retrieved"
 
         return 0
 
