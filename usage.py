@@ -248,7 +248,7 @@ EXAMPLES:
        --bucket=test_bucket
 
   Flush a bucket:
-    coucbase-cli bucket-flush -c 192.168.0.1:8091 \\
+    couchbase-cli bucket-flush -c 192.168.0.1:8091 \\
        --force
 
   Compact a bucket for both data and view
