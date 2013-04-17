@@ -54,7 +54,7 @@ class Buckets:
         output = 'default'
         wait_for_bucket_ready = False
         enable_flush = None
-        enable_index_replica = None
+        enable_replica_index = None
         force = False
         compact_data_only = False
         compact_view_only = False
@@ -125,7 +125,7 @@ class Buckets:
             if enable_flush:
                 rest.setParam('flushEnabled', enable_flush)
             if enable_replica_index:
-                rest.setParam('replicaIndex', enable_index_replica)
+                rest.setParam('replicaIndex', enable_replica_index)
         if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):
             self.rest_cmd = self.rest_cmd + bucketname
         if cmd == 'bucket-flush':
