@@ -358,12 +358,16 @@ class TAPDumpSource(pump.Source):
                     val.append(struct.pack(">HHQ",
                                            opts[op][0], opts[op][1], opts[op][2]))
             elif vblist and op == couchbaseConstants.TAP_FLAG_LIST_VBUCKETS:
-                vblist = vblist[1:-1].split(",")
-                val.append(struct.pack(">H", len(vblist)))
-                for v in vblist:
-                    if v.find("@"):
-                        v = v[1:-1].split("@")[0]
-                    val.append(struct.pack(">H", int(v)))
+                vblist = json.loads(vblist)
+                if isinstance(vblist, dict):
+                    for node, vbucketlist in vblist.iteritems():
+                        val.append(struct.pack(">H", len(vbucketlist)))
+                        for v in vbucketlist:
+                            val.append(struct.pack(">H", int(v)))
+                elif isinstance(vblist, list):
+                    val.append(struct.pack(">H", len(vblist)))
+                    for v in vblist:
+                        val.append(struct.pack(">H", int(v)))
             else:
                 val.append(opts[op])
 
@@ -449,8 +453,11 @@ class TapSink(pump_cb.CBSink):
         if not self.vbucket_list:
             return super(TapSink, self).find_conn(mconns, vbucket_id)
 
-        if str(vbucket_id) not in self.vbucket_list:
-            return "error: unexpected vbucket id:" + str(vbucket_id), None
+        vbuckets = json.loads(self.vbucket_list)
+        if isinstance(vbuckets, list):
+            if vbucket_id not in vbuckets:
+                return "error: unexpected vbucket id:" + str(vbucket_id), None
+            return super(TapSink, self).find_conn(mconns, vbucket_id)
 
         bucket = self.sink_map['buckets'][0]
         serverList = bucket['vBucketServerMap']['serverList']
@@ -459,28 +466,22 @@ class TapSink(pump_cb.CBSink):
         else:
             port_number = 11210
 
-        vblist = self.vbucket_list[1:-1].split(",")
         conn = None
-        for v in vblist:
-            if v.find("@"):
-                #vbucket associated with host as 'vbucket_id@hostname'
-                vbucket, node = v[1:-1].split("@")
-                if int(vbucket) == int(vbucket_id):
-                    host_port = "%s:%s" % (node, port_number)
-                    conn = mconns.get(host_port, None)
-                    if not conn:
-                        host, port = host_port.split(':')
-                        user = bucket['name']
-                        pswd = bucket['saslPassword']
-                        rv, conn = TapSink.connect_mc(host, port, user, pswd)
-                        if rv != 0:
-                            logging.error("error: CBSink.connect() for send: " + rv)
-                            return rv, None
-                        mconns[host_port] = conn
-                    break
-            elif int(v) == int(vbucket_id):
-                #no host associated with vbucket, reuse existed vbucket map
-                return super(TapSink, self).find_conn(mconns, vbucket_id)
+        if isinstance(vbuckets, dict):
+            for node, vblist in vbuckets.iteritems():
+                for vbucket in vblist:
+                    if int(vbucket) == int(vbucket_id):
+                        host_port = "%s:%s" % (node, port_number)
+                        conn = mconns.get(host_port, None)
+                        if not conn:
+                            user = bucket['name']
+                            pswd = bucket['saslPassword']
+                            rv, conn = TapSink.connect_mc(node, port_number, user, pswd)
+                            if rv != 0:
+                                logging.error("error: CBSink.connect() for send: " + rv)
+                                return rv, None
+                            mconns[host_port] = conn
+                        break
         return 0, conn
 
     def send_msgs(self, conn, msgs, operation, vbucket_id=None):

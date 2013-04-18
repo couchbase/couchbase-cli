@@ -39,7 +39,7 @@ class Recovery(pump_transfer.Transfer):
 
         self.err_map = {
             "startRecovery": {
-                "400": "Not all nodes in the cluster support recovery",
+                "400": "No recovery needed",
                 "404": "Specified bucket not found",
                 "500": "Could not start recovery because some nodes failed",
                 "503": "Could not start recovery because rebalance is running"
@@ -72,6 +72,9 @@ class Recovery(pump_transfer.Transfer):
             logging.info("No missing vbuckets to be recovered.")
             return 0
 
+        if opts.dry_run:
+            return 0
+
         #only care about data recovery
         argv.append("--extra")
         argv.append("data_only=1")
@@ -79,9 +82,10 @@ class Recovery(pump_transfer.Transfer):
         for i, node in enumerate(self.recovery_map):
             nodename = node["node"].split("@")[-1]
             for vbucket in node["vbuckets"]:
+                node_map = { nodename: [vbucket] }
                 temp_argv = copy.deepcopy(argv)
                 temp_argv.append("--vbucket-list")
-                temp_argv.append(str(["%s@%s" % (vbucket, nodename)]))
+                temp_argv.append(json.dumps(node_map))
                 err = pump_transfer.Transfer.main(self, temp_argv)
                 if err:
                     return err
@@ -101,7 +105,7 @@ class Recovery(pump_transfer.Transfer):
             pump.rest_request(host, int(port), user, pwd,
                               url, method='POST', reason='start_recovery')
         if err:
-            self.explain_error(err, err_map)
+            self.explain_error(err, cmd)
             return err
         response = json.loads(response)
         recoveryMap = response.get('recoveryMap', None)
