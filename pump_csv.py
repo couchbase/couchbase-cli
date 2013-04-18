@@ -119,22 +119,16 @@ class CSVSink(pump.Sink):
 
     @staticmethod
     def check(opts, spec, source_map):
+        rv = 0
         if spec.endswith(".csv"):
             if spec.startswith(CSVSink.CSV_JSON_SCHEME):
                 targetpath = spec[len(CSVSink.CSV_JSON_SCHEME):]
             else:
                 targetpath = spec[len(CSVSink.CSV_SCHEME):]
             targetpath = os.path.normpath(targetpath)
+            rv = pump.mkdirs(targetpath)
 
-            # Create all parent directories if necessary.
-            upperdirs = os.path.dirname(targetpath)
-            if upperdirs and not os.path.exists(upperdirs):
-                try:
-                    os.makedirs(upperdirs)
-                except:
-                    return "Cannot create output file:%s" % targetpath, None
-
-        return 0, None
+        return rv, None
 
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,

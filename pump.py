@@ -15,9 +15,9 @@ import urlparse
 import zlib
 import platform
 import subprocess
+
 import couchbaseConstants
 from cbcollections import defaultdict
-
 from cbqueue import PumpQueue
 
 # TODO: (1) optionally log into backup directory
@@ -964,3 +964,12 @@ def find_sink_bucket_name(opts, source_bucket):
         return "error: please specify a bucket_destination", None
     logging.debug("sink_bucket: " + sink_bucket)
     return 0, sink_bucket
+
+def mkdirs(targetpath):
+    upperdirs = os.path.dirname(targetpath)
+    if upperdirs and not os.path.exists(upperdirs):
+        try:
+            os.makedirs(upperdirs)
+        except:
+            return "Cannot create upper directories for file:%s" % targetpath
+    return 0
