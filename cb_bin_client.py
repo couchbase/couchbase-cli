@@ -189,28 +189,14 @@ class MemcachedClient(object):
         parts=self._doCmd(couchbaseConstants.CMD_GET, key, '')
         return self.__parseGet(parts)
 
-    def __parseMeta(self, data):
-        flags = struct.unpack('I', data[-1][0:4])[0]
-        meta_type = struct.unpack('B', data[-1][4])[0]
-        length = struct.unpack('B', data[-1][5])[0]
-        meta = data[-1][6:6 + length]
-        return (meta_type, flags, meta)
-
     def getMeta(self, key):
         """Get the metadata for a given key within the memcached server."""
-        parts=self._doCmd(couchbaseConstants.CMD_GET_META, key, '')
-        return self.__parseMeta(parts)
-
-    def getRev(self, key):
-        """Get the revision for a given key within the memcached server."""
-        (meta_type, flags, meta_data) = self.getMeta(key)
-        if meta_type != couchbaseConstants.META_REVID:
-            raise ValueError("Invalid meta type %x" % meta_type)
-
-        seqno = struct.unpack('>Q', meta_data[:8])[0]
-        revid = meta_data[4:]
-
-        return (seqno, revid)
+        opaque, cas, data = self._doCmd(couchbaseConstants.CMD_GET_META, key, '')
+        deleted = struct.unpack('>I', data[0:4])[0]
+        flags = struct.unpack('>I', data[4:8])[0]
+        exp = struct.unpack('>I', data[8:12])[0]
+        seqno = struct.unpack('>Q', data[12:20])[0]
+        return (deleted, flags, exp, seqno, cas)
 
     def getl(self, key, exp=15):
         """Get the value for a given key within the memcached server."""
