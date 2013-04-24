@@ -91,6 +91,9 @@ class CSVSource(pump.Source):
             except StopIteration:
                 self.done = True
                 self.r = None
+            except Exception, e:
+                logging.error("error: fails to read from csv file, %s", e)
+                continue
 
         if batch.size() <= 0:
             return 0, None
