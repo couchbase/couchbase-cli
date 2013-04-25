@@ -82,14 +82,15 @@ class Recovery(pump_transfer.Transfer):
         for i, node in enumerate(self.recovery_map):
             nodename = node["node"].split("@")[-1]
             for vbucket in node["vbuckets"]:
-                node_map = { nodename: [vbucket] }
-                temp_argv = copy.deepcopy(argv)
-                temp_argv.append("--vbucket-list")
-                temp_argv.append(json.dumps(node_map))
-                err = pump_transfer.Transfer.main(self, temp_argv)
-                if err:
-                    return err
-                self.post_transfer(opts, source, sink, vbucket)
+                if opts.id is None or int(opts.id) == int(vbucket):
+                    node_map = { nodename: [vbucket] }
+                    temp_argv = copy.deepcopy(argv)
+                    temp_argv.append("--vbucket-list")
+                    temp_argv.append(json.dumps(node_map))
+                    err = pump_transfer.Transfer.main(self, temp_argv)
+                    if err:
+                        return err
+                    self.post_transfer(opts, source, sink, vbucket)
 
         return 0
 
