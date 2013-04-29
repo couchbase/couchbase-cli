@@ -207,7 +207,6 @@ class Node:
                                      self.user,
                                      self.password,
                                      opts)
-        print output_result
 
         # per node quota unfortunately runs against a different location
         if not self.per_node_quota:
