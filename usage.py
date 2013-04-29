@@ -204,12 +204,19 @@ EXAMPLES:
   Stop the current rebalancing:
     couchbase-cli rebalance-stop -c 192.168.0.1:8091
 
-  Change the username, password, port and ram quota:
+  Set the username, password, port and ram quota:
     couchbase-cli cluster-init -c 192.168.0.1:8091 \\
        --cluster-init-username=Administrator \\
        --cluster-init-password=password \\
        --cluster-init-port=8080 \\
        --cluster-init-ramsize=300
+
+  change the cluster username, password, port and ram quota:
+    couchbase-cli cluster-edit -c 192.168.0.1:8091 \\
+       --cluster-username=Administrator \\
+       --cluster-password=password \\
+       --cluster-port=8080 \\
+       --cluster-ramsize=300
 
   Change the data path:
      couchbase-cli node-init -c 192.168.0.1:8091 \\
