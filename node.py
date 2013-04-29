@@ -238,7 +238,7 @@ class Node:
                                      self.port,
                                      {'debug':self.debug})
         if self.data_path:
-            rest.setParam('db_path', self.data_path)
+            rest.setParam('path', self.data_path)
 
         if self.index_path:
             rest.setParam('index_path', self.index_path)

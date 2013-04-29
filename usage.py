@@ -167,6 +167,11 @@ xdcr-replicate OPTIONS:
 The default PORT number is 8091.
 
 EXAMPLES:
+  Set data path for an unprovisioned cluster:
+    couchbse-cli node-init -c 192.168.0.1:8091 \\
+       --node-init-data-path=/tmp/data \\
+       --node-init-index-path=/tmp/index
+
   List servers in a cluster:
     couchbase-cli server-list -c 192.168.0.1:8091
 
