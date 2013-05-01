@@ -101,6 +101,7 @@ def main():
                 'worker-batch-size='
                 'doc-batch-size=',
                 'failure-restart-interval=',
+                'optimistic-replication-threshold=',
                 'email-recipients=',
                 'email-sender=',
                 'email-user=',

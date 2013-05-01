@@ -44,6 +44,7 @@ class XDCR:
         self.worker_batch_size = ''
         self.doc_batch_size = ''
         self.failure_restart_interval = ''
+        self.optimistic_replication_threshold = ''
 
         # the rest commands and associated URIs for various node operations
         self.REST_CMDS = {
@@ -130,6 +131,8 @@ class XDCR:
                 self.doc_batch_size = int(a)
             elif o == '--failure-restart-interval':
                 self.failure_restart_interval = int(a)
+            elif o == '--optimistic-replication-threshold':
+                self.optimistic_replication_threshold = int(a)
 
     def setup_create(self):
         rest = restclient.RestClient(self.server,
@@ -289,6 +292,10 @@ class XDCR:
         if self.failure_restart_interval:
             rest.setParam('xdcrFailureRestartInterval', self.failure_restart_interval)
             opts['success_msg'] += ' xdcrFailureRestartInterval'
+
+        if self.optimistic_replication_threshold:
+            rest.setParam('xdcrOptimisticReplicationThreshold', self.optimistic_replication_threshold)
+            opts['success_msg'] += ' xdcrOptimisticReplicationThreshold'
 
         opts = {
             'error_msg': "unable to set xdcr internal settings",

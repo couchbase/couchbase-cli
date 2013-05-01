@@ -147,6 +147,7 @@ setting-xdcr OPTIONS:
   --worker-batch-size=[500]              doc batch size, 500 to 10000.
   --doc-batch-size=[2048]KB              document batching size, 10 to 100000 KB
   --failure-restart-interval=[30]        interval for restarting failed xdcr, 1 to 300 seconds
+  --optimistic-replication-threshold=[256] document body size threshold (bytes) to trigger optimistic replication
 
 xdcr-setup OPTIONS:
   --create                               create a new xdcr configuration
