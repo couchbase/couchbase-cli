@@ -19,6 +19,7 @@ rest_cmds = {
     'bucket-node-stats': '/pools/default/buckets/%s/stats/%s?zoom=%s',
     'bucket-info': '/pools/default/buckets/%s',
     'bucket-compact': '/pools/default/buckets/',
+    'bucket-ddocs': '/pools/default/buckets/%s/ddocs',
     }
 methods = {
     'bucket-list': 'GET',
@@ -30,6 +31,7 @@ methods = {
     'bucket-stats': 'GET',
     'bucket-node-stats': 'GET',
     'bucket-compact': 'POST',
+    'bucket-ddocs': 'GET',
     }
 
 class Buckets:
@@ -159,7 +161,7 @@ class Buckets:
         data = rest.restCmd(methods[cmd], self.rest_cmd,
                             self.user, self.password, opts)
 
-        if cmd in ("bucket-get", "bucket-stats", "bucket-node-stats"):
+        if cmd in ("bucket-get", "bucket-stats", "bucket-node-stats", "bucket-ddocs"):
             return rest.getJson(data)
         elif cmd == "bucket-list":
             if output == 'json':
