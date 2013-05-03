@@ -73,6 +73,7 @@ class Recovery(pump_transfer.Transfer):
             return 0
 
         if opts.dry_run:
+            self.post_transfer(opts, source, sink, None)
             return 0
 
         #only care about data recovery
@@ -122,26 +123,31 @@ class Recovery(pump_transfer.Transfer):
         if not self.sink_bucket:
             return "Should specify destionation bucket for restore"
 
-        if opts.dry_run:
-            return 0
-
         host, port, user, pwd, path = \
             pump.parse_spec(opts, sink, 8091)
-
-        cmd = "commitVBucket"
-        params = {"vbucket": vbucket}
+        if opts.dry_run:
+            cmd = "stopRecovery"
+            reason_msg = "Stop recovery"
+        else:
+            cmd = "commitVBucket"
+            reason_msg = 'Activate vbucket:%s' % vbucket
+        if vbucket:
+            params = urllib.urlencode({"vbucket": vbucket})
+        else:
+            params = None
         url = '/pools/default/buckets/%s/controller/%s?recovery_uuid=%s' %\
               (self.sink_bucket, cmd, self.recovery_uuid)
         post_headers = {"Content-type": "application/x-www-form-urlencoded"}
         err, conn, response = \
             pump.rest_request(host, int(port), user, pwd,
-                              url, method='POST', body=urllib.urlencode(params),
-                              reason='Activate vbucket:%s' % vbucket,
+                              url, method='POST', body=params,
+                              reason=reason_msg,
                               headers=post_headers)
         if err:
             self.explain_error(err, cmd)
         else:
-            logging.debug("Recover and activate vbucket: %s" % vbucket)
+            if vbucket:
+                logging.debug("Recover and activate vbucket: %s" % vbucket)
 
         return err
 
