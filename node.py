@@ -62,7 +62,7 @@ methods = {
     'setting-alert'         :'POST',
 }
 
-bool_to_str = lambda value: str(bool(value)).lower()
+bool_to_str = lambda value: str(bool(int(value))).lower()
 
 # Map of HTTP success code, success message and error message for
 # handling HTTP response properly
