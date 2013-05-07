@@ -131,7 +131,7 @@ class Recovery(pump_transfer.Transfer):
         else:
             cmd = "commitVBucket"
             reason_msg = 'Activate vbucket:%s' % vbucket
-        if vbucket:
+        if vbucket is not None:
             params = urllib.urlencode({"vbucket": vbucket})
         else:
             params = None
