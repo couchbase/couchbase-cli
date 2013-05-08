@@ -169,6 +169,8 @@ class Recovery(pump_transfer.Transfer):
                      help="REST password for destination cluster or server node")
         self.opt_parser_options_common(p)
 
+        p.remove_option("-k")
+
     def find_handlers(self, opts, source, sink):
         return pump_tap.TAPDumpSource, pump_tap.TapSink
 

@@ -145,7 +145,7 @@ class Transfer:
                      help="""allow only items with keys that match a regexp""")
         p.add_option("", "--vbucket-list",
                      action="store", type="string", default=None,
-                     help="""transfer items from specified vbuckets only""")
+                     help=optparse.SUPPRESS_HELP)
         p.add_option("-n", "--dry-run",
                      action="store_true", default=False,
                      help="""no actual work; just validate parameters, files,
