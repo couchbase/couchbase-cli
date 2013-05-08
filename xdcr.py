@@ -18,7 +18,6 @@ import util_cli as util
 
 class XDCR:
     def __init__(self):
-        self.rest_cmd = rest_cmds['xdcr-setup']
         self.method = 'POST'
         self.debug = False
         self.cluster = ''
