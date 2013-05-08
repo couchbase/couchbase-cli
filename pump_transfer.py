@@ -81,10 +81,16 @@ class Transfer:
             return err
 
         try:
-            return pump.PumpingStation(opts, source_class, source,
-                                       sink_class, sink).run()
+            pumpStation = pump.PumpingStation(opts, source_class, source,
+                                              sink_class, sink)
+            rv = pumpStation.run()
+            self.aggregate_stats(pumpStation.cur)
+            return rv
         except KeyboardInterrupt:
             return "interrupted."
+
+    def aggregate_stats(self, cur):
+        return 0
 
     def opt_parse(self, argv):
         opts, rest = self.opt_parser().parse_args(argv[1:])

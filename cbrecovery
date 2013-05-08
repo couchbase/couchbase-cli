@@ -10,11 +10,14 @@ import logging
 import os
 import platform
 import re
+import string
 import sys
+import time
 import urllib
 
 import simplejson as json
 
+from cbcollections import defaultdict
 import pump_transfer
 import pump
 import pump_tap
@@ -30,6 +33,8 @@ class Recovery(pump_transfer.Transfer):
         self.recovery_uuid = None
         self.sink_bucket = None
         self.source_bucket = None
+        self.stats = defaultdict(int)
+        self.start_time = time.time()
 
         self.usage = \
             "%prog [options] source destination\n\n" \
@@ -67,9 +72,9 @@ class Recovery(pump_transfer.Transfer):
             return err
 
         if self.recovery_map:
-            logging.error("Missing vbuckets to be recovered:%s", json.dumps(self.recovery_map))
+            sys.stderr.write("Missing vbuckets to be recovered:%s\n" % json.dumps(self.recovery_map))
         else:
-            logging.info("No missing vbuckets to be recovered.")
+            sys.stderr.write("No missing vbuckets to be recovered.\n")
             return 0
 
         if opts.dry_run:
@@ -93,7 +98,37 @@ class Recovery(pump_transfer.Transfer):
                         return err
                     self.post_transfer(opts, source, sink, vbucket)
 
+        self.report_stats()
         return 0
+
+    def aggregate_stats(self, cur):
+        for k, val in cur.iteritems():
+            self.stats[k] += val
+        return 0
+
+    def report_stats(self):
+        delta = time.time() - self.start_time
+        x = sorted([k for k in self.stats.iterkeys() if "_sink_" in k])
+
+        width_k = max([5] + [len(k.replace("tot_sink_", "")) for k in x] + [len("Recovery")])
+        width_v = max([20] + [len(str(self.stats[k])) for k in x])
+        width_s = max([10] + [len("%0.1f" % (self.stats[k] / delta)) for k in x])
+        sys.stderr.write("\n %s : %s | %s\n"
+             % (string.ljust("Recovery", width_k),
+                string.rjust("Total", width_v),
+                string.rjust("Per sec", width_s)))
+        for k in x:
+            sys.stderr.write(" %s : %s | %s\n"
+                 % (string.ljust(k.replace("tot_sink_", ""), width_k),
+                    string.rjust(str(self.stats[k]), width_v),
+                    string.rjust("%0.1f" % (self.stats[k] / delta), width_s)))
+
+        total_vbucket = 0
+        if self.recovery_map:
+            for k, node in enumerate(self.recovery_map):
+                total_vbucket += len(node["vbuckets"])
+        sys.stderr.write("%d vbuckets recovered with elapsed time %0.2f seconds\n"
+             % (total_vbucket, delta))
 
     def pre_transfer(self, opts, source, sink):
 
