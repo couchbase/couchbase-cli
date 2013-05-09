@@ -154,7 +154,8 @@ class Buckets:
                 return True
             else:
                 self.rest_cmd = self.rest_cmd + '/controller/compactBucket'
-
+        elif cmd == 'bucket-ddocs':
+            self.rest_cmd = self.rest_cmd % bucketname
         opts = {}
         opts['error_msg'] = "unable to %s; please check your username (-u) and password (-p);" % cmd
         opts['success_msg'] = "%s" % cmd
