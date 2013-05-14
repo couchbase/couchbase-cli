@@ -412,7 +412,7 @@ class TapSink(pump_cb.CBSink):
         super(TapSink, self).__init__(opts, spec, source_bucket, source_node,
                                      source_map, sink_map, ctl, cur)
 
-        self.tap_flags = couchbaseConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER
+        self.tap_flags = couchbaseConstants.TAP_FLAG_NETWORK_BYTE_ORDER
         self.vbucket_list = getattr(opts, "vbucket_list", None)
 
     @staticmethod

@@ -135,6 +135,7 @@ TAP_FLAG_TYPES = {TAP_FLAG_BACKFILL: ">Q",
 # TAP per-message flags
 TAP_FLAG_ACK      = 0x01
 TAP_FLAG_NO_VALUE = 0x02 # The value for the key is not included in the packet
+TAP_FLAG_NETWORK_BYTE_ORDER = 0x04
 
 # Flags, expiration
 SET_PKT_FMT=">II"
