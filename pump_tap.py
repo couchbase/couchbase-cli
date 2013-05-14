@@ -443,11 +443,30 @@ class TapSink(pump_cb.CBSink):
                                 vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None, None
+
         # Yield to let other threads do stuff while server's processing.
         time.sleep(0.01)
 
-        # No need for Gather or recv phase
-        return 0, None, None
+        # Gather or recv phase.
+        # Only process the last msg which requires ack request
+        last_msg = []
+        retry_batch = None
+        need_refresh = False
+        for vbucket_id, msgs in vbuckets.iteritems():
+            last_msg.append(msgs[-1])
+            rv, conn = self.find_conn(mconns, vbucket_id)
+            if rv != 0:
+                return rv, None, None
+            rv, retry, refresh = \
+                self.recv_msgs(conn, last_msg, vbucket_id=vbucket_id, verify_opaque=False)
+            if rv != 0:
+                return rv, None, None
+            if retry:
+                retry_batch = batch
+            if refresh:
+                need_refresh = True
+
+        return 0, retry_batch, retry_batch and not need_refresh
 
     def find_conn(self, mconns, vbucket_id):
         if not self.vbucket_list:
@@ -486,6 +505,7 @@ class TapSink(pump_cb.CBSink):
 
     def send_msgs(self, conn, msgs, operation, vbucket_id=None):
         m = []
+        #Ask for acknowledgement for the last msg of batch
         for i, msg in enumerate(msgs):
             cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg
             if vbucket_id is not None:
@@ -498,10 +518,10 @@ class TapSink(pump_cb.CBSink):
                 val, flg, exp, cas = '', 0, 0, 0
             if cmd == couchbaseConstants.CMD_NOOP:
                 key, val, flg, exp, cas = '', '', 0, 0, 0
-
+            need_ack = (i == len(msgs)-1)
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
-                                       exp, cas, meta, i)
+                                       exp, cas, meta, i, need_ack)
             if rv != 0:
                 return rv
             self.append_req(m, req)
@@ -510,10 +530,9 @@ class TapSink(pump_cb.CBSink):
                 conn.s.send(''.join(m))
             except socket.error, e:
                 return "error: conn.send() exception: %s" % (e)
-
         return 0
 
-    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque):
+    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque, need_ack):
         if meta:
             seq_no = str(meta)
             if len(seq_no) > 8:
@@ -528,15 +547,18 @@ class TapSink(pump_cb.CBSink):
             seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + 1)[-8:]
         metalen = len(str(seq_no))
         ttl = -1
+        tap_flags = self.tap_flags
+        if need_ack:
+            tap_flags |= couchbaseConstants.TAP_FLAG_ACK
         if cmd == couchbaseConstants.CMD_TAP_MUTATION:
             ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
                               metalen,
-                              self.tap_flags,
+                              tap_flags,
                               ttl, flg, exp)
         elif cmd == couchbaseConstants.CMD_TAP_DELETE:
             ext = struct.pack(couchbaseConstants.TAP_GENERAL_PKT_FMT,
                               metalen,
-                              self.tap_flags, ttl)
+                              tap_flags, ttl)
         else:
             return "error: MCSink - unknown tap cmd for request: " + str(cmd), None
 

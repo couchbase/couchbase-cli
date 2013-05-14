@@ -169,7 +169,7 @@ class MCSink(pump.Sink):
 
         return 0
 
-    def recv_msgs(self, conn, msgs, vbucket_id=None):
+    def recv_msgs(self, conn, msgs, vbucket_id=None, verify_opaque=True):
         refresh = False
         retry = False
 
@@ -184,8 +184,7 @@ class MCSink(pump.Sink):
             try:
                 r_cmd, r_status, r_ext, r_key, r_val, r_cas, r_opaque = \
                     self.read_conn(conn)
-
-                if i != r_opaque:
+                if verify_opaque and i != r_opaque:
                     return "error: opaque mismatch: %s %s" % (i, r_opaque), None, None
 
                 if r_status == couchbaseConstants.ERR_SUCCESS:
@@ -235,7 +234,6 @@ class MCSink(pump.Sink):
             except Exception, e:
                 logging.error("MCSink exception: %s", e)
                 return "error: MCSink exception: " + str(e), None, None
-
         return 0, retry, refresh
 
     def translate_cmd(self, cmd, op, meta):
