@@ -880,6 +880,9 @@ def rest_couchbase(opts, spec):
     if not path or path == '/':
         path = '/pools/default/buckets'
 
+    if int(port) in [11210, 11211]:
+        return "error: invalid port number %s, which is reserved for moxi service" % port, None
+
     err, rest_json, rest_data = \
         rest_request_json(host, int(port), user, pswd, path)
     if err:
