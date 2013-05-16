@@ -272,6 +272,11 @@ class XDCR:
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
+        opts = {
+            'error_msg': "unable to set xdcr internal settings",
+            'success_msg': "set xdcr settings"
+        }
+
         if self.max_stream:
             rest.setParam('xdcrMaxConcurrentReps', self.max_stream)
             opts['success_msg'] += ' xdcrMaxConcurrentReps'
@@ -296,10 +301,6 @@ class XDCR:
             rest.setParam('xdcrOptimisticReplicationThreshold', self.optimistic_replication_threshold)
             opts['success_msg'] += ' xdcrOptimisticReplicationThreshold'
 
-        opts = {
-            'error_msg': "unable to set xdcr internal settings",
-            'success_msg': "set xdcr settings"
-        }
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
                                      self.user,
