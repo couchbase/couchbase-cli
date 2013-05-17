@@ -134,17 +134,11 @@ def abnormal_extract(vals, threshold, op = '>='):
     begin_index = -1
     seg_count = 0
 
-    func = {'>=' : lambda x, y: x >= y,
-            '>' : lambda x, y: x > y,
-            '==' : lambda x, y: x == y,
-            '<' : lambda x, y: x < y,
-            '!=' : lambda x, y: x != y,
-           }.get(op, None)
-    if func is None:
-        return abnormal
-
     for index, sample in enumerate(vals):
-        if func(sample,threshold):
+        ev = evalfunc(sample, threshold, op)
+        if ev is None:
+            return abnormal
+        elif ev:
             if begin_index < 0:
                 begin_index = index
             seg_count += 1
@@ -157,6 +151,19 @@ def abnormal_extract(vals, threshold, op = '>='):
     if begin_index >= 0:
         abnormal.append((begin_index, seg_count))
     return abnormal
+
+def evalfunc(value, threshold, op):
+    rt = None
+
+    func = {'>=' : lambda x, y: x >= y,
+            '>' : lambda x, y: x > y,
+            '==' : lambda x, y: x == y,
+            '<' : lambda x, y: x < y,
+            '!=' : lambda x, y: x != y,
+           }.get(op, None)
+    if func is None:
+        return rt
+    return func(value, threshold)
 
 def pretty_float(number, precision=2):
     return '%.*f' % (precision, number)
