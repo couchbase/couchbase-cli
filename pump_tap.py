@@ -387,23 +387,30 @@ class TAPDumpSource(pump.Source):
 
         vbucket_list = getattr(opts, "vbucket_list", None)
 
-        path = "/pools/default/buckets/%s/stats/curr_items" % (name)
+        stats_vals = {}
         host, port, user, pswd, _ = pump.parse_spec(opts, spec, 8091)
-        err, json, data = pump.rest_request_json(host, int(port),
-                                                 user, pswd, path,
-                                                 reason="total_msgs")
-        if err:
-            return 0, None
+        for stats in ["curr_items", "vb_active_resident_items_ratio"]:
+            path = "/pools/default/buckets/%s/stats/%s" % (name, stats)
+            err, json, data = pump.rest_request_json(host, int(port),
+                                                     user, pswd, path,
+                                                     reason="total_msgs")
+            if err:
+                return 0, None
 
-        nodeStats = data.get("nodeStats", None)
-        if not nodeStats:
-            return 0, None
+            nodeStats = data.get("nodeStats", None)
+            if not nodeStats:
+                return 0, None
+            vals = nodeStats.get(source_name, None)
+            if not vals:
+                return 0, None
+            stats_vals[stats] = vals[-1]
 
-        curr_items = nodeStats.get(source_name, None)
-        if not curr_items:
-            return 0, None
-
-        return 0, curr_items[-1]
+        total_msgs = stats_vals["curr_items"]
+        resident_ratio = stats_vals["vb_active_resident_items_ratio"]
+        if 0 < resident_ratio < 100:
+            #for DGM case, server will transfer both in-memory items and backfill all items on disk
+            total_msgs += (resident_ratio/100.0) * stats_vals["curr_items"]
+        return 0, int(total_msgs)
 
 class TapSink(pump_cb.CBSink):
     """Smart client using tap protocol to steam data to couchbase cluster."""
