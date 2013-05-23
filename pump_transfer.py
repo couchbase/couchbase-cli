@@ -81,10 +81,16 @@ class Transfer:
             return err
 
         try:
-            return pump.PumpingStation(opts, source_class, source,
-                                       sink_class, sink).run()
+            pumpStation = pump.PumpingStation(opts, source_class, source,
+                                              sink_class, sink)
+            rv = pumpStation.run()
+            self.aggregate_stats(pumpStation.cur)
+            return rv
         except KeyboardInterrupt:
             return "interrupted."
+
+    def aggregate_stats(self, cur):
+        return 0
 
     def opt_parse(self, argv):
         opts, rest = self.opt_parser().parse_args(argv[1:])
@@ -143,6 +149,9 @@ class Transfer:
         p.add_option("-k", "--key",
                      action="store", type="string", default=None,
                      help="""allow only items with keys that match a regexp""")
+        p.add_option("", "--vbucket-list",
+                     action="store", type="string", default=None,
+                     help=optparse.SUPPRESS_HELP)
         p.add_option("-n", "--dry-run",
                      action="store_true", default=False,
                      help="""no actual work; just validate parameters, files,
@@ -175,7 +184,9 @@ class Transfer:
             "recv_min_bytes":  (4096,   "amount of bytes for every recv() call"),
             "try_xwm":         (1,      "1 to first try XXX-WITH-META commands"),
             "nmv_retry":       (1,      "1 to retry after NOT_MY_VBUCKET replies"),
-            "rehash":          (0,      "1 to rehash vbucket id when transfering")
+            "rehash":          (0,      "1 to rehash vbucket id when transfering"),
+            "data_only":       (0,      "1 to transfer data only and without design docs"),
+            "design_doc_only": (0,      "1 to transfer design docs only and without data"),
             }
 
     def find_handlers(self, opts, source, sink):

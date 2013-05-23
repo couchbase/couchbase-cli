@@ -9,7 +9,7 @@ import listservers
 import buckets
 import info
 import util_cli as util
-import mc_bin_client
+import cb_bin_client
 
 import stats_buffer
 
@@ -189,7 +189,7 @@ class StatsCollector:
                 (node_server, node_port) = util.hostport(node['hostname'])
                 self.log.info("  node: %s %s" % (node_server, node['ports']['direct']))
                 stats = {}
-                mc = mc_bin_client.MemcachedClient(node_server, node['ports']['direct'])
+                mc = cb_bin_client.MemcachedClient(node_server, node['ports']['direct'])
                 if bucket["name"] != "Default":
                     mc.sasl_auth_plain(bucket_name.encode("utf8"), bucket["saslPassword"].encode("utf8"))
                 self.get_mc_stats_per_node(mc, stats)

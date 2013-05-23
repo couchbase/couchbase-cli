@@ -1,11 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import math
+import datetime
 import itertools
+import locale
+import simplejson as json
+import math
+
+locale.setlocale(locale.LC_ALL, '')
 
 BIG_VALUE = 2 ** 60
 SMALL_VALUE = - (2 ** 60)
+
+def devisible(a, b):
+    if b == 0:
+        return False
+    return a % b == 0
 
 def hostport(hoststring, default_port=8091):
     """ finds the host and port given a host:port string """
@@ -32,13 +42,16 @@ def time_label(s):
     elif s == 0:
         return '0'
     product = 1
-    sizes = (('us', 1), ('ms', 1000), ('s', 1000), ('m', 60))
+    sizes = (('us', 1), ('ms', 1000), ('sec', 1000), ('min', 60))
     sizeMap = []
     for l,sz in sizes:
         product = sz * product
         sizeMap.insert(0, (l, product))
     lbl, factor = itertools.dropwhile(lambda x: x[1] > s, sizeMap).next()
-    return "%d %s" % (s / factor, lbl)
+    if devisible(s, factor):
+        return '%d %s' % (s / factor, lbl)
+    else:
+        return '%.*f %s' % (3, s * 1.0/factor, lbl)
 
 def size_label(s):
     if type(s) in (int, long, float, complex) :
@@ -47,7 +60,31 @@ def size_label(s):
         sizes=['', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']
         e = math.floor(math.log(abs(s), 1024))
         suffix = sizes[int(e)]
-        return "%d %s" % (s/(1024 ** math.floor(e)), suffix)
+        if devisible(s, 1024 ** math.floor(e)):
+            return '%d %s' % ( s / (1024 ** math.floor(e)), suffix)
+        else:
+            return "%.*f %s" % (3, s *1.0/(1024 ** math.floor(e)), suffix)
+    else:
+        return s
+
+def number_label(s):
+    if type(s) in (int, long, float, complex) :
+        if s < 0:
+            s = -s
+            flag = "-"
+        else:
+            flag = ""
+        if s < 1:
+            return "0"
+        sizes=['', 'thousand', 'million', 'billion', 'trillion', 'quadrillion', 'quintillion']
+        e = math.floor(math.log(abs(s), 1000))
+        if e < 0:
+           e = 0
+        suffix = sizes[int(e)]
+        if devisible(s, 1000 ** math.floor(e)):
+            return "%s%d %s" % (flag, s / (1000 ** math.floor(e)), suffix)
+        else:
+            return "%s%.*f %s" % (flag, 2, s *1.0/(1000 ** math.floor(e)), suffix)
     else:
         return s
 
@@ -92,9 +129,51 @@ def two_pass_variance(data):
     variance = sum2/(n - 1)
     return variance
 
+def abnormal_extract(vals, threshold, op = '>='):
+    abnormal = []
+    begin_index = -1
+    seg_count = 0
+
+    for index, sample in enumerate(vals):
+        ev = evalfunc(sample, threshold, op)
+        if ev is None:
+            return abnormal
+        elif ev:
+            if begin_index < 0:
+                begin_index = index
+            seg_count += 1
+        else:
+            if begin_index >= 0:
+                abnormal.append((begin_index, seg_count))
+                begin_index = -1
+                seg_count = 0
+
+    if begin_index >= 0:
+        abnormal.append((begin_index, seg_count))
+    return abnormal
+
+def evalfunc(value, threshold, op):
+    rt = None
+
+    func = {'>=' : lambda x, y: x >= y,
+            '>' : lambda x, y: x > y,
+            '==' : lambda x, y: x == y,
+            '<' : lambda x, y: x < y,
+            '!=' : lambda x, y: x != y,
+           }.get(op, None)
+    if func is None:
+        return rt
+    return func(value, threshold)
+
 def pretty_float(number, precision=2):
     return '%.*f' % (precision, number)
 
 def pretty_print(obj):
-    import simplejson as json
     return json.dumps(obj, indent=4, sort_keys=True)
+
+def pretty_datetime(number, timeonly=False):
+    if timeonly:
+        return str(datetime.datetime.fromtimestamp(number/1000).time())
+    else:
+        timestamp = datetime.datetime.fromtimestamp(number/1000)
+        return timestamp.strftime('%x') + ' ' + str(timestamp.time())

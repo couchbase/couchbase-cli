@@ -3,14 +3,13 @@
 import glob
 import logging
 import os
-import Queue
 import re
 import simplejson as json
 import struct
 import threading
 
 import couchstore
-import memcacheConstants
+import couchbaseConstants
 import pump
 from cbcollections import defaultdict
 
@@ -149,7 +148,7 @@ class SFDSource(pump.Source):
 
         if not self.queue:
             name = "c" + threading.currentThread().getName()[1:]
-            self.queue = Queue.Queue(2)
+            self.queue = PumpQueue(2)
             self.thread = threading.Thread(target=self.loader, name=name)
             self.thread.daemon = True
             self.thread.start()
@@ -203,10 +202,10 @@ class SFDSource(pump.Source):
                     return
 
                 if doc_info.deleted:
-                    cmd = memcacheConstants.CMD_TAP_DELETE
+                    cmd = couchbaseConstants.CMD_TAP_DELETE
                     val = ''
                 else:
-                    cmd = memcacheConstants.CMD_TAP_MUTATION
+                    cmd = couchbaseConstants.CMD_TAP_MUTATION
                     val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
 
                 cas, exp, flg = struct.unpack(SFD_REV_META, doc_info.revMeta)
@@ -289,7 +288,7 @@ class SFDSink(pump.Sink):
                     else:
                         d.revSequence = 1
 
-                    if cmd == memcacheConstants.CMD_TAP_MUTATION:
+                    if cmd == couchbaseConstants.CMD_TAP_MUTATION:
                         v = str(val)
                         try:
                             if (re.match('^\\s*{', v) and
@@ -297,7 +296,7 @@ class SFDSink(pump.Sink):
                                 d.contentType = couchstore.DocumentInfo.IS_JSON
                         except ValueError:
                             pass # NON_JSON is already the default contentType.
-                    elif cmd == memcacheConstants.CMD_TAP_DELETE:
+                    elif cmd == couchbaseConstants.CMD_TAP_DELETE:
                         v = None
                     else:
                         self.future_done(future,

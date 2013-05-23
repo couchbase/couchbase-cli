@@ -11,6 +11,7 @@ import sys
 import listservers
 import buckets
 import node
+import xdcr
 import info
 import util_cli as util
 from usage import usage, short_usage
@@ -19,7 +20,7 @@ from timeout import TimeoutException
 
 def main():
     for x in sys.argv:
-        if x in ('-h', '--help', 'help'):
+        if x in ('-h', '-H', '--help', 'help'):
             usage()
 
     if len(sys.argv) <= 2:
@@ -50,19 +51,73 @@ def main():
                 'server-failover=',
                 'cluster-init=',
                 'cluster-init-username=',
+                'cluster-username=',
                 'cluster-init-password=',
+                'cluster-password=',
                 'cluster-init-port=',
+                'cluster-port=',
                 'cluster-init-ramsize=',
+                'cluster-ramsize=',
+                'enable-autofailover=',
+                'autofailover-timeout=',
+                'enable-notification=',
+                'enable-email-alert=',
+                'compaction-db-percentage=',
+                'compaction-db-size=',
+                'compaction-view-percentage=',
+                'compaction-view-size=',
+                'compaction-period-from=',
+                'compaction-period-to=',
+                'enable-compaction-abort=',
+                'enable-compaction-parallel=',
                 'node-init=',
                 'node-init-data-path=',
+                'node-init-index-path=',
                 'bucket=',
                 'bucket-type=',
                 'bucket-port=',
                 'bucket-password=',
                 'bucket-ramsize=',
                 'bucket-replica=',
+                'enable-flush=',
+                'enable-index-replica=',
                 'wait',
-                'version'
+                'force',
+                'data-only',
+                'view-only',
+                'version',
+                'xdcr-cluster-name=',
+                'xdcr-hostname=',
+                'xdcr-username=',
+                'xdcr-password=',
+                'xdcr-from-bucket=',
+                'xdcr-to-bucket=',
+                'xdcr-replicator=',
+                'create',
+                'edit',
+                'delete',
+                'max-concurrent-reps=',
+                'checkpoint-interval=',
+                'worker-batch-size='
+                'doc-batch-size=',
+                'failure-restart-interval=',
+                'optimistic-replication-threshold=',
+                'email-recipients=',
+                'email-sender=',
+                'email-user=',
+                'email-password=',
+                'email-host=',
+                'email-port=',
+                'enable-email-encrypt=',
+                'alert-auto-failover-node',
+                'alert-auto-failover-max-reached',
+                'alert-auto-failover-node-down',
+                'alert-auto-failover-cluster-small',
+                'alert-ip-changed',
+                'alert-disk-space',
+                'alert-meta-overhead',
+                'alert-meta-oom',
+                'alert-write-failed'
                 ])
     except getopt.GetoptError, err:
         usage(err)
@@ -80,12 +135,21 @@ def main():
         'eject-server'      : node.Node,
         'failover'          : node.Node,
         'cluster-init'      : node.Node,
+        'cluster-edit'      : node.Node,
         'node-init'         : node.Node,
         'bucket-list'       : buckets.Buckets,
         'bucket-create'     : buckets.Buckets,
         'bucket-edit'       : buckets.Buckets,
         'bucket-delete'     : buckets.Buckets,
-        'bucket-flush'      : buckets.Buckets
+        'bucket-flush'      : buckets.Buckets,
+        'bucket-compact'    : buckets.Buckets,
+        'setting-compaction'    : node.Node,
+        'setting-notification'  : node.Node,
+        'setting-autofailover'  : node.Node,
+        'setting-alert'         : node.Node,
+        'setting-xdcr'          : xdcr.XDCR,
+        'xdcr-setup'            : xdcr.XDCR,
+        'xdcr-replicate'        : xdcr.XDCR,
         }
 
     cmd = sys.argv[1]

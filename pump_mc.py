@@ -6,8 +6,8 @@ import struct
 import time
 import sys
 
-import mc_bin_client
-import memcacheConstants
+import cb_bin_client
+import couchbaseConstants
 import pump
 
 try:
@@ -24,17 +24,17 @@ except ImportError:
         sys.path.insert(0, cb_path)
 
 OP_MAP = {
-    'get': memcacheConstants.CMD_GET,
-    'set': memcacheConstants.CMD_SET,
-    'add': memcacheConstants.CMD_ADD,
-    'delete': memcacheConstants.CMD_DELETE,
+    'get': couchbaseConstants.CMD_GET,
+    'set': couchbaseConstants.CMD_SET,
+    'add': couchbaseConstants.CMD_ADD,
+    'delete': couchbaseConstants.CMD_DELETE,
     }
 
 OP_MAP_WITH_META = {
-    'get': memcacheConstants.CMD_GET,
-    'set': memcacheConstants.CMD_SET_WITH_META,
-    'add': memcacheConstants.CMD_ADD_WITH_META,
-    'delete': memcacheConstants.CMD_DELETE_WITH_META
+    'get': couchbaseConstants.CMD_GET,
+    'set': couchbaseConstants.CMD_SET_WITH_META,
+    'add': couchbaseConstants.CMD_ADD_WITH_META,
+    'delete': couchbaseConstants.CMD_DELETE_WITH_META
     }
 
 class MCSink(pump.Sink):
@@ -148,9 +148,9 @@ class MCSink(pump.Sink):
             if rv != 0:
                 return rv
 
-            if cmd == memcacheConstants.CMD_GET:
+            if cmd == couchbaseConstants.CMD_GET:
                 val, flg, exp, cas = '', 0, 0, 0
-            if cmd == memcacheConstants.CMD_NOOP:
+            if cmd == couchbaseConstants.CMD_NOOP:
                 key, val, flg, exp, cas = '', '', 0, 0, 0
 
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
@@ -169,7 +169,7 @@ class MCSink(pump.Sink):
 
         return 0
 
-    def recv_msgs(self, conn, msgs, vbucket_id=None):
+    def recv_msgs(self, conn, msgs, vbucket_id=None, verify_opaque=True):
         refresh = False
         retry = False
 
@@ -184,28 +184,27 @@ class MCSink(pump.Sink):
             try:
                 r_cmd, r_status, r_ext, r_key, r_val, r_cas, r_opaque = \
                     self.read_conn(conn)
-
-                if i != r_opaque:
+                if verify_opaque and i != r_opaque:
                     return "error: opaque mismatch: %s %s" % (i, r_opaque), None, None
 
-                if r_status == memcacheConstants.ERR_SUCCESS:
+                if r_status == couchbaseConstants.ERR_SUCCESS:
                     continue
-                elif r_status == memcacheConstants.ERR_KEY_EEXISTS:
+                elif r_status == couchbaseConstants.ERR_KEY_EEXISTS:
                     logging.warn("item exists: %s, key: %s" %
                                  (self.spec, key))
                     continue
-                elif r_status == memcacheConstants.ERR_KEY_ENOENT:
-                    if (cmd != memcacheConstants.CMD_TAP_DELETE and
-                        cmd != memcacheConstants.CMD_GET):
+                elif r_status == couchbaseConstants.ERR_KEY_ENOENT:
+                    if (cmd != couchbaseConstants.CMD_TAP_DELETE and
+                        cmd != couchbaseConstants.CMD_GET):
                         logging.warn("item not found: %s, key: %s" %
                                      (self.spec, key))
                     continue
-                elif (r_status == memcacheConstants.ERR_ETMPFAIL or
-                      r_status == memcacheConstants.ERR_EBUSY or
-                      r_status == memcacheConstants.ERR_ENOMEM):
+                elif (r_status == couchbaseConstants.ERR_ETMPFAIL or
+                      r_status == couchbaseConstants.ERR_EBUSY or
+                      r_status == couchbaseConstants.ERR_ENOMEM):
                     retry = True # Retry the whole batch again next time.
                     continue     # But, finish recv'ing current batch.
-                elif r_status == memcacheConstants.ERR_NOT_MY_VBUCKET:
+                elif r_status == couchbaseConstants.ERR_NOT_MY_VBUCKET:
                     msg = ("received NOT_MY_VBUCKET;"
                            " perhaps the cluster is/was rebalancing;"
                            " vbucket_id: %s, key: %s, spec: %s, host:port: %s:%s"
@@ -219,7 +218,7 @@ class MCSink(pump.Sink):
                             self.cur.get("tot_sink_not_my_vbucket", 0) + 1
                     else:
                         return "error: " + msg, None, None
-                elif r_status == memcacheConstants.ERR_UNKNOWN_COMMAND:
+                elif r_status == couchbaseConstants.ERR_UNKNOWN_COMMAND:
                     if self.op_map == OP_MAP:
                         if not retry:
                             return "error: unknown command: %s" % (r_cmd), None, None
@@ -235,7 +234,6 @@ class MCSink(pump.Sink):
             except Exception, e:
                 logging.error("MCSink exception: %s", e)
                 return "error: MCSink exception: " + str(e), None, None
-
         return 0, retry, refresh
 
     def translate_cmd(self, cmd, op, meta):
@@ -243,18 +241,18 @@ class MCSink(pump.Sink):
             # The source gave no meta, so use regular commands.
             self.op_map = OP_MAP
 
-        if cmd == memcacheConstants.CMD_TAP_MUTATION:
+        if cmd == couchbaseConstants.CMD_TAP_MUTATION:
             m = self.op_map.get(op, None)
             if m:
                 return 0, m
             return "error: MCSink.translate_cmd, unsupported op: " + op, None
 
-        if cmd == memcacheConstants.CMD_TAP_DELETE:
+        if cmd == couchbaseConstants.CMD_TAP_DELETE:
             if op == 'get':
-                return 0, memcacheConstants.CMD_NOOP
+                return 0, couchbaseConstants.CMD_NOOP
             return 0, self.op_map['delete']
 
-        if cmd == memcacheConstants.CMD_GET:
+        if cmd == couchbaseConstants.CMD_GET:
             return 0, cmd
 
         return "error: MCSink - unknown cmd: %s, op: %s" % (cmd, op), None
@@ -306,14 +304,14 @@ class MCSink(pump.Sink):
 
     @staticmethod
     def connect_mc(host, port, user, pswd):
-        mc = mc_bin_client.MemcachedClient(host, int(port))
+        mc = cb_bin_client.MemcachedClient(host, int(port))
         if user:
             try:
                 mc.sasl_auth_plain(str(user), str(pswd))
             except EOFError:
                 return "error: SASL auth error: %s:%s, user: %s" % \
                     (host, port, user), None
-            except mc_bin_client.MemcachedError:
+            except cb_bin_client.MemcachedError:
                 return "error: SASL auth failed: %s:%s, user: %s" % \
                     (host, port, user), None
             except socket.error:
@@ -322,9 +320,9 @@ class MCSink(pump.Sink):
         return 0, mc
 
     def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque):
-        if (cmd == memcacheConstants.CMD_SET_WITH_META or
-            cmd == memcacheConstants.CMD_ADD_WITH_META or
-            cmd == memcacheConstants.CMD_DELETE_WITH_META):
+        if (cmd == couchbaseConstants.CMD_SET_WITH_META or
+            cmd == couchbaseConstants.CMD_ADD_WITH_META or
+            cmd == couchbaseConstants.CMD_DELETE_WITH_META):
             if meta:
                 seq_no = str(meta)
                 if len(seq_no) > 8:
@@ -340,12 +338,12 @@ class MCSink(pump.Sink):
                     ext = struct.pack(">IIQQ", flg, exp, 1, cas)
             else:
                 ext = struct.pack(">IIQQ", flg, exp, 1, cas)
-        elif (cmd == memcacheConstants.CMD_SET or
-              cmd == memcacheConstants.CMD_ADD):
-            ext = struct.pack(memcacheConstants.SET_PKT_FMT, flg, exp)
-        elif (cmd == memcacheConstants.CMD_DELETE or
-              cmd == memcacheConstants.CMD_GET or
-              cmd == memcacheConstants.CMD_NOOP):
+        elif (cmd == couchbaseConstants.CMD_SET or
+              cmd == couchbaseConstants.CMD_ADD):
+            ext = struct.pack(couchbaseConstants.SET_PKT_FMT, flg, exp)
+        elif (cmd == couchbaseConstants.CMD_DELETE or
+              cmd == couchbaseConstants.CMD_GET or
+              cmd == couchbaseConstants.CMD_NOOP):
             ext = ''
         else:
             return "error: MCSink - unknown cmd for request: " + str(cmd), None
@@ -355,8 +353,8 @@ class MCSink(pump.Sink):
 
     def cmd_header(self, cmd, vbucket_id, key, val, ext, cas, opaque,
                    dtype=0,
-                   fmt=memcacheConstants.REQ_PKT_FMT,
-                   magic=memcacheConstants.REQ_MAGIC_BYTE):
+                   fmt=couchbaseConstants.REQ_PKT_FMT,
+                   magic=couchbaseConstants.REQ_MAGIC_BYTE):
         return struct.pack(fmt, magic, cmd,
                            len(key), len(ext), dtype, vbucket_id,
                            len(key) + len(ext) + len(val), opaque, cas)
@@ -378,12 +376,12 @@ class MCSink(pump.Sink):
         return cmd, errcode, ext, key, val, cas, opaque
 
     def recv_msg(self, sock, buf):
-        pkt, buf = self.recv(sock, memcacheConstants.MIN_RECV_PACKET, buf)
+        pkt, buf = self.recv(sock, couchbaseConstants.MIN_RECV_PACKET, buf)
         if not pkt:
             raise EOFError()
         magic, cmd, keylen, extlen, dtype, errcode, datalen, opaque, cas = \
-            struct.unpack(memcacheConstants.RES_PKT_FMT, pkt)
-        if magic != memcacheConstants.RES_MAGIC_BYTE:
+            struct.unpack(couchbaseConstants.RES_PKT_FMT, pkt)
+        if magic != couchbaseConstants.RES_MAGIC_BYTE:
             raise Exception("unexpected recv_msg magic: " + str(magic))
         data, buf = self.recv(sock, datalen, buf)
         return buf, cmd, errcode, extlen, keylen, data, cas, opaque

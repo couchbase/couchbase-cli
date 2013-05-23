@@ -5,7 +5,7 @@ import os
 import simplejson as json
 import struct
 
-import memcacheConstants
+import couchbaseConstants
 import pump
 
 BSON_SCHEME = "bson://"
@@ -51,7 +51,7 @@ class BSONSource(pump.Source):
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
 
-        cmd = memcacheConstants.CMD_TAP_MUTATION
+        cmd = couchbaseConstants.CMD_TAP_MUTATION
         vbucket_id = 0x0000ffff
         cas, exp, flg = 0, 0, 0
 

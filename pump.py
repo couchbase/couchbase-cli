@@ -15,9 +15,9 @@ import urlparse
 import zlib
 import platform
 import subprocess
-import memcacheConstants
-from cbcollections import defaultdict
 
+import couchbaseConstants
+from cbcollections import defaultdict
 from cbqueue import PumpQueue
 
 # TODO: (1) optionally log into backup directory
@@ -120,13 +120,19 @@ class PumpingStation(ProgressReporter):
                                     key=lambda b: b['name']):
             logging.info("bucket: " + source_bucket['name'])
 
-            rv = self.transfer_bucket_msgs(source_bucket, source_map, sink_map)
-            if rv != 0:
-                return rv
+            if not self.opts.extra.get("design_doc_only", 0):
+                rv = self.transfer_bucket_msgs(source_bucket, source_map, sink_map)
+                if rv != 0:
+                    return rv
+            else:
+                sys.stderr.write("transfer design doc only. bucket msgs will be skipped.\n")
 
-            rv = self.transfer_bucket_design(source_bucket, source_map, sink_map)
-            if rv != 0:
-                return rv
+            if not self.opts.extra.get("data_only", 0):
+                rv = self.transfer_bucket_design(source_bucket, source_map, sink_map)
+                if rv != 0:
+                    return rv
+            else:
+                sys.stderr.write("transfer data only. bucket design docs will be skipped.\n")
 
             # TODO: (5) PumpingStation - validate bucket transfers.
 
@@ -654,7 +660,7 @@ class StdInSource(Source):
             elif parts[0] == 'set' or parts[0] == 'add':
                 if len(parts) != 5:
                     return "error: length of set/add line: " + line, None
-                cmd = memcacheConstants.CMD_TAP_MUTATION
+                cmd = couchbaseConstants.CMD_TAP_MUTATION
                 key = parts[1]
                 flg = int(parts[2])
                 exp = int(parts[3])
@@ -675,7 +681,7 @@ class StdInSource(Source):
             elif parts[0] == 'delete':
                 if len(parts) != 2:
                     return "error: length of delete line: " + line, None
-                cmd = memcacheConstants.CMD_TAP_DELETE
+                cmd = couchbaseConstants.CMD_TAP_DELETE
                 key = parts[1]
                 if not self.skip(key, vbucket_id):
                     msg = (cmd, vbucket_id, key, 0, 0, 0, '', '')
@@ -747,7 +753,7 @@ class StdOutSink(Sink):
                 continue
 
             try:
-                if cmd == memcacheConstants.CMD_TAP_MUTATION:
+                if cmd == couchbaseConstants.CMD_TAP_MUTATION:
                     if op_mutate:
                         # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
                         stdout.write("%s %s %s %s %s\r\n" %
@@ -756,10 +762,10 @@ class StdOutSink(Sink):
                         stdout.write("\r\n")
                     elif op == 'get':
                         stdout.write("get %s\r\n" % (key))
-                elif cmd == memcacheConstants.CMD_TAP_DELETE:
+                elif cmd == couchbaseConstants.CMD_TAP_DELETE:
                     if op_mutate:
                         stdout.write("delete %s\r\n" % (key))
-                elif cmd == memcacheConstants.CMD_GET:
+                elif cmd == couchbaseConstants.CMD_GET:
                     stdout.write("get %s\r\n" % (key))
                 else:
                     return "error: StdOutSink - unknown cmd: " + str(cmd), None
@@ -774,15 +780,15 @@ class StdOutSink(Sink):
 # --------------------------------------------------
 
 CMD_STR = {
-    memcacheConstants.CMD_TAP_CONNECT: "TAP_CONNECT",
-    memcacheConstants.CMD_TAP_MUTATION: "TAP_MUTATION",
-    memcacheConstants.CMD_TAP_DELETE: "TAP_DELETE",
-    memcacheConstants.CMD_TAP_FLUSH: "TAP_FLUSH",
-    memcacheConstants.CMD_TAP_OPAQUE: "TAP_OPAQUE",
-    memcacheConstants.CMD_TAP_VBUCKET_SET: "TAP_VBUCKET_SET",
-    memcacheConstants.CMD_TAP_CHECKPOINT_START: "TAP_CHECKPOINT_START",
-    memcacheConstants.CMD_TAP_CHECKPOINT_END: "TAP_CHECKPOINT_END",
-    memcacheConstants.CMD_NOOP: "NOOP"
+    couchbaseConstants.CMD_TAP_CONNECT: "TAP_CONNECT",
+    couchbaseConstants.CMD_TAP_MUTATION: "TAP_MUTATION",
+    couchbaseConstants.CMD_TAP_DELETE: "TAP_DELETE",
+    couchbaseConstants.CMD_TAP_FLUSH: "TAP_FLUSH",
+    couchbaseConstants.CMD_TAP_OPAQUE: "TAP_OPAQUE",
+    couchbaseConstants.CMD_TAP_VBUCKET_SET: "TAP_VBUCKET_SET",
+    couchbaseConstants.CMD_TAP_CHECKPOINT_START: "TAP_CHECKPOINT_START",
+    couchbaseConstants.CMD_TAP_CHECKPOINT_END: "TAP_CHECKPOINT_END",
+    couchbaseConstants.CMD_NOOP: "NOOP"
 }
 
 def parse_spec(opts, spec, port):
@@ -812,27 +818,25 @@ def parse_spec(opts, spec, port):
 
     return host, port, username, password, p[2]
 
-def rest_request(host, port, user, pswd, path, method='GET', body='', reason=''):
+def rest_request(host, port, user, pswd, path, method='GET', body='', reason='', headers=None):
     if reason:
         reason = "; reason: %s" % (reason)
-
     logging.debug("rest_request: %s@%s:%s%s%s" % (user, host, port, path, reason))
-
     conn = httplib.HTTPConnection(host, port)
     try:
-        conn.request(method, path, body, rest_headers(user, pswd))
+        header = rest_headers(user, pswd, headers)
+        conn.request(method, path, body, header)
+        resp = conn.getresponse()
     except Exception, e:
         return ("error: could not access REST API: %s:%s%s" +
                 "; please check source URL, username (-u) and password (-p)" +
                 "; exception: %s%s") % \
                 (host, port, path, e, reason), None, None
 
-    resp = conn.getresponse()
     if resp.status in [200, 201, 202, 204, 302]:
         return None, conn, resp.read()
 
     conn.close()
-
     if resp.status == 401:
         return ("error: unable to access REST API: %s:%s%s" +
                 "; please check source URL, username (-u) and password (-p)%s") % \
@@ -875,6 +879,9 @@ def rest_couchbase(opts, spec):
 
     if not path or path == '/':
         path = '/pools/default/buckets'
+
+    if int(port) in [11210, 11211]:
+        return "error: invalid port number %s, which is reserved for moxi service" % port, None
 
     err, rest_json, rest_data = \
         rest_request_json(host, int(port), user, pswd, path)
@@ -960,3 +967,12 @@ def find_sink_bucket_name(opts, source_bucket):
         return "error: please specify a bucket_destination", None
     logging.debug("sink_bucket: " + sink_bucket)
     return 0, sink_bucket
+
+def mkdirs(targetpath):
+    upperdirs = os.path.dirname(targetpath)
+    if upperdirs and not os.path.exists(upperdirs):
+        try:
+            os.makedirs(upperdirs)
+        except:
+            return "Cannot create upper directories for file:%s" % targetpath
+    return 0

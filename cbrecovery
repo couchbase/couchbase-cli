@@ -1,0 +1,233 @@
+#!/usr/bin/env python
+# -*-python-*-
+
+"""
+Recover missing vbuckets from remote cluster due to failed rebalancing operation
+"""
+
+import copy
+import logging
+import os
+import platform
+import re
+import string
+import sys
+import time
+import urllib
+
+import simplejson as json
+
+from cbcollections import defaultdict
+import pump_transfer
+import pump
+import pump_tap
+
+class Recovery(pump_transfer.Transfer):
+    """Entry point for 2.0 cbrecovery."""
+
+    def __init__(self):
+        self.name = "cbrecovery"
+        self.source_alias = "cluster to recover from"
+        self.sink_alias = "cluster to recover to"
+        self.recovery_map = None
+        self.recovery_uuid = None
+        self.sink_bucket = None
+        self.source_bucket = None
+        self.stats = defaultdict(int)
+        self.start_time = time.time()
+
+        self.usage = \
+            "%prog [options] source destination\n\n" \
+            "Recover missing vbuckets from remote cluster .\n\n" \
+            "Examples:\n" \
+            "  %prog [options] http://SOURCE:8091 http://DEST:8091"
+
+        self.err_map = {
+            "startRecovery": {
+                "400": "No recovery needed",
+                "404": "Specified bucket not found",
+                "500": "Could not start recovery because some nodes failed",
+                "503": "Could not start recovery because rebalance is running"
+            },
+            "commitVBucket": {
+                "400": "recovery_uuid query parameter is missing",
+                "402": "Vbucket is either unspecified or could not be converted",
+                "404": "Specified vbucket is not part of recovery map",
+                "406": "Either no recovery in progress or wrong recovery_uuid provided",
+                "500": "Could not commit vbucket basuse some nodes failed"
+            }
+        }
+
+    def main(self, argv):
+
+        err, opts, source, sink = self.opt_parse(argv)
+        if err:
+            return err
+        self.sink_bucket = getattr(opts, "bucket_destination", "default")
+        self.source_bucket = getattr(opts, "bucket_source", "default")
+
+        #communicate with destination before data transferring
+        err = self.pre_transfer(opts, source, sink)
+        if err:
+            return err
+
+        if self.recovery_map:
+            sys.stderr.write("Missing vbuckets to be recovered:%s\n" % json.dumps(self.recovery_map))
+        else:
+            sys.stderr.write("No missing vbuckets to be recovered.\n")
+            return 0
+
+        if opts.dry_run:
+            self.post_transfer(opts, source, sink, None)
+            return 0
+
+        #only care about data recovery
+        argv.append("--extra")
+        argv.append("data_only=1")
+
+        for i, node in enumerate(self.recovery_map):
+            nodename = node["node"].split("@")[-1]
+            for vbucket in node["vbuckets"]:
+                if opts.id is None or int(opts.id) == int(vbucket):
+                    node_map = { nodename: [vbucket] }
+                    temp_argv = copy.deepcopy(argv)
+                    temp_argv.append("--vbucket-list")
+                    temp_argv.append(json.dumps(node_map))
+                    err = pump_transfer.Transfer.main(self, temp_argv)
+                    if err:
+                        return err
+                    self.post_transfer(opts, source, sink, vbucket)
+
+        self.report_stats()
+        return 0
+
+    def aggregate_stats(self, cur):
+        for k, val in cur.iteritems():
+            self.stats[k] += val
+        return 0
+
+    def report_stats(self):
+        delta = time.time() - self.start_time
+        x = sorted([k for k in self.stats.iterkeys() if "_sink_" in k])
+
+        width_k = max([5] + [len(k.replace("tot_sink_", "")) for k in x] + [len("Recovery")])
+        width_v = max([20] + [len(str(self.stats[k])) for k in x])
+        width_s = max([10] + [len("%0.1f" % (self.stats[k] / delta)) for k in x])
+        sys.stderr.write("\n %s : %s | %s\n"
+             % (string.ljust("Recovery", width_k),
+                string.rjust("Total", width_v),
+                string.rjust("Per sec", width_s)))
+        for k in x:
+            sys.stderr.write(" %s : %s | %s\n"
+                 % (string.ljust(k.replace("tot_sink_", ""), width_k),
+                    string.rjust(str(self.stats[k]), width_v),
+                    string.rjust("%0.1f" % (self.stats[k] / delta), width_s)))
+
+        total_vbucket = 0
+        if self.recovery_map:
+            for k, node in enumerate(self.recovery_map):
+                total_vbucket += len(node["vbuckets"])
+        sys.stderr.write("%d vbuckets recovered with elapsed time %0.2f seconds\n"
+             % (total_vbucket, delta))
+
+    def pre_transfer(self, opts, source, sink):
+
+        host, port, user, pwd, path = \
+            pump.parse_spec(opts, sink, 8091)
+
+        #retrieve a list of missing vbucket
+        cmd = "startRecovery"
+        url = "/pools/default/buckets/%s/controller/%s" % (self.sink_bucket, cmd)
+        err, conn, response = \
+            pump.rest_request(host, int(port), user, pwd,
+                              url, method='POST', reason='start_recovery')
+        if err:
+            self.explain_error(err, cmd)
+            return err
+        response = json.loads(response)
+        recoveryMap = response.get('recoveryMap', None)
+        if not recoveryMap:
+            return "Missing recovery map from response"
+        else:
+            self.recovery_map = recoveryMap
+        self.recovery_uuid = response.get('uuid', None)
+
+        return 0
+
+    def post_transfer(self, opts, source, sink, vbucket):
+        if not self.sink_bucket:
+            return "Should specify destionation bucket for restore"
+
+        host, port, user, pwd, path = \
+            pump.parse_spec(opts, sink, 8091)
+        if opts.dry_run:
+            cmd = "stopRecovery"
+            reason_msg = "Stop recovery"
+        else:
+            cmd = "commitVBucket"
+            reason_msg = 'Activate vbucket:%s' % vbucket
+        if vbucket is not None:
+            params = urllib.urlencode({"vbucket": vbucket})
+        else:
+            params = None
+        url = '/pools/default/buckets/%s/controller/%s?recovery_uuid=%s' %\
+              (self.sink_bucket, cmd, self.recovery_uuid)
+        post_headers = {"Content-type": "application/x-www-form-urlencoded"}
+        err, conn, response = \
+            pump.rest_request(host, int(port), user, pwd,
+                              url, method='POST', body=params,
+                              reason=reason_msg,
+                              headers=post_headers)
+        if err:
+            self.explain_error(err, cmd)
+        else:
+            if vbucket:
+                logging.debug("Recover and activate vbucket: %s" % vbucket)
+
+        return err
+
+    def opt_parser_options(self, p):
+
+        p.add_option("-b", "--bucket-source",
+                     action="store", type="string", default="default",
+                     metavar="default",
+                     help="""source bucket to recover from """)
+        p.add_option("-B", "--bucket-destination",
+                     action="store", type="string", default="default",
+                     metavar="default",
+                     help="""destination bucket to recover to """)
+        p.add_option("-U", "--username-destination",
+                     action="store", type="string", default=None,
+                     help="REST username for destination cluster or server node")
+        p.add_option("-P", "--password-destination",
+                     action="store", type="string", default=None,
+                     help="REST password for destination cluster or server node")
+        self.opt_parser_options_common(p)
+
+        p.remove_option("-k")
+
+    def find_handlers(self, opts, source, sink):
+        return pump_tap.TAPDumpSource, pump_tap.TapSink
+
+    def explain_error(self, err, cmd):
+        if cmd not in self.err_map:
+            logging.error(err)
+            return
+
+        pattern = ';\sresponse:\s(.+);\sreason'
+        m = re.search(pattern, err)
+        if m:
+            errcode = m.groups()[0]
+            if errcode in self.err_map[cmd]:
+                logging.error("Error:%s" % self.err_map[cmd][errcode])
+            else:
+                logging.error("Error: unknown error code:%s" % errcode)
+        else:
+            logging.error(err)
+
+if __name__ == '__main__':
+    if platform.system() == "Windows":
+        python_lib = os.path.join(os.path.dirname(sys.argv[0]), '..')
+        sys.path.append(python_lib)
+
+    pump_transfer.exit_handler(Recovery().main(sys.argv))

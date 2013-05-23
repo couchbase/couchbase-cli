@@ -22,7 +22,12 @@ rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
     'cluster-init'      :'/settings/web',
+    'cluster-edit'      :'/settings/web',
     'node-init'         :'/nodes/self/controller/settings',
+    'setting-compaction'    :'/controller/setAutoCompaction',
+    'setting-notification'  :'/settings/stats',
+    'setting-autofailover'  :'/settings/autoFailover',
+    'setting-alert'         :'/settings/alerts'
 }
 
 server_no_remove = [
@@ -49,8 +54,15 @@ methods = {
     'server-readd'      :'POST',
     'failover'          :'POST',
     'cluster-init'      :'POST',
+    'cluster-edit'      :'POST',
     'node-init'         :'POST',
+    'setting-compaction'    :'POST',
+    'setting-notification'  :'POST',
+    'setting-autofailover'  :'POST',
+    'setting-alert'         :'POST',
 }
+
+bool_to_str = lambda value: str(bool(int(value))).lower()
 
 # Map of HTTP success code, success message and error message for
 # handling HTTP response properly
@@ -71,6 +83,39 @@ class Node:
         self.port_new = None
         self.per_node_quota = None
         self.data_path = None
+        self.index_path = None
+        self.enable_auto_failover = None
+        self.enable_notification = None
+        self.autofailover_timeout = None
+        self.enable_email_alert = None
+
+        #compaction related settings
+        self.compaction_db_percentage = None
+        self.compaction_db_size = None
+        self.compaction_view_percentage = None
+        self.compaction_view_size = None
+        self.compaction_period_from = None
+        self.compaction_period_to = None
+        self.enable_compaction_abort = None
+        self.enable_compaction_parallel = None
+
+        #alert settings
+        self.email_recipient = None
+        self.email_sender = None
+        self.email_user = None
+        self.email_password = None
+        self.email_host = None
+        self.email_port = None
+        self.email_enable_encrypt = None
+        self.autofailover_node = None
+        self.autofailover_max_reached = None
+        self.autofailover_node_down = None
+        self.autofailover_cluster_small = None
+        self.alert_ip_changed = None
+        self.alert_disk_space = None
+        self.alert_meta_overhead = None
+        self.alert_meta_oom = None
+        self.alert_write_failed = None
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
@@ -80,7 +125,6 @@ class Node:
         self.port = int(port)
         self.user = user
         self.password = password
-
         servers = self.processOpts(cmd, opts)
 
         if self.debug:
@@ -117,12 +161,23 @@ class Node:
 
             self.failover(servers)
 
-        if cmd == 'cluster-init':
+        if cmd in ('cluster-init', 'cluster-edit'):
             self.clusterInit()
 
         if cmd == 'node-init':
             self.nodeInit()
 
+        if cmd == 'setting-compaction':
+            self.compaction()
+
+        if cmd == 'setting-notification':
+            self.notification()
+
+        if cmd == 'setting-alert':
+            self.alert()
+
+        if cmd == 'setting-autofailover':
+            self.autofailover()
 
     def clusterInit(self):
         rest = restclient.RestClient(self.server,
@@ -142,16 +197,16 @@ class Node:
         else:
             rest.setParam('password', self.password)
 
-        opts = {}
-        opts['error_msg'] = "unable to init %s" % self.server
-        opts['success_msg'] = "init %s" % self.server
+        opts = {
+            "error_msg": "unable to init %s" % self.server,
+            "success_msg": "init %s" % self.server
+        }
 
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
                                      self.user,
                                      self.password,
                                      opts)
-        print output_result
 
         # per node quota unfortunately runs against a different location
         if not self.per_node_quota:
@@ -185,9 +240,13 @@ class Node:
         if self.data_path:
             rest.setParam('path', self.data_path)
 
-        opts = {}
-        opts['error_msg'] = "unable to init %s" % self.server
-        opts['success_msg'] = "init %s" % self.server
+        if self.index_path:
+            rest.setParam('index_path', self.index_path)
+
+        opts = {
+            "error_msg": "unable to init %s" % self.server,
+            "success_msg": "init %s" % self.server
+        }
 
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
@@ -196,6 +255,159 @@ class Node:
                                      opts)
         print output_result
 
+    def compaction(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+
+        if self.compaction_db_percentage:
+            rest.setParam('databaseFragmentationThreshold[percentage]', self.compaction_db_percentage)
+        if self.compaction_db_size:
+            self.compaction_db_size = int(self.compaction_db_size) * 1024**2
+            rest.setParam('databaseFragmentationThreshold[size]', self.compaction_db_size)
+        if self.compaction_view_percentage:
+            rest.setParam('viewFragmentationThreshold[percentage]', self.compaction_view_percentage)
+        if self.compaction_view_size:
+            self.compaction_view_size = int(self.compaction_view_size) * 1024**2
+            rest.setParam('viewFragmentationThreshold[size]', self.compaction_view_size)
+        if self.compaction_period_from:
+            hour, minute = self.compaction_period_from.split(':')
+            if (int(hour) not in range(24)) or (int(minute) not in range(60)):
+                print "ERROR: invalid hour or minute value for compaction period"
+                return
+            else:
+                rest.setParam('allowedTimePeriod[fromHour]', int(hour))
+                rest.setParam('allowedTimePeriod[fromMinute]', int(minute))
+        if self.compaction_period_to:
+            hour, minute = self.compaction_period_to.split(':')
+            if (int(hour) not in range(24)) or (int(minute) not in range(60)):
+                print "ERROR: invalid hour or minute value for compaction"
+                return
+            else:
+                rest.setParam('allowedTimePeriod[toHour]', hour)
+                rest.setParam('allowedTimePeriod[toMinute]', minute)
+        if self.enable_compaction_abort:
+            rest.setParam('allowedTimePeriod[abortOutside]', self.enable_compaction_abort)
+        if self.enable_compaction_parallel:
+            rest.setParam('parallelDBAndViewCompaction', self.enable_compaction_parallel)
+        else:
+            self.enable_compaction_parallel = bool_to_str(0)
+            rest.setParam('parallelDBAndViewCompaction', self.enable_compaction_parallel)
+
+        if self.compaction_period_from and self.compaction_period_to:
+            if self.compaction_period_from >= self.compaction_period_to:
+                print "ERROR: compaction from time period cannot be late than to time period"
+                return
+
+        opts = {
+            "error_msg": "unable to set compaction settings",
+            "success_msg": "set compaction settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def notification(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.enable_notification:
+            rest.setParam('sendStats', self.enable_notification)
+
+        opts = {
+            "error_msg": "unable to set notification settings",
+            "success_msg": "set notification settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def alert(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        alert_opts = ''
+        if self.enable_email_alert:
+            rest.setParam('enabled', self.enable_email_alert)
+        if self.email_recipient:
+            rest.setParam('recipients', self.email_recipient)
+        if self.email_sender:
+            rest.setParam('sender', self.email_sender)
+        if self.email_user:
+            rest.setParam('emailUser', self.email_user)
+        if self.email_password:
+            rest.setParam('emailPass', self.email_password)
+        if self.email_host:
+            rest.setParam('emailHost', self.email_host)
+        if self.email_port:
+            rest.setParam('emailPort', self.email_port)
+        if self.email_enable_encrypt:
+            rest.setParam('emailEncrypt', self.email_enable_encrypt)
+        if self.autofailover_node:
+            alert_opts = alert_opts + 'auto_failover_node,'
+        if self.autofailover_max_reached:
+            alert_opts = alert_opts + 'auto_failover_maximum_reached,'
+        if self.autofailover_node_down:
+            alert_opts = alert_opts + 'auto_failover_other_nodes_down,'
+        if self.autofailover_cluster_small:
+            alert_opts = alert_opts + 'auto_failover_cluster_too_small,'
+        if self.alert_ip_changed:
+            alert_opts = alert_opts + 'ip,'
+        if self.alert_disk_space:
+            alert_opts = alert_opts + 'disk,'
+        if self.alert_meta_overhead:
+            alert_opts = alert_opts + 'overhead,'
+        if self.alert_meta_oom:
+            alert_opts = alert_opts + 'ep_oom_errors,'
+        if self.alert_write_failed:
+             alert_opts = alert_opts + 'ep_item_commit_failed,'
+
+        if alert_opts:
+            # remove last separator
+            alert_opts = alert_opts[:-1]
+            rest.setParam('alerts', alert_opts)
+
+        opts = {
+            "error_msg": "unable to set alert settings",
+            "success_msg": "set alert settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def autofailover(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.autofailover_timeout:
+            if int(self.autofailover_timeout) < 30:
+                print "ERROR: Timeout value must be larger than 30 second."
+                return
+            else:
+                rest.setParam('timeout', self.autofailover_timeout)
+
+        if self.enable_auto_failover:
+            rest.setParam('enabled', self.enable_auto_failover)
+
+        opts = {
+            "error_msg": "unable to set auto failover settings",
+            "success_msg": "set auto failover settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
 
     def processOpts(self, cmd, opts):
         """ Set standard opts.
@@ -223,7 +435,6 @@ class Node:
                     usage(usage_msg)
 
         server = None
-
         for o, a in opts:
             if o in ("-a", "--server-add"):
                 if a == "self":
@@ -255,16 +466,74 @@ class Node:
             elif o in ('-d', '--debug'):
                 self.debug = True
                 server = None
-            elif o == '--cluster-init-password':
+            elif o in ('--cluster-init-password', '--cluster-password'):
                 self.password_new = a
-            elif o == '--cluster-init-username':
+            elif o in ('--cluster-init-username', '--cluster-username'):
                 self.username_new = a
-            elif o == '--cluster-init-port':
+            elif o in ('--cluster-init-port', '--cluster-port'):
                 self.port_new = a
-            elif o == '--cluster-init-ramsize':
+            elif o in ('--cluster-init-ramsize', '--cluster-ramsize'):
                 self.per_node_quota = a
+            elif o == '--enable-auto-failover':
+                self.enable_auto_failover = bool_to_str(a)
+            elif o == '--enable-notification':
+                self.enable_notification = bool_to_str(a)
+            elif o == '--auto-failover-timeout':
+                self.autofailover_timeout = a
+            elif o == '--compaction-db-percentage':
+                self.compaction_db_percentage = a
+            elif o == '--compaction-db-size':
+                self.compaction_db_size = a
+            elif o == '--compaction-view-percentage':
+                self.compaction_view_percentage = a
+            elif o == '--compaction-view-size':
+                self.compaction_view_size = a
+            elif o == '--compaction-period-from':
+                self.compaction_period_from = a
+            elif o == '--compaction-period-to':
+                self.compaction_period_to = a
+            elif o == '--enable-compaction-abort':
+                self.enable_compaction_abort = bool_to_str(a)
+            elif o == '--enable-compaction-parallel':
+                self.enable_compaction_parallel = bool_to_str(a)
+            elif o == '--enable-email-alert':
+                self.enable_email_alert = bool_to_str(a)
             elif o == '--node-init-data-path':
                 self.data_path = a
+            elif o == '--node-init-index-path':
+                self.index_path = a
+            elif o == '--email-recipients':
+                self.email_recipient = a
+            elif o == '--email-sender':
+                self.email_sender = a
+            elif o == '--email-user':
+                self.email_user = a
+            elif o == '--email-password':
+                self.email_password = a
+            elif o == '--email-host':
+                self.email_host = a
+            elif o == 'email-port':
+                self.email_port = a
+            elif o == '--enable-email-encrypt':
+                self.email_enable_encrypt = bool_to_str(a)
+            elif o == '--alert-auto-failover-node':
+                self.autofailover_node = True
+            elif o == '--alert-auto-failover-max-reached':
+                self.autofailover_max_reached = True
+            elif o == '--alert-auto-failover-node-down':
+                self.autofailover_node_down = True
+            elif o == '--alert-auto-failover-cluster-small':
+                self.autofailover_cluster_small = True
+            elif o == '--alert-ip-changed':
+                self.alert_ip_changed = True
+            elif o == '--alert-disk-space':
+                self.alert_disk_space = True
+            elif o == '--alert-meta-overhead':
+                self.alert_meta_overhead = True
+            elif o == '--alert-meta-oom':
+                self.alert_meta_oom = True
+            elif o == '--alert-write-failed':
+                self.alert_write_failed = True
 
         return servers
 
@@ -286,10 +555,10 @@ class Node:
             rest.setParam('user', add_with_user)
             rest.setParam('password', add_with_password)
 
-        opts = {}
-        opts['error_msg'] = "unable to server-add %s" % add_server
-        opts['success_msg'] = "server-add %s" % add_server
-
+        opts = {
+            'error_msg': "unable to server-add %s" % add_server,
+            'success_msg': "server-add %s" % add_server
+        }
         output_result = rest.restCmd('POST',
                                      rest_cmds['server-add'],
                                      self.user,
@@ -307,10 +576,10 @@ class Node:
                                          {'debug':self.debug})
             rest.setParam('otpNode', readd_otp)
 
-            opts = {}
-            opts['error_msg'] = "unable to re-add %s" % readd_otp
-            opts['success_msg'] = "re-add %s" % readd_otp
-
+            opts = {
+                'error_msg': "unable to re-add %s" % readd_otp,
+                'success_msg': "re-add %s" % readd_otp
+            }
             output_result = rest.restCmd('POST',
                                          rest_cmds['server-readd'],
                                          self.user,
@@ -360,10 +629,10 @@ class Node:
         rest.setParam('knownNodes', ','.join(known_otps))
         rest.setParam('ejectedNodes', ','.join(eject_otps))
 
-        opts = {}
-        opts['success_msg'] = 'rebalanced cluster'
-        opts['error_msg'] = 'unable to rebalance cluster'
-
+        opts = {
+            'success_msg': 'rebalanced cluster',
+            'error_msg': 'unable to rebalance cluster'
+        }
         output_result = rest.restCmd('POST',
                                      rest_cmds['rebalance'],
                                      self.user,
@@ -421,10 +690,10 @@ class Node:
                                      self.port,
                                      {'debug':self.debug})
 
-        opts = {}
-        opts['success_msg'] = 'rebalance cluster stopped'
-        opts['error_msg'] = 'unable to stop rebalance'
-
+        opts = {
+            'success_msg': 'rebalance cluster stopped',
+            'error_msg': 'unable to stop rebalance'
+        }
         output_result = rest.restCmd('POST',
                                      rest_cmds['rebalance-stop'],
                                      self.user,
@@ -447,10 +716,10 @@ class Node:
                                          {'debug':self.debug})
             rest.setParam('otpNode', failover_otp)
 
-            opts = {}
-            opts['error_msg'] = "unable to failover %s" % failover_otp
-            opts['success_msg'] = "failover %s" % failover_otp
-
+            opts = {
+                'error_msg': "unable to failover %s" % failover_otp,
+                'success_msg': "failover %s" % failover_otp
+            }
             output_result = rest.restCmd('POST',
                                          rest_cmds['failover'],
                                          self.user,

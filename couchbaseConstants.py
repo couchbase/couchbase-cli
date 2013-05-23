@@ -135,6 +135,7 @@ TAP_FLAG_TYPES = {TAP_FLAG_BACKFILL: ">Q",
 # TAP per-message flags
 TAP_FLAG_ACK      = 0x01
 TAP_FLAG_NO_VALUE = 0x02 # The value for the key is not included in the packet
+TAP_FLAG_NETWORK_BYTE_ORDER = 0x04
 
 # Flags, expiration
 SET_PKT_FMT=">II"
@@ -203,7 +204,7 @@ EXTRA_HDR_FMTS={
 EXTRA_HDR_SIZES=dict(
     [(k, struct.calcsize(v)) for (k,v) in EXTRA_HDR_FMTS.items()])
 
-# Kept for backwards compatibility with existing mc_bin_client users.
+# Kept for backwards compatibility with existing cb_bin_client users.
 
 ERR_UNKNOWN_CMD = 0x81
 ERR_NOT_FOUND = 0x1

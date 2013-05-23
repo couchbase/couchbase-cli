@@ -6,17 +6,18 @@ default:
 pythonlibdir=$(libdir)/python
 nobase_pythonlib_DATA= \
          buckets.py \
+         cb_bin_client.py \
          cbcollections.py \
          cbqueue.py \
          cluster_stats.py \
          collector.py \
+         couchbaseConstants.py \
          diskqueue_stats.py \
          info.py \
          listservers.py \
-         mc_bin_client.py \
-         memcacheConstants.py \
          node.py \
          node_stats.py \
+         processor.py \
          pump.py \
          pump_bfd.py \
          pump_bson.py \
@@ -28,7 +29,6 @@ nobase_pythonlib_DATA= \
          pump_sfd.py \
          pump_tap.py \
          pump_transfer.py \
-         processor.py \
          restclient.py \
          simplejson/LICENSE.txt \
          simplejson/__init__.py \
@@ -38,10 +38,17 @@ nobase_pythonlib_DATA= \
          stats_buffer.py \
          timeout.py \
          usage.py \
-         util_cli.py
+         util_cli.py \
+         xdcr.py
 
 
-pythonlib_SCRIPTS= couchbase-cli cbbackup cbrestore cbtransfer cbclusterstats cbworkloadgen
+pythonlib_SCRIPTS= couchbase-cli \
+                   cbbackup \
+                   cbrestore \
+                   cbtransfer \
+                   cbclusterstats \
+                   cbworkloadgen \
+                   cbrecovery
 
 PYTHON_TOOLS= \
         wrapper/couchbase-cli \
@@ -49,7 +56,8 @@ PYTHON_TOOLS= \
         wrapper/cbrestore \
         wrapper/cbtransfer \
         wrapper/cbclusterstats \
-        wrapper/cbworkloadgen
+        wrapper/cbworkloadgen \
+        wrapper/cbrecovery
 
 ${PYTHON_TOOLS}: wrapper/wrapper
 	cp $< $@

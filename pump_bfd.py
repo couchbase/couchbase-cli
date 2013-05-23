@@ -10,9 +10,8 @@ import sys
 import time
 import urllib
 
-import memcacheConstants
-
-from pump import Source, Sink, Batch, SinkBatchFuture
+import couchbaseConstants
+import pump
 
 import_stmts = (
     'from pysqlite2 import dbapi2 as sqlite3',
@@ -58,7 +57,7 @@ class BFD:
 
 # --------------------------------------------------
 
-class BFDSource(BFD, Source):
+class BFDSource(BFD, pump.Source):
     """Can read from backup-file/directory layout."""
 
     def __init__(self, opts, spec, source_bucket, source_node,
@@ -128,7 +127,7 @@ class BFDSource(BFD, Source):
         if self.done:
             return 0, None
 
-        batch = Batch(self)
+        batch = pump.Batch(self)
 
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
@@ -214,7 +213,7 @@ class BFDSource(BFD, Source):
 
 # --------------------------------------------------
 
-class BFDSink(BFD, Sink):
+class BFDSink(BFD, pump.Sink):
     """Can write to backup-file/directory layout."""
 
     def __init__(self, opts, spec, source_bucket, source_node,
@@ -260,8 +259,8 @@ class BFDSink(BFD, Sink):
                     if self.skip(key, vbucket_id):
                         continue
 
-                    if (cmd != memcacheConstants.CMD_TAP_MUTATION and
-                        cmd != memcacheConstants.CMD_TAP_DELETE):
+                    if (cmd != couchbaseConstants.CMD_TAP_MUTATION and
+                        cmd != couchbaseConstants.CMD_TAP_DELETE):
                         return self.future_done(future,
                                                 "error: BFDSink bad cmd: " +
                                                 str(cmd))
@@ -323,6 +322,9 @@ class BFDSink(BFD, Sink):
             fname = BFD.design_path(sink_spec,
                                     source_bucket['name'])
             try:
+                rv = pump.mkdirs(fname)
+                if rv:
+                    return rv, None
                 f = open(fname, 'w')
                 f.write(source_design)
                 f.close()
@@ -332,7 +334,7 @@ class BFDSink(BFD, Sink):
         return 0
 
     def consume_batch_async(self, batch):
-        return self.push_next_batch(batch, SinkBatchFuture(self, batch))
+        return self.push_next_batch(batch, pump.SinkBatchFuture(self, batch))
 
     def create_db(self, num):
         rv = self.mkdirs()

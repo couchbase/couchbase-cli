@@ -28,10 +28,10 @@ import pump_cb
 import pump_mc
 import pump_tap
 
-import mc_bin_client
-import memcacheConstants
+import cb_bin_client
+import couchbaseConstants
 
-from memcacheConstants import *
+from couchbaseConstants import *
 from cbcollections import defaultdict
 from cbqueue import PumpQueue
 
@@ -233,14 +233,14 @@ class MockMemcachedSession(threading.Thread):
                 self.log("recv...")
 
                 pkt, buf = self.recv(self.client,
-                                     memcacheConstants.MIN_RECV_PACKET, buf)
+                                     couchbaseConstants.MIN_RECV_PACKET, buf)
                 if not pkt:
                     return self.close("recv no data")
 
                 magic, cmd, keylen, extlen, dtype, vbucket_id, datalen, opaque, cas = \
-                    struct.unpack(memcacheConstants.REQ_PKT_FMT, pkt)
-                if (magic != memcacheConstants.REQ_MAGIC_BYTE and
-                        magic != memcacheConstants.RES_MAGIC_BYTE):
+                    struct.unpack(couchbaseConstants.REQ_PKT_FMT, pkt)
+                if (magic != couchbaseConstants.REQ_MAGIC_BYTE and
+                        magic != couchbaseConstants.RES_MAGIC_BYTE):
                     raise Exception("unexpected recv magic: " + str(magic))
 
                 data, buf = self.recv(self.client, datalen, buf)
@@ -728,10 +728,10 @@ class MCTestHelper(unittest.TestCase):
         return j
 
     def parse_msg(self, buf, magic_expected):
-        head = buf[:memcacheConstants.MIN_RECV_PACKET]
-        data = buf[memcacheConstants.MIN_RECV_PACKET:]
+        head = buf[:couchbaseConstants.MIN_RECV_PACKET]
+        data = buf[couchbaseConstants.MIN_RECV_PACKET:]
         magic, cmd, keylen, extlen, dtype, vbucket_id, datalen, opaque, cas = \
-            struct.unpack(memcacheConstants.REQ_PKT_FMT, head)
+            struct.unpack(couchbaseConstants.REQ_PKT_FMT, head)
         self.assertEqual(magic, magic_expected)
 
         ext = ''
@@ -744,16 +744,16 @@ class MCTestHelper(unittest.TestCase):
         return cmd, vbucket_id, ext, key, val, opaque, cas
 
     def parse_req(self, buf):
-        return self.parse_msg(buf, memcacheConstants.REQ_MAGIC_BYTE)
+        return self.parse_msg(buf, couchbaseConstants.REQ_MAGIC_BYTE)
 
     def parse_res(self, buf):
-        return self.parse_msg(buf, memcacheConstants.RES_MAGIC_BYTE)
+        return self.parse_msg(buf, couchbaseConstants.RES_MAGIC_BYTE)
 
     def check_auth(self, req, user, pswd):
         self.assertTrue(req)
         cmd, vbucket_id, ext, key, val, opaque, cas = \
             self.parse_req(req)
-        self.assertEqual(memcacheConstants.CMD_SASL_AUTH, cmd)
+        self.assertEqual(couchbaseConstants.CMD_SASL_AUTH, cmd)
         self.assertEqual(0, vbucket_id)
         self.assertEqual('', ext)
         self.assertEqual('PLAIN', key)
@@ -765,14 +765,14 @@ class MCTestHelper(unittest.TestCase):
         self.assertTrue(req)
         cmd, vbucket_id, ext, key, val, opaque, cas = \
             self.parse_req(req)
-        self.assertEqual(memcacheConstants.CMD_TAP_CONNECT, cmd)
+        self.assertEqual(couchbaseConstants.CMD_TAP_CONNECT, cmd)
         self.assertEqual(0, vbucket_id)
 
         version = json.loads(SAMPLE_JSON_pools_default)["nodes"][0]["version"]
-        tap_opts = {memcacheConstants.TAP_FLAG_DUMP: '',
-                    memcacheConstants.TAP_FLAG_SUPPORT_ACK: ''}
+        tap_opts = {couchbaseConstants.TAP_FLAG_DUMP: '',
+                    couchbaseConstants.TAP_FLAG_SUPPORT_ACK: ''}
         if version.split(".") >= ["2", "0", "0"]:
-            tap_opts[memcacheConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
+            tap_opts[couchbaseConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
         expect_ext, expect_val = \
             pump_tap.TAPDumpSource.encode_tap_connect_opts(tap_opts)
 
@@ -785,8 +785,8 @@ class MCTestHelper(unittest.TestCase):
 
     def header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
                dtype=0,
-               fmt=memcacheConstants.REQ_PKT_FMT,
-               magic=memcacheConstants.REQ_MAGIC_BYTE):
+               fmt=couchbaseConstants.REQ_PKT_FMT,
+               magic=couchbaseConstants.REQ_MAGIC_BYTE):
         return struct.pack(fmt, magic, cmd,
                            len(key), len(ext), dtype, vbucket_id,
                            len(key) + len(ext) + len(val), opaque, cas)
@@ -795,15 +795,15 @@ class MCTestHelper(unittest.TestCase):
                    dtype=0):
         return self.header(cmd, vbucket_id, key, val, ext, opaque, cas,
                            dtype=dtype,
-                           fmt=memcacheConstants.REQ_PKT_FMT,
-                           magic=memcacheConstants.REQ_MAGIC_BYTE)
+                           fmt=couchbaseConstants.REQ_PKT_FMT,
+                           magic=couchbaseConstants.REQ_MAGIC_BYTE)
 
     def res_header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
                    dtype=0):
         return self.header(cmd, vbucket_id, key, val, ext, opaque, cas,
                            dtype=dtype,
-                           fmt=memcacheConstants.RES_PKT_FMT,
-                           magic=memcacheConstants.RES_MAGIC_BYTE)
+                           fmt=couchbaseConstants.RES_PKT_FMT,
+                           magic=couchbaseConstants.RES_MAGIC_BYTE)
 
     def req(self, cmd, vbucket_id, key, val, ext, opaque, cas,
             dtype=0):
@@ -999,8 +999,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
             cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 0)
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
+                              0, couchbaseConstants.TAP_FLAG_ACK, 0, 0, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         123, 'a', 'A', ext, 789, 321))
             client.go.set()
@@ -1067,13 +1067,13 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
             cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
                               0, 0, 0, 0xfedcba01, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         123, 'a', 'A', ext, 789, 321))
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 0xffeedd00)
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
+                              0, couchbaseConstants.TAP_FLAG_ACK, 0, 0, 0xffeedd00)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         1234, 'b', 'B', ext, 987, 4321))
             client.go.set()
@@ -1220,13 +1220,13 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
             cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
                               0, 0, 0, 0, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         123, 'a', 'A', ext, 987, 321))
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 0)
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
+                              0, couchbaseConstants.TAP_FLAG_ACK, 0, 0, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         1234, 'b', 'B', ext, 789, 4321)[0:self.chop_at])
             client.close("close after sending chopped message")
@@ -1280,18 +1280,18 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
             cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
                               0, 0, 0, 40302010, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         123, 'a', 'A', ext, 789, 321))
 
-            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_GENERAL_PKT_FMT,
                               0, 0, 0)
             client.client.send(self.req(CMD_TAP_DELETE,
                                         111, 'a', '', ext, 777, 333))
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
+                              0, couchbaseConstants.TAP_FLAG_ACK, 0, 0, 12345)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         1234, 'b', 'B', ext, 987, 4321))
             client.go.set()
@@ -1355,13 +1355,13 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
             cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
                               0, 0, 0, 40302010, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         123, 'a', 'A', ext, 789, 321))
 
-            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0)
+            ext = struct.pack(couchbaseConstants.TAP_GENERAL_PKT_FMT,
+                              0, couchbaseConstants.TAP_FLAG_ACK, 0)
             client.client.send(self.req(CMD_TAP_DELETE,
                                         111, 'a', '', ext, 777, 333))
             client.go.set()
@@ -1429,27 +1429,27 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
             cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
-            client.client.send(self.req(memcacheConstants.CMD_NOOP,
+            client.client.send(self.req(couchbaseConstants.CMD_NOOP,
                                         111, 'a', '', '', 777, 333))
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
                               0, 0, 0, 40302010, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         123, 'a', 'A', ext, 789, 321))
 
-            client.client.send(self.req(memcacheConstants.CMD_NOOP,
+            client.client.send(self.req(couchbaseConstants.CMD_NOOP,
                                         111, 'a', '', '', 777, 333))
 
-            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_GENERAL_PKT_FMT,
                               0, 0, 0)
             client.client.send(self.req(CMD_TAP_DELETE,
                                         111, 'a', '', ext, 777, 333))
 
-            client.client.send(self.req(memcacheConstants.CMD_NOOP,
+            client.client.send(self.req(couchbaseConstants.CMD_NOOP,
                                         111, 'a', '', '', 777, 333))
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
+                              0, couchbaseConstants.TAP_FLAG_ACK, 0, 0, 12345)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         1234, 'b', 'B', ext, 987, 4321))
             client.go.set()
@@ -1517,24 +1517,24 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
             cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
-            client.client.send(self.req(memcacheConstants.CMD_TAP_OPAQUE,
+            client.client.send(self.req(couchbaseConstants.CMD_TAP_OPAQUE,
                                         111, 'o0', '', '', 777, 333))
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
                               0, 0, 0, 40302010, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         123, 'a', 'A', ext, 789, 321))
 
-            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0)
-            client.client.send(self.req(memcacheConstants.CMD_TAP_OPAQUE,
+            ext = struct.pack(couchbaseConstants.TAP_GENERAL_PKT_FMT,
+                              0, couchbaseConstants.TAP_FLAG_ACK, 0)
+            client.client.send(self.req(couchbaseConstants.CMD_TAP_OPAQUE,
                                         111, 'o1', '', ext, 888, 444))
             client.go.set()
 
             client, res = mms.queue.get()
             cmd, vbucket_id, ext, key, val, opaque, cas = \
                 self.parse_res(res)
-            self.assertEqual(memcacheConstants.CMD_TAP_OPAQUE, cmd)
+            self.assertEqual(couchbaseConstants.CMD_TAP_OPAQUE, cmd)
             self.assertEqual(0, vbucket_id)
             self.assertEqual('', ext)
             self.assertEqual('', key)
@@ -1542,16 +1542,16 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
             self.assertEqual(0, cas)
             self.assertEqual('', val)
 
-            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_GENERAL_PKT_FMT,
                               0, 0, 0)
             client.client.send(self.req(CMD_TAP_DELETE,
                                         111, 'a', '', ext, 777, 333))
 
-            client.client.send(self.req(memcacheConstants.CMD_TAP_OPAQUE,
+            client.client.send(self.req(couchbaseConstants.CMD_TAP_OPAQUE,
                                         111, 'o2', '', '', 999, 555))
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
+                              0, couchbaseConstants.TAP_FLAG_ACK, 0, 0, 12345)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         1234, 'b', '', ext, 987, 4321))
             client.go.set()
@@ -1610,20 +1610,20 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
             cmd, _, _, _, _, opaque, _ = \
                 self.check_tap_connect(req)
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
                               0, 0, 0, 40302010, 0)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         123, 'a', 'A', ext, 789, 321))
 
             # After we send a flush-all, backup ignores the rest of the stream.
 
-            ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.TAP_GENERAL_PKT_FMT,
                               0, 0, 0)
-            client.client.send(self.req(memcacheConstants.CMD_TAP_FLUSH,
+            client.client.send(self.req(couchbaseConstants.CMD_TAP_FLUSH,
                                         111, 'a', '', ext, 777, 333))
 
-            ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                              0, memcacheConstants.TAP_FLAG_ACK, 0, 0, 12345)
+            ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
+                              0, couchbaseConstants.TAP_FLAG_ACK, 0, 0, 12345)
             client.client.send(self.req(CMD_TAP_MUTATION,
                                         1234, 'b', 'B', ext, 987, 4321))
 
@@ -1738,11 +1738,11 @@ class RestoreTestHelper:
         for i, msg in enumerate(msgs):
             cmd_tap, vbucket_id, key, val, flg, exp, cas, meta = msg
             if cmd_tap == CMD_TAP_MUTATION:
-                ext = struct.pack(memcacheConstants.TAP_MUTATION_PKT_FMT,
-                                  0, memcacheConstants.TAP_FLAG_ACK, 0, flg, exp)
+                ext = struct.pack(couchbaseConstants.TAP_MUTATION_PKT_FMT,
+                                  0, couchbaseConstants.TAP_FLAG_ACK, 0, flg, exp)
             elif cmd_tap == CMD_TAP_DELETE:
-                ext = struct.pack(memcacheConstants.TAP_GENERAL_PKT_FMT,
-                                  0, memcacheConstants.TAP_FLAG_ACK, 0)
+                ext = struct.pack(couchbaseConstants.TAP_GENERAL_PKT_FMT,
+                                  0, couchbaseConstants.TAP_FLAG_ACK, 0)
             else:
                 self.assertTrue(False,
                                 "unexpected cmd_tap: " + str(cmd_tap))
@@ -1810,15 +1810,15 @@ class RestoreTestHelper:
             self.parse_req(req)
         self.restored_cmd_counts[cmd] += 1
 
-        if cmd == memcacheConstants.CMD_SASL_AUTH:
+        if cmd == couchbaseConstants.CMD_SASL_AUTH:
             cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, bucket, bucket_password)
         else:
-            if (cmd == memcacheConstants.CMD_SET or
-                    cmd == memcacheConstants.CMD_ADD):
+            if (cmd == couchbaseConstants.CMD_SET or
+                    cmd == couchbaseConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
-            elif cmd == memcacheConstants.CMD_DELETE:
+            elif cmd == couchbaseConstants.CMD_DELETE:
                 cmd_tap = CMD_TAP_DELETE
                 flg, exp = 0, 0
             else:
@@ -2043,15 +2043,15 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
             client.go.set()
             return True
 
-        elif cmd == memcacheConstants.CMD_SASL_AUTH:
+        elif cmd == couchbaseConstants.CMD_SASL_AUTH:
             cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, bucket, bucket_password)
         else:
-            if (cmd == memcacheConstants.CMD_SET or
-                    cmd == memcacheConstants.CMD_ADD):
+            if (cmd == couchbaseConstants.CMD_SET or
+                    cmd == couchbaseConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
-            elif cmd == memcacheConstants.CMD_DELETE:
+            elif cmd == couchbaseConstants.CMD_DELETE:
                 cmd_tap = CMD_TAP_DELETE
                 flg, exp = 0, 0
             else:
@@ -2145,15 +2145,15 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         self.restored_cmd_counts[cmd] += 1
 
-        if cmd == memcacheConstants.CMD_SASL_AUTH:
+        if cmd == couchbaseConstants.CMD_SASL_AUTH:
             cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, bucket, bucket_password)
         else:
-            if (cmd == memcacheConstants.CMD_SET or
-                    cmd == memcacheConstants.CMD_ADD):
+            if (cmd == couchbaseConstants.CMD_SET or
+                    cmd == couchbaseConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
-            elif cmd == memcacheConstants.CMD_DELETE:
+            elif cmd == couchbaseConstants.CMD_DELETE:
                 cmd_tap = CMD_TAP_DELETE
                 flg, exp = 0, 0
             else:
@@ -2250,7 +2250,7 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             self.parse_req(req)
         self.restored_cmd_counts[cmd] += 1
 
-        if cmd == memcacheConstants.CMD_SASL_AUTH:
+        if cmd == couchbaseConstants.CMD_SASL_AUTH:
             cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, bucket, bucket_password)
             # Even though cbrestore sent the right SASL AUTH info,
@@ -2260,11 +2260,11 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             client.go.set()
             return True
         else:
-            if (cmd == memcacheConstants.CMD_SET or
-                    cmd == memcacheConstants.CMD_ADD):
+            if (cmd == couchbaseConstants.CMD_SET or
+                    cmd == couchbaseConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
-            elif cmd == memcacheConstants.CMD_DELETE:
+            elif cmd == couchbaseConstants.CMD_DELETE:
                 cmd_tap = CMD_TAP_DELETE
                 flg, exp = 0, 0
             else:
@@ -2316,15 +2316,15 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         status = 0
 
-        if cmd == memcacheConstants.CMD_SASL_AUTH:
+        if cmd == couchbaseConstants.CMD_SASL_AUTH:
             cmd, _, _, _, _, opaque, _ = \
                 self.check_auth(req, bucket, bucket_password)
         else:
-            if (cmd == memcacheConstants.CMD_SET or
-                    cmd == memcacheConstants.CMD_ADD):
+            if (cmd == couchbaseConstants.CMD_SET or
+                    cmd == couchbaseConstants.CMD_ADD):
                 cmd_tap = CMD_TAP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
-            elif cmd == memcacheConstants.CMD_DELETE:
+            elif cmd == couchbaseConstants.CMD_DELETE:
                 cmd_tap = CMD_TAP_DELETE
                 flg, exp = 0, 0
                 status = ERR_KEY_ENOENT
