@@ -930,20 +930,22 @@ def filter_bucket_nodes(bucket, spec_parts):
 
 def get_ip():
     ip = None
-    try:
-        f = open('/opt/couchbase/var/lib/couchbase/ip', 'r')
-        ip = string.strip(f.read())
-        if ip and ip.find('@'):
-            ip = ip.split('@')[1]
-        f.close()
-    except:
-        pass
+    for fname in ['/opt/couchbase/var/lib/couchbase/ip_start',
+                  '/opt/couchbase/var/lib/couchbase/ip',
+                  '../var/lib/couchbase/ip_start',
+                  '../var/lib/couchbase/ip']:
+        try:
+            f = open(fname, 'r')
+            ip = string.strip(f.read())
+            f.close()
+            if ip and len(ip):
+                if ip.find('@'):
+                    ip = ip.split('@')[1]
+                break
+        except:
+            pass
     if not ip or not len(ip):
-        if platform.system() == 'Windows':
-            ip = subprocess.Popen("ip_addr.bat",
-                                  stdout=subprocess.PIPE).communicate()[0]
-        else:
-            ip = '127.0.0.1'
+        ip = '127.0.0.1'
     return ip
 
 def find_source_bucket_name(opts, source_map):
