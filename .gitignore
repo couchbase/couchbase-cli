@@ -19,6 +19,7 @@ tmp
 /wrapper/wrapper
 /wrapper/couchbase-cli
 /wrapper/cbbackup
+/wrapper/cbrecovery
 /wrapper/cbrestore
 /wrapper/cbtransfer
 /wrapper/cbclusterstats
