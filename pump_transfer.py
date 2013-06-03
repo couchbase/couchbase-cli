@@ -183,11 +183,12 @@ from a source cluster into the caching layer at the destination""")
             "report":          (5,      "Number batches transferred before updating progress bar in console"),
             "report_full":     (2000,   "Number batches transferred before emitting progress information in console"),
             "recv_min_bytes":  (4096,   "Amount of bytes for every TCP/IP call transferred"),
-            "try_xwm":         (1,      "By default, transfer documents with metadata. 0 should only be used if you transfer from 1.8.x to 1.8.x"),
+            "try_xwm":         (1,      "Transfer documents with metadata. 0 should only be used if you transfer from 1.8.x to 1.8.x"),
             "nmv_retry":       (1,      "0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message"),
             "rehash":          (0,      "For value 1, transfer data from Mac OSX platform"),
             "data_only":       (0,      "For value 1, only transfer data from a backup file or cluster"),
             "design_doc_only": (0,      "For value 1, transfer design documents only from a backup file or cluster."),
+            "conflict_resolve":(1,      "By default, disable conflict resolution."),
             }
 
     def find_handlers(self, opts, source, sink):

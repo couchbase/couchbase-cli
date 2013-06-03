@@ -49,7 +49,7 @@ class MCSink(pump.Sink):
         self.op_map = OP_MAP
         if opts.extra.get("try_xwm", 1):
             self.op_map = OP_MAP_WITH_META
-
+        self.conflict_resolve = opts.extra.get("conflict_resolve", 1)
         self.init_worker(MCSink.run)
 
     def close(self):
@@ -152,7 +152,7 @@ class MCSink(pump.Sink):
                 val, flg, exp, cas = '', 0, 0, 0
             if cmd == couchbaseConstants.CMD_NOOP:
                 key, val, flg, exp, cas = '', '', 0, 0, 0
-            if cmd in (memcacheConstants.CMD_DELETE, memcacheConstants.CMD_DELETE_WITH_META):
+            if cmd in (couchbaseConstants.CMD_DELETE, couchbaseConstants.CMD_DELETE_WITH_META):
                 val = ''
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
@@ -324,6 +324,7 @@ class MCSink(pump.Sink):
         if (cmd == couchbaseConstants.CMD_SET_WITH_META or
             cmd == couchbaseConstants.CMD_ADD_WITH_META or
             cmd == couchbaseConstants.CMD_DELETE_WITH_META):
+            cr = int(self.conflict_resolve)
             if meta:
                 seq_no = str(meta)
                 if len(seq_no) > 8:
@@ -334,11 +335,11 @@ class MCSink(pump.Sink):
                 check_seqno, = struct.unpack(">Q", seq_no)
                 if check_seqno:
                     ext = (struct.pack(">II", flg, exp) + seq_no +
-                           struct.pack(">Q", cas))
+                           struct.pack(">Q", cas) + struct.pack(">I", cr))
                 else:
-                    ext = struct.pack(">IIQQ", flg, exp, 1, cas)
+                    ext = struct.pack(">IIQQI", flg, exp, 1, cas, cr)
             else:
-                ext = struct.pack(">IIQQ", flg, exp, 1, cas)
+                ext = struct.pack(">IIQQI", flg, exp, 1, cas, cr)
         elif (cmd == couchbaseConstants.CMD_SET or
               cmd == couchbaseConstants.CMD_ADD):
             ext = struct.pack(couchbaseConstants.SET_PKT_FMT, flg, exp)
