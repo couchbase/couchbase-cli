@@ -141,7 +141,6 @@ class TAPDumpSource(pump.Source):
 
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
-
         try:
             while (not self.tap_done and
                    batch.size() < batch_max_size and
@@ -160,6 +159,8 @@ class TAPDumpSource(pump.Source):
                         msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
                         batch.append(msg, len(val))
                         self.num_msg += 1
+                    if cmd == couchbaseConstants.CMD_TAP_DELETE:
+                        batch.adjust_size += 1
                 elif cmd == couchbaseConstants.CMD_TAP_OPAQUE:
                     pass
                 elif cmd == couchbaseConstants.CMD_NOOP:

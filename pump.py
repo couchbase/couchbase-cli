@@ -574,13 +574,14 @@ class Batch(object):
         self.source = source
         self.msgs = []
         self.bytes = 0
+        self.adjust_size = 0
 
     def append(self, msg, num_bytes):
         self.msgs.append(msg)
         self.bytes = self.bytes + num_bytes
 
     def size(self):
-        return len(self.msgs)
+        return len(self.msgs) + self.adjust_size
 
     def msg(self, i):
         return self.msgs[i]
