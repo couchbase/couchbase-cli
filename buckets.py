@@ -126,7 +126,7 @@ class Buckets:
                 rest.setParam('replicaNumber', bucketreplication)
             if enable_flush:
                 rest.setParam('flushEnabled', enable_flush)
-            if enable_replica_index:
+            if enable_replica_index and cmd == 'bucket-create':
                 rest.setParam('replicaIndex', enable_replica_index)
         if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):
             self.rest_cmd = self.rest_cmd + bucketname

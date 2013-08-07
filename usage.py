@@ -257,8 +257,7 @@ EXAMPLES:
        --bucket=test_bucket \\
        --bucket-port=11222 \\
        --bucket-ramsize=400 \\
-       --enable-flush=1 \\
-       --enable-index-replica=1
+       --enable-flush=1
 
   Delete a bucket:
     couchbase-cli bucket-delete -c 192.168.0.1:8091 \\
