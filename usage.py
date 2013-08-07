@@ -105,7 +105,7 @@ bucket-* OPTIONS:
   --data-only                       compact datbase data only
   --view-only                       compact view data only
 
-setting-compacttion OPTIONS:
+setting-compaction OPTIONS:
   --compaction-db-percentage=PERCENTAGE     at which point database compaction is triggered
   --compaction-db-size=SIZE[MB]             at which point database compaction is triggered
   --compaction-view-percentage=PERCENTAGE   at which point view compaction is triggered
