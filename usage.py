@@ -249,8 +249,7 @@ EXAMPLES:
        --bucket-type=memcached \\
        --bucket-password=password \\
        --bucket-ramsize=200 \\
-       --enable-flush=1 \\
-       --enable-index-replica=1
+       --enable-flush=1
 
   Modify a dedicated port bucket:
     couchbase-cli bucket-edit -c 192.168.0.1:8091 \\
