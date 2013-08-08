@@ -47,7 +47,10 @@ def time_label(s):
     for l,sz in sizes:
         product = sz * product
         sizeMap.insert(0, (l, product))
-    lbl, factor = itertools.dropwhile(lambda x: x[1] > s, sizeMap).next()
+    try:
+        lbl, factor = itertools.dropwhile(lambda x: x[1] > s, sizeMap).next()
+    except StopIteration:
+        lbl, factor = sizeMap[-1]
     if devisible(s, factor):
         return '%d %s' % (s / factor, lbl)
     else:
@@ -64,6 +67,22 @@ def size_label(s):
             return '%d %s' % ( s / (1024 ** math.floor(e)), suffix)
         else:
             return "%.*f %s" % (3, s *1.0/(1024 ** math.floor(e)), suffix)
+    else:
+        return s
+
+def size_convert(s, unit):
+    if type(s) in (int, long, float, complex) :
+        if s == 0:
+            return s
+        sizes=['', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB']
+        try:
+            e = sizes.index(unit.upper())
+        except Exception:
+            e = 0
+        if devisible(s, 1024 ** math.floor(e)):
+            return '%d' % (s / (1024 ** math.floor(e)))
+        else:
+            return "%.*f" % (3, s *1.0/(1024 ** math.floor(e)))
     else:
         return s
 
