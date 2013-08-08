@@ -29,6 +29,7 @@ class XDCR:
         self.remote_password = ''
         self.remote_hostname = ''
         self.remote_cluster = ''
+        self.replication_mode = ''
         self.cmd = 'create'
         self.replicator = ''
         self.params = {}
@@ -114,6 +115,8 @@ class XDCR:
                 self.type = a
             elif o == '--xdcr-replicator':
                 self.replicator = a
+            elif o == '--xdcr-replication-mode':
+                self.replication_mode = a
             elif o == '--create':
                 self.cmd = 'create'
             elif o == '--edit':
@@ -231,6 +234,9 @@ class XDCR:
 
         if self.from_bucket:
             rest.setParam('fromBucket', self.from_bucket)
+
+        if self.replication_mode:
+            rest.setParam('type', self.replication_mode)
 
         rest.setParam('replicationType', 'continuous')
 

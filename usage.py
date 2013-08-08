@@ -292,12 +292,21 @@ EXAMPLES:
     couchbase-cli xdcr-delete -c 192.168.0.1:8091 \\
         --xdcr-cluster-name=test
 
-  Start a replication stream
+  Start a replication stream in memcached protocol
     couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
         --create \\
         --xdcr-cluster-name=test \\
         --xdcr-from-bucket=default \\
-        --xdcr-to-bucket=default1
+        --xdcr-to-bucket=default1 \\
+        --xdcr-replication-mode=xmem
+
+  Start a replication stream in capi protocol
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --create \\
+        --xdcr-cluster-name=test \\
+        --xdcr-from-bucket=default \\
+        --xdcr-to-bucket=default1 \\
+        --xdcr-replication-mode=capi
 
   Delete a replication stream
     couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\

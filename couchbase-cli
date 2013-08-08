@@ -93,6 +93,7 @@ def main():
                 'xdcr-from-bucket=',
                 'xdcr-to-bucket=',
                 'xdcr-replicator=',
+                'xdcr-replication-mode=',
                 'create',
                 'edit',
                 'delete',
