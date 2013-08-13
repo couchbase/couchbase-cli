@@ -97,6 +97,10 @@ def main():
                 'create',
                 'edit',
                 'delete',
+                'list',
+                'set',
+                'ro-username=',
+                'ro-password=',
                 'max-concurrent-reps=',
                 'checkpoint-interval=',
                 'worker-batch-size='
@@ -138,6 +142,7 @@ def main():
         'cluster-init'      : node.Node,
         'cluster-edit'      : node.Node,
         'node-init'         : node.Node,
+        'user-manage'       : node.Node,
         'bucket-list'       : buckets.Buckets,
         'bucket-create'     : buckets.Buckets,
         'bucket-edit'       : buckets.Buckets,

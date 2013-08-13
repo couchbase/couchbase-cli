@@ -27,6 +27,7 @@ def commands_usage():
   setting-alert         set email alert settings
   setting-autofailover  set auto failover settings
   setting-xdcr          set xdcr related settings
+  user-manage           manage read only user
   xdcr-setup            set up XDCR connection
   xdcr-replicate        xdcr operations
   help                  show longer usage/help and examples
@@ -164,6 +165,14 @@ xdcr-replicate OPTIONS:
   --xdcr-from-bucket=BUCKET              local bucket name to replicate from
   --xdcr-clucter-name=CLUSTERNAME        remote cluster to replicate to
   --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
+
+user-manage OPTIONS:
+  --set                                  create/set a read only user
+  --list                                 list any read only user
+  --edit                                 modify existed read only user
+  --delete                               delete read only user
+  --username=USERNAME                    readonly user name
+  --password=PASSWORD                    readonly user password
 
 The default PORT number is 8091.
 
@@ -312,6 +321,18 @@ EXAMPLES:
     couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
         --delete \\
         --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
+
+  List read only user in a cluster:
+    couchbase-cli user-manage --list -c 192.168.0.1:8091
+
+  Delete a read only user in a cluster
+    couchbase-cli user-manage -c 192.168.0.1:8091 \\
+        --delete --ro-username=readonlyuser
+
+  create/modify a read only user in a cluster
+    couchbase-cli user-manage -c 192.168.0.1:8091 \\
+        --set --ro-username=readonlyuser --ro-password=readonlypassword
+
 """
 
     sys.exit(2)

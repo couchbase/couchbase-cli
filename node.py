@@ -27,7 +27,8 @@ rest_cmds = {
     'setting-compaction'    :'/controller/setAutoCompaction',
     'setting-notification'  :'/settings/stats',
     'setting-autofailover'  :'/settings/autoFailover',
-    'setting-alert'         :'/settings/alerts'
+    'setting-alert'         :'/settings/alerts',
+    'user-manage'           :'/settings/readOnlyUser',
 }
 
 server_no_remove = [
@@ -60,6 +61,7 @@ methods = {
     'setting-notification'  :'POST',
     'setting-autofailover'  :'POST',
     'setting-alert'         :'POST',
+    'user-manage'           :'POST',
 }
 
 bool_to_str = lambda value: str(bool(int(value))).lower()
@@ -76,6 +78,8 @@ class Node:
         self.port = ''
         self.user = ''
         self.password = ''
+        self.ro_username = ''
+        self.ro_password = ''
         self.params = {}
         self.output = 'standard'
         self.password_new = None
@@ -117,8 +121,11 @@ class Node:
         self.alert_meta_oom = None
         self.alert_write_failed = None
 
+        self.cmd = None
+
     def runCmd(self, cmd, server, port,
                user, password, opts):
+
         self.rest_cmd = rest_cmds[cmd]
         self.method = methods[cmd]
         self.server = server
@@ -178,6 +185,9 @@ class Node:
 
         if cmd == 'setting-autofailover':
             self.autofailover()
+
+        if cmd == 'user-manage':
+            self.userManage()
 
     def clusterInit(self):
         rest = restclient.RestClient(self.server,
@@ -534,6 +544,16 @@ class Node:
                 self.alert_meta_oom = True
             elif o == '--alert-write-failed':
                 self.alert_write_failed = True
+            elif o == '--list':
+                self.cmd = 'list'
+            elif o == '--delete':
+                self.cmd = 'delete'
+            elif o == '--set':
+                self.cmd = 'set'
+            elif o == '--ro-username':
+                self.ro_username = a
+            elif o == '--ro-password':
+                self.ro_password = a
 
         return servers
 
@@ -727,3 +747,70 @@ class Node:
                                          opts)
             print output_result
 
+    def userManage(self):
+        if self.cmd == 'list':
+            self.roUserList()
+        elif self.cmd == 'delete':
+            self.roUserDelete()
+        elif self.cmd == 'set':
+            self.roUserSet()
+
+    def roUserList(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        opts = { 'error_msg':'unable to retrieve any readOnly user'}
+
+        output_result = rest.restCmd('GET',
+                                     '/pools/default',
+                                     self.user,
+                                     self.password,
+                                     opts)
+
+        json = rest.getJson(output_result)
+        if json.has_key("isROAdminExist") and json["isROAdminExist"]:
+            output_result = rest.restCmd('GET',
+                                         '/settings/readOnlyAdminName',
+                                         self.user,
+                                         self.password,
+                                         opts)
+            json = rest.getJson(output_result)
+            print json
+        else:
+            print "ReadOnly Admin doesn't exist"
+
+    def roUserDelete(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+
+        opts = {
+            'success_msg': 'readOnly user deleted',
+            'error_msg': 'unable to delete readOnly user'
+        }
+        output_result = rest.restCmd('DELETE',
+                                     "/settings/readOnlyUser",
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def roUserSet(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.ro_username:
+            rest.setParam('username', self.ro_username)
+        if self.ro_password:
+            rest.setParam('password', self.ro_password)
+
+        opts = {
+            'success_msg': 'readOnly user created/modified',
+            'error_msg': 'fail to create/modify readOnly user'
+        }
+        output_result = rest.restCmd('POST',
+                                     "/settings/readOnlyUser",
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
