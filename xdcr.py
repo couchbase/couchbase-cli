@@ -180,7 +180,11 @@ class XDCR:
         else:
             print "Error: Cluster name is needed to edit cluster connections"
             return
-
+        if self.remote_hostname:
+            rest.setParam('hostname', self.remote_hostname)
+        else:
+            print "Error: hostname (ip) is missing"
+            return
         if self.remote_username:
             rest.setParam('username', self.remote_username)
         else:
