@@ -308,6 +308,11 @@ class Node:
             if self.compaction_period_from >= self.compaction_period_to:
                 print "ERROR: compaction from time period cannot be late than to time period"
                 return
+        if self.compaction_period_from or self.compaction_period_to or self.enable_compaction_abort:
+            if not (self.compaction_period_from and self.compaction_period_to and \
+                    self.enable_compaction_abort):
+                print "ERROR: compaction-period-from, compaction-period-to and enable-compaction-abort have to be specified at the same time"
+                return
 
         opts = {
             "error_msg": "unable to set compaction settings",
