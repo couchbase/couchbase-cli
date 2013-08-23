@@ -253,9 +253,7 @@ class XDCR:
                                      self.user,
                                      self.password,
                                      opts)
-        json = rest.getJson(output_result)
-
-        print "replicator id:", json["id"]
+        print output_result
 
     def replicate_stop(self):
         rest = restclient.RestClient(self.server,
