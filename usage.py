@@ -171,8 +171,8 @@ user-manage OPTIONS:
   --list                                 list any read only user
   --edit                                 modify existed read only user
   --delete                               delete read only user
-  --username=USERNAME                    readonly user name
-  --password=PASSWORD                    readonly user password
+  --ro-username=USERNAME                 readonly user name
+  --ro-password=PASSWORD                 readonly user password
 
 The default PORT number is 8091.
 
