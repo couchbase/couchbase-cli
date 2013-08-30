@@ -764,16 +764,8 @@ class Node:
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
-        opts = { 'error_msg':'unable to retrieve any readOnly user'}
-
-        output_result = rest.restCmd('GET',
-                                     '/pools/default',
-                                     self.user,
-                                     self.password,
-                                     opts)
-
-        json = rest.getJson(output_result)
-        if json.has_key("isROAdminExist") and json["isROAdminExist"]:
+        opts = { 'error_msg':'not any read only user defined'}
+        try:
             output_result = rest.restCmd('GET',
                                          '/settings/readOnlyAdminName',
                                          self.user,
@@ -781,8 +773,8 @@ class Node:
                                          opts)
             json = rest.getJson(output_result)
             print json
-        else:
-            print "ReadOnly Admin doesn't exist"
+        except:
+            pass
 
     def roUserDelete(self):
         rest = restclient.RestClient(self.server,
@@ -808,7 +800,7 @@ class Node:
             rest.setParam('username', self.ro_username)
         if self.ro_password:
             rest.setParam('password', self.ro_password)
-
+        print self.ro_username, self.ro_password
         opts = {
             'success_msg': 'readOnly user created/modified',
             'error_msg': 'fail to create/modify readOnly user'
