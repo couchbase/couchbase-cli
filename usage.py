@@ -167,9 +167,8 @@ xdcr-replicate OPTIONS:
   --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
 
 user-manage OPTIONS:
-  --set                                  create/set a read only user
+  --set                                  create/modify a read only user
   --list                                 list any read only user
-  --edit                                 modify existed read only user
   --delete                               delete read only user
   --ro-username=USERNAME                 readonly user name
   --ro-password=PASSWORD                 readonly user password
