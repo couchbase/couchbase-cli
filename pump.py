@@ -340,6 +340,7 @@ class Pump(ProgressReporter):
                 self.cur['tot_sink_byte'] += future.batch.bytes
 
                 self.ctl['run_msg'] += future.batch.size()
+                self.ctl['tot_msg'] += future.batch.adjust_size
 
             if not batch:
                 return self.done(0)
@@ -581,7 +582,7 @@ class Batch(object):
         self.bytes = self.bytes + num_bytes
 
     def size(self):
-        return len(self.msgs) + self.adjust_size
+        return len(self.msgs)
 
     def msg(self, i):
         return self.msgs[i]
