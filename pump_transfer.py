@@ -114,79 +114,81 @@ class Transfer:
     def opt_parser_options(self, p):
         p.add_option("-b", "--bucket-source",
                      action="store", type="string", default=None,
-                     help="""single bucket from source to transfer""")
+                     help="""Single named bucket from source cluster to transfer""")
         p.add_option("-B", "--bucket-destination",
                      action="store", type="string", default=None,
-                     help="""when --bucket-source is specified, overrides the
-                             destination bucket name; this allows you to transfer
-                             to a different bucket; defaults to the same as the
-                             bucket-source""")
+                     help="""Single named bucket on destination cluster which receives transfer.
+This allows you to transfer to a bucket with a different name
+as your source bucket. If you do not provide defaults to the
+same name as the bucket-source""")
         self.opt_parser_options_common(p)
         p.add_option("", "--single-node",
                      action="store_true", default=False,
-                     help="""use a single server node from the source only,
-                             not all server nodes from the entire cluster;
-                             this single server node is defined by the source URL""")
+                     help="""Transfer from a single server node in a source cluster,
+This single server node is a source node URL""")
         p.add_option("", "--source-vbucket-state",
                      action="store", type="string", default='active',
-                     help="""only transfer from source vbuckets in this state,
-                             such as 'active' (default) or 'replica',
-                             if supported by the source class""")
+                     help="""Only transfer from source vbuckets in this state,
+such as 'active' (default) or 'replica'.
+Must be used with Couchbase cluster as source""")
         p.add_option("", "--destination-vbucket-state",
                      action="store", type="string", default='active',
-                     help="""only transfer to destination vbuckets in this state,
-                             such as 'active' (default) or 'replica',
-                             if supported by the destination class""")
+                     help="""Only transfer to destination vbuckets in this state,
+such as 'active' (default) or 'replica'.
+Must be used with Couchbase cluster as source""")
         p.add_option("", "--destination-operation",
                      action="store", type="string", default=None,
-                     help="""use a given operation (set, add, get) on the
-                             destination, if supported""")
+                     help="""Perform this operation on transfer.
+'set' will override an existing document,
+'add' will not override, 'get' will load all keys transferred
+from a source cluster into the caching layer at the destination""")
 
     def opt_parser_options_common(self, p):
         p.add_option("-i", "--id",
                      action="store", type="int", default=None,
-                     help="""allow only items that match a vbucketID""")
+                     help="""Transfer only items that match a vbucketID""")
         p.add_option("-k", "--key",
                      action="store", type="string", default=None,
-                     help="""allow only items with keys that match a regexp""")
+                     help="""Transfer only items with keys that match a regexp""")
         p.add_option("", "--vbucket-list",
                      action="store", type="string", default=None,
                      help=optparse.SUPPRESS_HELP)
         p.add_option("-n", "--dry-run",
                      action="store_true", default=False,
-                     help="""no actual work; just validate parameters, files,
+                     help="""No actual transfer; just validate parameters, files,
                              connectivity and configurations""")
         p.add_option("-u", "--username",
                      action="store", type="string", default=None,
-                     help="REST username for cluster or server node")
+                     help="REST username for source cluster or server node")
         p.add_option("-p", "--password",
                      action="store", type="string", default=None,
-                     help="REST password for cluster or server node")
+                     help="REST password for source cluster or server node")
         p.add_option("-t", "--threads",
                      action="store", type="int", default=4,
-                     help="""number of concurrent workers""")
+                     help="""Number of concurrent workers threads performing the transfer""")
         p.add_option("-v", "--verbose",
                      action="count", default=0,
                      help="verbose logging; more -v's provide more verbosity")
         p.add_option("-x", "--extra",
                      action="store", type="string", default=None,
-                     help="""extra, uncommon config parameters;
+                     help="""Provide extra, uncommon config parameters;
                              comma-separated key=val(,key=val)* pairs""")
 
     def opt_extra_defaults(self):
         return {
-            "batch_max_size":  (1000,   "max # msgs per batch"),
-            "batch_max_bytes": (400000, "max # of msg value bytes per batch"),
-            "cbb_max_mb":      (100000, "max # of msg value MB per *.cbb file"),
-            "max_retry":       (10,     "max # of sequential retries"),
-            "report":          (5,      "# batches before updating progress bar"),
-            "report_full":     (2000,   "# batches before emitting progress info"),
-            "recv_min_bytes":  (4096,   "amount of bytes for every recv() call"),
-            "try_xwm":         (1,      "1 to first try XXX-WITH-META commands"),
-            "nmv_retry":       (1,      "1 to retry after NOT_MY_VBUCKET replies"),
-            "rehash":          (0,      "1 to rehash vbucket id when transfering"),
-            "data_only":       (0,      "1 to transfer data only and without design docs"),
-            "design_doc_only": (0,      "1 to transfer design docs only and without data"),
+            "batch_max_size":  (1000,   "Transfer this # of documents per batch"),
+            "batch_max_bytes": (400000, "Transfer this # of bytes per batch"),
+            "cbb_max_mb":      (100000, "Split backup file on destination cluster if it exceeds MB"),
+            "max_retry":       (10,     "Max number of sequential retries if transfer fails"),
+            "report":          (5,      "Number batches transferred before updating progress bar in console"),
+            "report_full":     (2000,   "Number batches transferred before emitting progress information in console"),
+            "recv_min_bytes":  (4096,   "Amount of bytes for every TCP/IP call transferred"),
+            "try_xwm":         (1,      "Transfer documents with metadata. 0 should only be used if you transfer from 1.8.x to 1.8.x"),
+            "nmv_retry":       (1,      "0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message"),
+            "rehash":          (0,      "For value 1, transfer data from Mac OSX platform"),
+            "data_only":       (0,      "For value 1, only transfer data from a backup file or cluster"),
+            "design_doc_only": (0,      "For value 1, transfer design documents only from a backup file or cluster."),
+            "conflict_resolve":(1,      "By default, disable conflict resolution."),
             }
 
     def find_handlers(self, opts, source, sink):

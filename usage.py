@@ -27,6 +27,7 @@ def commands_usage():
   setting-alert         set email alert settings
   setting-autofailover  set auto failover settings
   setting-xdcr          set xdcr related settings
+  user-manage           manage read only user
   xdcr-setup            set up XDCR connection
   xdcr-replicate        xdcr operations
   help                  show longer usage/help and examples
@@ -105,7 +106,7 @@ bucket-* OPTIONS:
   --data-only                       compact datbase data only
   --view-only                       compact view data only
 
-setting-compacttion OPTIONS:
+setting-compaction OPTIONS:
   --compaction-db-percentage=PERCENTAGE     at which point database compaction is triggered
   --compaction-db-size=SIZE[MB]             at which point database compaction is triggered
   --compaction-view-percentage=PERCENTAGE   at which point view compaction is triggered
@@ -156,7 +157,7 @@ xdcr-setup OPTIONS:
   --xdcr-cluster-name=CLUSTERNAME        cluster name
   --xdcr-hostname=HOSTNAME               remote host name to connect to
   --xdcr-username=USERNAME               remote cluster admin username
-  --xdcr-password=PASSWORD               remtoe cluster admin password
+  --xdcr-password=PASSWORD               remote cluster admin password
 
 xdcr-replicate OPTIONS:
   --create                               create and start a new replication
@@ -164,6 +165,13 @@ xdcr-replicate OPTIONS:
   --xdcr-from-bucket=BUCKET              local bucket name to replicate from
   --xdcr-clucter-name=CLUSTERNAME        remote cluster to replicate to
   --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
+
+user-manage OPTIONS:
+  --set                                  create/modify a read only user
+  --list                                 list any read only user
+  --delete                               delete read only user
+  --ro-username=USERNAME                 readonly user name
+  --ro-password=PASSWORD                 readonly user password
 
 The default PORT number is 8091.
 
@@ -249,16 +257,14 @@ EXAMPLES:
        --bucket-type=memcached \\
        --bucket-password=password \\
        --bucket-ramsize=200 \\
-       --enable-flush=1 \\
-       --enable-index-replica=1
+       --enable-flush=1
 
   Modify a dedicated port bucket:
     couchbase-cli bucket-edit -c 192.168.0.1:8091 \\
        --bucket=test_bucket \\
        --bucket-port=11222 \\
        --bucket-ramsize=400 \\
-       --enable-flush=1 \\
-       --enable-index-replica=1
+       --enable-flush=1
 
   Delete a bucket:
     couchbase-cli bucket-delete -c 192.168.0.1:8091 \\
@@ -291,20 +297,41 @@ EXAMPLES:
         --xdcr-password=password
 
   Delete a XDCR remote cluster
-    couchbase-cli xdcr-delete -c 192.168.0.1:8091 \\
+    couchbase-cli xdcr-setup -delete -c 192.168.0.1:8091 \\
         --xdcr-cluster-name=test
 
-  Start a replication stream
+  Start a replication stream in memcached protocol
     couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
         --create \\
         --xdcr-cluster-name=test \\
         --xdcr-from-bucket=default \\
-        --xdcr-to-bucket=default1
+        --xdcr-to-bucket=default1 \\
+        --xdcr-replication-mode=xmem
+
+  Start a replication stream in capi protocol
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --create \\
+        --xdcr-cluster-name=test \\
+        --xdcr-from-bucket=default \\
+        --xdcr-to-bucket=default1 \\
+        --xdcr-replication-mode=capi
 
   Delete a replication stream
     couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
         --delete \\
         --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
+
+  List read only user in a cluster:
+    couchbase-cli user-manage --list -c 192.168.0.1:8091
+
+  Delete a read only user in a cluster
+    couchbase-cli user-manage -c 192.168.0.1:8091 \\
+        --delete --ro-username=readonlyuser
+
+  create/modify a read only user in a cluster
+    couchbase-cli user-manage -c 192.168.0.1:8091 \\
+        --set --ro-username=readonlyuser --ro-password=readonlypassword
+
 """
 
     sys.exit(2)

@@ -252,9 +252,8 @@ class BFDSink(BFD, pump.Sink):
             try:
                 c = db.cursor()
 
-                for i in range(0, batch.size()):
-                    cmd, vbucket_id, key, flg, exp, cas, meta, val = \
-                        batch.msg(i)
+                for msg in batch.msgs:
+                    cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
 
                     if self.skip(key, vbucket_id):
                         continue

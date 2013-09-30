@@ -126,7 +126,7 @@ class Buckets:
                 rest.setParam('replicaNumber', bucketreplication)
             if enable_flush:
                 rest.setParam('flushEnabled', enable_flush)
-            if enable_replica_index:
+            if enable_replica_index and cmd == 'bucket-create':
                 rest.setParam('replicaIndex', enable_replica_index)
         if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):
             self.rest_cmd = self.rest_cmd + bucketname
@@ -148,12 +148,12 @@ class Buckets:
                 print "You cannot compact data only and view only at the same time."
                 return False
             elif compact_data_only:
-                self.rest_cmd = self.rest_cmd + '/controller/compactDatabases'
+                self.rest_cmd = self.rest_cmd + bucketname + '/controller/compactDatabases'
             elif compact_view_only:
                 self.compact_view(rest, server, port, bucketname)
                 return True
             else:
-                self.rest_cmd = self.rest_cmd + '/controller/compactBucket'
+                self.rest_cmd = self.rest_cmd + bucketname + '/controller/compactBucket'
         elif cmd == 'bucket-ddocs':
             self.rest_cmd = self.rest_cmd % bucketname
         opts = {}
