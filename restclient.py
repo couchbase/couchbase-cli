@@ -47,6 +47,9 @@ class RestClient:
     def setParam(self, param, value):
         self.params[param] = value
 
+    def getParam(self, param):
+        return self.params[param]
+
     def handleResponse(self,
                        method,
                        response,

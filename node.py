@@ -207,6 +207,10 @@ class Node:
         else:
             rest.setParam('password', self.password)
 
+        if not (rest.getParam('username') and rest.getParam('password')):
+            print "ERROR: Both username and password are required."
+            return
+
         opts = {
             "error_msg": "unable to init %s" % self.server,
             "success_msg": "init %s" % self.server
