@@ -800,14 +800,27 @@ class Node:
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
+        try:
+            output_result = rest.restCmd('GET',
+                                         '/settings/readOnlyAdminName',
+                                         self.user,
+                                         self.password)
+            json = rest.getJson(output_result)
+            print "ERROR: readonly user %s exist already. Delete it before creating a new one" % json
+            return
+        except:
+            pass
+
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
         if self.ro_username:
             rest.setParam('username', self.ro_username)
         if self.ro_password:
             rest.setParam('password', self.ro_password)
-        print self.ro_username, self.ro_password
         opts = {
-            'success_msg': 'readOnly user created/modified',
-            'error_msg': 'fail to create/modify readOnly user'
+            'success_msg': 'readOnly user created',
+            'error_msg': 'fail to create readOnly user'
         }
         output_result = rest.restCmd('POST',
                                      "/settings/readOnlyUser",
