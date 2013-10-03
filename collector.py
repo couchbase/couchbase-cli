@@ -191,7 +191,7 @@ class StatsCollector:
                 stats = {}
                 mc = cb_bin_client.MemcachedClient(node_server, node['ports']['direct'])
                 if bucket["name"] != "Default":
-                    mc.sasl_auth_plain(bucket_name.encode("utf8"), bucket["saslPassword"].encode("utf8"))
+                    mc.sasl_auth_cram_md5(bucket_name.encode("utf8"), bucket["saslPassword"].encode("utf8"))
                 self.get_mc_stats_per_node(mc, stats)
                 stats_buffer.node_stats[bucket_name][node['hostname']] = stats
 

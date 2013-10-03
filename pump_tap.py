@@ -241,7 +241,7 @@ class TAPDumpSource(pump.Source):
                                                    self.opts.password) or "")
             if sasl_user:
                 try:
-                    self.tap_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                    self.tap_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
                 except EOFError:
                     return "error: SASL auth error: %s:%s, user: %s" % \
                         (host, port, sasl_user), None

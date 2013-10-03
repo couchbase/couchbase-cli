@@ -308,7 +308,7 @@ class MCSink(pump.Sink):
         mc = cb_bin_client.MemcachedClient(host, int(port))
         if user:
             try:
-                mc.sasl_auth_plain(str(user), str(pswd))
+                mc.sasl_auth_cram_md5(str(user), str(pswd))
             except EOFError:
                 return "error: SASL auth error: %s:%s, user: %s" % \
                     (host, port, user), None

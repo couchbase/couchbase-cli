@@ -249,6 +249,7 @@ class MemcachedClient(object):
 
     def sasl_auth_cram_md5(self, user, password):
         """Start a plan auth session."""
+        challenge = ""
         try:
             self.sasl_auth_start('CRAM-MD5', '')
         except MemcachedError, e:

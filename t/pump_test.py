@@ -355,8 +355,8 @@ class MCTestHelper(unittest.TestCase):
         return client
 
     def process_auth_without_read(self, mms, client, req, user, pwd, res):
-        self.process_plaintext_auth(client, req, user, pwd, res)
-        #return self.process_cram_md5_auth(mms, user, pwd, res)
+        #self.process_plaintext_auth(client, req, user, pwd, res)
+        self.process_cram_md5_auth(mms, client, req, user, pwd, res)
 
     def check_plaintext_auth(self, req, user, pswd):
         self.assertTrue(req)
