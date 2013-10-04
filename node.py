@@ -102,6 +102,7 @@ class Node:
         self.compaction_period_to = None
         self.enable_compaction_abort = None
         self.enable_compaction_parallel = None
+        self.purge_interval = None
 
         #alert settings
         self.email_recipient = None
@@ -317,6 +318,8 @@ class Node:
                     self.enable_compaction_abort):
                 print "ERROR: compaction-period-from, compaction-period-to and enable-compaction-abort have to be specified at the same time"
                 return
+        if self.purge_interval:
+            rest.setParam('purgeInterval', self.purge_interval)
 
         opts = {
             "error_msg": "unable to set compaction settings",
@@ -563,7 +566,8 @@ class Node:
                 self.ro_username = a
             elif o == '--ro-password':
                 self.ro_password = a
-
+            elif o == '--metadata-purge-interval':
+                self.purge_interval = a
         return servers
 
     def addServers(self, servers):

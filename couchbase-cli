@@ -70,6 +70,7 @@ def main():
                 'compaction-period-to=',
                 'enable-compaction-abort=',
                 'enable-compaction-parallel=',
+                'metadata-purge-interval=',
                 'node-init=',
                 'node-init-data-path=',
                 'node-init-index-path=',

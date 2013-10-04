@@ -115,6 +115,7 @@ setting-compaction OPTIONS:
   --compaction-period-to=HH:MM              allow compaction time period to
   --enable-compaction-abort=[0|1]           allow compaction abort when time expires
   --enable-compaction-parallel=[0|1]        allow parallel compaction for database and view
+  --metadata-purge-interval=DAYS            how frequently a node will purge metadata on deleted items
 
 setting-notification OPTIONS:
   --enable-notification=[0|1]               allow notification
