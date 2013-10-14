@@ -97,7 +97,6 @@ class MockRESTHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if (isinstance(response, types.FunctionType) or
                 isinstance(response, types.MethodType)):
             return response(self, request, response)
-
         # Send the pre-canned response.
         if response['code'] != 200:
             self.send_error(response['code'], response['message'])
@@ -245,8 +244,6 @@ class MockMemcachedSession(threading.Thread):
 
                 data, buf = self.recv(self.client, datalen, buf)
 
-                # print cmd, vbucket_id, extlen, keylen, data, cas, opaque
-
                 self.loops = 0
                 self.log("recv done: %s %s" % (cmd, vbucket_id))
                 self.server.queue.put((self, pkt + data))
@@ -298,6 +295,175 @@ class Worker(threading.Thread):
         threading.Thread.__init__(self, target=target, args=args, group=None)
         self.daemon = True
 
+class MCTestHelper(unittest.TestCase):
+    """Provides memcached binary protocol helper methods."""
+
+    def setUp(self):
+        mrs.reset()
+        mms0.reset()
+        #mms1.reset()
+
+    def tearDown(self):
+        mrs.reset()
+        mms0.reset()
+        #mms1.reset()
+
+    def json_2_nodes(self, sample):
+        j = sample
+        j = j.replace("HOST0:8091", mrs.host_port())
+        j = j.replace("HOST1:8091", mrs.host + ":8091")  # Assuming test won't contact 2nd REST server.
+        j = j.replace("HOST0:11210", mms0.host_port())
+        j = j.replace("HOST1:11210", mms1.host_port())
+        j = j.replace("HOST0", mms0.host)
+        j = j.replace("HOST1", mms1.host)
+        m = json.loads(j)
+        m[0]['nodes'][0]['ports']['direct'] = mms0.port
+        #m[0]['nodes'][1]['ports']['direct'] = mms1.port
+        j = json.dumps(m)
+        return j
+
+    def json_hostport(self, sample):
+        j = sample
+        j = j.replace("HOST0:8091", mrs.host_port())
+        return j
+
+    def parse_msg(self, buf, magic_expected):
+        head = buf[:couchbaseConstants.MIN_RECV_PACKET]
+        data = buf[couchbaseConstants.MIN_RECV_PACKET:]
+        magic, cmd, keylen, extlen, dtype, vbucket_id, datalen, opaque, cas = \
+            struct.unpack(couchbaseConstants.REQ_PKT_FMT, head)
+        self.assertEqual(magic, magic_expected)
+
+        ext = ''
+        key = ''
+        val = ''
+        if data:
+            ext = data[0:extlen]
+            key = data[extlen:extlen + keylen]
+            val = data[extlen + keylen:]
+        return cmd, vbucket_id, ext, key, val, opaque, cas
+
+    def parse_req(self, buf):
+        return self.parse_msg(buf, couchbaseConstants.REQ_MAGIC_BYTE)
+
+    def parse_res(self, buf):
+        return self.parse_msg(buf, couchbaseConstants.RES_MAGIC_BYTE)
+
+    def process_auth(self, mms, user, pwd, res):
+        client, req = mms.queue.get()
+        self.process_auth_without_read(mms, client, req, user, pwd, res)
+        return client
+
+    def process_auth_without_read(self, mms, client, req, user, pwd, res):
+        self.process_plaintext_auth(client, req, user, pwd, res)
+        #return self.process_cram_md5_auth(mms, user, pwd, res)
+
+    def check_plaintext_auth(self, req, user, pswd):
+        self.assertTrue(req)
+        cmd, vbucket_id, ext, key, val, opaque, cas = \
+            self.parse_req(req)
+        self.assertEqual(couchbaseConstants.CMD_SASL_AUTH, cmd)
+        self.assertEqual(0, vbucket_id)
+        self.assertEqual('', ext)
+        self.assertEqual('PLAIN', key)
+        self.assertEqual('\x00' + user + '\x00' + pswd, val)
+        self.assertEqual(0, cas)
+        return cmd, vbucket_id, ext, key, val, opaque, cas
+
+    def process_plaintext_auth(self, client, req, user, pwd, res):
+        cmd, _, _, _, _, opaque, _ = \
+                self.check_plaintext_auth(req, user, pwd)
+        client.client.send(self.res(cmd, res, '', '', '', opaque, 0))
+        client.go.set()
+
+    def check_cram_md5_auth(self, req, user, pswd):
+        self.assertTrue(req)
+        cmd, vbucket_id, ext, key, val, opaque, cas = \
+            self.parse_req(req)
+        self.assertEqual(couchbaseConstants.CMD_SASL_AUTH, cmd)
+        self.assertEqual(0, vbucket_id)
+        self.assertEqual('', ext)
+        self.assertEqual('CRAM-MD5', key)
+        self.assertEqual('', val)
+        self.assertEqual(0, cas)
+        return cmd, vbucket_id, ext, key, val, opaque, cas
+
+    def check_cram_md5_step(self, req, user, pswd):
+        self.assertTrue(req)
+        cmd, vbucket_id, ext, key, val, opaque, cas = \
+            self.parse_req(req)
+        self.assertEqual(couchbaseConstants.CMD_SASL_STEP, cmd)
+        self.assertEqual(0, vbucket_id)
+        self.assertEqual('', ext)
+        self.assertEqual('CRAM-MD5', key)
+        self.assertEqual(0, cas)
+        return cmd, vbucket_id, ext, key, val, opaque, cas
+
+    def process_cram_md5_auth(self, mms, client, req, user, pwd, res):
+        cmd, _, _, _, _, opaque, _ = \
+                self.check_cram_md5_auth(req, user, pwd)
+        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+        client.go.set()
+
+        client, req = mms.queue.get()
+        cmd, _, _, _, _, opaque, _ = \
+                self.check_cram_md5_step(req, user, pwd)
+        client.client.send(self.res(cmd, res, '', '', '', opaque, 0))
+        client.go.set()
+
+    def check_tap_connect(self, req):
+        self.assertTrue(req)
+        cmd, vbucket_id, ext, key, val, opaque, cas = \
+            self.parse_req(req)
+        self.assertEqual(couchbaseConstants.CMD_TAP_CONNECT, cmd)
+        self.assertEqual(0, vbucket_id)
+
+        version = json.loads(SAMPLE_JSON_pools_default)["nodes"][0]["version"]
+        tap_opts = {couchbaseConstants.TAP_FLAG_DUMP: '',
+                    couchbaseConstants.TAP_FLAG_SUPPORT_ACK: ''}
+        if version.split(".") >= ["2", "0", "0"]:
+            tap_opts[couchbaseConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
+        expect_ext, expect_val = \
+            pump_tap.TAPDumpSource.encode_tap_connect_opts(tap_opts)
+
+        self.assertEqual(expect_ext, ext)
+        self.assertTrue(key)  # Expecting non-empty TAP name.
+        self.assertEqual(expect_val, val)
+        self.assertEqual(0, cas)
+
+        return cmd, vbucket_id, ext, key, val, opaque, cas
+
+    def header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
+               dtype=0,
+               fmt=couchbaseConstants.REQ_PKT_FMT,
+               magic=couchbaseConstants.REQ_MAGIC_BYTE):
+        return struct.pack(fmt, magic, cmd,
+                           len(key), len(ext), dtype, vbucket_id,
+                           len(key) + len(ext) + len(val), opaque, cas)
+
+    def req_header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
+                   dtype=0):
+        return self.header(cmd, vbucket_id, key, val, ext, opaque, cas,
+                           dtype=dtype,
+                           fmt=couchbaseConstants.REQ_PKT_FMT,
+                           magic=couchbaseConstants.REQ_MAGIC_BYTE)
+
+    def res_header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
+                   dtype=0):
+        return self.header(cmd, vbucket_id, key, val, ext, opaque, cas,
+                           dtype=dtype,
+                           fmt=couchbaseConstants.RES_PKT_FMT,
+                           magic=couchbaseConstants.RES_MAGIC_BYTE)
+
+    def req(self, cmd, vbucket_id, key, val, ext, opaque, cas,
+            dtype=0):
+        return self.req_header(cmd, vbucket_id, key, val, ext, opaque, cas,
+                               dtype=dtype) + ext + key + val
+
+    def res(self, cmd, vbucket_id, key, val, ext, opaque, cas,
+            dtype=0):
+        return self.res_header(cmd, vbucket_id, key, val, ext, opaque, cas,
+                               dtype=dtype) + ext + key + val
 
 # ------------------------------------------------
 
@@ -488,7 +654,7 @@ class TestKeyFilter(unittest.TestCase):
         shutil.rmtree(d, ignore_errors=True)
 
 
-class TestTAPDumpSourceCheck(unittest.TestCase):
+class TestTAPDumpSourceCheck(MCTestHelper):
 
     def setUp(self):
         mrs.reset()
@@ -500,11 +666,16 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets}),
+                           'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
+                          {'code': 200,
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)}),
+                         ])
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
@@ -570,11 +741,11 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/a/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/b/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
@@ -605,7 +776,12 @@ class TestTAPDumpSourceCheck(unittest.TestCase):
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/b/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
+                         ({'command': 'GET',
+                           'path': '/pools/default/buckets/b/stats/curr_items'},
+                          {'code': 200,
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)}),
+                        ])
 
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
@@ -700,122 +876,6 @@ class BackupTestHelper(unittest.TestCase):
                          len(glob.glob(dir + "/bucket-*/node-*/data-0000.cbb")))
 
 
-class MCTestHelper(unittest.TestCase):
-    """Provides memcached binary protocol helper methods."""
-
-    def setUp(self):
-        mrs.reset()
-        mms0.reset()
-        mms1.reset()
-
-    def tearDown(self):
-        mrs.reset()
-        mms0.reset()
-        mms1.reset()
-
-    def json_2_nodes(self):
-        j = SAMPLE_JSON_pools_default_buckets
-        j = j.replace("HOST0:8091", mrs.host_port())
-        j = j.replace("HOST1:8091", mrs.host + ":8091")  # Assuming test won't contact 2nd REST server.
-        j = j.replace("HOST0:11210", mms0.host_port())
-        j = j.replace("HOST1:11210", mms1.host_port())
-        j = j.replace("HOST0", mms0.host)
-        j = j.replace("HOST1", mms1.host)
-        m = json.loads(j)
-        m[0]['nodes'][0]['ports']['direct'] = mms0.port
-        m[0]['nodes'][1]['ports']['direct'] = mms1.port
-        j = json.dumps(m)
-        return j
-
-    def parse_msg(self, buf, magic_expected):
-        head = buf[:couchbaseConstants.MIN_RECV_PACKET]
-        data = buf[couchbaseConstants.MIN_RECV_PACKET:]
-        magic, cmd, keylen, extlen, dtype, vbucket_id, datalen, opaque, cas = \
-            struct.unpack(couchbaseConstants.REQ_PKT_FMT, head)
-        self.assertEqual(magic, magic_expected)
-
-        ext = ''
-        key = ''
-        val = ''
-        if data:
-            ext = data[0:extlen]
-            key = data[extlen:extlen + keylen]
-            val = data[extlen + keylen:]
-        return cmd, vbucket_id, ext, key, val, opaque, cas
-
-    def parse_req(self, buf):
-        return self.parse_msg(buf, couchbaseConstants.REQ_MAGIC_BYTE)
-
-    def parse_res(self, buf):
-        return self.parse_msg(buf, couchbaseConstants.RES_MAGIC_BYTE)
-
-    def check_auth(self, req, user, pswd):
-        self.assertTrue(req)
-        cmd, vbucket_id, ext, key, val, opaque, cas = \
-            self.parse_req(req)
-        self.assertEqual(couchbaseConstants.CMD_SASL_AUTH, cmd)
-        self.assertEqual(0, vbucket_id)
-        self.assertEqual('', ext)
-        self.assertEqual('PLAIN', key)
-        self.assertEqual('\x00' + user + '\x00' + pswd, val)
-        self.assertEqual(0, cas)
-        return cmd, vbucket_id, ext, key, val, opaque, cas
-
-    def check_tap_connect(self, req):
-        self.assertTrue(req)
-        cmd, vbucket_id, ext, key, val, opaque, cas = \
-            self.parse_req(req)
-        self.assertEqual(couchbaseConstants.CMD_TAP_CONNECT, cmd)
-        self.assertEqual(0, vbucket_id)
-
-        version = json.loads(SAMPLE_JSON_pools_default)["nodes"][0]["version"]
-        tap_opts = {couchbaseConstants.TAP_FLAG_DUMP: '',
-                    couchbaseConstants.TAP_FLAG_SUPPORT_ACK: ''}
-        if version.split(".") >= ["2", "0", "0"]:
-            tap_opts[couchbaseConstants.TAP_FLAG_TAP_FIX_FLAG_BYTEORDER] = ''
-        expect_ext, expect_val = \
-            pump_tap.TAPDumpSource.encode_tap_connect_opts(tap_opts)
-
-        self.assertEqual(expect_ext, ext)
-        self.assertTrue(key)  # Expecting non-empty TAP name.
-        self.assertEqual(expect_val, val)
-        self.assertEqual(0, cas)
-
-        return cmd, vbucket_id, ext, key, val, opaque, cas
-
-    def header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
-               dtype=0,
-               fmt=couchbaseConstants.REQ_PKT_FMT,
-               magic=couchbaseConstants.REQ_MAGIC_BYTE):
-        return struct.pack(fmt, magic, cmd,
-                           len(key), len(ext), dtype, vbucket_id,
-                           len(key) + len(ext) + len(val), opaque, cas)
-
-    def req_header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
-                   dtype=0):
-        return self.header(cmd, vbucket_id, key, val, ext, opaque, cas,
-                           dtype=dtype,
-                           fmt=couchbaseConstants.REQ_PKT_FMT,
-                           magic=couchbaseConstants.REQ_MAGIC_BYTE)
-
-    def res_header(self, cmd, vbucket_id, key, val, ext, opaque, cas,
-                   dtype=0):
-        return self.header(cmd, vbucket_id, key, val, ext, opaque, cas,
-                           dtype=dtype,
-                           fmt=couchbaseConstants.RES_PKT_FMT,
-                           magic=couchbaseConstants.RES_MAGIC_BYTE)
-
-    def req(self, cmd, vbucket_id, key, val, ext, opaque, cas,
-            dtype=0):
-        return self.req_header(cmd, vbucket_id, key, val, ext, opaque, cas,
-                               dtype=dtype) + ext + key + val
-
-    def res(self, cmd, vbucket_id, key, val, ext, opaque, cas,
-            dtype=0):
-        return self.res_header(cmd, vbucket_id, key, val, ext, opaque, cas,
-                               dtype=dtype) + ext + key + val
-
-
 # ------------------------------------------------
 
 class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
@@ -824,15 +884,15 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_close_at_auth)
         w.start()
@@ -844,7 +904,7 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_close_at_auth(self):
-        for mms in [mms0, mms1]:
+        for mms in [mms0]:
             client, req = mms.queue.get()
             self.assertTrue(req)
             client.close("simulate auth fail by closing conn")
@@ -854,15 +914,15 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_rejected_auth)
         w.start()
@@ -874,27 +934,22 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_rejected_auth(self):
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, ERR_AUTH_ERROR,
-                                        '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            self.process_auth(mms, 'default', '', ERR_AUTH_ERROR)
 
     def test_close_after_auth(self):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_close_after_auth)
         w.start()
@@ -908,27 +963,23 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_close_after_auth(self):
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+        for mms in [mms0]:
+            client = self.process_auth(mms, 'default', '', 0)
             client.close("simulate failure right after auth")
-            client.go.set()
 
     def test_close_after_TAP_connect(self):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_close_after_TAP_connect)
         w.start()
@@ -942,12 +993,8 @@ class TestTAPDumpSource(MCTestHelper, BackupTestHelper):
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_close_after_TAP_connect(self):
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            self.process_auth(mms, 'default', '', 0)
 
             client, req = mms.queue.get()
             cmd, _, _, _, _, opaque, _ = \
@@ -962,15 +1009,15 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_1_mutation)
         w.start()
@@ -979,21 +1026,16 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.assertEqual(0, rv)
 
         # Two BFD files should be created, with 1 msg each.
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d,
-                                    "set a 0 0 1\r\nA\r\n"
                                     "set a 0 0 1\r\nA\r\n")
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_1_mutation(self):
         # Sends one TAP_MUTATION with an ACK.
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            self.process_auth(mms, 'default', '', 0)
 
             client, req = mms.queue.get()
             cmd, _, _, _, _, opaque, _ = \
@@ -1023,15 +1065,15 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_2_mutation)
         w.start()
@@ -1039,29 +1081,21 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
                                           "-x", "max_retry=0"])
         self.assertEqual(0, rv)
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         # 0xfedcba01 == 4275878401 == 29023486L, using high numbers to check endianess.
         # 0xffeedd00 == 4293844224
         self.expect_backup_contents(d,
                                     "set a 29023486 0 1\r\nA\r\n"
-                                    "set b 0 4293844224 1\r\nB\r\n"
-                                    "set a 29023486 0 1\r\nA\r\n"
                                     "set b 0 4293844224 1\r\nB\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A'),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, '', 'B'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A'),
                                      (CMD_TAP_MUTATION, 1234, 'b', 0, 0xffeedd00, 4321, '', 'B')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_2_mutation(self):
         # Sends two TAP_MUTATION's with an ACK on the last.
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            client = self.process_auth(mms, 'default', '', 0)
 
             client, req = mms.queue.get()
             cmd, _, _, _, _, opaque, _ = \
@@ -1096,28 +1130,26 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_2_mutation)
         w.start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d, "-k", "a"])
         self.assertEqual(0, rv)
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         # 0xfedcba01 == 4275878401 == 29023486L
         self.expect_backup_contents(d,
-                                    "set a 29023486 0 1\r\nA\r\n"
                                     "set a 29023486 0 1\r\nA\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A')])
+                                    [(CMD_TAP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '', 'A')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1125,22 +1157,22 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_2_mutation)
         w.start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d, "-k", "aaa"])
         self.assertEqual(0, rv)
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d, "", [])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
@@ -1149,15 +1181,15 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         self.chop_at = 16  # Header length is 24 bytes.
         w = Worker(target=self.worker_2_chopped)
@@ -1168,9 +1200,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.assertEqual(0, rv)
 
         # Two BFD files should be created, with 1 msg each.
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d,
-                                    "set a 0 0 1\r\nA\r\n"
                                     "set a 0 0 1\r\nA\r\n")
         w.join()
         shutil.rmtree(d, ignore_errors=True)
@@ -1179,15 +1210,15 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         self.chop_at = 26  # Header length is 24 bytes.
         w = Worker(target=self.worker_2_chopped)
@@ -1198,7 +1229,7 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         self.assertNotEqual(0, rv)
 
         # Two BFD files should be created, with 1 msg each.
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
 
         # We can't depend on deterministic backup when messages are chopped.
         # self.expect_backup_contents(d,
@@ -1209,12 +1240,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def worker_2_chopped(self):
         # Sends two TAP_MUTATION's, but second message is chopped.
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            client = self.process_auth(mms, 'default', '', 0)
 
             client, req = mms.queue.get()
             cmd, _, _, _, _, opaque, _ = \
@@ -1236,45 +1263,35 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_delete)
         w.start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d,
-                                    "set a 3136644610 0 1\r\nA\r\n"
-                                    "delete a\r\n"
-                                    "set b 0 12345 1\r\nB\r\n"
                                     "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 1\r\nB\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', 'B'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
                                      (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', 'B')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_delete(self):
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            client = self.process_auth(mms, 'default', '', 0)
 
             client, req = mms.queue.get()
             cmd, _, _, _, _, opaque, _ = \
@@ -1314,42 +1331,34 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_delete_ack)
         w.start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d,
-                                    "set a 3136644610 0 1\r\nA\r\n"
-                                    "delete a\r\n"
                                     "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', '')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_delete_ack(self):
         # The last sent message is a TAP_DELETE with TAP_FLAG_ACK.
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            client = self.process_auth(mms, 'default', '', 0)
 
             client, req = mms.queue.get()
             cmd, _, _, _, _, opaque, _ = \
@@ -1384,33 +1393,27 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_noop)
         w.start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d,
-                                    "set a 3136644610 0 1\r\nA\r\n"
-                                    "delete a\r\n"
-                                    "set b 0 12345 1\r\nB\r\n"
                                     "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 1\r\nB\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', 'B'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
                                      (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', 'B')])
         w.join()
@@ -1418,12 +1421,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def worker_noop(self):
         # Has CMD_NOOP's sprinkled amongst the stream.
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            client = self.process_auth(mms, 'default', '', 0)
 
             client, req = mms.queue.get()
             cmd, _, _, _, _, opaque, _ = \
@@ -1472,33 +1471,27 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_tap_cmd_opaque)
         w.start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d,
-                                    "set a 3136644610 0 1\r\nA\r\n"
-                                    "delete a\r\n"
-                                    "set b 0 12345 0\r\n\r\n"
                                     "set a 3136644610 0 1\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 0\r\n\r\n",
                                     [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
-                                     (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
-                                     (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', ''),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
                                      (CMD_TAP_DELETE, 111, 'a', 0, 0, 333, '', ''),
                                      (CMD_TAP_MUTATION, 1234, 'b', 0, 12345, 4321, '', '')])
         w.join()
@@ -1506,12 +1499,8 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
 
     def worker_tap_cmd_opaque(self):
         # Has CMD_TAP_OPAQUE's sprinkled amongst the stream.
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            client = self.process_auth(mms, 'default', '', 0)
 
             client, req = mms.queue.get()
             cmd, _, _, _, _, opaque, _ = \
@@ -1574,37 +1563,31 @@ class TestTAPDumpSourceMutations(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         w = Worker(target=self.worker_flush_all)
         w.start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d])
         self.assertEqual(0, rv)
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d,
-                                    "set a 3136644610 0 1\r\nA\r\n"
                                     "set a 3136644610 0 1\r\nA\r\n",
-                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A'),
-                                     (CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A')])
+                                    [(CMD_TAP_MUTATION, 123, 'a', 40302010, 0, 321, '', 'A')])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_flush_all(self):
-        for mms in [mms0, mms1]:
-            client, req = mms.queue.get()
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, 'default', '')
-            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-            client.go.set()
+        for mms in [mms0]:
+            client = self.process_auth(mms, 'default', '', 0)
 
             client, req = mms.queue.get()
             cmd, _, _, _, _, opaque, _ = \
@@ -1633,6 +1616,7 @@ class RestoreTestHelper:
     def setUp(self):
         MCTestHelper.setUp(self)
         BackupTestHelper.setUp(self)
+        
 
         # Cmds in order of restoration.
         self.restored_cmds = []
@@ -1659,8 +1643,8 @@ class RestoreTestHelper:
             msgs_per_node = [
                 # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
                 [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 1000, 8000, ''),
-                 (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 1001, 8001, '')],
-                [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 9900, 8800, ''),
+                 (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 1001, 8001, ''),
+                 (CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 9900, 8800, ''),
                  (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 9901, 8801, '')]
             ]
             # 0xf1000000 == 4043309056 == 241L
@@ -1672,10 +1656,10 @@ class RestoreTestHelper:
                 "set y 16777470 9901 1\r\nY\r\n"
 
         if not json:
-            json = self.json_2_nodes()
+            json = self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)
 
         if not list_mms:
-            list_mms = [mms0, mms1]
+            list_mms = [mms0]
 
         self.assertTrue(len(list_mms) <= len(msgs_per_node))
 
@@ -1687,23 +1671,23 @@ class RestoreTestHelper:
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})] +
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})] +
                       more_mrs_expect)
 
         workers = []
         for idx, msgs in enumerate(msgs_per_node):
             workers.append(Worker(target=self.worker_gen_backup,
-                                  args=[idx, list_mms[idx], msgs]))
+                                  args=[idx, list_mms[0], msgs]))
             workers[-1].start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d] + more_args)
         self.assertEqual(0, rv)
 
-        self.check_cbb_file_exists(d, num=2)
+        self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d, expected_backup_stdout)
 
         for w in workers:
@@ -1734,7 +1718,6 @@ class RestoreTestHelper:
         client, req = mms.queue.get()
         cmd, _, _, _, _, opaque, _ = \
             self.check_tap_connect(req)
-
         for i, msg in enumerate(msgs):
             cmd_tap, vbucket_id, key, val, flg, exp, cas, meta = msg
             if cmd_tap == CMD_TAP_MUTATION:
@@ -1750,7 +1733,6 @@ class RestoreTestHelper:
             client.client.send(self.req(cmd_tap, vbucket_id, key, val, ext,
                                         i + opaque_base, cas))
             client.go.set()
-
             client, res = mms.queue.get()
             cmd, vbucket_id, ext, key, val, opaque, cas = \
                 self.parse_res(res)
@@ -1766,53 +1748,42 @@ class RestoreTestHelper:
         client.go.set()
 
     def worker_gen_backup_auth(self, mms, bucket, bucket_password):
-        client, req = mms.queue.get()
-        cmd, _, _, _, _, opaque, _ = \
-            self.check_auth(req, bucket, bucket_password)
-        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-        client.go.set()
+        self.process_auth(mms, bucket, bucket_password, 0)
 
-    def reset_mock_cluster(self, rest_msgs=None, json=None):
-        if not json:
-            json = self.json_2_nodes()
-
+    def reset_mock_cluster(self, rest_msgs=None):
         mrs.reset(self,
                   rest_msgs or
                   [({'command': 'GET',
                      'path': '/pools/default/buckets'},
-                    {'code': 200, 'message': json}),
+                    {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                    ({'command': 'GET',
                      'path': '/pools/default/buckets/default/stats/curr_items'},
                     {'code': 200,
-                     'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                     'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                    ({'command': 'GET',
-                     'path': '/pools/default/buckets/default/stats/curr_items'},
+                     'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                     {'code': 200,
-                     'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                     'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
         mms0.reset()
-        mms1.reset()
 
     def worker_restore(self, idx, mms, orig_msgs_total,
                        bucket='default', bucket_password=''):
         """Represents a mock memcached server during the restore phase
            that just collects all received commands."""
-
         while len(self.restored_key_cmds) < orig_msgs_total:
             client, req = mms.queue.get()
             mms.queue.task_done()
             if not client or not req:
-                return
-            if not self.handle_mc_req(client, req, bucket, bucket_password):
+                return "empty client?"
+            if not self.handle_mc_req(mms, client, req, bucket, bucket_password):
                 return
 
-    def handle_mc_req(self, client, req, bucket, bucket_password):
+    def handle_mc_req(self, mms, client, req, bucket, bucket_password):
         cmd, vbucket_id, ext, key, val, opaque, cas = \
             self.parse_req(req)
         self.restored_cmd_counts[cmd] += 1
-
         if cmd == couchbaseConstants.CMD_SASL_AUTH:
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, bucket, bucket_password)
+            self.process_auth_without_read(mms, client, req, bucket, bucket_password, 0)
         else:
             if (cmd == couchbaseConstants.CMD_SET or
                     cmd == couchbaseConstants.CMD_ADD):
@@ -1831,13 +1802,13 @@ class RestoreTestHelper:
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
-        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-        client.go.set()
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+            client.go.set()
         return True
 
     def check_restore_matches_backup(self, expected_msgs,
                                      expected_cmd_counts=2,
-                                     expected_sasl_counts=2):
+                                     expected_sasl_counts=1):
         self.assertEqual(len(expected_msgs),
                          len(self.restored_cmds))
         self.assertEqual(expected_cmd_counts,
@@ -1867,7 +1838,6 @@ class RestoreTestHelper:
                       more_args=[]):
         d, orig_msgs, orig_msgs_flattened = \
             self.gen_backup(msgs_per_node=msgs_per_node)
-
         if not expected_msgs:
             expected_msgs = orig_msgs_flattened
 
@@ -1875,21 +1845,18 @@ class RestoreTestHelper:
 
         # Two mock servers in the cluster.
         workers = [Worker(target=self.worker_restore,
-                          args=[0, mms0, len(orig_msgs_flattened)]),
-                   Worker(target=self.worker_restore,
-                          args=[1, mms1, len(orig_msgs_flattened)])]
+                          args=[0, mms0, len(orig_msgs_flattened)])]
         for w in workers:
             w.start()
-
         restore_args = ["cbrestore", d, mrs.url(),
                         "-t", str(threads),
                         "-x",
                         "batch_max_size=%s,batch_max_bytes=%s" %
                         (batch_max_size, batch_max_bytes)] + \
                         more_args
-
         rv = pump_transfer.Restore().main(restore_args)
         self.assertEqual(0, rv)
+
         self.check_restore_matches_backup(expected_msgs,
                                           expected_cmd_counts=expected_cmd_counts)
 
@@ -1944,8 +1911,8 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 0xf6f2aeabb0ca78b4L, ''),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 0xeeeeddddffffffffL, '')],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 0xffffffffffffffff, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 0xeeeeddddffffffffL, ''),
+             (CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 0xffffffffffffffff, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, '')]
         ]
 
@@ -1958,9 +1925,8 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff, ''),
              (CMD_TAP_MUTATION, 1, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff, ''),
-             (CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff, '')
-             ],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff, ''),
+             (CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff, ''),             
+             (CMD_TAP_MUTATION, 900, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, ''),
              (CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y-back', 123, 456, 40000 * 0xffffffff, '')
@@ -1990,8 +1956,8 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_MUTATION, 1, kb, vb, 0, 0, 0, '')],
-            [(CMD_TAP_MUTATION, 900, kx, vx, 0, 0, 1, '')]
+            [(CMD_TAP_MUTATION, 1, kb, vb, 0, 0, 0, ''),
+             (CMD_TAP_MUTATION, 900, kx, vx, 0, 0, 1, '')]
         ]
 
         source_msgs = self.check_restore(msgs_per_node,
@@ -2023,12 +1989,12 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
         self.msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000, ''),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, '')],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, ''),
+             (CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
         ]
 
-    def handle_mc_req(self, client, req, bucket, bucket_password):
+    def handle_mc_req(self, mms, client, req, bucket, bucket_password):
         """Sends NOT_MY_VBUCKET to test topology change detection."""
 
         client.reqs = getattr(client, "reqs", 0) + 1
@@ -2044,8 +2010,7 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
             return True
 
         elif cmd == couchbaseConstants.CMD_SASL_AUTH:
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, bucket, bucket_password)
+            self.process_auth_without_read(mms, client, req, bucket, bucket_password, 0)
         else:
             if (cmd == couchbaseConstants.CMD_SET or
                     cmd == couchbaseConstants.CMD_ADD):
@@ -2063,8 +2028,8 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
-        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-        client.go.set()
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+            client.go.set()
         return True
 
     def go(self, reqs_after_respond_with_not_my_vbucket,
@@ -2080,9 +2045,7 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
 
         # Two mock servers in the cluster.
         workers = [Worker(target=self.worker_restore,
-                          args=[0, mms0, len(orig_msgs_flattened)]),
-                   Worker(target=self.worker_restore,
-                          args=[1, mms1, len(orig_msgs_flattened)])]
+                          args=[0, mms0, len(orig_msgs_flattened)])]
         for w in workers:
             w.start()
 
@@ -2122,12 +2085,13 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000, ''),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, '')],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, ''),
+             (CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
         ]
 
-    def handle_mc_req(self, client, req, bucket, bucket_password):
+
+    def handle_mc_req(self, mms, client, req, bucket, bucket_password):
         """Sends backoff responses to test retries."""
 
         client.reqs = getattr(client, "reqs", 0) + 1
@@ -2146,8 +2110,7 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.restored_cmd_counts[cmd] += 1
 
         if cmd == couchbaseConstants.CMD_SASL_AUTH:
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, bucket, bucket_password)
+            self.process_auth_without_read(mms, client, req, bucket, bucket_password, 0)
         else:
             if (cmd == couchbaseConstants.CMD_SET or
                     cmd == couchbaseConstants.CMD_ADD):
@@ -2165,8 +2128,8 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
-        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-        client.go.set()
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+            client.go.set()
         return True
 
     def go(self, reqs_after_respond_with_backoff,
@@ -2182,9 +2145,7 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         # Two mock servers in the cluster.
         workers = [Worker(target=self.worker_restore,
-                          args=[0, mms0, len(orig_msgs_flattened)]),
-                   Worker(target=self.worker_restore,
-                          args=[1, mms1, len(orig_msgs_flattened)])]
+                          args=[0, mms0, len(orig_msgs_flattened)])]
         for w in workers:
             w.start()
 
@@ -2220,8 +2181,8 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
             [(CMD_TAP_MUTATION, 0, 'a', 'A', 0, 0, 1000, ''),
-             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, '')],
-            [(CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
+             (CMD_TAP_MUTATION, 1, 'b', 'B', 1, 1, 2000, ''),
+             (CMD_TAP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
              (CMD_TAP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
         ]
 
@@ -2232,9 +2193,7 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         # Two mock servers in the cluster.
         workers = [Worker(target=self.worker_restore,
-                          args=[0, mms0, len(orig_msgs_flattened)]),
-                   Worker(target=self.worker_restore,
-                          args=[1, mms1, len(orig_msgs_flattened)])]
+                          args=[0, mms0, len(orig_msgs_flattened)])]
         for w in workers:
             w.start()
 
@@ -2245,20 +2204,13 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             w.join()
         shutil.rmtree(d, ignore_errors=True)
 
-    def handle_mc_req(self, client, req, bucket, bucket_password):
+    def handle_mc_req(self, mms, client, req, bucket, bucket_password):
         cmd, vbucket_id, ext, key, val, opaque, cas = \
             self.parse_req(req)
         self.restored_cmd_counts[cmd] += 1
 
         if cmd == couchbaseConstants.CMD_SASL_AUTH:
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, bucket, bucket_password)
-            # Even though cbrestore sent the right SASL AUTH info,
-            # let's reject them for testing.
-            client.client.send(self.res(cmd, ERR_AUTH_ERROR,
-                                        '', '', '', opaque, 0))
-            client.go.set()
-            return True
+            self.process_auth_without_read(mms, client, req, bucket, bucket_password, ERR_AUTH_ERROR)
         else:
             if (cmd == couchbaseConstants.CMD_SET or
                     cmd == couchbaseConstants.CMD_ADD):
@@ -2276,8 +2228,8 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
-        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-        client.go.set()
+            client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+            client.go.set()
         return True
 
 
@@ -2292,8 +2244,8 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         msgs_per_node = [
             # (cmd_tap, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff, '')],
-            [(CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff, '')]
+            [(CMD_TAP_DELETE, 0, 'a', '', 0, 0, 3000 * 0xffffffff, ''),
+             (CMD_TAP_DELETE, 901, 'y', '', 0, 0, 30000 * 0xffffffff, '')]
         ]
 
         source_msgs = self.check_restore(msgs_per_node,
@@ -2305,7 +2257,7 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.assertEqual(CMD_TAP_DELETE, self.restored_key_cmds['a'][0][0])
         self.assertEqual(CMD_TAP_DELETE, self.restored_key_cmds['y'][0][0])
 
-    def handle_mc_req(self, client, req, bucket, bucket_password):
+    def handle_mc_req(self, mms, client, req, bucket, bucket_password):
         """Sends ERR_KEY_ENOENT for DELETE commands."""
 
         client.reqs = getattr(client, "reqs", 0) + 1
@@ -2317,8 +2269,7 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         status = 0
 
         if cmd == couchbaseConstants.CMD_SASL_AUTH:
-            cmd, _, _, _, _, opaque, _ = \
-                self.check_auth(req, bucket, bucket_password)
+           self.process_auth_without_read(mms, client, req, bucket, bucket_password, 0)
         else:
             if (cmd == couchbaseConstants.CMD_SET or
                     cmd == couchbaseConstants.CMD_ADD):
@@ -2338,9 +2289,9 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
-        client.client.send(self.res(cmd, status,
+            client.client.send(self.res(cmd, status,
                                     '', '', '', opaque, 0))
-        client.go.set()
+            client.go.set()
         return True
 
 
@@ -2374,16 +2325,14 @@ class TestDesignDocs(MCTestHelper, BackupTestHelper, RestoreTestHelper):
                                                              'path': '/pools/default/buckets/default/ddocs'},
                                                             self.on_all_docs)])
 
-        print "waiting for mcs all_docs..."
         self.mcs_event.wait()
         self.mcs_event.clear()
-        print "waiting for mcs all_docs... done"
         self.assertTrue("all_docs" in self.mcs_events)
 
         return rv
 
-    def json_2_nodes(self):
-        json = MCTestHelper.json_2_nodes(self)
+    def json_2_nodes(self, sample):
+        json = MCTestHelper.json_2_nodes(self, sample)
         json = json.replace('CAPIk0', 'couchApiBase')
         json = json.replace('CAPIv0', "http://%s/default" % (mcs.host_port()))
         return json
@@ -2454,15 +2403,15 @@ class TestBackupDryRun(MCTestHelper, BackupTestHelper):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
-                          {'code': 200, 'message': self.json_2_nodes()}),
+                          {'code': 200, 'message': self.json_2_nodes(SAMPLE_JSON_pools_default_buckets_one_node)}),
                          ({'command': 'GET',
                            'path': '/pools/default/buckets/default/stats/curr_items'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items}),
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_curr_items)}),
                          ({'command': 'GET',
-                           'path': '/pools/default/buckets/default/stats/curr_items'},
+                           'path': '/pools/default/buckets/default/stats/vb_active_resident_items_ratio'},
                           {'code': 200,
-                           'message': SAMPLE_JSON_pools_default_buckets_default_stats_curr_items})])
+                           'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
                                           "--dry-run"])
@@ -2502,7 +2451,7 @@ class TestCBBMaxSize(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
     def check_cbb_file_exists(self, d, num=1):
         self.assertEqual(1, len(glob.glob(d + "/bucket-*")))
-        self.assertEqual(2, len(glob.glob(d + "/bucket-*/node-*")))
+        self.assertEqual(1, len(glob.glob(d + "/bucket-*/node-*")))
         self.assertEqual(4, len(glob.glob(d + "/bucket-*/node-*/data-*.cbb")))
 
 
@@ -2622,10 +2571,50 @@ SAMPLE_JSON_pools_default_buckets = """
                  "itemCount":0,"diskUsed":5117960,"memUsed":54117632}}]
 """
 
-SAMPLE_JSON_pools_default_buckets_default_stats_curr_items = """
-{"samplesCount":60,"isPersistent":true,"lastTStamp":1341861910910.0,"interval":1000,"timestamp":[1341861852910.0,1341861853910.0,1341861854910.0,1341861855910.0,1341861856910.0,1341861857910.0,1341861858910.0,1341861859909.0,1341861860910.0,1341861861909.0,1341861862910.0,1341861863910.0,1341861864910.0,1341861865910.0,1341861866910.0,1341861867909.0,1341861868910.0,1341861869910.0,1341861870909.0,1341861871910.0,1341861872910.0,1341861873910.0,1341861874910.0,1341861875909.0,1341861876910.0,1341861877909.0,1341861878910.0,1341861879910.0,1341861880910.0,1341861881909.0,1341861882910.0,1341861883909.0,1341861884910.0,1341861885909.0,1341861886909.0,1341861887910.0,1341861888910.0,1341861889909.0,1341861890909.0,1341861891909.0,1341861892910.0,1341861893910.0,1341861894910.0,1341861895910.0,1341861896910.0,1341861897909.0,1341861898910.0,1341861899910.0,1341861900910.0,1341861901909.0,1341861902910.0,1341861903910.0,1341861904910.0,1341861905910.0,1341861906910.0,1341861907909.0,1341861908910.0,1341861909910.0,1341861910910.0],"nodeStats":{"10.3.121.192:8091":[24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954],"10.3.121.194:8091":[25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428]}}
+SAMPLE_JSON_pools_default_buckets_one_node = """
+[{"name":"default","bucketType":"membase",
+  "authType":"sasl","saslPassword":"",
+  "proxyPort":0,
+  "uri":"/pools/default/buckets/default",
+  "streamingUri":"/pools/default/bucketsStreaming/default",
+  "flushCacheUri":"/pools/default/buckets/default/controller/doFlush",
+  "nodes":[
+    {"systemStats":{"cpu_utilization_rate":0.25,"swap_total":1073737728,"swap_used":0},
+     "interestingStats":{"curr_items":0,"curr_items_tot":0,"vb_replica_curr_items":0},
+     "uptime":"1210","memoryTotal":4156071936.0,"memoryFree":1757093888,
+     "mcdMemoryReserved":3170,"mcdMemoryAllocated":3170,
+     "replication":1.0,
+     "clusterMembership":"active",
+     "status":"healthy",
+     "hostname":"HOST0:8091",
+     "clusterCompatibility":1,
+     "version":"1.8.0r-55-g80f24f2-enterprise",
+     "os":"x86_64-unknown-linux-gnu",
+     "CAPIk0":"CAPIv0",
+     "ports":{"proxy":11211,"direct":11210}}
+   ],
+   "stats":{"uri":"/pools/default/buckets/default/stats",
+            "directoryURI":"/pools/default/buckets/default/statsDirectory",
+            "nodeStatsListURI":"/pools/default/buckets/default/nodes"},
+   "nodeLocator":"vbucket",
+   "vBucketServerMap":{
+     "hashAlgorithm":"CRC",
+     "numReplicas":1,
+     "serverList":["HOST0:11210"],
+     "vBucketMap":[[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]]},
+   "replicaNumber":1,
+   "quota":{"ram":629145600,"rawRAM":314572800},
+   "basicStats":{"quotaPercentUsed":8.601765950520834,"opsPerSec":0,"diskFetches":0,
+                 "itemCount":0,"diskUsed":5117960,"memUsed":54117632}}]
 """
 
+SAMPLE_JSON_pools_default_buckets_default_stats_curr_items = """
+{"samplesCount":60,"isPersistent":true,"lastTStamp":1341861910910.0,"interval":1000,"timestamp":[1341861852910.0,1341861853910.0,1341861854910.0,1341861855910.0,1341861856910.0,1341861857910.0,1341861858910.0,1341861859909.0,1341861860910.0,1341861861909.0,1341861862910.0,1341861863910.0,1341861864910.0,1341861865910.0,1341861866910.0,1341861867909.0,1341861868910.0,1341861869910.0,1341861870909.0,1341861871910.0,1341861872910.0,1341861873910.0,1341861874910.0,1341861875909.0,1341861876910.0,1341861877909.0,1341861878910.0,1341861879910.0,1341861880910.0,1341861881909.0,1341861882910.0,1341861883909.0,1341861884910.0,1341861885909.0,1341861886909.0,1341861887910.0,1341861888910.0,1341861889909.0,1341861890909.0,1341861891909.0,1341861892910.0,1341861893910.0,1341861894910.0,1341861895910.0,1341861896910.0,1341861897909.0,1341861898910.0,1341861899910.0,1341861900910.0,1341861901909.0,1341861902910.0,1341861903910.0,1341861904910.0,1341861905910.0,1341861906910.0,1341861907909.0,1341861908910.0,1341861909910.0,1341861910910.0],"nodeStats":{"HOST0:8091":[24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954],"127.0.0.1:8091":[25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428]}}
+"""
+
+SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio = """
+{"samplesCount":60,"isPersistent":true,"lastTStamp":1341861910910.0,"interval":1000,"timestamp":[1341861852910.0,1341861853910.0,1341861854910.0,1341861855910.0,1341861856910.0,1341861857910.0,1341861858910.0,1341861859909.0,1341861860910.0,1341861861909.0,1341861862910.0,1341861863910.0,1341861864910.0,1341861865910.0,1341861866910.0,1341861867909.0,1341861868910.0,1341861869910.0,1341861870909.0,1341861871910.0,1341861872910.0,1341861873910.0,1341861874910.0,1341861875909.0,1341861876910.0,1341861877909.0,1341861878910.0,1341861879910.0,1341861880910.0,1341861881909.0,1341861882910.0,1341861883909.0,1341861884910.0,1341861885909.0,1341861886909.0,1341861887910.0,1341861888910.0,1341861889909.0,1341861890909.0,1341861891909.0,1341861892910.0,1341861893910.0,1341861894910.0,1341861895910.0,1341861896910.0,1341861897909.0,1341861898910.0,1341861899910.0,1341861900910.0,1341861901909.0,1341861902910.0,1341861903910.0,1341861904910.0,1341861905910.0,1341861906910.0,1341861907909.0,1341861908910.0,1341861909910.0,1341861910910.0],"nodeStats":{"HOST0:8091":[24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954,24954],"127.0.0.1:8091":[25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,25428,0]}}
+"""
 
 class MockStdOut:
     def __init__(self):
