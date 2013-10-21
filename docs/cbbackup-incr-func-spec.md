@@ -26,7 +26,7 @@ Examples:
 
 Options
 
-    --full            full or level 0 backup. By default, it is always a full backup.
+    --full            force to have a full or level 0 backup. Errors throws if backup directory is not empty.
     --incr-diff       differential incremental backup. Error throws if no level 0 backup exists on backup dir. By default, it is true.
     --incr-cumulative cumulative incremental backup. Error throws if no level 0 backup exists on backup dir. By default, it is false
 
@@ -40,7 +40,7 @@ Instead of restoring all items in the backup, the restore tool will restore only
 
 options:
 
-    --full restore all data to the destination while ignoring SCN
+    --full force to restore all data to the destination while ignoring SCN
 
 New command line tools
 ----------------------
@@ -57,7 +57,7 @@ Examples:
 
 Options:
 
-    --report      report how many backup items in the speified backup directory
+    --report      report how many backup mutation items in the specified backup directory
     --retent  RETENION-DAYS  set up retention policy for the backup directory.
     --delete      automatically delete obsolete files. By default, it won't delete any files.
     --merge  LEVEL   merge multiple incremental level N backup files into one level N-1backup file, where N > 0
@@ -74,6 +74,7 @@ Multilevel incremental Backups
 ------------------------------
 
 cbbackup can create multilevel incremental backups.
+
 Level 0 backup is a full backup, which is the base for any subsequent incremental backups.
 
 Level 1 backup is the delta change with respect to the most recent Level 0 or Level 1.
@@ -84,9 +85,9 @@ And so on (Imagine backup level at Level 3, 4, etc)
 
 Any incremental backup can be either of the following types:
 
-**A differential incremental backup**, which backs up all mutation changed after the most recent incremental backup at level N or N-1.
+**A differential incremental backup**, which contains all mutations changed after the most recent incremental backup at level N or N-1.
 
-**A cumulative incremental backup**, which backs up all mutation changed after the most recent incremental backup at level N - 1
+**A cumulative incremental backup**, which contains all mutations changed after the most recent incremental backup at level N - 1
 
 By default, incremental backup will be differential. However, cumulative backups are preferable to differential backups when recovery time is more important than disk space, because fewer incremental backups need to be applied during recovery.
 
