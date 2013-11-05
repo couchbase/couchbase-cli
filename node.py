@@ -213,7 +213,7 @@ class Node:
             return
 
         opts = {
-            "error_msg": "unable to init %s" % self.server,
+            "error_msg": "unable to init/modify %s" % self.server,
             "success_msg": "init %s" % self.server
         }
 
@@ -225,6 +225,7 @@ class Node:
 
         # per node quota unfortunately runs against a different location
         if not self.per_node_quota:
+            print "ERROR: option cluster-init-ramsize is not specified"
             return
 
         if self.port_new:
