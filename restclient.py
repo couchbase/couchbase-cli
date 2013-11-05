@@ -25,6 +25,7 @@ class RestClient:
         self.params = {}
         self.user = ''
         self.password = ''
+        self.body = ''
         self.clientConnect(server, int(port))
 
     def clientConnect(self, server, port):
@@ -46,6 +47,9 @@ class RestClient:
 
     def setParam(self, param, value):
         self.params[param] = value
+
+    def setPayload(self, payload):
+        self.body = payload
 
     def getParam(self, param):
         return self.params[param]
@@ -115,6 +119,16 @@ class RestClient:
         elif method == 'DELETE':
             encoded_params = urllib.urlencode(self.params)
             headers['Content-type'] = 'application/x-www-form-urlencoded'
+        elif method == 'PUT':
+            if self.body:
+                headers['Content-type'] = 'application/json;charset=UTF-8'
+                encoded_params = self.body
+            elif self.params:
+                headers['Content-type'] = 'application/x-www-form-urlencoded'
+                encoded_params = urllib.urlencode(self.params)
+            else:
+                print "ERROR: no input parameters for PUT request"
+                return None
         else:
             if self.params:
                 uri = uri, '?', urllib.urlencode(self.params)

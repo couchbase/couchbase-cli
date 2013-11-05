@@ -7,6 +7,7 @@ import os
 import sys
 import util_cli as util
 import socket
+import simplejson as json
 
 from usage import usage
 from restclient import *
@@ -29,6 +30,7 @@ rest_cmds = {
     'setting-autofailover'  :'/settings/autoFailover',
     'setting-alert'         :'/settings/alerts',
     'user-manage'           :'/settings/readOnlyUser',
+    'group-manage'          :'/pools/default/serverGroups',
 }
 
 server_no_remove = [
@@ -62,6 +64,7 @@ methods = {
     'setting-autofailover'  :'POST',
     'setting-alert'         :'POST',
     'user-manage'           :'POST',
+    'group-manage'          :'POST',
 }
 
 bool_to_str = lambda value: str(bool(int(value))).lower()
@@ -121,6 +124,13 @@ class Node:
         self.alert_meta_overhead = None
         self.alert_meta_oom = None
         self.alert_write_failed = None
+
+        #group management
+        self.group_name = None
+        self.server_list = None
+        self.from_group = None
+        self.to_group = None
+        self.group_rename = None
 
         self.cmd = None
 
@@ -189,6 +199,9 @@ class Node:
 
         if cmd == 'user-manage':
             self.userManage()
+
+        if cmd == 'group-manage':
+            self.groupManage()
 
     def clusterInit(self):
         rest = restclient.RestClient(self.server,
@@ -557,6 +570,8 @@ class Node:
                 self.alert_meta_oom = True
             elif o == '--alert-write-failed':
                 self.alert_write_failed = True
+            elif o == '--create':
+                self.cmd = 'create'
             elif o == '--list':
                 self.cmd = 'list'
             elif o == '--delete':
@@ -569,6 +584,25 @@ class Node:
                 self.ro_password = a
             elif o == '--metadata-purge-interval':
                 self.purge_interval = a
+            elif o == '--group-name':
+                self.group_name = a
+            elif o == '--add-servers':
+                self.server_list = a
+                self.cmd = 'add-servers'
+            elif o == '--remove-servers':
+                self.server_list = a
+                self.cmd = 'remove-servers'
+            elif o == '--move-servers':
+                self.server_list = a
+                self.cmd = 'move-servers'
+            elif o == '--from-group':
+                self.from_group = a
+            elif o == '--to-group':
+                self.to_group = a
+            elif o == '--rename':
+                self.group_rename = a
+                self.cmd = 'rename'
+
         return servers
 
     def addServers(self, servers):
@@ -829,6 +863,190 @@ class Node:
         }
         output_result = rest.restCmd('POST',
                                      "/settings/readOnlyUser",
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def groupManage(self):
+        if self.cmd == 'move-servers':
+            self.groupMoveServer()
+        elif self.cmd == 'list':
+             self.groupList()
+        else:
+            if self.group_name is None:
+                usage("please specify --group-name for the operation")
+            elif self.cmd == 'delete':
+                self.groupDelete()
+            elif self.cmd == 'create':
+                self.groupCreate()
+            elif self.cmd == 'add-servers':
+                self.groupAddServers(self.group_name)
+            elif self.cmd == 'rename':
+                self.groupRename()
+            else:
+                print "Unknown group command:%s" % self.cmd
+
+    def getGroupUri(self, groupName):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        output_result = rest.restCmd('GET',
+                                     '/pools/default/serverGroups',
+                                     self.user,
+                                     self.password)
+        groups = rest.getJson(output_result)
+        for group in groups["groups"]:
+            if groupName == group["name"]:
+                return group["uri"]
+        return None
+
+    def getServerGroups(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        output_result = rest.restCmd('GET',
+                                     '/pools/default/serverGroups',
+                                     self.user,
+                                     self.password)
+        return rest.getJson(output_result)
+
+    def groupList(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        output_result = rest.restCmd('GET',
+                                     '/pools/default/serverGroups',
+                                     self.user,
+                                     self.password)
+        groups = rest.getJson(output_result)
+        for group in groups["groups"]:
+            print '%s' % group['name']
+            for node in group['nodes']:
+                print ' server: %s' % node["hostname"]
+
+    def groupCreate(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        rest.setParam('name', self.group_name)
+        opts = {
+            'error_msg': "unable to create group %s" % self.group_name,
+            'success_msg': "group created %s" % self.group_name
+        }
+        output_result = rest.restCmd('POST',
+                                     '/pools/default/serverGroups',
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def groupRename(self):
+        uri = self.getGroupUri(self.group_name)
+        if uri is None:
+            usage("invalid group name:%s" % self.group_name)
+        if self.group_rename is None:
+            usage("invalid group name:%s" % self.group_name)
+
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        rest.setParam('name', self.group_rename)
+        opts = {
+            'error_msg': "unable to rename group %s" % self.group_name,
+            'success_msg': "group renamed %s" % self.group_name
+        }
+        output_result = rest.restCmd('PUT',
+                                     uri,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def groupDelete(self):
+        uri = self.getGroupUri(self.group_name)
+        if uri is None:
+            usage("invalid group name:%s" % self.group_name)
+
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        rest.setParam('name', self.group_name)
+        opts = {
+            'error_msg': "unable to delete group %s" % self.group_name,
+            'success_msg': "group deleted %s" % self.group_name
+        }
+        output_result = rest.restCmd('DELETE',
+                                     uri,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def groupAddServers(self, name):
+
+        uri = self.getGroupUri(self.group_name)
+        if uri is None:
+            usage("invalid group name:%s" % self.group_name)
+        uri = "%s/addNode" % uri
+        groups = self.getServerGroups()
+        server_list = self.server_list.split(";")
+
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        for server in server_list:
+            rest.setParam('hostname', server)
+
+            opts = {
+                'error_msg': "unable to add server '%s' to group '%s'" % (server, self.group_name),
+                'success_msg': "add server '%s' to group '%s'" % (server, self.group_name)
+            }
+            output_result = rest.restCmd('POST',
+                                     uri,
+                                     self.user,
+                                     self.password,
+                                     opts)
+            print output_result
+
+    def groupMoveServer(self):
+        groups = self.getServerGroups()
+        node_info = {}
+        for group in groups["groups"]:
+            if self.from_group == group['name']:
+                server_list = self.server_list.split(";")
+                for server in server_list:
+                    for node in group["nodes"]:
+                        if server == node["hostname"]:
+                            node_info[server] = node
+                            group["nodes"].remove(node)
+        if not node_info:
+            print "No servers removed from group '%s'" % self.from_group
+            return
+
+        for group in groups["groups"]:
+            if self.to_group == group['name']:
+                server_list = self.server_list.split(";")
+                for server in server_list:
+                    found = False
+                    for node in group["nodes"]:
+                        if server == node["hostname"]:
+                            found = True
+                            break
+                    if not found:
+                        group["nodes"].append(node_info[server])
+        payload = json.dumps(groups)
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        rest.setPayload(payload)
+
+        opts = {
+            'error_msg': "unable to move servers from group '%s' to group '%s'" % (self.from_group, self.to_group),
+            'success_msg': "move servers from group '%s' to group '%s'" % (self.from_group, self.to_group)
+        }
+        output_result = rest.restCmd('PUT',
+                                     groups["uri"],
                                      self.user,
                                      self.password,
                                      opts)

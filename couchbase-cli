@@ -123,7 +123,13 @@ def main():
                 'alert-disk-space',
                 'alert-meta-overhead',
                 'alert-meta-oom',
-                'alert-write-failed'
+                'alert-write-failed',
+                'group-name=',
+                'rename=',
+                'add-servers=',
+                'move-servers=',
+                'from-group=',
+                'to-group=',
                 ])
     except getopt.GetoptError, err:
         usage(err)
@@ -138,6 +144,7 @@ def main():
         'server-eshell'     : info.Info,
         'server-add'        : node.Node,
         'server-readd'      : node.Node,
+        'group-manage'      : node.Node,
         'rebalance'         : node.Node,
         'rebalance-stop'    : node.Node,
         'rebalance-status'  : node.Node,
@@ -188,7 +195,6 @@ def main():
         print "INFO: running command: %s" % cmd
 
     c = commands[cmd]()
-
     try:
         c.runCmd(cmd, server, port, user, password, opts)
     except TimeoutException, err:
