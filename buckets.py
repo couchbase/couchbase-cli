@@ -95,6 +95,9 @@ class Buckets:
         rest = restclient.RestClient(server, port, {'debug':self.debug})
 
         # get the parameters straight
+        opts = {}
+        opts['error_msg'] = "unable to %s; please check your username (-u) and password (-p);" % cmd
+        opts['success_msg'] = "%s" % cmd
 
         if cmd in ('bucket-create', 'bucket-edit'):
             if bucketname:
@@ -143,6 +146,7 @@ class Buckets:
                     return False
             else:
                 print "Database data will be purged from disk ..."
+            opts['error_msg'] = "unable to %s; please check username/password or if the bucket exists or not;" % cmd
         elif cmd == 'bucket-compact':
             if compact_data_only and compact_view_only:
                 print "You cannot compact data only and view only at the same time."
@@ -156,9 +160,7 @@ class Buckets:
                 self.rest_cmd = self.rest_cmd + bucketname + '/controller/compactBucket'
         elif cmd == 'bucket-ddocs':
             self.rest_cmd = self.rest_cmd % bucketname
-        opts = {}
-        opts['error_msg'] = "unable to %s; please check your username (-u) and password (-p);" % cmd
-        opts['success_msg'] = "%s" % cmd
+
         data = rest.restCmd(methods[cmd], self.rest_cmd,
                             self.user, self.password, opts)
 
