@@ -774,6 +774,7 @@ class StdOutSink(Sink):
             except IOError:
                 return "error: could not write to stdout", None
 
+        stdout.flush()
         future = SinkBatchFuture(self, batch)
         self.future_done(future, 0)
         return 0, future
