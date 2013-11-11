@@ -2628,6 +2628,8 @@ class MockStdOut:
         self.msgs.append(msg)
         return msg
 
+    def flush(self):
+        return self.msgs
 
 if __name__ == '__main__':
     unittest.main()
