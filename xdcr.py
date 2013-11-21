@@ -86,6 +86,10 @@ class XDCR:
                 self.replicate_start()
             elif self.cmd == 'delete':
                 self.replicate_stop()
+            elif self.cmd == 'list':
+                self.replicate_list()
+            else:
+                print "ERROR: unsupported replicate command:", cmd
 
         if cmd == 'setting-xdcr':
             self.setting()
@@ -123,6 +127,8 @@ class XDCR:
                 self.cmd = 'edit'
             elif o == '--delete':
                 self.cmd = 'delete'
+            elif o == '--list':
+                self.cmd = 'list'
             elif o == '--max-concurrent-reps':
                 self.max_stream = int(a)
             elif o == '--checkpoint-interval':
@@ -275,6 +281,28 @@ class XDCR:
                                      self.password,
                                      opts)
         print output_result
+
+    def replicate_list(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+
+        opts = {
+            'error_msg': "unable to retrieve any replication streams",
+            'success_msg': "list replication streams"
+        }
+        output_result = rest.restCmd('GET',
+                                     '/pools/default/tasks',
+                                     self.user,
+                                     self.password,
+                                     opts)
+        tasks = rest.getJson(output_result)
+        for task in tasks:
+            if task["type"] == "xdcr":
+                print 'stream id: %s' % task['id']
+                print "   status: %s" % task["status"]
+                print "   source: %s" % task["source"]
+                print "   target: %s" % task["target"]
 
     def setting(self):
         rest = restclient.RestClient(self.server,

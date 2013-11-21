@@ -173,6 +173,7 @@ xdcr-setup OPTIONS:
 xdcr-replicate OPTIONS:
   --create                               create and start a new replication
   --delete                               stop and cancel a replication
+  --list                                 list all xdcr replications
   --xdcr-from-bucket=BUCKET              local bucket name to replicate from
   --xdcr-clucter-name=CLUSTERNAME        remote cluster to replicate to
   --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
@@ -334,6 +335,10 @@ EXAMPLES:
     couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
         --delete \\
         --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
+
+  List all xdcr replication streams
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --list
 
   List read only user in a cluster:
     couchbase-cli user-manage --list -c 192.168.0.1:8091
