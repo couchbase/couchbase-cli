@@ -95,6 +95,8 @@ def main():
                 'xdcr-to-bucket=',
                 'xdcr-replicator=',
                 'xdcr-replication-mode=',
+                'xdcr-demand-encryption=',
+                'xdcr-certificate=',
                 'create',
                 'edit',
                 'delete',

@@ -173,6 +173,8 @@ xdcr-setup OPTIONS:
   --xdcr-hostname=HOSTNAME               remote host name to connect to
   --xdcr-username=USERNAME               remote cluster admin username
   --xdcr-password=PASSWORD               remote cluster admin password
+  --xdcr-demand-encryption=[0|1]         allow data encrypted using ssl
+  --xdcr-certificate=CERTIFICATE         pem-encoded certificate. Need be present if xdcr-demand-encryption is true
 
 xdcr-replicate OPTIONS:
   --create                               create and start a new replication
@@ -313,7 +315,9 @@ EXAMPLES:
         --xdcr-cluster-name=test \\
         --xdcr-hostname=10.1.2.3:8091 \\
         --xdcr-username=Administrator \\
-        --xdcr-password=password
+        --xdcr-password=password \\
+        --xdcr-demand-encryption=1 \\
+        --xdcr-certificate=/tmp/test.pem
 
   Delete a XDCR remote cluster
     couchbase-cli xdcr-setup -delete -c 192.168.0.1:8091 \\
