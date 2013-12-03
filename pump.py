@@ -57,8 +57,10 @@ class ProgressReporter(object):
                 string.rjust("total", width_v),
                 string.rjust("last", width_d),
                 string.rjust("per sec", width_s)))
+        verbose_set = ["tot_sink_batch", "tot_sink_msg"]
         for k in x:
-            emit(prefix + " %s : %s | %s | %s"
+            if k not in verbose_set or self.opts.verbose > 0:
+                emit(prefix + " %s : %s | %s | %s"
                  % (string.ljust(k.replace("tot_sink_", ""), width_k),
                     string.rjust(str(c[k]), width_v),
                     string.rjust(str(c[k] - p[k]), width_d),
@@ -76,7 +78,7 @@ class ProgressReporter(object):
         pct = float(current) / total
         max_hash = 20
         num_hash = int(round(pct * max_hash))
-        return ("  [%s%s] %0.1f%% (%s/%s msgs)%s" %
+        return ("  [%s%s] %0.1f%% (%s/estimated %s msgs)%s" %
                 ('#' * num_hash, ' ' * (max_hash - num_hash),
                  100.0 * pct, current, total, cr))
 
@@ -374,8 +376,8 @@ class Pump(ProgressReporter):
 
         if (rv == 0 and
             (self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
-             self.cur['tot_source_batch'] != self.cur['tot_sink_batch'] or
-             self.cur['tot_source_batch'] != self.cur['tot_sink_batch'])):
+             self.cur['tot_source_msg'] != self.cur['tot_sink_msg'] or
+             self.cur['tot_source_byte'] != self.cur['tot_sink_byte'])):
             return "error: sink missing some source msgs: " + str(self.cur)
 
         return rv
