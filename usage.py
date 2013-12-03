@@ -189,7 +189,7 @@ The default PORT number is 8091.
 
 EXAMPLES:
   Set data path for an unprovisioned cluster:
-    couchbse-cli node-init -c 192.168.0.1:8091 \\
+    couchbase-cli node-init -c 192.168.0.1:8091 \\
        --node-init-data-path=/tmp/data \\
        --node-init-index-path=/tmp/index
 
@@ -235,7 +235,7 @@ EXAMPLES:
        --cluster-init-port=8080 \\
        --cluster-init-ramsize=300
 
-  change the cluster username, password, port and ram quota:
+  Change the cluster username, password, port and ram quota:
     couchbase-cli cluster-edit -c 192.168.0.1:8091 \\
        --cluster-username=Administrator \\
        --cluster-password=password \\
