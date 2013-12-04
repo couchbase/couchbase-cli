@@ -3,12 +3,15 @@
 import logging
 import simplejson as json
 import time
+import urllib
 
 import pump
 import pump_mc
 
 
 class CBSink(pump_mc.MCSink):
+    DDOC_HEAD = "_design/"
+
     """Smart client sink to couchbase cluster."""
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
@@ -172,6 +175,10 @@ class CBSink(pump_mc.MCSink):
                     return "error: missing id for row: %s" % (row)
 
             js_doc = json.dumps(js)
+            if id.startswith(CBSink.DDOC_HEAD):
+                id = CBSink.DDOC_HEAD + urllib.quote(id[len(CBSink.DDOC_HEAD):], '')
+            else:
+                id = urllib.quote(id, '')
             logging.debug("design_doc: " + js_doc)
             logging.debug("design_doc id: " + id + " at: " + path + "/" + id)
 
