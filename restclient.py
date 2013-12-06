@@ -139,8 +139,7 @@ class RestClient:
             print "ENCODED_PARAMS: %s" % encoded_params
             print "REST CMD: %s %s" % (method,uri)
 
-        self.makeRequest(method, urllib.quote(uri), encoded_params, headers)
-
+        self.makeRequest(method, uri, encoded_params, headers)
         response = self.conn.getresponse()
         if self.debug:
             print "response.status: %s" % response.status

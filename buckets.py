@@ -7,6 +7,7 @@ import restclient
 from timeout import timed_out
 import time
 import sys
+import urllib
 
 rest_cmds = {
     'bucket-list': '/pools/default/buckets',
@@ -161,7 +162,7 @@ class Buckets:
         elif cmd == 'bucket-ddocs':
             self.rest_cmd = self.rest_cmd % bucketname
 
-        data = rest.restCmd(methods[cmd], self.rest_cmd,
+        data = rest.restCmd(methods[cmd], urllib.quote(self.rest_cmd),
                             self.user, self.password, opts)
 
         if cmd in ("bucket-get", "bucket-stats", "bucket-node-stats", "bucket-ddocs"):
@@ -206,7 +207,7 @@ class Buckets:
 
             #Query status for all bucket nodes
             while (time.time() - start) <= timeout_in_seconds:
-                bucket_info = rest_query.restCmd('GET', rest_cmds['bucket-info'] % bucketname,
+                bucket_info = rest_query.restCmd('GET', urllib.quote(rest_cmds['bucket-info'] % bucketname),
                                                  self.user, self.password, opts)
                 json = rest_query.getJson(bucket_info)
                 all_node_ready = True
@@ -240,7 +241,7 @@ class Buckets:
 
         rest_query = restclient.RestClient(server, port, {'debug':self.debug})
         rest_cmd = '/pools/default/buckets/%s/ddocs' % bucket_name
-        ddoc_info = rest_query.restCmd('GET', rest_cmd,
+        ddoc_info = rest_query.restCmd('GET', urllib.quote(rest_cmd),
                                        self.user, self.password, opts)
         json = rest_query.getJson(ddoc_info)
         for row in json["rows"]:
