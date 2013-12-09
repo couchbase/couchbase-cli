@@ -921,9 +921,10 @@ class Node:
                                      self.password)
         groups = rest.getJson(output_result)
         for group in groups["groups"]:
-            print '%s' % group['name']
-            for node in group['nodes']:
-                print ' server: %s' % node["hostname"]
+            if self.group_name is None or self.group_name == group['name']:
+                print '%s' % group['name']
+                for node in group['nodes']:
+                    print ' server: %s' % node["hostname"]
 
     def groupCreate(self):
         rest = restclient.RestClient(self.server,
