@@ -920,11 +920,15 @@ class Node:
                                      self.user,
                                      self.password)
         groups = rest.getJson(output_result)
+        found = False
         for group in groups["groups"]:
             if self.group_name is None or self.group_name == group['name']:
+                found = True
                 print '%s' % group['name']
                 for node in group['nodes']:
                     print ' server: %s' % node["hostname"]
+        if not found and self.group_name:
+            print "Invalid group name: %s" % self.group_name
 
     def groupCreate(self):
         rest = restclient.RestClient(self.server,
