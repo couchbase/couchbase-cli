@@ -210,7 +210,7 @@ Differential level 1 incremental backups happen between these dates.
 
 Suppose the current date is January 18 and the point of recover-ability is January 11. Hence the January 8 full backup is needed for recovery, so are the incremental backups. The backup files before January 8 are obsolete because they are not needed for recovery to a point within the window.
 
-Back deletes of obsolete backups
+Batch deletes of obsolete backups
 --------------------------------
 
    You can use cbbackup-manage --retent with delete option to clean up obsolete backup files. Assume that the retention period is two weeks, i.e. 14 days, you can run the following command:
@@ -218,6 +218,31 @@ Back deletes of obsolete backups
     cbbackup-manage --retent 14 --delete /backups/backup1
 
    All obsolete files that are older than the retention period will be deleted. But any deletion action will be recorded in auditing log file under the backup directory.
+
+Bacup file directory structure
+-------------------------------
+
+ 1. Current file structure
+
+           <backup_root>/
+             bucket-<BUCKETNAME>/
+               design.json
+               node-<NODE>/
+                 data-<XXXX>.cbb
+
+ 2. Proposed new file structure
+
+           <backup_root>/
+             bucket-<BUCKETNAME>/
+               design.json
+               node-<NODE>/
+                    data-<XXXX>.cbb
+                    <TIMESTAMP2>-1/
+                       data-<XXXX>.cbb
+                    <TIMESTAMP3>-1/
+                       data-<XXXX>.cbb
+
+Full backup or level 0 backup files are under node directory as before. And incremental backup files are under TIMESTAMP-1 directory.
 
 Backward compatibility
 ----------------------
