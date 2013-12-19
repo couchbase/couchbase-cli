@@ -996,11 +996,10 @@ class Node:
         uri = "%s/addNode" % uri
         groups = self.getServerGroups()
         server_list = self.server_list.split(";")
-
-        rest = restclient.RestClient(self.server,
+        for server in server_list:
+            rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
-        for server in server_list:
             rest.setParam('hostname', server)
 
             opts = {
