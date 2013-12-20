@@ -73,6 +73,7 @@ bool_to_str = lambda value: str(bool(int(value))).lower()
 # handling HTTP response properly
 
 class Node:
+    SEP = ";"
     def __init__(self):
         self.rest_cmd = rest_cmds['rebalance-status']
         self.method = 'GET'
@@ -127,7 +128,7 @@ class Node:
 
         #group management
         self.group_name = None
-        self.server_list = None
+        self.server_list = []
         self.from_group = None
         self.to_group = None
         self.group_rename = None
@@ -587,13 +588,13 @@ class Node:
             elif o == '--group-name':
                 self.group_name = a
             elif o == '--add-servers':
-                self.server_list = a
+                self.server_list = self.normalize_servers(a)
                 self.cmd = 'add-servers'
             elif o == '--remove-servers':
-                self.server_list = a
+                self.server_list = self.normalize_servers(a)
                 self.cmd = 'remove-servers'
             elif o == '--move-servers':
-                self.server_list = a
+                self.server_list = self.normalize_servers(a)
                 self.cmd = 'move-servers'
             elif o == '--from-group':
                 self.from_group = a
@@ -604,6 +605,13 @@ class Node:
                 self.cmd = 'rename'
 
         return servers
+
+    def normalize_servers(self, server_list):
+        slist = []
+        for server in server_list.split(Node.SEP):
+            hostport = "%s:%d" % util.hostport(server)
+            slist.append(hostport)
+        return slist
 
     def addServers(self, servers):
         for server in servers:
@@ -995,8 +1003,7 @@ class Node:
             usage("invalid group name:%s" % self.group_name)
         uri = "%s/addNode" % uri
         groups = self.getServerGroups()
-        server_list = self.server_list.split(";")
-        for server in server_list:
+        for server in self.server_list:
             rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
@@ -1018,8 +1025,7 @@ class Node:
         node_info = {}
         for group in groups["groups"]:
             if self.from_group == group['name']:
-                server_list = self.server_list.split(";")
-                for server in server_list:
+                for server in self.server_list:
                     for node in group["nodes"]:
                         if server == node["hostname"]:
                             node_info[server] = node
@@ -1030,8 +1036,7 @@ class Node:
 
         for group in groups["groups"]:
             if self.to_group == group['name']:
-                server_list = self.server_list.split(";")
-                for server in server_list:
+                for server in self.server_list:
                     found = False
                     for node in group["nodes"]:
                         if server == node["hostname"]:
@@ -1039,6 +1044,7 @@ class Node:
                             break
                     if not found:
                         group["nodes"].append(node_info[server])
+
         payload = json.dumps(groups)
         rest = restclient.RestClient(self.server,
                                      self.port,
