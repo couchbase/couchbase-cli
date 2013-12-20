@@ -369,13 +369,13 @@ EXAMPLES:
 
   Add a server to a group
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --add-servers=10.1.1.1;10.1.1.2:8091 \\
+        --add-servers="10.1.1.1:8091;10.1.1.2:8091" \\
         --group-name=group1 \\
         -u Administor -p password
 
   Move list of servers from group1 to group2
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --move-servers=10.1.1.1;10.1.1.2:8091 \\
+        --move-servers="10.1.1.1:8091;10.1.1.2:8091" \\
         --from-group=group1 \\
         --to-group=group2 \\
         -u Administor -p password
