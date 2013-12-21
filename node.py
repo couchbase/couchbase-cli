@@ -158,7 +158,10 @@ class Node:
                   " or use -h for more help.")
 
         if cmd in ('server-add', 'rebalance'):
-            self.addServers(servers['add'])
+            if not self.group_name:
+                self.addServers(servers['add'])
+            else:
+                self.groupAddServers()
             if cmd == 'rebalance':
                 self.rebalance(servers)
 
@@ -478,6 +481,7 @@ class Node:
                     a = socket.gethostbyname(socket.getfqdn())
                 server = "%s:%d" % util.hostport(a)
                 servers['add'][server] = { 'user':'', 'password':''}
+                self.server_list.append(server)
             elif o == "--server-add-username":
                 if server is None:
                     usage("please specify --server-add"
@@ -889,7 +893,7 @@ class Node:
             elif self.cmd == 'create':
                 self.groupCreate()
             elif self.cmd == 'add-servers':
-                self.groupAddServers(self.group_name)
+                self.groupAddServers()
             elif self.cmd == 'rename':
                 self.groupRename()
             else:
@@ -996,7 +1000,7 @@ class Node:
                                      opts)
         print output_result
 
-    def groupAddServers(self, name):
+    def groupAddServers(self):
 
         uri = self.getGroupUri(self.group_name)
         if uri is None:
