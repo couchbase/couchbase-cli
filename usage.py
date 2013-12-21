@@ -353,32 +353,32 @@ EXAMPLES:
 
   Create a new group
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --create --group-name=group1 -u Administor -p password
+        --create --group-name=group1 -u Administrator -p password
 
   Delete an empty group
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --delete --group-name=group1 -u Administor -p password
+        --delete --group-name=group1 -u Administrator -p password
 
   Rename an existed group
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --rename=newgroup --group-name=group1 -u Administor -p password
+        --rename=newgroup --group-name=group1 -u Administrator -p password
 
   Show group/server map
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --list -u Administor -p password
+        --list -u Administrator -p password
 
   Add a server to a group
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
         --add-servers="10.1.1.1:8091;10.1.1.2:8091" \\
         --group-name=group1 \\
-        -u Administor -p password
+        -u Administrator -p password
 
   Move list of servers from group1 to group2
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
         --move-servers="10.1.1.1:8091;10.1.1.2:8091" \\
         --from-group=group1 \\
         --to-group=group2 \\
-        -u Administor -p password
+        -u Administrator -p password
 
 """
 
