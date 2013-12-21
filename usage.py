@@ -78,6 +78,10 @@ server-readd OPTIONS:
                                     server to be added
   --group-name=GROUPNAME            group that server belongs
 
+rebalance OPTIONS:
+  --server-add*                     see server-add OPTIONS
+  --server-remove=HOST[:PORT]       the server to be removed
+
 group-manage OPTIONS:
   --group-name=GROUPNAME            group name
   --create                          create a new group
