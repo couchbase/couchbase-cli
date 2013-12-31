@@ -182,7 +182,7 @@ class XDCR:
                                      {'debug':self.debug})
         if self.remote_cluster:
             rest.setParam('name', self.remote_cluster)
-            self.rest_cmd = self.rest_cmd + "/" + self.remote_cluster
+            self.rest_cmd = self.rest_cmd + "/" + urllib.quote(self.remote_cluster)
         else:
             print "Error: Cluster name is needed to edit cluster connections"
             return
@@ -216,7 +216,7 @@ class XDCR:
                                      self.port,
                                      {'debug':self.debug})
         if self.remote_cluster:
-            self.rest_cmd = self.rest_cmd + "/" + self.remote_cluster
+            self.rest_cmd = self.rest_cmd + "/" + urllib.quote(self.remote_cluster)
         else:
             print "Error: Cluster name is needed to delete cluster connections"
             return
