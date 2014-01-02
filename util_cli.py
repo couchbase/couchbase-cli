@@ -6,8 +6,17 @@ import itertools
 import locale
 import simplejson as json
 import math
+import os
+import sys
 
-locale.setlocale(locale.LC_ALL, '')
+try:
+    locale.setlocale(locale.LC_ALL, '')
+except:
+    os.environ['LC_ALL'] = "en_US.UTF-8"
+    try:
+        locale.setlocale(locale.LC_ALL, '')
+    except:
+        sys.exit("Error: unsupported locale setting, please set LC_ALL to en_US.UTF-8")
 
 BIG_VALUE = 2 ** 60
 SMALL_VALUE = - (2 ** 60)
