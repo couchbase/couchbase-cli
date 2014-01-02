@@ -184,7 +184,7 @@ class Node:
             self.failover(servers)
 
         if cmd in ('cluster-init', 'cluster-edit'):
-            self.clusterInit()
+            self.clusterInit(cmd)
 
         if cmd == 'node-init':
             self.nodeInit()
@@ -207,7 +207,7 @@ class Node:
         if cmd == 'group-manage':
             self.groupManage()
 
-    def clusterInit(self):
+    def clusterInit(self, cmd):
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
@@ -239,12 +239,10 @@ class Node:
                                      self.user,
                                      self.password,
                                      opts)
-
         # per node quota unfortunately runs against a different location
-        if not self.per_node_quota:
+        if cmd == "cluster-init" and not self.per_node_quota:
             print "ERROR: option cluster-init-ramsize is not specified"
             return
-
         if self.port_new:
             self.port = int(self.port_new)
         if self.username_new:
