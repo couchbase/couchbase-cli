@@ -195,7 +195,7 @@ class XDCR:
                 print "ERROR: certificate required if encryption is demanded."
                 return
         else:
-            rest.setParam("demandEncryption", str(bool(int(0))).lower())
+            rest.setParam("demandEncryption", str(int(0)))
 
         opts = {
             'error_msg': "unable to set up xdcr remote site %s" % self.remote_cluster,
