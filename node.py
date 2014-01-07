@@ -88,6 +88,8 @@ class Node:
         self.output = 'standard'
         self.password_new = None
         self.username_new = None
+        self.sa_username = None
+        self.sa_password = None
         self.port_new = None
         self.per_node_quota = None
         self.data_path = None
@@ -481,15 +483,13 @@ class Node:
                 servers['add'][server] = { 'user':'', 'password':''}
                 self.server_list.append(server)
             elif o == "--server-add-username":
-                if server is None:
-                    usage("please specify --server-add"
-                          " before --server-add-username")
-                servers['add'][server]['user'] = a
+                if server:
+                    servers['add'][server]['user'] = a
+                self.sa_username = a
             elif o == "--server-add-password":
-                if server is None:
-                    usage("please specify --server-add"
-                          " before --server-add-password")
-                servers['add'][server]['password'] = a
+                if server:
+                    servers['add'][server]['password'] = a
+                self.sa_password = a
             elif o in ( "-r", "--server-remove"):
                 server = "%s:%d" % util.hostport(a)
                 servers['remove'][server] = True
@@ -1010,6 +1010,10 @@ class Node:
                                      self.port,
                                      {'debug':self.debug})
             rest.setParam('hostname', server)
+            if self.sa_username:
+                rest.setParam('user', self.sa_username)
+            if self.sa_password:
+                rest.setParam('password', self.sa_password)
 
             opts = {
                 'error_msg': "unable to add server '%s' to group '%s'" % (server, self.group_name),

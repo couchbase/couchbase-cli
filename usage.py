@@ -404,6 +404,8 @@ EXAMPLES:
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
         --add-servers="10.1.1.1:8091;10.1.1.2:8091" \\
         --group-name=group1 \\
+        --server-add-username=Administrator1 \\
+        --server-add-password=password1 \\
         -u Administrator -p password
 
   Move list of servers from group1 to group2
