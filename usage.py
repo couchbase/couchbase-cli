@@ -28,6 +28,7 @@ def commands_usage():
   setting-alert         set email alert settings
   setting-autofailover  set auto failover settings
   setting-xdcr          set xdcr related settings
+  ssl-manage            manage cluster certificate
   user-manage           manage read only user
   xdcr-setup            set up XDCR connection
   xdcr-replicate        xdcr operations
@@ -190,6 +191,10 @@ user-manage OPTIONS:
   --delete                               delete read only user
   --ro-username=USERNAME                 readonly user name
   --ro-password=PASSWORD                 readonly user password
+
+ssl-manage OPTIONS:
+  --retrieve-cert=CERTIFICATE            retrieve cluster certificate AND save to a pem file
+  --regenerate-cert=CERTIFICATE          regenerate cluster certificate AND save to a pem file
 
 The default PORT number is 8091.
 
@@ -415,6 +420,15 @@ EXAMPLES:
         --to-group=group2 \\
         -u Administrator -p password
 
+  Download a cluster certificate
+    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
+        --retrieve-cert=/tmp/test.pem \\
+        -u Administrator -p password
+
+  Regenerate AND download a cluster certificate
+    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
+        --regenerate-cert=/tmp/test.pem \\
+        -u Administrator -p password
 """
 
     sys.exit(2)

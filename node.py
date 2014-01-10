@@ -31,6 +31,7 @@ rest_cmds = {
     'setting-alert'         :'/settings/alerts',
     'user-manage'           :'/settings/readOnlyUser',
     'group-manage'          :'/pools/default/serverGroups',
+    'ssl-manage'            :'/pools/default/certificate',
 }
 
 server_no_remove = [
@@ -65,6 +66,7 @@ methods = {
     'setting-alert'         :'POST',
     'user-manage'           :'POST',
     'group-manage'          :'POST',
+    'ssl-manage'            :'GET',
 }
 
 bool_to_str = lambda value: str(bool(int(value))).lower()
@@ -135,6 +137,8 @@ class Node:
         self.to_group = None
         self.group_rename = None
 
+        #SSL certificate management
+        self.certificate_file = None
         self.cmd = None
 
     def runCmd(self, cmd, server, port,
@@ -167,47 +171,50 @@ class Node:
             if cmd == 'rebalance':
                 self.rebalance(servers)
 
-        if cmd == 'server-readd':
+        elif cmd == 'server-readd':
             self.reAddServers(servers)
 
-        if cmd == 'rebalance-status':
+        elif cmd == 'rebalance-status':
             output_result = self.rebalanceStatus()
             print output_result
 
-        if cmd == 'rebalance-stop':
+        elif cmd == 'rebalance-stop':
             output_result = self.rebalanceStop()
             print output_result
 
-        if cmd == 'failover':
+        elif cmd == 'failover':
             if len(servers['failover']) <= 0:
                 usage("please list one or more --server-failover=HOST[:PORT];"
                       " or use -h for more help.")
 
             self.failover(servers)
 
-        if cmd in ('cluster-init', 'cluster-edit'):
+        elif cmd in ('cluster-init', 'cluster-edit'):
             self.clusterInit(cmd)
 
-        if cmd == 'node-init':
+        elif cmd == 'node-init':
             self.nodeInit()
 
-        if cmd == 'setting-compaction':
+        elif cmd == 'setting-compaction':
             self.compaction()
 
-        if cmd == 'setting-notification':
+        elif cmd == 'setting-notification':
             self.notification()
 
-        if cmd == 'setting-alert':
+        elif cmd == 'setting-alert':
             self.alert()
 
-        if cmd == 'setting-autofailover':
+        elif cmd == 'setting-autofailover':
             self.autofailover()
 
-        if cmd == 'user-manage':
+        elif cmd == 'user-manage':
             self.userManage()
 
-        if cmd == 'group-manage':
+        elif cmd == 'group-manage':
             self.groupManage()
+
+        elif cmd == 'ssl-manage':
+            self.retrieveCert()
 
     def clusterInit(self, cmd):
         rest = restclient.RestClient(self.server,
@@ -605,6 +612,12 @@ class Node:
             elif o == '--rename':
                 self.group_rename = a
                 self.cmd = 'rename'
+            elif o == '--retrieve-cert':
+                self.cmd = 'retrieve'
+                self.certificate_file = a
+            elif o == '--regenerate-cert':
+                self.cmd = 'regenerate'
+                self.certificate_file = a
 
         return servers
 
@@ -1067,3 +1080,43 @@ class Node:
                                      self.password,
                                      opts)
         print output_result
+
+    def retrieveCert(self):
+        if self.certificate_file is None:
+            usage("please specify certificate file name for the operation")
+
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        output_result = ''
+        if self.cmd == 'retrieve':
+            opts = {
+                'error_msg': "unable to %s certificate" % self.cmd,
+                'success_msg': "Successfully %s certificate" % self.cmd
+            }
+            output_result = rest.restCmd('GET',
+                                         '/pools/default/certificate',
+                                        self.user,
+                                        self.password,
+                                        opts)
+        elif self.cmd  == 'regenerate':
+            opts = {
+                'error_msg': "unable to %s certificate" % self.cmd,
+                'success_msg': None
+            }
+            output_result = rest.restCmd('POST',
+                                         '/controller/regenerateCertificate',
+                                        self.user,
+                                        self.password,
+                                        opts)
+        else:
+            print "ERROR: unknown request:", self.cmd
+            return
+
+        try:
+            fp = open(self.certificate_file, 'w')
+            fp.write(output_result)
+            fp.close()
+            print "SUCCESS: %s certificate to '%s'" % (self.cmd, self.certificate_file)
+        except IOError, error:
+            print "ERROR:", error

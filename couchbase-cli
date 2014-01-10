@@ -132,6 +132,8 @@ def main():
                 'move-servers=',
                 'from-group=',
                 'to-group=',
+                'retrieve-cert=',
+                'regenerate-cert=',
                 ])
     except getopt.GetoptError, err:
         usage(err)
@@ -154,6 +156,7 @@ def main():
         'failover'          : node.Node,
         'cluster-init'      : node.Node,
         'cluster-edit'      : node.Node,
+        'ssl-manage'        : node.Node,
         'node-init'         : node.Node,
         'user-manage'       : node.Node,
         'bucket-list'       : buckets.Buckets,
