@@ -24,23 +24,25 @@ Examples:
     cbbackup http://HOST:8091 /backups/backup-1
     cbbackup couchbase://HOST:8091 /backups/backup-1
 
-Options
+    Options
+        --mode  [full | incr-diff | incr-cumu | auto]  backup running mode, where
+          full           force to have a full or level 0 backup. Errors throws if backup directory is not empty.
+          incr-diff      differential incremental backup. Error throws if no level 0 backup exists on backup dir. By default, it is true.
+          incr-cumu      cumulative incremental backup. Error throws if no level 0 backup exists on backup dir. By default, it is false
+          auto           tool will decide what the best mode to use.
 
-    --full            force to have a full or level 0 backup. Errors throws if backup directory is not empty.
-    --incr-diff       differential incremental backup. Error throws if no level 0 backup exists on backup dir. By default, it is true.
-    --incr-cumulative cumulative incremental backup. Error throws if no level 0 backup exists on backup dir. By default, it is false
+    Note, existed cbbackup options will be supported as before. For example, we can backup a single bucket by specify -b option. Or -v to increase verbose level.
 
-Note, existed cbbackup options will be supported as before. For example, we can backup a single bucket by specify -b option. Or -v to increase verbose level.
-
- - Extend cbrestore to support incremental restore
+ - Extend cbrestore to support partial restore
 
 >  cbrestore /backups/backup-1  http://HOST:8091
 
-Instead of restoring all items in the backup, the restore tool will restore only the missing mutations to the destination cluster based on the current cluster vbucket sequence number.
+Instead of restoring all items in the backup, the restore tool can restore partial data from specified period.
 
 options:
 
-    --full force to restore all data to the destination while ignoring SCN
+    --from-date  data collected sooner than the specified date won't be restored. By default, it is from the very beginning
+    --to-date    data collected later than the specified date won't be restored. By default, it is to the very end of collection.
 
 New command line tools
 ----------------------
@@ -125,25 +127,33 @@ Backup file directory structure
 -------------------------------
 
     backup root dir \
-        + full-10-13-2013 \
-        |   meta data for backup
-        |    - user to create backup
-        |    - a bucket or all buckets
-        |    - compress or not
-        |    - retention policy defined or not
-        |    - merge level-1 backups or not
-        |    - auditing logs?
-        |    - when backup created
-        |    - when retention runs
-        |    - when merge happens
-        |   *.mb
-        |   + incr-10-14-2013 \
-        |      *.mb
-        |   + incr-10-14-2013 \
-        |     ..
-        |   + incr-10-19-2013
-        + full-10-20-2103 \
+        + full-2013-10-13 \
+        |   + bucket-<bucketname> \
+        |     + node-<nodename> \
+        |           meta data for backup
+        |            - user to create backup
+        |            - a bucket or all buckets
+        |            - compress or not
+        |            - retention policy defined or not
+        |            - merge level-1 backups or not
+        |            - auditing logs?
+        |            - when backup created
+        |            - when retention runs
+        |            - when merge happens
+        |           *.cbb
+        |           + diff-2013-10-14 \
+        |              *.cbb
+        |           + diff-2013-10-14 \
+        |             ..
+        |           + diff-2013-10-19
+        + full-2013-10-20 \
            ...
+
+Under one root directory, there can be multiple full backup root directories where directory name starts from prefix "full" and ends with timestamp when the directory is created.
+
+Each full backup root directory will have the current backup directory structure grouped as bucket-bucketname / node-nodename
+
+Under the node directory, it will contain backup files suffixed as ".cbb", i.e. full backup files as baseline for future incremental backups. Besides those backup files, every incremental backup subdirectory will start from here. The directory prefix starts with "diff" for differential incrementals and "cumu" for cumulative incrementals. 
 
 By default, all backup files won't be compressed. If you want to save disk space, 3rd party tools are needed to compress files. cbrestore tool won't recognize compressed database files. As a result, any compressed files should be decompressed before running cbrestore tool.
 
@@ -152,29 +162,29 @@ Built in compress function may be implemented in future releases.
 Backup strategy
 ---------------
 
-   When cbbackup runs against an empty root backup directory, a full backup or a level-0 backup will be generated to backup all data from the very beginning. Errors will be thrown if --incr option is specified for an incremental backup but against an empty root backup directory.
+   When cbbackup runs against an empty root backup directory, a full backup or a level-0 backup will be generated to backup all data from the very beginning.
 
-   When cbbackup runs against non empty root backup direcotry, it will generate a differential incremental backup, i.e. always backup changes since last run of cbbackup. Errors will be thrown if --full option is specified for a full backup.
+   When cbbackup runs against non empty root backup direcotry, it will generate a differential incremental backup, i.e. always backup changes since last run of cbbackup.
 
-   Design-docs/views will be generated during full backups, but NOT for incremental backups.
+   Design-docs/views will be generated during full backups and incremental backups. But only the latest version of design docs should be used for restore.
 
 
 Incremental Backup Algorithm
 ----------------------------
 
- - Mutation SCN
+ - Mutation SEQNO
 
-    Every couchbase mutation comes with a sequence change number (SCN). All changes with SCN lower than this SCN are guaranteed to happen before this mutation.
+    Every couchbase mutation comes with a sequential number (SEQNO). All changes with SEQNO lower than this SEQNO are guaranteed to happen before this mutation for a specific vbucket.
 
- - Incremental start SCN
+ - Incremental start SEQNO
 
-    This SCN applies only to level 1 incremental backup. All mutations whose SCN is greater than or equal to the incremental start SCN are included in the backup. Mutatations whose SCN are lower than the incremental start SCN are not included in the backup.
+    This SEQNO applies only to level 1 incremental backup. All mutations whose SEQNO is greater than or equal to the incremental start SEQNO are included in the backup. Mutatations whose SEQNO are lower than the incremental start SEQNO are not included in the backup.
 
- - Incremental session SCN
+ - Incremental session SEQNO
 
-    Every run of incremental backup will persist the SCN at which the most recent change is made to the cluster.
+    Every run of incremental backup will persist the SEQNO at which the most recent change is made to the cluster.
 
-    When cbbackup makes a level 1 incremental backup, it will keep tracking every mutation's SCN and will persist the last SCN. If not any incremental start SCN exists under the destination directory, cbbackup will notify couchbase server and all data in the cluster will be retrieved for a level 0 backup. If it exists, cbbackup will pass the Incremental start SCN to couchbase server to skip any mutations with lower SCNs.
+    When cbbackup makes a level 1 incremental backup, it will keep tracking every mutation's SEQNO and will persist the last SEQNO. If not any incremental start SEQNO exists under the destination directory, cbbackup will notify couchbase server and all data in the cluster will be retrieved for a level 0 backup. If it exists, cbbackup will pass the Incremental start SEQNO to couchbase server to skip any mutations with lower SEQNOs.
 
 Backup retention policy
 -----------------------
@@ -230,44 +240,61 @@ Bacup file directory structure
                node-<NODE>/
                  data-<XXXX>.cbb
 
- 2. Proposed new file structure
+ 2. New file structure
 
-           <backup_root>/
-             bucket-<BUCKETNAME>/
-               design.json
-               node-<NODE>/
+           <backup_root> /
+             full-<TIMESTAMP> /
+               bucket-<BUCKETNAME>/
+                 design.json
+                 node-<NODE>/
                     data-<XXXX>.cbb
-                    <TIMESTAMP2>-1/
+                    diff-<TIMESTAMP1>/
                        data-<XXXX>.cbb
-                    <TIMESTAMP3>-1/
+                       design.json
+                    diff-<TIMESTAMP2>/
                        data-<XXXX>.cbb
-
-Full backup or level 0 backup files are under node directory as before. And incremental backup files are under TIMESTAMP-1 directory.
+                       design.json
+                    cumu-<TIMESTAMP3>/
+                       data-<XXXX>.cbb
+                       design.json
+             full-<TIMESTAMP2>/
+                   ...
+Full backup or level 0 backup files are under node directory as before. And incremental backup files are under diff-<TIMESTAMP> directory or cumu-<TIMESTAMP>
 
 Backward compatibility
 ----------------------
 
  - Use new IBR tool agaist setup version 2.2 and older
 
-    cbbackup should work as before, without SCN in scene. cbbackup will do a full backup as before. But it will persist the last mutation SCN as part of backup files to server for the Incrementatl start SCN in case cbbackup-incr runs.
+    cbbackup should work as before, without SEQNO in scene. cbbackup will do a full backup as before. But it will persist the last mutation SEQNO as part of backup files to server for the Incrementatl start SEQNO in case cbbackup-incr runs.
 
-   cbbackup should print error message and exist without generating any backup files. Since cbbackup-incr won't find any Incremental start SCN, it won't run anyway.
+   cbbackup should print error message and exist without generating any backup files. Since cbbackup-incr won't find any Incremental start SEQNO, it won't run anyway.
 
    cbrestore should work as before, restoring all backup data as a whole. If it is interrupted, it will restore from the beginning again.
 
  - Use new cbrestore tool against existed backup files
 
-    Since no Incremental session SCN found, cbrestore will restore all backup data as a whole. No restartable restore process supported though.
+    Since no Incremental session SEQNO found, cbrestore will restore all backup data as a whole. No restartable restore process supported though.
+
+## Source vs. Target   ##
+
+    |        |   2.x  |  3.0   | 2.x BFF | 3.0 BFF |
+    | ------ | ------ | ------ | ------- | ------- |
+    |  2.x   |   TAP  |   TAP  |   Y     |   N/A   |
+    |  3.0   |   TAP  |   UPR  |   Y     |    Y    |
+
+IBR should automatically identify the version of target server and source data file format. For 2.x target server, TAP protocol will be used as before. For 2.x data format, default value will be used for restore.
+
 What if errors pop up while using IBR tools
 ----------------------------------------
 
  - When using cbbackup
 
-    cbbackup --full will stop when error occurs during data transfering. As result, it won't be a complete and successful backup. No mutation SCN will be persisted though. cbbackup will start from beging when it runs again.
+    cbbackup --full will stop when error occurs during data transfering. As result, it won't be a complete and successful backup. No mutation SEQNO will be persisted though. cbbackup will start from beging when it runs again.
 
  - When using cbbackup-incr
 
-    cbbackup --incr-diff is restartable. it will record the mutation SCN for the last change that is backed up successfully. When it runs again, it will use that SCN as the incremental Start SCN.
+    cbbackup --incr-diff is restartable. it will record the mutation SEQNO for the last change that is backed up successfully. When it runs again, it will use that SEQNO as the incremental Start SEQNO.
 
  - When using cbrestore
 
@@ -305,6 +332,6 @@ Now the backup directory tree has gotten complex, with branching history in it..
 
 Next, what happens when the user tries to restore from that backup_dir?  How does the cbrestore allow the user to figure out what happened and to choose what to restore?
 
-Based on Incremental Session SCN, cbbackup should tell that Wednesday's session SCN is way ahead of the incremental Start SCN retrieved from master node.
+Based on Incremental Session SEQNO, cbbackup should tell that Wednesday's session SEQNO is way ahead of the incremental Start SEQNO retrieved from master node.
 
 As result, it should be able to mark backup state from Tusday and Wednesday as out of sync. cbrestore can take advantage of backup state and skip them as well.
