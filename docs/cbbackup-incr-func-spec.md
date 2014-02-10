@@ -25,11 +25,11 @@ Examples:
     cbbackup couchbase://HOST:8091 /backups/backup-1
 
     Options
-        --mode  [full | incr-diff | incr-cumu | auto]  backup running mode, where
-          full           force to have a full or level 0 backup. Errors throws if backup directory is not empty.
-          incr-diff      differential incremental backup. Error throws if no level 0 backup exists on backup dir. By default, it is true.
-          incr-cumu      cumulative incremental backup. Error throws if no level 0 backup exists on backup dir. By default, it is false
-          auto           tool will decide what the best mode to use.
+        --mode  [full | incr-diff | incr-accu | auto]  backup running mode, default is auto, where
+          full           force to have a full or level 0 backup.
+          incr-diff      differential incremental backup. Only back up the delta changes from the last full or incremental. 
+          incr-accu      accumulative incremental backup. Only back up the delta changes from the last full.
+          auto           Tool will decide what the best mode to use. If no backup data, then it is a full backup. Otherwise, it is a differential incremental one. 
 
     Note, existed cbbackup options will be supported as before. For example, we can backup a single bucket by specify -b option. Or -v to increase verbose level.
 
@@ -44,6 +44,8 @@ options:
     --from-date  data collected sooner than the specified date won't be restored. By default, it is from the very beginning
     --to-date    data collected later than the specified date won't be restored. By default, it is to the very end of collection.
 
+cbrestore will browse through meta.json files under the latest backup chains and find all related .cbb files to restore. A backp chain is conceptually similar to a git branch.
+
 New command line tools
 ----------------------
 
@@ -51,18 +53,20 @@ New command line tools
 
 >  cbbackup-manage [options] backup-dir
 
+Note: this command won't be ready for 3.0
+
 Examples:
 
     cbbackup-manage  --report /backups/backup-1
-    cbbackup-manage  --retent 14 /backups/backup-1
+    cbbackup-manage  --prune 14 /backups/backup-1
     cbbackup-manage  --merge /backups/backup-1
 
 Options:
 
-    --report      report how many backup mutation items in the specified backup directory
-    --retent  RETENION-DAYS  set up retention policy for the backup directory.
-    --delete      automatically delete obsolete files. By default, it won't delete any files.
-    --merge  LEVEL   merge multiple incremental level N backup files into one level N-1backup file, where N > 0
+    --report  report         how many backup mutation items in the specified backup directory
+    --prune  RETENION-DAYS   set up retention policy for the backup directory.
+    --delete                 automatically delete obsolete files. By default, it won't delete any files.
+    --merge  LEVEL           merge multiple incremental level N backup files into one level N-1backup file, where N > 0
 
 Incremental Backups
 -------------------
@@ -70,7 +74,7 @@ Incremental Backups
 By default, cbbackup makes full or level 0 backups. A full backup contains all the mutations and design docs/views in the cluster for all buckets or a specific bucket up to the moment when 
 snapshots are taken.
 
-Contrast to full backups, an incremental backup is to back up only those mutations that have changed since a previous backup. No design docs or views will be backed up for level N incremental backups.
+Contrast to full backups, an incremental backup is to back up only those mutations that have changed since a previous either full backup or incremental backups. 
 
 Multilevel incremental Backups
 ------------------------------
@@ -83,7 +87,7 @@ Level 1 backup is the delta change with respect to the most recent Level 0 or Le
 
 Level 2 backup is the delta change with respect to the most recent Lelve 1 or Level 2.
 
-And so on (Imagine backup level at Level 3, 4, etc)
+And so on (Imagine backup level at Level 3, 4, etc). Currently, we only support Level 1 incremental backup.
 
 Any incremental backup can be either of the following types:
 
@@ -127,33 +131,41 @@ Backup file directory structure
 -------------------------------
 
     backup root dir \
-        + full-2013-10-13 \
-        |   + bucket-<bucketname> \
-        |     + node-<nodename> \
-        |           meta data for backup
-        |            - user to create backup
-        |            - a bucket or all buckets
-        |            - compress or not
-        |            - retention policy defined or not
-        |            - merge level-1 backups or not
-        |            - auditing logs?
-        |            - when backup created
-        |            - when retention runs
-        |            - when merge happens
-        |           *.cbb
-        |           + diff-2013-10-14 \
+        + 2013-10-13_11_28_11 \
+        |   + 2013-10-13_11_28_11-full \
+        |       design.json
+        |       + bucket-<bucketname> \
+        |           + node-<nodename> \
+        |              + meta \
+        |                  meta data for backup
+        |                  - dependent .cbb files which server for baseline for this backup
+        |                  - user to create backup
+        |                  - a bucket or all buckets
+        |                  - compress or not
+        |                  - retention policy defined or not
+        |                  - merge level-1 backups or not
+        |                  - auditing logs?
+        |                  - when retention runs
+        |                  - when merge happens
         |              *.cbb
-        |           + diff-2013-10-14 \
+        |   + 2013-10-14_11_30_00-diff \
+        |       design.json
+        |       + bucket-<bucketname> \
+        |           + node-<nodename> \
+        |              *.cbb
+        |   + 2013-10-15_11_45_20-diff \
         |             ..
-        |           + diff-2013-10-19
-        + full-2013-10-20 \
+        |   + 2013-10-16-12_10_10-accu \
+        + 2013-11-10_11_28_11 \
            ...
 
-Under one root directory, there can be multiple full backup root directories where directory name starts from prefix "full" and ends with timestamp when the directory is created.
+Under one root directory, there can be multiple full backup root directories where directory name is the date time with format as YYYY-MM-DD_HH_MM_SS when full backup starts.
 
-Each full backup root directory will have the current backup directory structure grouped as bucket-bucketname / node-nodename
+Each full backup directory name start with the same time stamp and suffixed with "-full". It will have the current backup directory structure grouped as bucket-bucketname / node-nodename
 
-Under the node directory, it will contain backup files suffixed as ".cbb", i.e. full backup files as baseline for future incremental backups. Besides those backup files, every incremental backup subdirectory will start from here. The directory prefix starts with "diff" for differential incrementals and "cumu" for cumulative incrementals. 
+Under the node directory, it will contain backup files suffixed as ".cbb", i.e. full backup files as baseline for future incremental backups.
+
+Every incremental backup subdirectory sits within the same directory as the full backup directory, . The directory suffix ends with "diff" for differential incrementals and "accu" for accumulative incrementals. 
 
 By default, all backup files won't be compressed. If you want to save disk space, 3rd party tools are needed to compress files. cbrestore tool won't recognize compressed database files. As a result, any compressed files should be decompressed before running cbrestore tool.
 
@@ -223,9 +235,9 @@ Suppose the current date is January 18 and the point of recover-ability is Janua
 Batch deletes of obsolete backups
 --------------------------------
 
-   You can use cbbackup-manage --retent with delete option to clean up obsolete backup files. Assume that the retention period is two weeks, i.e. 14 days, you can run the following command:
+   You can use cbbackup-manage --prune with delete option to clean up obsolete backup files. Assume that the retention period is two weeks, i.e. 14 days, you can run the following command:
 
-    cbbackup-manage --retent 14 --delete /backups/backup1
+    cbbackup-manage --prune 14 --delete /backups/backup1
 
    All obsolete files that are older than the retention period will be deleted. But any deletion action will be recorded in auditing log file under the backup directory.
 
@@ -243,23 +255,35 @@ Bacup file directory structure
  2. New file structure
 
            <backup_root> /
-             full-<TIMESTAMP> /
-               bucket-<BUCKETNAME>/
-                 design.json
-                 node-<NODE>/
-                    data-<XXXX>.cbb
-                    diff-<TIMESTAMP1>/
-                       data-<XXXX>.cbb
-                       design.json
-                    diff-<TIMESTAMP2>/
-                       data-<XXXX>.cbb
-                       design.json
-                    cumu-<TIMESTAMP3>/
-                       data-<XXXX>.cbb
-                       design.json
-             full-<TIMESTAMP2>/
+             <TIMESTAMP1> /
+                <TIMESTAMP1-full> /
+                   design.json
+                   bucket-<BUCKETNAME>/
+                     node-<NODE>/
+                        data-<XXXX>.cbb
+                        meta.json
+                <TIMESTAMP2-diff>/
+                   design.json
+                   bucket-<BUCKETNAME>/
+                     node-<NODE>/
+                        data-<XXXX>.cbb
+                        meta.json
+                <TIMESTAMP3-diff>/
+                   design.json
+                   bucket-<BUCKETNAME>/
+                     node-<NODE>/
+                        data-<XXXX>.cbb
+                        meta.json
+                <TIMESTAMP4-accu>/
+                   design.json
+                   bucket-<BUCKETNAME>/
+                     node-<NODE>/
+                        data-<XXXX>.cbb
+                        meta.json
+             <TIMESTAMP5>/
                    ...
-Full backup or level 0 backup files are under node directory as before. And incremental backup files are under diff-<TIMESTAMP> directory or cumu-<TIMESTAMP>
+Compared to 2.x backup directory structure, you can have multiple full backup directories under the backup root, with timestamp to distinguish from each other. And each backup run, wether it is full,
+differential incremental or accumulative incrementals, are under the same directory with different suffix.
 
 Backward compatibility
 ----------------------
@@ -290,15 +314,15 @@ What if errors pop up while using IBR tools
 
  - When using cbbackup
 
-    cbbackup --full will stop when error occurs during data transfering. As result, it won't be a complete and successful backup. No mutation SEQNO will be persisted though. cbbackup will start from beging when it runs again.
+    cbbackup -m full will stop when error occurs during data transfering. As result, it won't be a complete and successful backup. No mutation SEQNO will be persisted though. cbbackup will start from beging when it runs again.
 
  - When using cbbackup-incr
 
-    cbbackup --incr-diff is restartable. it will record the mutation SEQNO for the last change that is backed up successfully. When it runs again, it will use that SEQNO as the incremental Start SEQNO.
+    cbbackup -m incr-diff is restartable. it will record the mutation SEQNO for the last change that is backed up successfully. When it runs again, it will use that SEQNO as the incremental Start SEQNO.
 
  - When using cbrestore
 
-    cbrestore can be restartable. Unless option full is specified, cbrestore will only restore missing mutations to the destination based on the handshaking result to the destination cluster.
+    Unless specified the restore period, cbrestore will always restore data from all the cbb files from the latest backup chains, i.e. from full, differential and/or accumulative incrementals.
 
     If error pops up during cbrestore, it can begin with whatever leftover from the last cbrestore run.
 
