@@ -17,8 +17,9 @@ from cbqueue import PumpQueue
 
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024
-SFD_REV_META = ">QII" # cas, exp, flg
+SFD_REV_META = ">QIIBB" # cas, exp, flg, flex_meta, dtype
 SFD_REV_SEQ = ">Q"
+SFD_DB_SEQ = ">Q"
 SFD_RE = "^([0-9]+)\\.couch\\.([0-9]+)$"
 
 # TODO: (1) SFDSource - total_msgs.
@@ -208,9 +209,11 @@ class SFDSource(pump.Source):
                     cmd = couchbaseConstants.CMD_TAP_MUTATION
                     val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
 
-                cas, exp, flg = struct.unpack(SFD_REV_META, doc_info.revMeta)
+                cas, exp, flg, flex_meta, dtype = struct.unpack(SFD_REV_META, doc_info.revMeta)
                 meta = struct.pack(SFD_REV_SEQ, doc_info.revSequence)
-                msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
+                seqno = struct.pack(SFD_DB_SEQ, doc_info.sequence)
+                nmeta = 0
+                msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta)
                 abatch[0].append(msg, len(val))
 
             if (abatch[0].size() >= batch_max_size or
@@ -273,12 +276,13 @@ class SFDSink(pump.Sink):
                 bulk_vals = []
 
                 for i, msg in enumerate(msgs):
-                    cmd, _vbucket_id, key, flg, exp, cas, meta, val = msg
+                    cmd, _vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta = msg
                     if self.skip(key, vbucket_id):
                         continue
 
                     d = couchstore.DocumentInfo(str(key))
-                    d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg))
+                    flex_meta = 1
+                    d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg, flex_meta, dtype))
                     if meta:
                         if len(meta) > 8:
                             meta = meta[0:8]
@@ -288,6 +292,8 @@ class SFDSink(pump.Sink):
                     else:
                         d.revSequence = 1
 
+                    if seqno:
+                        d.sequence = int(seqno)
                     if cmd == couchbaseConstants.CMD_TAP_MUTATION:
                         v = str(val)
                         try:

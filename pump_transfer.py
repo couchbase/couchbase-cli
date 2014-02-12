@@ -15,6 +15,7 @@ import pump_gen
 import pump_mbf
 import pump_mc
 import pump_tap
+import pump_upr
 
 from pump import PumpingStation
 
@@ -75,7 +76,6 @@ class Transfer:
             return "error: unknown type of source: " + source
         if not sink_class:
             return "error: unknown type of sink: " + sink
-
         err = sink_class.check_source(opts, source_class, source, sink_class, sink)
         if err:
             return err
@@ -189,6 +189,8 @@ from a source cluster into the caching layer at the destination""")
             "data_only":       (0,      "For value 1, only transfer data from a backup file or cluster"),
             "design_doc_only": (0,      "For value 1, transfer design documents only from a backup file or cluster."),
             "conflict_resolve":(1,      "By default, disable conflict resolution."),
+            "seqno":           (0,      "By default, start seqno from beginning."),
+            "mcd_compatible":  (1,      "For value 0, display extended fields for stdout output."),
             }
 
     def find_handlers(self, opts, source, sink):
@@ -219,6 +221,10 @@ class Backup(Transfer):
                      help="""use a single server node from the source only,
                              not all server nodes from the entire cluster;
                              this single server node is defined by the source URL""")
+        p.add_option("-m", "--mode",
+                    action="store", type="string", default="diff",
+                    help="backup mode: full, diff or accu [default:%default]")
+
         Transfer.opt_parser_options_common(self, p)
 
     def find_handlers(self, opts, source, sink):
@@ -262,6 +268,14 @@ class Restore(Transfer):
                              destination bucket name; this allows you to restore
                              to a different bucket; defaults to the same as the
                              bucket-source""")
+        p.add_option("", "--from-date",
+                    action="store", type="string", default=None,
+                    help="""restore data from the date specified. By default
+                            all data from the very beginning will be restored""")
+        p.add_option("", "--to-date",
+                    action="store", type="string", default=None,
+                    help="""restore data till the date specified. By default
+                            all data that are collected will be restored""")
         Transfer.opt_parser_options_common(self, p)
 
         # TODO: (1) cbrestore parameter --create-design-docs=y|n
@@ -319,6 +333,7 @@ SOURCES = [pump_bfd.BFDSource,
            pump_csv.CSVSource,
            pump_gen.GenSource,
            pump_mbf.MBFSource,
+           pump_upr.UPRStreamSource,
            pump_tap.TAPDumpSource,
            pump.StdInSource]
 

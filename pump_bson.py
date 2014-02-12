@@ -74,7 +74,7 @@ class BSONSource(pump.Source):
             doc = bson._elements_to_dict(doc_buf, dict, True)
             key = doc['_id']
             doc_json = json.dumps(doc)
-            msg = (cmd, vbucket_id, key, flg, exp, cas, '', doc_json)
+            msg = (cmd, vbucket_id, key, flg, exp, cas, '', doc_json, 0, 0, 0)
             batch.append(msg, len(doc))
 
         if batch.size() <= 0:

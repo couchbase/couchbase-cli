@@ -180,6 +180,11 @@ Backup strategy
 
    Design-docs/views will be generated during full backups and incremental backups. But only the latest version of design docs should be used for restore.
 
+    |        |   full exists   |  full non exists  |
+    | ------ | --------------- | ----------------- |
+    |  full  |     full        |      full         |
+    |  accu  |     accu        |      full         |
+    |  diff  |     diff        |      full         |
 
 Incremental Backup Algorithm
 ----------------------------
@@ -282,6 +287,9 @@ Bacup file directory structure
                         meta.json
              <TIMESTAMP5>/
                    ...
+
+All the timestamp on the directory names will be in UTC format as [YYYY]-[MM]-[DD]T[hh][mm][ss]Z.  Example might be 2014-01-31T134511Z. In UTC, it is 1:45:11 PM on Jan 31, 2014.
+
 Compared to 2.x backup directory structure, you can have multiple full backup directories under the backup root, with timestamp to distinguish from each other. And each backup run, wether it is full,
 differential incremental or accumulative incrementals, are under the same directory with different suffix.
 

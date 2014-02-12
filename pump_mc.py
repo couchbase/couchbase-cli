@@ -136,8 +136,14 @@ class MCSink(pump.Sink):
     def send_msgs(self, conn, msgs, operation, vbucket_id=None):
         m = []
 
+        msg_format_length = 0
         for i, msg in enumerate(msgs):
-            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg
+            if not msg_format_length:
+                msg_format_length = len(msg)
+            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg[:8]
+            seqno = dtype = nmeta = 0
+            if msg_format_length > 8:
+                seqno, dtype, nmeta = msg[8:]
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 
@@ -156,7 +162,7 @@ class MCSink(pump.Sink):
                 val = ''
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
-                                       exp, cas, meta, i)
+                                       exp, cas, meta, i, dtype, nmeta)
             if rv != 0:
                 return rv
 
@@ -175,7 +181,7 @@ class MCSink(pump.Sink):
         retry = False
 
         for i, msg in enumerate(msgs):
-            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg
+            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg[:8]
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 
@@ -242,13 +248,13 @@ class MCSink(pump.Sink):
             # The source gave no meta, so use regular commands.
             self.op_map = OP_MAP
 
-        if cmd == couchbaseConstants.CMD_TAP_MUTATION:
+        if cmd in[couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_UPR_MUTATION] :
             m = self.op_map.get(op, None)
             if m:
                 return 0, m
             return "error: MCSink.translate_cmd, unsupported op: " + op, None
 
-        if cmd == couchbaseConstants.CMD_TAP_DELETE:
+        if cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_UPR_DELETE]:
             if op == 'get':
                 return 0, couchbaseConstants.CMD_NOOP
             return 0, self.op_map['delete']
@@ -320,7 +326,7 @@ class MCSink(pump.Sink):
                     (host, port, user), None
         return 0, mc
 
-    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque):
+    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque, dtype, nmeta):
         if (cmd == couchbaseConstants.CMD_SET_WITH_META or
             cmd == couchbaseConstants.CMD_ADD_WITH_META or
             cmd == couchbaseConstants.CMD_DELETE_WITH_META):
@@ -350,7 +356,7 @@ class MCSink(pump.Sink):
         else:
             return "error: MCSink - unknown cmd for request: " + str(cmd), None
 
-        hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque)
+        hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque, dtype)
         return 0, (hdr, ext, key, val)
 
     def cmd_header(self, cmd, vbucket_id, key, val, ext, cas, opaque,

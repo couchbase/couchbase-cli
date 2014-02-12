@@ -262,7 +262,16 @@ class PumpingStation(ProgressReporter):
             logging.debug(" node: %s" % (hostname))
 
             curx = defaultdict(int)
-
+            self.source_class.check_spec(source_bucket,
+                                         source_node,
+                                         self.opts,
+                                         self.source_spec,
+                                         self.ctl)
+            self.sink_class.check_spec(source_bucket,
+                                       source_node,
+                                       self.opts,
+                                       self.sink_spec,
+                                       self.ctl)
             rv = Pump(self.opts,
                       self.source_class(self.opts, self.source_spec,
                                         source_bucket, source_node,
@@ -413,6 +422,11 @@ class EndPoint(object):
                 re.compile(k)
             except:
                 return "error: could not parse key regexp: " + k
+        return 0
+
+    @staticmethod
+    def check_spec(source_bucket, source_node, opts, spec, ctl):
+        ctl['seqno'] = opts.extra['seqno']
         return 0
 
     def __repr__(self):
@@ -593,12 +607,12 @@ class Batch(object):
         """Returns dict of vbucket_id->[msgs] grouped by msg's vbucket_id."""
         g = defaultdict(list)
         for msg in self.msgs:
-            cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
+            vbucket_id = msg[1]
             if vbucket_id == 0x0000ffff or rehash == 1:
                 # Special case when the source did not supply a vbucket_id
                 # (such as stdin source), so we calculate it.
                 vbucket_id = (zlib.crc32(key) >> 16) & (vbuckets_num - 1)
-                msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
+                msg = (msg[0], vbucket_id) + msg[2:]
             g[vbucket_id].append(msg)
         return g
 
@@ -680,7 +694,7 @@ class StdInSource(Source):
                     return "error: value end read failed at: " + line, None
 
                 if not self.skip(key, vbucket_id):
-                    msg = (cmd, vbucket_id, key, flg, exp, 0, '', val)
+                    msg = (cmd, vbucket_id, key, flg, exp, 0, '', val, 0, 0, 0)
                     batch.append(msg, len(val))
             elif parts[0] == 'delete':
                 if len(parts) != 2:
@@ -688,7 +702,7 @@ class StdInSource(Source):
                 cmd = couchbaseConstants.CMD_TAP_DELETE
                 key = parts[1]
                 if not self.skip(key, vbucket_id):
-                    msg = (cmd, vbucket_id, key, 0, 0, 0, '', '')
+                    msg = (cmd, vbucket_id, key, 0, 0, 0, '', '', 0, 0, 0)
                     batch.append(msg, 0)
             else:
                 return "error: expected set/add/delete but got: " + line, None
@@ -748,25 +762,36 @@ class StdOutSink(Sink):
             stdout = opts_etc.get("stdout", sys.stdout)
             msg_visitor = opts_etc.get("msg_visitor", None)
 
+        mcd_compatible = self.opts.extra.get("mcd_compatible", 1)
+        msg_tuple_format = 0
         for msg in batch.msgs:
             if msg_visitor:
                 msg = msg_visitor(msg)
-
-            cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
+            if not msg_tuple_format:
+                msg_tuple_format = len(msg)
+            cmd, vbucket_id, key, flg, exp, cas, meta, val = msg[:8]
+            seqno = dtype = nmeta = 0
+            if msg_tuple_format > 8:
+                seqno, dtype, nmeta = msg[8:]
             if self.skip(key, vbucket_id):
                 continue
-
             try:
-                if cmd == couchbaseConstants.CMD_TAP_MUTATION:
+                if cmd == couchbaseConstants.CMD_TAP_MUTATION or \
+                   cmd == couchbaseConstants.CMD_UPR_MUTATION:
                     if op_mutate:
                         # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
-                        stdout.write("%s %s %s %s %s\r\n" %
-                                     (op, key, flg, exp, len(val)))
+                        if mcd_compatible:
+                            stdout.write("%s %s %s %s %s\r\n" %
+                                         (op, key, flg, exp, len(val)))
+                        else:
+                            stdout.write("%s %s %s %s %s %s %s\r\n" %
+                                         (op, key, flg, exp, len(val), seqno, dtype))
                         stdout.write(val)
                         stdout.write("\r\n")
                     elif op == 'get':
                         stdout.write("get %s\r\n" % (key))
-                elif cmd == couchbaseConstants.CMD_TAP_DELETE:
+                elif cmd == couchbaseConstants.CMD_TAP_DELETE or \
+                     cmd == couchbaseConstants.CMD_UPR_DELETE:
                     if op_mutate:
                         stdout.write("delete %s\r\n" % (key))
                 elif cmd == couchbaseConstants.CMD_GET:

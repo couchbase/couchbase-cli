@@ -235,7 +235,7 @@ class MBFSource(Source):
                     meta = ''
                     flg = socket.ntohl(ctypes.c_uint32(flg).value)
                     batch.append((couchbaseConstants.CMD_TAP_MUTATION,
-                                  vbucket_id, key, flg, exp, cas, meta, val), len(val))
+                                  vbucket_id, key, flg, exp, cas, meta, val, 0, 0, 0), len(val))
                 else:
                     cursor.close()
                     self.cursor_todo = (db, db_kv_names, None, vbucket_states)

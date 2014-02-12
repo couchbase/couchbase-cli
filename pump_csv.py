@@ -86,7 +86,7 @@ class CSVSource(pump.Source):
                         doc[field] = number_try_parse(vals[i])
                 if doc['id']:
                     doc_json = json.dumps(doc)
-                    msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc_json)
+                    msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc_json, 0, 0, 0)
                     batch.append(msg, len(doc))
             except StopIteration:
                 self.done = True
@@ -150,7 +150,7 @@ class CSVSink(pump.Sink):
                     self.future_done(future, 0)
                     return 0, future
 
-                cmd, vbucket_id, key, flg, exp, cas, meta, val = batch.msgs[0]
+                cmd, vbucket_id, key, flg, exp, cas, meta, val = batch.msgs[0][:8]
                 doc = json.loads(val)
                 self.fields = sorted(doc.keys())
                 if 'id' not in self.fields:
@@ -174,12 +174,13 @@ class CSVSink(pump.Sink):
                 self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value'])
 
         for msg in batch.msgs:
-            cmd, vbucket_id, key, flg, exp, cas, meta, val = msg
+            cmd, vbucket_id, key, flg, exp, cas, meta, val = msg[:8]
             if self.skip(key, vbucket_id):
                 continue
 
             try:
-                if cmd == couchbaseConstants.CMD_TAP_MUTATION:
+                if cmd in [couchbaseConstants.CMD_TAP_MUTATION,
+                           couchbaseConstants.CMD_UPR_MUTATION]:
                     if self.fields:
                         if val and len(val) > 0:
                             try:
@@ -196,7 +197,7 @@ class CSVSink(pump.Sink):
                                 pass
                     else:
                         self.writer.writerow([key, flg, exp, cas, val])
-                elif cmd == couchbaseConstants.CMD_TAP_DELETE:
+                elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_UPR_DELETE]:
                     pass
                 elif cmd == couchbaseConstants.CMD_GET:
                     pass

@@ -156,7 +156,7 @@ class TAPDumpSource(pump.Source):
                 if (cmd == couchbaseConstants.CMD_TAP_MUTATION or
                     cmd == couchbaseConstants.CMD_TAP_DELETE):
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val)
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, 0, 0, 0)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                     if cmd == couchbaseConstants.CMD_TAP_DELETE:
@@ -266,7 +266,6 @@ class TAPDumpSource(pump.Source):
                 tap_opts[couchbaseConstants.TAP_FLAG_LIST_VBUCKETS] = ''
 
             ext, val = TAPDumpSource.encode_tap_connect_opts(tap_opts, vblist=self.vbucket_list)
-
             self.tap_conn._sendCmd(couchbaseConstants.CMD_TAP_CONNECT,
                                    self.tap_name, val, 0, ext)
 
@@ -515,7 +514,7 @@ class TapSink(pump_cb.CBSink):
         m = []
         #Ask for acknowledgement for the last msg of batch
         for i, msg in enumerate(msgs):
-            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg
+            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg[:8]
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 
