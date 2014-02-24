@@ -12,6 +12,7 @@ from usage import usage
 import restclient
 import listservers
 import util_cli as util
+import node
 
 # Map of HTTP success code, success message and error message for
 # handling HTTP response properly
@@ -87,6 +88,10 @@ class XDCR:
                 self.replicate_stop()
             elif self.cmd == 'list':
                 self.replicate_list()
+            elif self.cmd == 'pause' or self.cmd == 'resume':
+                self.replicate_pause_resume()
+            elif self.cmd == 'settings':
+                self.replicate_settings()
             else:
                 print "ERROR: unsupported replicate command:", cmd
 
@@ -128,6 +133,12 @@ class XDCR:
                 self.cmd = 'delete'
             elif o == '--list':
                 self.cmd = 'list'
+            elif o == '--settings':
+                self.cmd = 'settings'
+            elif o == '--pause':
+                self.cmd = 'pause'
+            elif o == '--resume':
+                self.cmd = 'resume'
             elif o == '--max-concurrent-reps':
                 self.max_stream = int(a)
             elif o == '--checkpoint-interval':
@@ -279,6 +290,31 @@ class XDCR:
                                      opts)
         print output_result
 
+    def replicate_pause_resume(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        if self.replicator:
+            self.rest_cmd = '/settings/replications/' + urllib.quote_plus(self.replicator)
+            if self.cmd == "pause":
+                rest.setParam('pause_requested', node.bool_to_str(1))
+            elif self.cmd == "resume":
+                rest.setParam('pause_requested', node.bool_to_str(0))
+        else:
+            print "Error: option --xdcr-replicator is needed to pause/resume a replication"
+            return
+
+        opts = {
+            'error_msg': "unable to pause/resume replication",
+            'success_msg': "pause/resume replication"
+        }
+        output_result = rest.restCmd('POST',
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
     def replicate_list(self):
         rest = restclient.RestClient(self.server,
                                      self.port,
@@ -300,6 +336,51 @@ class XDCR:
                 print "   status: %s" % task["status"]
                 print "   source: %s" % task["source"]
                 print "   target: %s" % task["target"]
+
+    def replicate_settings(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        opts = {
+            'error_msg': "unable to set xdcr replication settings",
+            'success_msg': "set xdcr replication settings"
+        }
+        if self.replicator:
+            self.rest_cmd = '/settings/replications/' + urllib.quote_plus(self.replicator)
+        else:
+            print "Error: option --xdcr-replicator is needed to update replication settings"
+            return
+
+        if self.max_stream:
+            rest.setParam('maxConcurrentReps', self.max_stream)
+            opts['success_msg'] += ' xdcrMaxConcurrentReps'
+
+        if self.checkpoint_interval:
+            rest.setParam('checkpointInterval', self.checkpoint_interval)
+            opts['success_msg'] += ' xdcrCheckpointInterval'
+
+        if self.worker_batch_size:
+            rest.setParam('workerBatchSize', self.worker_batch_size)
+            opts['success_msg'] += ' xdcrWorkerBatchSize'
+
+        if self.doc_batch_size:
+            rest.setParam('docBatchSizeKb', self.doc_batch_size)
+            opts['success_msg'] += ' xdcrDocBatchSizeKb'
+
+        if self.failure_restart_interval:
+            rest.setParam('failureRestartInterval', self.failure_restart_interval)
+            opts['success_msg'] += ' xdcrFailureRestartInterval'
+
+        if self.optimistic_replication_threshold:
+            rest.setParam('optimisticReplicationThreshold', self.optimistic_replication_threshold)
+            opts['success_msg'] += ' xdcrOptimisticReplicationThreshold'
+
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
 
     def setting(self):
         rest = restclient.RestClient(self.server,

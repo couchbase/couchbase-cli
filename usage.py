@@ -182,9 +182,19 @@ xdcr-replicate OPTIONS:
   --create                               create and start a new replication
   --delete                               stop and cancel a replication
   --list                                 list all xdcr replications
+  --pause                                pause the replication
+  --resume                               resume the replication
+  --settings                             update settings for the replication
+  --xdcr-replicator=REPLICATOR           replication id
   --xdcr-from-bucket=BUCKET              local bucket name to replicate from
   --xdcr-clucter-name=CLUSTERNAME        remote cluster to replicate to
   --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
+  --max-concurrent-reps=[32]             maximum concurrent replications per bucket, 8 to 256.
+  --checkpoint-interval=[1800]           intervals between checkpoints, 60 to 14400 seconds.
+  --worker-batch-size=[500]              doc batch size, 500 to 10000.
+  --doc-batch-size=[2048]KB              document batching size, 10 to 100000 KB
+  --failure-restart-interval=[30]        interval for restarting failed xdcr, 1 to 300 seconds
+  --optimistic-replication-threshold=[256] document body size threshold (bytes) to trigger optimistic replication
 
 user-manage OPTIONS:
   --set                                  create/modify a read only user
@@ -371,6 +381,30 @@ EXAMPLES:
     couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
         --delete \\
         --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \\
+        -u Administrator -p password
+
+  Pause a running replication stream
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --pause \\
+        --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \\
+        -u Administrator -p password
+
+  Resume a paused replication stream
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --resume \\
+        --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \\
+        -u Administrator -p password
+
+  Update settings for a replication stream
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --settings \\
+        --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \\
+        --max-concurrent-reps=32   \\
+        --checkpoint-interval=1800 \\
+        --worker-batch-size=500    \\
+        --doc-batch-size=2048      \\
+        --failure-restart-interval=30 \\
+        --optimistic-replication-threshold=256 \\
         -u Administrator -p password
 
   List all xdcr replication streams
