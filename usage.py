@@ -114,6 +114,7 @@ bucket-* OPTIONS:
   --bucket-password=PASSWORD        standard port, exclusive with bucket-port
   --bucket-ramsize=RAMSIZEMB        ram quota in MB
   --bucket-replica=COUNT            replication count
+  --bucket-eviction-policy=[valueOnly|fullEviction]   policy how to retain meta in memory
   --enable-flush=[0|1]              enable/disable flush
   --enable-index-replica=[0|1]      enable/disable index replicas
   --wait                            wait for bucket create to be complete before returning
@@ -293,6 +294,7 @@ EXAMPLES:
        --bucket-type=memcached \\
        --bucket-password=password \\
        --bucket-ramsize=200 \\
+       --bucket-eviction-policy=valueOnly \\
        --enable-flush=1 \\
        -u Administrator -p password
 
@@ -301,6 +303,7 @@ EXAMPLES:
        --bucket=test_bucket \\
        --bucket-port=11222 \\
        --bucket-ramsize=400 \\
+       --bucket-eviction-policy=fullEviction \\
        --enable-flush=1 \\
        -u Administrator -p password
 

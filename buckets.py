@@ -54,6 +54,7 @@ class Buckets:
         bucketpassword = ''
         bucketramsize = ''
         bucketreplication = '1'
+        eviction_policy = None
         output = 'default'
         wait_for_bucket_ready = False
         enable_flush = None
@@ -75,6 +76,8 @@ class Buckets:
                 bucketramsize = a
             elif o == '--bucket-replica':
                 bucketreplication = a
+            elif o == '--bucket-eviction-policy':
+                eviction_policy = a
             elif o == '-d' or o == '--debug':
                 self.debug = True
             elif o in ('-o', '--output'):
@@ -130,6 +133,11 @@ class Buckets:
                 rest.setParam('replicaNumber', bucketreplication)
             if enable_flush:
                 rest.setParam('flushEnabled', enable_flush)
+            if eviction_policy:
+                if eviction_policy in ['valueOnly', 'fullEviction']:
+                    rest.setParam('evictionPolicy', eviction_policy)
+                else:
+                    usage("eviction policy value should be either 'valueOnly' or 'fullEviction'.")
             if enable_replica_index and cmd == 'bucket-create':
                 rest.setParam('replicaIndex', enable_replica_index)
         if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):

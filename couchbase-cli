@@ -80,6 +80,7 @@ def main():
                 'bucket-password=',
                 'bucket-ramsize=',
                 'bucket-replica=',
+                'bucket-eviction-policy=',
                 'enable-flush=',
                 'enable-index-replica=',
                 'wait',
