@@ -29,6 +29,7 @@ nobase_pythonlib_DATA= \
          pump_sfd.py \
          pump_tap.py \
          pump_transfer.py \
+         pump_upr.py \
          restclient.py \
          simplejson/LICENSE.txt \
          simplejson/__init__.py \
