@@ -59,6 +59,7 @@ INSTALL(FILES
         pump_sfd.py
         pump_tap.py
         pump_transfer.py
+        pump_upr.py
         restclient.py
         stats_buffer.py
         timeout.py
