@@ -71,7 +71,7 @@ class BFD:
         return json_data["pred"]
 
     @staticmethod
-    def db_dir(opts, spec, bucket_name, node_name):
+    def db_dir(spec, bucket_name, node_name, mode=None):
         parent_dir = os.path.normpath(spec) + \
                         '/bucket-' + urllib.quote_plus(bucket_name) + \
                         '/node-' + urllib.quote_plus(node_name)
@@ -79,11 +79,10 @@ class BFD:
             return parent_dir
 
         #check 3.0 directory structure
-        mode = getattr(opts, "mode", "diff")
         tmstamp = time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime())
         parent_dir = os.path.normpath(spec)
         timepath, dirs = BFD.find_latest_dir(parent_dir, None)
-        if not timepath or mode == "full":
+        if not timepath or not mode or mode == "full":
             # no any backup roots exists
             path = os.path.join(parent_dir, tmstamp, tmstamp+"-full")
             return BFD.construct_dir(path, bucket_name, node_name)
@@ -119,7 +118,7 @@ class BFD:
         return latest_dir, all_subdirs
 
     @staticmethod
-    def find_seqno(opts, spec, bucket_name, node_name):
+    def find_seqno(opts, spec, bucket_name, node_name, mode):
         seqno = {}
         dep = {}
         dep_list = []
@@ -128,7 +127,7 @@ class BFD:
             dep[i] = None
         file_list = []
         parent_dir = os.path.normpath(spec)
-        mode = getattr(opts, "mode", "auto")
+
         if mode == "full":
             return seqno, dep_list
         timedir,latest_dirs = BFD.find_latest_dir(parent_dir, None)
@@ -266,7 +265,7 @@ class BFDSource(BFD, pump.Source):
              "SELECT cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, meta_size FROM cbb_msg"]
 
         if self.files is None: # None != [], as self.files will shrink to [].
-            g =  glob.glob(BFD.db_dir(self.opts, self.spec, self.bucket_name(), self.node_name()) + "/data-*.cbb")
+            g =  glob.glob(BFD.db_dir(self.spec, self.bucket_name(), self.node_name()) + "/data-*.cbb")
             if not g:
                 #check 3.0 file structure
                 rv, file_list = BFDSource.list_files(self.opts,
@@ -348,7 +347,7 @@ class BFDSource(BFD, pump.Source):
     @staticmethod
     def total_msgs(opts, source_bucket, source_node, source_map):
         t = 0
-        file_list = glob.glob(BFD.db_dir(opts,
+        file_list = glob.glob(BFD.db_dir(
                                  source_map['spec'],
                                  source_bucket['name'],
                                  source_node['hostname']) + "/data-*.cbb")
@@ -412,6 +411,7 @@ class BFDSink(BFD, pump.Sink):
                  source_map, sink_map, ctl, cur):
         super(BFDSink, self).__init__(opts, spec, source_bucket, source_node,
                                       source_map, sink_map, ctl, cur)
+        self.mode = "full"
         self.init_worker(BFDSink.run)
 
     @staticmethod
@@ -424,7 +424,11 @@ class BFDSink(BFD, pump.Sink):
         cbb_bytes = 0 # Current cbb msg value bytes total.
         cbb_max_bytes = \
             self.opts.extra.get("cbb_max_mb", 100000) * 1024 * 1024
-        seqno, dep = BFD.find_seqno(self.opts, self.spec, self.source_bucket, self.source_node)
+        seqno, dep = BFD.find_seqno(self.opts,
+                                    self.spec,
+                                    self.source_bucket,
+                                    self.source_node,
+                                    self.mode)
         while not self.ctl['stop']:
             batch, future = self.pull_next_batch()
             if not batch:
@@ -481,14 +485,6 @@ class BFDSink(BFD, pump.Sink):
         spec = os.path.normpath(spec)
         return (os.path.isdir(spec) or (not os.path.exists(spec) and
                                         os.path.isdir(os.path.dirname(spec))))
-
-    @staticmethod
-    def check_spec(source_bucket, source_node, opts, spec, ctl):
-        pump.Sink.check_spec(source_bucket, source_node, opts, spec, ctl)
-
-        seqno, dep = BFD.find_seqno(opts, spec, source_bucket['name'], source_node['hostname'])
-        if seqno:
-            ctl['seqno'] = seqno
 
     @staticmethod
     def check(opts, spec, source_map):
@@ -590,7 +586,10 @@ class BFDSink(BFD, pump.Sink):
             except OSError, e:
                 return "error: could not mkdir: %s; exception: %s" % (spec, e)
 
-        d = BFD.db_dir(self.opts, self.spec, self.bucket_name(), self.node_name())
+        d = BFD.db_dir(self.spec,
+                       self.bucket_name(),
+                       self.node_name(),
+                       getattr(self.opts, "mode", "diff"))
         if not os.path.isdir(d):
             try:
                 os.makedirs(d)

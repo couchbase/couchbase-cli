@@ -1,3 +1,7 @@
+# Distinguish EE from CE packaging
+option (BUILD_ENTERPRISE
+        "Include additional files for EE release" ON)
+
 # Generate the python wrappers
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper.cmake.in
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/couchbase-cli)
@@ -67,6 +71,11 @@ INSTALL(FILES
         util_cli.py
         xdcr.py
         DESTINATION lib/python)
+IF (BUILD_ENTERPRISE)
+    INSTALL(FILES
+            pump_bfd2.py
+            DESTINATION lib/python)
+ENDIF (BUILD_ENTERPRISE)
 
 INSTALL(FILES
         simplejson/LICENSE.txt

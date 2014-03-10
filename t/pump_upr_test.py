@@ -28,6 +28,7 @@ import pump_cb
 import pump_mc
 import pump_tap
 import pump_upr
+import pump_bfd2
 
 import cb_bin_client
 import couchbaseConstants
@@ -550,7 +551,7 @@ class TestPumpingStationFind(unittest.TestCase):
         except ImportError:
             pass
         self.assertEqual(7 + extra_sources, len(pump_transfer.SOURCES))
-        self.assertTrue(6 + extra_sinks, len(pump_transfer.SINKS))
+        self.assertTrue(7 + extra_sinks, len(pump_transfer.SINKS))
 
         self.assertEqual(pump_upr.UPRStreamSource,
                          self.find(None,
@@ -580,7 +581,7 @@ class TestPumpingStationFind(unittest.TestCase):
         self.assertEqual(None,
                          self.find(None, d,
                                    pump_transfer.SOURCES))
-        self.assertEqual(pump_bfd.BFDSink,
+        self.assertEqual(pump_bfd2.BFDSinkEx,
                          self.find(None, d,
                                    pump_transfer.SINKS))
         os.makedirs(d + "/bucket-foo/node-bar")
@@ -895,7 +896,7 @@ class TestBFDSinkCheck(unittest.TestCase):
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", "1", d])
         self.assertEqual(d, backup_dir)
-        rv, map = pump_bfd.BFDSink.check(opts, backup_dir, None)
+        rv, map = pump_bfd2.BFDSinkEx.check(opts, backup_dir, None)
         self.assertEqual(0, rv)
         os.removedirs(d)
 
@@ -905,7 +906,7 @@ class TestBFDSinkCheck(unittest.TestCase):
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", "1", dchild])
         self.assertEqual(dchild, backup_dir)
-        rv, map = pump_bfd.BFDSink.check(opts, backup_dir, None)
+        rv, map = pump_bfd2.BFDSinkEx.check(opts, backup_dir, None)
         self.assertEqual(0, rv)
         os.removedirs(d)
 
@@ -914,7 +915,7 @@ class TestBFDSinkCheck(unittest.TestCase):
         err, opts, source, backup_dir = \
             pump_transfer.Backup().opt_parse(["cbbackup", "1", d])
         self.assertEqual(d, backup_dir)
-        rv, map = pump_bfd.BFDSink.check(opts, backup_dir, None)
+        rv, map = pump_bfd2.BFDSinkEx.check(opts, backup_dir, None)
         self.assertNotEqual(0, rv)
 
 

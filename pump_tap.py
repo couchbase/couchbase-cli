@@ -148,7 +148,7 @@ class TAPDumpSource(pump.Source):
                 # TODO: (1) TAPDumpSource - provide_batch timeout on inactivity.
 
                 rv, cmd, vbucket_id, key, flg, exp, cas, meta, val, \
-                    opaque, need_ack = self.read_tap_conn(tap_conn)
+                    opaque, need_ack, dtype = self.read_tap_conn(tap_conn)
                 if rv != 0:
                     self.tap_done = True
                     return rv, batch
@@ -156,7 +156,7 @@ class TAPDumpSource(pump.Source):
                 if (cmd == couchbaseConstants.CMD_TAP_MUTATION or
                     cmd == couchbaseConstants.CMD_TAP_DELETE):
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, 0, 0, 0)
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, 0, dtype, 0)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                     if cmd == couchbaseConstants.CMD_TAP_DELETE:
@@ -272,7 +272,7 @@ class TAPDumpSource(pump.Source):
         return 0, self.tap_conn
 
     def read_tap_conn(self, tap_conn):
-        buf, cmd, vbucket_id, opaque, cas, keylen, extlen, data, datalen = \
+        buf, cmd, vbucket_id, opaque, cas, keylen, extlen, data, datalen, dtype = \
             self.recv_msg(tap_conn.s, getattr(tap_conn, 'buf', ''))
         tap_conn.buf = buf
 
@@ -302,7 +302,7 @@ class TAPDumpSource(pump.Source):
         elif datalen:
             rv = "error: could not read full TAP message body"
 
-        return rv, cmd, vbucket_id, key, flg, exp, cas, meta, val, opaque, need_ack
+        return rv, cmd, vbucket_id, key, flg, exp, cas, meta, val, opaque, need_ack, dtype
 
     def recv_msg(self, sock, buf):
         pkt, buf = self.recv(sock, couchbaseConstants.MIN_RECV_PACKET, buf)
@@ -313,7 +313,7 @@ class TAPDumpSource(pump.Source):
         if magic != couchbaseConstants.REQ_MAGIC_BYTE:
             raise Exception("unexpected recv_msg magic: " + str(magic))
         data, buf = self.recv(sock, datalen, buf)
-        return buf, cmd, errcode, opaque, cas, keylen, extlen, data, datalen
+        return buf, cmd, errcode, opaque, cas, keylen, extlen, data, datalen, dtype
 
     def recv(self, skt, nbytes, buf):
         recv_arr = [ buf ]
@@ -513,8 +513,14 @@ class TapSink(pump_cb.CBSink):
     def send_msgs(self, conn, msgs, operation, vbucket_id=None):
         m = []
         #Ask for acknowledgement for the last msg of batch
+        msg_format_length = 0
         for i, msg in enumerate(msgs):
+            if not msg_format_length:
+                msg_format_length = len(msg)
             cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg[:8]
+            seqno = dtype = nmeta = 0
+            if msg_format_length > 8:
+                seqno, dtype, nmeta = msg[8:]
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 
@@ -528,7 +534,7 @@ class TapSink(pump_cb.CBSink):
             need_ack = (i == len(msgs)-1)
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
-                                       exp, cas, meta, i, need_ack)
+                                       exp, cas, meta, i, need_ack, dtype)
             if rv != 0:
                 return rv
             self.append_req(m, req)
@@ -539,7 +545,7 @@ class TapSink(pump_cb.CBSink):
                 return "error: conn.send() exception: %s" % (e)
         return 0
 
-    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque, need_ack):
+    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque, need_ack, dtype):
         if meta:
             seq_no = str(meta)
             if len(seq_no) > 8:
@@ -569,7 +575,7 @@ class TapSink(pump_cb.CBSink):
         else:
             return "error: MCSink - unknown tap cmd for request: " + str(cmd), None
 
-        hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque, metalen)
+        hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque, metalen, dtype)
         return 0, (hdr, ext, seq_no, key, val)
 
     def cmd_header(self, cmd, vbucket_id, key, val, ext, cas, opaque, metalen,

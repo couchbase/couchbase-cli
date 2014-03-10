@@ -607,12 +607,12 @@ class Batch(object):
         """Returns dict of vbucket_id->[msgs] grouped by msg's vbucket_id."""
         g = defaultdict(list)
         for msg in self.msgs:
-            vbucket_id = msg[1]
+            cmd, vbucket_id, key = msg[:3]
             if vbucket_id == 0x0000ffff or rehash == 1:
                 # Special case when the source did not supply a vbucket_id
                 # (such as stdin source), so we calculate it.
                 vbucket_id = (zlib.crc32(key) >> 16) & (vbuckets_num - 1)
-                msg = (msg[0], vbucket_id) + msg[2:]
+                msg = (cmd, vbucket_id) + msg[2:]
             g[vbucket_id].append(msg)
         return g
 

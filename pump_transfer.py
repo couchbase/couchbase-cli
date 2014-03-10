@@ -221,15 +221,21 @@ class Backup(Transfer):
                      help="""use a single server node from the source only,
                              not all server nodes from the entire cluster;
                              this single server node is defined by the source URL""")
-        p.add_option("-m", "--mode",
-                    action="store", type="string", default="diff",
-                    help="backup mode: full, diff or accu [default:%default]")
+        try:
+            import pump_bfd2
+            p.add_option("-m", "--mode",
+                        action="store", type="string", default="diff",
+                        help="backup mode: full, diff or accu [default:%default]")
+        except ImportError:
+            p.add_option("-m", "--mode",
+                        action="store", type="string", default="full",
+                        help="backup mode: full")
 
         Transfer.opt_parser_options_common(self, p)
 
     def find_handlers(self, opts, source, sink):
-        return PumpingStation.find_handler(opts, source, SOURCES), pump_bfd.BFDSink
-
+        return PumpingStation.find_handler(opts, source, SOURCES), \
+               PumpingStation.find_handler(opts, sink, SINKS)
 
 class Restore(Transfer):
     """Entry point for 2.0 cbrestore."""
@@ -356,6 +362,11 @@ try:
 except ImportError:
     pass
 
+try:
+    import pump_bfd2
+    SINKS.insert(0, pump_bfd2.BFDSinkEx)
+except ImportError:
+    pass
 
 # TODO: (1) pump_transfer - use QUIET commands
 # TODO: (1) pump_transfer - verify that nth replica got the msg
