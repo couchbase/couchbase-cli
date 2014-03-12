@@ -96,6 +96,7 @@ group-manage OPTIONS:
 
 failover OPTIONS:
   --server-failover=HOST[:PORT]     server to failover
+  --force                           failover node from cluster right away
 
 cluster-* OPTIONS:
   --cluster-username=USER           new admin username

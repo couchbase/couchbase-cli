@@ -140,6 +140,7 @@ class Node:
         #SSL certificate management
         self.certificate_file = None
         self.cmd = None
+        self.hard_failover = None
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
@@ -618,6 +619,8 @@ class Node:
             elif o == '--regenerate-cert':
                 self.cmd = 'regenerate'
                 self.certificate_file = a
+            elif o == '--force':
+                self.hard_failover = True
 
         return servers
 
@@ -805,18 +808,45 @@ class Node:
             rest = restclient.RestClient(self.server,
                                          self.port,
                                          {'debug':self.debug})
-            rest.setParam('otpNode', failover_otp)
-
             opts = {
                 'error_msg': "unable to failover %s" % failover_otp,
                 'success_msg': "failover %s" % failover_otp
             }
-            output_result = rest.restCmd('POST',
-                                         rest_cmds['failover'],
-                                         self.user,
-                                         self.password,
-                                         opts)
-            print output_result
+            rest.setParam('otpNode', failover_otp)
+            if self.hard_failover:
+                output_result = rest.restCmd('POST',
+                                             rest_cmds['failover'],
+                                             self.user,
+                                             self.password,
+                                             opts)
+                print output_result
+            else:
+                output_result = rest.restCmd('POST',
+                                             '/controller/startGracefulFailover',
+                                             self.user,
+                                             self.password,
+                                             opts)
+                if self.debug:
+                    print "INFO: rebalance started: %s" % output_result
+
+                sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+                print "INFO: graceful failover",
+
+                status, error = self.rebalanceStatus(prefix='\n')
+                while status == 'running':
+                    print ".",
+                    time.sleep(0.5)
+                    try:
+                        status, error = self.rebalanceStatus(prefix='\n')
+                    except socket.error:
+                        time.sleep(2)
+                        status, error = self.rebalanceStatus(prefix='\n')
+
+                if error:
+                    print '\n' + error
+                else:
+                    print '\n' + output_result
 
     def userManage(self):
         if self.cmd == 'list':
