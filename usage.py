@@ -14,6 +14,7 @@ def commands_usage():
   rebalance-stop        stop current cluster rebalancing
   rebalance-status      show status of current cluster rebalancing
   failover              failover one or more servers
+  recovery              recover one or more servers
   cluster-init          set the username,password and port of the cluster
   cluster-edit          modify cluster settings
   node-init             set node specific parameters
@@ -97,6 +98,10 @@ group-manage OPTIONS:
 failover OPTIONS:
   --server-failover=HOST[:PORT]     server to failover
   --force                           failover node from cluster right away
+
+recovery OPTIONS:
+  --server-recovery=HOST[:PORT]     server to recover
+  --recovery-type=TYPE[delta|full]  type of recovery to be performed for a node
 
 cluster-* OPTIONS:
   --cluster-username=USER           new admin username
@@ -252,10 +257,33 @@ EXAMPLES:
       --server-add-username=Administrator1 \\
       --server-add-password=password1 \\
       --group-name=group1 \\
-       -u Administrator -p password
+      -u Administrator -p password
 
   Stop the current rebalancing:
     couchbase-cli rebalance-stop -c 192.168.0.1:8091 \\
+       -u Administrator -p password
+
+  Set recovery type to a server:
+    couchbase-cli recovery -c 192.168.0.1:8091 \\
+       --server-recovery=192.168.0.2 \\
+       --recovery-type=full \\
+       -u Administrator -p password
+
+  Set a failover, readd, recovery and rebalance sequence operations \\
+    couchbase-cli failover -c 192.168.0.1:8091 \\
+       --server-failover=192.168.0.2 \\
+       -u Administrator -p password
+
+    couchbase-cli server-readd -c 192.168.0.1:8091 \\
+       --server-add=192.168.0.2 \\
+       -u Administrator -p password
+
+    couchbase-cli recovery -c 192.168.0.1:8091 \\
+       --server-recovery=192.168.0.2 \\
+       --recovery-type=delta \\
+       -u Administrator -p password
+
+    couchbase-cli rebalance -c 192.168.0.1:8091 \\
        -u Administrator -p password
 
   Set the username, password, port and ram quota:
