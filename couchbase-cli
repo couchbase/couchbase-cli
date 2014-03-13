@@ -49,6 +49,7 @@ def main():
                 'server-add-password=',
                 'server-remove=',
                 'server-failover=',
+                'server-recovery=',
                 'cluster-init=',
                 'cluster-init-username=',
                 'cluster-username=',
@@ -138,6 +139,7 @@ def main():
                 'to-group=',
                 'retrieve-cert=',
                 'regenerate-cert=',
+                'recovery-type=',
                 ])
     except getopt.GetoptError, err:
         usage(err)
@@ -158,6 +160,7 @@ def main():
         'rebalance-status'  : node.Node,
         'eject-server'      : node.Node,
         'failover'          : node.Node,
+        'recovery'          : node.Node,
         'cluster-init'      : node.Node,
         'cluster-edit'      : node.Node,
         'ssl-manage'        : node.Node,

@@ -22,6 +22,7 @@ rest_cmds = {
     'server-add'        :'/controller/addNode',
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
+    'recovery'          :'/controller/setRecoveryType',
     'cluster-init'      :'/settings/web',
     'cluster-edit'      :'/settings/web',
     'node-init'         :'/nodes/self/controller/settings',
@@ -39,12 +40,14 @@ server_no_remove = [
     'rebalance-status',
     'server-add',
     'server-readd',
-    'failover'
+    'failover',
+    'recovery',
 ]
 server_no_add = [
     'rebalance-stop',
     'rebalance-status',
     'failover',
+    'recovery',
 ]
 
 # Map of operations and the HTTP methods used against the REST interface
@@ -57,6 +60,7 @@ methods = {
     'server-add'        :'POST',
     'server-readd'      :'POST',
     'failover'          :'POST',
+    'recovery'          :'POST',
     'cluster-init'      :'POST',
     'cluster-edit'      :'POST',
     'node-init'         :'POST',
@@ -140,11 +144,12 @@ class Node:
         #SSL certificate management
         self.certificate_file = None
         self.cmd = None
+
         self.hard_failover = None
+        self.recovery_type = None
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
-
         self.rest_cmd = rest_cmds[cmd]
         self.method = methods[cmd]
         self.server = server
@@ -152,7 +157,6 @@ class Node:
         self.user = user
         self.password = password
         servers = self.processOpts(cmd, opts)
-
         if self.debug:
             print "INFO: servers %s" % servers
 
@@ -165,10 +169,11 @@ class Node:
                   " or use -h for more help.")
 
         if cmd in ('server-add', 'rebalance'):
-            if not self.group_name:
-                self.addServers(servers['add'])
-            else:
-                self.groupAddServers()
+            if len(servers['add']) > 0:
+                if not self.group_name:
+                    self.addServers(servers['add'])
+                else:
+                    self.groupAddServers()
             if cmd == 'rebalance':
                 self.rebalance(servers)
 
@@ -189,6 +194,12 @@ class Node:
                       " or use -h for more help.")
 
             self.failover(servers)
+
+        elif cmd == 'recovery':
+            if len(servers['recovery']) <= 0:
+                usage("please list one or more --server-recovery=HOST[:PORT];"
+                      " or use -h for more help.")
+            self.recovery(servers)
 
         elif cmd in ('cluster-init', 'cluster-edit'):
             self.clusterInit(cmd)
@@ -465,7 +476,8 @@ class Node:
         servers = {
             'add': {},
             'remove': {},
-            'failover': {}
+            'failover': {},
+            'recovery': {}
         }
 
         # don't allow options that don't correspond to given commands
@@ -505,6 +517,10 @@ class Node:
             elif o in ( "--server-failover"):
                 server = "%s:%d" % util.hostport(a)
                 servers['failover'][server] = True
+                server = None
+            elif o in ( "--server-recovery"):
+                server = "%s:%d" % util.hostport(a)
+                servers['recovery'][server] = True
                 server = None
             elif o in ('-o', '--output'):
                 if a == 'json':
@@ -621,6 +637,8 @@ class Node:
                 self.certificate_file = a
             elif o == '--force':
                 self.hard_failover = True
+            elif o == '--recovery-type':
+                self.recovery_type = a
 
         return servers
 
@@ -713,22 +731,44 @@ class Node:
 
         return (known_otps, eject_otps, failover_otps, readd_otps)
 
+    def recovery(self, servers):
+        known_otps, eject_otps, failover_otps, readd_otps = \
+            self.getNodeOtps(to_readd=servers['recovery'])
+        for readd_otp in readd_otps:
+            rest = restclient.RestClient(self.server,
+                                         self.port,
+                                         {'debug':self.debug})
+            opts = {
+                'error_msg': "unable to setRecoveryType for node %s" % readd_otp,
+                'success_msg': "setRecoveryType for node %s" % readd_otp
+            }
+            rest.setParam('otpNode', readd_otp)
+            if self.recovery_type:
+                rest.setParam('recoveryType', self.recovery_type)
+            else:
+                rest.setParam('recoveryType', 'delta')
+            output_result = rest.restCmd('POST',
+                                         '/controller/setRecoveryType',
+                                         self.user,
+                                         self.password,
+                                         opts)
+            print output_result
+
     def rebalance(self, servers):
         known_otps, eject_otps, failover_otps, readd_otps = \
             self.getNodeOtps(to_eject=servers['remove'])
-
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
         rest.setParam('knownNodes', ','.join(known_otps))
         rest.setParam('ejectedNodes', ','.join(eject_otps))
-
         opts = {
             'success_msg': 'rebalanced cluster',
             'error_msg': 'unable to rebalance cluster'
         }
+        rest_request = rest_cmds['rebalance'] + "?requireDeltaRecovery=true"
         output_result = rest.restCmd('POST',
-                                     rest_cmds['rebalance'],
+                                     rest_request,
                                      self.user,
                                      self.password,
                                      opts)
