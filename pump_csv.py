@@ -5,6 +5,7 @@ import logging
 import os
 import simplejson as json
 import sys
+import struct
 
 import couchbaseConstants
 import pump
@@ -171,7 +172,7 @@ class CSVSink(pump.Sink):
                         return ("error: could not write csv to file:%s" % \
                                self.spec[len(CSVSink.CSV_SCHEME):]), None
                 self.writer = csv.writer(csvfile)
-                self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value'])
+                self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev'])
 
         for msg in batch.msgs:
             cmd, vbucket_id, key, flg, exp, cas, meta, val = msg[:8]
@@ -196,7 +197,8 @@ class CSVSink(pump.Sink):
                             except ValueError:
                                 pass
                     else:
-                        self.writer.writerow([key, flg, exp, cas, val])
+                        rev = self.convert_meta(meta)
+                        self.writer.writerow([key, flg, exp, cas, val, rev])
                 elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_UPR_DELETE]:
                     pass
                 elif cmd == couchbaseConstants.CMD_GET:
@@ -209,3 +211,15 @@ class CSVSink(pump.Sink):
         future = pump.SinkBatchFuture(self, batch)
         self.future_done(future, 0)
         return 0, future
+
+    def convert_meta(self, meta):
+        seq_no = str(meta)
+        if len(seq_no) > 8:
+            seq_no = seq_no[0:8]
+        if len(seq_no) < 8:
+            seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + seq_no)[-8:]
+        check_seqno, = struct.unpack(">Q", seq_no)
+        if not check_seqno:
+            check_seqno = 1
+
+        return check_seqno

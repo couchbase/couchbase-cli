@@ -478,7 +478,7 @@ class MCTestHelper(unittest.TestCase):
         flag, _, start, end, uuid, high = struct.unpack(UPR_STREAM_REQ_PKT_FMT, ext)
         self.assertEqual(0, flag)
         self.assertEqual(0, uuid)
-        self.assertEqual(seqno+1, start)
+        self.assertEqual(seqno, start)
         self.assertEqual(0, uuid)
         self.assertEqual(0, high)
 
