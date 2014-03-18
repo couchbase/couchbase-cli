@@ -196,6 +196,7 @@ xdcr-replicate OPTIONS:
   --doc-batch-size=[2048]KB              document batching size, 10 to 100000 KB
   --failure-restart-interval=[30]        interval for restarting failed xdcr, 1 to 300 seconds
   --optimistic-replication-threshold=[256] document body size threshold (bytes) to trigger optimistic replication
+  --xdcr-replication-mode=[xmem|capi]    replication protocol, either capi or xmem.
 
 user-manage OPTIONS:
   --set                                  create/modify a read only user
