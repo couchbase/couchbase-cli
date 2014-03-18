@@ -297,16 +297,16 @@ class XDCR:
         if self.replicator:
             self.rest_cmd = '/settings/replications/' + urllib.quote_plus(self.replicator)
             if self.cmd == "pause":
-                rest.setParam('pause_requested', node.bool_to_str(1))
+                rest.setParam('pauseRequested', node.bool_to_str(1))
             elif self.cmd == "resume":
-                rest.setParam('pause_requested', node.bool_to_str(0))
+                rest.setParam('pauseRequested', node.bool_to_str(0))
         else:
             print "Error: option --xdcr-replicator is needed to pause/resume a replication"
             return
 
         opts = {
-            'error_msg': "unable to pause/resume replication",
-            'success_msg': "pause/resume replication"
+            'error_msg': "unable to %s replication" % self.cmd,
+            'success_msg': "%s replication" % self.cmd
         }
         output_result = rest.restCmd('POST',
                                      self.rest_cmd,
