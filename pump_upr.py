@@ -165,7 +165,8 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     elif errcode == couchbaseConstants.ERR_ROLLBACK:
                         vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno = \
                             self.stream_list[opaque]
-                        start_seqno = struck.unpack(couchbaseConstants.UPR_VB_SEQNO_PKT_FMT, data)
+                        start_seqno, = struct.unpack(couchbaseConstants.UPR_VB_SEQNO_PKT_FMT, data)
+
                         logging.warn("rollback at %s" % start_seqno)
                         self.request_upr_stream(vbid, flags, start_seqno, end_seqno, 0, hi_seqno)
 
@@ -370,8 +371,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 start_seqno = self.ctl['seqno'][int(vbid)]
             else:
                 start_seqno = 0
-
-            self.request_upr_stream(int(vbid), flags, start_seqno+1,
+            self.request_upr_stream(int(vbid), flags, start_seqno,
                                     vb_list[vbid][UPRStreamSource.HIGH_SEQNO],
                                     vb_list[vbid][UPRStreamSource.VB_UUID], 0)
 
