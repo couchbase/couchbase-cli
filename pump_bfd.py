@@ -579,12 +579,19 @@ class BFDSink(BFD, pump.Sink):
                      node-<NODE>/
                        data-<XXXX>.cbb
                    """
+        """CBSE-1052: There appears to be a race condition in os.mkdir. Suppose
+           more than two threads simultaneously try to create the same directory
+           or different directories with a common non-existent ancestor. Both check
+           the directory doesn't exists, then both invoke os.mkdir. One of these
+           will throw OSError due to underlying EEXIST system error."""
+
         spec = os.path.normpath(self.spec)
         if not os.path.isdir(spec):
             try:
                 os.mkdir(spec)
             except OSError, e:
-                return "error: could not mkdir: %s; exception: %s" % (spec, e)
+                if not os.path.isdir(spec):
+                    return "error: could not mkdir: %s; exception: %s" % (spec, e)
 
         d = BFD.db_dir(self.spec,
                        self.bucket_name(),
@@ -594,7 +601,8 @@ class BFDSink(BFD, pump.Sink):
             try:
                 os.makedirs(d)
             except OSError, e:
-                return "error: could not mkdirs: %s; exception: %s" % (d, e), None
+                if not os.path.isdir(d):
+                    return "error: could not mkdirs: %s; exception: %s" % (d, e), None
         return 0, d
 
 
