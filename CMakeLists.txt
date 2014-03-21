@@ -1,3 +1,6 @@
+PROJECT(CouchbaseClient)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+
 # Distinguish EE from CE packaging
 option (BUILD_ENTERPRISE
         "Include additional files for EE release" ON)
