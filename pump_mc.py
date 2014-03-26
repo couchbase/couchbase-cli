@@ -315,11 +315,20 @@ class MCSink(pump.Sink):
         if user:
             try:
                 mc.sasl_auth_cram_md5(str(user), str(pswd))
+            except cb_bin_client.MemcachedError:
+                try:
+                    mc.sasl_auth_plain(str(user), str(pswd))
+                except EOFError:
+                    return "error: SASL auth error: %s:%s, user: %s" % \
+                        (host, port, user), None
+                except cb_bin_client.MemcachedError:
+                    return "error: SASL auth failed: %s:%s, user: %s" % \
+                        (host, port, user), None
+                except socket.error:
+                    return "error: SASL auth exception: %s:%s, user: %s" % \
+                        (host, port, user), None
             except EOFError:
                 return "error: SASL auth error: %s:%s, user: %s" % \
-                    (host, port, user), None
-            except cb_bin_client.MemcachedError:
-                return "error: SASL auth failed: %s:%s, user: %s" % \
                     (host, port, user), None
             except socket.error:
                 return "error: SASL auth exception: %s:%s, user: %s" % \
