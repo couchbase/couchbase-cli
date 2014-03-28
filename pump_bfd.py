@@ -64,14 +64,50 @@ class BFD:
         return glob.glob(os.path.join(parent_dir, "data-*.cbb"))
 
     @staticmethod
-    def get_precessors(parent_dir):
-        json_file = open(os.path.join(parent_dir, "meta.json"), "r")
-        json_data = json.load(json_file)
-        json_file.close()
-        return json_data["pred"]
+    def get_predecessors(parent_dir):
+        try:
+            json_file = open(os.path.join(parent_dir, "meta.json"), "r")
+            json_data = json.load(json_file)
+            json_file.close()
+            return json_data["pred"]
+        except IOError:
+            return []
 
     @staticmethod
-    def db_dir(spec, bucket_name, node_name, mode=None):
+    def get_failover_log(parent_dir):
+        filepath = os.path.join(parent_dir, "failover.json")
+        if os.path.isfile(filepath):
+            json_file = open(filepath, "r")
+            json_data = json.load(json_file)
+            json_file.close()
+            return json_data
+        else:
+            return {}
+
+    @staticmethod
+    def list_files(opts, spec, bucket, node, pattern):
+        file_list = []
+        prec_list = []
+
+    @staticmethod
+    def write_failover_log(parent_dir, failover_logs):
+        filepath = os.path.join(parent_dir, "failover.json")
+        json_data = {}
+        if os.path.isfile(filepath):
+            json_file = open(filepath, "r")
+            json_data = json.load(json_file)
+            json_file.close()
+
+        for i in range(BFD.NUM_VBUCKET):
+            if i in failover_logs:
+                json_data[i] = failover_logs[i]
+
+        json_file = open(filepath, "w")
+        json.dump(json_data, json_file, ensure_ascii=False)
+        json_file.close()
+
+    @staticmethod
+    def db_dir(spec, bucket_name, node_name, mode=None, new_session=False):
         parent_dir = os.path.normpath(spec) + \
                         '/bucket-' + urllib.quote_plus(bucket_name) + \
                         '/node-' + urllib.quote_plus(node_name)
@@ -81,24 +117,47 @@ class BFD:
         #check 3.0 directory structure
         tmstamp = time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime())
         parent_dir = os.path.normpath(spec)
-        timepath, dirs = BFD.find_latest_dir(parent_dir, None)
-        if not timepath or not mode or mode == "full":
+        rootpath, dirs = BFD.find_latest_dir(parent_dir, None)
+        if not rootpath or not mode or mode == "full":
             # no any backup roots exists
             path = os.path.join(parent_dir, tmstamp, tmstamp+"-full")
             return BFD.construct_dir(path, bucket_name, node_name)
 
         #check if any full backup exists
-        path, dirs = BFD.find_latest_dir(timepath, "full")
+        path, dirs = BFD.find_latest_dir(rootpath, "full")
         if not path:
-            path = os.path.join(timepath, tmstamp+"-full")
+            path = os.path.join(rootpath, tmstamp+"-full")
             return BFD.construct_dir(path, bucket_name, node_name)
+        else:
+            #further check full backup for this bucket and node
+            path = BFD.construct_dir(path, bucket_name, node_name)
+            if not os.path.isdir(path):
+                return path
 
         if mode.find("diff") >= 0:
-            path = os.path.join(timepath, tmstamp+"-diff")
-            return BFD.construct_dir(path, bucket_name, node_name)
+            path, dirs = BFD.find_latest_dir(rootpath, "diff")
+            if not path or new_session:
+                path = os.path.join(rootpath, tmstamp+"-diff")
+                return BFD.construct_dir(path, bucket_name, node_name)
+            else:
+                path = BFD.construct_dir(path, bucket_name, node_name)
+                if not os.path.isdir(path):
+                    return path
+                else:
+                    path = os.path.join(rootpath, tmstamp+"-diff")
+                    return BFD.construct_dir(path, bucket_name, node_name)
         elif mode.find("accu") >= 0:
-            path = os.path.join(timepath, tmstamp+"-accu")
-            return BFD.construct_dir(path, bucket_name, node_name)
+            path, dirs = BFD.find_latest_dir(rootpath, "accu")
+            if not path or new_session:
+                path = os.path.join(rootpath, tmstamp+"-accu")
+                return BFD.construct_dir(path, bucket_name, node_name)
+            else:
+                path = BFD.construct_dir(path, bucket_name, node_name)
+                if not os.path.isdir(path):
+                    return path
+                else:
+                    path = os.path.join(rootpath, tmstamp+"-accu")
+                    return BFD.construct_dir(path, bucket_name, node_name)
         else:
             return parent_dir
 
@@ -114,7 +173,8 @@ class BFD:
                 if os.path.isdir(bd):
                     all_subdirs.append(bd)
         if all_subdirs:
-            latest_dir = max(all_subdirs, key=os.path.getmtime)
+            all_subdirs = sorted(all_subdirs,key=os.path.getmtime, reverse=True)
+            latest_dir = all_subdirs[0]
         return latest_dir, all_subdirs
 
     @staticmethod
@@ -122,35 +182,51 @@ class BFD:
         seqno = {}
         dep = {}
         dep_list = []
+        failover_log = {}
         for i in range(BFD.NUM_VBUCKET):
             seqno[i] = 0
             dep[i] = None
+            failover_log[i] = None
+
         file_list = []
+        failoverlog_list = []
         parent_dir = os.path.normpath(spec)
 
         if mode == "full":
-            return seqno, dep_list
+            return seqno, dep_list, failover_log
         timedir,latest_dirs = BFD.find_latest_dir(parent_dir, None)
         if not timedir:
-            return seqno, dep_list
+            return seqno, dep_list, failover_log
         fulldir, latest_dirs = BFD.find_latest_dir(timedir, "full")
         if not fulldir:
-            return seqno, dep_list
-        file_list.extend(recursive_glob(fulldir, 'data-*.cbb'))
+            return seqno, dep_list, failover_log
+
+        path = BFD.construct_dir(fulldir, bucket_name, node_name)
+        if not os.path.isdir(path):
+            return seqno, dep_list, failover_log
+
+        file_list.extend(recursive_glob(path, 'data-*.cbb'))
+        failoverlog_list.extend(recursive_glob(path, 'failover.json'))
+
         accudir, accu_dirs = BFD.find_latest_dir(timedir, "accu")
         if accudir:
-            file_list.extend(recursive_glob(accudir, 'data-*.cbb'))
+            path = BFD.construct_dir(accudir, bucket_name, node_name)
+            if os.path.isdir(path):
+                file_list.extend(recursive_glob(path, 'data-*.cbb'))
+                failoverlog_list.extend(recursive_glob(path, 'failover.json'))
         if mode.find("diff") >= 0:
             diffdir, diff_dirs = BFD.find_latest_dir(timedir, "diff")
             if diff_dirs:
                 for dir in diff_dirs:
-                    file_list.extend(recursive_glob(dir, 'data-*.cbb'))
+                    path = BFD.construct_dir(dir, bucket_name, node_name)
+                    if os.path.isdir(path):
+                        file_list.extend(recursive_glob(path, 'data-*.cbb'))
+                        failoverlog_list.extend(recursive_glob(path, 'failover.json'))
 
         for x in sorted(file_list):
             rv, db, ver = connect_db(x, opts, CBB_VERSION)
             if rv != 0:
-                return seqno, dep_list
-
+                return seqno, dep_list, failover_log
             for i in range(BFD.NUM_VBUCKET):
                 cur = db.cursor()
                 cur.execute("SELECT MAX(seqno) FROM cbb_msg where vbucket_id = %s;" % i)
@@ -162,11 +238,23 @@ class BFD:
                 cur.close()
             db.close()
 
+        for log_file in sorted(failoverlog_list):
+            json_file = open(log_file, "r")
+            json_data = json.load(json_file)
+            json_file.close()
+
+            for vbid, flogs in json_data.iteritems():
+                if vbid not in failover_log.keys():
+                    failover_log[vbid] = flogs
+                else:
+                    for logpair in flogs:
+                        if logpair not in failover_log[vbid]:
+                            failover_log[vbid].extend(logpair)
+
         for i in range(BFD.NUM_VBUCKET):
             if dep[i] and dep[i] not in dep_list:
                 dep_list.append(dep[i])
-
-        return seqno, dep_list
+        return seqno, dep_list, failover_log
 
 # --------------------------------------------------
 
@@ -382,19 +470,25 @@ class BFDSource(BFD, pump.Source):
         path, dirs = BFD.find_latest_dir(spec, None)
         if not path:
             return "error: No valid data in path:" % spec, None
+
         path, dirs = BFD.find_latest_dir(path, None)
         if not path:
             return 0, file_list
-        latest_dir = BFD.construct_dir(path, bucket, node)
-        file_list.extend(glob.glob(os.path.join(latest_dir, pattern)))
-        for p in BFD.get_precessors(latest_dir):
-            prec_list.append(os.path.dirname(p))
+
+        for dir in dirs:
+            latest_dir = BFD.construct_dir(dir, bucket, node)
+            file_list.extend(glob.glob(os.path.join(latest_dir, pattern)))
+            for p in BFD.get_predecessors(latest_dir):
+                prec_list.append(os.path.dirname(p))
+            if len(prec_list) > 0:
+                break
+
         while len(prec_list) > 0:
             deps = glob.glob(os.path.join(prec_list[0], pattern))
             for d in glob.glob(os.path.join(prec_list[0], pattern)):
                 if d not in file_list:
                     file_list.append(d)
-            for p in BFD.get_precessors(prec_list[0]):
+            for p in BFD.get_predecessors(prec_list[0]):
                 dirname = os.path.dirname(p)
                 if dirname not in prec_list:
                     prec_list.append(dirname)
@@ -422,13 +516,15 @@ class BFDSink(BFD, pump.Sink):
         db = None
         cbb = 0       # Current cbb file NUM, like data-NUM.cbb.
         cbb_bytes = 0 # Current cbb msg value bytes total.
+        db_dir = None
         cbb_max_bytes = \
             self.opts.extra.get("cbb_max_mb", 100000) * 1024 * 1024
-        seqno, dep = BFD.find_seqno(self.opts,
-                                    self.spec,
-                                    self.source_bucket,
-                                    self.source_node,
-                                    self.mode)
+        seqno, dep, failover_log = BFD.find_seqno(self.opts,
+                                                  self.spec,
+                                                  self.bucket_name(),
+                                                  self.node_name(),
+                                                  self.mode)
+
         while not self.ctl['stop']:
             batch, future = self.pull_next_batch()
             if not batch:
@@ -439,14 +535,21 @@ class BFDSink(BFD, pump.Sink):
                 db = None
                 cbb += 1
                 cbb_bytes = 0
+                db_dir = None
 
             if not db:
-                rv, db, meta_file = self.create_db(cbb)
+                rv, db, db_dir = self.create_db(cbb)
                 if rv != 0:
                     return self.future_done(future, rv)
+
+                meta_file = os.path.join(db_dir, "meta.json")
                 json_file = open(meta_file, "w")
                 json.dump({'pred': dep}, json_file, ensure_ascii=False)
                 json_file.close()
+
+            if (self.bucket_name(), self.node_name()) in self.cur['failoverlog']:
+                BFD.write_failover_log(db_dir,
+                                   self.cur['failoverlog'][(self.bucket_name(), self.node_name())])
             try:
                 c = db.cursor()
 
@@ -562,7 +665,7 @@ class BFDSink(BFD, pump.Sink):
         except Exception, e:
             return "error: create_db exception: " + str(e), None, None
 
-        return 0, db, dir + "/meta.json"
+        return 0, db, dir
 
     def mkdirs(self):
         """Make directories, if not already, with structure like...
@@ -593,10 +696,13 @@ class BFDSink(BFD, pump.Sink):
                 if not os.path.isdir(spec):
                     return "error: could not mkdir: %s; exception: %s" % (spec, e)
 
+        new_session = self.ctl['new_session']
+        self.ctl['new_session'] = False
         d = BFD.db_dir(self.spec,
                        self.bucket_name(),
                        self.node_name(),
-                       getattr(self.opts, "mode", "diff"))
+                       getattr(self.opts, "mode", "diff"),
+                       new_session)
         if not os.path.isdir(d):
             try:
                 os.makedirs(d)

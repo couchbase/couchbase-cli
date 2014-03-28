@@ -139,14 +139,21 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 seqno = 0
                 if cmd == couchbaseConstants.CMD_UPR_REQUEST_STREAM:
                     if errcode == couchbaseConstants.ERR_SUCCESS:
+                        pair_index = (self.source_bucket['name'], self.source_node['hostname'])
                         start = 0
                         step = UPRStreamSource.HIGH_SEQNO_BYTE + UPRStreamSource.UUID_BYTE
-                        #while start+step <= datalen:
-                        #    uuid, seqno = struct.unpack(
-                        #                    couchbaseConstants.UPR_VB_UUID_SEQNO_PKT_FMT, \
-                        #                    data[start:start + step])
-                        #    #print "vbuuid: %s, seqno:%s" % (uuid, seqno)
-                        #    start = start + step
+                        while start+step <= datalen:
+                            uuid, seqno = struct.unpack(
+                                            couchbaseConstants.UPR_VB_UUID_SEQNO_PKT_FMT, \
+                                            data[start:start + step])
+                            if pair_index not in self.cur['failoverlog']:
+                                self.cur['failoverlog'][pair_index] = {}
+                            if opaque not in self.cur['failoverlog'][pair_index] or \
+                               not self.cur['failoverlog'][pair_index][opaque]:
+                                self.cur['failoverlog'][pair_index][opaque] = [(uuid, seqno)]
+                            else:
+                                self.cur['failoverlog'][pair_index][opaque].append((uuid, seqno))
+                            start = start + step
                     elif errcode == couchbaseConstants.ERR_KEY_ENOENT:
                         logging.warn("producer doesn't know about the vbucket uuid, rollback to 0")
                         vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno = \
@@ -166,9 +173,16 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                         vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno = \
                             self.stream_list[opaque]
                         start_seqno, = struct.unpack(couchbaseConstants.UPR_VB_SEQNO_PKT_FMT, data)
-
-                        logging.warn("rollback at %s" % start_seqno)
-                        self.request_upr_stream(vbid, flags, start_seqno, end_seqno, 0, hi_seqno)
+                        #find the most latest uuid, hi_seqno that fit start_seqno
+                        if self.cur['failoverlog']:
+                            pair_index = (self.source_bucket['name'], self.source_node['hostname'])
+                            if vbid in self.cur['failoverlog'][pair_index]:
+                                for uuid, seqno in self.cur['failoverlog'][pair_index][vbid]:
+                                    if start_seqno >= seqno:
+                                        vb_uuid = uuid
+                                        hi_seqno = seqno
+                                        break
+                        self.request_upr_stream(vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno)
 
                         del self.stream_list[opaque]
                         self.stream_list[opaque] = \
@@ -278,13 +292,21 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 try:
                     self.upr_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
                     self.mem_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
-                    #self.upr_conn.sasl_auth_plain(sasl_user, sasl_pswd)
-                    #self.mem_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                except cb_bin_client.MemcachedError:
+                    try:
+                        self.upr_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                        self.mem_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                    except EOFError:
+                        return "error: SASL auth error: %s:%s, user: %s" % \
+                            (host, port, sasl_user), None
+                    except cb_bin_client.MemcachedError:
+                        return "error: SASL auth failed: %s:%s, user: %s" % \
+                            (host, port, sasl_user), None
+                    except socket.error:
+                        return "error: SASL auth socket error: %s:%s, user: %s" % \
+                            (host, port, sasl_user), None
                 except EOFError:
                     return "error: SASL auth error: %s:%s, user: %s" % \
-                        (host, port, sasl_user), None
-                except cb_bin_client.MemcachedError:
-                    return "error: SASL auth failed: %s:%s, user: %s" % \
                         (host, port, sasl_user), None
                 except socket.error:
                     return "error: SASL auth socket error: %s:%s, user: %s" % \
@@ -366,14 +388,25 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 vb_list[key[3:i-1]][UPRStreamSource.HIGH_SEQNO] = int(val)
 
         flags = 0
+        pair_index = (self.source_bucket['name'], self.source_node['hostname'])
         for vbid in vb_list.iterkeys():
-            if self.ctl['seqno']:
-                start_seqno = self.ctl['seqno'][int(vbid)]
+            if self.cur['seqno'][pair_index]:
+                start_seqno = self.cur['seqno'][pair_index][int(vbid)]
             else:
                 start_seqno = 0
+            hi_seqno = 0
+            uuid = 0
+            if self.cur['failoverlog']:
+                if vbid in self.cur['failoverlog'][pair_index]:
+                    #Use the latest failover log
+                    self.cur['failoverlog'][pair_index][vbid] = \
+                        sorted(self.cur['failoverlog'][pair_index][vbid], \
+                               lambda tup: tup[1], reverse=True)
+                    uuid, hi_seqno = self.cur['failoverlog'][pair_index][vbid][0]
+
             self.request_upr_stream(int(vbid), flags, start_seqno,
                                     vb_list[vbid][UPRStreamSource.HIGH_SEQNO],
-                                    vb_list[vbid][UPRStreamSource.VB_UUID], 0)
+                                    uuid, hi_seqno)
 
     def request_upr_stream(self, vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno):
         if not self.upr_conn:

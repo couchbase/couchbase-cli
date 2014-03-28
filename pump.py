@@ -92,7 +92,7 @@ class PumpingStation(ProgressReporter):
         self.sink_class = sink_class
         self.sink_spec = sink_spec
         self.queue = None
-        self.ctl = { 'stop': False, 'rv': 0 }
+        self.ctl = { 'stop': False, 'rv': 0, 'new_session': True }
         self.cur = defaultdict(int)
 
     def run(self):
@@ -257,7 +257,6 @@ class PumpingStation(ProgressReporter):
         while not self.ctl['stop']:
             source_bucket, source_node, source_map, sink_map = \
                 self.queue.get()
-
             hostname = source_node.get('hostname', NA)
             logging.debug(" node: %s" % (hostname))
 
@@ -266,12 +265,12 @@ class PumpingStation(ProgressReporter):
                                          source_node,
                                          self.opts,
                                          self.source_spec,
-                                         self.ctl)
+                                         curx)
             self.sink_class.check_spec(source_bucket,
                                        source_node,
                                        self.opts,
                                        self.sink_spec,
-                                       self.ctl)
+                                       curx)
             rv = Pump(self.opts,
                       self.source_class(self.opts, self.source_spec,
                                         source_bucket, source_node,
@@ -282,7 +281,8 @@ class PumpingStation(ProgressReporter):
                       source_map, sink_map, self.ctl, curx).run()
 
             for k, v in curx.items():
-                self.cur[k] = self.cur.get(k, 0) + v
+                if isinstance(v, int):
+                    self.cur[k] = self.cur.get(k, 0) + v
 
             logging.debug(" node: %s, done; rv: %s" % (hostname, rv))
             if self.ctl['rv'] == 0 and rv != 0:
@@ -425,8 +425,9 @@ class EndPoint(object):
         return 0
 
     @staticmethod
-    def check_spec(source_bucket, source_node, opts, spec, ctl):
-        ctl['seqno'] = opts.extra['seqno']
+    def check_spec(source_bucket, source_node, opts, spec, cur):
+        cur['seqno'] = {}
+        cur['failoverlog'] = {}
         return 0
 
     def __repr__(self):
