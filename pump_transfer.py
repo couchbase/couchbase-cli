@@ -93,9 +93,11 @@ class Transfer:
         return 0
 
     def opt_parse(self, argv):
-        opts, rest = self.opt_parser().parse_args(argv[1:])
+        p = self.opt_parser()
+        opts, rest = p.parse_args(argv[1:])
         if len(rest) != 2:
-            return "error: please provide both a %s and a %s" % \
+            p.print_help()
+            return "\nError: please provide both a %s and a %s" % \
                 (self.source_alias, self.sink_alias), \
                 None, None, None
 
