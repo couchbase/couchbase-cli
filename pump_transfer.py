@@ -209,8 +209,17 @@ class Backup(Transfer):
             "%prog [options] source backup_dir\n\n" \
             "Online backup of a couchbase cluster or server node.\n\n" \
             "Examples:\n" \
-            "  %prog http://HOST:8091 /backups/backup-42\n" \
-            "  %prog couchbase://HOST:8091 /backups/backup-42"
+            "   These are a full backup plus two incremental backups for a cluster. \n" \
+            "       %prog http://HOST:8091 /backup-42\n" \
+            "       %prog http://HOST:8091 /backup-42\n" \
+            "       %prog http://HOST:8091 /backup-42\n\n" \
+            "   These are a full backup plus two differentials and one accumulative for a single node. \n" \
+            "       %prog couchbase://HOST:8091 /backup-43 [-m full] --single-node\n" \
+            "       %prog couchbase://HOST:8091 /backup-43 [-m diff] --single-node\n" \
+            "       %prog couchbase://HOST:8091 /backup-43 [-m diff] --single-node\n" \
+            "       %prog couchbase://HOST:8091 /backup-43 -m accu --single-node\n\n" \
+            "Note: A full backup task is always triggered for a new sink location\n" \
+            "   no matter what backup mode is specified.\n"
 
     def opt_parser_options(self, p):
         p.add_option("-b", "--bucket-source",
