@@ -172,7 +172,7 @@ class CSVSink(pump.Sink):
                         return ("error: could not write csv to file:%s" % \
                                self.spec[len(CSVSink.CSV_SCHEME):]), None
                 self.writer = csv.writer(csvfile)
-                self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev'])
+                self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev', 'vbid'])
 
         for msg in batch.msgs:
             cmd, vbucket_id, key, flg, exp, cas, meta, val = msg[:8]
@@ -198,7 +198,7 @@ class CSVSink(pump.Sink):
                                 pass
                     else:
                         rev = self.convert_meta(meta)
-                        self.writer.writerow([key, flg, exp, cas, val, rev])
+                        self.writer.writerow([key, flg, exp, cas, val, rev, vbucket_id])
                 elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_UPR_DELETE]:
                     pass
                 elif cmd == couchbaseConstants.CMD_GET:
