@@ -16,7 +16,6 @@ tmp
 /m4/version.m4
 /membase
 /python_wrapper
-/wrapper/wrapper
 /wrapper/couchbase-cli
 /wrapper/cbbackup
 /wrapper/cbrecovery
