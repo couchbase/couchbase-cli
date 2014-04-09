@@ -390,14 +390,15 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         flags = 0
         pair_index = (self.source_bucket['name'], self.source_node['hostname'])
         for vbid in vb_list.iterkeys():
-            if self.cur['seqno'][pair_index]:
+            if self.cur['seqno'] and self.cur['seqno'][pair_index]:
                 start_seqno = self.cur['seqno'][pair_index][int(vbid)]
             else:
                 start_seqno = 0
             hi_seqno = 0
             uuid = 0
-            if self.cur['failoverlog']:
-                if vbid in self.cur['failoverlog'][pair_index]:
+            if self.cur['failoverlog'] and self.cur['failoverlog'][pair_index]:
+                if vbid in self.cur['failoverlog'][pair_index] and \
+                   self.cur['failoverlog'][pair_index][vbid]:
                     #Use the latest failover log
                     self.cur['failoverlog'][pair_index][vbid] = \
                         sorted(self.cur['failoverlog'][pair_index][vbid], \
