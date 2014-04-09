@@ -248,7 +248,9 @@ class BFD:
                     failover_log[vbid] = flogs
                 else:
                     for logpair in flogs:
-                        if logpair not in failover_log[vbid]:
+                        if not failover_log[vbid]:
+                            failover_log[vbid] = [logpair]
+                        elif logpair not in failover_log[vbid]:
                             failover_log[vbid].extend(logpair)
 
         for i in range(BFD.NUM_VBUCKET):
