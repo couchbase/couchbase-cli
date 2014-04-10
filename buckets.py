@@ -35,6 +35,11 @@ methods = {
     'bucket-ddocs': 'GET',
     }
 
+priority = {
+    'low': 3,
+    'high': 8,
+    }
+
 class Buckets:
     def __init__(self):
         self.debug = False
@@ -54,6 +59,7 @@ class Buckets:
         bucketpassword = ''
         bucketramsize = ''
         bucketreplication = '1'
+        bucketpriority = None
         eviction_policy = None
         output = 'default'
         wait_for_bucket_ready = False
@@ -78,6 +84,8 @@ class Buckets:
                 bucketreplication = a
             elif o == '--bucket-eviction-policy':
                 eviction_policy = a
+            elif o == '--bucket-priority':
+                bucketpriority = a
             elif o == '-d' or o == '--debug':
                 self.debug = True
             elif o in ('-o', '--output'):
@@ -140,6 +148,12 @@ class Buckets:
                     usage("eviction policy value should be either 'valueOnly' or 'fullEviction'.")
             if enable_replica_index and cmd == 'bucket-create':
                 rest.setParam('replicaIndex', enable_replica_index)
+            if bucketpriority:
+                if bucketpriority in priority:
+                    rest.setParam('threadsNumber', priority[bucketpriority])
+                else:
+                    usage("bucket priority must be either low or high.")
+
         if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):
             self.rest_cmd = self.rest_cmd + bucketname
         if cmd == 'bucket-flush':

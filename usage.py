@@ -120,6 +120,7 @@ bucket-* OPTIONS:
   --bucket-password=PASSWORD        standard port, exclusive with bucket-port
   --bucket-ramsize=RAMSIZEMB        ram quota in MB
   --bucket-replica=COUNT            replication count
+  --bucket-priority=[low|high]      priority when compared to other buckets
   --bucket-eviction-policy=[valueOnly|fullEviction]   policy how to retain meta in memory
   --enable-flush=[0|1]              enable/disable flush
   --enable-index-replica=[0|1]      enable/disable index replicas
@@ -316,6 +317,7 @@ EXAMPLES:
        --bucket-port=11222 \\
        --bucket-ramsize=200 \\
        --bucket-replica=1 \\
+       --bucket-priority=high \\
        -u Administrator -p password
 
   Create a couchbase bucket and wait for bucket ready:
@@ -325,6 +327,7 @@ EXAMPLES:
        --bucket-port=11222 \\
        --bucket-ramsize=200 \\
        --bucket-replica=1 \\
+       --bucket-priority=low \\
        --wait \\
        -u Administrator -p password
 
@@ -345,6 +348,7 @@ EXAMPLES:
        --bucket-ramsize=400 \\
        --bucket-eviction-policy=fullEviction \\
        --enable-flush=1 \\
+       --bucket-priority=high \\
        -u Administrator -p password
 
   Delete a bucket:
