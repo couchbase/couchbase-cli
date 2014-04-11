@@ -649,13 +649,17 @@ class BFDSink(BFD, pump.Sink):
             return rv, None, None
 
         try:
+            import copy
+            tmp_map = copy.deepcopy(self.source_map)
+            if 'spec_parts' in tmp_map:
+                del tmp_map['spec_parts']
             cur = db.cursor()
             cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
                         ("source_bucket.json",
                          json.dumps(cleanse(self.source_bucket))))
             cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
                         ("source_node.json",
-                         json.dumps(cleanse(self.source_node))))
+                         json.dumps(cleanse(tmp_map))))
             cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
                         ("source_map.json",
                          json.dumps(cleanse(self.source_map))))
