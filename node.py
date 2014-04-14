@@ -346,10 +346,6 @@ class Node:
             self.enable_compaction_parallel = bool_to_str(0)
             rest.setParam('parallelDBAndViewCompaction', self.enable_compaction_parallel)
 
-        if self.compaction_period_from and self.compaction_period_to:
-            if self.compaction_period_from >= self.compaction_period_to:
-                print "ERROR: compaction from time period cannot be late than to time period"
-                return
         if self.compaction_period_from or self.compaction_period_to or self.enable_compaction_abort:
             if not (self.compaction_period_from and self.compaction_period_to and \
                     self.enable_compaction_abort):
