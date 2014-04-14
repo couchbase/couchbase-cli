@@ -178,6 +178,7 @@ xdcr-setup OPTIONS:
   --create                               create a new xdcr configuration
   --edit                                 modify existed xdcr configuration
   --delete                               delete existed xdcr configuration
+  --list                                 list all xdcr configurations
   --xdcr-cluster-name=CLUSTERNAME        cluster name
   --xdcr-hostname=HOSTNAME               remote host name to connect to
   --xdcr-username=USERNAME               remote cluster admin username
@@ -389,8 +390,12 @@ EXAMPLES:
         -u Administrator -p password
 
   Delete a XDCR remote cluster
-    couchbase-cli xdcr-setup -delete -c 192.168.0.1:8091 \\
+    couchbase-cli xdcr-setup --delete -c 192.168.0.1:8091 \\
         --xdcr-cluster-name=test \\
+        -u Administrator -p password
+
+  List XDCR remote cluster
+    couchbase-cli xdcr-setup --list -c 192.168.0.1:8091 \\
         -u Administrator -p password
 
   Start a replication stream in memcached protocol

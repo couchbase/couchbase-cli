@@ -81,6 +81,8 @@ class XDCR:
                 self.setup_create(self.cmd)
             elif self.cmd == 'delete':
                 self.setup_delete()
+            elif self.cmd == 'list':
+                self.setup_list()
         if cmd == 'xdcr-replicate':
             if self.cmd == 'create':
                 self.replicate_start()
@@ -239,6 +241,27 @@ class XDCR:
                                      self.password,
                                      opts)
         print output_result
+
+    def setup_list(self):
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        opts = {
+            'error_msg': "unable to list xdcr remote cluster",
+            'success_msg': "list remote cluster successfully",
+        }
+        output_result = rest.restCmd('GET',
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        clusters = rest.getJson(output_result)
+        for cluster in clusters:
+            print "cluster name: %s" % cluster["name"]
+            print "        uuid: %s" % cluster["uuid"]
+            print "   host name: %s" % cluster["hostname"]
+            print "   user name: %s" % cluster["username"]
+            print "         uri: %s" % cluster["uri"]
 
     def replicate_start(self):
         rest = restclient.RestClient(self.server,
