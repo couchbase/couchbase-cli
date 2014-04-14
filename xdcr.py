@@ -190,6 +190,9 @@ class XDCR:
             rest.setParam('password', "password")
 
         if self.demand_encryption:
+            if self.demand_encryption not in [0, 1]:
+                print "ERROR: xdcr-demand-encryption can only be either 0 or 1."
+                return
             rest.setParam("demandEncryption", self.demand_encryption)
             if self.certificate:
                 if os.path.isfile(self.certificate):
