@@ -83,6 +83,7 @@ server-readd OPTIONS:
 rebalance OPTIONS:
   --server-add*                     see server-add OPTIONS
   --server-remove=HOST[:PORT]       the server to be removed
+  --recovery-buckets=BUCKETS        comma separated list of bucket name. Default is for all buckets.
 
 group-manage OPTIONS:
   --group-name=GROUPNAME            group name
@@ -286,6 +287,7 @@ EXAMPLES:
        -u Administrator -p password
 
     couchbase-cli rebalance -c 192.168.0.1:8091 \\
+       --recovery-buckets="default,bucket1" \\
        -u Administrator -p password
 
   Set the username, password, port and ram quota:

@@ -141,6 +141,7 @@ def main():
                 'retrieve-cert=',
                 'regenerate-cert=',
                 'recovery-type=',
+                'recovery-buckets=',
                 ])
     except getopt.GetoptError, err:
         usage(err)

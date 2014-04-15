@@ -147,6 +147,7 @@ class Node:
 
         self.hard_failover = None
         self.recovery_type = None
+        self.recovery_buckets = None
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
@@ -635,6 +636,8 @@ class Node:
                 self.hard_failover = True
             elif o == '--recovery-type':
                 self.recovery_type = a
+            elif o == '--recovery-buckets':
+                self.recovery_buckets = a
 
         return servers
 
@@ -758,13 +761,14 @@ class Node:
                                      {'debug':self.debug})
         rest.setParam('knownNodes', ','.join(known_otps))
         rest.setParam('ejectedNodes', ','.join(eject_otps))
+        if self.recovery_buckets:
+            rest.setParam('requireDeltaRecoveryBuckets', self.recovery_buckets)
         opts = {
             'success_msg': 'rebalanced cluster',
             'error_msg': 'unable to rebalance cluster'
         }
-        rest_request = rest_cmds['rebalance'] + "?requireDeltaRecovery=true"
         output_result = rest.restCmd('POST',
-                                     rest_request,
+                                     rest_cmds['rebalance'],
                                      self.user,
                                      self.password,
                                      opts)
