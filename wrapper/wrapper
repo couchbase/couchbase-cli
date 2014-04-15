@@ -2,14 +2,23 @@
 
 CWD="`pwd`"
 D0="`dirname "$0"`"
-cd $D0/../lib/python
-root="`pwd`"
+cd $D0/../lib
+lib="`pwd`"
+root="$lib/python"
 cd "$CWD"
 
-if test -z "$PYTHONPATH"; then
+if test -z "$PYTHONPATH"
+then
    PYTHONPATH="$root"
 else
    PYTHONPATH="$root:$PYTHONPATH"
 fi
 export PYTHONPATH
+
+if test -z "${LD_LIBRARY_PATH}"; then
+   LD_LIBRARY_PATH="$lib"
+else
+   LD_LIBRARY_PATH="$lib":$LD_LIBRARY_PATH
+fi
+export LD_LIBRARY_PATH
 exec "$root"/`basename "$0"` "$@"
