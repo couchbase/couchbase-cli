@@ -113,6 +113,7 @@ cluster-* OPTIONS:
 node-init OPTIONS:
   --node-init-data-path=PATH        per node path to store data
   --node-init-index-path=PATH       per node path to store index
+  --node-init-hostname=NAME         hostname for the node. Default is 127.0.0.1
 
 bucket-* OPTIONS:
   --bucket=BUCKETNAME               bucket to act on
@@ -220,10 +221,11 @@ ssl-manage OPTIONS:
 The default PORT number is 8091.
 
 EXAMPLES:
-  Set data path for an unprovisioned cluster:
+  Set data path and hostname for an unprovisioned cluster:
     couchbse-cli node-init -c 192.168.0.1:8091 \\
        --node-init-data-path=/tmp/data \\
        --node-init-index-path=/tmp/index \\
+       --node-init-hostname=myhostname \\
        -u Administrator -p password
 
   List servers in a cluster:

@@ -100,6 +100,7 @@ class Node:
         self.per_node_quota = None
         self.data_path = None
         self.index_path = None
+        self.hostname = None
         self.enable_auto_failover = None
         self.enable_notification = None
         self.autofailover_timeout = None
@@ -307,6 +308,24 @@ class Node:
                                      self.password,
                                      opts)
         print output_result
+        if self.hostname:
+            rest = restclient.RestClient(self.server,
+                                         self.port,
+                                         {'debug':self.debug})
+            if self.hostname:
+                rest.setParam('hostname', self.hostname)
+
+            opts = {
+                "error_msg": "unable to set hostname for %s" % self.server,
+                "success_msg": "set hostname for %s" % self.server
+            }
+
+            output_result = rest.restCmd('POST',
+                                         '/node/controller/rename',
+                                         self.user,
+                                         self.password,
+                                         opts)
+            print output_result
 
     def compaction(self):
         rest = restclient.RestClient(self.server,
@@ -562,6 +581,8 @@ class Node:
                 self.data_path = a
             elif o == '--node-init-index-path':
                 self.index_path = a
+            elif o == '--node-init-hostname':
+                self.hostname = a
             elif o == '--email-recipients':
                 self.email_recipient = a
             elif o == '--email-sender':

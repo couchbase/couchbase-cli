@@ -75,6 +75,7 @@ def main():
                 'node-init=',
                 'node-init-data-path=',
                 'node-init-index-path=',
+                'node-init-hostname=',
                 'bucket=',
                 'bucket-type=',
                 'bucket-port=',
