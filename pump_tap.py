@@ -162,7 +162,8 @@ class TAPDumpSource(pump.Source):
                     if cmd == couchbaseConstants.CMD_TAP_DELETE:
                         batch.adjust_size += 1
                 elif cmd == couchbaseConstants.CMD_TAP_OPAQUE:
-                    pass
+                    if not need_ack:
+                        pass
                 elif cmd == couchbaseConstants.CMD_NOOP:
                     # 1.8.x servers might not end the TAP dump on an empty bucket,
                     # so we treat 2 NOOP's in a row as the end and proactively close.
@@ -172,6 +173,7 @@ class TAPDumpSource(pump.Source):
                         self.num_msg == 0 and
                         batch.size() <= 0):
                         self.tap_done = True
+                        logging.debug("Receive 2 NOOp's in a row. Close it proactively.")
                         return 0, batch
                 elif cmd == couchbaseConstants.CMD_TAP_FLUSH:
                     logging.warn("stopping: saw CMD_TAP_FLUSH")
@@ -213,6 +215,8 @@ class TAPDumpSource(pump.Source):
             if batch.size() <= 0 and self.ack_last:
                 # A closed conn after an ACK means clean end of TAP dump.
                 self.tap_done = True
+            else:
+                logging.warn("Connection is closed prematurely")
 
         if batch.size() <= 0:
             return 0, None
