@@ -313,18 +313,42 @@ class XDCR:
         print output_result
 
     def replicate_pause_resume(self):
+        if not self.replicator:
+            print "Error: option --xdcr-replicator is needed to pause/resume a replication"
+            return
+
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
-        if self.replicator:
-            self.rest_cmd = '/settings/replications/' + urllib.quote_plus(self.replicator)
-            if self.cmd == "pause":
-                rest.setParam('pauseRequested', node.bool_to_str(1))
-            elif self.cmd == "resume":
-                rest.setParam('pauseRequested', node.bool_to_str(0))
-        else:
-            print "Error: option --xdcr-replicator is needed to pause/resume a replication"
-            return
+
+        opts = {
+            'error_msg': "unable to retrieve any replication streams",
+            'success_msg': "list replication streams"
+        }
+        output_result = rest.restCmd('GET',
+                                     '/pools/default/tasks',
+                                     self.user,
+                                     self.password,
+                                     opts)
+        tasks = rest.getJson(output_result)
+        for task in tasks:
+            if task["type"] == "xdcr" and task["id"] == self.replicator:
+                if self.cmd == "pause" and task["status"] == "notRunning":
+                    print "The replication is not running yet. Pause is not needed"
+                    return
+                if self.cmd == "resume" and task["status"] == "running":
+                    print "The replication is running already. Resume is not needed"
+                    return
+                break
+
+        rest = restclient.RestClient(self.server,
+                                     self.port,
+                                     {'debug':self.debug})
+        self.rest_cmd = '/settings/replications/' + urllib.quote_plus(self.replicator)
+        if self.cmd == "pause":
+            rest.setParam('pauseRequested', node.bool_to_str(1))
+        elif self.cmd == "resume":
+            rest.setParam('pauseRequested', node.bool_to_str(0))
 
         opts = {
             'error_msg': "unable to %s replication" % self.cmd,
