@@ -860,7 +860,7 @@ def rest_request(host, port, user, pswd, path, method='GET', body='', reason='',
         resp = conn.getresponse()
     except Exception, e:
         return ("error: could not access REST API: %s:%s%s" +
-                "; please check source URL, username (-u) and password (-p)" +
+                "; please check source URL, server status, username (-u) and password (-p)" +
                 "; exception: %s%s") % \
                 (host, port, path, e, reason), None, None
 
@@ -870,11 +870,11 @@ def rest_request(host, port, user, pswd, path, method='GET', body='', reason='',
     conn.close()
     if resp.status == 401:
         return ("error: unable to access REST API: %s:%s%s" +
-                "; please check source URL, username (-u) and password (-p)%s") % \
+                "; please check source URL, server status, username (-u) and password (-p)%s") % \
                 (host, port, path, reason), None, None
 
     return ("error: unable to access REST API: %s:%s%s" +
-            "; please check source URL, username (-u) and password (-p)" +
+            "; please check source URL, server status, username (-u) and password (-p)" +
             "; response: %s%s") % \
             (host, port, path, resp.status, reason), None, None
 
