@@ -162,17 +162,13 @@ class XDCR:
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
-
-        if self.remote_cluster:
+        if not self.remote_cluster:
+            print "Error: --xdcr-cluster-name is required to create/edit cluster connection"
+            return
+        else:
             rest.setParam('name', self.remote_cluster)
             if cmd == 'edit':
                 self.rest_cmd = self.rest_cmd + "/" + urllib.quote(self.remote_cluster)
-        else:
-            if cmd == 'edit':
-                print "Error: Cluster name is needed to edit cluster connections"
-                return
-            else:
-                rest.setParam('name', 'remote cluster')
 
         if self.remote_hostname:
             rest.setParam('hostname', self.remote_hostname)
