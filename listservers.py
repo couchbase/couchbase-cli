@@ -75,8 +75,7 @@ class ListServers:
                 print node['hostname']
             else:
                 if node.get('otpNode') is None:
-                    raise Exception("could not access node;" +
-                                    " please check your username (-u) and password (-p)")
+                    raise Exception("could not access node")
 
                 print '%s %s %s %s' % (node['otpNode'],
                                        node['hostname'],

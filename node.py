@@ -735,8 +735,7 @@ class Node:
 
         for node in known_nodes_list:
             if node.get('otpNode') is None:
-                raise Exception("could not access node;" +
-                                " please check your username (-u) and password (-p)")
+                raise Exception("could not access node")
 
             known_otps.append(node['otpNode'])
             if node['hostname'] in to_eject:

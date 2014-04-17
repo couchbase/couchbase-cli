@@ -108,7 +108,7 @@ class Buckets:
 
         # get the parameters straight
         opts = {}
-        opts['error_msg'] = "unable to %s; please check your username (-u) and password (-p);" % cmd
+        opts['error_msg'] = "unable to %s;" % cmd
         opts['success_msg'] = "%s" % cmd
 
         if cmd in ('bucket-create', 'bucket-edit'):
@@ -169,7 +169,7 @@ class Buckets:
                     return False
             else:
                 print "Database data will be purged from disk ..."
-            opts['error_msg'] = "unable to %s; please check username/password or if the bucket exists or not;" % cmd
+            opts['error_msg'] = "unable to %s; please check if the bucket exists or not;" % cmd
         elif cmd == 'bucket-compact':
             if compact_data_only and compact_view_only:
                 print "You cannot compact data only and view only at the same time."
