@@ -197,8 +197,8 @@ class CSVSink(pump.Sink):
                             except ValueError:
                                 pass
                     else:
-                        rev = self.convert_meta(meta)
-                        self.writer.writerow([key, flg, exp, cas, val, rev, vbucket_id])
+                        #rev = self.convert_meta(meta)
+                        self.writer.writerow([key, flg, exp, cas, val, meta, vbucket_id])
                 elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_UPR_DELETE]:
                     pass
                 elif cmd == couchbaseConstants.CMD_GET:
