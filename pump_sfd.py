@@ -41,6 +41,12 @@ class SFDSource(pump.Source):
         return spec.startswith(SFD_SCHEME)
 
     @staticmethod
+    def check_base(opts, spec):
+        # Skip immediate superclass Source.check_base(),
+        # since SFDSource can handle different vbucket states.
+        return EndPoint.check_base(opts, spec)
+
+    @staticmethod
     def check(opts, spec):
         rv, d = data_dir(spec)
         if rv != 0:
