@@ -64,6 +64,10 @@ OPTIONS:
   -o KIND, --output=KIND            KIND is json or standard
   -d, --debug
 
+NOTE:
+    USERNAME can be set in evvironment variable CB_REST_USERNAME and/or
+    PASSWORD can be set in environment variable CB_REST_PASSWORD instead
+
 server-add OPTIONS:
   --server-add=HOST[:PORT]          server to be added
   --server-add-username=USERNAME    admin username for the

@@ -822,6 +822,14 @@ CMD_STR = {
     couchbaseConstants.CMD_NOOP: "NOOP"
 }
 
+def get_username(username):
+    return username or \
+        ('CB_REST_USERNAME' in os.environ and os.environ['CB_REST_USERNAME']) or ''
+
+def get_password(password):
+    return password or \
+        ('CB_REST_PASSWORD' in os.environ and os.environ['CB_REST_PASSWORD']) or ''
+
 def parse_spec(opts, spec, port):
     """Parse host, port, username, password, path from opts and spec."""
 
@@ -839,13 +847,11 @@ def parse_spec(opts, spec, port):
     host = (pair[-1] + ":" + str(port)).split(':')[0]
     port = (pair[-1] + ":" + str(port)).split(':')[1]
 
-    username = opts.username
-    password = opts.password
+    username = get_username(opts.username)
+    password = get_password(opts.password)
     if len(pair) > 1:
-        username = username or (pair[0] + ':').split(':')[0] \
-            or os.environ['CB_REST_USERNAME'] or ''
-        password = password or (pair[0] + ':').split(':')[1] \
-            or os.environ['CB_REST_PASSWORD'] or ''
+        username = username or (pair[0] + ':').split(':')[0]
+        password = password or (pair[0] + ':').split(':')[1]
 
     return host, port, username, password, p[2]
 

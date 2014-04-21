@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging
+import os
 import random
 import simplejson as json
 import socket
@@ -239,10 +240,8 @@ class TAPDumpSource(pump.Source):
                 return "error: could not connect to memcached: " + \
                     host + ":" + str(port), None
 
-            sasl_user = str(self.source_bucket.get("name",
-                                                   self.opts.username) or "")
-            sasl_pswd = str(self.source_bucket.get("saslPassword",
-                                                   self.opts.password) or "")
+            sasl_user = str(pump.get_username(self.source_bucket.get("name", self.opts.username)))
+            sasl_pswd = str(pump.get_password(self.source_bucket.get("saslPassword", self.opts.password)))
             if sasl_user:
                 try:
                     self.tap_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
