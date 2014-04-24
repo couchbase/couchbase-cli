@@ -6,6 +6,7 @@ import os
 import simplejson as json
 import sys
 import struct
+import urllib
 
 import couchbaseConstants
 import pump
@@ -113,6 +114,17 @@ class CSVSink(pump.Sink):
         self.writer = None
         self.fields = None
 
+    def bucket_name(self):
+        if 'name' in self.source_bucket:
+            return self.source_bucket['name']
+        else:
+            return ""
+
+    def node_name(self):
+        if 'hostname' in self.source_node:
+            return self.source_node['hostname']
+        else:
+            return ""
 
     @staticmethod
     def can_handle(opts, spec):
@@ -157,20 +169,21 @@ class CSVSink(pump.Sink):
                 if 'id' not in self.fields:
                     self.fields = ['id'] + self.fields
                 if self.spec.endswith(".csv"):
+                    filename = self.get_csvfile(self.spec[len(CSVSink.CSV_JSON_SCHEME):])
                     try:
-                        csvfile = open(self.spec[len(CSVSink.CSV_JSON_SCHEME):], "wb")
+                        csvfile = open(filename, "wb")
                     except IOError, e:
-                        return ("error: could not write csv to file:%s" % \
-                               self.spec[len(CSVSink.CSV_JSON_SCHEME):]), None
+                        return ("error: could not write csv to file:%s" % filename), None
                 self.writer = csv.writer(csvfile)
                 self.writer.writerow(self.fields)
             else:
                 if self.spec.endswith(".csv"):
+                    filename = self.get_csvfile(self.spec[len(CSVSink.CSV_SCHEME):])
                     try:
-                        csvfile = open(self.spec[len(CSVSink.CSV_SCHEME):], "wb")
+                        csvfile = open(filename, "wb")
                     except IOError, e:
                         return ("error: could not write csv to file:%s" % \
-                               self.spec[len(CSVSink.CSV_SCHEME):]), None
+                               filename), None
                 self.writer = csv.writer(csvfile)
                 self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev', 'vbid'])
 
@@ -211,6 +224,15 @@ class CSVSink(pump.Sink):
         future = pump.SinkBatchFuture(self, batch)
         self.future_done(future, 0)
         return 0, future
+
+    def get_csvfile(self, base):
+        extension = os.path.splitext(base)
+        filename = extension[0]
+        if self.bucket_name():
+            filename = filename + "_" + urllib.quote_plus(self.bucket_name())
+        if self.node_name():
+            filename = filename + "_" + urllib.quote_plus(self.node_name())
+        return filename + extension[1]
 
     def convert_meta(self, meta):
         seq_no = str(meta)
