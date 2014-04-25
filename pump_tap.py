@@ -197,7 +197,6 @@ class TAPDumpSource(pump.Source):
                                 " or had connectivity/server problems" %
                                 (self.source_node['hostname'])), batch
                     except EOFError:
-                        self.tap_done = True
                         return ("error: EOFError on socket send();"
                                 " perhaps the source server: %s was rebalancing"
                                 " or had connectivity/server problems" %
