@@ -216,8 +216,8 @@ class SFDSource(pump.Source):
                     val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
 
                 cas, exp, flg, flex_meta, dtype = struct.unpack(SFD_REV_META, doc_info.revMeta)
-                meta = struct.pack(SFD_REV_SEQ, doc_info.revSequence)
-                seqno = struct.pack(SFD_DB_SEQ, doc_info.sequence)
+                meta = doc_info.revSequence
+                seqno = doc_info.sequence
                 nmeta = 0
                 msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta)
                 abatch[0].append(msg, len(val))
