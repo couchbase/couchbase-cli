@@ -30,7 +30,7 @@ class CBSink(pump_mc.MCSink):
 
         # Scatter or send phase.
         for vbucket_id, msgs in vbuckets.iteritems():
-            rv, conn = self.find_conn(mconns, vbucket_id)
+            rv, conn = self.find_conn(mconns, vbucket_id, msgs)
             if rv != 0:
                 return rv, None, None
             rv = self.send_msgs(conn, msgs, self.operation(),
@@ -46,7 +46,7 @@ class CBSink(pump_mc.MCSink):
 
         # Gather or recv phase.
         for vbucket_id, msgs in vbuckets.iteritems():
-            rv, conn = self.find_conn(mconns, vbucket_id)
+            rv, conn = self.find_conn(mconns, vbucket_id, msgs)
             if rv != 0:
                 return rv, None, None
             rv, retry, refresh = self.recv_msgs(conn, msgs, vbucket_id=vbucket_id)
@@ -200,7 +200,7 @@ class CBSink(pump_mc.MCSink):
 
         return 0
 
-    def find_conn(self, mconns, vbucket_id):
+    def find_conn(self, mconns, vbucket_id, msgs):
         bucket = self.sink_map['buckets'][0]
 
         vBucketMap = bucket['vBucketServerMap']['vBucketMap']
@@ -224,5 +224,14 @@ class CBSink(pump_mc.MCSink):
                 logging.error("error: CBSink.connect() for send: " + rv)
                 return rv, None
             mconns[host_port] = conn
-
+            #check if we need to calll hello command
+            for i, msg in enumerate(msgs):
+                msg_format_length = len(msg)
+                if msg_format_length > 8:
+                    try:
+                        conn.hello()
+                    except Exception, e:
+                        logging.warn("fail to call hello command, maybe it is not supported")
+                        pass
+                break
         return 0, conn

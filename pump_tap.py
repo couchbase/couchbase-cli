@@ -263,6 +263,12 @@ class TAPDumpSource(pump.Source):
                     return "error: SASL auth socket error: %s:%s, user: %s" % \
                         (host, port, sasl_user), None
 
+            try:
+                self.tap_conn.hello()
+            except Exception, e:
+                logging.warn("fail to call hello command, maybe it is not supported.")
+                pass
+
             # We explicitly do not use TAP_FLAG_REGISTERED_CLIENT,
             # as that is for checkpoint/incremental backup only.
             #
@@ -454,7 +460,7 @@ class TapSink(pump_cb.CBSink):
 
         # Scatter or send phase.
         for vbucket_id, msgs in vbuckets.iteritems():
-            rv, conn = self.find_conn(mconns, vbucket_id)
+            rv, conn = self.find_conn(mconns, vbucket_id, msgs)
             if rv != 0:
                 return rv, None, None
             rv = self.send_msgs(conn, msgs, self.operation(),
@@ -472,7 +478,7 @@ class TapSink(pump_cb.CBSink):
         need_refresh = False
         for vbucket_id, msgs in vbuckets.iteritems():
             last_msg.append(msgs[-1])
-            rv, conn = self.find_conn(mconns, vbucket_id)
+            rv, conn = self.find_conn(mconns, vbucket_id, msgs)
             if rv != 0:
                 return rv, None, None
             rv, retry, refresh = \
@@ -486,15 +492,15 @@ class TapSink(pump_cb.CBSink):
 
         return 0, retry_batch, retry_batch and not need_refresh
 
-    def find_conn(self, mconns, vbucket_id):
+    def find_conn(self, mconns, vbucket_id, msgs):
         if not self.vbucket_list:
-            return super(TapSink, self).find_conn(mconns, vbucket_id)
+            return super(TapSink, self).find_conn(mconns, vbucket_id, msgs)
 
         vbuckets = json.loads(self.vbucket_list)
         if isinstance(vbuckets, list):
             if vbucket_id not in vbuckets:
                 return "error: unexpected vbucket id:" + str(vbucket_id), None
-            return super(TapSink, self).find_conn(mconns, vbucket_id)
+            return super(TapSink, self).find_conn(mconns, vbucket_id, msgs)
 
         bucket = self.sink_map['buckets'][0]
         serverList = bucket['vBucketServerMap']['serverList']
@@ -518,6 +524,15 @@ class TapSink(pump_cb.CBSink):
                                 logging.error("error: CBSink.connect() for send: " + rv)
                                 return rv, None
                             mconns[host_port] = conn
+                            for i, msg in enumerate(msgs):
+                                msg_format_length = len(msg)
+                                if msg_format_length > 8:
+                                    try:
+                                        conn.hello()
+                                    except Exception, e:
+                                        logging.warn("fail to call hello command, maybe it is not supported")
+                                        pass
+                                break
                         break
         return 0, conn
 
