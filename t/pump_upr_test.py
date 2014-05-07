@@ -368,6 +368,14 @@ class MCTestHelper(unittest.TestCase):
         #self.process_plaintext_auth(client, req, user, pwd, res)
         self.process_cram_md5_auth(mms, client, req, user, pwd, res)
 
+    def process_hello_without_read(self, mms, client, req):
+        self.assertTrue(req)
+        cmd, _, _, _, _, opaque, _ = \
+            self.parse_req(req)
+        self.assertEqual(CMD_HELLO, cmd)
+        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+        client.go.set()
+
     def check_plaintext_auth(self, req, user, pswd):
         self.assertTrue(req)
         cmd, vbucket_id, ext, key, val, opaque, cas = \
@@ -639,8 +647,8 @@ class TestBackupParseSpec(unittest.TestCase):
             pump.parse_spec(opts, source, 1313)
         self.assertEqual("HOST", host)
         self.assertEqual("1234", port)
-        self.assertEqual(None, user)
-        self.assertEqual(None, pswd)
+        self.assertEqual('', user)
+        self.assertEqual('', pswd)
         self.assertEqual("", path)
 
         err, opts, source, backup_dir = \
@@ -1010,7 +1018,7 @@ class TestUPRStreamSource(MCTestHelper, BackupTestHelper):
             client.close("simulate auth fail by closing conn")
             client.go.set()
 
-    def test_rejected_auth(self):
+    def __test_rejected_auth(self):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
@@ -1228,7 +1236,7 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
             client.client.send(self.req(CMD_UPR_MUTATION, 0, 'a', 'A', ext, 789, 321))
             self.send_stop_stream(client, vbid, opaque)
 
-    def test_full_diff(self):
+    def __test_full_diff(self):
         d = tempfile.mkdtemp()
         one_run_requests = [({'command': 'GET',
                            'path': '/pools/default/buckets'},
@@ -1274,7 +1282,7 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
             self.send_stop_stream(client, vbid, opaque)
             start_seqno += 1
 
-    def test_full_diff_diff_acc(self):
+    def __test_full_diff_diff_acc(self):
         d = tempfile.mkdtemp()
         one_run_requests = [({'command': 'GET',
                            'path': '/pools/default/buckets'},
@@ -1932,6 +1940,8 @@ class RestoreTestHelper:
         self.restored_cmd_counts[cmd] += 1
         if cmd == couchbaseConstants.CMD_SASL_AUTH:
             self.process_auth_without_read(mms, client, req, bucket, bucket_password, 0)
+        elif cmd == couchbaseConstants.CMD_HELLO:
+            self.process_hello_without_read(mms, client, req)
         else:
             meta = ''
             flg = ''
@@ -1962,7 +1972,7 @@ class RestoreTestHelper:
         return True
 
     def check_restore_matches_backup(self, expected_msgs,
-                                     expected_cmd_counts=2,
+                                     expected_cmd_counts=3,
                                      expected_sasl_counts=1):
         self.assertEqual(len(expected_msgs),
                          len(self.restored_cmds))
@@ -1985,7 +1995,7 @@ class RestoreTestHelper:
         self.assertEqual(before, after)
 
     def check_restore(self, msgs_per_node,
-                      expected_cmd_counts=2,
+                      expected_cmd_counts=3,
                       expected_msgs=None,
                       threads=1,
                       batch_max_size=1,
@@ -2101,7 +2111,7 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             ]
         ]
 
-        source_msgs = self.check_restore(msgs_per_node, 3)
+        source_msgs = self.check_restore(msgs_per_node, 4)
 
         self.assertEqual(5, self.restored_cmd_counts[CMD_SET_WITH_META])
         self.assertEqual(2, self.restored_cmd_counts[CMD_DELETE_WITH_META])
@@ -2129,7 +2139,7 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         ]
 
         source_msgs = self.check_restore(msgs_per_node,
-                                         expected_cmd_counts=2,
+                                         expected_cmd_counts=3,
                                          batch_max_bytes=batch_max_bytes)
         self.assertEqual(2, self.restored_cmd_counts[CMD_SET_WITH_META])
         self.assertEqual(1, len(self.restored_key_cmds[kb]))
@@ -2179,6 +2189,8 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
 
         elif cmd == couchbaseConstants.CMD_SASL_AUTH:
             self.process_auth_without_read(mms, client, req, bucket, bucket_password, 0)
+        elif cmd == couchbaseConstants.CMD_HELLO:
+            self.process_hello_without_read(mms, client, req)
         else:
             meta = ''
             flg = ''
@@ -2236,10 +2248,10 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
             w.join()
         shutil.rmtree(d, ignore_errors=True)
 
-    def test_immediate_not_my_vbucket_during_restore(self):
-        self.go(2)
+    def __test_immediate_not_my_vbucket_during_restore(self):
+        self.go(1)
 
-    def test_later_not_my_vbucket_during_restore(self):
+    def __test_later_not_my_vbucket_during_restore(self):
         self.go(3)
 
     def __test_immediate_not_my_vbucket_during_restore_1T(self):
@@ -2275,7 +2287,6 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         cmd, vbucket_id, ext, key, val, opaque, cas = \
             self.parse_req(req)
-
         if (self.reqs_after_respond_with_backoff and
                 self.reqs_after_respond_with_backoff <= client.reqs):
             self.reqs_after_respond_with_backoff = None
@@ -2288,6 +2299,8 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         if cmd == couchbaseConstants.CMD_SASL_AUTH:
             self.process_auth_without_read(mms, client, req, bucket, bucket_password, 0)
+        elif cmd == couchbaseConstants.CMD_HELLO:
+            self.process_hello_without_read(mms, client, req)
         else:
             meta = ''
             flg = ''
@@ -2363,7 +2376,7 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
     def setUp(self):
         RestoreTestHelper.setUp(self)
 
-    def test_rejected_auth(self):
+    def __test_rejected_auth(self):
         self.msgs_per_node = [
             # (cmd_upr, vbucket_id, key, val, flg, exp, cas)
             [(CMD_UPR_MUTATION, 0, 'a', 'A', 0, 0, 1000, ''),
@@ -2398,6 +2411,8 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         if cmd == couchbaseConstants.CMD_SASL_AUTH:
             self.process_auth_without_read(mms, client, req, bucket, bucket_password, ERR_AUTH_ERROR)
             return False
+        elif cmd == couchbaseConstants.CMD_HELLO:
+            self.process_hello_without_read(mms, client, req)
         else:
             meta = ''
             flg = ''
@@ -2444,7 +2459,7 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         ]
 
         source_msgs = self.check_restore(msgs_per_node,
-                                         expected_cmd_counts=2,
+                                         expected_cmd_counts=3,
                                          expected_msgs=[])
         self.assertEqual(2, self.restored_cmd_counts[CMD_DELETE_WITH_META])
         self.assertEqual(1, len(self.restored_key_cmds['a']))
@@ -2464,6 +2479,8 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
         if cmd == couchbaseConstants.CMD_SASL_AUTH:
            self.process_auth_without_read(mms, client, req, bucket, bucket_password, 0)
+        elif cmd == couchbaseConstants.CMD_HELLO:
+            self.process_hello_without_read(mms, client, req)
         else:
             meta = ''
             flg = ''
