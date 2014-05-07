@@ -823,12 +823,10 @@ CMD_STR = {
 }
 
 def get_username(username):
-    return username or \
-        ('CB_REST_USERNAME' in os.environ and os.environ['CB_REST_USERNAME']) or ''
+    return username or os.environ.get('CB_REST_USERNAME', '')
 
 def get_password(password):
-    return password or \
-        ('CB_REST_PASSWORD' in os.environ and os.environ['CB_REST_PASSWORD']) or ''
+    return password or os.environ.get('CB_REST_PASSWORD', '')
 
 def parse_spec(opts, spec, port):
     """Parse host, port, username, password, path from opts and spec."""

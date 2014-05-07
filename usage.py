@@ -65,7 +65,7 @@ OPTIONS:
   -d, --debug
 
 NOTE:
-    USERNAME can be set in evvironment variable CB_REST_USERNAME and/or
+    USERNAME can be set in environment variable CB_REST_USERNAME and/or
     PASSWORD can be set in environment variable CB_REST_PASSWORD instead
 
 server-add OPTIONS:
