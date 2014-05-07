@@ -94,6 +94,12 @@ class Transfer:
 
     def opt_parse(self, argv):
         opts, rest = self.opt_parser().parse_args(argv[1:])
+
+        if opts.username is None and 'COUCHBASE_USERNAME' in os.environ:
+            setattr(opts, 'username', os.environ['COUCHBASE_USERNAME'])
+        if opts.password is None and 'COUCHBASE_PASSWORD' in os.environ:
+            setattr(opts, 'password', os.environ['COUCHBASE_PASSWORD'])
+
         if len(rest) != 2:
             return "error: please provide both a %s and a %s" % \
                 (self.source_alias, self.sink_alias), \
@@ -159,10 +165,12 @@ from a source cluster into the caching layer at the destination""")
                              connectivity and configurations""")
         p.add_option("-u", "--username",
                      action="store", type="string", default=None,
-                     help="REST username for source cluster or server node")
+                     help="""REST username for source cluster or server node.
+                             Overrides COUCHBASE_USERNAME environment variable if it exists.""")
         p.add_option("-p", "--password",
                      action="store", type="string", default=None,
-                     help="REST password for source cluster or server node")
+                     help="""REST password for source cluster or server node.
+                             Overrides COUCHBASE_PASSWORD environment variable if it exists.""")
         p.add_option("-t", "--threads",
                      action="store", type="int", default=4,
                      help="""Number of concurrent workers threads performing the transfer""")
