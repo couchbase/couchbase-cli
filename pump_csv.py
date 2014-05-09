@@ -11,6 +11,12 @@ import urllib
 import couchbaseConstants
 import pump
 
+try:
+    import snappy
+except ImportError:
+    logging.warn("could not import snappy module. Compress/uncompress function will be skipped.")
+    pass
+
 def number_try_parse(s):
     for func in (int, float):
         try:
@@ -185,13 +191,22 @@ class CSVSink(pump.Sink):
                         return ("error: could not write csv to file:%s" % \
                                filename), None
                 self.writer = csv.writer(csvfile)
-                self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev', 'vbid'])
-
+                self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev', 'vbid', 'dtype'])
+        msg_tuple_format = 0
         for msg in batch.msgs:
             cmd, vbucket_id, key, flg, exp, cas, meta, val = msg[:8]
             if self.skip(key, vbucket_id):
                 continue
-
+            if not msg_tuple_format:
+                msg_tuple_format = len(msg)
+            seqno = dtype = nmeta = 0
+            if msg_tuple_format > 8:
+                seqno, dtype, nmeta = msg[8:]
+            if dtype > 2:
+                try:
+                    val = snappy.uncompress(val)
+                except Exception, err:
+                    pass
             try:
                 if cmd in [couchbaseConstants.CMD_TAP_MUTATION,
                            couchbaseConstants.CMD_UPR_MUTATION]:
@@ -211,7 +226,7 @@ class CSVSink(pump.Sink):
                                 pass
                     else:
                         #rev = self.convert_meta(meta)
-                        self.writer.writerow([key, flg, exp, cas, val, meta, vbucket_id])
+                        self.writer.writerow([key, flg, exp, cas, val, meta, vbucket_id, dtype])
                 elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_UPR_DELETE]:
                     pass
                 elif cmd == couchbaseConstants.CMD_GET:

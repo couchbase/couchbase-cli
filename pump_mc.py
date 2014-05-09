@@ -23,6 +23,12 @@ except ImportError:
     else:
         sys.path.insert(0, cb_path)
 
+try:
+    import snappy
+except ImportError:
+    logging.warn("could not import snappy module. Compress/uncompress function will be skipped.")
+    pass
+
 OP_MAP = {
     'get': couchbaseConstants.CMD_GET,
     'set': couchbaseConstants.CMD_SET,
@@ -51,6 +57,7 @@ class MCSink(pump.Sink):
             self.op_map = OP_MAP_WITH_META
         self.conflict_resolve = opts.extra.get("conflict_resolve", 1)
         self.init_worker(MCSink.run)
+        self.uncompress = opts.extra.get("uncompress", 0)
 
     def close(self):
         self.push_next_batch(None, None)
@@ -153,7 +160,12 @@ class MCSink(pump.Sink):
             rv, cmd = self.translate_cmd(cmd, operation, meta)
             if rv != 0:
                 return rv
-
+            if dtype > 2:
+                if self.uncompress and val:
+                    try:
+                        val = snappy.uncompress(val)
+                    except Exception, err:
+                        pass
             if cmd == couchbaseConstants.CMD_GET:
                 val, flg, exp, cas = '', 0, 0, 0
             if cmd == couchbaseConstants.CMD_NOOP:

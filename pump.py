@@ -20,6 +20,12 @@ import couchbaseConstants
 from cbcollections import defaultdict
 from cbqueue import PumpQueue
 
+try:
+    import snappy
+except ImportError:
+    logging.warn("could not import snappy module. Compress/uncompress function will be skipped.")
+    pass
+
 # TODO: (1) optionally log into backup directory
 
 LOGGING_FORMAT = '%(asctime)s: %(threadName)s %(message)s'
@@ -776,6 +782,11 @@ class StdOutSink(Sink):
                 seqno, dtype, nmeta = msg[8:]
             if self.skip(key, vbucket_id):
                 continue
+            if dtype > 2:
+                try:
+                    val = snappy.uncompress(val)
+                except Exception, err:
+                    pass
             try:
                 if cmd == couchbaseConstants.CMD_TAP_MUTATION or \
                    cmd == couchbaseConstants.CMD_UPR_MUTATION:
