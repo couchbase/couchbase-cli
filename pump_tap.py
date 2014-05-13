@@ -45,7 +45,7 @@ class TAPDumpSource(pump.Source):
         self.cmd_last = None
         self.num_msg = 0
 
-        self.recv_min_bytes = int(getattr(opts, "recv_min_bytes", 4096))
+        self.recv_min_bytes = int(opts.extra.get("recv_min_bytes", 4096))
         self.vbucket_list = getattr(opts, "vbucket_list", None)
 
     @staticmethod
