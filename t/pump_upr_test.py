@@ -483,12 +483,11 @@ class MCTestHelper(unittest.TestCase):
         self.assertEqual(0, cas)
         self.assertTrue(ext)
 
-        flag, _, start, end, uuid, high = struct.unpack(UPR_STREAM_REQ_PKT_FMT, ext)
+        flag, _, start, end, uuid, ss_start, ss_end = struct.unpack(UPR_STREAM_REQ_PKT_FMT, ext)
         self.assertEqual(0, flag)
         self.assertEqual(0, uuid)
         self.assertEqual(seqno, start)
         self.assertEqual(0, uuid)
-        self.assertEqual(0, high)
 
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()

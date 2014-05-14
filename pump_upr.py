@@ -120,6 +120,8 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         end_seqno = 0
         vb_uuid = 0
         hi_seqno = 0
+        ss_start_seqno = 0
+        ss_end_seqno = 0
         try:
             while (not self.upr_done and
                    batch.size() < batch_max_size and
@@ -157,7 +159,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                             start = start + step
                     elif errcode == couchbaseConstants.ERR_KEY_ENOENT:
                         logging.warn("producer doesn't know about the vbucket uuid, rollback to 0")
-                        vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno = \
+                        vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno = \
                             self.stream_list[opaque]
                         del self.stream_list[opaque]
                         #self.request_upr_stream(vbid, flags, start_seqno, end_seqno, 0, hi_seqno)
@@ -171,7 +173,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                         #             (start_seqno, end_seqno))
                         del self.stream_list[opaque]
                     elif errcode == couchbaseConstants.ERR_ROLLBACK:
-                        vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno = \
+                        vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_stop_seqno = \
                             self.stream_list[opaque]
                         start_seqno, = struct.unpack(couchbaseConstants.UPR_VB_SEQNO_PKT_FMT, data)
                         #find the most latest uuid, hi_seqno that fit start_seqno
@@ -181,13 +183,18 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                 for uuid, seqno in self.cur['failoverlog'][pair_index][vbid]:
                                     if start_seqno >= seqno:
                                         vb_uuid = uuid
-                                        hi_seqno = seqno
                                         break
-                        self.request_upr_stream(vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno)
+                        ss_start_seqno = start_seqno
+                        ss_end_seqno = start_seqno
+                        if self.cur['snapshot']:
+                            pair_index = (self.source_bucket['name'], self.source_node['hostname'])
+                            if vbid in self.cur['snapshot'][pair_index]:
+                                ss_start_seqno, ss_end_seqno = self.cur['snapshot'][pair_index][vbid]
+                        self.request_upr_stream(vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
 
                         del self.stream_list[opaque]
                         self.stream_list[opaque] = \
-                            (vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno)
+                            (vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
                 elif cmd == couchbaseConstants.CMD_UPR_MUTATION:
                     vbucket_id = errcode
                     seqno, rev_seqno, flg, exp, locktime, metalen, nru = \
@@ -225,7 +232,14 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     if not len(self.stream_list):
                         self.upr_done = True
                 elif cmd == couchbaseConstants.CMD_UPR_SNAPSHOT_MARKER:
-                    logging.info("snapshot marker received, simply ignored:")
+                    ss_start_seqno, ss_end_seqno, _ = \
+                        struct.unpack(couchbaseConstants.UPR_SNAPSHOT_PKT_FMT, data[0:extlen])
+                    pair_index = (self.source_bucket['name'], self.source_node['hostname'])
+                    if not self.cur['snapshot']:
+                        self.cur['snapshot'] = {}
+                    if pair_index not in self.cur['snapshot']:
+                        self.cur['snapshot'][pair_index] = {}
+                    self.cur['snapshot'][pair_index][opaque] = (ss_start_seqno, ss_end_seqno)
                 else:
                     logging.warn("warning: unexpected UPR message: %s" % cmd)
                     return "unexpected UPR message: %s" % cmd, batch
@@ -343,6 +357,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
             for reader in readers:
                 data = reader.recv(1024)
+                #print "Read %d bytes off the wire" % len(data)
                 logging.debug("Read %d bytes off the wire" % len(data))
                 if len(data) == 0:
                     raise exceptions.EOFError("Got empty data (remote died?).")
@@ -360,7 +375,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 body = bytes_read[couchbaseConstants.MIN_RECV_PACKET : \
                                   couchbaseConstants.MIN_RECV_PACKET+bodylen]
                 bytes_read = bytes_read[couchbaseConstants.MIN_RECV_PACKET+bodylen:]
-
+                #print "Push:", opcode, status, opaque, cas, keylen, extlen, bodylen, datatype
                 self.response.put((opcode, status, opaque, cas, keylen, extlen, body, \
                                    bodylen, datatype))
 
@@ -393,7 +408,6 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 start_seqno = self.cur['seqno'][pair_index][int(vbid)]
             else:
                 start_seqno = 0
-            hi_seqno = 0
             uuid = 0
             if self.cur['failoverlog'] and self.cur['failoverlog'][pair_index]:
                 if vbid in self.cur['failoverlog'][pair_index] and \
@@ -402,24 +416,38 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     self.cur['failoverlog'][pair_index][vbid] = \
                         sorted(self.cur['failoverlog'][pair_index][vbid], \
                                lambda tup: tup[1], reverse=True)
-                    uuid, hi_seqno = self.cur['failoverlog'][pair_index][vbid][0]
-
+                    uuid, _ = self.cur['failoverlog'][pair_index][vbid][0]
+            ss_start_seqno = start_seqno
+            ss_end_seqno = start_seqno
+            if self.cur['snapshot'] and self.cur['snapshot'][pair_index]:
+                if vbid in self.cur['snapshot'][pair_index] and \
+                   self.cur['snapshot'][pair_index][vbid]:
+                    ss_start_seqno, ss_end_seqno = self.cur['snapshot'][pair_index][vbid]
             self.request_upr_stream(int(vbid), flags, start_seqno,
                                     vb_list[vbid][UPRStreamSource.HIGH_SEQNO],
-                                    uuid, hi_seqno)
+                                    uuid, ss_start_seqno, ss_end_seqno)
 
-    def request_upr_stream(self, vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno):
+    def request_upr_stream(self,
+                           vbid,
+                           flags,
+                           start_seqno,
+                           end_seqno,
+                           vb_uuid,
+                           ss_start_seqno,
+                           ss_end_seqno):
         if not self.upr_conn:
             return "error: no upr connection setup yet.", None
+        #print start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno
         extra = struct.pack(couchbaseConstants.UPR_STREAM_REQ_PKT_FMT,
                             int(flags), 0,
                             int(start_seqno),
                             int(end_seqno),
                             int(vb_uuid),
-                            int(hi_seqno))
+                            int(ss_start_seqno),
+                            int(ss_end_seqno))
         self.upr_conn._sendMsg(couchbaseConstants.CMD_UPR_REQUEST_STREAM, '', '', vbid, \
                                extra, 0, 0, vbid)
-        self.stream_list[vbid] = (vbid, flags, start_seqno, end_seqno, vb_uuid, hi_seqno)
+        self.stream_list[vbid] = (vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
 
     def _read_upr_conn(self, upr_conn):
         buf, cmd, errcode, opaque, cas, keylen, extlen, data, datalen = \

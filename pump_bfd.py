@@ -107,6 +107,23 @@ class BFD:
         json_file.close()
 
     @staticmethod
+    def write_snapshot_markers(parent_dir, snapshot_markers):
+        filepath = os.path.join(parent_dir, "snapshot_markers.json")
+        json_data = {}
+        if os.path.isfile(filepath):
+            json_file = open(filepath, "r")
+            json_data = json.load(json_file)
+            json_file.close()
+
+        for i in range(BFD.NUM_VBUCKET):
+            if i in snapshot_markers:
+                json_data[i] = snapshot_markers[i]
+
+        json_file = open(filepath, "w")
+        json.dump(json_data, json_file, ensure_ascii=False)
+        json_file.close()
+
+    @staticmethod
     def db_dir(spec, bucket_name, node_name, mode=None, new_session=False):
         parent_dir = os.path.normpath(spec) + \
                         '/bucket-' + urllib.quote_plus(bucket_name) + \
@@ -183,30 +200,34 @@ class BFD:
         dep = {}
         dep_list = []
         failover_log = {}
+        snapshot_markers = {}
         for i in range(BFD.NUM_VBUCKET):
             seqno[i] = 0
             dep[i] = None
             failover_log[i] = None
+            snapshot_markers[i] = None
 
         file_list = []
         failoverlog_list = []
+        snapshot_list = []
         parent_dir = os.path.normpath(spec)
 
         if mode == "full":
-            return seqno, dep_list, failover_log
+            return seqno, dep_list, failover_log, snapshot_markers
         timedir,latest_dirs = BFD.find_latest_dir(parent_dir, None)
         if not timedir:
-            return seqno, dep_list, failover_log
+            return seqno, dep_list, failover_log, snapshot_markers
         fulldir, latest_dirs = BFD.find_latest_dir(timedir, "full")
         if not fulldir:
-            return seqno, dep_list, failover_log
+            return seqno, dep_list, failover_log, snapshot_markers
 
         path = BFD.construct_dir(fulldir, bucket_name, node_name)
         if not os.path.isdir(path):
-            return seqno, dep_list, failover_log
+            return seqno, dep_list, failover_log, snapshot_markers
 
         file_list.extend(recursive_glob(path, 'data-*.cbb'))
         failoverlog_list.extend(recursive_glob(path, 'failover.json'))
+        snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
 
         accudir, accu_dirs = BFD.find_latest_dir(timedir, "accu")
         if accudir:
@@ -214,6 +235,7 @@ class BFD:
             if os.path.isdir(path):
                 file_list.extend(recursive_glob(path, 'data-*.cbb'))
                 failoverlog_list.extend(recursive_glob(path, 'failover.json'))
+                snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
         if mode.find("diff") >= 0:
             diffdir, diff_dirs = BFD.find_latest_dir(timedir, "diff")
             if diff_dirs:
@@ -222,11 +244,11 @@ class BFD:
                     if os.path.isdir(path):
                         file_list.extend(recursive_glob(path, 'data-*.cbb'))
                         failoverlog_list.extend(recursive_glob(path, 'failover.json'))
-
+                        snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
         for x in sorted(file_list):
             rv, db, ver = connect_db(x, opts, CBB_VERSION)
             if rv != 0:
-                return seqno, dep_list, failover_log
+                return seqno, dep_list, failover_log, snapshot_markers
             for i in range(BFD.NUM_VBUCKET):
                 cur = db.cursor()
                 cur.execute("SELECT MAX(seqno) FROM cbb_msg where vbucket_id = %s;" % i)
@@ -253,10 +275,18 @@ class BFD:
                         elif logpair not in failover_log[vbid]:
                             failover_log[vbid].extend(logpair)
 
+        for snapshot in sorted(snapshot_list):
+            json_file = open(snapshot, "r")
+            json_data = json.load(json_file)
+            json_file.close()
+
+            for vbid, markers in json_data.iteritems():
+                snapshot_markers[vbid] = markers
+
         for i in range(BFD.NUM_VBUCKET):
             if dep[i] and dep[i] not in dep_list:
                 dep_list.append(dep[i])
-        return seqno, dep_list, failover_log
+        return seqno, dep_list, failover_log, snapshot_markers
 
 # --------------------------------------------------
 
@@ -521,7 +551,7 @@ class BFDSink(BFD, pump.Sink):
         db_dir = None
         cbb_max_bytes = \
             self.opts.extra.get("cbb_max_mb", 100000) * 1024 * 1024
-        seqno, dep, failover_log = BFD.find_seqno(self.opts,
+        seqno, dep, _, _ = BFD.find_seqno(self.opts,
                                                   self.spec,
                                                   self.bucket_name(),
                                                   self.node_name(),
@@ -552,6 +582,9 @@ class BFDSink(BFD, pump.Sink):
             if (self.bucket_name(), self.node_name()) in self.cur['failoverlog']:
                 BFD.write_failover_log(db_dir,
                                    self.cur['failoverlog'][(self.bucket_name(), self.node_name())])
+            if (self.bucket_name(), self.node_name()) in self.cur['snapshot']:
+                BFD.write_snapshot_markers(db_dir,
+                                   self.cur['snapshot'][(self.bucket_name(), self.node_name())])
             try:
                 c = db.cursor()
 
