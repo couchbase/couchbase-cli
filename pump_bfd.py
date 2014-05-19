@@ -266,7 +266,9 @@ class BFD:
             json_file.close()
 
             for vbid, flogs in json_data.iteritems():
-                if vbid not in failover_log.keys():
+                if not flogs:
+                    continue
+                elif vbid not in failover_log.keys():
                     failover_log[vbid] = flogs
                 else:
                     for logpair in flogs:
