@@ -187,9 +187,11 @@ from a source cluster into the caching layer at the destination""")
             "recv_min_bytes":  (4096,   "Amount of bytes for every TCP/IP call transferred"),
             "try_xwm":         (1,      "Transfer documents with metadata. 0 should only be used if you transfer from 1.8.x to 1.8.x"),
             "nmv_retry":       (1,      "0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message"),
-            "rehash":          (0,      "For value 1, transfer data from Mac OSX platform"),
+            "rehash":          (0,      "For value 1, rehash the partition id's of each item; \
+this is needed when transferring data between clusters with different number of partitions, \
+such as when transferring data from an OSX server to a non-OSX cluster"),
             "data_only":       (0,      "For value 1, only transfer data from a backup file or cluster"),
-            "design_doc_only": (0,      "For value 1, transfer design documents only from a backup file or cluster."),
+            "design_doc_only": (0,      "For value 1, transfer design documents only from a backup file or cluster"),
             "conflict_resolve":(1,      "By default, disable conflict resolution."),
             "seqno":           (0,      "By default, start seqno from beginning."),
             "mcd_compatible":  (1,      "For value 0, display extended fields for stdout output."),
