@@ -132,7 +132,7 @@ class BFD:
             return parent_dir
 
         #check 3.0 directory structure
-        tmstamp = time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime())
+        tmstamp = time.strftime("%Y-%m-%dT%H%MZ", time.gmtime())
         parent_dir = os.path.normpath(spec)
         rootpath, dirs = BFD.find_latest_dir(parent_dir, None)
         if not rootpath or not mode or mode == "full":
@@ -711,13 +711,13 @@ class BFDSink(BFD, pump.Sink):
     def mkdirs(self):
         """Make directories, if not already, with structure like...
            <spec>/
-             YYYY-MM-DDThhmmssZ/
-                YYYY-MM-DDThhmmssZ-full /
+             YYYY-MM-DDThhmmZ/
+                YYYY-MM-DDThhmmZ-full /
                    bucket-<BUCKETNAME>/
                      design.json
                      node-<NODE>/
                        data-<XXXX>.cbb
-                YYYY-MM-DDThhmmssZ-diff/
+                YYYY-MM-DDThhmmZ-diff/
                    bucket-<BUCKETNAME>/
                      design.json
                      node-<NODE>/
