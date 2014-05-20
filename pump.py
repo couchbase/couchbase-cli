@@ -98,7 +98,11 @@ class PumpingStation(ProgressReporter):
         self.sink_class = sink_class
         self.sink_spec = sink_spec
         self.queue = None
-        self.ctl = { 'stop': False, 'rv': 0, 'new_session': True }
+        tmstamp = time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime())
+        self.ctl = { 'stop': False,
+                     'rv': 0,
+                     'new_session': True,
+                     'new_timestamp': tmstamp}
         self.cur = defaultdict(int)
 
     def run(self):

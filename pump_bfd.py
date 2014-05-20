@@ -124,7 +124,7 @@ class BFD:
         json_file.close()
 
     @staticmethod
-    def db_dir(spec, bucket_name, node_name, mode=None, new_session=False):
+    def db_dir(spec, bucket_name, node_name, tmstamp=None, mode=None, new_session=False):
         parent_dir = os.path.normpath(spec) + \
                         '/bucket-' + urllib.quote_plus(bucket_name) + \
                         '/node-' + urllib.quote_plus(node_name)
@@ -132,7 +132,8 @@ class BFD:
             return parent_dir
 
         #check 3.0 directory structure
-        tmstamp = time.strftime("%Y-%m-%dT%H%MZ", time.gmtime())
+        if not tmstamp:
+            tmstamp = time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime())
         parent_dir = os.path.normpath(spec)
         rootpath, dirs = BFD.find_latest_dir(parent_dir, None)
         if not rootpath or not mode or mode == "full":
@@ -711,13 +712,13 @@ class BFDSink(BFD, pump.Sink):
     def mkdirs(self):
         """Make directories, if not already, with structure like...
            <spec>/
-             YYYY-MM-DDThhmmZ/
-                YYYY-MM-DDThhmmZ-full /
+             YYYY-MM-DDThhmmssZ/
+                YYYY-MM-DDThhmmssZ-full /
                    bucket-<BUCKETNAME>/
                      design.json
                      node-<NODE>/
                        data-<XXXX>.cbb
-                YYYY-MM-DDThhmmZ-diff/
+                YYYY-MM-DDThhmmssZ-diff/
                    bucket-<BUCKETNAME>/
                      design.json
                      node-<NODE>/
@@ -742,6 +743,7 @@ class BFDSink(BFD, pump.Sink):
         d = BFD.db_dir(self.spec,
                        self.bucket_name(),
                        self.node_name(),
+                       self.ctl['new_timestamp'],
                        getattr(self.opts, "mode", "diff"),
                        new_session)
         if not os.path.isdir(d):
