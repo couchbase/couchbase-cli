@@ -3,9 +3,11 @@
 import copy
 import logging
 import optparse
+import os
+import random
+import string
 import sys
 import threading
-import os
 
 import pump
 import pump_bfd
@@ -65,6 +67,9 @@ class Transfer:
 
         if opts_etc:
             opts.etc = opts_etc # Used for unit tests, etc.
+
+        process_name = os.path.basename(argv[0]) + "-" + "".join(random.sample(string.letters, 16))
+        setattr(opts, "process_name", process_name)
 
         logging.info(self.name + "...")
         logging.info(" source : %s", source)

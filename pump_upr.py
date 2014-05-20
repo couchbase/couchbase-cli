@@ -5,7 +5,6 @@ import os
 import random
 import simplejson as json
 import socket
-import string
 import struct
 import time
 import threading
@@ -50,7 +49,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         self.upr_done = False
         self.upr_conn = None
         self.mem_conn = None
-        self.upr_name = "".join(random.sample(string.letters, 16))
+        self.upr_name = opts.process_name
         self.ack_last = False
         self.cmd_last = None
         self.num_msg = 0

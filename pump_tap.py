@@ -5,7 +5,6 @@ import os
 import random
 import simplejson as json
 import socket
-import string
 import struct
 import time
 
@@ -40,7 +39,7 @@ class TAPDumpSource(pump.Source):
                                             source_map, sink_map, ctl, cur)
         self.tap_done = False
         self.tap_conn = None
-        self.tap_name = "".join(random.sample(string.letters, 16))
+        self.tap_name = opts.process_name
         self.ack_last = False # True when the last TAP msg had TAP_FLAG_ACK.
         self.cmd_last = None
         self.num_msg = 0
