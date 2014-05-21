@@ -55,6 +55,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         self.num_msg = 0
         self.version_supported = self.source_node['version'].split(".") >= ["3", "0", "0"]
         self.recv_min_bytes = int(opts.extra.get("recv_min_bytes", 4096))
+        self.batch_max_bytes = int(opts.extra.get("batch_max_bytes", 400000))
         self.vbucket_list = getattr(opts, "vbucket_list", None)
         self.r=random.Random()
         self.queue = PumpQueue()
@@ -239,6 +240,8 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     if pair_index not in self.cur['snapshot']:
                         self.cur['snapshot'][pair_index] = {}
                     self.cur['snapshot'][pair_index][opaque] = (ss_start_seqno, ss_end_seqno)
+                elif cmd == couchbaseConstants.CMD_UPR_NOOP:
+                    need_ack = True
                 else:
                     logging.warn("warning: unexpected UPR message: %s" % cmd)
                     return "unexpected UPR message: %s" % cmd, batch
@@ -282,7 +285,17 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
     def get_upr_conn(self):
         """Return previously connected upr conn."""
 
-        if not self.upr_conn:
+        if self.upr_conn:
+            try:
+                opaque=self.r.randint(0, 2**32)
+                self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_BUFFER_ACK, '', \
+                    struct.pack(">I", self.batch_max_bytes), opaque)
+                self.upr_conn._handleSingleResponse(opaque)
+            except socket.error:
+                return "error: socket error during sending buffer ack msg", None
+            except EOFError:
+                return "error: send buffer ack msg", None
+        else:
             host = self.source_node['hostname'].split(':')[0]
             port = self.source_node['ports']['direct']
             version = self.source_node['version']
@@ -329,6 +342,13 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 opaque=self.r.randint(0, 2**32)
                 self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_CONNECT, self.upr_name, \
                                        '', opaque, extra)
+                self.upr_conn._handleSingleResponse(opaque)
+
+                # set connection buffer size
+                opaque=self.r.randint(0, 2**32)
+                self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_CONTROL,
+                                       couchbaseConstants.KEY_UPR_CONNECTION_BUFFER_SIZE,
+                                       str(self.batch_max_bytes), opaque)
                 self.upr_conn._handleSingleResponse(opaque)
             except EOFError:
                 return "error: Fail to set up UPR connection", None

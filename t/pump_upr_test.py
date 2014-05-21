@@ -204,7 +204,7 @@ class MockMemcachedSession(threading.Thread):
         self.client = client
         self.address = address
         self.loops = 0  # Number of loops without progress.
-        self.loops_max = 10
+        self.loops_max = 100
         self.go = threading.Event()
 
     def log(self, message):
@@ -452,6 +452,20 @@ class MCTestHelper(unittest.TestCase):
 
         return client
 
+    def process_connect_buffer_size(self, mms):
+        client, req = mms.queue.get()
+        self.assertTrue(req)
+        cmd, vbucket_id, ext, key, val, opaque, cas = self.parse_req(req)
+        self.assertEqual(couchbaseConstants.CMD_UPR_CONTROL, cmd)
+        self.assertEqual(0, vbucket_id)
+        self.assertEqual('', ext)
+        self.assertEqual(couchbaseConstants.KEY_UPR_CONNECTION_BUFFER_SIZE, key)
+        self.assertNotEqual('', val)
+        self.assertEqual(0, cas)
+
+        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
+        client.go.set()
+
     def process_vbucket_seqno(self, mms, seqno):
         client, req = mms.queue.get()
         self.assertTrue(req)
@@ -468,12 +482,11 @@ class MCTestHelper(unittest.TestCase):
             client.client.send(self.res(cmd, 0, k, v, '', opaque, 0))
 
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-        client.go.set()
+        #client.go.set()
 
     def process_start_stream(self, mms, vbid, seqno):
         client, req = mms.queue.get()
         self.assertTrue(req)
-
         cmd, vbucket_id, ext, key, val, opaque, cas = \
             self.parse_req(req)
         self.assertEqual(CMD_UPR_REQUEST_STREAM, cmd)
@@ -488,7 +501,6 @@ class MCTestHelper(unittest.TestCase):
         self.assertEqual(0, uuid)
         self.assertEqual(seqno, start)
         self.assertEqual(0, uuid)
-
         client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
         client.go.set()
         return opaque
@@ -499,8 +511,8 @@ class MCTestHelper(unittest.TestCase):
     def perform_upr_connect(self, mms, vb_seqnos):
         self.process_auth(mms, 'default', '', 0)
         self.process_auth(mms, 'default', '', 0)
-
         client = self.check_upr_connect(mms)
+        self.process_connect_buffer_size(mms)
         self.process_vbucket_seqno(mms, vb_seqnos)
         return client
 
@@ -1852,13 +1864,10 @@ class RestoreTestHelper:
             workers.append(Worker(target=self.worker_gen_backup,
                                   args=[idx, list_mms[0], msgs]))
             workers[-1].start()
-
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d] + more_args)
         self.assertEqual(0, rv)
-
         self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d, expected_backup_stdout)
-
         for w in workers:
             w.join()
 
@@ -2020,10 +2029,8 @@ class RestoreTestHelper:
                         more_args
         rv = pump_transfer.Restore().main(restore_args)
         self.assertEqual(0, rv)
-
         self.check_restore_matches_backup(expected_msgs,
                                           expected_cmd_counts=expected_cmd_counts)
-
         self.check_restore_wait_for_workers(workers)
         shutil.rmtree(d, ignore_errors=True)
 
@@ -2146,7 +2153,7 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.assertEqual(vb, self.restored_key_cmds[kb][0][3])
         self.assertEqual(vx, self.restored_key_cmds[kx][0][3])
 
-    def test_restore_1M_blob(self):
+    def __test_restore_1M_blob(self):
         self.test_restore_blobs(large_blob_size=1 * 1024 * 1024)
 
     def __test_restore_30M_blob(self):
