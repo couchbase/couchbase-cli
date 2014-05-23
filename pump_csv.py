@@ -10,12 +10,7 @@ import urllib
 
 import couchbaseConstants
 import pump
-
-try:
-    import snappy
-except ImportError:
-    logging.warn("could not import snappy module. Compress/uncompress function will be skipped.")
-    pass
+import cbsnappy as snappy
 
 def number_try_parse(s):
     for func in (int, float):

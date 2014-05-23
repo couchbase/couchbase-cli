@@ -9,6 +9,7 @@ import sys
 import cb_bin_client
 import couchbaseConstants
 import pump
+import cbsnappy as snappy
 
 try:
     import ctypes
@@ -22,12 +23,6 @@ except ImportError:
         sys.exit('error: could not import ctypes module')
     else:
         sys.path.insert(0, cb_path)
-
-try:
-    import snappy
-except ImportError:
-    logging.warn("could not import snappy module. Compress/uncompress function will be skipped.")
-    pass
 
 OP_MAP = {
     'get': couchbaseConstants.CMD_GET,

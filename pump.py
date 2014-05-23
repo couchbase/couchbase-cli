@@ -19,12 +19,7 @@ import subprocess
 import couchbaseConstants
 from cbcollections import defaultdict
 from cbqueue import PumpQueue
-
-try:
-    import snappy
-except ImportError:
-    logging.warn("could not import snappy module. Compress/uncompress function will be skipped.")
-    pass
+import cbsnappy as snappy
 
 # TODO: (1) optionally log into backup directory
 
