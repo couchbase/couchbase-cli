@@ -2,7 +2,7 @@
 
 CWD="`pwd`"
 D0="`dirname "$0"`"
-cd $D0/../lib
+cd "$D0/../lib"
 lib="`pwd`"
 root="$lib/python"
 cd "$CWD"
