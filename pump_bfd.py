@@ -441,10 +441,10 @@ class BFDSource(BFD, pump.Source):
 
                     if self.skip(key, vbucket_id):
                         continue
-
                     msg = (row[0], row[1], row[2], row[3], row[4],
                            int(row[5]), # CAS as 64-bit integer not string.
-                           row[6], row[7])
+                           row[6], # revid as 64-bit integer too
+                           row[7])
                     if ver == 1:
                         msg = msg + (row[8], row[9], row[10])
                     else:

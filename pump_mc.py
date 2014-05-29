@@ -348,18 +348,22 @@ class MCSink(pump.Sink):
             cmd == couchbaseConstants.CMD_DELETE_WITH_META):
             cr = int(self.conflict_resolve)
             if meta:
-                seq_no = str(meta)
-                if len(seq_no) > 8:
-                    seq_no = seq_no[0:8]
-                if len(seq_no) < 8:
-                    # The seq_no might be 32-bits from 2.0DP4, so pad with 0x00's.
-                    seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + seq_no)[-8:]
-                check_seqno, = struct.unpack(">Q", seq_no)
-                if check_seqno:
-                    ext = (struct.pack(">II", flg, exp) + seq_no +
-                           struct.pack(">Q", cas) + struct.pack(">I", cr))
-                else:
-                    ext = struct.pack(">IIQQI", flg, exp, 1, cas, cr)
+                try:
+                    ext = struct.pack(">IIQQI", flg, exp, int(meta), cas, cr)
+                except ValueError:
+                    seq_no = str(meta)
+                    if len(seq_no) > 8:
+                        seq_no = seq_no[0:8]
+                    if len(seq_no) < 8:
+                        # The seq_no might be 32-bits from 2.0DP4, so pad with 0x00's.
+                        seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + seq_no)[-8:]
+
+                    check_seqno, = struct.unpack(">Q", seq_no)
+                    if check_seqno:
+                        ext = (struct.pack(">II", flg, exp) + seq_no +
+                               struct.pack(">Q", cas) + struct.pack(">I", cr))
+                    else:
+                        ext = struct.pack(">IIQQI", flg, exp, 1, cas, cr)
             else:
                 ext = struct.pack(">IIQQI", flg, exp, 1, cas, cr)
         elif (cmd == couchbaseConstants.CMD_SET or
