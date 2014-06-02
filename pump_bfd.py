@@ -398,11 +398,11 @@ class BFDSource(BFD, pump.Source):
                                                      "data-*.cbb")
                 if rv != 0:
                     return rv, None
-                from_date = getattr(self.opts, "from-date", None)
+                from_date = getattr(self.opts, "from_date", None)
                 if from_date:
                     from_date = datetime.datetime.strptime(from_date, "%Y-%m-%d")
 
-                to_date = getattr(self.opts, "to-date", None)
+                to_date = getattr(self.opts, "to_date", None)
                 if to_date:
                     to_date = datetime.datetime.strptime(to_date, "%Y-%m-%d")
                 g = []
