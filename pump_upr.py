@@ -114,6 +114,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
+        buf_ack_size = batch_max_bytes / 4
         vbid = 0
         cmd = 0
         start_seqno = 0
@@ -133,6 +134,13 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     else:
                         self.upr_done = True
                     continue
+                if batch.bytes > buf_ack_size:
+                    rv = self.ack_buffer_size(buf_ack_size)
+                    if rv:
+                        logging.error(rv)
+                    else:
+                        buf_ack_size += buf_ack_size
+
                 cmd, errcode, opaque, cas, keylen, extlen, data, datalen, dtype = \
                     self.response.get()
                 rv = 0
@@ -179,7 +187,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                         #find the most latest uuid, hi_seqno that fit start_seqno
                         if self.cur['failoverlog']:
                             pair_index = (self.source_bucket['name'], self.source_node['hostname'])
-                            if vbid in self.cur['failoverlog'][pair_index]:
+                            if self.cur['failoverlog'][pair_index].get("vbid"):
                                 for uuid, seqno in self.cur['failoverlog'][pair_index][vbid]:
                                     if start_seqno >= seqno:
                                         vb_uuid = uuid
@@ -188,7 +196,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                         ss_end_seqno = start_seqno
                         if self.cur['snapshot']:
                             pair_index = (self.source_bucket['name'], self.source_node['hostname'])
-                            if vbid in self.cur['snapshot'][pair_index]:
+                            if self.cur['snapshot'][pair_index].get("vbid"):
                                 ss_start_seqno, ss_end_seqno = self.cur['snapshot'][pair_index][vbid]
                         self.request_upr_stream(vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
 
@@ -242,6 +250,8 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     self.cur['snapshot'][pair_index][opaque] = (ss_start_seqno, ss_end_seqno)
                 elif cmd == couchbaseConstants.CMD_UPR_NOOP:
                     need_ack = True
+                elif cmd == couchbaseConstants.CMD_UPR_BUFFER_ACK:
+                    continue
                 else:
                     logging.warn("warning: unexpected UPR message: %s" % cmd)
                     return "unexpected UPR message: %s" % cmd, batch
@@ -286,15 +296,9 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         """Return previously connected upr conn."""
 
         if self.upr_conn:
-            try:
-                opaque=self.r.randint(0, 2**32)
-                self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_BUFFER_ACK, '', \
-                    struct.pack(">I", self.batch_max_bytes), opaque)
-                self.upr_conn._handleSingleResponse(opaque)
-            except socket.error:
-                return "error: socket error during sending buffer ack msg", None
-            except EOFError:
-                return "error: send buffer ack msg", None
+            rv = self.ack_buffer_size(self.batch_max_bytes)
+            if rv:
+                logging.error(rv)
         else:
             host = self.source_node['hostname'].split(':')[0]
             port = self.source_node['ports']['direct']
@@ -362,6 +366,19 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             self.setup_upr_streams()
         return 0, self.upr_conn
 
+    def ack_buffer_size(self, buf_size):
+        try:
+            opaque=self.r.randint(0, 2**32)
+            self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_BUFFER_ACK, '', \
+                struct.pack(">I", buf_size), opaque)
+            logging.debug("Send buffer size: %d" % buf_size)
+        except socket.error:
+            return "error: socket error during sending buffer ack msg"
+        except EOFError:
+            return "error: send buffer ack msg"
+
+        return None
+
     def run(self):
         if not self.upr_conn:
             logging.error("socket to memcached server is not created yet.")
@@ -376,7 +393,6 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
             for reader in readers:
                 data = reader.recv(1024)
-                #print "Read %d bytes off the wire" % len(data)
                 logging.debug("Read %d bytes off the wire" % len(data))
                 if len(data) == 0:
                     raise exceptions.EOFError("Got empty data (remote died?).")
@@ -394,7 +410,6 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 body = bytes_read[couchbaseConstants.MIN_RECV_PACKET : \
                                   couchbaseConstants.MIN_RECV_PACKET+bodylen]
                 bytes_read = bytes_read[couchbaseConstants.MIN_RECV_PACKET+bodylen:]
-                #print "Push:", opcode, status, opaque, cas, keylen, extlen, bodylen, datatype
                 self.response.put((opcode, status, opaque, cas, keylen, extlen, body, \
                                    bodylen, datatype))
 
@@ -456,7 +471,6 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                            ss_end_seqno):
         if not self.upr_conn:
             return "error: no upr connection setup yet.", None
-        #print start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno
         extra = struct.pack(couchbaseConstants.UPR_STREAM_REQ_PKT_FMT,
                             int(flags), 0,
                             int(start_seqno),
