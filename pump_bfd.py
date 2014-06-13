@@ -90,8 +90,8 @@ class BFD:
         prec_list = []
 
     @staticmethod
-    def write_failover_log(parent_dir, failover_logs):
-        filepath = os.path.join(parent_dir, "failover.json")
+    def write_json_file(parent_dir, filename, output_data):
+        filepath = os.path.join(parent_dir, filename)
         json_data = {}
         if os.path.isfile(filepath):
             json_file = open(filepath, "r")
@@ -99,25 +99,8 @@ class BFD:
             json_file.close()
 
         for i in range(BFD.NUM_VBUCKET):
-            if i in failover_logs:
-                json_data[i] = failover_logs[i]
-
-        json_file = open(filepath, "w")
-        json.dump(json_data, json_file, ensure_ascii=False)
-        json_file.close()
-
-    @staticmethod
-    def write_snapshot_markers(parent_dir, snapshot_markers):
-        filepath = os.path.join(parent_dir, "snapshot_markers.json")
-        json_data = {}
-        if os.path.isfile(filepath):
-            json_file = open(filepath, "r")
-            json_data = json.load(json_file)
-            json_file.close()
-
-        for i in range(BFD.NUM_VBUCKET):
-            if i in snapshot_markers:
-                json_data[i] = snapshot_markers[i]
+            if output_data.get(i):
+                json_data[i] = output_data[i]
 
         json_file = open(filepath, "w")
         json.dump(json_data, json_file, ensure_ascii=False)
@@ -203,7 +186,7 @@ class BFD:
         failover_log = {}
         snapshot_markers = {}
         for i in range(BFD.NUM_VBUCKET):
-            seqno[i] = 0
+            seqno[str(i)] = 0
             dep[i] = None
             failover_log[i] = None
             snapshot_markers[i] = None
@@ -211,6 +194,7 @@ class BFD:
         file_list = []
         failoverlog_list = []
         snapshot_list = []
+        seqno_list = []
         parent_dir = os.path.normpath(spec)
 
         if mode == "full":
@@ -229,6 +213,7 @@ class BFD:
         file_list.extend(recursive_glob(path, 'data-*.cbb'))
         failoverlog_list.extend(recursive_glob(path, 'failover.json'))
         snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
+        seqno_list.extend(recursive_glob(path, 'seqno.json'))
 
         accudir, accu_dirs = BFD.find_latest_dir(timedir, "accu")
         if accudir:
@@ -237,6 +222,7 @@ class BFD:
                 file_list.extend(recursive_glob(path, 'data-*.cbb'))
                 failoverlog_list.extend(recursive_glob(path, 'failover.json'))
                 snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
+                seqno_list.extend(recursive_glob(path, 'seqno.json'))
         if mode.find("diff") >= 0:
             diffdir, diff_dirs = BFD.find_latest_dir(timedir, "diff")
             if diff_dirs:
@@ -246,20 +232,18 @@ class BFD:
                         file_list.extend(recursive_glob(path, 'data-*.cbb'))
                         failoverlog_list.extend(recursive_glob(path, 'failover.json'))
                         snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
-        for x in sorted(file_list):
-            rv, db, ver = connect_db(x, opts, CBB_VERSION)
-            if rv != 0:
-                return seqno, dep_list, failover_log, snapshot_markers
-            for i in range(BFD.NUM_VBUCKET):
-                cur = db.cursor()
-                cur.execute("SELECT MAX(seqno) FROM cbb_msg where vbucket_id = %s;" % i)
-                row = cur.fetchone()[0]
-                if row:
-                    if int(row) > seqno[i]:
-                        seqno[i] = int(row)
-                        dep[i] = x
-                cur.close()
-            db.close()
+                        seqno_list.extend(recursive_glob(path, 'seqno.json'))
+
+        for x in sorted(seqno_list):
+            json_file = open(x, "r")
+            json_data = json.load(json_file)
+            json_file.close()
+
+            for vbid, seq in json_data.iteritems():
+                if not seq:
+                    continue
+                if seqno.get(vbid) < seq:
+                    seqno[vbid] = seq
 
         for log_file in sorted(failoverlog_list):
             json_file = open(log_file, "r")
@@ -277,7 +261,6 @@ class BFD:
                             failover_log[vbid] = [logpair]
                         elif logpair not in failover_log[vbid]:
                             failover_log[vbid].extend(logpair)
-
         for snapshot in sorted(snapshot_list):
             json_file = open(snapshot, "r")
             json_data = json.load(json_file)
@@ -554,12 +537,14 @@ class BFDSink(BFD, pump.Sink):
         db_dir = None
         cbb_max_bytes = \
             self.opts.extra.get("cbb_max_mb", 100000) * 1024 * 1024
-        seqno, dep, _, _ = BFD.find_seqno(self.opts,
+        _, dep, _, _ = BFD.find_seqno(self.opts,
                                                   self.spec,
                                                   self.bucket_name(),
                                                   self.node_name(),
                                                   self.mode)
-
+        seqno_map = {}
+        for i in range(BFD.NUM_VBUCKET):
+            seqno_map[i] = 0
         while not self.ctl['stop']:
             batch, future = self.pull_next_batch()
             if not batch:
@@ -583,11 +568,13 @@ class BFDSink(BFD, pump.Sink):
                 json_file.close()
 
             if (self.bucket_name(), self.node_name()) in self.cur['failoverlog']:
-                BFD.write_failover_log(db_dir,
-                                   self.cur['failoverlog'][(self.bucket_name(), self.node_name())])
+                BFD.write_json_file(db_dir,
+                                    "failover.json",
+                                    self.cur['failoverlog'][(self.bucket_name(), self.node_name())])
             if (self.bucket_name(), self.node_name()) in self.cur['snapshot']:
-                BFD.write_snapshot_markers(db_dir,
-                                   self.cur['snapshot'][(self.bucket_name(), self.node_name())])
+                BFD.write_json_file(db_dir,
+                                    "snapshot_markers.json",
+                                    self.cur['snapshot'][(self.bucket_name(), self.node_name())])
             try:
                 c = db.cursor()
 
@@ -611,9 +598,10 @@ class BFDSink(BFD, pump.Sink):
                                   dtype,
                                   nmeta))
                     cbb_bytes += len(val)
-
+                    if seqno_map[vbucket_id] < seqno:
+                        seqno_map[vbucket_id] = seqno
                 db.commit()
-
+                BFD.write_json_file(db_dir, "seqno.json", seqno_map)
                 self.future_done(future, 0) # No return to keep looping.
 
             except sqlite3.Error, e:
