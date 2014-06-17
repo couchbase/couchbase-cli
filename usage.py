@@ -151,7 +151,7 @@ setting-notification OPTIONS:
 
 setting-alert OPTIONS:
   --enable-email-alert=[0|1]                allow email alert
-  --email-recipients=RECIPIENT              email recipents, separate addresses with , or ;
+  --email-recipients=RECIPIENT              email recipients, separate addresses with , or ;
   --email-sender=SENDER                     sender email address
   --email-user=USER                         email server username
   --email-password=PWD                      email server password
@@ -201,7 +201,7 @@ xdcr-replicate OPTIONS:
   --settings                             update settings for the replication
   --xdcr-replicator=REPLICATOR           replication id
   --xdcr-from-bucket=BUCKET              local bucket name to replicate from
-  --xdcr-clucter-name=CLUSTERNAME        remote cluster to replicate to
+  --xdcr-cluster-name=CLUSTERNAME        remote cluster to replicate to
   --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
   --max-concurrent-reps=[32]             maximum concurrent replications per bucket, 8 to 256.
   --checkpoint-interval=[1800]           intervals between checkpoints, 60 to 14400 seconds.

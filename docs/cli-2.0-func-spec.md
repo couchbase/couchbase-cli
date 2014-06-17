@@ -93,7 +93,7 @@ Extend node-init option with --node-init-index-path
 
 A new setting-compaction cmd for compaction related settings
 
-    setting-compacttion OPTIONS:
+    setting-compaction OPTIONS:
 
     --compaction-db-percentage=PERCENTAGE     at which point database compaction is triggered
     --compaction-db-size=SIZE[MB]             at which point database compaction is triggered
@@ -163,7 +163,7 @@ Cancel/stop replication
 
  - **Cluster setting management**
 
-setting-compacttion OPTIONS:
+setting-compaction OPTIONS:
 
       --compaction-db-percentage=PERCENTAGE     at which point database compaction is triggered
       --compaction-db-size=SIZE[MB]             at which point database compaction is triggered
@@ -227,6 +227,6 @@ xdcr-replicate OPTIONS:
       --create                               create and start a new replication
       --delete                               stop and cancel a replication
       --xdcr-from-bucket=BUCKET              local bucket name to replicate from
-      --xdcr-clucter-name=CLUSTERNAME        remote cluster to replicate to
+      --xdcr-cluster-name=CLUSTERNAME        remote cluster to replicate to
       --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
 

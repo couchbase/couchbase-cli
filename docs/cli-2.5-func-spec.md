@@ -106,6 +106,6 @@ OPTIONS:
       --create                               create and start a new replication
       --delete                               stop and cancel a replication
       --xdcr-from-bucket=BUCKET              local bucket name to replicate from
-      --xdcr-clucter-name=CLUSTERNAME        remote cluster to replicate to
+      --xdcr-cluster-name=CLUSTERNAME        remote cluster to replicate to
       --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
       --enable-data-security=[0|1]           allow data security using ssl
