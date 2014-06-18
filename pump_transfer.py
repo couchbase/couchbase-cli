@@ -271,7 +271,7 @@ class Restore(Transfer):
             "Please first create the destination / bucket before restoring.\n\n" \
             "Examples:\n" \
             "  %prog /backups/backup-42 http://HOST:8091 \\\n" \
-            "    --bucket-source=default\n" \
+            "    --bucket-source=default --from-date=2014-01-20 --to-date=2014-03-31\n" \
             "  %prog /backups/backup-42 couchbase://HOST:8091 \\\n" \
             "    --bucket-source=default\n" \
             "  %prog /backups/backup-42 memcached://HOST:11211 \\\n" \
@@ -295,12 +295,12 @@ class Restore(Transfer):
                              bucket-source""")
         p.add_option("", "--from-date",
                     action="store", type="string", default=None,
-                    help="""restore data from the date specified. By default
-                            all data from the very beginning will be restored""")
+                    help="""restore data from the date specified as yyyy-mm-dd. By default,
+all data from the very beginning will be restored""")
         p.add_option("", "--to-date",
                     action="store", type="string", default=None,
-                    help="""restore data till the date specified. By default
-                            all data that are collected will be restored""")
+                    help="""restore data till the date specified as yyyy-mm-dd. By default,
+all data that are collected will be restored""")
         Transfer.opt_parser_options_common(self, p)
 
         # TODO: (1) cbrestore parameter --create-design-docs=y|n
