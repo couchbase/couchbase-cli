@@ -854,6 +854,11 @@ def parse_spec(opts, spec, port):
     pair = netloc.split('@') # [ "user:pwsd", "host:port" ].
     host = (pair[-1] + ":" + str(port)).split(':')[0]
     port = (pair[-1] + ":" + str(port)).split(':')[1]
+    try:
+       val = int(port)
+    except ValueError:
+       logging.warn("\"" + port + "\" is not int, reset it to default port number")
+       port = 8091
 
     username = get_username(opts.username)
     password = get_password(opts.password)
