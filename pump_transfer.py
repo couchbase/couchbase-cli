@@ -175,7 +175,7 @@ from a source cluster into the caching layer at the destination""")
                      help="""Number of concurrent workers threads performing the transfer""")
         p.add_option("-v", "--verbose",
                      action="count", default=0,
-                     help="verbose logging; more -v's provide more verbosity")
+                     help="verbose logging; more -v's provide more verbosity. Max is -vvv")
         p.add_option("-x", "--extra",
                      action="store", type="string", default=None,
                      help="""Provide extra, uncommon config parameters;
