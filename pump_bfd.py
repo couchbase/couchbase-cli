@@ -260,7 +260,7 @@ class BFD:
                         if not failover_log[vbid]:
                             failover_log[vbid] = [logpair]
                         elif logpair not in failover_log[vbid]:
-                            failover_log[vbid].extend(logpair)
+                            failover_log[vbid].append(logpair)
         for snapshot in sorted(snapshot_list):
             json_file = open(snapshot, "r")
             json_data = json.load(json_file)
