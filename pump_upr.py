@@ -369,8 +369,8 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
     def ack_buffer_size(self, buf_size):
         try:
             opaque=self.r.randint(0, 2**32)
-            self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_BUFFER_ACK, '', \
-                struct.pack(">I", int(buf_size)), opaque)
+            self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_BUFFER_ACK, '', '', \
+                opaque, struct.pack(">I", int(buf_size)))
             logging.debug("Send buffer size: %d" % buf_size)
         except socket.error:
             return "error: socket error during sending buffer ack msg"
