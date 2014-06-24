@@ -97,6 +97,9 @@ class Transfer:
     def aggregate_stats(self, cur):
         return 0
 
+    def check_opts(self, opts):
+        return None
+
     def opt_parse(self, argv):
         p = self.opt_parser()
         opts, rest = p.parse_args(argv[1:])
@@ -105,6 +108,10 @@ class Transfer:
             return "\nError: please provide both a %s and a %s" % \
                 (self.source_alias, self.sink_alias), \
                 None, None, None
+
+        err = self.check_opts(opts)
+        if err:
+            return err, None, None, None
 
         opts.extra = opt_parse_extra(opts.extra, self.opt_extra_defaults())
         opts.safe = opt_parse_helper(opts)
@@ -255,6 +262,13 @@ class Backup(Transfer):
     def find_handlers(self, opts, source, sink):
         return PumpingStation.find_handler(opts, source, SOURCES), \
                PumpingStation.find_handler(opts, sink, SINKS)
+
+    def check_opts(self, opts):
+        mode = getattr(opts, "mode", None)
+        if mode:
+            if mode not in ["full", "diff", "accu"]:
+                return "\nError: option mode has to be 'full', 'diff' or 'accu'"
+        return None
 
 class Restore(Transfer):
     """Entry point for 2.0 cbrestore."""
