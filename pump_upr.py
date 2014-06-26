@@ -62,6 +62,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         self.response = PumpQueue()
         self.running = False
         self.stream_list = {}
+        self.unack_size = 0
 
     @staticmethod
     def can_handle(opts, spec):
@@ -114,7 +115,10 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
         batch_max_size = self.opts.extra['batch_max_size']
         batch_max_bytes = self.opts.extra['batch_max_bytes']
-        buf_ack_size = batch_max_bytes / 4
+        delta_ack_size = batch_max_bytes * 10 / 4 #ack every 25% of buffer size
+        last_processed = 0
+        total_bytes_read = 0
+
         vbid = 0
         cmd = 0
         start_seqno = 0
@@ -134,15 +138,17 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     else:
                         self.upr_done = True
                     continue
-                if batch.bytes > buf_ack_size:
-                    rv = self.ack_buffer_size(buf_ack_size)
+                unprocessed_size = total_bytes_read - last_processed
+                if unprocessed_size > delta_ack_size:
+                    rv = self.ack_buffer_size(unprocessed_size)
                     if rv:
                         logging.error(rv)
                     else:
-                        buf_ack_size += buf_ack_size
+                        last_processed = total_bytes_read
 
-                cmd, errcode, opaque, cas, keylen, extlen, data, datalen, dtype = \
+                cmd, errcode, opaque, cas, keylen, extlen, data, datalen, dtype, bytes_read = \
                     self.response.get()
+                total_bytes_read += bytes_read
                 rv = 0
                 metalen = flags = flg = exp = 0
                 key = val = ext = ''
@@ -170,7 +176,6 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                         vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno = \
                             self.stream_list[opaque]
                         del self.stream_list[opaque]
-                        #self.request_upr_stream(vbid, flags, start_seqno, end_seqno, 0, hi_seqno)
                     elif errcode == couchbaseConstants.ERR_KEY_EEXISTS:
                        logging.warn("a stream exists on the connection for vbucket:%s" % opaque)
                     elif errcode ==  couchbaseConstants.ERR_NOT_MY_VBUCKET:
@@ -251,6 +256,8 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 elif cmd == couchbaseConstants.CMD_UPR_NOOP:
                     need_ack = True
                 elif cmd == couchbaseConstants.CMD_UPR_BUFFER_ACK:
+                    if errcode != couchbaseConstants.ERR_SUCCESS:
+                        logging.warning("buffer ack response errcode:%s" % errcode)
                     continue
                 else:
                     logging.warn("warning: unexpected UPR message: %s" % cmd)
@@ -278,6 +285,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     # the server can concurrently send us the next batch.
                     # If we are slow, our slow ACK's will naturally slow
                     # down the server.
+                    self.ack_buffer_size(total_bytes_read - last_processed)
                     return 0, batch
 
                 self.ack_last = False
@@ -290,16 +298,13 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
         if batch.size() <= 0:
             return 0, None
+        self.ack_buffer_size(total_bytes_read - last_processed)
         return 0, batch
 
     def get_upr_conn(self):
         """Return previously connected upr conn."""
 
-        if self.upr_conn:
-            rv = self.ack_buffer_size(self.batch_max_bytes)
-            if rv:
-                logging.error(rv)
-        else:
+        if not self.upr_conn:
             host = self.source_node['hostname'].split(':')[0]
             port = self.source_node['ports']['direct']
             version = self.source_node['version']
@@ -348,11 +353,12 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                        '', opaque, extra)
                 self.upr_conn._handleSingleResponse(opaque)
 
-                # set connection buffer size
+                # set connection buffer size. Considering header size, we roughly
+                # set the total received package size as 10 times as value size.
                 opaque=self.r.randint(0, 2**32)
                 self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_CONTROL,
                                        couchbaseConstants.KEY_UPR_CONNECTION_BUFFER_SIZE,
-                                       str(self.batch_max_bytes), opaque)
+                                       str(self.batch_max_bytes * 10), opaque)
                 self.upr_conn._handleSingleResponse(opaque)
             except EOFError:
                 return "error: Fail to set up UPR connection", None
@@ -387,6 +393,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         bytes_read = ''
         rd_timeout = 1
         desc = [self.upr_conn.s]
+        extra_bytes = 0
         while self.running:
             readers, writers, errors = select.select(desc, [], [], rd_timeout)
             rd_timeout = .25
@@ -397,13 +404,13 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 if len(data) == 0:
                     raise exceptions.EOFError("Got empty data (remote died?).")
                 bytes_read += data
-
             while len(bytes_read) >= couchbaseConstants.MIN_RECV_PACKET:
                 magic, opcode, keylen, extlen, datatype, status, bodylen, opaque, cas= \
                     struct.unpack(couchbaseConstants.RES_PKT_FMT, \
                                   bytes_read[0:couchbaseConstants.MIN_RECV_PACKET])
 
                 if len(bytes_read) < (couchbaseConstants.MIN_RECV_PACKET+bodylen):
+                    extra_bytes = len(bytes_read)
                     break
 
                 rd_timeout = 0
@@ -411,7 +418,9 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                   couchbaseConstants.MIN_RECV_PACKET+bodylen]
                 bytes_read = bytes_read[couchbaseConstants.MIN_RECV_PACKET+bodylen:]
                 self.response.put((opcode, status, opaque, cas, keylen, extlen, body, \
-                                   bodylen, datatype))
+                                   bodylen, datatype, \
+                                   couchbaseConstants.MIN_RECV_PACKET+bodylen+extra_bytes))
+                extra_bytes = 0
 
     def setup_upr_streams(self):
         #send request to retrieve vblist and uuid for the node
