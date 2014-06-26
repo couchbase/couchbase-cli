@@ -797,7 +797,8 @@ def connect_db(db_path, opts, version):
         if cur not in version:
             logging.debug("dbpath is not empty: " + db_path)
             return "error: unexpected db user version: " + \
-                str(cur) + " vs " + str(version), \
+                str(cur) + " vs " + str(version) + \
+                ", maybe a backup directory created by older releases is reused", \
                 None, None
 
         return 0, db, version.index(cur)
