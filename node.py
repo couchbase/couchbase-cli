@@ -744,7 +744,7 @@ class Node:
                 if node['clusterMembership'] != 'active':
                     raise Exception('node %s is not active' % node['hostname'])
                 else:
-                    failover_otps.append(node['otpNode'])
+                    failover_otps.append((node['otpNode'], node['status']))
             if node['hostname'] in to_readd:
                 readd_otps.append(node['otpNode'])
 
@@ -864,7 +864,7 @@ class Node:
             usage("specified servers are not part of the cluster: %s" %
                   servers['failover'].keys())
 
-        for failover_otp in failover_otps:
+        for failover_otp, node_status in failover_otps:
             rest = restclient.RestClient(self.server,
                                          self.port,
                                          {'debug':self.debug})
@@ -873,7 +873,7 @@ class Node:
                 'success_msg': "failover %s" % failover_otp
             }
             rest.setParam('otpNode', failover_otp)
-            if self.hard_failover:
+            if self.hard_failover or node_status != 'healthy':
                 output_result = rest.restCmd('POST',
                                              rest_cmds['failover'],
                                              self.user,
