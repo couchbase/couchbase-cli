@@ -208,6 +208,7 @@ such as when transferring data from an OSX server to a non-OSX cluster"),
             "seqno":           (0,      "By default, start seqno from beginning."),
             "mcd_compatible":  (1,      "For value 0, display extended fields for stdout output."),
             "uncompress":      (0,      "For value 1, restore data in uncompressed mode"),
+            "backoff_cap":     (10,     "Max backoff time during rebalance period"),
             }
 
     def find_handlers(self, opts, source, sink):

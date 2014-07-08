@@ -62,6 +62,7 @@ class WorkloadGen(pump_transfer.Transfer):
                        "threads" : ["-t", None],
                        "username" : ["-u", None],
                        "password" : ["-p", None],
+                       "extra" : ["-x", "backoff_cap=0.1"],
                       }
 
         count_opts = {"verbose" : ["-v", None]}

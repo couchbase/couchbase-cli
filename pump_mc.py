@@ -77,7 +77,7 @@ class MCSink(pump.Sink):
         """Worker thread to asynchronously store batches into sink."""
 
         mconns = {} # State kept across scatter_gather() calls.
-
+        backoff_cap = self.opts.extra.get("backoff_cap", 10)
         while not self.ctl['stop']:
             batch, future = self.pull_next_batch()
             if not batch:
@@ -99,7 +99,7 @@ class MCSink(pump.Sink):
                         self.cur.get("tot_sink_retry_batch", 0) + 1
 
                 if need_backoff:
-                    backoff = min(backoff * 2.0, 10.0)
+                    backoff = min(backoff * 2.0, backoff_cap)
                     logging.warn("backing off, secs: %s" % (backoff))
                     time.sleep(backoff)
 
