@@ -146,6 +146,12 @@ def main():
                 'regenerate-cert=',
                 'recovery-type=',
                 'recovery-buckets=',
+                'nodes=',
+                'allnodes',
+                'upload',
+                'upload-host=',
+                'customer=',
+                'ticket=',
                 ])
     except getopt.GetoptError, err:
         usage(err)
@@ -172,6 +178,9 @@ def main():
         'ssl-manage'        : node.Node,
         'node-init'         : node.Node,
         'user-manage'       : node.Node,
+        'collect-logs-start'  : node.Node,
+        'collect-logs-stop'   : node.Node,
+        'collect-logs-status' : node.Node,
         'bucket-list'       : buckets.Buckets,
         'bucket-create'     : buckets.Buckets,
         'bucket-edit'       : buckets.Buckets,

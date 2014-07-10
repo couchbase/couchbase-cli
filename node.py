@@ -8,6 +8,8 @@ import sys
 import util_cli as util
 import socket
 import simplejson as json
+import re
+import urlparse
 
 from usage import usage
 from restclient import *
@@ -33,6 +35,9 @@ rest_cmds = {
     'user-manage'           :'/settings/readOnlyUser',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
+    'collect-logs-start'  : '/controller/startLogsCollection',
+    'collect-logs-stop'   : '/controller/cancelLogsCollection',
+    'collect-logs-status' : '/pools/default/tasks',
 }
 
 server_no_remove = [
@@ -71,6 +76,9 @@ methods = {
     'user-manage'           :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
+    'collect-logs-start'  : 'POST',
+    'collect-logs-stop'   : 'POST',
+    'collect-logs-status' : 'GET',
 }
 
 bool_to_str = lambda value: str(bool(int(value))).lower()
@@ -149,6 +157,14 @@ class Node:
         self.hard_failover = None
         self.recovery_type = None
         self.recovery_buckets = None
+
+        # Collect logs
+        self.nodes = None
+        self.all_nodes = None
+        self.upload = False
+        self.upload_host = None
+        self.customer = None
+        self.ticket = None
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
@@ -229,6 +245,15 @@ class Node:
 
         elif cmd == 'ssl-manage':
             self.retrieveCert()
+
+        elif cmd == 'collect-logs-start':
+            self.collectLogsStart()
+
+        elif cmd == 'collect-logs-stop':
+            self.collectLogsStop()
+
+        elif cmd == 'collect-logs-status':
+            self.collectLogsStatus()
 
     def clusterInit(self, cmd):
         rest = restclient.RestClient(self.server,
@@ -659,6 +684,18 @@ class Node:
                 self.recovery_type = a
             elif o == '--recovery-buckets':
                 self.recovery_buckets = a
+            elif o == '--nodes':
+                self.nodes = a
+            elif o == '--allnodes':
+                self.all_nodes = True
+            elif o == '--upload':
+                self.upload = True
+            elif o == '--upload-host':
+                self.upload_host = a
+            elif o == '--customer':
+                self.customer = a
+            elif o == '--ticket':
+                self.ticket = a
 
         return servers
 
@@ -1210,3 +1247,81 @@ class Node:
             print "SUCCESS: %s certificate to '%s'" % (self.cmd, self.certificate_file)
         except IOError, error:
             print "ERROR:", error
+
+    def collectLogsStart(self):
+        """Starts a cluster-wide log collection task"""
+        if (self.nodes is None) and (self.all_nodes is not True):
+            usage("please specify a list of nodes to collect logs from, " +
+                  " or 'allnodes'")
+
+        rest = restclient.RestClient(self.server, self.port,
+                                     {'debug': self.debug})
+
+        if self.all_nodes:
+            rest.setParam("nodes", "*")
+        else:
+            rest.setParam("nodes", self.nodes)
+            print "NODES:", nodes
+
+        if self.upload:
+            if self.upload_host is None:
+                usage("please specify an upload-host when using --upload")
+
+            rest.setParam("uploadHost", self.upload_host)
+
+            if not self.customer:
+                usage("please specify a value for --customer when using" +
+                      " --upload")
+
+            rest.setParam("customer", self.customer)
+            rest.setParam("ticket", self.ticket)
+
+        opts = {
+            'error_msg': "unable to start log collection:",
+            'success_msg': "Log collection started"
+        }
+
+        output_result = rest.restCmd(self.method, self.rest_cmd, self.user,
+                                     self.password, opts)
+        return output_result
+
+    def collectLogsStop(self):
+        """Stops a cluster-wide log collection task"""
+        rest = restclient.RestClient(self.server, self.port,
+                                     {'debug': self.debug})
+
+        opts = {
+            'success_msg': 'collect logs successfully stopped',
+            'error_msg': 'unable to stop collect logs'
+        }
+        output_result = rest.restCmd(self.method, self.rest_cmd, self.user,
+                                     self.password, opts)
+        return output_result
+
+    def collectLogsStatus(self):
+        """Shows the current status of log collection task"""
+        rest = restclient.RestClient(self.server, self.port,
+                                     {'debug': self.debug})
+
+        opts = {
+            'error_msg': 'unable to obtain collect logs status'
+        }
+        output_result = rest.restCmd(self.method, self.rest_cmd, self.user,
+                                     self.password, opts)
+
+        output_json = rest.getJson(output_result)
+
+        for e in output_json:
+            if ((type(e) == type(dict()) and ('type' in e) and
+                (e['type'] == 'clusterLogsCollection'))):
+                print "Status:   {}".format(e['status'])
+                if 'perNode' in e:
+                    print "Details:"
+                    for node, ns in e["perNode"].iteritems():
+                        print '\tNode:', node
+                        print '\tStatus:', ns['status']
+                        for f in ["path", "statusCode", "url", "uploadStatusCode", "uploadOutput"]:
+                            if f in ns:
+                                print '\t', f, ":", ns[f]
+                        print
+                return

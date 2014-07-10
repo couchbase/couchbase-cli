@@ -114,8 +114,12 @@ class RestClient:
         self.bootStrap(headers)
 
         if method == 'POST':
-            encoded_params = urllib.urlencode(self.params)
-            headers['Content-type'] = 'application/x-www-form-urlencoded'
+            if self.body:
+                headers['Content-type'] = 'application/json;charset=UTF-8'
+                encoded_params = self.body
+            elif self.params:
+                encoded_params = urllib.urlencode(self.params)
+                headers['Content-type'] = 'application/x-www-form-urlencoded'
         elif method == 'DELETE':
             encoded_params = urllib.urlencode(self.params)
             headers['Content-type'] = 'application/x-www-form-urlencoded'

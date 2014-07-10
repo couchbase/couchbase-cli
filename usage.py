@@ -33,6 +33,9 @@ def commands_usage():
   user-manage           manage read only user
   xdcr-setup            set up XDCR connection
   xdcr-replicate        xdcr operations
+  collect-logs-start    Start a cluster-wide log collection
+  collect-logs-stop     Stop a cluster-wide log collection
+  collect-logs status   Show the status of cluster-wide log collection
   help                  show longer usage/help and examples
 """
 
@@ -221,6 +224,15 @@ user-manage OPTIONS:
 ssl-manage OPTIONS:
   --retrieve-cert=CERTIFICATE            retrieve cluster certificate AND save to a pem file
   --regenerate-cert=CERTIFICATE          regenerate cluster certificate AND save to a pem file
+
+collect-logs-start OPTIONS:
+  --all-nodes                            Collect logs from all accessible cluster nodes
+  --nodes=node_1,node_2,...              Collect logs from the specified subset of cluster nodes
+  --upload                               Upload collects logs to specified host
+    --upload-host=HOST                   Host to upload logs to (Manditory when --upload specified)
+    --customer=CUSTOMER                  Customer name to use when uploading logs (Manditory when --upload specified)
+    --ticket=TICKET_NUMBER               Ticket number to associate the uploaded logs with
+
 
 The default PORT number is 8091.
 
@@ -513,6 +525,22 @@ EXAMPLES:
     couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
         --regenerate-cert=/tmp/test.pem \\
         -u Administrator -p password
+
+
+  Start cluster-wide log collection for whole cluster
+    couchbase-cli collect-logs-start -c 192.168.0.1:8091 \\
+        -u Administrator -p password \\
+        --all-nodes --upload --upload-host=host.upload.com \\
+        --customer="example inc" --ticket=12345
+
+  Stop cluster-wide log collection
+    couchbase-cli collect-logs-stop -c 192.168.0.1:8091 \\
+        -u Administrator -p password
+
+  Show status of cluster-wide log collection
+    couchbase-cli collect-logs-status -c 192.168.0.1:8091 \\
+        -u Administrator -p password
+
 """
 
     sys.exit(2)
