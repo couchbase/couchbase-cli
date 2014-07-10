@@ -55,7 +55,10 @@ class Transfer:
             "  %prog http://SOURCE:8091 /backups/backup-42\n" \
             "  %prog /backups/backup-42 http://DEST:8091\n" \
             "  %prog /backups/backup-42 couchbase://DEST:8091\n" \
-            "  %prog http://SOURCE:8091 http://DEST:8091"
+            "  %prog http://SOURCE:8091 http://DEST:8091\n" \
+            "  %prog couchstore-files:///opt/couchbase/var/lib/couchbase/data/ /backup-XXX\n" \
+            "  %prog couchstore-files:///opt/couchbase/var/lib/couchbase/data/ couchbase://DEST:8091\n"
+
 
     def main(self, argv, opts_etc=None):
         if threading.currentThread().getName() == "MainThread":
