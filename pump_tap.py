@@ -600,7 +600,7 @@ class TapSink(pump_cb.CBSink):
         else:
             return "error: MCSink - unknown tap cmd for request: " + str(cmd), None
 
-        hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque, metalen, dtype)
+        hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, cas, opaque, metalen, dtype)
         return 0, (hdr, ext, seq_no, key, val)
 
     def cmd_header(self, cmd, vbucket_id, key, val, ext, cas, opaque, metalen,
