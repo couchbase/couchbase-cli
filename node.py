@@ -164,7 +164,7 @@ class Node:
         self.upload = False
         self.upload_host = None
         self.customer = None
-        self.ticket = None
+        self.ticket = ""
 
     def runCmd(self, cmd, server, port,
                user, password, opts):
