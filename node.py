@@ -686,7 +686,7 @@ class Node:
                 self.recovery_buckets = a
             elif o == '--nodes':
                 self.nodes = a
-            elif o == '--allnodes':
+            elif o == '--all-nodes':
                 self.all_nodes = True
             elif o == '--upload':
                 self.upload = True
@@ -1252,7 +1252,7 @@ class Node:
         """Starts a cluster-wide log collection task"""
         if (self.nodes is None) and (self.all_nodes is not True):
             usage("please specify a list of nodes to collect logs from, " +
-                  " or 'allnodes'")
+                  " or 'all-nodes'")
 
         rest = restclient.RestClient(self.server, self.port,
                                      {'debug': self.debug})

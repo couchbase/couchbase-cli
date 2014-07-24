@@ -147,7 +147,7 @@ def main():
                 'recovery-type=',
                 'recovery-buckets=',
                 'nodes=',
-                'allnodes',
+                'all-nodes',
                 'upload',
                 'upload-host=',
                 'customer=',
