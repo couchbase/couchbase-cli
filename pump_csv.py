@@ -204,7 +204,7 @@ class CSVSink(pump.Sink):
                     pass
             try:
                 if cmd in [couchbaseConstants.CMD_TAP_MUTATION,
-                           couchbaseConstants.CMD_UPR_MUTATION]:
+                           couchbaseConstants.CMD_DCP_MUTATION]:
                     if self.fields:
                         if val and len(val) > 0:
                             try:
@@ -222,7 +222,7 @@ class CSVSink(pump.Sink):
                     else:
                         #rev = self.convert_meta(meta)
                         self.writer.writerow([key, flg, exp, cas, val, meta, vbucket_id, dtype])
-                elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_UPR_DELETE]:
+                elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_DCP_DELETE]:
                     pass
                 elif cmd == couchbaseConstants.CMD_GET:
                     pass

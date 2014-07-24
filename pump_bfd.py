@@ -584,8 +584,8 @@ class BFDSink(BFD, pump.Sink):
                         continue
                     if cmd not in [couchbaseConstants.CMD_TAP_MUTATION,
                                    couchbaseConstants.CMD_TAP_DELETE,
-                                   couchbaseConstants.CMD_UPR_MUTATION,
-                                   couchbaseConstants.CMD_UPR_DELETE]:
+                                   couchbaseConstants.CMD_DCP_MUTATION,
+                                   couchbaseConstants.CMD_DCP_DELETE]:
                         return self.future_done(future,
                                                 "error: BFDSink bad cmd: " +
                                                 str(cmd))

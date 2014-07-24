@@ -255,13 +255,13 @@ class MCSink(pump.Sink):
             # The source gave no meta, so use regular commands.
             self.op_map = OP_MAP
 
-        if cmd in[couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_UPR_MUTATION] :
+        if cmd in[couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_DCP_MUTATION] :
             m = self.op_map.get(op, None)
             if m:
                 return 0, m
             return "error: MCSink.translate_cmd, unsupported op: " + op, None
 
-        if cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_UPR_DELETE]:
+        if cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_DCP_DELETE]:
             if op == 'get':
                 return 0, couchbaseConstants.CMD_NOOP
             return 0, self.op_map['delete']

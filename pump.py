@@ -788,7 +788,7 @@ class StdOutSink(Sink):
                     pass
             try:
                 if cmd == couchbaseConstants.CMD_TAP_MUTATION or \
-                   cmd == couchbaseConstants.CMD_UPR_MUTATION:
+                   cmd == couchbaseConstants.CMD_DCP_MUTATION:
                     if op_mutate:
                         # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
                         if mcd_compatible:
@@ -802,7 +802,7 @@ class StdOutSink(Sink):
                     elif op == 'get':
                         stdout.write("get %s\r\n" % (key))
                 elif cmd == couchbaseConstants.CMD_TAP_DELETE or \
-                     cmd == couchbaseConstants.CMD_UPR_DELETE:
+                     cmd == couchbaseConstants.CMD_DCP_DELETE:
                     if op_mutate:
                         stdout.write("delete %s\r\n" % (key))
                 elif cmd == couchbaseConstants.CMD_GET:

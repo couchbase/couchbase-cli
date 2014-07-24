@@ -313,7 +313,7 @@ Backward compatibility
     |        |   2.x  |  3.0   | 2.x BFF | 3.0 BFF |
     | ------ | ------ | ------ | ------- | ------- |
     |  2.x   |   TAP  |   TAP  |   Y     |   N/A   |
-    |  3.0   |   TAP  |   UPR  |   Y     |    Y    |
+    |  3.0   |   TAP  |   DCP  |   Y     |    Y    |
 
 IBR should automatically identify the version of target server and source data file format. For 2.x target server, TAP protocol will be used as before. For 2.x data format, default value will be used for restore.
 

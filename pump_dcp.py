@@ -33,8 +33,8 @@ except ImportError:
     else:
         sys.path.insert(0, cb_path)
 
-class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
-    """Can read from cluster/server/bucket via UPR streaming."""
+class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
+    """Can read from cluster/server/bucket via DCP streaming."""
     HIGH_SEQNO = "high_seqno"
     HIGH_SEQNO_BYTE = 8
     VB_UUID = "uuid"
@@ -42,14 +42,14 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
-        super(UPRStreamSource, self).__init__(opts, spec, source_bucket, source_node,
+        super(DCPStreamSource, self).__init__(opts, spec, source_bucket, source_node,
                                             source_map, sink_map, ctl, cur)
         threading.Thread.__init__(self)
 
-        self.upr_done = False
-        self.upr_conn = None
+        self.dcp_done = False
+        self.dcp_conn = None
         self.mem_conn = None
-        self.upr_name = opts.process_name
+        self.dcp_name = opts.process_name
         self.ack_last = False
         self.cmd_last = None
         self.num_msg = 0
@@ -79,29 +79,29 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
     def provide_batch(self):
         if not self.version_supported:
-            return super(UPRStreamSource, self).provide_batch()
+            return super(DCPStreamSource, self).provide_batch()
         cur_sleep = 0.2
         cur_retry = 0
         max_retry = self.opts.extra['max_retry']
         while True:
-            if self.upr_done:
+            if self.dcp_done:
                 return 0, None
 
-            rv, upr_conn = self.get_upr_conn()
+            rv, dcp_conn = self.get_dcp_conn()
             if rv != 0:
-                self.upr_done = True
+                self.dcp_done = True
                 return rv, None
 
-            rv, batch = self.provide_upr_batch_actual(upr_conn)
+            rv, batch = self.provide_dcp_batch_actual(dcp_conn)
             if rv == 0:
                 return rv, batch
 
-            if self.upr_conn:
-                self.upr_conn.close()
-                self.upr_conn = None
+            if self.dcp_conn:
+                self.dcp_conn.close()
+                self.dcp_conn = None
 
             if cur_retry > max_retry:
-                self.upr_done = True
+                self.dcp_done = True
                 return rv, batch
 
             logging.warn("backoff: %s, sleeping: %s, on error: %s" %
@@ -110,7 +110,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             cur_sleep = min(cur_sleep * 2, 20) # Max backoff sleep 20 seconds.
             cur_retry = cur_retry + 1
 
-    def provide_upr_batch_actual(self, upr_conn):
+    def provide_dcp_batch_actual(self, dcp_conn):
         batch = pump.Batch(self)
 
         batch_max_size = self.opts.extra['batch_max_size']
@@ -128,7 +128,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         ss_start_seqno = 0
         ss_end_seqno = 0
         try:
-            while (not self.upr_done and
+            while (not self.dcp_done and
                    batch.size() < batch_max_size and
                    batch.bytes < batch_max_bytes):
 
@@ -136,7 +136,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     if len(self.stream_list) > 0:
                         time.sleep(.25)
                     else:
-                        self.upr_done = True
+                        self.dcp_done = True
                     continue
                 unprocessed_size = total_bytes_read - last_processed
                 if unprocessed_size > delta_ack_size:
@@ -154,14 +154,14 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 key = val = ext = ''
                 need_ack = False
                 seqno = 0
-                if cmd == couchbaseConstants.CMD_UPR_REQUEST_STREAM:
+                if cmd == couchbaseConstants.CMD_DCP_REQUEST_STREAM:
                     if errcode == couchbaseConstants.ERR_SUCCESS:
                         pair_index = (self.source_bucket['name'], self.source_node['hostname'])
                         start = 0
-                        step = UPRStreamSource.HIGH_SEQNO_BYTE + UPRStreamSource.UUID_BYTE
+                        step = DCPStreamSource.HIGH_SEQNO_BYTE + DCPStreamSource.UUID_BYTE
                         while start+step <= datalen:
                             uuid, seqno = struct.unpack(
-                                            couchbaseConstants.UPR_VB_UUID_SEQNO_PKT_FMT, \
+                                            couchbaseConstants.DCP_VB_UUID_SEQNO_PKT_FMT, \
                                             data[start:start + step])
                             if pair_index not in self.cur['failoverlog']:
                                 self.cur['failoverlog'][pair_index] = {}
@@ -188,7 +188,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     elif errcode == couchbaseConstants.ERR_ROLLBACK:
                         vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_stop_seqno = \
                             self.stream_list[opaque]
-                        start_seqno, = struct.unpack(couchbaseConstants.UPR_VB_SEQNO_PKT_FMT, data)
+                        start_seqno, = struct.unpack(couchbaseConstants.DCP_VB_SEQNO_PKT_FMT, data)
                         #find the most latest uuid, hi_seqno that fit start_seqno
                         if self.cur['failoverlog']:
                             pair_index = (self.source_bucket['name'], self.source_node['hostname'])
@@ -203,15 +203,15 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                             pair_index = (self.source_bucket['name'], self.source_node['hostname'])
                             if self.cur['snapshot'][pair_index].get("vbid"):
                                 ss_start_seqno, ss_end_seqno = self.cur['snapshot'][pair_index][vbid]
-                        self.request_upr_stream(vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
+                        self.request_dcp_stream(vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
 
                         del self.stream_list[opaque]
                         self.stream_list[opaque] = \
                             (vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
-                elif cmd == couchbaseConstants.CMD_UPR_MUTATION:
+                elif cmd == couchbaseConstants.CMD_DCP_MUTATION:
                     vbucket_id = errcode
                     seqno, rev_seqno, flg, exp, locktime, metalen, nru = \
-                        struct.unpack(couchbaseConstants.UPR_MUTATION_PKT_FMT, data[0:extlen])
+                        struct.unpack(couchbaseConstants.DCP_MUTATION_PKT_FMT, data[0:extlen])
                     key_start = extlen
                     val_start = key_start + keylen
                     key = data[extlen:val_start]
@@ -221,11 +221,11 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                metalen)
                         batch.append(msg, len(val))
                         self.num_msg += 1
-                elif cmd == couchbaseConstants.CMD_UPR_DELETE or \
-                     cmd == couchbaseConstants.CMD_UPR_EXPIRATION:
+                elif cmd == couchbaseConstants.CMD_DCP_DELETE or \
+                     cmd == couchbaseConstants.CMD_DCP_EXPIRATION:
                     vbucket_id = errcode
                     seqno, rev_seqno, metalen = \
-                        struct.unpack(couchbaseConstants.UPR_DELETE_PKT_FMT, data[0:extlen])
+                        struct.unpack(couchbaseConstants.DCP_DELETE_PKT_FMT, data[0:extlen])
                     key_start = extlen
                     val_start = key_start + keylen
                     key = data[extlen:val_start]
@@ -234,39 +234,39 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                metalen)
                         batch.append(msg, len(val))
                         self.num_msg += 1
-                    if cmd == couchbaseConstants.CMD_UPR_DELETE:
+                    if cmd == couchbaseConstants.CMD_DCP_DELETE:
                         batch.adjust_size += 1
-                elif cmd == couchbaseConstants.CMD_UPR_FLUSH:
-                    logging.warn("stopping: saw CMD_UPR_FLUSH")
-                    self.upr_done = True
+                elif cmd == couchbaseConstants.CMD_DCP_FLUSH:
+                    logging.warn("stopping: saw CMD_DCP_FLUSH")
+                    self.dcp_done = True
                     break
-                elif cmd == couchbaseConstants.CMD_UPR_END_STREAM:
+                elif cmd == couchbaseConstants.CMD_DCP_END_STREAM:
                     del self.stream_list[opaque]
                     if not len(self.stream_list):
-                        self.upr_done = True
-                elif cmd == couchbaseConstants.CMD_UPR_SNAPSHOT_MARKER:
+                        self.dcp_done = True
+                elif cmd == couchbaseConstants.CMD_DCP_SNAPSHOT_MARKER:
                     ss_start_seqno, ss_end_seqno, _ = \
-                        struct.unpack(couchbaseConstants.UPR_SNAPSHOT_PKT_FMT, data[0:extlen])
+                        struct.unpack(couchbaseConstants.DCP_SNAPSHOT_PKT_FMT, data[0:extlen])
                     pair_index = (self.source_bucket['name'], self.source_node['hostname'])
                     if not self.cur['snapshot']:
                         self.cur['snapshot'] = {}
                     if pair_index not in self.cur['snapshot']:
                         self.cur['snapshot'][pair_index] = {}
                     self.cur['snapshot'][pair_index][opaque] = (ss_start_seqno, ss_end_seqno)
-                elif cmd == couchbaseConstants.CMD_UPR_NOOP:
+                elif cmd == couchbaseConstants.CMD_DCP_NOOP:
                     need_ack = True
-                elif cmd == couchbaseConstants.CMD_UPR_BUFFER_ACK:
+                elif cmd == couchbaseConstants.CMD_DCP_BUFFER_ACK:
                     if errcode != couchbaseConstants.ERR_SUCCESS:
                         logging.warning("buffer ack response errcode:%s" % errcode)
                     continue
                 else:
-                    logging.warn("warning: unexpected UPR message: %s" % cmd)
-                    return "unexpected UPR message: %s" % cmd, batch
+                    logging.warn("warning: unexpected DCP message: %s" % cmd)
+                    return "unexpected DCP message: %s" % cmd, batch
 
                 if need_ack:
                     self.ack_last = True
                     try:
-                        upr_conn._sendMsg(cmd, '', '', opaque, vbucketId=0,
+                        dcp_conn._sendMsg(cmd, '', '', opaque, vbucketId=0,
                                           fmt=couchbaseConstants.RES_PKT_FMT,
                                           magic=couchbaseConstants.RES_MAGIC_BYTE)
                     except socket.error:
@@ -275,7 +275,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                 " or had connectivity/server problems" %
                                 (self.source_node['hostname'])), batch
                     except EOFError:
-                        self.upr_done = True
+                        self.dcp_done = True
                         return ("error: EOFError on socket send();"
                                 " perhaps the source server: %s was rebalancing"
                                 " or had connectivity/server problems" %
@@ -294,41 +294,41 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         except EOFError:
             if batch.size() <= 0 and self.ack_last:
                 # A closed conn after an ACK means clean end of TAP dump.
-                self.upr_done = True
+                self.dcp_done = True
 
         if batch.size() <= 0:
             return 0, None
         self.ack_buffer_size(total_bytes_read - last_processed)
         return 0, batch
 
-    def get_upr_conn(self):
-        """Return previously connected upr conn."""
+    def get_dcp_conn(self):
+        """Return previously connected dcp conn."""
 
-        if not self.upr_conn:
+        if not self.dcp_conn:
             host = self.source_node['hostname'].split(':')[0]
             port = self.source_node['ports']['direct']
             version = self.source_node['version']
 
-            logging.debug("  UPRStreamSource connecting mc: " +
+            logging.debug("  DCPStreamSource connecting mc: " +
                           host + ":" + str(port))
 
-            self.upr_conn = cb_bin_client.MemcachedClient(host, port)
-            if not self.upr_conn:
+            self.dcp_conn = cb_bin_client.MemcachedClient(host, port)
+            if not self.dcp_conn:
                 return "error: could not connect to memcached: " + \
                     host + ":" + str(port), None
             self.mem_conn = cb_bin_client.MemcachedClient(host, port)
-            if not self.upr_conn:
+            if not self.dcp_conn:
                 return "error: could not connect to memcached: " + \
                     host + ":" + str(port), None
             sasl_user = str(pump.get_username(self.source_bucket.get("name", self.opts.username)))
             sasl_pswd = str(pump.get_password(self.source_bucket.get("saslPassword", self.opts.password)))
             if sasl_user:
                 try:
-                    self.upr_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
+                    self.dcp_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
                     self.mem_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
                 except cb_bin_client.MemcachedError:
                     try:
-                        self.upr_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                        self.dcp_conn.sasl_auth_plain(sasl_user, sasl_pswd)
                         self.mem_conn.sasl_auth_plain(sasl_user, sasl_pswd)
                     except EOFError:
                         return "error: SASL auth error: %s:%s, user: %s" % \
@@ -345,37 +345,37 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 except socket.error:
                     return "error: SASL auth socket error: %s:%s, user: %s" % \
                         (host, port, sasl_user), None
-            extra = struct.pack(couchbaseConstants.UPR_CONNECT_PKT_FMT, 0, \
-                                couchbaseConstants.FLAG_UPR_PRODUCER)
+            extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, \
+                                couchbaseConstants.FLAG_DCP_PRODUCER)
             try:
                 opaque=self.r.randint(0, 2**32)
-                self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_CONNECT, self.upr_name, \
+                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONNECT, self.dcp_name, \
                                        '', opaque, extra)
-                self.upr_conn._handleSingleResponse(opaque)
+                self.dcp_conn._handleSingleResponse(opaque)
 
                 # set connection buffer size. Considering header size, we roughly
                 # set the total received package size as 10 times as value size.
                 opaque=self.r.randint(0, 2**32)
-                self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_CONTROL,
-                                       couchbaseConstants.KEY_UPR_CONNECTION_BUFFER_SIZE,
+                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
+                                       couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
                                        str(self.batch_max_bytes * 10), opaque)
-                self.upr_conn._handleSingleResponse(opaque)
+                self.dcp_conn._handleSingleResponse(opaque)
             except EOFError:
-                return "error: Fail to set up UPR connection", None
+                return "error: Fail to set up DCP connection", None
             except cb_bin_client.MemcachedError:
-                return "error: UPR connect memcached error", None
+                return "error: DCP connect memcached error", None
             except socket.error:
-                return "error: UPR connection error", None
+                return "error: DCP connection error", None
             self.running = True
             self.start()
 
-            self.setup_upr_streams()
-        return 0, self.upr_conn
+            self.setup_dcp_streams()
+        return 0, self.dcp_conn
 
     def ack_buffer_size(self, buf_size):
         try:
             opaque=self.r.randint(0, 2**32)
-            self.upr_conn._sendCmd(couchbaseConstants.CMD_UPR_BUFFER_ACK, '', '', \
+            self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_BUFFER_ACK, '', '', \
                 opaque, struct.pack(">I", int(buf_size)))
             logging.debug("Send buffer size: %d" % buf_size)
         except socket.error:
@@ -386,13 +386,13 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         return None
 
     def run(self):
-        if not self.upr_conn:
+        if not self.dcp_conn:
             logging.error("socket to memcached server is not created yet.")
             return
 
         bytes_read = ''
         rd_timeout = 1
-        desc = [self.upr_conn.s]
+        desc = [self.dcp_conn.s]
         extra_bytes = 0
         while self.running:
             readers, writers, errors = select.select(desc, [], [], rd_timeout)
@@ -422,7 +422,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                    couchbaseConstants.MIN_RECV_PACKET+bodylen+extra_bytes))
                 extra_bytes = 0
 
-    def setup_upr_streams(self):
+    def setup_dcp_streams(self):
         #send request to retrieve vblist and uuid for the node
         stats = self.mem_conn.stats("vbucket-seqno")
         if not stats:
@@ -433,16 +433,16 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         seqno_list = {}
         vb_list = {}
         for key, val in stats.items():
-            i = key.find(UPRStreamSource.VB_UUID)
+            i = key.find(DCPStreamSource.VB_UUID)
             if i > 0:
                 if not vb_list.has_key(key[3:i-1]):
                     vb_list[key[3:i-1]] = {}
-                vb_list[key[3:i-1]][UPRStreamSource.VB_UUID] = int(val)
-            i = key.find(UPRStreamSource.HIGH_SEQNO)
+                vb_list[key[3:i-1]][DCPStreamSource.VB_UUID] = int(val)
+            i = key.find(DCPStreamSource.HIGH_SEQNO)
             if i > 0:
                 if not vb_list.has_key(key[3:i-1]):
                     vb_list[key[3:i-1]] = {}
-                vb_list[key[3:i-1]][UPRStreamSource.HIGH_SEQNO] = int(val)
+                vb_list[key[3:i-1]][DCPStreamSource.HIGH_SEQNO] = int(val)
 
         flags = 0
         pair_index = (self.source_bucket['name'], self.source_node['hostname'])
@@ -467,11 +467,11 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 if vbid in self.cur['snapshot'][pair_index] and \
                    self.cur['snapshot'][pair_index][vbid]:
                     ss_start_seqno, ss_end_seqno = self.cur['snapshot'][pair_index][vbid]
-            self.request_upr_stream(int(vbid), flags, start_seqno,
-                                    vb_list[vbid][UPRStreamSource.HIGH_SEQNO],
+            self.request_dcp_stream(int(vbid), flags, start_seqno,
+                                    vb_list[vbid][DCPStreamSource.HIGH_SEQNO],
                                     uuid, ss_start_seqno, ss_end_seqno)
 
-    def request_upr_stream(self,
+    def request_dcp_stream(self,
                            vbid,
                            flags,
                            start_seqno,
@@ -479,23 +479,23 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                            vb_uuid,
                            ss_start_seqno,
                            ss_end_seqno):
-        if not self.upr_conn:
-            return "error: no upr connection setup yet.", None
-        extra = struct.pack(couchbaseConstants.UPR_STREAM_REQ_PKT_FMT,
+        if not self.dcp_conn:
+            return "error: no dcp connection setup yet.", None
+        extra = struct.pack(couchbaseConstants.DCP_STREAM_REQ_PKT_FMT,
                             int(flags), 0,
                             int(start_seqno),
                             int(end_seqno),
                             int(vb_uuid),
                             int(ss_start_seqno),
                             int(ss_end_seqno))
-        self.upr_conn._sendMsg(couchbaseConstants.CMD_UPR_REQUEST_STREAM, '', '', vbid, \
+        self.dcp_conn._sendMsg(couchbaseConstants.CMD_DCP_REQUEST_STREAM, '', '', vbid, \
                                extra, 0, 0, vbid)
         self.stream_list[vbid] = (vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
 
-    def _read_upr_conn(self, upr_conn):
+    def _read_dcp_conn(self, dcp_conn):
         buf, cmd, errcode, opaque, cas, keylen, extlen, data, datalen = \
-            self.recv_upr_msg(upr_conn.s)
-        upr_conn.buf = buf
+            self.recv_dcp_msg(dcp_conn.s)
+        dcp_conn.buf = buf
 
         rv = 0
         metalen = flags = ttl = flg = exp = 0
@@ -504,39 +504,39 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         extlen = seqno = 0
         if data:
             ext = data[0:extlen]
-            if cmd == couchbaseConstants.CMD_UPR_MUTATION:
+            if cmd == couchbaseConstants.CMD_DCP_MUTATION:
                 seqno, rev_seqno, flg, exp, locktime, meta = \
-                    struct.unpack(couchbaseConstants.UPR_MUTATION_PKT_FMT, ext)
+                    struct.unpack(couchbaseConstants.DCP_MUTATION_PKT_FMT, ext)
                 key_start = extlen
                 val_start = key_start + keylen
                 key = data[extlen:val_start]
                 val = data[val_start:]
-            elif cmd == couchbaseConstants.CMD_UPR_DELETE or \
-                 cmd == couchbaseConstants.CMD_UPR_EXPIRATION:
+            elif cmd == couchbaseConstants.CMD_DCP_DELETE or \
+                 cmd == couchbaseConstants.CMD_DCP_EXPIRATION:
                 seqno, rev_seqno, meta = \
-                    struct.unpack(couchbaseConstants.UPR_DELETE_PKT_FMT, ext)
+                    struct.unpack(couchbaseConstants.DCP_DELETE_PKT_FMT, ext)
                 key_start = extlen
                 val_start = key_start + keylen
                 key = data[extlen:val_start]
             else:
-                rv = "error: uninterpreted UPR commands:%s" % cmd
+                rv = "error: uninterpreted DCP commands:%s" % cmd
         elif datalen:
             rv = "error: could not read full TAP message body"
 
         return rv, cmd, errcode, key, flg, exp, cas, meta, val, opaque, need_ack, seqno
 
-    def _recv_upr_msg_error(self, sock, buf):
-        pkt, buf = self.recv_upr(sock, couchbaseConstants.MIN_RECV_PACKET, buf)
+    def _recv_dcp_msg_error(self, sock, buf):
+        pkt, buf = self.recv_dcp(sock, couchbaseConstants.MIN_RECV_PACKET, buf)
         if not pkt:
             raise EOFError()
         magic, cmd, keylen, extlen, dtype, errcode, datalen, opaque, cas = \
             struct.unpack(couchbaseConstants.REQ_PKT_FMT, pkt)
         if magic != couchbaseConstants.REQ_MAGIC_BYTE:
             raise Exception("unexpected recv_msg magic: " + str(magic))
-        data, buf = self.recv_upr(sock, datalen, buf)
+        data, buf = self.recv_dcp(sock, datalen, buf)
         return buf, cmd, errcode, opaque, cas, keylen, extlen, data, datalen
 
-    def _recv_upr_msg(self, sock):
+    def _recv_dcp_msg(self, sock):
         response = ""
         while len(response) < couchbaseConstants.MIN_RECV_PACKET:
             data = sock.recv(couchbaseConstants.MIN_RECV_PACKET - len(response))
@@ -560,7 +560,7 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                "Got magic: %d" % magic
         return cmd, errcode, opaque, cas, keylen, extralen, rv, datalen
 
-    def _recv_upr(self, skt, nbytes, buf):
+    def _recv_dcp(self, skt, nbytes, buf):
         recv_arr = [ buf ]
         recv_tot = len(buf) # In bytes.
 
@@ -629,11 +629,11 @@ class UPRStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             total_msgs += (resident_ratio/100.0) * stats_vals["curr_items"]
         return 0, int(total_msgs)
 
-class UPRSink(pump_cb.CBSink):
-    """Smart client using UPR protocol to steam data to couchbase cluster."""
+class DCPSink(pump_cb.CBSink):
+    """Smart client using DCP protocol to steam data to couchbase cluster."""
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
-        super(UPRSink, self).__init__(opts, spec, source_bucket, source_node,
+        super(DCPSink, self).__init__(opts, spec, source_bucket, source_node,
                                      source_map, sink_map, ctl, cur)
 
         self.vbucket_list = getattr(opts, "vbucket_list", None)
@@ -692,21 +692,21 @@ class UPRSink(pump_cb.CBSink):
         return 0, retry_batch, retry_batch and not need_refresh
 
     def connect_mc(self, node, sasl_user, sasl_pswd):
-        """Return previously connected upr conn."""
+        """Return previously connected dcp conn."""
 
         host = node.split(':')[0]
         port = node.split(':')[1]
 
-        logging.debug("  UPRSink connecting mc: " +
+        logging.debug("  DCPSink connecting mc: " +
                       host + ":" + str(port))
 
-        upr_conn = cb_bin_client.MemcachedClient(host, port)
-        if not upr_conn:
+        dcp_conn = cb_bin_client.MemcachedClient(host, port)
+        if not dcp_conn:
             return "error: could not connect to memcached: " + \
                 host + ":" + str(port), None
         if sasl_user:
             try:
-                upr_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                dcp_conn.sasl_auth_plain(sasl_user, sasl_pswd)
             except EOFError:
                 return "error: SASL auth error: %s:%s, user: %s" % \
                     (host, port, sasl_user), None
@@ -716,30 +716,30 @@ class UPRSink(pump_cb.CBSink):
             except socket.error:
                 return "error: SASL auth socket error: %s:%s, user: %s" % \
                     (host, port, sasl_user), None
-        extra = struct.pack(couchbaseConstants.UPR_CONNECT_PKT_FMT, 0, \
-                            couchbaseConstants.FLAG_UPR_CONSUMER)
+        extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, \
+                            couchbaseConstants.FLAG_DCP_CONSUMER)
         try:
             opaque=self.r.randint(0, 2**32)
-            upr_conn._sendCmd(couchbaseConstants.CMD_UPR_CONNECT, self.upr_name, '', opaque, extra)
-            upr_conn._handleSingleResponse(opaque)
+            dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONNECT, self.dcp_name, '', opaque, extra)
+            dcp_conn._handleSingleResponse(opaque)
         except EOFError:
-            return "error: Fail to set up UPR connection", None
+            return "error: Fail to set up DCP connection", None
         except cb_bin_client.MemcachedError:
-            return "error: UPR connect memcached error", None
+            return "error: DCP connect memcached error", None
         except socket.error:
-            return "error: UPR connection error", None
+            return "error: DCP connection error", None
 
-        return 0, upr_conn
+        return 0, dcp_conn
 
     def find_conn(self, mconns, vbucket_id):
         if not self.vbucket_list:
-            return super(UPRSink, self).find_conn(mconns, vbucket_id)
+            return super(DCPSink, self).find_conn(mconns, vbucket_id)
 
         vbuckets = json.loads(self.vbucket_list)
         if isinstance(vbuckets, list):
             if vbucket_id not in vbuckets:
                 return "error: unexpected vbucket id:" + str(vbucket_id), None
-            return super(UPRSink, self).find_conn(mconns, vbucket_id)
+            return super(DCPSink, self).find_conn(mconns, vbucket_id)
 
         bucket = self.sink_map['buckets'][0]
         serverList = bucket['vBucketServerMap']['serverList']
@@ -758,7 +758,7 @@ class UPRSink(pump_cb.CBSink):
                         if not conn:
                             user = bucket['name']
                             pswd = bucket['saslPassword']
-                            rv, conn = UPRSink.connect_mc(host_port, user, pswd)
+                            rv, conn = DCPSink.connect_mc(host_port, user, pswd)
                             if rv != 0:
                                 logging.error("error: CBSink.connect() for send: " + rv)
                                 return rv, None
@@ -813,11 +813,11 @@ class UPRSink(pump_cb.CBSink):
         locktime = 0
         rev_seqno = 0
         nru = 0
-        if cmd == couchbaseConstants.CMD_UPR_MUTATION:
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+        if cmd == couchbaseConstants.CMD_DCP_MUTATION:
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               seqno, rev_seqno, flg, exp, locktime, metalen, nru)
-        elif cmd == couchbaseConstants.CMD_UPR_DELETE:
-            ext = struct.pack(couchbaseConstants.UPR_DELETE_PKT_FMT,
+        elif cmd == couchbaseConstants.CMD_DCP_DELETE:
+            ext = struct.pack(couchbaseConstants.DCP_DELETE_PKT_FMT,
                               seqno, rev_seqno, metalen)
         else:
             return "error: MCSink - unknown tap cmd for request: " + str(cmd), None

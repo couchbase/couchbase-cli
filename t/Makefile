@@ -2,7 +2,7 @@ TEST_SOURCE=10.3.121.192
 TEST_SINK=10.3.121.192
 
 test-unit:
-	./t/pump_upr_test.py -v
+	./t/pump_dcp_test.py -v
 
 test-dev: test-clean test-backup test-transfer \
           test-restore-cb test-restore-mc

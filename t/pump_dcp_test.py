@@ -27,7 +27,7 @@ import pump_bfd
 import pump_cb
 import pump_mc
 import pump_tap
-import pump_upr
+import pump_dcp
 import pump_bfd2
 
 import cb_bin_client
@@ -429,21 +429,21 @@ class MCTestHelper(unittest.TestCase):
         client.client.send(self.res(cmd, res, '', '', '', opaque, 0))
         client.go.set()
 
-    def check_upr_connect(self, mms):
+    def check_dcp_connect(self, mms):
         client, req = mms.queue.get()
         self.assertTrue(req)
 
         cmd, vbucket_id, ext, key, val, opaque, cas = \
             self.parse_req(req)
-        self.assertEqual(CMD_UPR_CONNECT, cmd)
+        self.assertEqual(CMD_DCP_CONNECT, cmd)
         self.assertEqual(0, vbucket_id)
 
         version = json.loads(SAMPLE_JSON_pools_default)["nodes"][0]["version"]
         self.assertTrue(ext)
-        seqno, flags = struct.unpack(UPR_CONNECT_PKT_FMT, ext)
-        self.assertEqual(flags, FLAG_UPR_PRODUCER)
+        seqno, flags = struct.unpack(DCP_CONNECT_PKT_FMT, ext)
+        self.assertEqual(flags, FLAG_DCP_PRODUCER)
 
-        self.assertTrue(key)  # Expecting non-empty UPR name.
+        self.assertTrue(key)  # Expecting non-empty DCP name.
         self.assertEqual('', val)
         self.assertEqual(0, cas)
 
@@ -456,10 +456,10 @@ class MCTestHelper(unittest.TestCase):
         client, req = mms.queue.get()
         self.assertTrue(req)
         cmd, vbucket_id, ext, key, val, opaque, cas = self.parse_req(req)
-        self.assertEqual(couchbaseConstants.CMD_UPR_CONTROL, cmd)
+        self.assertEqual(couchbaseConstants.CMD_DCP_CONTROL, cmd)
         self.assertEqual(0, vbucket_id)
         self.assertEqual('', ext)
-        self.assertEqual(couchbaseConstants.KEY_UPR_CONNECTION_BUFFER_SIZE, key)
+        self.assertEqual(couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE, key)
         self.assertNotEqual('', val)
         self.assertEqual(0, cas)
 
@@ -489,14 +489,14 @@ class MCTestHelper(unittest.TestCase):
         self.assertTrue(req)
         cmd, vbucket_id, ext, key, val, opaque, cas = \
             self.parse_req(req)
-        self.assertEqual(CMD_UPR_REQUEST_STREAM, cmd)
+        self.assertEqual(CMD_DCP_REQUEST_STREAM, cmd)
         self.assertEqual(vbucket_id, vbid)
         self.assertEqual('', key)
         self.assertEqual('', val)
         self.assertEqual(0, cas)
         self.assertTrue(ext)
 
-        flag, _, start, end, uuid, ss_start, ss_end = struct.unpack(UPR_STREAM_REQ_PKT_FMT, ext)
+        flag, _, start, end, uuid, ss_start, ss_end = struct.unpack(DCP_STREAM_REQ_PKT_FMT, ext)
         self.assertEqual(0, flag)
         self.assertEqual(0, uuid)
         self.assertEqual(seqno, start)
@@ -506,12 +506,12 @@ class MCTestHelper(unittest.TestCase):
         return opaque
 
     def send_stop_stream(self, client, vbucket_id, opaque):
-        client.client.send(self.req(CMD_UPR_END_STREAM, vbucket_id, '', '', '', opaque, 0))
+        client.client.send(self.req(CMD_DCP_END_STREAM, vbucket_id, '', '', '', opaque, 0))
 
-    def perform_upr_connect(self, mms, vb_seqnos):
+    def perform_dcp_connect(self, mms, vb_seqnos):
         self.process_auth(mms, 'default', '', 0)
         self.process_auth(mms, 'default', '', 0)
-        client = self.check_upr_connect(mms)
+        client = self.check_dcp_connect(mms)
         self.process_connect_buffer_size(mms)
         self.process_vbucket_seqno(mms, vb_seqnos)
         return client
@@ -572,21 +572,21 @@ class TestPumpingStationFind(unittest.TestCase):
         self.assertEqual(7 + extra_sources, len(pump_transfer.SOURCES))
         self.assertTrue(7 + extra_sinks, len(pump_transfer.SINKS))
 
-        self.assertEqual(pump_upr.UPRStreamSource,
+        self.assertEqual(pump_dcp.DCPStreamSource,
                          self.find(None,
                                    "http://HOST:8091/pools/default",
                                    pump_transfer.SOURCES))
-        self.assertEqual(pump_upr.UPRStreamSource,
+        self.assertEqual(pump_dcp.DCPStreamSource,
                          self.find(None,
                                    "http://HOST:8091/",
                                    pump_transfer.SOURCES))
-        self.assertEqual(pump_upr.UPRStreamSource,
+        self.assertEqual(pump_dcp.DCPStreamSource,
                          self.find(None,
                                    "http://HOST",
                                    pump_transfer.SOURCES))
 
     def test_find_couchbase_handlers(self):
-        self.assertEqual(pump_upr.UPRStreamSource,
+        self.assertEqual(pump_dcp.DCPStreamSource,
                          self.find(None,
                                    "couchbase://HOST:8091",
                                    pump_transfer.SOURCES))
@@ -737,7 +737,7 @@ class TestKeyFilter(unittest.TestCase):
         shutil.rmtree(d, ignore_errors=True)
 
 
-class TestUPRStreamSourceCheck(MCTestHelper):
+class TestDCPStreamSourceCheck(MCTestHelper):
 
     def setUp(self):
         mrs.reset()
@@ -764,7 +764,7 @@ class TestUPRStreamSourceCheck(MCTestHelper):
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
         self.assertEqual(mrs.url(), source)
         self.assertEqual("2", backup_dir)
-        rv, map = pump_upr.UPRStreamSource.check(opts, source)
+        rv, map = pump_dcp.DCPStreamSource.check(opts, source)
         self.assertEqual(0, rv)
         self.assertTrue(map is not None)
 
@@ -805,7 +805,7 @@ class TestUPRStreamSourceCheck(MCTestHelper):
             pump_transfer.Backup().opt_parse(["cbbackup",
                                               "http://localhost:6666666",
                                               "2"])
-        rv, map = pump_upr.UPRStreamSource.check(opts, source)
+        rv, map = pump_dcp.DCPStreamSource.check(opts, source)
         self.assertNotEqual(0, rv)
         self.assertTrue(map is None)
 
@@ -819,7 +819,7 @@ class TestUPRStreamSourceCheck(MCTestHelper):
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
         self.assertEqual(mrs.url(), source)
         self.assertEqual("2", backup_dir)
-        rv, map = pump_upr.UPRStreamSource.check(opts, source)
+        rv, map = pump_dcp.DCPStreamSource.check(opts, source)
         self.assertNotEqual(0, rv)
         self.assertTrue(map is None)
 
@@ -833,7 +833,7 @@ class TestUPRStreamSourceCheck(MCTestHelper):
             pump_transfer.Backup().opt_parse(["cbbackup", mrs.url(), "2"])
         self.assertEqual(mrs.url(), source)
         self.assertEqual("2", backup_dir)
-        rv, map = pump_upr.UPRStreamSource.check(opts, source)
+        rv, map = pump_dcp.DCPStreamSource.check(opts, source)
         self.assertNotEqual(0, rv)
         self.assertTrue(map is None)
 
@@ -865,7 +865,7 @@ class TestUPRStreamSourceCheck(MCTestHelper):
         opts.username = opts.password = ''
         self.assertEqual(mrs.url(), source)
         self.assertEqual("2", backup_dir)
-        rv, map = pump_upr.UPRStreamSource.check(opts, source)
+        rv, map = pump_dcp.DCPStreamSource.check(opts, source)
         self.assertEqual(0, rv)
         self.assertTrue(map is not None)
         self.assertEqual(2, len(map['buckets']))
@@ -901,7 +901,7 @@ class TestUPRStreamSourceCheck(MCTestHelper):
         opts.username = opts.password = ''
         self.assertEqual(mrs.url(), source)
         self.assertEqual("2", backup_dir)
-        rv, map = pump_upr.UPRStreamSource.check(opts, source)
+        rv, map = pump_dcp.DCPStreamSource.check(opts, source)
         self.assertEqual(0, rv)
         self.assertTrue(map is not None)
         self.assertEqual(1, len(map['buckets']))
@@ -997,7 +997,7 @@ class BackupTestHelper(unittest.TestCase):
 
 # ------------------------------------------------
 
-class TestUPRStreamSource(MCTestHelper, BackupTestHelper):
+class TestDCPStreamSource(MCTestHelper, BackupTestHelper):
 
     def test_close_at_auth(self):
         d = tempfile.mkdtemp()
@@ -1086,7 +1086,7 @@ class TestUPRStreamSource(MCTestHelper, BackupTestHelper):
             client = self.process_auth(mms, 'default', '', 0)
             client.close("simulate failure right after auth")
 
-    def test_close_after_UPR_connect(self):
+    def test_close_after_DCP_connect(self):
         d = tempfile.mkdtemp()
         mrs.reset(self, [({'command': 'GET',
                            'path': '/pools/default/buckets'},
@@ -1100,7 +1100,7 @@ class TestUPRStreamSource(MCTestHelper, BackupTestHelper):
                           {'code': 200,
                            'message': self.json_hostport(SAMPLE_JSON_pools_default_buckets_default_stats_vb_active_resident_items_ratio)})])
 
-        w = Worker(target=self.worker_close_after_UPR_connect)
+        w = Worker(target=self.worker_close_after_DCP_connect)
         w.start()
 
         rv = pump_transfer.Backup().main(["cbbackup", mrs.url(), d,
@@ -1110,13 +1110,13 @@ class TestUPRStreamSource(MCTestHelper, BackupTestHelper):
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
-    def worker_close_after_UPR_connect(self):
+    def worker_close_after_DCP_connect(self):
         seqno = {}
         for mms in [mms0]:
-            client = self.perform_upr_connect(mms, seqno)
+            client = self.perform_dcp_connect(mms, seqno)
             client.close()
 
-class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
+class TestDCPSourceStreamMutations(MCTestHelper, BackupTestHelper):
 
     def test_1_mutation(self):
         d = tempfile.mkdtemp()
@@ -1141,20 +1141,20 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
         self.check_cbb_file_exists(d, num=1)
         self.expect_backup_contents(d,
                                     "set a 0 0 1 1 0\r\nA\r\n",
-                                    [(CMD_UPR_MUTATION, 0, 'a', 0, 0, 321, 1, 'A', 1, 0, 0)])
+                                    [(CMD_DCP_MUTATION, 0, 'a', 0, 0, 321, 1, 'A', 1, 0, 0)])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_1_mutation(self):
         seqno = {'vb_0_high_seqno': '0', 'vb_0_uuid': '0'}
         for mms in [mms0]:
-            client = self.perform_upr_connect(mms, seqno)
+            client = self.perform_dcp_connect(mms, seqno)
 
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               1, 1, 0, 0, 0, 0, 0)
             vbid = 0
             opaque = self.process_start_stream(mms, vbid, 0)
-            client.client.send(self.req(CMD_UPR_MUTATION, 0, 'a', 'A', ext, 789, 321))
+            client.client.send(self.req(CMD_DCP_MUTATION, 0, 'a', 'A', ext, 789, 321))
             self.send_stop_stream(client, vbid, opaque)
 
     def test_2_mutation(self):
@@ -1183,24 +1183,24 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
         self.expect_backup_contents(d,
                                     "set a 29023486 0 1 1 0\r\nA\r\n"
                                     "set b 0 4293844224 1 1 0\r\nB\r\n",
-                                    [(CMD_UPR_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '1', 'A', 1, 0, 0),
-                                     (CMD_UPR_MUTATION, 123, 'b', 0, 0xffeedd00, 4321, '1', 'B', 1, 0, 0)])
+                                    [(CMD_DCP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '1', 'A', 1, 0, 0),
+                                     (CMD_DCP_MUTATION, 123, 'b', 0, 0xffeedd00, 4321, '1', 'B', 1, 0, 0)])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_2_mutation(self):
         seqno = {'vb_123_high_seqno': '0', 'vb_123_uuid': '0'}
         for mms in [mms0]:
-            client = self.perform_upr_connect(mms, seqno)
+            client = self.perform_dcp_connect(mms, seqno)
 
             vbid = 123
             opaque = self.process_start_stream(mms, vbid, 0)
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               1, 1, 0xfedcba01, 0, 0, 0, 0)
-            client.client.send(self.req(CMD_UPR_MUTATION, 123, 'a', 'A', ext, 789, 321))
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+            client.client.send(self.req(CMD_DCP_MUTATION, 123, 'a', 'A', ext, 789, 321))
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               1, 1, 0, 0xffeedd00, 0, 0, 0)
-            client.client.send(self.req(CMD_UPR_MUTATION, 123, 'b', 'B', ext, 987, 4321))
+            client.client.send(self.req(CMD_DCP_MUTATION, 123, 'b', 'B', ext, 987, 4321))
             self.send_stop_stream(client, vbid, opaque)
 
     def test_full_full(self):
@@ -1231,20 +1231,20 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
         self.check_cbb_file_exists(d, num_backup_chains=2)
         self.expect_backup_contents(d,
                                     "set a 0 0 1 1 0\r\nA\r\n",
-                                    [(CMD_UPR_MUTATION, 0, 'a', 0, 0, 321, 1, 'A', 1, 0, 0)])
+                                    [(CMD_DCP_MUTATION, 0, 'a', 0, 0, 321, 1, 'A', 1, 0, 0)])
 
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_full_full(self):
         seqno = {'vb_0_high_seqno': '0', 'vb_0_uuid': '0'}
         for mms in [mms0, mms0]:
-            client = self.perform_upr_connect(mms, seqno)
+            client = self.perform_dcp_connect(mms, seqno)
 
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               1, 1, 0, 0, 0, 0, 0)
             vbid = 0
             opaque = self.process_start_stream(mms, vbid, 0)
-            client.client.send(self.req(CMD_UPR_MUTATION, 0, 'a', 'A', ext, 789, 321))
+            client.client.send(self.req(CMD_DCP_MUTATION, 0, 'a', 'A', ext, 789, 321))
             self.send_stop_stream(client, vbid, opaque)
 
     def __test_full_diff(self):
@@ -1275,7 +1275,7 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
         self.check_cbb_file_exists(d)
         self.expect_backup_contents(d,
                                     "set a 0 0 1 1 0\r\nA\r\n",
-                                    [(CMD_UPR_MUTATION, 0, 'a', 0, 0, 321, 1, 'A', 1, 0, 0)])
+                                    [(CMD_DCP_MUTATION, 0, 'a', 0, 0, 321, 1, 'A', 1, 0, 0)])
 
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1283,13 +1283,13 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
         seqno = {'vb_0_high_seqno': '0', 'vb_0_uuid': '0'}
         start_seqno = 0
         for mms in [mms0, mms0]:
-            client = self.perform_upr_connect(mms, seqno)
+            client = self.perform_dcp_connect(mms, seqno)
 
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               1, 1, 0, 0, 0, 0, 0)
             vbid = 0
             opaque = self.process_start_stream(mms, vbid, start_seqno)
-            client.client.send(self.req(CMD_UPR_MUTATION, 0, 'a', 'A', ext, 789, 321))
+            client.client.send(self.req(CMD_DCP_MUTATION, 0, 'a', 'A', ext, 789, 321))
             self.send_stop_stream(client, vbid, opaque)
             start_seqno += 1
 
@@ -1330,30 +1330,30 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
     def worker_full_diff_diff_accu(self):
         vb_seqno = {'vb_0_high_seqno': '0', 'vb_0_uuid': '0'}
         requests = [
-                    [(CMD_UPR_MUTATION, 0, 'a', 'A', 789, 321, 1, 1, 0, 0, 0, 0),
+                    [(CMD_DCP_MUTATION, 0, 'a', 'A', 789, 321, 1, 1, 0, 0, 0, 0),
                     ],
-                    [(CMD_UPR_MUTATION, 0, 'b', 'B', 790, 321, 2, 1, 0, 0, 0, 0),
-                     (CMD_UPR_MUTATION, 0, 'c', 'C', 791, 321, 3, 1, 0, 0, 0, 0),
+                    [(CMD_DCP_MUTATION, 0, 'b', 'B', 790, 321, 2, 1, 0, 0, 0, 0),
+                     (CMD_DCP_MUTATION, 0, 'c', 'C', 791, 321, 3, 1, 0, 0, 0, 0),
                     ],
-                    [(CMD_UPR_MUTATION, 0, 'd', 'D', 792, 321, 4, 1, 0, 0, 0, 0),
-                     (CMD_UPR_MUTATION, 0, 'e', 'E', 793, 321, 5, 1, 0, 0, 0, 0),
-                     (CMD_UPR_MUTATION, 0, 'f', 'F', 794, 321, 6, 1, 0, 0, 0, 0),
+                    [(CMD_DCP_MUTATION, 0, 'd', 'D', 792, 321, 4, 1, 0, 0, 0, 0),
+                     (CMD_DCP_MUTATION, 0, 'e', 'E', 793, 321, 5, 1, 0, 0, 0, 0),
+                     (CMD_DCP_MUTATION, 0, 'f', 'F', 794, 321, 6, 1, 0, 0, 0, 0),
                     ],
-                    [(CMD_UPR_MUTATION, 0, 'b', 'B', 795, 321, 7, 2, 0, 0, 0, 0),
-                     (CMD_UPR_MUTATION, 0, 'c', 'C', 796, 321, 8, 2, 0, 0, 0, 0),
-                     (CMD_UPR_MUTATION, 0, 'd', 'D', 797, 321, 9, 2, 0, 0, 0, 0),
-                     (CMD_UPR_MUTATION, 0, 'e', 'E', 798, 321, 10, 2, 0, 0, 0, 0),
-                     (CMD_UPR_MUTATION, 0, 'f', 'F', 799, 321, 11, 2, 0, 0, 0, 0),
+                    [(CMD_DCP_MUTATION, 0, 'b', 'B', 795, 321, 7, 2, 0, 0, 0, 0),
+                     (CMD_DCP_MUTATION, 0, 'c', 'C', 796, 321, 8, 2, 0, 0, 0, 0),
+                     (CMD_DCP_MUTATION, 0, 'd', 'D', 797, 321, 9, 2, 0, 0, 0, 0),
+                     (CMD_DCP_MUTATION, 0, 'e', 'E', 798, 321, 10, 2, 0, 0, 0, 0),
+                     (CMD_DCP_MUTATION, 0, 'f', 'F', 799, 321, 11, 2, 0, 0, 0, 0),
                     ],
                    ]
         start_seqno = [0, 1, 3, 1]
         for i, mms in enumerate([mms0, mms0, mms0, mms0]):
-            client = self.perform_upr_connect(mms, vb_seqno)
+            client = self.perform_dcp_connect(mms, vb_seqno)
             vbid = 0
             stream_opaque = self.process_start_stream(mms, vbid, start_seqno[i])
             for req in requests[i]:
                 cmd, vid, key, val, opaque, cas, seqno, revno, flg, exp, lock, nmeta = req
-                ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+                ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                                   seqno, revno, flg, exp, lock, nmeta, 0)
                 client.client.send(self.req(cmd, vbid, key, val, ext, opaque, cas))
             self.send_stop_stream(client, vbid, stream_opaque)
@@ -1381,7 +1381,7 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
         # 0xfedcba01 == 4275878401 == 29023486L
         self.expect_backup_contents(d,
                                     "set a 29023486 0 1 1 0\r\nA\r\n",
-                                    [(CMD_UPR_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '1', 'A', 1, 0, 0)])
+                                    [(CMD_DCP_MUTATION, 123, 'a', 0xfedcba01, 0, 321, '1', 'A', 1, 0, 0)])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1449,16 +1449,16 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
     def worker_2_chopped(self):
         seqno = {'vb_123_high_seqno': '0', 'vb_123_uuid': '0'}
         for mms in [mms0]:
-            client = self.perform_upr_connect(mms, seqno)
+            client = self.perform_dcp_connect(mms, seqno)
 
             vbid = 123
             opaque = self.process_start_stream(mms, vbid, 0)
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               1, 1, 0xfedcba01, 0, 0, 0, 0)
-            client.client.send(self.req(CMD_UPR_MUTATION, 123, 'a', 'A', ext, 789, 321))
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+            client.client.send(self.req(CMD_DCP_MUTATION, 123, 'a', 'A', ext, 789, 321))
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               1, 1, 0, 0xffeedd00, 0, 0, 0)
-            client.client.send(self.req(CMD_UPR_MUTATION, 123, 'b', 'B', ext, 987, 4321)[0:self.chop_at])
+            client.client.send(self.req(CMD_DCP_MUTATION, 123, 'b', 'B', ext, 987, 4321)[0:self.chop_at])
             self.send_stop_stream(client, vbid, opaque)
 
     def test_delete(self):
@@ -1485,28 +1485,28 @@ class TestUPRSourceStreamMutations(MCTestHelper, BackupTestHelper):
                                     "set a 0 0 1 1 0\r\nA\r\n"
                                     "delete a\r\n"
                                     "set b 0 12345 1\r\nB\r\n",
-                                    [(CMD_UPR_MUTATION, 123, 'a', 0, 0, 321, 1, 'A', 1, 0, 0),
-                                     (CMD_UPR_DELETE, 123, 'a', 0, 0, 333, 1, '', 5, 0, 0),
-                                     (CMD_UPR_MUTATION, 123, 'b', 0, 12345, 4321, 1, 'B', 1, 0, 0)])
+                                    [(CMD_DCP_MUTATION, 123, 'a', 0, 0, 321, 1, 'A', 1, 0, 0),
+                                     (CMD_DCP_DELETE, 123, 'a', 0, 0, 333, 1, '', 5, 0, 0),
+                                     (CMD_DCP_MUTATION, 123, 'b', 0, 12345, 4321, 1, 'B', 1, 0, 0)])
         w.join()
         shutil.rmtree(d, ignore_errors=True)
 
     def worker_delete(self):
         seqno = {'vb_123_high_seqno': '0', 'vb_123_uuid': '0'}
         for mms in [mms0]:
-            client = self.perform_upr_connect(mms, seqno)
+            client = self.perform_dcp_connect(mms, seqno)
 
             vbid = 123
             opaque = self.process_start_stream(mms, vbid, 0)
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               1, 1, 0, 0, 0, 0, 0)
-            client.client.send(self.req(CMD_UPR_MUTATION, vbid, 'a', 'A', ext, 789, 321))
-            ext = struct.pack(couchbaseConstants.UPR_DELETE_PKT_FMT,
+            client.client.send(self.req(CMD_DCP_MUTATION, vbid, 'a', 'A', ext, 789, 321))
+            ext = struct.pack(couchbaseConstants.DCP_DELETE_PKT_FMT,
                               5, 1, 0)
-            client.client.send(self.req(CMD_UPR_DELETE, vbid, 'a', '', ext, 777, 333))
-            ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+            client.client.send(self.req(CMD_DCP_DELETE, vbid, 'a', '', ext, 777, 333))
+            ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                               1, 1, 0, 12345, 0, 0, 0)
-            client.client.send(self.req(CMD_UPR_MUTATION, vbid, 'b', 'B', ext, 987, 4321))
+            client.client.send(self.req(CMD_DCP_MUTATION, vbid, 'b', 'B', ext, 987, 4321))
             self.send_stop_stream(client, vbid, opaque)
 
     def __test_delete_ack(self):
@@ -1822,11 +1822,11 @@ class RestoreTestHelper:
 
         if not msgs_per_node:
             msgs_per_node = [
-                # (cmd_upr, vbucket_id, key, val, flg, exp, cas)
-                [(CMD_UPR_MUTATION, 123, 'a', 'A', 0xf1000000, 1000, 8000, ''),
-                 (CMD_UPR_MUTATION, 123, 'b', 'B', 0xf1000001, 1001, 8001, ''),
-                 (CMD_UPR_MUTATION, 123, 'x', 'X', 0xfe000000, 9900, 8800, ''),
-                 (CMD_UPR_MUTATION, 123, 'y', 'Y', 0xfe000001, 9901, 8801, '')]
+                # (cmd_dcp, vbucket_id, key, val, flg, exp, cas)
+                [(CMD_DCP_MUTATION, 123, 'a', 'A', 0xf1000000, 1000, 8000, ''),
+                 (CMD_DCP_MUTATION, 123, 'b', 'B', 0xf1000001, 1001, 8001, ''),
+                 (CMD_DCP_MUTATION, 123, 'x', 'X', 0xfe000000, 9900, 8800, ''),
+                 (CMD_DCP_MUTATION, 123, 'y', 'Y', 0xfe000001, 9901, 8801, '')]
             ]
             # 0xf1000000 == 4043309056 == 241L
             # 0xfe000000 == 4261412864 == 254L
@@ -1878,9 +1878,9 @@ class RestoreTestHelper:
 
         arr = []
         for msg in flattened:
-            cmd_upr, vbucket_id, key, val, flg, exp, cas, meta = msg
+            cmd_dcp, vbucket_id, key, val, flg, exp, cas, meta = msg
             #flg = socket.ntohl(flg)
-            arr.append((cmd_upr, vbucket_id, key, val, flg, exp, cas, meta))
+            arr.append((cmd_dcp, vbucket_id, key, val, flg, exp, cas, meta))
 
         return arr
 
@@ -1891,23 +1891,23 @@ class RestoreTestHelper:
         """Represents a memcached server that provides msgs
            for gen_backup."""
         seqno = {'vb_123_high_seqno': '0', 'vb_123_uuid': '0'}
-        client = self.perform_upr_connect(mms, seqno)
+        client = self.perform_dcp_connect(mms, seqno)
         vbid = 123
         opaque = self.process_start_stream(mms, vbid, 0)
         for i, msg in enumerate(msgs):
-            cmd_upr, vbucket_id, key, val, flg, exp, cas, meta = msg
-            if cmd_upr == CMD_UPR_MUTATION:
+            cmd_dcp, vbucket_id, key, val, flg, exp, cas, meta = msg
+            if cmd_dcp == CMD_DCP_MUTATION:
                 # seqno, revno, flg, exp, locktime, nmeta, nru
-                ext = struct.pack(couchbaseConstants.UPR_MUTATION_PKT_FMT,
+                ext = struct.pack(couchbaseConstants.DCP_MUTATION_PKT_FMT,
                                   1, 1, flg, exp, 0, 0, 0)
-            elif cmd_upr == CMD_UPR_DELETE:
+            elif cmd_dcp == CMD_DCP_DELETE:
                 # seqno, revno, nmeta
-                ext = struct.pack(couchbaseConstants.UPR_DELETE_PKT_FMT,
+                ext = struct.pack(couchbaseConstants.DCP_DELETE_PKT_FMT,
                                   5, 1, 0)
             else:
                 self.assertTrue(False,
-                                "unexpected cmd_upr: " + str(cmd_upr))
-            client.client.send(self.req(cmd_upr, vbid, key, val, ext,
+                                "unexpected cmd_dcp: " + str(cmd_dcp))
+            client.client.send(self.req(cmd_dcp, vbid, key, val, ext,
                                         i + opaque_base, cas))
         self.send_stop_stream(client, vbid, opaque)
 
@@ -1956,23 +1956,23 @@ class RestoreTestHelper:
             exp = ''
             if cmd in [couchbaseConstants.CMD_SET,
                        couchbaseConstants.CMD_ADD]:
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd in [couchbaseConstants.CMD_SET_WITH_META,couchbaseConstants.CMD_ADD_WITH_META]:
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
             elif cmd == couchbaseConstants.CMD_DELETE:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp = 0, 0
             elif cmd == couchbaseConstants.CMD_DELETE_WITH_META:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
             else:
                 self.assertTrue(False,
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            msg = (cmd_upr, vbucket_id, key, val, flg, exp, cas, '')
+            msg = (cmd_dcp, vbucket_id, key, val, flg, exp, cas, '')
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
             client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
@@ -2093,11 +2093,11 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
     def test_restore_big_expirations_and_CAS(self):
         msgs_per_node = [
-            # (cmd_upr, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_UPR_MUTATION, 123, 'a', 'A', 0xf1000000, 0xa0001000, 0xf6f2aeabb0ca78b4L, ''),
-             (CMD_UPR_MUTATION, 123, 'b', 'B', 0xf1000001, 0xb0001001, 0xeeeeddddffffffffL, ''),
-             (CMD_UPR_MUTATION, 123, 'x', 'X', 0xfe000000, 0xc0009900, 0xffffffffffffffff, ''),
-             (CMD_UPR_MUTATION, 123, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, '')]
+            # (cmd_dcp, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_DCP_MUTATION, 123, 'a', 'A', 0xf1000000, 0xa0001000, 0xf6f2aeabb0ca78b4L, ''),
+             (CMD_DCP_MUTATION, 123, 'b', 'B', 0xf1000001, 0xb0001001, 0xeeeeddddffffffffL, ''),
+             (CMD_DCP_MUTATION, 123, 'x', 'X', 0xfe000000, 0xc0009900, 0xffffffffffffffff, ''),
+             (CMD_DCP_MUTATION, 123, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, '')]
         ]
 
         source_msgs = self.check_restore(msgs_per_node)
@@ -2106,14 +2106,14 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
     def test_restore_deletes(self):
         msgs_per_node = [
-            # (cmd_upr, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_UPR_MUTATION, 123, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff, ''),
-             (CMD_UPR_MUTATION, 123, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff, ''),
-             (CMD_UPR_DELETE, 123, 'a', '', 0, 0, 3000 * 0xffffffff, ''),
-             (CMD_UPR_MUTATION, 123, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff, ''),
-             (CMD_UPR_MUTATION, 123, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, ''),
-             (CMD_UPR_DELETE, 123, 'y', '', 0, 0, 30000 * 0xffffffff, ''),
-             (CMD_UPR_MUTATION, 123, 'y', 'Y-back', 123, 456, 40000 * 0xffffffff, '')
+            # (cmd_dcp, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_DCP_MUTATION, 123, 'a', 'A', 0xf1000000, 0xa0001000, 1000 * 0xffffffff, ''),
+             (CMD_DCP_MUTATION, 123, 'b', 'B', 0xf1000001, 0xb0001001, 2000 * 0xffffffff, ''),
+             (CMD_DCP_DELETE, 123, 'a', '', 0, 0, 3000 * 0xffffffff, ''),
+             (CMD_DCP_MUTATION, 123, 'x', 'X', 0xfe000000, 0xc0009900, 10000 * 0xffffffff, ''),
+             (CMD_DCP_MUTATION, 123, 'y', 'Y', 0xfe000001, 0xd0009901, 20000 * 0xffffffff, ''),
+             (CMD_DCP_DELETE, 123, 'y', '', 0, 0, 30000 * 0xffffffff, ''),
+             (CMD_DCP_MUTATION, 123, 'y', 'Y-back', 123, 456, 40000 * 0xffffffff, '')
             ]
         ]
 
@@ -2125,11 +2125,11 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.assertEqual(1, len(self.restored_key_cmds['b']))
         self.assertEqual(1, len(self.restored_key_cmds['x']))
         self.assertEqual(3, len(self.restored_key_cmds['y']))
-        self.assertEqual(CMD_UPR_MUTATION, self.restored_key_cmds['a'][0][0])
-        self.assertEqual(CMD_UPR_DELETE,   self.restored_key_cmds['a'][1][0])
-        self.assertEqual(CMD_UPR_MUTATION, self.restored_key_cmds['y'][0][0])
-        self.assertEqual(CMD_UPR_DELETE,   self.restored_key_cmds['y'][1][0])
-        self.assertEqual(CMD_UPR_MUTATION, self.restored_key_cmds['y'][2][0])
+        self.assertEqual(CMD_DCP_MUTATION, self.restored_key_cmds['a'][0][0])
+        self.assertEqual(CMD_DCP_DELETE,   self.restored_key_cmds['a'][1][0])
+        self.assertEqual(CMD_DCP_MUTATION, self.restored_key_cmds['y'][0][0])
+        self.assertEqual(CMD_DCP_DELETE,   self.restored_key_cmds['y'][1][0])
+        self.assertEqual(CMD_DCP_MUTATION, self.restored_key_cmds['y'][2][0])
 
     def test_restore_blobs(self, large_blob_size=40000, batch_max_bytes=400000):
         kb = binascii.a2b_hex('00ff010203040506070800')
@@ -2139,9 +2139,9 @@ class TestRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         vx = ''.join(['\x00' for x in xrange(large_blob_size)])
 
         msgs_per_node = [
-            # (cmd_upr, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_UPR_MUTATION, 123, kb, vb, 0, 0, 0, ''),
-             (CMD_UPR_MUTATION, 123, kx, vx, 0, 0, 1, '')]
+            # (cmd_dcp, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_DCP_MUTATION, 123, kb, vb, 0, 0, 0, ''),
+             (CMD_DCP_MUTATION, 123, kx, vx, 0, 0, 1, '')]
         ]
 
         source_msgs = self.check_restore(msgs_per_node,
@@ -2171,11 +2171,11 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
         self.reqs_after_respond_with_not_my_vbucket = None
 
         self.msgs_per_node = [
-            # (cmd_upr, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_UPR_MUTATION, 123, 'a', 'A', 0, 0, 1000, ''),
-             (CMD_UPR_MUTATION, 123, 'b', 'B', 1, 1, 2000, ''),
-             (CMD_UPR_MUTATION, 123, 'x', 'X', 900, 900, 10000, ''),
-             (CMD_UPR_MUTATION, 123, 'y', 'Y', 901, 901, 20000, '')]
+            # (cmd_dcp, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_DCP_MUTATION, 123, 'a', 'A', 0, 0, 1000, ''),
+             (CMD_DCP_MUTATION, 123, 'b', 'B', 1, 1, 2000, ''),
+             (CMD_DCP_MUTATION, 123, 'x', 'X', 900, 900, 10000, ''),
+             (CMD_DCP_MUTATION, 123, 'y', 'Y', 901, 901, 20000, '')]
         ]
 
     def handle_mc_req(self, mms, client, req, bucket, bucket_password):
@@ -2203,23 +2203,23 @@ class TestNotMyVBucketRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper)
             exp = ''
             if cmd in [couchbaseConstants.CMD_SET,
                        couchbaseConstants.CMD_ADD]:
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd in [couchbaseConstants.CMD_SET_WITH_META,couchbaseConstants.CMD_ADD_WITH_META]:
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
             elif cmd == couchbaseConstants.CMD_DELETE:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp = 0, 0
             elif cmd == couchbaseConstants.CMD_DELETE_WITH_META:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
             else:
                 self.assertTrue(False,
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            msg = (cmd_upr, vbucket_id, key, val, flg, exp, cas, '')
+            msg = (cmd_dcp, vbucket_id, key, val, flg, exp, cas, '')
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
@@ -2278,11 +2278,11 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.reqs_after_respond_with_backoff = None
 
         self.msgs_per_node = [
-            # (cmd_upr, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_UPR_MUTATION, 123, 'a', 'A', 0, 0, 1000, ''),
-             (CMD_UPR_MUTATION, 123, 'b', 'B', 1, 1, 2000, ''),
-             (CMD_UPR_MUTATION, 123, 'x', 'X', 900, 900, 10000, ''),
-             (CMD_UPR_MUTATION, 123, 'y', 'Y', 901, 901, 20000, '')]
+            # (cmd_dcp, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_DCP_MUTATION, 123, 'a', 'A', 0, 0, 1000, ''),
+             (CMD_DCP_MUTATION, 123, 'b', 'B', 1, 1, 2000, ''),
+             (CMD_DCP_MUTATION, 123, 'x', 'X', 900, 900, 10000, ''),
+             (CMD_DCP_MUTATION, 123, 'y', 'Y', 901, 901, 20000, '')]
         ]
 
 
@@ -2313,23 +2313,23 @@ class TestBackoffRestore(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             exp = ''
             if cmd in [couchbaseConstants.CMD_SET,
                        couchbaseConstants.CMD_ADD]:
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd in [couchbaseConstants.CMD_SET_WITH_META,couchbaseConstants.CMD_ADD_WITH_META]:
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
             elif cmd == couchbaseConstants.CMD_DELETE:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp = 0, 0
             elif cmd == couchbaseConstants.CMD_DELETE_WITH_META:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
             else:
                 self.assertTrue(False,
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
 
-            msg = (cmd_upr, vbucket_id, key, val, flg, exp, cas, '')
+            msg = (cmd_dcp, vbucket_id, key, val, flg, exp, cas, '')
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
@@ -2384,11 +2384,11 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
 
     def __test_rejected_auth(self):
         self.msgs_per_node = [
-            # (cmd_upr, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_UPR_MUTATION, 0, 'a', 'A', 0, 0, 1000, ''),
-             (CMD_UPR_MUTATION, 1, 'b', 'B', 1, 1, 2000, ''),
-             (CMD_UPR_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
-             (CMD_UPR_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
+            # (cmd_dcp, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_DCP_MUTATION, 0, 'a', 'A', 0, 0, 1000, ''),
+             (CMD_DCP_MUTATION, 1, 'b', 'B', 1, 1, 2000, ''),
+             (CMD_DCP_MUTATION, 900, 'x', 'X', 900, 900, 10000, ''),
+             (CMD_DCP_MUTATION, 901, 'y', 'Y', 901, 901, 20000, '')]
         ]
 
         d, orig_msgs, orig_msgs_flattened = \
@@ -2425,22 +2425,22 @@ class TestRejectedSASLAuth(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             exp = ''
             if cmd in [couchbaseConstants.CMD_SET,
                        couchbaseConstants.CMD_ADD]:
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd in [couchbaseConstants.CMD_SET_WITH_META,couchbaseConstants.CMD_ADD_WITH_META]:
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
             elif cmd == couchbaseConstants.CMD_DELETE:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp = 0, 0
             elif cmd == couchbaseConstants.CMD_DELETE_WITH_META:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
             else:
                 self.assertTrue(False,
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
-            msg = (cmd_upr, vbucket_id, key, val, flg, exp, cas)
+            msg = (cmd_dcp, vbucket_id, key, val, flg, exp, cas)
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
@@ -2459,9 +2459,9 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
            have any of the msgs for attempted DELETION."""
 
         msgs_per_node = [
-            # (cmd_upr, vbucket_id, key, val, flg, exp, cas)
-            [(CMD_UPR_DELETE, 123, 'a', '', 0, 0, 3000 * 0xffffffff, ''),
-             (CMD_UPR_DELETE, 123, 'y', '', 0, 0, 30000 * 0xffffffff, '')]
+            # (cmd_dcp, vbucket_id, key, val, flg, exp, cas)
+            [(CMD_DCP_DELETE, 123, 'a', '', 0, 0, 3000 * 0xffffffff, ''),
+             (CMD_DCP_DELETE, 123, 'y', '', 0, 0, 30000 * 0xffffffff, '')]
         ]
 
         source_msgs = self.check_restore(msgs_per_node,
@@ -2470,8 +2470,8 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
         self.assertEqual(2, self.restored_cmd_counts[CMD_DELETE_WITH_META])
         self.assertEqual(1, len(self.restored_key_cmds['a']))
         self.assertEqual(1, len(self.restored_key_cmds['y']))
-        self.assertEqual(CMD_UPR_DELETE, self.restored_key_cmds['a'][0][0])
-        self.assertEqual(CMD_UPR_DELETE, self.restored_key_cmds['y'][0][0])
+        self.assertEqual(CMD_DCP_DELETE, self.restored_key_cmds['a'][0][0])
+        self.assertEqual(CMD_DCP_DELETE, self.restored_key_cmds['y'][0][0])
 
     def handle_mc_req(self, mms, client, req, bucket, bucket_password):
         """Sends ERR_KEY_ENOENT for DELETE commands."""
@@ -2493,22 +2493,22 @@ class TestRestoreAllDeletes(MCTestHelper, BackupTestHelper, RestoreTestHelper):
             exp = ''
             if cmd in [couchbaseConstants.CMD_SET,
                        couchbaseConstants.CMD_ADD]:
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
                 flg, exp = struct.unpack(SET_PKT_FMT, ext)
             elif cmd in [couchbaseConstants.CMD_SET_WITH_META,couchbaseConstants.CMD_ADD_WITH_META]:
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
-                cmd_upr = CMD_UPR_MUTATION
+                cmd_dcp = CMD_DCP_MUTATION
             elif cmd == couchbaseConstants.CMD_DELETE:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp = 0, 0
             elif cmd == couchbaseConstants.CMD_DELETE_WITH_META:
-                cmd_upr = CMD_UPR_DELETE
+                cmd_dcp = CMD_DCP_DELETE
                 flg, exp, meta, cas, _ = struct.unpack(">IIQQI", ext)
             else:
                 self.assertTrue(False,
                                 "received unexpected restore cmd: " +
                                 str(cmd) + " with key: " + key)
-            msg = (cmd_upr, vbucket_id, key, val, flg, exp, cas, '')
+            msg = (cmd_dcp, vbucket_id, key, val, flg, exp, cas, '')
             self.restored_cmds.append(msg)
             self.restored_key_cmds[key].append(msg)
 
