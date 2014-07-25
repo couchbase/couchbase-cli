@@ -1261,7 +1261,7 @@ class Node:
             rest.setParam("nodes", "*")
         else:
             rest.setParam("nodes", self.nodes)
-            print "NODES:", nodes
+            print "NODES:", self.nodes
 
         if self.upload:
             if self.upload_host is None:
