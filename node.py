@@ -1283,7 +1283,7 @@ class Node:
 
         output_result = rest.restCmd(self.method, self.rest_cmd, self.user,
                                      self.password, opts)
-        return output_result
+        print output_result
 
     def collectLogsStop(self):
         """Stops a cluster-wide log collection task"""
@@ -1296,7 +1296,7 @@ class Node:
         }
         output_result = rest.restCmd(self.method, self.rest_cmd, self.user,
                                      self.password, opts)
-        return output_result
+        print output_result
 
     def collectLogsStatus(self):
         """Shows the current status of log collection task"""
