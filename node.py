@@ -247,7 +247,7 @@ class Node:
             self.retrieveCert()
 
         elif cmd == 'collect-logs-start':
-            self.collectLogsStart()
+            self.collectLogsStart(servers)
 
         elif cmd == 'collect-logs-stop':
             self.collectLogsStop()
@@ -518,7 +518,8 @@ class Node:
             'add': {},
             'remove': {},
             'failover': {},
-            'recovery': {}
+            'recovery': {},
+            'log': {},
         }
 
         # don't allow options that don't correspond to given commands
@@ -563,6 +564,9 @@ class Node:
                 server = "%s:%d" % util.hostport(a)
                 servers['recovery'][server] = True
                 server = None
+            elif o == "--nodes":
+                for server in self.normalize_servers(a):
+                    servers['log'][server] = True
             elif o in ('-o', '--output'):
                 if a == 'json':
                     self.output = a
@@ -1248,20 +1252,22 @@ class Node:
         except IOError, error:
             print "ERROR:", error
 
-    def collectLogsStart(self):
+    def collectLogsStart(self, servers):
         """Starts a cluster-wide log collection task"""
-        if (self.nodes is None) and (self.all_nodes is not True):
+        if (servers['log'] is None) and (self.all_nodes is not True):
             usage("please specify a list of nodes to collect logs from, " +
                   " or 'all-nodes'")
 
         rest = restclient.RestClient(self.server, self.port,
                                      {'debug': self.debug})
-
         if self.all_nodes:
             rest.setParam("nodes", "*")
         else:
-            rest.setParam("nodes", self.nodes)
-            print "NODES:", self.nodes
+            known_otps, eject_otps, failover_otps, readd_otps = \
+                self.getNodeOtps(to_readd=servers['log'])
+            nodelist = ",".join(readd_otps)
+            rest.setParam("nodes", nodelist)
+            print "NODES:", nodelist
 
         if self.upload:
             if self.upload_host is None:

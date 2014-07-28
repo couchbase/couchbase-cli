@@ -227,7 +227,7 @@ ssl-manage OPTIONS:
 
 collect-logs-start OPTIONS:
   --all-nodes                            Collect logs from all accessible cluster nodes
-  --nodes=node_1,node_2,...              Collect logs from the specified subset of cluster nodes
+  --nodes=HOST[:PORT];HOST[:PORT]        Collect logs from the specified subset of cluster nodes
   --upload                               Upload collects logs to specified host
     --upload-host=HOST                   Host to upload logs to (Manditory when --upload specified)
     --customer=CUSTOMER                  Customer name to use when uploading logs (Manditory when --upload specified)
@@ -535,7 +535,7 @@ EXAMPLES:
   Start cluster-wide log collection for selected nodes
     couchbase-cli collect-logs-start -c 192.168.0.1:8091 \\
         -u Administrator -p password \\
-        --nodes=ns_1@10.1.2.3,ns_1@10.1.2.4 --upload --upload-host=host.upload.com \\
+        --nodes="10.1.2.3:8091;10.1.2.4" --upload --upload-host=host.upload.com \\
         --customer="example inc" --ticket=12345
 
   Stop cluster-wide log collection
