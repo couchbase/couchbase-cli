@@ -526,11 +526,16 @@ EXAMPLES:
         --regenerate-cert=/tmp/test.pem \\
         -u Administrator -p password
 
-
   Start cluster-wide log collection for whole cluster
     couchbase-cli collect-logs-start -c 192.168.0.1:8091 \\
         -u Administrator -p password \\
         --all-nodes --upload --upload-host=host.upload.com \\
+        --customer="example inc" --ticket=12345
+
+  Start cluster-wide log collection for selected nodes
+    couchbase-cli collect-logs-start -c 192.168.0.1:8091 \\
+        -u Administrator -p password \\
+        --nodes=ns_1@10.1.2.3,ns_1@10.1.2.4 --upload --upload-host=host.upload.com \\
         --customer="example inc" --ticket=12345
 
   Stop cluster-wide log collection
