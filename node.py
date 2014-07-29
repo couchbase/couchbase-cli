@@ -740,7 +740,7 @@ class Node:
         return output_result
 
     def reAddServers(self, servers):
-        known_otps, eject_otps, failover_otps, readd_otps = \
+        known_otps, eject_otps, failover_otps, readd_otps, _ = \
             self.getNodeOtps(to_readd=servers['add'])
 
         for readd_otp in readd_otps:
@@ -773,12 +773,13 @@ class Node:
         eject_otps = []
         failover_otps = []
         readd_otps = []
+        hostnames = []
 
         for node in known_nodes_list:
             if node.get('otpNode') is None:
                 raise Exception("could not access node")
-
             known_otps.append(node['otpNode'])
+            hostnames.append(node['hostname'])
             if node['hostname'] in to_eject:
                 eject_otps.append(node['otpNode'])
             if node['hostname'] in to_failover:
@@ -786,13 +787,15 @@ class Node:
                     raise Exception('node %s is not active' % node['hostname'])
                 else:
                     failover_otps.append((node['otpNode'], node['status']))
-            if node['hostname'] in to_readd:
+            _, host = node['otpNode'].split('@')
+            hostport = "%s:%d" % util.hostport(host)
+            if node['hostname'] in to_readd or hostport in to_readd:
                 readd_otps.append(node['otpNode'])
 
-        return (known_otps, eject_otps, failover_otps, readd_otps)
+        return (known_otps, eject_otps, failover_otps, readd_otps, hostnames)
 
     def recovery(self, servers):
-        known_otps, eject_otps, failover_otps, readd_otps = \
+        known_otps, eject_otps, failover_otps, readd_otps, _ = \
             self.getNodeOtps(to_readd=servers['recovery'])
         for readd_otp in readd_otps:
             rest = restclient.RestClient(self.server,
@@ -815,7 +818,7 @@ class Node:
             print output_result
 
     def rebalance(self, servers):
-        known_otps, eject_otps, failover_otps, readd_otps = \
+        known_otps, eject_otps, failover_otps, readd_otps, _ = \
             self.getNodeOtps(to_eject=servers['remove'])
         rest = restclient.RestClient(self.server,
                                      self.port,
@@ -898,7 +901,7 @@ class Node:
 
 
     def failover(self, servers):
-        known_otps, eject_otps, failover_otps, readd_otps = \
+        known_otps, eject_otps, failover_otps, readd_otps, _ = \
             self.getNodeOtps(to_failover=servers['failover'])
 
         if len(failover_otps) <= 0:
@@ -1263,8 +1266,12 @@ class Node:
         if self.all_nodes:
             rest.setParam("nodes", "*")
         else:
-            known_otps, eject_otps, failover_otps, readd_otps = \
+            known_otps, eject_otps, failover_otps, readd_otps, hostnames = \
                 self.getNodeOtps(to_readd=servers['log'])
+            if not len(readd_otps):
+                msg = ",".join(hostnames)
+                usage("invalid node name specified for collecting logs, available nodes are:\n"+msg)
+
             nodelist = ",".join(readd_otps)
             rest.setParam("nodes", nodelist)
             print "NODES:", nodelist
