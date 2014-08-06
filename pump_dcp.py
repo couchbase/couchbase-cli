@@ -63,6 +63,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         self.running = False
         self.stream_list = {}
         self.unack_size = 0
+        self.node_vbucket_map = None
 
     @staticmethod
     def can_handle(opts, spec):
@@ -77,12 +78,34 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
     def provide_design(opts, source_spec, source_bucket, source_map):
         return pump_tap.TAPDumpSource.provide_design(opts, source_spec, source_bucket, source_map);
 
+    def build_node_vbucket_map(self):
+        if self.source_bucket.has_key("vBucketServerMap"):
+            server_list = self.source_bucket["vBucketServerMap"]["serverList"]
+            vbucket_map = self.source_bucket["vBucketServerMap"]["vBucketMap"]
+        else:
+            return None
+
+        node_vbucket_map = []
+        nodename = self.source_node.get('hostname', 'N/A').split(":")[0]
+        nodeindex = -1
+        for index, node in enumerate(server_list):
+            if nodename in node:
+                nodeindex = index
+                break
+        for index, vblist in enumerate(vbucket_map):
+            if vblist[0] >= 0 and vblist[0] == nodeindex:
+                node_vbucket_map.append(index)
+        return node_vbucket_map
+
     def provide_batch(self):
         if not self.version_supported:
             return super(DCPStreamSource, self).provide_batch()
         cur_sleep = 0.2
         cur_retry = 0
         max_retry = self.opts.extra['max_retry']
+        if not self.node_vbucket_map:
+            self.node_vbucket_map = self.build_node_vbucket_map()
+
         while True:
             if self.dcp_done:
                 return 0, None
@@ -447,6 +470,9 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         flags = 0
         pair_index = (self.source_bucket['name'], self.source_node['hostname'])
         for vbid in vb_list.iterkeys():
+            if int(vbid) not in self.node_vbucket_map:
+                #skip nonactive vbucket
+                continue
             if self.cur['seqno'] and self.cur['seqno'][pair_index]:
                 start_seqno = self.cur['seqno'][pair_index][vbid]
             else:
