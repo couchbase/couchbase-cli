@@ -607,6 +607,8 @@ class TapSink(pump_cb.CBSink):
                    dtype=0,
                    fmt=couchbaseConstants.REQ_PKT_FMT,
                    magic=couchbaseConstants.REQ_MAGIC_BYTE):
+        #MB-11902
+        dtype = 0
         return struct.pack(fmt, magic, cmd,
                            len(key), len(ext), dtype, vbucket_id,
                            metalen + len(key) + len(val) + len(ext), opaque, cas)

@@ -394,7 +394,9 @@ class MemcachedClient(object):
 
     def hello(self):
         """Send a hello command for feature checking"""
-        return self._doCmd(couchbaseConstants.CMD_HELLO, '', struct.pack(">H", 1))
+        #MB-11902
+        #return self._doCmd(couchbaseConstants.CMD_HELLO, '', struct.pack(">H", 1))
+        return 0, 0, 0
 
     def delete(self, key, cas=0):
         """Delete the value for a given key within the memcached server."""
