@@ -62,6 +62,7 @@ INSTALL(FILES
         pump_cb.py
         pump_csv.py
         pump_gen.py
+        pump_json.py
         pump_mbf.py
         pump_mc.py
         pump_sfd.py

@@ -400,6 +400,12 @@ except ImportError:
     pass
 
 try:
+    import pump_json
+    SOURCES.append(pump_json.JSONSource)
+except ImportError:
+    pass
+
+try:
     import pump_bfd2
     SINKS.insert(0, pump_bfd2.BFDSinkEx)
 except ImportError:
