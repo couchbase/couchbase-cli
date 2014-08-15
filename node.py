@@ -1327,7 +1327,7 @@ class Node:
         for e in output_json:
             if ((type(e) == type(dict()) and ('type' in e) and
                 (e['type'] == 'clusterLogsCollection'))):
-                print "Status:   {}".format(e['status'])
+                print "Status:   %s" % e['status']
                 if 'perNode' in e:
                     print "Details:"
                     for node, ns in e["perNode"].iteritems():
