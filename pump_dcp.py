@@ -36,8 +36,11 @@ except ImportError:
 class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
     """Can read from cluster/server/bucket via DCP streaming."""
     HIGH_SEQNO = "high_seqno"
-    HIGH_SEQNO_BYTE = 8
     VB_UUID = "uuid"
+    ABS_HIGH_SEQNO = "abs_high_seqno"
+    PURGE_SEQNO = "purge_seqno"
+
+    HIGH_SEQNO_BYTE = 8
     UUID_BYTE = 8
 
     def __init__(self, opts, spec, source_bucket, source_node,
@@ -456,17 +459,14 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         seqno_list = {}
         vb_list = {}
         for key, val in stats.items():
-            i = key.find(DCPStreamSource.VB_UUID)
-            if i > 0:
-                if not vb_list.has_key(key[3:i-1]):
-                    vb_list[key[3:i-1]] = {}
-                vb_list[key[3:i-1]][DCPStreamSource.VB_UUID] = int(val)
-            i = key.find(DCPStreamSource.HIGH_SEQNO)
-            if i > 0:
-                if not vb_list.has_key(key[3:i-1]):
-                    vb_list[key[3:i-1]] = {}
-                vb_list[key[3:i-1]][DCPStreamSource.HIGH_SEQNO] = int(val)
-
+            vb, counter = key.split(":")
+            if counter in [DCPStreamSource.VB_UUID,
+                           DCPStreamSource.HIGH_SEQNO,
+                           DCPStreamSource.ABS_HIGH_SEQNO,
+                           DCPStreamSource.PURGE_SEQNO]:
+                if not vb_list.has_key(vb[3:]):
+                    vb_list[vb[3:]] = {}
+                vb_list[vb[3:]][counter] = int(val)
         flags = 0
         pair_index = (self.source_bucket['name'], self.source_node['hostname'])
         for vbid in vb_list.iterkeys():
