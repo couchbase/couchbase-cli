@@ -10,8 +10,8 @@ for status, stmt in enumerate(import_stmts):
         break
     except ImportError:
         status = None
-if status is None:
-    logging.warn("could not import snappy module. Compress/uncompress function will be skipped.")
+#if status is None:
+#    logging.warn("could not import snappy module. Compress/uncompress function will be skipped.")
 
 def uncompress(data, decoding=None):
     try:
