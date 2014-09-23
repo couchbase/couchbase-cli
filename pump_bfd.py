@@ -548,6 +548,8 @@ class BFDSink(BFD, pump.Sink):
         while not self.ctl['stop']:
             batch, future = self.pull_next_batch()
             if not batch:
+                if db:
+                    db.close()
                 return self.future_done(future, 0)
 
             if db and cbb_bytes >= cbb_max_bytes:
@@ -586,6 +588,8 @@ class BFDSink(BFD, pump.Sink):
                                    couchbaseConstants.CMD_TAP_DELETE,
                                    couchbaseConstants.CMD_DCP_MUTATION,
                                    couchbaseConstants.CMD_DCP_DELETE]:
+                        if db:
+                            db.close()
                         return self.future_done(future,
                                                 "error: BFDSink bad cmd: " +
                                                 str(cmd))
