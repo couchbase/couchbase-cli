@@ -54,6 +54,7 @@ class WorkloadGen(pump_transfer.Transfer):
                     "size" : "min-value-size",
                     "prefix" : "prefix",
                     "json" : "json",
+                    "low_compression" : "low-compression"
                    }
 
         sink_opts = {"node" : "http://"}
@@ -141,6 +142,9 @@ class WorkloadGen(pump_transfer.Transfer):
         p.add_option("-v", "--verbose",
                      action="count", default=0,
                      help="verbose logging; more -v's provide more verbosity")
+        p.add_option("--low-compression",
+                     action="store_true", default=False,
+                     help="generate document data that is difficult to compress")
         return p
 
 

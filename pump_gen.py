@@ -2,6 +2,8 @@
 
 import couchbaseConstants
 import pump
+import random
+import string
 
 class GenSource(pump.Source):
     """Generates simple SET/GET workload, useful for basic testing.
@@ -51,7 +53,8 @@ class GenSource(pump.Source):
                'min-value-size': 10,
                'prefix': "",
                'ratio-sets': 0.05,
-               'json': 0}
+               'json': 0,
+               'low-compression': False}
         for kv in spec[len("gen:"):].split(','):
             if kv:
                 k = kv.split('=')[0].strip()
@@ -81,14 +84,24 @@ class GenSource(pump.Source):
         max_items = cfg['max-items']
         ratio_sets = cfg['ratio-sets']
         exit_after_creates = cfg['exit-after-creates']
+        low_compression  = cfg['low-compression']
         json = cfg['json']
         if not self.body:
-            min_value_body = "0" * cfg['min-value-size']
+
+            if low_compression:
+                # Generate a document which snappy will struggle to compress.
+                # Useful if your creating data-sets which utilise disk.
+                random.seed(0) # Seed to a fixed value so we always have the same document pattern.
+                document = ''.join(random.choice(string.ascii_uppercase) for _ in range(cfg['min-value-size']))
+            else:
+                # else a string of 0 is fine, but will compress very well.
+                document = "0" * cfg['min-value-size']
+
             if json:
                 self.body = '{"name": "%s%s", "age": %s, "index": %s,' + \
-                            ' "body": "%s"}' % min_value_body
+                            ' "body": "%s"}' % document
             else:
-                self.body = min_value_body
+                self.body = document
 
         batch = pump.Batch(self)
 
