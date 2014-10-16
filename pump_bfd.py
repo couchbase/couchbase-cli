@@ -94,13 +94,29 @@ class BFD:
         filepath = os.path.join(parent_dir, filename)
         json_data = {}
         if os.path.isfile(filepath):
+            #load into existed meta data generated from previous batch run
             json_file = open(filepath, "r")
             json_data = json.load(json_file)
             json_file.close()
 
         for i in range(BFD.NUM_VBUCKET):
             if output_data.get(i):
-                json_data[i] = output_data[i]
+                str_index = str(i)
+                historic_data_exist = json_data.get(str_index)
+                if historic_data_exist:
+                    #Historic data will share same data type as incoming ones.
+                    #It will be sufficient to only check type for historic data
+                    if isinstance(json_data[str_index], int):
+                        #For seqno, we want to keep the highest seqno
+                        if json_data[str_index] < output_data[i]:
+                            json_data[str_index] = output_data[i]
+                    elif isinstance(json_data[str_index], list):
+                        #For each vbucket, we want to get the superset of its references
+                        if len(json_data[str_index]) < len(output_data[i]):
+                            json_data[str_index] = output_data[i]
+                else:
+                    #Bookkeeping the incoming one.
+                    json_data[str_index] = output_data[i]
 
         json_file = open(filepath, "w")
         json.dump(json_data, json_file, ensure_ascii=False)
