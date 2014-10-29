@@ -425,7 +425,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             rd_timeout = .25
 
             for reader in readers:
-                data = reader.recv(1024)
+                data = reader.recv(self.recv_min_bytes)
                 logging.debug("Read %d bytes off the wire" % len(data))
                 if len(data) == 0:
                     raise exceptions.EOFError("Got empty data (remote died?).")
