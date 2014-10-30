@@ -216,17 +216,18 @@ def main():
     if not cluster:
         usage("please provide a CLUSTER, or use -h for more help.")
 
-    if not user:
-        if CB_USERNAME in os.environ:
-            user = os.environ[CB_USERNAME]
-        else:
-            usage("Username cannot be empty. \
+    if cmd != "cluster-init":
+        if not user:
+            if CB_USERNAME in os.environ:
+                user = os.environ[CB_USERNAME]
+            else:
+                usage("Username cannot be empty. \
 Please use -u or set environment variable %s."  % CB_USERNAME)
-    if not password:
-        if CB_PASSWORD in os.environ:
-            password = os.environ[CB_PASSWORD]
-        else:
-            usage("Password cannot be empty. \
+        if not password:
+            if CB_PASSWORD in os.environ:
+                password = os.environ[CB_PASSWORD]
+            else:
+                usage("Password cannot be empty. \
 Please use -p or set environment variable %s." % CB_PASSWORD)
 
     server, port = util.hostport(cluster)
