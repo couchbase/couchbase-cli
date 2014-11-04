@@ -844,7 +844,7 @@ class Node:
         print "INFO: rebalancing",
 
         status, error = self.rebalanceStatus(prefix='\n')
-        while status == 'running':
+        while status in['running', 'unknown']:
             print ".",
             time.sleep(0.5)
             try:
@@ -863,25 +863,33 @@ class Node:
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
-        opts = { 'error_msg':'unable to obtain rebalance status'}
 
+        opts = {
+            'error_msg': "unable to obtain rebalance status",
+            'success_msg': "retrieve replication status successfully"
+        }
         output_result = rest.restCmd('GET',
-                                     rest_cmds['rebalance-status'],
+                                     '/pools/default/tasks',
                                      self.user,
                                      self.password,
                                      opts)
-
-        json = rest.getJson(output_result)
-        if type(json) == type(list()):
-            print prefix + ("ERROR: %s" % json[0])
-            sys.exit(1)
-
-        if 'errorMessage' in json:
-            error_message = json['errorMessage']
+        tasks = rest.getJson(output_result)
+        if 'errorMessage' in tasks:
+            error_message = tasks['errorMessage']
         else:
             error_message = None
+        for task in tasks:
+            if task["type"] == "rebalance":
+                if task["status"] == "running":
+                    return task["status"], error_message
+                if task["status"] == "notRunning":
+                    if task.has_key("statusIsStale"):
+                        if task["statusIsStale"] or task["statusIsStale"] == "true":
+                            return "unknown", error_message
 
-        return json['status'],error_message
+                return task["status"], error_message
+
+        return "unknown", error_message
 
     def rebalanceStop(self):
         rest = restclient.RestClient(self.server,
