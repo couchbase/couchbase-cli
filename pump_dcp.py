@@ -346,8 +346,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             if not self.dcp_conn:
                 return "error: could not connect to memcached: " + \
                     host + ":" + str(port), None
-            sasl_user = str(pump.get_username(self.source_bucket.get("name", self.opts.username)))
-            sasl_pswd = str(pump.get_password(self.source_bucket.get("saslPassword", self.opts.password)))
+            sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+            sasl_pswd = str(self.source_bucket.get("saslPassword", pump.get_password(self.opts.password)))
             if sasl_user:
                 try:
                     self.dcp_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
