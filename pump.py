@@ -251,7 +251,8 @@ class PumpingStation(ProgressReporter):
             self.source_class.provide_design(self.opts, self.source_spec,
                                              source_bucket, source_map)
         if rv == 0:
-            rv = self.sink_class.consume_design(self.opts,
+            if source_design:
+                rv = self.sink_class.consume_design(self.opts,
                                                 self.sink_spec, sink_map,
                                                 source_bucket, source_map,
                                                 source_design)

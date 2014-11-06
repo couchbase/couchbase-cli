@@ -101,7 +101,10 @@ class TAPDumpSource(pump.Source):
         if err:
             return err, None
 
-        return 0, json.dumps(ddocs.get('rows', []))
+        if not ddocs.get('rows', None):
+            return 0, None
+        else:
+            return 0, json.dumps(ddocs.get('rows', []))
 
     def provide_batch(self):
         cur_sleep = 0.2
