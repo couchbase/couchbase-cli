@@ -159,13 +159,13 @@ class Buckets:
         if cmd == 'bucket-flush':
             self.rest_cmd = self.rest_cmd + '/controller/doFlush'
             if not force:
-                question = "Running this command will totally PURGE database data from disk." + \
+                question = "Running this command will totally PURGE database data from disk. " + \
                            "Do you really want to do it? (Yes/No)"
                 confirm = raw_input(question)
                 if confirm in ('Y', 'Yes'):
-                    print "Database data will be purged from disk ..."
+                    print "\nDatabase data will be purged from disk ..."
                 else:
-                    print "Database data will not be purged. Done."
+                    print "\nDatabase data will not be purged. Done."
                     return False
             else:
                 print "Database data will be purged from disk ..."
