@@ -278,7 +278,7 @@ class Node:
         if not (rest.getParam('username') and rest.getParam('password')):
             print "ERROR: Both username and password are required."
             return
-        print "here we are, len=", len(rest.getParam('password'))
+
         if len(rest.getParam('password')) > MAX_LEN_PASSWORD:
             print "ERROR: Password length %s exceeds maximum number of characters allowed, which is %s" \
                   % (len(rest.getParam('password')), MAX_LEN_PASSWORD)
