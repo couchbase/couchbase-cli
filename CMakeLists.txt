@@ -20,7 +20,10 @@ CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen)
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery)
-
+CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
+                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackupwrapper)
+CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
+                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestorewrapper)
 INSTALL(PROGRAMS
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/couchbase-cli
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackup
@@ -29,6 +32,8 @@ INSTALL(PROGRAMS
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbclusterstats
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery
+        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackupwrapper
+        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestorewrapper
         DESTINATION bin)
 
 INSTALL(PROGRAMS
@@ -39,6 +44,8 @@ INSTALL(PROGRAMS
         cbclusterstats
         cbworkloadgen
         cbrecovery
+        cbbackupwrapper
+        cbrestorewrapper
         DESTINATION lib/python)
 
 INSTALL(FILES

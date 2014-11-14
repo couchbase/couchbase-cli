@@ -1,0 +1,220 @@
+#!/usr/bin/env python
+# -*-python-*-
+
+import argparse
+import urllib2
+import json
+import subprocess
+import os
+import re
+import base64
+
+"""Written by Daniel Owen owend@couchbase.com on 27 June 2014
+Version 1.4    Last Updated 17 Sept 2014 (Ian McCloy)
+
+This script is to be used to restore backups made using cbbackupwrapper.py script.
+It is a wrapper to the cbrestore command that comes with Couchbase Server 2.5.1
+
+The script uses the same number of processes for each bucket that were used to produce
+original backup.  You can specify a bucket to restore, if no bucket is specified then
+all buckets will be restored.  Note: The destination cluster must have the
+buckets created first.
+An example invocation is as follows:
+
+python cbrestorewrapper.py ../backup/ http://127.0.0.1:8091 -u Administrator \
+-p myPassword --path /opt/couchbbase/bin/ -v
+
+This will restore all the buckets from ../backup onto cluster 127.0.0.1
+Access to the cluster is authenticated using username=Administrator and
+password=myPassword.  Finally, cbrestore will be found in /opt/couchbase/bin
+
+Run python cbrestorewrapper -h for more information."""
+
+bucketList = []
+processes = {}
+bucket_target = ""
+
+
+def argumentParsing():
+    parser = argparse.ArgumentParser(description='cbbackupwrapper')
+    parser.add_argument('backupDir', type=str, help='Root directory of backup')
+    parser.add_argument('node', type=str, help='Server node specified as name or IP address')
+
+    parser.add_argument('-b', '--bucket-source', default='',
+                        help='Specify the bucket to restore.  Defaults to all buckets')
+    parser.add_argument('-B', '--bucket-destination', default='',
+                        help='Target bucket on destination cluster. Defaults to bucket-source name')
+                        #This allows you to transfer to a bucket with a different name
+                        #Only valid if --bucket-source is specified
+    parser.add_argument('-u', '--username', default='Administrator',
+                        help='REST username for source cluster or server node.  Default is Administrator')
+    parser.add_argument('-p', '--password', default='PASSWORD',
+                        help='REST password for source cluster or server node.   Defaults to PASSWORD')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        default=False, help='Enable verbose messaging')
+    parser.add_argument('--path', default='.',
+                        help='Specify the path to cbrestore.  Defaults to current directory')
+    parser.add_argument('--port', default='11210',
+                        help='Specify the bucket port.  Defaults to 11210')
+    return parser.parse_args()
+
+
+# Get the buckets that exist on the cluster
+def getBuckets(node, rest_port, username, password):
+    request = urllib2.Request(
+        'http://' + node + ':' + rest_port + '/pools/default/buckets')
+    base64string = base64.encodestring(
+        '%s:%s' % (username, password)).replace('\n', '')
+    request.add_header('Authorization', 'Basic %s' % base64string)
+    try:
+        response = urllib2.urlopen(request)
+    except:
+        print('Authorization failed.  Please check username and password.')
+        exit(1)
+    bucketsOnCluster = []
+    data = json.loads(response.read())
+    for item in data:
+        bucket = item['name']
+        bucketsOnCluster.append(bucket)
+    return bucketsOnCluster
+
+
+def getVbucketsToRestore(path, bucket):
+    vBucketList = []
+    # for each file in the directory
+    files = os.listdir(path)
+    regex = re.compile(r'^(\d+)-(\d+)$')
+    cleaned_list = filter(regex.search, files)
+    bucketname = 'bucket-' + bucket
+    okay_items = [
+        x for x in cleaned_list if bucketname in os.listdir(os.path.join(path, x))]
+    return okay_items
+
+if __name__ == '__main__':
+    # Parse the arguments given.
+    args = argumentParsing()
+
+    # Remove any white-spaces from start and end of strings
+    backupDir = args.backupDir.strip()
+    path = args.path.strip()
+
+    # Check to see if root backup directory exists
+    if not os.path.isdir(backupDir):
+        print '\n\nThe directory ' + backupDir + ' does not exist'
+        print 'Please enter a different backup directory\n'
+        exit(1)
+    # Check to see if path is correct
+    if not os.path.isdir(path):
+        print 'The path to cbrestore does not exist'
+        print 'Please run with a different path'
+        exit(1)
+    if not os.path.isfile(os.path.join(path, 'cbrestore')):
+        print 'cbrestore could not be found in ' + path
+        exit(1)
+
+    # Check to see if log directory exists if not create it
+    dir = os.path.join(backupDir, 'logs')
+    try:
+        os.stat(dir)
+    except:
+        try:
+            os.mkdir(dir)
+        except:
+            print('Error trying to create directory ' + dir)
+            exit(1)
+
+    # Separate out node and REST port
+    matchObj = re.match(r'^http://(.*):(\d+)$', args.node, re.I)
+    if matchObj:
+        node = matchObj.group(1)
+        rest = matchObj.group(2)
+    else:
+        print("Please enter the destination as http://hostname:port")
+        print("For example http://localhost:8091 or http://127.0.0.1:8091")
+        exit(1)
+
+    # Check to see if restoring all buckets or just a specified bucket
+    if args.bucket_source == '':
+        if not args.bucket_destination == '':
+            print 'please specify a bucket_source'
+            exit(1)
+        bucketList = getBuckets(
+            node, rest, args.username, args.password)
+    else:
+        # Check that the bucket exists
+        if not args.bucket_destination == '':
+            bucket_target = args.bucket_destination
+        else:
+            bucket_target = args.bucket_source
+        for item in getBuckets(node, rest, args.username, args.password):
+            if item == bucket_target:
+                bucketList.append(bucket_target)
+
+        if len(bucketList) == 0:
+            print 'Bucket ' + bucket_target + ' does not exist'
+            print 'Please enter a different bucket'
+            exit(1)
+
+    # Handle the case when path has spaces
+    if os.name == 'nt':
+        path = re.sub(r' ', '^ ', path)
+    else:
+        path = re.sub(r' ', '\ ', path)
+
+    for bucket in bucketList:
+        if not args.bucket_destination == '':
+            vbucketList = getVbucketsToRestore(backupDir, args.bucket_source.strip())
+            if len(vbucketList) == 0:
+                print 'Error reading source backup vBuckets for bucket', args.bucket_source.strip()
+                exit(1)
+        else:
+            vbucketList = getVbucketsToRestore(backupDir, bucket)
+            if len(vbucketList) == 0:
+                print 'Error reading source backup vBuckets for bucket', bucket
+                exit(1)
+        for vbuckets in vbucketList:
+            # Invoke cbrestore on each of the active vbuckets that reside on
+            # the node
+            if args.verbose:
+                print "vBucket: ", vbuckets
+            if not args.bucket_destination == '':
+                command_line = os.path.join(path, 'cbrestore') + ' -v -t 1 -b ' + args.bucket_source.strip() \
+                    + ' -B ' + args.bucket_destination + ' ' + os.path.join(backupDir, vbuckets) \
+                    + ' http://' + node + ':' + rest \
+                    + ' -u ' + args.username + ' -p ' + args.password + ' 2>' + \
+                    os.path.join(backupDir, 'logs', vbuckets) + \
+                    '-restore-' + bucket + '.err'
+            else:
+                command_line = os.path.join(path, 'cbrestore') + ' -v -t 1 -b ' + bucket \
+                    + ' ' + os.path.join(backupDir, vbuckets) + ' http://' + node + ':' + rest \
+                    + ' -u ' + args.username + ' -p ' + args.password + ' 2>' + \
+                    os.path.join(backupDir, 'logs', vbuckets) + \
+                    '-restore-' + bucket + '.err'
+            if args.verbose:
+                print command_line
+            p = subprocess.Popen(command_line, shell=True)
+            processes[p] = vbuckets + '-restore-' + bucket
+
+    # Did we restore anything?
+    if len(processes) == 0:
+        print 'Did not restore anything'
+        print 'Please check that the backup directory contains data to restore'
+        print 'Also please check that you have the correct buckets created on ' + args.node
+        exit(1)
+    else:
+        print 'Waiting for the restore to complete...'
+        successCount = 0
+        for p in processes:
+            p.wait()
+            if p.returncode == 1:
+                print 'Error with backup - look in ' + os.path.join(backupDir, 'logs', processes[p]) \
+                                                     + '-restore-' + bucket + \
+                    '.err for details'
+            else:
+                successCount += 1
+
+        if successCount == len(processes):
+            print 'SUCCESSFULLY COMPLETED!'
+        else:
+            print 'ERROR!'
+            exit(1)

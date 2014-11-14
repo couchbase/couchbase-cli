@@ -51,7 +51,9 @@ pythonlib_SCRIPTS= couchbase-cli \
                    cbtransfer \
                    cbclusterstats \
                    cbworkloadgen \
-                   cbrecovery
+                   cbrecovery \
+                   cbbackupwrapper \
+                   cbrestorewrapper
 
 PYTHON_TOOLS= \
         wrapper/couchbase-cli \
@@ -60,7 +62,9 @@ PYTHON_TOOLS= \
         wrapper/cbtransfer \
         wrapper/cbclusterstats \
         wrapper/cbworkloadgen \
-        wrapper/cbrecovery
+        wrapper/cbrecovery \
+        wrapper/cbbackupwrapper \
+        wrapper/cbrestorewrapper
 
 ${PYTHON_TOOLS}: wrapper/wrapper
 	cp $< $@

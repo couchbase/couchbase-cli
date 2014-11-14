@@ -1,0 +1,278 @@
+#!/usr/bin/env python
+# -*-python-*-
+
+import argparse
+import urllib2
+import json
+import subprocess
+import os
+import re
+import base64
+import socket
+
+"""Written by Daniel Owen owend@couchbase.com on 27 June 2014
+Version 1.4    Last updated 10 July 2014
+
+The current implementation of cbbackup that comes with Couchbase Server 2.5.1
+uses only one thead per node.  Therefore when using cbbackup with the single-node
+parameter we are limited to one thread - this impacts performance.
+
+This script provides a wrapper to invoke multiple cbbackup processes.
+It automatically detects which buckets and vbuckets are
+on the node.  It allow the user to specify how many vbuckets to backup in a single
+cbbackup process and then invokes the necessary number of processes.
+An example invocation is as follows:
+
+python cbbackupwrapper.py http://127.0.0.1:8091 ../backup/ --single-node -n 4 \
+-u Administrator -p myPassword --path /opt/couchbbase/bin/  -v
+
+This will backup all the buckets on node 127.0.0.1 into ../backup
+It will backup 4 vbuckets per cbbackup process
+Access to the cluster is authenticated using username=Administrator and
+password=myPassword.and cbbackup will be found in /opt/couchbase/bin
+
+Run python cbbackupwrapper -h for more information.
+
+See the cbrestorewrapper.py script for restoring backups made with this script."""
+
+
+bucketList = []
+vbucketList = []
+processes = {}
+
+
+def argumentParsing():
+    parser = argparse.ArgumentParser(description='cbbackupwrapper')
+    parser.add_argument('node', type=str, help='Server node specified as name or IP address')
+    parser.add_argument('backupDir', type=str, help='Root directory of backup')
+
+    parser.add_argument('-b', '--bucket-source', default='',
+                        help='Specify the bucket to backup.  Defaults to all buckets')
+    parser.add_argument('--single-node', action='store_true',
+                        default=False, help='use a single server node from the source only')
+    parser.add_argument('-u', '--username', default='Administrator',
+                        help='REST username for source cluster or server node.  Default is Administrator')
+    parser.add_argument('-p', '--password', default='PASSWORD',
+                        help='REST password for source cluster or server node.   Defaults to PASSWORD')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        default=False, help='Enable verbose messaging')
+    parser.add_argument('--path', default='.',
+                        help='Specify the path to cbbackup.  Defaults to current directory')
+    parser.add_argument('--port', default='11210',
+                        help='Specify the bucket port.  Defaults to 11210')
+    parser.add_argument('-n', '--number', default='1',
+                        help='Specify the number of vbuckets per process.  Defaults to 1')
+    parser.add_argument('-x', '--extra', default=None,
+                        help="""Provide extra, uncommon config parameters;
+                             comma-separated key=val(,key=val)* pairs""")
+    return parser.parse_args()
+
+
+def findAllVbucketsForBucket(node, bucket, path, port, restport, username, password, single_node):
+    localvbucketlist = []
+    request = urllib2.Request(
+        'http://' + node + ':' + restport + '/pools/default/buckets/' + bucket)
+    base64string = base64.encodestring(
+        '%s:%s' % (username, password)).replace('\n', '')
+    request.add_header('Authorization', 'Basic %s' % base64string)
+    try:
+        response = urllib2.urlopen(request)
+    except:
+        print('Authorization failed.  Please check username and password.')
+        exit(1)
+    data = json.loads(response.read())
+    vbucketserverdata = data['vBucketServerMap']
+    vbucketdata = vbucketserverdata['vBucketMap']
+    serverlist = vbucketserverdata['serverList']
+    # all possibles names / ipaddress for the node
+    aliases = []
+    # check to see if node was given as ip addess
+    matchObj = re.match(r'^\d+.\d+.\d+.\d+$', node, re.I)
+    if matchObj:
+        # node was entered as its IP address
+        nodeip = node
+        aliases.append(nodeip)
+        try:
+            (node, other_names, other_ips) = socket.gethostbyaddr(nodeip)
+            aliases.append(node)
+            aliases + other_names
+        except:
+            print("WARN: Could not find name for nodeip")
+    else:
+        aliases.append(node)
+        nodeip = socket.gethostbyname(node)
+        aliases.append(nodeip)
+
+    aliases = [alias + ":" + port for alias in aliases]
+
+    if args.verbose:
+        print("aliases list is ")
+        for x in aliases:
+            print(str(x))
+        print("server list is")
+        for x in serverlist:
+            print(str(x))
+
+    # find out the index in the serverlist for this node
+    serverindex = -1
+    for i in range(len(serverlist)):
+        for nodewithport in aliases:
+            if nodewithport == serverlist[i]:
+                serverindex = i
+    if serverindex == -1:
+        print serverindex
+        print 'Could not find node:port in server list.'
+        exit(1)
+
+    if single_node:
+        # iterate through all vbuckets and see which are active on this node
+        for i in range(len(vbucketdata)):
+            if vbucketdata[i][0] == serverindex:
+                vbucket = i
+                localvbucketlist.append(vbucket)
+    else:
+        # Just iterate through all vbuckets
+        for i in range(len(vbucketdata)):
+            vbucket = i
+            localvbucketlist.append(vbucket)
+
+    return localvbucketlist
+
+
+# Get the buckets that exist on the cluster
+def getBuckets(node, rest_port, username, password):
+    request = urllib2.Request(
+        'http://' + node + ':' + rest_port + '/pools/default/buckets')
+    base64string = base64.encodestring(
+        '%s:%s' % (username, password)).replace('\n', '')
+    request.add_header('Authorization', 'Basic %s' % base64string)
+    try:
+        response = urllib2.urlopen(request)
+    except:
+        print('Authorization failed.  Please check username and password.')
+        exit(1)
+    bucketsOnCluster = []
+    data = json.loads(response.read())
+    for item in data:
+        bucket = item['name']
+        bucketsOnCluster.append(bucket)
+    return bucketsOnCluster
+
+
+if __name__ == '__main__':
+    # Parse the arguments given.
+    args = argumentParsing()
+
+    # Remove any white-spaces from start and end of strings
+    backupDir = args.backupDir.strip()
+    path = args.path.strip()
+
+    # Check to see if root backup directory exists
+    if not os.path.isdir(backupDir):
+        try:
+            os.makedirs(backupDir)
+        except:
+            exit("Cannot create backup root directory:%s" % backupDir)
+
+    # Check to see if path is correct
+    if not os.path.isdir(path):
+        print 'The path to cbbackup does not exist'
+        print 'Please run with a different path'
+        exit(1)
+    if not os.path.isfile(os.path.join(path, 'cbbackup')):
+        print 'cbbackup could not be found in ' + path
+        exit(1)
+
+    # Check to see if log directory exists if not create it
+    dir = os.path.join(backupDir, 'logs')
+    try:
+        os.stat(dir)
+    except:
+        try:
+            os.mkdir(dir)
+        except:
+            print('Error trying to create directory ' + dir)
+            exit(1)
+
+    # Separate out node and REST port
+    matchObj = re.match(r'^http://(.*):(\d+)$', args.node, re.I)
+    if matchObj:
+        node = matchObj.group(1)
+        rest = matchObj.group(2)
+    else:
+        print("Please enter the source as http://hostname:port")
+        print("For example http://localhost:8091 or http://127.0.0.1:8091")
+        exit(1)
+
+    # Check to see if backing-up all buckets or just a specified bucket
+    if args.bucket_source == '':
+        bucketList = getBuckets(
+            node, rest, args.username, args.password)
+    else:
+        # Check that the bucket exists
+        for item in getBuckets(node, rest, args.username, args.password):
+            if item == args.bucket_source:
+                bucketList.append(args.bucket_source)
+
+        if len(bucketList) == 0:
+            print 'Bucket ' + args.bucket_source + ' does not exist'
+            print 'Please enter a different bucket'
+            exit(1)
+
+    # For each bucket
+    for item in bucketList:
+        perbucketvbucketlist = findAllVbucketsForBucket(
+            node, item, path, args.port, rest, args.username, args.password, args.single_node)
+        for item in perbucketvbucketlist:
+            if item not in vbucketList:
+                vbucketList.append(item)
+
+    # Handle the case when path has spaces
+    # i.e. /Applications/Couchbase Server.app/Contents/...
+    if os.name == 'nt':
+        path = re.sub(r' ', '^ ', path)
+    else:
+        path = re.sub(r' ', '\ ', path)
+
+    # If a bucket was specfified then set-up the string to pass to cbbackup.
+    specific_bucket = ''
+    if len(bucketList) == 1:
+        specific_bucket = ' -b ' + bucketList[0]
+
+    extra_options = ''
+    if args.extra:
+        extra_options = ' -x ' + args.extra
+
+    # Group the number of vbuckets per process
+    for i in range(0, len(vbucketList), int(args.number)):
+        chunk = vbucketList[i:i + int(args.number)]
+        vbucketsname = str(chunk[0]) + '-' + str(chunk[-1])
+        command_line = os.path.join(path, 'cbbackup') + ' -v -t 1 --vbucket-list=' + ''.join(str(chunk).split()) + ' http://' \
+            + node + ':' + rest + ' ' + os.path.join(backupDir, vbucketsname) + ' -u ' + args.username \
+            + ' -p ' + args.password + extra_options + specific_bucket + ' 2>' + \
+            os.path.join(backupDir, 'logs', vbucketsname) + '.err'
+        if args.verbose:
+            print command_line
+        p = subprocess.Popen(command_line, shell=True)
+        processes[p] = vbucketsname
+
+    # Did we backup anything?
+    if len(processes) == 0:
+        print 'Did not backup anything'
+        print 'Please check that you have the buckets on ' + args.node
+        exit(1)
+    else:
+        print 'Waiting for the backup to complete...'
+        successCount = 0
+        for p in processes:
+            p.wait()
+            if p.returncode == 1:
+                print 'Error with backup - look in ' + os.path.join(backupDir, 'logs', processes[p]) + '.err for details'
+            else:
+                successCount += 1
+
+        if successCount == len(processes):
+            print 'SUCCESSFULLY COMPLETED!'
+        else:
+            print 'ERROR!'
+            exit(1)

@@ -59,6 +59,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         self.version_supported = self.source_node['version'].split(".") >= ["3", "0", "0"]
         self.recv_min_bytes = int(opts.extra.get("recv_min_bytes", 4096))
         self.batch_max_bytes = int(opts.extra.get("batch_max_bytes", 400000))
+        self.flow_control = int(opts.extra.get("flow_control", 1))
         self.vbucket_list = getattr(opts, "vbucket_list", None)
         self.r=random.Random()
         self.queue = PumpQueue()
@@ -379,13 +380,14 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                        '', opaque, extra)
                 self.dcp_conn._handleSingleResponse(opaque)
 
-                # set connection buffer size. Considering header size, we roughly
-                # set the total received package size as 10 times as value size.
-                opaque=self.r.randint(0, 2**32)
-                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
-                                       couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
-                                       str(self.batch_max_bytes * 10), opaque)
-                self.dcp_conn._handleSingleResponse(opaque)
+                if self.flow_control:
+                    # set connection buffer size. Considering header size, we roughly
+                    # set the total received package size as 10 times as value size.
+                    opaque=self.r.randint(0, 2**32)
+                    self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
+                                           couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
+                                           str(self.batch_max_bytes * 10), opaque)
+                    self.dcp_conn._handleSingleResponse(opaque)
             except EOFError:
                 return "error: Fail to set up DCP connection", None
             except cb_bin_client.MemcachedError:
@@ -399,15 +401,16 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         return 0, self.dcp_conn
 
     def ack_buffer_size(self, buf_size):
-        try:
-            opaque=self.r.randint(0, 2**32)
-            self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_BUFFER_ACK, '', '', \
-                opaque, struct.pack(">I", int(buf_size)))
-            logging.debug("Send buffer size: %d" % buf_size)
-        except socket.error:
-            return "error: socket error during sending buffer ack msg"
-        except EOFError:
-            return "error: send buffer ack msg"
+        if self.flow_control:
+            try:
+                opaque=self.r.randint(0, 2**32)
+                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_BUFFER_ACK, '', '', \
+                    opaque, struct.pack(">I", int(buf_size)))
+                logging.debug("Send buffer size: %d" % buf_size)
+            except socket.error:
+                return "error: socket error during sending buffer ack msg"
+            except EOFError:
+                return "error: send buffer ack msg"
 
         return None
 
@@ -469,10 +472,17 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 vb_list[vb[3:]][counter] = int(val)
         flags = 0
         pair_index = (self.source_bucket['name'], self.source_node['hostname'])
+        vbuckets = None
+        if self.vbucket_list:
+            vbuckets = json.loads(self.vbucket_list)
         for vbid in vb_list.iterkeys():
             if int(vbid) not in self.node_vbucket_map:
                 #skip nonactive vbucket
                 continue
+            if vbuckets and int(vbid) not in vbuckets:
+                #skip vbuckets that are not in this run
+                continue
+
             if self.cur['seqno'] and self.cur['seqno'][pair_index]:
                 start_seqno = self.cur['seqno'][pair_index][vbid]
             else:
