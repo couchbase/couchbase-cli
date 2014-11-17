@@ -60,7 +60,7 @@ def argumentParsing():
                         help='Specify the path to cbbackup.  Defaults to current directory')
     parser.add_argument('--port', default='11210',
                         help='Specify the bucket port.  Defaults to 11210')
-    parser.add_argument('-n', '--number', default='1',
+    parser.add_argument('-n', '--number', default='100',
                         help='Specify the number of vbuckets per process.  Defaults to 1')
     parser.add_argument('-x', '--extra', default=None,
                         help="""Provide extra, uncommon config parameters;
