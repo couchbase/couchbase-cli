@@ -2,10 +2,10 @@
 # -*-python-*-
 
 import base64
-import json
 import optparse
 import os
 import re
+import simplejson as json
 import subprocess
 import sys
 import urllib2
