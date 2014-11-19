@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*-python-*-
 
-import argparse
-import urllib2
+import base64
 import json
-import subprocess
+import optparse
 import os
 import re
-import base64
 import socket
+import subprocess
+import sys
+import urllib2
 
 """Written by Daniel Owen owend@couchbase.com on 27 June 2014
 Version 1.4    Last updated 10 July 2014
@@ -35,38 +36,39 @@ Run python cbbackupwrapper -h for more information.
 
 See the cbrestorewrapper.py script for restoring backups made with this script."""
 
-
 bucketList = []
 vbucketList = []
 processes = {}
 
-
 def argumentParsing():
-    parser = argparse.ArgumentParser(description='cbbackupwrapper')
-    parser.add_argument('node', type=str, help='Server node specified as name or IP address')
-    parser.add_argument('backupDir', type=str, help='Root directory of backup')
+    usage = "usage: %prog CLUSTER BACKUPDIR OPTIONS"
+    parser = optparse.OptionParser(usage)
 
-    parser.add_argument('-b', '--bucket-source', default='',
+    parser.add_option('-b', '--bucket-source', default='',
                         help='Specify the bucket to backup.  Defaults to all buckets')
-    parser.add_argument('--single-node', action='store_true',
+    parser.add_option('--single-node', action='store_true',
                         default=False, help='use a single server node from the source only')
-    parser.add_argument('-u', '--username', default='Administrator',
-                        help='REST username for source cluster or server node.  Default is Administrator')
-    parser.add_argument('-p', '--password', default='PASSWORD',
-                        help='REST password for source cluster or server node.   Defaults to PASSWORD')
-    parser.add_argument('-v', '--verbose', action='store_true',
+    parser.add_option('-u', '--username', default='Administrator',
+                        help='REST username for source cluster or server node. Default is Administrator')
+    parser.add_option('-p', '--password', default='PASSWORD',
+                        help='REST password for source cluster or server node. Defaults to PASSWORD')
+    parser.add_option('-v', '--verbose', action='store_true',
                         default=False, help='Enable verbose messaging')
-    parser.add_argument('--path', default='.',
-                        help='Specify the path to cbbackup.  Defaults to current directory')
-    parser.add_argument('--port', default='11210',
+    parser.add_option('--path', default='.',
+                        help='Specify the path to cbbackup. Defaults to current directory')
+    parser.add_option('--port', default='11210',
                         help='Specify the bucket port.  Defaults to 11210')
-    parser.add_argument('-n', '--number', default='100',
-                        help='Specify the number of vbuckets per process.  Defaults to 1')
-    parser.add_argument('-x', '--extra', default=None,
+    parser.add_option('-n', '--number', default='100',
+                        help='Specify the number of vbuckets per process. Defaults to 100')
+    parser.add_option('-x', '--extra', default=None,
                         help="""Provide extra, uncommon config parameters;
-                             comma-separated key=val(,key=val)* pairs""")
-    return parser.parse_args()
+                        comma-separated key=val(,key=val)* pairs""")
+    options, rest = parser.parse_args()
+    if len(rest) != 2:
+        parser.print_help()
+        sys.exit("\nError: please provide both cluster IP and backup directory path.")
 
+    return options, rest[0], rest[1]
 
 def findAllVbucketsForBucket(node, bucket, path, port, restport, username, password, single_node):
     localvbucketlist = []
@@ -161,10 +163,10 @@ def getBuckets(node, rest_port, username, password):
 
 if __name__ == '__main__':
     # Parse the arguments given.
-    args = argumentParsing()
+    args, cluster, backupDir = argumentParsing()
 
     # Remove any white-spaces from start and end of strings
-    backupDir = args.backupDir.strip()
+    backupDir = backupDir.strip()
     path = args.path.strip()
 
     # Check to see if root backup directory exists
@@ -195,7 +197,7 @@ if __name__ == '__main__':
             exit(1)
 
     # Separate out node and REST port
-    matchObj = re.match(r'^http://(.*):(\d+)$', args.node, re.I)
+    matchObj = re.match(r'^http://(.*):(\d+)$', cluster, re.I)
     if matchObj:
         node = matchObj.group(1)
         rest = matchObj.group(2)
