@@ -90,10 +90,7 @@ def getVbucketsToRestore(path, bucket):
     files = os.listdir(path)
     regex = re.compile(r'^(\d+)-(\d+)$')
     cleaned_list = filter(regex.search, files)
-    bucketname = 'bucket-' + bucket
-    okay_items = [
-        x for x in cleaned_list if bucketname in os.listdir(os.path.join(path, x))]
-    return okay_items
+    return cleaned_list
 
 if __name__ == '__main__':
     # Parse the arguments given.
