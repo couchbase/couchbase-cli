@@ -63,6 +63,15 @@ def argumentParsing():
     parser.add_option('-x', '--extra', default=None,
                         help="""Provide extra, uncommon config parameters;
                         comma-separated key=val(,key=val)* pairs""")
+    try:
+        import pump_bfd2
+        parser.add_option("-m", "--mode",
+                        action="store", type="string", default="diff",
+                        help="backup mode: full, diff or accu [default:%default]")
+    except ImportError:
+        parser.add_option("-m", "--mode",
+                        action="store", type="string", default="full",
+                        help="backup mode: full")
     options, rest = parser.parse_args()
     if len(rest) != 2:
         parser.print_help()
@@ -245,13 +254,17 @@ if __name__ == '__main__':
     if args.extra:
         extra_options = ' -x ' + args.extra
 
+    mode_options = ''
+    if args.mode:
+        mode_options = ' -m ' + args.mode
+
     # Group the number of vbuckets per process
     for i in range(0, len(vbucketList), int(args.number)):
         chunk = vbucketList[i:i + int(args.number)]
         vbucketsname = str(chunk[0]) + '-' + str(chunk[-1])
         command_line = os.path.join(path, 'cbbackup') + ' -v -t 1 --vbucket-list=' + ''.join(str(chunk).split()) + ' http://' \
             + node + ':' + rest + ' ' + os.path.join(backupDir, vbucketsname) + ' -u ' + args.username \
-            + ' -p ' + args.password + extra_options + specific_bucket + ' 2>' + \
+            + ' -p ' + args.password + extra_options + mode_options + specific_bucket + ' 2>' + \
             os.path.join(backupDir, 'logs', vbucketsname) + '.err'
         if args.verbose:
             print command_line
