@@ -331,6 +331,8 @@ class BFDSource(BFD, pump.Source):
             if not path:
                 return "error: no backup directory found: " + spec, None
             latest_dir, dir = BFD.find_latest_dir(path, "full")
+            if not latest_dir:
+                return "error: no valid backup directory found: " + path, None
             bucket_dirs = glob.glob(latest_dir + "/bucket-*")
 
         for bucket_dir in sorted(bucket_dirs):
