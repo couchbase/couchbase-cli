@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*-python-*-
 
+import pump_transfer
+import pump
+
 import base64
 import optparse
 import os
@@ -43,6 +46,7 @@ processes = {}
 def argumentParsing():
     usage = "usage: %prog CLUSTER BACKUPDIR OPTIONS"
     parser = optparse.OptionParser(usage)
+    opt_extra_help(parser, opt_extra_defaults())
 
     parser.add_option('-b', '--bucket-source', default='',
                         help='Specify the bucket to backup.  Defaults to all buckets')
@@ -77,7 +81,36 @@ def argumentParsing():
         parser.print_help()
         sys.exit("\nError: please provide both cluster IP and backup directory path.")
 
+    opt_parse_extra(opts.extra, self.opt_extra_defaults())
+
     return options, rest[0], rest[1]
+
+def opt_extra_help(parser, extra_defaults):
+    extra_help = "; ".join(["%s=%s (%s)" %
+                           (k, extra_defaults[k][0], extra_defaults[k][1])
+                           for k in sorted(extra_defaults.iterkeys())])
+
+    group = optparse.OptionGroup(parser, "Available extra config parameters (-x)",
+                        extra_help)
+    parser.add_option_group(group)
+
+def opt_extra_defaults():
+    return {
+        "batch_max_size":  (1000,   "Transfer this # of documents per batch"),
+        "batch_max_bytes": (400000, "Transfer this # of bytes per batch"),
+        "cbb_max_mb":      (100000, "Split backup file on destination cluster if it exceeds MB"),
+        "max_retry":       (10,     "Max number of sequential retries if transfer fails"),
+        "report":          (5,      "Number batches transferred before updating progress bar in console"),
+        "report_full":     (2000,   "Number batches transferred before emitting progress information in console"),
+        "recv_min_bytes":  (4096,   "Amount of bytes for every TCP/IP call transferred"),
+        "rehash":          (0,      "For value 1, rehash the partition id's of each item; \
+this is needed when transferring data between clusters with different number of partitions, \
+such as when transferring data from an OSX server to a non-OSX cluster"),
+        "data_only":       (0,      "For value 1, only transfer data from a backup file or cluster"),
+        "design_doc_only": (0,      "For value 1, transfer design documents only from a backup file or cluster"),
+        "seqno":           (0,      "By default, start seqno from beginning."),
+        "backoff_cap":     (10,     "Max backoff time during rebalance period"),
+    }
 
 def findAllVbucketsForBucket(node, bucket, path, port, restport, username, password, single_node):
     localvbucketlist = []
