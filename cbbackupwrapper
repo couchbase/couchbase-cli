@@ -108,7 +108,7 @@ def findAllVbucketsForBucket(node, bucket, path, port, restport, username, passw
             aliases.append(node)
             aliases + other_names
         except:
-            print("WARN: Could not find name for nodeip")
+            pass
     else:
         aliases.append(node)
         nodeip = socket.gethostbyname(node)
