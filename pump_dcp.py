@@ -103,7 +103,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
     def provide_batch(self):
         if not self.version_supported:
-            return super(DCPStreamSource, self).provide_batch()
+            return "error: cannot back up 2.x or older clusters with 3.x tools", None
+
         cur_sleep = 0.2
         cur_retry = 0
         max_retry = self.opts.extra['max_retry']
