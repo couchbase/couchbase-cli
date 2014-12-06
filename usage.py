@@ -66,6 +66,7 @@ OPTIONS:
   -p PASSWORD, --password=PASSWORD  admin password of the cluster
   -o KIND, --output=KIND            KIND is json or standard
   -d, --debug
+  -s, --ssl                         uses SSL for communication with secure servers
 
 NOTE:
     USERNAME can be set in environment variable CB_REST_USERNAME and/or
@@ -78,6 +79,7 @@ server-add OPTIONS:
   --server-add-password=PASSWORD    admin password for the
                                     server to be added
   --group-name=GROUPNAME            group that server belongs
+  --services="data;index;query;moxi" services that server runs
 
 server-readd OPTIONS:
   --server-add=HOST[:PORT]          server to be added
@@ -102,6 +104,7 @@ group-manage OPTIONS:
   --move-servers=HOST[:PORT];HOST[:PORT] move a list of servers from group
   --from-group=GROUPNAME            group name that to move servers from
   --to-group=GROUPNAME              group name tat to move servers to
+  --services="data;index;query;moxi" services that server runs
 
 failover OPTIONS:
   --server-failover=HOST[:PORT]     server to failover
@@ -507,6 +510,7 @@ EXAMPLES:
         --group-name=group1 \\
         --server-add-username=Administrator1 \\
         --server-add-password=password1 \\
+        --services="data;index;query" \\
         -u Administrator -p password
 
   Move list of servers from group1 to group2

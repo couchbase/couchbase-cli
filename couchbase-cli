@@ -152,6 +152,7 @@ def main():
                 'upload-host=',
                 'customer=',
                 'ticket=',
+                'services=',
                 ])
     except getopt.GetoptError, err:
         usage(err)

@@ -168,8 +168,11 @@ class Node:
         self.customer = None
         self.ticket = ""
 
+        self.services = None
+
     def runCmd(self, cmd, server, port,
                user, password, opts):
+        print "runCmd"
         self.rest_cmd = rest_cmds[cmd]
         self.method = methods[cmd]
         self.server = server
@@ -305,6 +308,7 @@ class Node:
         if self.password_new:
             self.password = self.password_new
 
+        opts["error_msg"] = "unable to set memory quota"
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
@@ -318,6 +322,20 @@ class Node:
                                      opts)
         print output_result
 
+    def process_services(self, data_required):
+        if not self.services:
+            self.services = "data"
+        svc_list = [w.strip() for w in self.services.split(";")]
+        for svc in svc_list:
+            if svc not in ["data", "moxi", "index", "query"]:
+                return "ERROR: invalid service: %s" % svc
+        if data_required and "data" not in svc_list:
+            svc_list.append("data")
+        self.services = ",".join(svc_list)
+        for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
+            self.services = self.services.replace(old, new)
+
+        return None
 
     def nodeInit(self):
         rest = restclient.RestClient(self.server,
@@ -707,6 +725,8 @@ class Node:
                 self.customer = a
             elif o == '--ticket':
                 self.ticket = a
+            elif o == '--services':
+                self.services = a
 
         return servers
 
@@ -718,6 +738,10 @@ class Node:
         return slist
 
     def addServers(self, servers):
+        err = self.process_services(True)
+        if err:
+            print err
+            return
         for server in servers:
             user = servers[server]['user']
             password = servers[server]['password']
@@ -734,7 +758,7 @@ class Node:
         if add_with_user and add_with_password:
             rest.setParam('user', add_with_user)
             rest.setParam('password', add_with_password)
-
+        rest.setParam('services', self.services)
         opts = {
             'error_msg': "unable to server-add %s" % add_server,
             'success_msg': "server-add %s" % add_server
@@ -1161,11 +1185,16 @@ class Node:
         print output_result
 
     def groupAddServers(self):
-
         uri = self.getGroupUri(self.group_name)
         if uri is None:
             usage("invalid group name:%s" % self.group_name)
         uri = "%s/addNode" % uri
+
+        err = self.process_services(True)
+        if err:
+            print err
+            return
+
         groups = self.getServerGroups()
         for server in self.server_list:
             rest = restclient.RestClient(self.server,
@@ -1176,7 +1205,7 @@ class Node:
                 rest.setParam('user', self.sa_username)
             if self.sa_password:
                 rest.setParam('password', self.sa_password)
-
+            rest.setParam("services", self.services)
             opts = {
                 'error_msg': "unable to add server '%s' to group '%s'" % (server, self.group_name),
                 'success_msg': "add server '%s' to group '%s'" % (server, self.group_name)
