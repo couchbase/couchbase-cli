@@ -18,7 +18,7 @@ Use cases:
        --server-add=10.11.12.13:8091 \\
        --server-add-username=Admin1 \\
        --server-add-password=password \\
-       --services=data;query
+       --services=data;n1ql
 
   
   Add a new server with service index:
@@ -35,7 +35,7 @@ Use cases:
 
 OPTIONS:
 
-     --services=[data|index|query|moxi]   services that run on the server
+     --services=[data|index|n1ql|moxi]   services that run on the server
 
 Use cases:
 
