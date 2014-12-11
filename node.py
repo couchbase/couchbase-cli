@@ -98,6 +98,8 @@ class Node:
         self.port = ''
         self.user = ''
         self.password = ''
+        self.ssl = False
+
         self.ro_username = ''
         self.ro_password = ''
         self.params = {}
@@ -171,14 +173,15 @@ class Node:
         self.services = None
 
     def runCmd(self, cmd, server, port,
-               user, password, opts):
-        print "runCmd"
+               user, password, ssl, opts):
         self.rest_cmd = rest_cmds[cmd]
         self.method = methods[cmd]
         self.server = server
         self.port = int(port)
         self.user = user
         self.password = password
+        self.ssl = ssl
+
         servers = self.processOpts(cmd, opts)
         if self.debug:
             print "INFO: servers %s" % servers
@@ -261,9 +264,10 @@ class Node:
             self.collectLogsStatus()
 
     def clusterInit(self, cmd):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if self.port_new:
             rest.setParam('port', self.port_new)
         else:
@@ -309,9 +313,10 @@ class Node:
             self.password = self.password_new
 
         opts["error_msg"] = "unable to set memory quota"
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if self.per_node_quota:
             rest.setParam('memoryQuota', self.per_node_quota)
 
@@ -338,9 +343,10 @@ class Node:
         return None
 
     def nodeInit(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if self.data_path:
             rest.setParam('path', self.data_path)
 
@@ -357,11 +363,11 @@ class Node:
                                      self.user,
                                      self.password,
                                      opts)
-        print output_result
         if self.hostname:
-            rest = restclient.RestClient(self.server,
+            rest = util.restclient_factory(self.server,
                                          self.port,
-                                         {'debug':self.debug})
+                                         {'debug':self.debug},
+                                         self.ssl)
             if self.hostname:
                 rest.setParam('hostname', self.hostname)
 
@@ -378,9 +384,10 @@ class Node:
             print output_result
 
     def compaction(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
 
         if self.compaction_db_percentage:
             rest.setParam('databaseFragmentationThreshold[percentage]', self.compaction_db_percentage)
@@ -436,9 +443,10 @@ class Node:
         print output_result
 
     def notification(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if self.enable_notification:
             rest.setParam('sendStats', self.enable_notification)
 
@@ -454,9 +462,10 @@ class Node:
         print output_result
 
     def alert(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         alert_opts = ''
         if self.enable_email_alert:
             rest.setParam('enabled', self.enable_email_alert)
@@ -510,9 +519,10 @@ class Node:
         print output_result
 
     def autofailover(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if self.autofailover_timeout:
             if int(self.autofailover_timeout) < 30:
                 print "ERROR: Timeout value must be larger than 30 second."
@@ -751,9 +761,10 @@ class Node:
             print output_result
 
     def serverAdd(self, add_server, add_with_user, add_with_password):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         rest.setParam('hostname', add_server)
         if add_with_user and add_with_password:
             rest.setParam('user', add_with_user)
@@ -775,9 +786,10 @@ class Node:
             self.getNodeOtps(to_readd=servers['add'])
 
         for readd_otp in readd_otps:
-            rest = restclient.RestClient(self.server,
+            rest = util.restclient_factory(self.server,
                                          self.port,
-                                         {'debug':self.debug})
+                                         {'debug':self.debug},
+                                         self.ssl)
             rest.setParam('otpNode', readd_otp)
 
             opts = {
@@ -829,9 +841,10 @@ class Node:
         known_otps, eject_otps, failover_otps, readd_otps, _ = \
             self.getNodeOtps(to_readd=servers['recovery'])
         for readd_otp in readd_otps:
-            rest = restclient.RestClient(self.server,
+            rest = util.restclient_factory(self.server,
                                          self.port,
-                                         {'debug':self.debug})
+                                         {'debug':self.debug},
+                                         self.ssl)
             opts = {
                 'error_msg': "unable to setRecoveryType for node %s" % readd_otp,
                 'success_msg': "setRecoveryType for node %s" % readd_otp
@@ -851,9 +864,10 @@ class Node:
     def rebalance(self, servers):
         known_otps, eject_otps, failover_otps, readd_otps, _ = \
             self.getNodeOtps(to_eject=servers['remove'])
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         rest.setParam('knownNodes', ','.join(known_otps))
         rest.setParam('ejectedNodes', ','.join(eject_otps))
         if self.recovery_buckets:
@@ -891,9 +905,10 @@ class Node:
             print '\n' + output_result
 
     def rebalanceStatus(self, prefix=''):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
 
         opts = {
             'error_msg': "unable to obtain rebalance status",
@@ -923,9 +938,10 @@ class Node:
         return "unknown", error_message
 
     def rebalanceStop(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
 
         opts = {
             'success_msg': 'rebalance cluster stopped',
@@ -948,9 +964,10 @@ class Node:
                   servers['failover'].keys())
 
         for failover_otp, node_status in failover_otps:
-            rest = restclient.RestClient(self.server,
+            rest = util.restclient_factory(self.server,
                                          self.port,
-                                         {'debug':self.debug})
+                                         {'debug':self.debug},
+                                         self.ssl)
             opts = {
                 'error_msg': "unable to failover %s" % failover_otp,
                 'success_msg': "failover %s" % failover_otp
@@ -1000,9 +1017,10 @@ class Node:
             self.roUserSet()
 
     def roUserList(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         opts = { 'error_msg':'not any read only user defined'}
         try:
             output_result = rest.restCmd('GET',
@@ -1016,9 +1034,10 @@ class Node:
             pass
 
     def roUserDelete(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
 
         opts = {
             'success_msg': 'readOnly user deleted',
@@ -1032,9 +1051,10 @@ class Node:
         print output_result
 
     def roUserSet(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         try:
             output_result = rest.restCmd('GET',
                                          '/settings/readOnlyAdminName',
@@ -1046,9 +1066,10 @@ class Node:
         except:
             pass
 
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if self.ro_username:
             rest.setParam('username', self.ro_username)
         if self.ro_password:
@@ -1084,9 +1105,10 @@ class Node:
                 print "Unknown group command:%s" % self.cmd
 
     def getGroupUri(self, groupName):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         output_result = rest.restCmd('GET',
                                      '/pools/default/serverGroups',
                                      self.user,
@@ -1098,9 +1120,10 @@ class Node:
         return None
 
     def getServerGroups(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         output_result = rest.restCmd('GET',
                                      '/pools/default/serverGroups',
                                      self.user,
@@ -1108,9 +1131,10 @@ class Node:
         return rest.getJson(output_result)
 
     def groupList(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         output_result = rest.restCmd('GET',
                                      '/pools/default/serverGroups',
                                      self.user,
@@ -1127,9 +1151,10 @@ class Node:
             print "Invalid group name: %s" % self.group_name
 
     def groupCreate(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         rest.setParam('name', self.group_name)
         opts = {
             'error_msg': "unable to create group %s" % self.group_name,
@@ -1149,9 +1174,10 @@ class Node:
         if self.group_rename is None:
             command_error("invalid group name:%s" % self.group_name)
 
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         rest.setParam('name', self.group_rename)
         opts = {
             'error_msg': "unable to rename group %s" % self.group_name,
@@ -1169,9 +1195,10 @@ class Node:
         if uri is None:
             command_error("invalid group name:%s" % self.group_name)
 
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         rest.setParam('name', self.group_name)
         opts = {
             'error_msg': "unable to delete group %s" % self.group_name,
@@ -1197,9 +1224,10 @@ class Node:
 
         groups = self.getServerGroups()
         for server in self.server_list:
-            rest = restclient.RestClient(self.server,
+            rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
             rest.setParam('hostname', server)
             if self.sa_username:
                 rest.setParam('user', self.sa_username)
@@ -1243,9 +1271,10 @@ class Node:
                         group["nodes"].append(node_info[server])
 
         payload = json.dumps(groups)
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         rest.setPayload(payload)
 
         opts = {
@@ -1263,9 +1292,10 @@ class Node:
         if self.certificate_file is None:
             command_error("please specify certificate file name for the operation")
 
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         output_result = ''
         if self.cmd == 'retrieve':
             opts = {
@@ -1305,8 +1335,8 @@ class Node:
             command_error("please specify a list of nodes to collect logs from, " +
                   " or 'all-nodes'")
 
-        rest = restclient.RestClient(self.server, self.port,
-                                     {'debug': self.debug})
+        rest = util.restclient_factory(self.server, self.port,
+                                     {'debug': self.debug}, self.ssl)
         if self.all_nodes:
             rest.setParam("nodes", "*")
         else:
@@ -1344,8 +1374,8 @@ class Node:
 
     def collectLogsStop(self):
         """Stops a cluster-wide log collection task"""
-        rest = restclient.RestClient(self.server, self.port,
-                                     {'debug': self.debug})
+        rest = util.restclient_factory(self.server, self.port,
+                                     {'debug': self.debug}, self.ssl)
 
         opts = {
             'success_msg': 'collect logs successfully stopped',
@@ -1357,8 +1387,8 @@ class Node:
 
     def collectLogsStatus(self):
         """Shows the current status of log collection task"""
-        rest = restclient.RestClient(self.server, self.port,
-                                     {'debug': self.debug})
+        rest = util.restclient_factory(self.server, self.port,
+                                     {'debug': self.debug}, self.ssl)
 
         opts = {
             'error_msg': 'unable to obtain collect logs status'

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import restclient
-
+import util_cli as util
 
 class ListServers:
     def __init__(self):
@@ -12,14 +12,16 @@ class ListServers:
         self.user = ''
         self.password = ''
         self.error = ''
+        self.ssl = False
 
     def runCmd(self, cmd, server, port,
-               user, password, opts,):
+               user, password, ssl, opts,):
         self.cmd = cmd
         self.server = server
         self.port = port
         self.user = user
         self.password = password
+        self.ssl = ssl
 
         for (o, a) in opts:
             if o in  ('-o', '--output'):
@@ -51,8 +53,8 @@ class ListServers:
         The reason for passing arguments which could be obtained
         from 'self' is because getData() must be callable externally
     """
-        self.rest = restclient.RestClient(server, port,
-                                          {'debug':self.debug})
+        self.rest = util.restclient_factory(server, port,
+                                          {'debug':self.debug}, self.ssl)
         return self.rest.restCmd('GET', self.rest_cmd,
                                  user, password)
 

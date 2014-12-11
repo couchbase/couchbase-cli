@@ -26,6 +26,7 @@ class XDCR:
         self.port = ''
         self.user = ''
         self.password = ''
+        self.ssl = False
         self.remote_username = ''
         self.remote_password = ''
         self.remote_hostname = ''
@@ -64,7 +65,7 @@ class XDCR:
         }
 
     def runCmd(self, cmd, server, port,
-               user, password, opts):
+               user, password, ssl, opts):
         self.rest_cmd = self.REST_CMDS[cmd]
         self.method = self.METHODS[cmd]
         self.server = server
@@ -161,9 +162,10 @@ class XDCR:
                 self.certificate = a
 
     def setup_create(self, cmd):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if not self.remote_cluster:
             print "Error: --xdcr-cluster-name is required to create/edit cluster connection"
             return
@@ -223,9 +225,10 @@ class XDCR:
         print output_result
 
     def setup_delete(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if self.remote_cluster:
             self.rest_cmd = self.rest_cmd + "/" + urllib.quote(self.remote_cluster)
         else:
@@ -244,9 +247,10 @@ class XDCR:
         print output_result
 
     def setup_list(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         opts = {
             'error_msg': "unable to list xdcr remote cluster",
             'success_msg': "list remote cluster successfully",
@@ -269,9 +273,10 @@ class XDCR:
                     print "         uri: %s" % cluster["uri"]
 
     def replicate_start(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if self.to_bucket:
             rest.setParam('toBucket', self.to_bucket)
 
@@ -298,9 +303,10 @@ class XDCR:
         print output_result
 
     def replicate_stop(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         if self.replicator:
             self.rest_cmd = '/controller/cancelXCDR/' + urllib.quote_plus(self.replicator)
         else:
@@ -323,9 +329,10 @@ class XDCR:
             print "Error: option --xdcr-replicator is needed to pause/resume a replication"
             return
 
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
 
         opts = {
             'error_msg': "unable to retrieve any replication streams",
@@ -347,9 +354,10 @@ class XDCR:
                     return
                 break
 
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         self.rest_cmd = '/settings/replications/' + urllib.quote_plus(self.replicator)
         if self.cmd == "pause":
             rest.setParam('pauseRequested', node.bool_to_str(1))
@@ -368,9 +376,10 @@ class XDCR:
         print output_result
 
     def replicate_list(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
 
         opts = {
             'error_msg': "unable to retrieve any replication streams",
@@ -390,9 +399,10 @@ class XDCR:
                 print "   target: %s" % task["target"]
 
     def replicate_settings(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         opts = {
             'error_msg': "unable to set xdcr replication settings",
             'success_msg': "set xdcr replication settings"
@@ -435,9 +445,10 @@ class XDCR:
         print output_result
 
     def setting(self):
-        rest = restclient.RestClient(self.server,
+        rest = util.restclient_factory(self.server,
                                      self.port,
-                                     {'debug':self.debug})
+                                     {'debug':self.debug},
+                                     self.ssl)
         opts = {
             'error_msg': "unable to set xdcr internal settings",
             'success_msg': "set xdcr settings"

@@ -180,3 +180,21 @@ class RestClient:
                                 user, password, opts)
 
         return self.handleResponse(method, response, opts)
+
+class SslRestClient(RestClient):
+    def clientConnect(self, server, port):
+        error_connect = "Unable to connect to %s as SSL client" % self.server
+        try:
+            self.conn = httplib.HTTPSConnection(server, port)
+        except httplib.NotConnected:
+            print error_connect
+            sys.exit(2)
+        except httplib.HTTPException:
+            print error_connect
+            sys.exit(2)
+        except socket.error:
+            print error_connect
+            sys.exit(2)
+        except socket.gaierror:
+            print error_connect
+            sys.exit(2)

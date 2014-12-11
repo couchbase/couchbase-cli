@@ -25,7 +25,7 @@ def main():
 
     debug = False
 
-    (cluster, user, password) = ('', '', '')
+    (cluster, user, password, ssl) = ('', '', '', False)
 
     try:
         (opts, _args) = getopt.getopt(sys.argv[2:],
@@ -225,6 +225,8 @@ def main():
             password = arg
         if opt in ('-d', '--debug'):
             debug = True
+        if opt in ('-d', '--ssl'):
+            ssl = True
 
     if not cluster:
         usage.command_error("please provide a CLUSTER, or use -h for more help.")
@@ -250,7 +252,7 @@ Please use -p or set environment variable %s." % CB_PASSWORD)
 
     c = commands[cmd]()
     try:
-        c.runCmd(cmd, server, port, user, password, opts)
+        c.runCmd(cmd, server, port, user, password, ssl, opts)
     except TimeoutException, err:
         print "TIMED OUT: command: %s: %s:%d, %s" % (cmd, server, port, err)
         sys.exit(1)

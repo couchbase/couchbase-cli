@@ -95,7 +95,7 @@ class StatsCollector:
     def get_hostlist(self, server, port, user, password, opts):
         try:
             opts.append(("-o", "return"))
-            nodes = listservers.ListServers().runCmd('host-list', server, port, user, password, opts)
+            nodes = listservers.ListServers().runCmd('host-list', server, port, user, password, False, opts)
 
             for node in nodes:
                 (node_server, node_port) = util.hostport(node['hostname'])
@@ -105,7 +105,7 @@ class StatsCollector:
                           "master" : server}
                 stats_buffer.nodes[node['hostname']] = node_stats
                 if node['status'] == 'healthy':
-                    node_info = info.Info().runCmd('get-server-info', node_server, node_port, user, password, opts)
+                    node_info = info.Info().runCmd('get-server-info', node_server, node_port, user, password, False, opts)
                     self.retrieve_node_stats(node_info, node_stats)
                 else:
                     self.log.error("Unhealthy node: %s:%s" %(node_server, node['status']))
@@ -116,7 +116,7 @@ class StatsCollector:
 
     def get_bucketlist(self, server, port, user, password, opts):
         try:
-            bucketlist = buckets.Buckets().runCmd('bucket-get', server, port, user, password, opts)
+            bucketlist = buckets.Buckets().runCmd('bucket-get', server, port, user, password, False, opts)
             for bucket in bucketlist:
                 bucket_name = bucket['name']
                 self.log.info("bucket: %s" % bucket_name)
@@ -142,7 +142,7 @@ class StatsCollector:
 
                 # get bucket related stats
                 c = buckets.BucketStats(bucket_name)
-                json = c.runCmd('bucket-stats', server, port, user, password, opts)
+                json = c.runCmd('bucket-stats', server, port, user, password, False, opts)
                 stats_buffer.buckets_summary[bucket_name] = json
             return bucketlist
         except Exception, err:
@@ -206,7 +206,7 @@ class StatsCollector:
                     self.log.debug("retrieve: %s" % stat)
                     c = buckets.BucketNodeStats(bucket_name, stat, scale)
 
-                    json = c.runCmd('bucket-node-stats', server, port, user, password, opts)
+                    json = c.runCmd('bucket-node-stats', server, port, user, password, False, opts)
                     stats_buffer.buckets[bucket_name][scale][stat] = json
             sys.stderr.write('\n')
 

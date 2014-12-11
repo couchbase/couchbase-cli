@@ -8,6 +8,7 @@ from timeout import timed_out
 import time
 import sys
 import urllib
+import util_cli as util
 
 rest_cmds = {
     'bucket-list': '/pools/default/buckets',
@@ -45,12 +46,14 @@ class Buckets:
         self.debug = False
         self.rest_cmd = rest_cmds['bucket-list']
         self.method = 'GET'
+        self.ssl = False
 
     @timed_out(60)
     def runCmd(self, cmd, server, port,
-               user, password, opts):
+               user, password, ssl, opts):
         self.user = user
         self.password = password
+        self.ssl = ssl
 
         bucketname = ''
         buckettype = ''
@@ -104,8 +107,7 @@ class Buckets:
                 compact_view_only = True
 
         self.rest_cmd = rest_cmds[cmd]
-        rest = restclient.RestClient(server, port, {'debug':self.debug})
-
+        rest = util.restclient_factory(server, port, {'debug':self.debug}, self.ssl)
         # get the parameters straight
         opts = {}
         opts['error_msg'] = "unable to %s;" % cmd
@@ -206,7 +208,7 @@ class Buckets:
                     print ' ramQuota: %s' % bucket['quota']['ram']
                     print ' ramUsed: %s' % bucket['basicStats']['memUsed']
         elif cmd == "bucket-create" and wait_for_bucket_ready:
-            rest_query = restclient.RestClient(server, port, {'debug':self.debug})
+            rest_query = util.restclient_factory(server, port, {'debug':self.debug}, self.ssl)
             timeout_in_seconds = 120
             start = time.time()
             # Make sure the bucket exists before querying its status
@@ -261,7 +263,7 @@ class Buckets:
         opts['error_msg'] = "unable to compact view; please check your username (-u) and password (-p);"
         opts['success_msg'] = "compact view for bucket"
 
-        rest_query = restclient.RestClient(server, port, {'debug':self.debug})
+        rest_query = util.restclient_factory(server, port, {'debug':self.debug}, self.ssl)
         rest_cmd = '/pools/default/buckets/%s/ddocs' % bucket_name
         ddoc_info = rest_query.restCmd('GET', urllib.quote(rest_cmd),
                                        self.user, self.password, opts)
@@ -336,13 +338,13 @@ class BucketStats:
         self.method = 'GET'
 
     def runCmd(self, cmd, server, port,
-               user, password, opts):
+               user, password, ssl, opts):
         opts = {}
         opts['error_msg'] = "unable to %s" % cmd
         opts['success_msg'] = "%s" % cmd
 
         #print server, port, cmd, self.rest_cmd
-        rest = restclient.RestClient(server, port, {'debug':self.debug})
+        rest = util.restclient_factory(server, port, {'debug':self.debug}, ssl)
         data = rest.restCmd(methods[cmd], self.rest_cmd,
                             user, password, opts)
         return rest.getJson(data)
@@ -355,13 +357,13 @@ class BucketNodeStats:
         #print self.rest_cmd
 
     def runCmd(self, cmd, server, port,
-               user, password, opts):
+               user, password, ssl, opts):
         opts = {}
         opts['error_msg'] = "unable to %s" % cmd
         opts['success_msg'] = "%s" % cmd
 
         #print server, port, cmd, self.rest_cmd
-        rest = restclient.RestClient(server, port, {'debug':self.debug})
+        rest = util.restclient_factory(server, port, {'debug':self.debug}, ssl)
         data = rest.restCmd(methods[cmd], self.rest_cmd,
                             user, password, opts)
         return rest.getJson(data)

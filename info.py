@@ -11,6 +11,7 @@ import subprocess
 
 import string
 import random
+import util_cli as util
 
 class Info:
     def __init__(self):
@@ -21,12 +22,12 @@ class Info:
         return 'ctl-%s@127.0.0.1' % tmp
 
     def runCmd(self, cmd, server, port,
-               user, password, opts):
+               user, password, ssl, opts):
         for (o, a) in opts:
             if o == '-d' or o == '--debug':
                 self.debug = True
 
-        rest = restclient.RestClient(server, port, {'debug':self.debug})
+        rest = util.restclient_factory(server, port, {'debug':self.debug}, ssl)
         opts = {'error_msg': 'server-info error'}
 
         data = rest.restCmd('GET', '/nodes/self',
