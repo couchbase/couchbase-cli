@@ -180,6 +180,9 @@ from a source cluster into the caching layer at the destination""")
         p.add_option("-p", "--password",
                      action="store", type="string", default=None,
                      help="REST password for source cluster or server node")
+        p.add_option("-s", "--ssl",
+                     action="store_true", default=False,
+                     help="Transfer data with SSL enabled")
         p.add_option("-t", "--threads",
                      action="store", type="int", default=4,
                      help="""Number of concurrent workers threads performing the transfer""")

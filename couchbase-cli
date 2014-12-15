@@ -148,9 +148,10 @@ def main():
                 'ticket=',
                 'services=',
                 'help',
+                'ssl'
                 ])
     except getopt.GetoptError, err:
-        usage(err)
+        usage.command_error(err)
     if len(_args) > 0:
         err_message = ("Possible missing '--' in front of one of parameters '%s'," +
                        " please see -h for more help.") % _args
@@ -225,7 +226,7 @@ def main():
             password = arg
         if opt in ('-d', '--debug'):
             debug = True
-        if opt in ('-d', '--ssl'):
+        if opt in ('-s', '--ssl'):
             ssl = True
 
     if not cluster:

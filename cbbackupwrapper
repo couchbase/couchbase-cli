@@ -95,6 +95,9 @@ def argumentParsing():
                         help='REST username for source cluster or server node. Default is Administrator')
     parser.add_option('-p', '--password', default='PASSWORD',
                         help='REST password for source cluster or server node. Defaults to PASSWORD')
+    parser.add_option("-s", "--ssl",
+                     action="store_true", default=False,
+                     help="Transfer data with SSL enabled")
     parser.add_option('-v', '--verbose', action='store_true',
                         default=False, help='Enable verbose messaging')
     parser.add_option('--path', default='.',
@@ -303,13 +306,17 @@ if __name__ == '__main__':
     if args.mode:
         mode_options = ' -m ' + args.mode
 
+    ssl_option = ''
+    if args.ssl:
+        ssl_option = ' -s '
+
     # Group the number of vbuckets per process
     for i in range(0, len(vbucketList), int(args.number)):
         chunk = vbucketList[i:i + int(args.number)]
         vbucketsname = str(chunk[0]) + '-' + str(chunk[-1])
         command_line = os.path.join(path, 'cbbackup') + ' -v -t 1 --vbucket-list=' + ''.join(str(chunk).split()) + ' http://' \
             + node + ':' + rest + ' ' + os.path.join(backupDir, vbucketsname) + ' -u ' + args.username \
-            + ' -p ' + args.password + extra_options + mode_options + specific_bucket + ' 2>' + \
+            + ' -p ' + args.password + extra_options + mode_options + ssl_option + specific_bucket + ' 2>' + \
             os.path.join(backupDir, 'logs', vbucketsname) + '.err'
         if args.verbose:
             print command_line

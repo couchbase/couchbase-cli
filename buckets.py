@@ -108,6 +108,7 @@ class Buckets:
 
         self.rest_cmd = rest_cmds[cmd]
         rest = util.restclient_factory(server, port, {'debug':self.debug}, self.ssl)
+        #rest = restclient.RestClient(server, port, {'debug':self.debug})
         # get the parameters straight
         opts = {}
         opts['error_msg'] = "unable to %s;" % cmd

@@ -82,7 +82,7 @@ class TAPDumpSource(pump.Source):
             return 0, None # No couchApiBase; probably not 2.0.
 
         err, ddocs_json, ddocs = \
-            pump.rest_request_json(host, int(port), user, pswd,
+            pump.rest_request_json(host, int(port), user, pswd, opts.ssl,
                                    "/pools/default/buckets/%s/ddocs" %
                                    (source_bucket['name']),
                                    reason="provide_design")
@@ -95,7 +95,7 @@ class TAPDumpSource(pump.Source):
                 pump.parse_spec(opts, ddocs_url, 8092)
             # Not using user/pwd as 2.0-DP4 CAPI did not support auth.
             err, ddocs_json, ddocs = \
-                pump.rest_request_json(host, int(port), None, None,
+                pump.rest_request_json(host, int(port), None, None, opts.ssl,
                                        path + ddocs_qry,
                                        reason="provide_design-2.0DP4")
         if err:
@@ -410,7 +410,7 @@ class TAPDumpSource(pump.Source):
         for stats in ["curr_items", "vb_active_resident_items_ratio"]:
             path = "/pools/default/buckets/%s/stats/%s" % (name, stats)
             err, json, data = pump.rest_request_json(host, int(port),
-                                                     user, pswd, path,
+                                                     user, pswd, opts.ssl, path,
                                                      reason="total_msgs")
             if err:
                 return 0, None

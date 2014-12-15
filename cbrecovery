@@ -139,7 +139,7 @@ class Recovery(pump_transfer.Transfer):
         cmd = "startRecovery"
         url = "/pools/default/buckets/%s/controller/%s" % (self.sink_bucket, cmd)
         err, conn, response = \
-            pump.rest_request(host, int(port), user, pwd,
+            pump.rest_request(host, int(port), user, pwd, opts.ssl,
                               url, method='POST', reason='start_recovery')
         if err:
             self.explain_error(err, cmd)

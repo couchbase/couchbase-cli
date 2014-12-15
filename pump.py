@@ -869,11 +869,14 @@ def parse_spec(opts, spec, port):
 
     return host, port, username, password, p[2]
 
-def rest_request(host, port, user, pswd, path, method='GET', body='', reason='', headers=None):
+def rest_request(host, port, user, pswd, ssl, path, method='GET', body='', reason='', headers=None):
     if reason:
         reason = "; reason: %s" % (reason)
     logging.debug("rest_request: %s@%s:%s%s%s" % (user, host, port, path, reason))
-    conn = httplib.HTTPConnection(host, port)
+    if ssl:
+        conn = httplib.HTTPSConnection(host, port)
+    else:
+        conn = httplib.HTTPConnection(host, port)
     try:
         header = rest_headers(user, pswd, headers)
         conn.request(method, path, body, header)
@@ -907,8 +910,8 @@ def rest_headers(user, pswd, headers=None):
         headers['Authorization'] = auth
     return headers
 
-def rest_request_json(host, port, user, pswd, path, reason=''):
-    err, conn, rest_json = rest_request(host, port, user, pswd, path,
+def rest_request_json(host, port, user, pswd, ssl, path, reason=''):
+    err, conn, rest_json = rest_request(host, port, user, pswd, ssl, path,
                                         reason=reason)
     if err:
         return err, None, None
@@ -933,9 +936,9 @@ def rest_couchbase(opts, spec):
 
     if int(port) in [11210, 11211]:
         return "error: invalid port number %s, which is reserved for moxi service" % port, None
-
+ 
     err, rest_json, rest_data = \
-        rest_request_json(host, int(port), user, pswd, path)
+        rest_request_json(host, int(port), user, pswd, opts.ssl, path)
     if err:
         return err, None
 

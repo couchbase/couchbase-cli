@@ -208,6 +208,7 @@ def pretty_datetime(number, timeonly=False):
         return timestamp.strftime('%x') + ' ' + str(timestamp.time())
 
 def restclient_factory(server, port, debug, ssl=False):
+    print "server:", server, "port:", port, "debug:", debug, "ssl:", ssl
     if ssl:
         return restclient.SslRestClient(server, port, debug)
     else:

@@ -50,6 +50,9 @@ def argumentParsing():
                         help='REST username for source cluster or server node. Default is Administrator')
     parser.add_option('-p', '--password', default='PASSWORD',
                         help='REST password for source cluster or server node. Defaults to PASSWORD')
+    parser.add_option("-s", "--ssl",
+                     action="store_true", default=False,
+                     help="Transfer data with SSL enabled")
     parser.add_option('-v', '--verbose', action='store_true',
                         default=False, help='Enable verbose messaging')
     parser.add_option('--path', default='.',
@@ -163,6 +166,10 @@ if __name__ == '__main__':
     else:
         path = re.sub(r' ', '\ ', path)
 
+    ssl_option = ''
+    if args.ssl:
+        ssl_option = ' -s '
+
     for bucket in bucketList:
         if not args.bucket_destination == '':
             vbucketList = getVbucketsToRestore(backupDir, args.bucket_source.strip())
@@ -183,7 +190,7 @@ if __name__ == '__main__':
                 command_line = os.path.join(path, 'cbrestore') + ' -v -t 1 -b ' + args.bucket_source.strip() \
                     + ' -B ' + args.bucket_destination + ' ' + os.path.join(backupDir, vbuckets) \
                     + ' http://' + node + ':' + rest \
-                    + ' -u ' + args.username + ' -p ' + args.password + ' 2>' + \
+                    + ' -u ' + args.username + ' -p ' + args.password + ssl_option + ' 2>' + \
                     os.path.join(backupDir, 'logs', vbuckets) + \
                     '-restore-' + bucket + '.err'
             else:

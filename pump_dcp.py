@@ -645,7 +645,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         for stats in ["curr_items", "vb_active_resident_items_ratio"]:
             path = "/pools/default/buckets/%s/stats/%s" % (name, stats)
             err, json, data = pump.rest_request_json(host, int(port),
-                                                     user, pswd, path,
+                                                     user, pswd, opts.ssl, path,
                                                      reason="total_msgs")
             if err:
                 return 0, None

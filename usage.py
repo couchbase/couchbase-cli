@@ -11,7 +11,7 @@ class Usage:
 
 def command_error(err):
     """ Print an error and terminate with exit(2) """
-    print "ERROR: {}".format(err)
+    print "ERROR: %s" % (err)
     sys.exit(2)
     return
 
@@ -33,11 +33,11 @@ def usage_header():
 
     print "couchbase-cli - command-line cluster administration tool"
     print ""
-    print "{}".format(cluster_options)
+    print "%s" % (cluster_options)
     print ""
-    print "{}".format(global_options)
+    print "%s" % (global_options)
     print ""
-    print "{}".format(command_notes)
+    print "%s" % (command_notes)
     print ""
 
 MIN_SPACES = 2
@@ -58,10 +58,10 @@ def command_usage(cmd, command_map):
                 if len(arg_pair[0]) > longest_key:
                     longest_key = len(arg_pair[0])
 
-            print "{} OPTIONS:".format(cmd)
+            print "%s OPTIONS:" % (cmd)
             for arg_pair in cmd_help:
                 spaces = ' ' * (MIN_SPACES + (longest_key - len(arg_pair[0])))
-                print "  {}{}{}".format(arg_pair[0], spaces, arg_pair[1])
+                print "  %s%s%s" % (arg_pair[0], spaces, arg_pair[1])
             print ""
 
 
@@ -87,7 +87,8 @@ def command_summaries(command_map):
 
     for cmd in sorted(summary_help):
         spaces = ' ' * (MIN_SPACES + (longest_cmd - len(cmd)))
-        print "  {}{}{}".format(cmd, spaces, summary_help[cmd])
+        print "  %s%s%s" % (cmd, spaces, summary_help[cmd])
+
 
 def one_command_usage(cmd, command_map):
     """ Print formatted usage information for the CLI and one chosen command.
@@ -95,7 +96,7 @@ def one_command_usage(cmd, command_map):
     """
     usage_header()
     command_usage(cmd, command_map)
-    print "usage: couchbase-cli {} CLUSTER [OPTIONS]".format(cmd)
+    print "usage: couchbase-cli %s CLUSTER [OPTIONS]" % (cmd)
     sys.exit(2)
 
 def short_usage(command_map):
