@@ -46,3 +46,12 @@ class Info:
                 '-setcookie',json['otpCookie'],'-hidden','-remsh',json['otpNode']])
         else:
             print simplejson.dumps(json, sort_keys=True, indent=2)
+
+    def getCommandSummary(self, cmd):
+        """Return one-line summary info for each supported command"""
+        command_summary = {
+            "server-info" : "show details on one server"}
+        if cmd in command_summary:
+            return command_summary[cmd]
+        else:
+            return None

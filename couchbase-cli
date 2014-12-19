@@ -15,19 +15,13 @@ import node
 import xdcr
 import info
 import util_cli as util
-from usage import usage, short_usage
+import usage
 from timeout import TimeoutException
 
 CB_USERNAME = 'CB_REST_USERNAME'
 CB_PASSWORD = 'CB_REST_PASSWORD'
 
 def main():
-    for x in sys.argv:
-        if x in ('-h', '-H', '--help', 'help'):
-            usage()
-
-    if len(sys.argv) <= 2:
-        short_usage()
 
     debug = False
 
@@ -35,7 +29,7 @@ def main():
 
     try:
         (opts, _args) = getopt.getopt(sys.argv[2:],
-                                     'a:b:c:dse:gdlmo:OPp:r:Ssu:vV', [
+                                     'a:b:c:dse:gdlmo:OPp:r:Ssu:vVhH', [
                 'cluster=',
                 'debug',
                 'storage',
@@ -153,13 +147,14 @@ def main():
                 'customer=',
                 'ticket=',
                 'services=',
+                'help',
                 ])
     except getopt.GetoptError, err:
         usage(err)
     if len(_args) > 0:
         err_message = ("Possible missing '--' in front of one of parameters '%s'," +
                        " please see -h for more help.") % _args
-        usage(err_message)
+        usage.command_error(err_message)
     commands = {
         'host-list'         : listservers.ListServers,
         'server-list'       : listservers.ListServers,
@@ -195,14 +190,31 @@ def main():
         'setting-xdcr'          : xdcr.XDCR,
         'xdcr-setup'            : xdcr.XDCR,
         'xdcr-replicate'        : xdcr.XDCR,
+        'help'                  : usage.Usage
         }
+
+    if len(sys.argv) <= 1:
+        usage.short_usage(commands)
 
     cmd = sys.argv[1]
 
     if cmd not in commands:
+        # cmd not a command, maybe help is needed.
+        for x in sys.argv:
+            if x in ('-h', '-H', '--help'):
+                usage.all_help(commands) # exits program.
+
         err_message = ("'%s' is not a couchbase-cli command;" +
                        " please see -h for more help.") % cmd
-        usage(err_message)
+        usage.command_error(err_message) # exits program.
+
+    if cmd == "help":
+        usage.all_help(commands)
+
+    # If a command and -h,-H,--help give context sensitive help by passing cmd
+    for x in sys.argv:
+        if x in ('-h', '-H', '--help'):
+            usage.one_command_usage(cmd, commands)
 
     for (opt, arg) in opts:
         if opt in ('-c', '--cluster'):
@@ -215,20 +227,20 @@ def main():
             debug = True
 
     if not cluster:
-        usage("please provide a CLUSTER, or use -h for more help.")
+        usage.command_error("please provide a CLUSTER, or use -h for more help.")
 
     if cmd != "cluster-init":
         if not user:
             if CB_USERNAME in os.environ:
                 user = os.environ[CB_USERNAME]
             else:
-                usage("Username cannot be empty. \
+                usage.command_error("Username cannot be empty. \
 Please use -u or set environment variable %s."  % CB_USERNAME)
         if not password:
             if CB_PASSWORD in os.environ:
                 password = os.environ[CB_PASSWORD]
             else:
-                usage("Password cannot be empty. \
+                usage.command_error("Password cannot be empty. \
 Please use -p or set environment variable %s." % CB_PASSWORD)
 
     server, port = util.hostport(cluster)

@@ -8,7 +8,7 @@ import sys
 import socket
 import urllib
 
-from usage import usage
+from usage import command_error
 import restclient
 import listservers
 import util_cli as util
@@ -467,3 +467,77 @@ class XDCR:
                                      self.password,
                                      opts)
         print output_result
+
+    def getCommandSummary(self, cmd):
+        """Return one-line summary info for each supported command"""
+        command_summary = {
+            "setting-xdcr" : "set xdcr related settings",
+            "xdcr-replicate" : "xdcr operations",
+            "xdcr-setup" : "set up XDCR connection"}
+        if cmd in command_summary:
+            return command_summary[cmd]
+        else:
+            return None
+
+    def getCommandHelp(self, cmd):
+        """ Obtain detailed parameter help for Xdcr commands
+        Returns a list of pairs (arg1, arg1-information) or None if there's
+        no help or cmd is unknown.
+        """
+
+        max_con_reps = [("--max-concurrent-reps=[32]",
+                         "maximum concurrent replications per bucket, 8 to 256.")]
+        chkpoint_interval = [("--checkpoint-interval=[1800]",
+                              "intervals between checkpoints, 60 to 14400 seconds.")]
+        worker_bat_size = [("--worker-batch-size=[500]",
+                            "doc batch size, 500 to 10000.")]
+        doc_bat_size = [("--doc-batch-size=[2048]KB",
+                         "document batching size, 10 to 100000 KB")]
+        failure_restart = [("--failure-restart-interval=[30]",
+                            "interval for restarting failed xdcr, 1 to 300 seconds")]
+        opt_rep_theshold = [("--optimistic-replication-threshold=[256]",
+                             ("document body size threshold (bytes) "
+                              "to trigger optimistic replication"))]
+        xdcr_create = [("--create", "create a new xdcr configuration")]
+        xdcr_edit = [("--edit", "modify existed xdcr configuration")]
+        xdcr_delete = [("--delete", "delete existed xdcr configuration")]
+        xdcr_list = [("--list", "list all xdcr configurations")]
+        remote_cluster_name = [("--xdcr-cluster-name=CLUSTERNAME",
+                                "remote cluster to replicate to")]
+        xdcr_pause = [("--pause", "pause the replication")]
+        xdcr_resume = [("--resume", "resume the replication")]
+        xdcr_settings = [("--settings", "update settings for the replication")]
+        remote_hostname = [("--xdcr-hostname=HOSTNAME",
+                            "remote host name to connect to")]
+        remote_admin = [("--xdcr-username=USERNAME",
+                         "remote cluster admin username")]
+        remote_pwd = [("--xdcr-password=PASSWORD",
+                       "remote cluster admin password")]
+        encrypt = [("--xdcr-demand-encryption=[0|1]",
+                    "allow data encrypted using ssl")]
+        certificate = [("--xdcr-certificate=CERTIFICATE",
+                        ("pem-encoded certificate. "
+                        "Need be present if xdcr-demand-encryption is true"))]
+        replicator_id = [("--xdcr-replicator=REPLICATOR", "replication id")]
+        from_bucket = [("--xdcr-from-bucket=BUCKET",
+                       "local bucket name to replicate from")]
+        to_bucket = [("--xdcr-to-bucket=BUCKETNAME",
+                      "remote bucket to replicate to")]
+        replication_mode = [("--xdcr-replication-mode=[xmem|capi]",
+                             "replication protocol, either capi or xmem.")]
+
+        if cmd == "setting-xdcr":
+            return (max_con_reps + chkpoint_interval + worker_bat_size +
+                    doc_bat_size + failure_restart + opt_rep_theshold)
+        elif cmd == "xdcr-setup":
+            return (xdcr_create + xdcr_edit + xdcr_list + xdcr_delete +
+                    remote_cluster_name + remote_hostname + remote_admin +
+                    remote_pwd + encrypt + certificate)
+        elif cmd == "xdcr-replicate":
+            return (xdcr_create + xdcr_delete + xdcr_list + xdcr_pause + xdcr_resume +
+                    xdcr_settings + replicator_id + from_bucket + to_bucket + max_con_reps +
+                    chkpoint_interval + worker_bat_size + doc_bat_size + failure_restart +
+                    opt_rep_theshold + replication_mode)
+        else:
+            return None
+

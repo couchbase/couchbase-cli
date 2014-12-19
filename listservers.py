@@ -81,3 +81,13 @@ class ListServers:
                                        node['hostname'],
                                        node['status'],
                                        node['clusterMembership'])
+
+    def getCommandSummary(self, cmd):
+        """Return one-line summary info for each supported command"""
+        command_summary = {
+            "server-list" : "list all servers in a cluster",
+            "server-info" : "show details on one server"}
+        if cmd in command_summary:
+            return command_summary[cmd]
+        else:
+            return None

@@ -11,7 +11,7 @@ import simplejson as json
 import re
 import urlparse
 
-from usage import usage
+from usage import command_error
 from restclient import *
 from listservers import *
 
@@ -184,11 +184,11 @@ class Node:
             print "INFO: servers %s" % servers
 
         if cmd == 'server-add' and not servers['add']:
-            usage("please list one or more --server-add=HOST[:PORT];"
+            command_error("please list one or more --server-add=HOST[:PORT];"
                   " or use -h for more help.")
 
         if cmd == 'server-readd' and not servers['add']:
-            usage("please list one or more --server-add=HOST[:PORT];"
+            command_error("please list one or more --server-add=HOST[:PORT];"
                   " or use -h for more help.")
 
         if cmd in ('server-add', 'rebalance'):
@@ -213,14 +213,14 @@ class Node:
 
         elif cmd == 'failover':
             if len(servers['failover']) <= 0:
-                usage("please list one or more --server-failover=HOST[:PORT];"
+                command_error("please list one or more --server-failover=HOST[:PORT];"
                       " or use -h for more help.")
 
             self.failover(servers)
 
         elif cmd == 'recovery':
             if len(servers['recovery']) <= 0:
-                usage("please list one or more --server-recovery=HOST[:PORT];"
+                command_error("please list one or more --server-recovery=HOST[:PORT];"
                       " or use -h for more help.")
             self.recovery(servers)
 
@@ -550,16 +550,16 @@ class Node:
         # don't allow options that don't correspond to given commands
 
         for o, a in opts:
-            usage_msg = "option '%s' is not used with command '%s'" % (o, cmd)
+            command_error_msg = "option '%s' is not used with command '%s'" % (o, cmd)
 
             if o in ( "-r", "--server-remove"):
                 if cmd in server_no_remove:
-                    usage(usage_msg)
+                    command_error(command_error_msg)
             elif o in ( "-a", "--server-add",
                         "--server-add-username",
                         "--server-add-password"):
                 if cmd in server_no_add:
-                    usage(usage_msg)
+                    command_error(command_error_msg)
 
         server = None
         for o, a in opts:
@@ -944,7 +944,7 @@ class Node:
             self.getNodeOtps(to_failover=servers['failover'])
 
         if len(failover_otps) <= 0:
-            usage("specified servers are not part of the cluster: %s" %
+            command_error("specified servers are not part of the cluster: %s" %
                   servers['failover'].keys())
 
         for failover_otp, node_status in failover_otps:
@@ -1071,7 +1071,7 @@ class Node:
              self.groupList()
         else:
             if self.group_name is None:
-                usage("please specify --group-name for the operation")
+                command_error("please specify --group-name for the operation")
             elif self.cmd == 'delete':
                 self.groupDelete()
             elif self.cmd == 'create':
@@ -1145,9 +1145,9 @@ class Node:
     def groupRename(self):
         uri = self.getGroupUri(self.group_name)
         if uri is None:
-            usage("invalid group name:%s" % self.group_name)
+            command_error("invalid group name:%s" % self.group_name)
         if self.group_rename is None:
-            usage("invalid group name:%s" % self.group_name)
+            command_error("invalid group name:%s" % self.group_name)
 
         rest = restclient.RestClient(self.server,
                                      self.port,
@@ -1167,7 +1167,7 @@ class Node:
     def groupDelete(self):
         uri = self.getGroupUri(self.group_name)
         if uri is None:
-            usage("invalid group name:%s" % self.group_name)
+            command_error("invalid group name:%s" % self.group_name)
 
         rest = restclient.RestClient(self.server,
                                      self.port,
@@ -1187,7 +1187,7 @@ class Node:
     def groupAddServers(self):
         uri = self.getGroupUri(self.group_name)
         if uri is None:
-            usage("invalid group name:%s" % self.group_name)
+            command_error("invalid group name:%s" % self.group_name)
         uri = "%s/addNode" % uri
 
         err = self.process_services(True)
@@ -1261,7 +1261,7 @@ class Node:
 
     def retrieveCert(self):
         if self.certificate_file is None:
-            usage("please specify certificate file name for the operation")
+            command_error("please specify certificate file name for the operation")
 
         rest = restclient.RestClient(self.server,
                                      self.port,
@@ -1302,7 +1302,7 @@ class Node:
     def collectLogsStart(self, servers):
         """Starts a cluster-wide log collection task"""
         if (servers['log'] is None) and (self.all_nodes is not True):
-            usage("please specify a list of nodes to collect logs from, " +
+            command_error("please specify a list of nodes to collect logs from, " +
                   " or 'all-nodes'")
 
         rest = restclient.RestClient(self.server, self.port,
@@ -1314,7 +1314,7 @@ class Node:
                 self.getNodeOtps(to_readd=servers['log'])
             if not len(readd_otps):
                 msg = ",".join(hostnames)
-                usage("invalid node name specified for collecting logs, available nodes are:\n"+msg)
+                command_error("invalid node name specified for collecting logs, available nodes are:\n"+msg)
 
             nodelist = ",".join(readd_otps)
             rest.setParam("nodes", nodelist)
@@ -1322,12 +1322,12 @@ class Node:
 
         if self.upload:
             if self.upload_host is None:
-                usage("please specify an upload-host when using --upload")
+                command_error("please specify an upload-host when using --upload")
 
             rest.setParam("uploadHost", self.upload_host)
 
             if not self.customer:
-                usage("please specify a value for --customer when using" +
+                command_error("please specify a value for --customer when using" +
                       " --upload")
 
             rest.setParam("customer", self.customer)
@@ -1382,3 +1382,143 @@ class Node:
                                 print '\t', f, ":", ns[f]
                         print
                 return
+
+    def getCommandSummary(self, cmd):
+        """Return one-line summary info for each supported command"""
+        command_summary = {
+            "server-list" :"list all servers in a cluster",
+            "server-info" :"show details on one server",
+            "server-add" :"add one or more servers to the cluster",
+            "server-readd" :"readd a server that was failed over",
+            "group-manage" :"manage server groups",
+            "rebalance" :"start a cluster rebalancing",
+            "rebalance-stop" :"stop current cluster rebalancing",
+            "rebalance-status" :"show status of current cluster rebalancing",
+            "failover" :"failover one or more servers",
+            "recovery" :"recover one or more servers",
+            "setting-compaction" : "set auto compaction settings",
+            "setting-notification" : "set notification settings",
+            "setting-alert" : "set email alert settings",
+            "setting-autofailover" : "set auto failover settings",
+            "collect-logs-start" : "start a cluster-wide log collection",
+            "collect-logs-stop" : "stop a cluster-wide log collection",
+            "collect-logs-status" : "show the status of cluster-wide log collection",
+            "cluster-init" : "set the username,password and port of the cluster",
+            "cluster-edit" : "modify cluster settings",
+            "node-init" : "set node specific parameters",
+            "ssl-manage" : "manage cluster certificate",
+            "user-manage" : "manage read only user"
+        }
+        if cmd in command_summary:
+            return command_summary[cmd]
+        else:
+            return None
+
+    def getCommandHelp(self, cmd):
+        """ Obtain detailed parameter help for Node commands
+        Returns a list of pairs (arg1, arg1-information) or None if there's
+        no help or cmd is unknown.
+        """
+
+        # Some common flags for server- commands
+        server_common = [("--server-add=HOST[:PORT]", "server to be added,"),
+                         ("--server-add-username=USERNAME",
+                          "admin username for the server to be added"),
+                         ("--server-add-password=PASSWORD",
+                          "admin password for the server to be added"),
+                         ("--group-name=GROUPNAME", "group that server belongs")]
+
+        services = [("--services=\"data;index;query;moxi\"",
+                     "services that server runs")]
+
+        if cmd == "server-add":
+            return server_common + services
+        elif cmd == "server-readd":
+            return server_common
+        elif cmd == "group-manage":
+            return [
+            ("--group-name=GROUPNAME", "group name"),
+            ("--create", "create a new group"),
+            ("--delete", "delete an empty group"),
+            ("--list", "show group/server relationship map"),
+            ("--rename=NEWGROUPNAME", "rename group to new name"),
+            ("--add-servers=HOST[:PORT];HOST[:PORT]",
+             "add a list of servers to group"),
+            ("--move-servers=HOST[:PORT];HOST[:PORT]",
+             "move a list of servers from group"),
+            ("--from-group=GROUPNAME", "group name to move servers from"),
+            ("--to-group=GROUPNAME", "group name to move servers into")] + services
+        elif cmd == "cluster-init" or cmd == "cluster-edit":
+            return [
+            ("--cluster-username=USER", "new admin username"),
+            ("--cluster-password=PASSWORD", "new admin password"),
+            ("--cluster-port=PORT", "new cluster REST/http port"),
+            ("--cluster-ramsize=RAMSIZEMB", "per node ram quota in MB")]
+        elif cmd == "failover":
+            return [
+            ("--server-failover=HOST[:PORT]", "server to failover"),
+            ("--force", "failover node from cluster right away")]
+        elif cmd == "recovery":
+            return [
+            ("--server-recovery=HOST[:PORT]", "server to recover"),
+            ("--recovery-type=TYPE[delta|full]",
+             "type of recovery to be performed for a node")]
+        elif cmd == "user-manage":
+            return [
+            ("--set", "create/modify a read only user"),
+            ("--list", "list any read only user"),
+            ("--delete", "delete read only user"),
+            ("--ro-username=USERNAME", "readonly user name"),
+            ("--ro-password=PASSWORD", "readonly user password")]
+        elif cmd == "setting-alert":
+            return [
+            ("--enable-email-alert=[0|1]", "allow email alert"),
+            ("--email-recipients=RECIPIENT",
+             "email recipients, separate addresses with , or ;"),
+            ("--email-sender=SENDER", "sender email address"),
+            ("--email-user=USER", "email server username"),
+            ("--email-password=PWD", "email server password"),
+            ("--email-host=HOST", "email server host"),
+            ("--email-port=PORT", "email server port"),
+            ("--enable-email-encrypt=[0|1]", "email encrypt"),
+            ("--alert-auto-failover-node", "node was auto failover"),
+            ("--alert-auto-failover-max-reached",
+             "maximum number of auto failover nodes was reached"),
+            ("--alert-auto-failover-node-down",
+             "node wasn't auto failover as other nodes are down at the same time"),
+            ("--alert-auto-failover-cluster-small",
+             "node wasn't auto fail over as cluster was too small"),
+            ("--alert-ip-changed", "node ip address has changed unexpectedly"),
+            ("--alert-disk-space",
+             "disk space used for persistent storgage has reached at least 90% capacity"),
+            ("--alert-meta-overhead",
+             "metadata overhead is more than 50%"),
+            ("--alert-meta-oom",
+             "bucket memory on a node is entirely used for metadata"),
+            ("--alert-write-failed",
+             "writing data to disk for a specific bucket has failed")]
+        elif cmd == "setting-notification":
+            return [("--enable-notification=[0|1]", "allow notification")]
+        elif cmd == "setting-autofailover":
+            return [("--enable-auto-failover=[0|1]", "allow auto failover"),
+                    ("--auto-failover-timeout=TIMEOUT (>=30)",
+                     "specify timeout that expires to trigger auto failover")]
+        elif cmd == "ssl-manage":
+            return [("--retrieve-cert=CERTIFICATE",
+                     "retrieve cluster certificate AND save to a pem file"),
+                    ("--regenerate-cert=CERTIFICATE",
+                     "regenerate cluster certificate AND save to a pem file")]
+        elif cmd == "collect-logs-start":
+            return [
+            ("--all-nodes", "Collect logs from all accessible cluster nodes"),
+            ("--nodes=HOST[:PORT];HOST[:PORT]",
+             "Collect logs from the specified subset of cluster nodes"),
+            ("--upload", "Upload collects logs to specified host"),
+            ("--upload-host=HOST",
+             "Host to upload logs to (Manditory when --upload specified)"),
+            ("--customer=CUSTOMER",
+             "Customer name to use when uploading logs (Mandatory when --upload specified)"),
+            ("--ticket=TICKET_NUMBER",
+             "Ticket number to associate the uploaded logs with")]
+        else:
+            return None

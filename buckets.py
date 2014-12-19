@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from usage import usage
+from usage import command_error
 
 import restclient
 from timeout import timed_out
@@ -116,9 +116,9 @@ class Buckets:
                 rest.setParam('name', bucketname)
                 if bucketname == "default":
                     if bucketport and bucketport != "11211":
-                        usage("default bucket must be on port 11211.")
+                        command_error("default bucket must be on port 11211.")
                     if bucketpassword:
-                        usage("default bucket should only have empty password.")
+                        command_error("default bucket should only have empty password.")
                     authtype = 'sasl'
                 else:
                     if bucketport == "11211":
@@ -126,7 +126,7 @@ class Buckets:
                     else:
                         authtype = 'none'
                         if bucketpassword:
-                            usage("a sasl bucket is supported only on port 11211.")
+                            command_error("a sasl bucket is supported only on port 11211.")
             if buckettype:
                 rest.setParam('bucketType', buckettype)
             if authtype:
@@ -145,14 +145,14 @@ class Buckets:
                 if eviction_policy in ['valueOnly', 'fullEviction']:
                     rest.setParam('evictionPolicy', eviction_policy)
                 else:
-                    usage("eviction policy value should be either 'valueOnly' or 'fullEviction'.")
+                    command_error("eviction policy value should be either 'valueOnly' or 'fullEviction'.")
             if enable_replica_index and cmd == 'bucket-create':
                 rest.setParam('replicaIndex', enable_replica_index)
             if bucketpriority:
                 if bucketpriority in priority:
                     rest.setParam('threadsNumber', priority[bucketpriority])
                 else:
-                    usage("bucket priority must be either low or high.")
+                    command_error("bucket priority must be either low or high.")
 
         if cmd in ('bucket-delete', 'bucket-flush', 'bucket-edit'):
             self.rest_cmd = self.rest_cmd + bucketname
@@ -271,6 +271,63 @@ class Buckets:
             data = rest.restCmd('POST', cmd,
                                 self.user, self.password, opts)
             print data
+
+    def getCommandSummary(self, cmd):
+        """Return one-line summary info for each supported command"""
+        command_summary = {
+            "bucket-list" : "list all buckets in a cluster",
+            "bucket-create" : "add a new bucket to the cluster",
+            "bucket-edit" : "modify an existing bucket",
+            "bucket-delete" : "delete an existing bucket",
+            "bucket-flush" : "flush all data from disk for a given bucket",
+            "bucket-compact" : "compact database and index data"}
+        if cmd in command_summary:
+            return command_summary[cmd]
+        else:
+            return None
+
+    def getCommandHelp(self, cmd):
+        """ Obtain detailed parameter help for Bucket commands
+        Returns a list of pairs (arg1, arg1-information) or None if there's
+        no help or cmd is unknown.
+        """
+        bucket_name = [("--bucket=BUCKETNAME", "bucket to act on")]
+        bucket_replica = [("--bucket-replica=COUNT", "replication count")]
+        bucket_ramsize = [("--bucket-ramsize=RAMSIZEMB", "ram quota in MB")]
+        bucket_type = [("--bucket-type=TYPE","memcached or couchbase")]
+        bucket_priority = [("--bucket-priority=[low|high]",
+                            "priority when compared to other buckets")]
+        bucket_port = [("--bucket-port=PORT",
+                        "supports ASCII protocol and is auth-less")]
+        bucket_password = [("--bucket-password=PASSWORD",
+                            "standard port, exclusive with bucket-port")]
+        bucket_replica = [("--bucket-replica=COUNT", "replication count")]
+        eviction_policy = [("--bucket-eviction-policy=[valueOnly|fullEviction]",
+                            "policy how to retain meta in memory")]
+        enable_flush = [("--enable-flush=[0|1]", "enable/disable flush")]
+        enable_replica_idx = [("--enable-index-replica=[0|1]",
+                               "enable/disable index replicas")]
+        force = [("--force",
+                  "force to execute command without asking for confirmation")]
+        wait = [("--wait",
+                 "wait for bucket create to be complete before returning")]
+        compact_data = [("--data-only", "compact database data only")]
+        compact_view = [("--view-only", "compact view data only")]
+
+        create_edit = (bucket_name + bucket_ramsize + bucket_replica +
+                      bucket_type + bucket_priority + bucket_password +
+                      bucket_replica + eviction_policy + enable_flush)
+
+        if cmd == "bucket-create":
+            return create_edit + enable_replica_idx + wait
+        elif cmd == "bucket-edit":
+            return create_edit
+        elif cmd == "bucket-delete":
+            return bucket_name
+        elif cmd == "bucket-flush":
+            return bucket_name + force
+        elif cmd == "bucket-compact":
+            return bucket_name + compact_data + compact_view
 
 class BucketStats:
     def __init__(self, bucket_name):

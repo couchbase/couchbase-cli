@@ -3,239 +3,131 @@
 
 import sys
 
-def commands_usage():
-    return """
-  server-list           list all servers in a cluster
-  server-info           show details on one server
-  server-add            add one or more servers to the cluster
-  server-readd          readd a server that was failed over
-  group-manage          manage server groups
-  rebalance             start a cluster rebalancing
-  rebalance-stop        stop current cluster rebalancing
-  rebalance-status      show status of current cluster rebalancing
-  failover              failover one or more servers
-  recovery              recover one or more servers
-  cluster-init          set the username,password and port of the cluster
-  cluster-edit          modify cluster settings
-  node-init             set node specific parameters
-  bucket-list           list all buckets in a cluster
-  bucket-create         add a new bucket to the cluster
-  bucket-edit           modify an existing bucket
-  bucket-delete         delete an existing bucket
-  bucket-flush          flush all data from disk for a given bucket
-  bucket-compact        compact database and index data
-  setting-compaction    set auto compaction settings
-  setting-notification  set notification settings
-  setting-alert         set email alert settings
-  setting-autofailover  set auto failover settings
-  setting-xdcr          set xdcr related settings
-  ssl-manage            manage cluster certificate
-  user-manage           manage read only user
-  xdcr-setup            set up XDCR connection
-  xdcr-replicate        xdcr operations
-  collect-logs-start    Start a cluster-wide log collection
-  collect-logs-stop     Stop a cluster-wide log collection
-  collect-logs status   Show the status of cluster-wide log collection
-  help                  show longer usage/help and examples
-"""
+class Usage:
+    def getCommandSummary(self, cmd):
+        if cmd == "help":
+            return "show longer usage/help and examples"
+        return None
 
-def short_usage():
-    print "usage: couchbase-cli COMMAND CLUSTER [OPTIONS]"
-    print ""
-    print "CLUSTER is --cluster=HOST[:PORT] or -c HOST[:PORT]"
-    print ""
-    print "COMMANDs include" + commands_usage()
-
+def command_error(err):
+    """ Print an error and terminate with exit(2) """
+    print "ERROR: {}".format(err)
     sys.exit(2)
+    return
 
-def usage(error_msg=''):
-    if error_msg:
-        print "ERROR: %s" % error_msg
-        sys.exit(2)
+def usage_header():
+    """ Print the CLI usage 'header' information. """
+    cluster_options = """CLUSTER:
+  --cluster=HOST[:PORT] or -c HOST[:PORT]"""
 
-    print """couchbase-cli - command-line cluster administration tool
-
-usage: couchbase-cli COMMAND CLUSTER [OPTIONS]
-
-COMMAND:""" + commands_usage() + """
-CLUSTER:
-  --cluster=HOST[:PORT] or -c HOST[:PORT]
-
-OPTIONS:
+    global_options = """OPTIONS:
   -u USERNAME, --user=USERNAME      admin username of the cluster
   -p PASSWORD, --password=PASSWORD  admin password of the cluster
   -o KIND, --output=KIND            KIND is json or standard
   -d, --debug
-  -s, --ssl                         uses SSL for communication with secure servers
+  -s, --ssl                         uses SSL for communication with secure servers"""
 
-NOTE:
-    USERNAME can be set in environment variable CB_REST_USERNAME and/or
-    PASSWORD can be set in environment variable CB_REST_PASSWORD instead
+    command_notes = """NOTE:
+  USERNAME can be set in environment variable CB_REST_USERNAME and/or
+  PASSWORD can be set in environment variable CB_REST_PASSWORD instead"""
 
-server-add OPTIONS:
-  --server-add=HOST[:PORT]          server to be added
-  --server-add-username=USERNAME    admin username for the
-                                    server to be added
-  --server-add-password=PASSWORD    admin password for the
-                                    server to be added
-  --group-name=GROUPNAME            group that server belongs
-  --services="data;index;query;moxi" services that server runs
+    print "couchbase-cli - command-line cluster administration tool"
+    print ""
+    print "{}".format(cluster_options)
+    print ""
+    print "{}".format(global_options)
+    print ""
+    print "{}".format(command_notes)
+    print ""
 
-server-readd OPTIONS:
-  --server-add=HOST[:PORT]          server to be added
-  --server-add-username=USERNAME    admin username for the
-                                    server to be added
-  --server-add-password=PASSWORD    admin password for the
-                                    server to be added
-  --group-name=GROUPNAME            group that server belongs
+MIN_SPACES = 2
 
-rebalance OPTIONS:
-  --server-add*                     see server-add OPTIONS
-  --server-remove=HOST[:PORT]       the server to be removed
-  --recovery-buckets=BUCKETS        comma separated list of bucket name. Default is for all buckets.
+def command_usage(cmd, command_map):
+    """ For the command 'cmd', use the command_map to find the class
+        which owns that command and use getCommandHelp to obtain
+        detailed parameter infomation for it.
+    """
+    c = command_map[cmd]()
+    if hasattr(c, 'getCommandHelp'):
+        # None is allowed as a return
+        cmd_help = c.getCommandHelp(cmd)
+        if cmd_help:
 
-group-manage OPTIONS:
-  --group-name=GROUPNAME            group name
-  --create                          create a new group
-  --delete                          delete an empty group
-  --list                            show group/server relationship map
-  --rename=NEWGROUPNAME             rename group to new name
-  --add-servers=HOST[:PORT];HOST[:PORT]  add a list of servers to group
-  --move-servers=HOST[:PORT];HOST[:PORT] move a list of servers from group
-  --from-group=GROUPNAME            group name that to move servers from
-  --to-group=GROUPNAME              group name tat to move servers to
-  --services="data;index;query;moxi" services that server runs
+            longest_key = 0
+            for arg_pair in cmd_help:
+                if len(arg_pair[0]) > longest_key:
+                    longest_key = len(arg_pair[0])
 
-failover OPTIONS:
-  --server-failover=HOST[:PORT]     server to failover
-  --force                           failover node from cluster right away
+            print "{} OPTIONS:".format(cmd)
+            for arg_pair in cmd_help:
+                spaces = ' ' * (MIN_SPACES + (longest_key - len(arg_pair[0])))
+                print "  {}{}{}".format(arg_pair[0], spaces, arg_pair[1])
+            print ""
 
-recovery OPTIONS:
-  --server-recovery=HOST[:PORT]     server to recover
-  --recovery-type=TYPE[delta|full]  type of recovery to be performed for a node
 
-cluster-* OPTIONS:
-  --cluster-username=USER           new admin username
-  --cluster-password=PASSWORD       new admin password
-  --cluster-port=PORT               new cluster REST/http port
-  --cluster-ramsize=RAMSIZEMB       per node ram quota in MB
 
-node-init OPTIONS:
-  --node-init-data-path=PATH        per node path to store data
-  --node-init-index-path=PATH       per node path to store index
-  --node-init-hostname=NAME         hostname for the node. Default is 127.0.0.1
+def command_summaries(command_map):
+    """ For all commands in the command_map print a formatted
+    block of text showing the command and one-line summary help.
+    E.g.
+    command1     Create a cluster.
+    command2     Delete a cluster.
+    """
+    summary_help = {}
+    longest_cmd = 0
+    for cmd in command_map:
+        c = command_map[cmd]()
+        if hasattr(c, 'getCommandSummary'):
+            if len(cmd) > longest_cmd:
+                longest_cmd = len(cmd)
+            summary =  c.getCommandSummary(cmd)
+            # some commands have no summary (None returned)
+            if summary:
+                summary_help[cmd] = summary
 
-bucket-* OPTIONS:
-  --bucket=BUCKETNAME               bucket to act on
-  --bucket-type=TYPE                memcached or couchbase
-  --bucket-port=PORT                supports ASCII protocol and is auth-less
-  --bucket-password=PASSWORD        standard port, exclusive with bucket-port
-  --bucket-ramsize=RAMSIZEMB        ram quota in MB
-  --bucket-replica=COUNT            replication count
-  --bucket-priority=[low|high]      priority when compared to other buckets
-  --bucket-eviction-policy=[valueOnly|fullEviction]   policy how to retain meta in memory
-  --enable-flush=[0|1]              enable/disable flush
-  --enable-index-replica=[0|1]      enable/disable index replicas
-  --wait                            wait for bucket create to be complete before returning
-  --force                           force to execute command without asking for confirmation
-  --data-only                       compact datbase data only
-  --view-only                       compact view data only
+    for cmd in sorted(summary_help):
+        spaces = ' ' * (MIN_SPACES + (longest_cmd - len(cmd)))
+        print "  {}{}{}".format(cmd, spaces, summary_help[cmd])
 
-setting-compaction OPTIONS:
-  --compaction-db-percentage=PERCENTAGE     at which point database compaction is triggered
-  --compaction-db-size=SIZE[MB]             at which point database compaction is triggered
-  --compaction-view-percentage=PERCENTAGE   at which point view compaction is triggered
-  --compaction-view-size=SIZE[MB]           at which point view compaction is triggered
-  --compaction-period-from=HH:MM            allow compaction time period from
-  --compaction-period-to=HH:MM              allow compaction time period to
-  --enable-compaction-abort=[0|1]           allow compaction abort when time expires
-  --enable-compaction-parallel=[0|1]        allow parallel compaction for database and view
-  --metadata-purge-interval=DAYS            how frequently a node will purge metadata on deleted items
+def one_command_usage(cmd, command_map):
+    """ Print formatted usage information for the CLI and one chosen command.
+    Function terminates the process with exit(2).
+    """
+    usage_header()
+    command_usage(cmd, command_map)
+    print "usage: couchbase-cli {} CLUSTER [OPTIONS]".format(cmd)
+    sys.exit(2)
 
-setting-notification OPTIONS:
-  --enable-notification=[0|1]               allow notification
+def short_usage(command_map):
+    """ Print formatted usage information showing commands and one-line summaries.
+    Function terminates the process with exit(2).
+    """
+    usage_header()
+    print "usage: couchbase-cli COMMAND CLUSTER [OPTIONS]"
+    print ""
+    print "COMMANDs include"
+    command_summaries(command_map)
+    print ""
+    sys.exit(2)
 
-setting-alert OPTIONS:
-  --enable-email-alert=[0|1]                allow email alert
-  --email-recipients=RECIPIENT              email recipients, separate addresses with , or ;
-  --email-sender=SENDER                     sender email address
-  --email-user=USER                         email server username
-  --email-password=PWD                      email server password
-  --email-host=HOST                         email server host
-  --email-port=PORT                         email server port
-  --enable-email-encrypt=[0|1]              email encrypt
-  --alert-auto-failover-node                node was auto failover
-  --alert-auto-failover-max-reached         maximum number of auto failover nodes was reached
-  --alert-auto-failover-node-down           node wasn't auto failover as other nodes are down at the same time
-  --alert-auto-failover-cluster-small       node wasn't auto fail over as cluster was too small
-  --alert-ip-changed                        node ip address has changed unexpectedly
-  --alert-disk-space                        disk space used for persistent storgage has reached at least 90% capacity
-  --alert-meta-overhead                     metadata overhead is more than 50%
-  --alert-meta-oom                          bucket memory on a node is entirely used for metadata
-  --alert-write-failed                      writing data to disk for a specific bucket has failed
+def all_help(command_map):
+    """
+        Print everything, summaries, command help and examples.
+        Note: Function exits process.
+    """
+    usage_header()
 
-setting-autofailover OPTIONS:
-  --enable-auto-failover=[0|1]              allow auto failover
-  --auto-failover-timeout=TIMEOUT (>=30)    specify timeout that expires to trigger auto failover
+    print """COMMAND:"""
+    command_summaries(command_map)
 
-setting-xdcr OPTIONS:
-  --max-concurrent-reps=[32]             maximum concurrent replications per bucket, 8 to 256.
-  --checkpoint-interval=[1800]           intervals between checkpoints, 60 to 14400 seconds.
-  --worker-batch-size=[500]              doc batch size, 500 to 10000.
-  --doc-batch-size=[2048]KB              document batching size, 10 to 100000 KB
-  --failure-restart-interval=[30]        interval for restarting failed xdcr, 1 to 300 seconds
-  --optimistic-replication-threshold=[256] document body size threshold (bytes) to trigger optimistic replication
+    print ""
 
-xdcr-setup OPTIONS:
-  --create                               create a new xdcr configuration
-  --edit                                 modify existed xdcr configuration
-  --delete                               delete existed xdcr configuration
-  --list                                 list all xdcr configurations
-  --xdcr-cluster-name=CLUSTERNAME        cluster name
-  --xdcr-hostname=HOSTNAME               remote host name to connect to
-  --xdcr-username=USERNAME               remote cluster admin username
-  --xdcr-password=PASSWORD               remote cluster admin password
-  --xdcr-demand-encryption=[0|1]         allow data encrypted using ssl
-  --xdcr-certificate=CERTIFICATE         pem-encoded certificate. Need be present if xdcr-demand-encryption is true
+    for cmd in sorted(command_map):
+        command_usage(cmd, command_map)
 
-xdcr-replicate OPTIONS:
-  --create                               create and start a new replication
-  --delete                               stop and cancel a replication
-  --list                                 list all xdcr replications
-  --pause                                pause the replication
-  --resume                               resume the replication
-  --settings                             update settings for the replication
-  --xdcr-replicator=REPLICATOR           replication id
-  --xdcr-from-bucket=BUCKET              local bucket name to replicate from
-  --xdcr-cluster-name=CLUSTERNAME        remote cluster to replicate to
-  --xdcr-to-bucket=BUCKETNAME            remote bucket to replicate to
-  --max-concurrent-reps=[32]             maximum concurrent replications per bucket, 8 to 256.
-  --checkpoint-interval=[1800]           intervals between checkpoints, 60 to 14400 seconds.
-  --worker-batch-size=[500]              doc batch size, 500 to 10000.
-  --doc-batch-size=[2048]KB              document batching size, 10 to 100000 KB
-  --failure-restart-interval=[30]        interval for restarting failed xdcr, 1 to 300 seconds
-  --optimistic-replication-threshold=[256] document body size threshold (bytes) to trigger optimistic replication
-  --xdcr-replication-mode=[xmem|capi]    replication protocol, either capi or xmem.
-
-user-manage OPTIONS:
-  --set                                  create/modify a read only user
-  --list                                 list any read only user
-  --delete                               delete read only user
-  --ro-username=USERNAME                 readonly user name
-  --ro-password=PASSWORD                 readonly user password
-
-ssl-manage OPTIONS:
-  --retrieve-cert=CERTIFICATE            retrieve cluster certificate AND save to a pem file
-  --regenerate-cert=CERTIFICATE          regenerate cluster certificate AND save to a pem file
-
-collect-logs-start OPTIONS:
-  --all-nodes                            Collect logs from all accessible cluster nodes
-  --nodes=HOST[:PORT];HOST[:PORT]        Collect logs from the specified subset of cluster nodes
-  --upload                               Upload collects logs to specified host
-    --upload-host=HOST                   Host to upload logs to (Manditory when --upload specified)
-    --customer=CUSTOMER                  Customer name to use when uploading logs (Manditory when --upload specified)
-    --ticket=TICKET_NUMBER               Ticket number to associate the uploaded logs with
-
+    # Now dump our examples
+    print """
+usage: couchbase-cli COMMAND CLUSTER [OPTIONS]"
 
 The default PORT number is 8091.
 
@@ -553,3 +445,6 @@ EXAMPLES:
 """
 
     sys.exit(2)
+
+
+
