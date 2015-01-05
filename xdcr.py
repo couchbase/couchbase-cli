@@ -74,7 +74,7 @@ class XDCR:
         self.processOpts(cmd, opts)
 
         if self.debug:
-            print "INFO: servers %s" % servers
+            print "INFO: server %s" % server
 
         if cmd == 'xdcr-setup':
             if self.cmd in('create', 'edit'):
@@ -109,6 +109,8 @@ class XDCR:
         for o, a in opts:
             if o in ('-d', '--debug'):
                 self.debug = True
+            if o in ('-o', '--output'):
+                self.output = a
             elif o == '--xdcr-cluster-name':
                 self.remote_cluster = a
             elif o == '--xdcr-hostname':
@@ -255,12 +257,16 @@ class XDCR:
                                      self.password,
                                      opts)
         clusters = rest.getJson(output_result)
-        for cluster in clusters:
-            print "cluster name: %s" % cluster["name"]
-            print "        uuid: %s" % cluster["uuid"]
-            print "   host name: %s" % cluster["hostname"]
-            print "   user name: %s" % cluster["username"]
-            print "         uri: %s" % cluster["uri"]
+        if self.output == 'json':
+            print output_result
+        else:
+            for cluster in clusters:
+                if not cluster.get('deleted'):
+                    print "cluster name: %s" % cluster["name"]
+                    print "        uuid: %s" % cluster["uuid"]
+                    print "   host name: %s" % cluster["hostname"]
+                    print "   user name: %s" % cluster["username"]
+                    print "         uri: %s" % cluster["uri"]
 
     def replicate_start(self):
         rest = restclient.RestClient(self.server,
