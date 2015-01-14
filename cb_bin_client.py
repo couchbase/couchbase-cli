@@ -14,6 +14,7 @@ import exceptions
 from couchbaseConstants import REQ_MAGIC_BYTE, RES_MAGIC_BYTE
 from couchbaseConstants import REQ_PKT_FMT, RES_PKT_FMT, MIN_RECV_PACKET
 from couchbaseConstants import SET_PKT_FMT, INCRDECR_RES_FMT
+from couchbaseConstants import AUDIT_PKT_FMT
 import couchbaseConstants
 
 class MemcachedError(exceptions.Exception):
@@ -425,3 +426,9 @@ class MemcachedClient(object):
     def reset_replication_chain(self):
         """Reset the replication chain."""
         return self._doCmd(couchbaseConstants.CMD_RESET_REPLICATION_CHAIN, '', '', '', 0)
+
+    def audit(self, auditid, event):
+        print couchbaseConstants.CMD_AUDIT_PUT, auditid, event
+
+        return self._doCmd(couchbaseConstants.CMD_AUDIT_PUT, '', event, \
+                           struct.pack(AUDIT_PKT_FMT, auditid))

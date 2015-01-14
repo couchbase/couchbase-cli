@@ -109,6 +109,7 @@ class MCSink(pump.Sink):
 
     def close_mconns(self, mconns):
         for k, conn in mconns.items():
+            self.add_stop_event(conn)
             conn.close()
 
     def scatter_gather(self, mconns, batch):

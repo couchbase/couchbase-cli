@@ -457,9 +457,18 @@ class EndPoint(object):
 
         return False
 
+    def get_timestamp(self):
+        #milliseconds with three digits
+        return time.strftime("%Y-%m-%dT%H:%M:%S.%3s", time.gmtime())[:-7] + "Z"
+
     def add_counter(self, key, val=1):
         self.cur[key] = self.cur.get(key, 0.0) + val
 
+    def add_start_event(self, conn):
+        return 0
+
+    def add_start_event(self, conn):
+        return 0
 
 class Source(EndPoint):
     """Base class for all data sources."""

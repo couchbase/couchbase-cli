@@ -5,6 +5,7 @@ import simplejson as json
 import time
 import urllib
 
+import couchbaseConstants
 import pump
 import pump_mc
 
@@ -19,6 +20,41 @@ class CBSink(pump_mc.MCSink):
                                      source_map, sink_map, ctl, cur)
 
         self.rehash = opts.extra.get("rehash", 0)
+
+    def add_start_event(self, conn):
+        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        event = {"timestamp": self.get_timestamp(),
+                 "real_userid": {"source": "internal",
+                                 "user": sasl_user,
+                                },
+                 "mode": getattr(self.opts, "mode", "diff"),
+                 "source_bucket": self.source_bucket['name'],
+                 "source_node": self.source_node['hostname'],
+                 "target_bucket": self.sink_map['buckets'][0]['name']
+                }
+        if conn:
+            try:
+                conn.audit(couchbaseConstants.AUDIT_EVENT_RESTORE_SINK_START, json.dumps(event))
+            except Exception, e:
+                logging.warn("auditing error: %s" % e)
+        return 0
+
+    def add_stop_event(self, conn):
+        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        event = {"timestamp": self.get_timestamp(),
+                 "real_userid": {"source": "internal",
+                                 "user": sasl_user
+                                },
+                 "source_bucket": self.source_bucket['name'],
+                 "source_node": self.source_node['hostname'],
+                 "target_bucket": self.sink_map['buckets'][0]['name']
+                }
+        if conn:
+            try:
+                conn.audit(couchbaseConstants.AUDIT_EVENT_RESTORE_SINK_STOP, json.dumps(event))
+            except Exception, e:
+                logging.warn("auditing error: %s" % e)
+        return 0
 
     def scatter_gather(self, mconns, batch):
         sink_map_buckets = self.sink_map['buckets']
@@ -224,6 +260,7 @@ class CBSink(pump_mc.MCSink):
                 logging.error("error: CBSink.connect() for send: " + rv)
                 return rv, None
             mconns[host_port] = conn
+
             #check if we need to calll hello command
             for i, msg in enumerate(msgs):
                 msg_format_length = len(msg)
@@ -234,4 +271,6 @@ class CBSink(pump_mc.MCSink):
                         logging.warn("fail to call hello command, maybe it is not supported")
                         pass
                 break
+
+            self.add_start_event(conn)
         return 0, conn

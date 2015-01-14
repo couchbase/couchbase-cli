@@ -106,6 +106,39 @@ class TAPDumpSource(pump.Source):
         else:
             return 0, json.dumps(ddocs.get('rows', []))
 
+    def add_start_event(self, conn):
+        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        event = {"timestamp": self.get_timestamp(),
+                 "real_userid": {"source": "internal",
+                                 "user": sasl_user,
+                                },
+                 "mode": getattr(self.opts, "mode", "diff"),
+                 "source_bucket": self.source_bucket['name'],
+                 "source_node": self.source_node['hostname']
+                }
+        if conn:
+            try:
+                conn.audit(couchbaseConstants.AUDIT_EVENT_RECOVERY_SOURCE_START, json.dumps(event))
+            except Exception, e:
+                logging.warn("auditing error: %s" % e)
+        return 0
+
+    def add_stop_event(self, conn):
+        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        event = {"timestamp": self.get_timestamp(),
+                 "real_userid": {"source": "internal",
+                                 "user": sasl_user
+                                },
+                 "source_bucket": self.source_bucket['name'],
+                 "source_node": self.source_node['hostname']
+                }
+        if conn:
+            try:
+                conn.audit(couchbaseConstants.AUDIT_EVENT_RECOVERY_SOURCE_STOP, json.dumps(event))
+            except Exception, e:
+                logging.warn("auditing error: %s" % e)
+        return 0
+
     def provide_batch(self):
         cur_sleep = 0.2
         cur_retry = 0
@@ -113,6 +146,10 @@ class TAPDumpSource(pump.Source):
 
         while True:
             if self.tap_done:
+                if self.tap_conn:
+                    self.add_stop_event(self.tap_conn)
+                    self.tap_conn.close()
+                    self.tap_conn = None
                 return 0, None
 
             rv, tap_conn = self.get_tap_conn()
@@ -270,6 +307,7 @@ class TAPDumpSource(pump.Source):
                 logging.warn("fail to call hello command, maybe it is not supported.")
                 pass
 
+            self.add_start_event(self.tap_conn)
             # We explicitly do not use TAP_FLAG_REGISTERED_CLIENT,
             # as that is for checkpoint/incremental backup only.
             #
@@ -493,6 +531,41 @@ class TapSink(pump_cb.CBSink):
 
         return 0, retry_batch, retry_batch and not need_refresh
 
+    def add_start_event(self, conn):
+        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        event = {"timestamp": self.get_timestamp(),
+                 "real_userid": {"source": "internal",
+                                 "user": sasl_user,
+                                },
+                 "mode": getattr(self.opts, "mode", "diff"),
+                 "source_bucket": self.source_bucket['name'],
+                 "source_node": self.source_node['hostname'],
+                 "target_bucket": self.sink_map['buckets'][0]['name']
+                }
+        if conn:
+            try:
+                conn.audit(couchbaseConstants.AUDIT_EVENT_RECOVERY_SINK_START, json.dumps(event))
+            except Exception, e:
+                logging.warn("auditing error: %s" % e)
+        return 0
+
+    def add_stop_event(self, conn):
+        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        event = {"timestamp": self.get_timestamp(),
+                 "real_userid": {"source": "internal",
+                                 "user": sasl_user
+                                },
+                 "source_bucket": self.source_bucket['name'],
+                 "source_node": self.source_node['hostname'],
+                 "target_bucket": self.sink_map['buckets'][0]['name']
+                }
+        if conn:
+            try:
+                conn.audit(couchbaseConstants.AUDIT_EVENT_RECOVERY_SINK_STOP, json.dumps(event))
+            except Exception, e:
+                logging.warn("auditing error: %s" % e)
+        return 0
+
     def find_conn(self, mconns, vbucket_id, msgs):
         if not self.vbucket_list:
             return super(TapSink, self).find_conn(mconns, vbucket_id, msgs)
@@ -534,6 +607,7 @@ class TapSink(pump_cb.CBSink):
                                         logging.warn("fail to call hello command, maybe it is not supported")
                                         pass
                                 break
+                            self.add_start_event(conn)
                         break
         return 0, conn
 

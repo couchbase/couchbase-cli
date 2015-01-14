@@ -80,7 +80,40 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
-        return pump_tap.TAPDumpSource.provide_design(opts, source_spec, source_bucket, source_map);
+        return pump_tap.TAPDumpSource.provide_design(opts, source_spec, source_bucket, source_map)
+
+    def add_start_event(self, conn):
+        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        event = {"timestamp": self.get_timestamp(),
+                 "real_userid": {"source": "internal",
+                                 "user": sasl_user,
+                                },
+                 "mode": getattr(self.opts, "mode", "diff"),
+                 "source_bucket": self.source_bucket['name'],
+                 "source_node": self.source_node['hostname']
+                }
+        if conn:
+            try:
+                conn.audit(couchbaseConstants.AUDIT_EVENT_BACKUP_START, json.dumps(event))
+            except Exception, e:
+                logging.warn("auditing error: %s" % e)
+        return 0
+
+    def add_stop_event(self, conn):
+        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        event = {"timestamp": self.get_timestamp(),
+                 "real_userid": {"source": "internal",
+                                 "user": sasl_user
+                                },
+                 "source_bucket": self.source_bucket['name'],
+                 "source_node": self.source_node['hostname']
+                }
+        if conn:
+            try:
+                conn.audit(couchbaseConstants.AUDIT_EVENT_BACKUP_STOP, json.dumps(event))
+            except Exception, e:
+                logging.warn("auditing error: %s" % e)
+        return 0
 
     def build_node_vbucket_map(self):
         if self.source_bucket.has_key("vBucketServerMap"):
@@ -113,16 +146,20 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
         while True:
             if self.dcp_done:
+                if self.dcp_conn:
+                    self.add_stop_event(self.dcp_conn)
+                    self.dcp_conn.close()
+                    self.dcp_conn = None
                 return 0, None
 
-            rv, dcp_conn = self.get_dcp_conn()
+            rv = self.get_dcp_conn()
             if rv != 0:
                 self.dcp_done = True
                 return rv, None
 
-            rv, batch = self.provide_dcp_batch_actual(dcp_conn)
+            rv, batch = self.provide_dcp_batch_actual()
             if rv == 0:
-                return rv, batch
+                return 0, batch
 
             if self.dcp_conn:
                 self.dcp_conn.close()
@@ -138,7 +175,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             cur_sleep = min(cur_sleep * 2, 20) # Max backoff sleep 20 seconds.
             cur_retry = cur_retry + 1
 
-    def provide_dcp_batch_actual(self, dcp_conn):
+    def provide_dcp_batch_actual(self):
         batch = pump.Batch(self)
 
         batch_max_size = self.opts.extra['batch_max_size']
@@ -294,7 +331,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 if need_ack:
                     self.ack_last = True
                     try:
-                        dcp_conn._sendMsg(cmd, '', '', opaque, vbucketId=0,
+                        self.dcp_conn._sendMsg(cmd, '', '', opaque, vbucketId=0,
                                           fmt=couchbaseConstants.RES_PKT_FMT,
                                           magic=couchbaseConstants.RES_MAGIC_BYTE)
                     except socket.error:
@@ -343,11 +380,11 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             self.dcp_conn = cb_bin_client.MemcachedClient(host, port)
             if not self.dcp_conn:
                 return "error: could not connect to memcached: " + \
-                    host + ":" + str(port), None
+                    host + ":" + str(port)
             self.mem_conn = cb_bin_client.MemcachedClient(host, port)
-            if not self.dcp_conn:
+            if not self.mem_conn:
                 return "error: could not connect to memcached: " + \
-                    host + ":" + str(port), None
+                    host + ":" + str(port)
             sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
             sasl_pswd = str(self.source_bucket.get("saslPassword", pump.get_password(self.opts.password)))
             if sasl_user:
@@ -360,19 +397,19 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                         self.mem_conn.sasl_auth_plain(sasl_user, sasl_pswd)
                     except EOFError:
                         return "error: SASL auth error: %s:%s, user: %s" % \
-                            (host, port, sasl_user), None
+                            (host, port, sasl_user)
                     except cb_bin_client.MemcachedError:
                         return "error: SASL auth failed: %s:%s, user: %s" % \
-                            (host, port, sasl_user), None
+                            (host, port, sasl_user)
                     except socket.error:
                         return "error: SASL auth socket error: %s:%s, user: %s" % \
-                            (host, port, sasl_user), None
+                            (host, port, sasl_user)
                 except EOFError:
                     return "error: SASL auth error: %s:%s, user: %s" % \
-                        (host, port, sasl_user), None
+                        (host, port, sasl_user)
                 except socket.error:
                     return "error: SASL auth socket error: %s:%s, user: %s" % \
-                        (host, port, sasl_user), None
+                        (host, port, sasl_user)
             extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, \
                                 couchbaseConstants.FLAG_DCP_PRODUCER)
             try:
@@ -390,16 +427,17 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                            str(self.batch_max_bytes * 10), opaque)
                     self.dcp_conn._handleSingleResponse(opaque)
             except EOFError:
-                return "error: Fail to set up DCP connection", None
+                return "error: Fail to set up DCP connection"
             except cb_bin_client.MemcachedError:
-                return "error: DCP connect memcached error", None
+                return "error: DCP connect memcached error"
             except socket.error:
-                return "error: DCP connection error", None
+                return "error: DCP connection error"
             self.running = True
             self.start()
 
+            self.add_start_event(self.dcp_conn)
             self.setup_dcp_streams()
-        return 0, self.dcp_conn
+        return 0
 
     def ack_buffer_size(self, buf_size):
         if self.flow_control:
