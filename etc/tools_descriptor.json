@@ -14,7 +14,7 @@
                                         },
                    "optional_fields" : {
                                         "source_bucket" : "",
-                                        "source_node" : "",
+                                        "source_node" : ""
                                        }
                 },
                 {  "id" : 12289,
@@ -29,7 +29,7 @@
                                         },
                    "optional_fields" : {
                                         "source_bucket" : "",
-                                        "source_node" : "",
+                                        "source_node" : ""
                                        }
                 },
                 {  "id" : 12290,
@@ -45,7 +45,7 @@
                    "optional_fields" : {
                                         "source_bucket" : "",
                                         "source_node" : "",
-                                        "target_bucket" : "",
+                                        "target_bucket" : ""
                                        }
                 },
                 {  "id" : 12291,
@@ -61,7 +61,7 @@
                    "optional_fields" : {
                                         "source_bucket" : "",
                                         "source_node" : "",
-                                        "target_bucket" : "",
+                                        "target_bucket" : ""
                                        }
                 },
                 {  "id" : 12292,
@@ -76,7 +76,7 @@
                                         },
                    "optional_fields" : {
                                         "source_bucket" : "",
-                                        "source_node" : "",
+                                        "source_node" : ""
                                        }
                 },
                 {  "id" : 12293,
@@ -92,7 +92,7 @@
                    "optional_fields" : {
                                         "source_bucket" : "",
                                         "source_node" : "",
-                                        "target_bucket" : "",
+                                        "target_bucket" : ""
                                        }
                 },
                 {  "id" : 12294,
@@ -107,7 +107,7 @@
                                         },
                    "optional_fields" : {
                                         "source_bucket" : "",
-                                        "source_node" : "",
+                                        "source_node" : ""
                                        }
                 },
                 {  "id" : 12295,
@@ -123,8 +123,9 @@
                    "optional_fields" : {
                                         "source_bucket" : "",
                                         "source_node" : "",
-                                        "target_bucket" : "",
+                                        "target_bucket" : ""
                                        }
-                },
+                }
                ]
 }
+
