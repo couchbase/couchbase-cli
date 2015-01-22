@@ -459,7 +459,7 @@ class EndPoint(object):
 
     def get_timestamp(self):
         #milliseconds with three digits
-        return time.strftime("%Y-%m-%dT%H:%M:%S.%3s", time.gmtime())[:-7] + "Z"
+        return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     def add_counter(self, key, val=1):
         self.cur[key] = self.cur.get(key, 0.0) + val
