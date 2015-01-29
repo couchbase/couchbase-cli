@@ -199,6 +199,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
                 if self.response.empty():
                     if len(self.stream_list) > 0:
+                        logging.debug("no response while there %s active streams" % len(self.stream_list))
                         time.sleep(.25)
                     else:
                         self.dcp_done = True
@@ -247,8 +248,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                         logging.warn("Vbucket is not active anymore, skip it:%s" % vbid)
                         del self.stream_list[opaque]
                     elif errcode == couchbaseConstants.ERR_ERANGE:
-                        #logging.warn("Start or end sequence numbers specified incorrectly,(%s, %s)" % \
-                        #             (start_seqno, end_seqno))
+                        logging.warn("Start or end sequence numbers specified incorrectly,(%s, %s)" % \
+                                     (start_seqno, end_seqno))
                         del self.stream_list[opaque]
                     elif errcode == couchbaseConstants.ERR_ROLLBACK:
                         vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_stop_seqno = \
@@ -273,6 +274,9 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                         del self.stream_list[opaque]
                         self.stream_list[opaque] = \
                             (vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
+                    else:
+                        logging.error("unprocessed errcode:%s" % errcode)
+                        del self.stream_list[opaque]
                 elif cmd == couchbaseConstants.CMD_DCP_MUTATION:
                     vbucket_id = errcode
                     seqno, rev_seqno, flg, exp, locktime, metalen, nru = \

@@ -428,7 +428,8 @@ class MemcachedClient(object):
         return self._doCmd(couchbaseConstants.CMD_RESET_REPLICATION_CHAIN, '', '', '', 0)
 
     def audit(self, auditid, event):
-        print couchbaseConstants.CMD_AUDIT_PUT, auditid, event
+        #print couchbaseConstants.CMD_AUDIT_PUT, auditid, event
 
-        return self._doCmd(couchbaseConstants.CMD_AUDIT_PUT, '', event, \
-                           struct.pack(AUDIT_PKT_FMT, auditid))
+        #return self._doCmd(couchbaseConstants.CMD_AUDIT_PUT, '', event, \
+        #                   struct.pack(AUDIT_PKT_FMT, auditid))
+        return 0
