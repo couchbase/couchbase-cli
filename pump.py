@@ -786,9 +786,9 @@ class StdOutSink(Sink):
             if not msg_tuple_format:
                 msg_tuple_format = len(msg)
             cmd, vbucket_id, key, flg, exp, cas, meta, val = msg[:8]
-            seqno = dtype = nmeta = 0
+            seqno = dtype = nmeta = conf_res = 0
             if msg_tuple_format > 8:
-                seqno, dtype, nmeta = msg[8:]
+                seqno, dtype, nmeta, conf_res = msg[8:]
             if self.skip(key, vbucket_id):
                 continue
             if dtype > 2:
@@ -805,8 +805,8 @@ class StdOutSink(Sink):
                             stdout.write("%s %s %s %s %s\r\n" %
                                          (op, key, flg, exp, len(val)))
                         else:
-                            stdout.write("%s %s %s %s %s %s %s\r\n" %
-                                         (op, key, flg, exp, len(val), seqno, dtype))
+                            stdout.write("%s %s %s %s %s %s %s %s\r\n" %
+                                         (op, key, flg, exp, len(val), seqno, dtype, conf_res))
                         stdout.write(val)
                         stdout.write("\r\n")
                     elif op == 'get':

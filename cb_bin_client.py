@@ -52,17 +52,17 @@ class MemcachedClient(object):
     def __del__(self):
         self.close()
 
-    def _sendCmd(self, cmd, key, val, opaque, extraHeader='', cas=0):
+    def _sendCmd(self, cmd, key, val, opaque, extraHeader='', cas=0, extraMeta=''):
         self._sendMsg(cmd, key, val, opaque, extraHeader=extraHeader, cas=cas,
-                      vbucketId=self.vbucketId)
+                      vbucketId=self.vbucketId, extraMeta=extraMeta)
 
     def _sendMsg(self, cmd, key, val, opaque, extraHeader='', cas=0,
-                 dtype=0, vbucketId=0,
+                 dtype=0, vbucketId=0, extraMeta='',
                  fmt=REQ_PKT_FMT, magic=REQ_MAGIC_BYTE):
         msg=struct.pack(fmt, magic,
             cmd, len(key), len(extraHeader), dtype, vbucketId,
-                len(key) + len(extraHeader) + len(val), opaque, cas)
-        self.s.send(msg + extraHeader + key + val)
+                len(key) + len(extraHeader) + len(val) + len(extraMeta), opaque, cas)
+        self.s.send(msg + extraHeader + key + val + extraMeta)
 
     def _recvMsg(self):
         response = ""

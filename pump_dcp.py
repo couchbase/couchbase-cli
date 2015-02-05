@@ -33,6 +33,8 @@ except ImportError:
     else:
         sys.path.insert(0, cb_path)
 
+bool_to_str = lambda value: str(bool(int(value))).lower()
+
 class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
     """Can read from cluster/server/bucket via DCP streaming."""
     HIGH_SEQNO = "high_seqno"
@@ -283,11 +285,35 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                         struct.unpack(couchbaseConstants.DCP_MUTATION_PKT_FMT, data[0:extlen])
                     key_start = extlen
                     val_start = key_start + keylen
+                    val_len = datalen- keylen - metalen - extlen
+                    meta_start = val_start + val_len
                     key = data[extlen:val_start]
-                    val = data[val_start:]
+                    val = data[val_start:meta_start]
+                    extra_meta = data[meta_start:]
+                    extra_index = 0
+                    version = extra_meta[extra_index]
+                    extra_index += 1
+                    conf_res = 0
+                    while extra_index < metalen:
+                        id, extlen = struct.unpack(couchbaseConstants.DCP_EXTRA_META_PKG_FMT, extra_meta[extra_index:extra_index+3])
+                        extra_index += 3
+                        if id == couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION:
+                            if extlen == 1:
+                                conf_res, = struct.unpack(">B",extra_meta[extra_index:extra_index+1])
+                            elif extlen == 2:
+                                conf_res, = struct.unpack(">H",extra_meta[extra_index:extra_index+2])
+                            elif extlen == 4:
+                                conf_res, = struct.unpack(">I", extra_meta[extra_index:extra_index+4])
+                            elif extlen == 8:
+                                conf_res, = struct.unpack(">Q", extra_meta[extra_index:extra_index+8])
+                            else:
+                                logging.error("unsupported extra meta data format:%d" % extlen)
+                                conf_res = 0
+                        extra_index += extlen
+
                     if not self.skip(key, vbucket_id):
                         msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno, val, seqno, dtype, \
-                               metalen)
+                               metalen, conf_res)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                 elif cmd == couchbaseConstants.CMD_DCP_DELETE or \
@@ -300,7 +326,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     key = data[extlen:val_start]
                     if not self.skip(key, vbucket_id):
                         msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno, val, seqno, dtype, \
-                               metalen)
+                               metalen, 0)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                     if cmd == couchbaseConstants.CMD_DCP_DELETE:
@@ -422,14 +448,23 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                        '', opaque, extra)
                 self.dcp_conn._handleSingleResponse(opaque)
 
+                buff_size = 0
                 if self.flow_control:
                     # set connection buffer size. Considering header size, we roughly
                     # set the total received package size as 10 times as value size.
-                    opaque=self.r.randint(0, 2**32)
-                    self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
-                                           couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
-                                           str(self.batch_max_bytes * 10), opaque)
-                    self.dcp_conn._handleSingleResponse(opaque)
+                    buff_size = self.batch_max_bytes * 10
+
+                opaque=self.r.randint(0, 2**32)
+                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
+                                       couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
+                                       str(self.batch_max_bytes * 10), opaque)
+                self.dcp_conn._handleSingleResponse(opaque)
+
+                opaque=self.r.randint(0, 2**32)
+                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
+                                       couchbaseConstants.KEY_DCP_EXT_METADATA,
+                                       bool_to_str(True), opaque)
+                self.dcp_conn._handleSingleResponse(opaque)
             except EOFError:
                 return "error: Fail to set up DCP connection"
             except cb_bin_client.MemcachedError:
@@ -849,7 +884,7 @@ class DCPSink(pump_cb.CBSink):
         m = []
         #Ask for acknowledgement for the last msg of batch
         for i, msg in enumerate(msgs):
-            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val, seqno, dtype, nmeta = msg
+            cmd, vbucket_id_msg, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res = msg
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 

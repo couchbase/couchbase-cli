@@ -50,7 +50,6 @@ class MCSink(pump.Sink):
         self.op_map = OP_MAP
         if opts.extra.get("try_xwm", 1):
             self.op_map = OP_MAP_WITH_META
-        self.conflict_resolve = opts.extra.get("conflict_resolve", 1)
         self.init_worker(MCSink.run)
         self.uncompress = opts.extra.get("uncompress", 0)
 
@@ -144,9 +143,9 @@ class MCSink(pump.Sink):
             if not msg_format_length:
                 msg_format_length = len(msg)
             cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg[:8]
-            seqno = dtype = nmeta = 0
+            seqno = dtype = nmeta = conf_res = 0
             if msg_format_length > 8:
-                seqno, dtype, nmeta = msg[8:]
+                seqno, dtype, nmeta, conf_res = msg[8:]
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 
@@ -170,7 +169,8 @@ class MCSink(pump.Sink):
                 val = ''
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
-                                       exp, cas, meta, i, dtype, nmeta)
+                                       exp, cas, meta, i, dtype, nmeta,
+                                       conf_res)
             if rv != 0:
                 return rv
 
@@ -273,7 +273,7 @@ class MCSink(pump.Sink):
         return "error: MCSink - unknown cmd: %s, op: %s" % (cmd, op), None
 
     def append_req(self, m, req):
-        hdr, ext, key, val = req
+        hdr, ext, key, val, extra_meta = req
         m.append(hdr)
         if ext:
             m.append(ext)
@@ -281,6 +281,8 @@ class MCSink(pump.Sink):
             m.append(str(key))
         if val:
             m.append(str(val))
+        if extra_meta:
+            m.append(extra_meta)
 
     @staticmethod
     def can_handle(opts, spec):
@@ -343,14 +345,14 @@ class MCSink(pump.Sink):
                     (host, port, user), None
         return 0, mc
 
-    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque, dtype, nmeta):
+    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque, dtype, nmeta, conf_res):
+        ext_meta = ''
         if (cmd == couchbaseConstants.CMD_SET_WITH_META or
             cmd == couchbaseConstants.CMD_ADD_WITH_META or
             cmd == couchbaseConstants.CMD_DELETE_WITH_META):
-            cr = int(self.conflict_resolve)
             if meta:
                 try:
-                    ext = struct.pack(">IIQQI", flg, exp, int(meta), cas, cr)
+                    ext = struct.pack(">IIQQ", flg, exp, int(meta), cas)
                 except ValueError:
                     seq_no = str(meta)
                     if len(seq_no) > 8:
@@ -362,11 +364,18 @@ class MCSink(pump.Sink):
                     check_seqno, = struct.unpack(">Q", seq_no)
                     if check_seqno:
                         ext = (struct.pack(">II", flg, exp) + seq_no +
-                               struct.pack(">Q", cas) + struct.pack(">I", cr))
+                               struct.pack(">Q", cas))
                     else:
-                        ext = struct.pack(">IIQQI", flg, exp, 1, cas, cr)
+                        ext = struct.pack(">IIQQ", flg, exp, 1, cas)
             else:
-                ext = struct.pack(">IIQQI", flg, exp, 1, cas, cr)
+                ext = struct.pack(">IIQQ", flg, exp, 1, cas)
+            if conf_res:
+                extra_meta = struct.pack(">BBHH",
+                                couchbaseConstants.DCP_EXTRA_META_VERSION,
+                                couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION,
+                                con_res_len,
+                                conf_res)
+                ext += struct.pack(">H", len(extra_meta))
         elif (cmd == couchbaseConstants.CMD_SET or
               cmd == couchbaseConstants.CMD_ADD):
             ext = struct.pack(couchbaseConstants.SET_PKT_FMT, flg, exp)
@@ -378,7 +387,7 @@ class MCSink(pump.Sink):
             return "error: MCSink - unknown cmd for request: " + str(cmd), None
 
         hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque, dtype)
-        return 0, (hdr, ext, key, val)
+        return 0, (hdr, ext, key, val, ext_meta)
 
     def cmd_header(self, cmd, vbucket_id, key, val, ext, cas, opaque,
                    dtype=0,

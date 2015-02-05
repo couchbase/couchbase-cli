@@ -196,7 +196,7 @@ class CSVSink(pump.Sink):
                 msg_tuple_format = len(msg)
             seqno = dtype = nmeta = 0
             if msg_tuple_format > 8:
-                seqno, dtype, nmeta = msg[8:]
+                seqno, dtype, nmeta, conf_res = msg[8:]
             if dtype > 2:
                 try:
                     val = snappy.uncompress(val)

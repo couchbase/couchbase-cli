@@ -219,7 +219,7 @@ class SFDSource(pump.Source):
                 meta = doc_info.revSequence
                 seqno = doc_info.sequence
                 nmeta = 0
-                msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta)
+                msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res)
                 abatch[0].append(msg, len(val))
 
             if (abatch[0].size() >= batch_max_size or
@@ -282,13 +282,12 @@ class SFDSink(pump.Sink):
                 bulk_vals = []
 
                 for i, msg in enumerate(msgs):
-                    cmd, _vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta = msg
+                    cmd, _vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res = msg
                     if self.skip(key, vbucket_id):
                         continue
 
                     d = couchstore.DocumentInfo(str(key))
                     flex_meta = 1
-                    conf_res = 0
                     d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg, flex_meta, dtype, conf_res))
                     if meta:
                         if len(meta) > 8:

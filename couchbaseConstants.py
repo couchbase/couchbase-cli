@@ -125,6 +125,9 @@ FLAG_DCP_PRODUCER = 0x01
 #DCP control keys
 KEY_DCP_CONNECTION_BUFFER_SIZE = "connection_buffer_size"
 KEY_DCP_STREAM_BUFFER_SIZE = "stream_buffer_size"
+KEY_DCP_NOOP = "enable_noop"
+KEY_DCP_NOOP_INTERVAL = "set_noop_interval"
+KEY_DCP_EXT_METADATA = "enable_ext_metadata"
 
 # event IDs for the SYNC command responses
 CMD_SYNC_EVENT_PERSISTED  = 1
@@ -198,6 +201,11 @@ DCP_DELETE_PKT_FMT = ">QQH"
 DCP_VB_UUID_SEQNO_PKT_FMT = ">QQ"
 DCP_VB_SEQNO_PKT_FMT = ">Q"
 DCP_SNAPSHOT_PKT_FMT = ">QQI"
+DCP_EXTRA_META_PKG_FMT = ">BH"
+
+DCP_EXTRA_META_VERSION = 0x01
+DCP_EXTRA_META_ADJUSTED_TIME = 0x01
+DCP_EXTRA_META_CONFLICT_RESOLUTION = 0x02
 
 # amount, initial value, expiration
 INCRDECR_PKT_FMT=">QQI"

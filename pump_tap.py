@@ -195,7 +195,7 @@ class TAPDumpSource(pump.Source):
                 if (cmd == couchbaseConstants.CMD_TAP_MUTATION or
                     cmd == couchbaseConstants.CMD_TAP_DELETE):
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, 0, dtype, 0)
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, 0, dtype, 0, 0)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                     if cmd == couchbaseConstants.CMD_TAP_DELETE:
@@ -619,9 +619,9 @@ class TapSink(pump_cb.CBSink):
             if not msg_format_length:
                 msg_format_length = len(msg)
             cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg[:8]
-            seqno = dtype = nmeta = 0
+            seqno = dtype = nmeta = conf_res = 0
             if msg_format_length > 8:
-                seqno, dtype, nmeta = msg[8:]
+                seqno, dtype, nmeta, conf_res = msg[8:]
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 

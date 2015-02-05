@@ -28,7 +28,7 @@ for status, stmt in enumerate(import_stmts):
 if status is None:
     sys.exit("Error: could not import sqlite3 module")
 
-CBB_VERSION = [2004, 2014] # sqlite pragma user version.
+CBB_VERSION = [2004, 2014, 2015] # sqlite pragma user version.
 
 class BFD:
     """Mixin for backup-file/directory EndPoint helper methods."""
@@ -386,7 +386,8 @@ class BFDSource(BFD, pump.Source):
         batch_max_bytes = self.opts.extra['batch_max_bytes']
 
         s = ["SELECT cmd, vbucket_id, key, flg, exp, cas, meta, val FROM cbb_msg",
-             "SELECT cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, meta_size FROM cbb_msg"]
+             "SELECT cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, meta_size FROM cbb_msg",
+             "SELECT cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, meta_size, conf_res FROM cbb_msg"]
 
         if self.files is None: # None != [], as self.files will shrink to [].
             g =  glob.glob(BFD.db_dir(self.spec, self.bucket_name(), self.node_name()) + "/data-*.cbb")
@@ -446,10 +447,12 @@ class BFDSource(BFD, pump.Source):
                            int(row[5]), # CAS as 64-bit integer not string.
                            row[6], # revid as 64-bit integer too
                            row[7])
-                    if ver == 1:
-                        msg = msg + (row[8], row[9], row[10])
+                    if ver == 2:
+                        msg = msg + (row[8], row[9], row[10], row[11])
+                    elif ver == 1:
+                        msg = msg + (row[8], row[9], row[10], 0)
                     else:
-                        msg = msg + (0, 0, 0)
+                        msg = msg + (0, 0, 0, 0)
                     batch.append(msg, len(val))
                 else:
                     if self.cursor_db:
@@ -548,7 +551,7 @@ class BFDSink(BFD, pump.Sink):
     def run(self):
         """Worker thread to asynchronously store incoming batches into db."""
         s = "INSERT INTO cbb_msg (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, \
-            dtype, meta_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            dtype, meta_size, conf_res) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         db = None
         cbb = 0       # Current cbb file NUM, like data-NUM.cbb.
         cbb_bytes = 0 # Current cbb msg value bytes total.
@@ -599,7 +602,7 @@ class BFDSink(BFD, pump.Sink):
                 c = db.cursor()
 
                 for msg in batch.msgs:
-                    cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta = msg
+                    cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res = msg
                     if self.skip(key, vbucket_id):
                         continue
                     if cmd not in [couchbaseConstants.CMD_TAP_MUTATION,
@@ -618,7 +621,8 @@ class BFDSink(BFD, pump.Sink):
                                   sqlite3.Binary(val),
                                   seqno,
                                   dtype,
-                                  nmeta))
+                                  nmeta,
+                                  conf_res))
                     cbb_bytes += len(val)
                     if seqno_map[vbucket_id] < seqno:
                         seqno_map[vbucket_id] = seqno
@@ -791,13 +795,14 @@ def create_db(db_path, opts):
                       val blob,
                       seqno integer,
                       dtype integer,
-                      meta_size integer);
+                      meta_size integer,
+                      conf_res integer);
                   CREATE TABLE cbb_meta
                      (key text,
                       val blob);
                   pragma user_version=%s;
                   COMMIT;
-                """ % (CBB_VERSION[1]))
+                """ % (CBB_VERSION[2]))
 
         return 0, db
 
