@@ -93,7 +93,7 @@ class JSONSource(pump.Source):
             doc = json.loads(raw_data)
             if '_id' not in doc:
                 if is_data:
-                    msg = (cmd, vbucket_id, dockey, flg, exp, cas, '', raw_data, 0, 0, 0)
+                    msg = (cmd, vbucket_id, dockey, flg, exp, cas, '', raw_data, 0, 0, 0, 0)
                     batch.append(msg, len(raw_data))
             else:
                 id = doc['_id'].encode('UTF-8')
