@@ -174,7 +174,7 @@ class Recovery(pump_transfer.Transfer):
               (self.sink_bucket, cmd, self.recovery_uuid)
         post_headers = {"Content-type": "application/x-www-form-urlencoded"}
         err, conn, response = \
-            pump.rest_request(host, int(port), user, pwd,
+            pump.rest_request(host, int(port), user, pwd, False,
                               url, method='POST', body=params,
                               reason=reason_msg,
                               headers=post_headers)

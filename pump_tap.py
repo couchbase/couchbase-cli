@@ -107,6 +107,7 @@ class TAPDumpSource(pump.Source):
             return 0, json.dumps(ddocs.get('rows', []))
 
     def add_start_event(self, conn):
+        return 0
         sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
@@ -124,6 +125,7 @@ class TAPDumpSource(pump.Source):
         return 0
 
     def add_stop_event(self, conn):
+        return 0
         sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
