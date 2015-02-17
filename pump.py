@@ -434,6 +434,7 @@ class EndPoint(object):
     def check_spec(source_bucket, source_node, opts, spec, cur):
         cur['seqno'] = {}
         cur['failoverlog'] = {}
+        cur['snapshot'] = {}
         return 0
 
     def __repr__(self):
