@@ -131,7 +131,7 @@ class GenSource(pump.Source):
                 value = self.body % (prefix, key, key % 101, key)
             else:
                 value = self.body
-            msg = (cmd, vbucket_id, prefix + str(key), flg, exp, cas, '', value, 0, 0, 0)
+            msg = (cmd, vbucket_id, prefix + str(key), flg, exp, cas, '', value, 0, 0, 0, 0)
             batch.append(msg, len(value))
 
             if exit_after_creates and self.cur_items >= max_items:
