@@ -47,7 +47,6 @@ Use cases:
        --add-servers=10.11.12.13:8091 \\
        --services=data;query
 
-  
   Add a new server with index service:
 
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
@@ -56,3 +55,61 @@ Use cases:
        --add-servers=10.11.12.13:8091;10.11.12.14 \\
        --services=index
 
+ **- Add filtering to xdcr replication**
+
+    couchbase-cli bucket-create
+    couchbase-cli bucket-edit
+
+OPTIONS:
+
+     --enable-clock-sync   enable last write wins for conflict resolution
+
+Use cases:
+
+  Modify existed bucket:
+
+    couchbase-cli bucket-edit -c 192.168.0.1:8091 -u Administrator -p password \
+    --enable-clock-sync=1
+
+
+  Create a new bucket:
+
+    couchbase-cli bucket-create -c 192.168.0.1:8091 \\
+       --bucket=test_bucket \\
+       --bucket-type=couchbase \\
+       --bucket-port=11222 \\
+       --bucket-ramsize=200 \\
+       --bucket-replica=1 \\
+       --bucket-priority=high \\
+       --enable-clock-sync=1 \\
+       -u Administrator -p password
+
+  Add a new server with index service:
+
+    couchbase-cli group-manage -c 192.168.0.1:8091 \\
+       --group-name=group2 \\
+       --create \\
+       --add-servers=10.11.12.13:8091;10.11.12.14 \\
+       --services=index
+
+ **- Add filter to xdcr replication**
+
+    couchbase-cli xdcr-replicate
+
+OPTIONS:
+
+     --regex=REGEX   regular expression as filter
+
+Use cases:
+
+  Create a xdcr replication:
+
+  Start a replication stream in memcached protocol
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --create \\
+        --xdcr-cluster-name=test \\
+        --xdcr-from-bucket=default \\
+        --xdcr-to-bucket=default1 \\
+        --xdcr-replication-mode=xmem \\
+        --regex="192\.168\.1\.\d{1,3}" \\
+        -u Administrator -p password
