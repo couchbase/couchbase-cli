@@ -264,6 +264,28 @@ class Node:
             self.collectLogsStatus()
 
     def clusterInit(self, cmd):
+        #setup services
+        if cmd == "cluster-init":
+            err = self.process_services(True)
+            if err:
+                print err
+                return
+
+            opts = {
+                "error_msg": "unable to setup services",
+                "success_msg": "setup service successfully"
+            }
+            rest = util.restclient_factory(self.server,
+                                           self.port,
+                                           {'debug':self.debug},
+                                           self.ssl)
+            rest.setParam('services', self.services)
+            output_result = rest.restCmd(self.method,
+                                         '/node/controller/setupServices',
+                                         self.user,
+                                         self.password,
+                                         opts)
+
         rest = util.restclient_factory(self.server,
                                      self.port,
                                      {'debug':self.debug},
@@ -312,6 +334,7 @@ class Node:
         if self.password_new:
             self.password = self.password_new
 
+        #set memory quota
         opts["error_msg"] = "unable to set memory quota"
         rest = util.restclient_factory(self.server,
                                      self.port,
@@ -1483,7 +1506,11 @@ class Node:
             ("--cluster-username=USER", "new admin username"),
             ("--cluster-password=PASSWORD", "new admin password"),
             ("--cluster-port=PORT", "new cluster REST/http port"),
-            ("--cluster-ramsize=RAMSIZEMB", "per node ram quota in MB")]
+            ("--cluster-ramsize=RAMSIZEMB", "per node ram quota in MB")] + servicesg
+        elif cmd == "node-init":
+            return [
+            ("--node-init-data-path=PATH", "data path for database files"),
+            ("--node-init-index-path=PATH", "index path for view data")]
         elif cmd == "failover":
             return [
             ("--server-failover=HOST[:PORT]", "server to failover"),
