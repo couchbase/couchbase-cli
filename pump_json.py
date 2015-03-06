@@ -69,7 +69,8 @@ class JSONSource(pump.Source):
                                          source_map, sink_map, ctl, cur)
         self.done = False
         self.f = None
-        self.views = list()
+        self.file_iter = None
+        self.working_dir = None
 
     @staticmethod
     def can_handle(opts, spec):
@@ -83,8 +84,8 @@ class JSONSource(pump.Source):
         return 0, {'spec': spec,
                    'buckets': [{'name': os.path.basename(spec),
                                 'nodes': [{'hostname': 'N/A'}]}]}
-    @staticmethod
-    def save_doc(batch, dockey, datafile, is_data):
+
+    def save_doc(self, batch, dockey, datafile, is_data):
         cmd = couchbaseConstants.CMD_TAP_MUTATION
         vbucket_id = 0x0000ffff
         cas, exp, flg = 0, 0, 0
@@ -112,29 +113,43 @@ class JSONSource(pump.Source):
         return os.path.splitext(os.path.basename(filename))[0]
 
     @staticmethod
-    def enumerate_and_save(batch, subdir, is_data):
+    def enumerate_files(subdir, file_candidate):
         if not subdir:
             return
         subdirlist = list()
         viewdirs = list()
         for item in os.listdir(subdir):
-            if os.path.isfile(os.path.join(subdir, item)):
-                try:
-                    fp = open(os.path.join(subdir, item), 'r')
-                    dockey = JSONSource.gen_dockey(item)
-                    JSONSource.save_doc(batch, dockey, fp, is_data)
-                    fp.close()
-                except IOError, error:
-                    logging.error("Fail to load json file with error" + str(error))
+            path = os.path.join(subdir, item)
+            if os.path.isfile(path):
+                file_candidate.append(path)
             else:
                 if item.find("design_docs") > 0:
                     viewdirs.append(os.path.join(subdir, item))
                 else:
                     subdirlist.append(os.path.join(subdir, item))
         for dir in subdirlist:
-            JSONSource.enumerate_and_save(batch, dir, is_data)
+            JSONSource.enumerate_files(dir, file_candidate)
         for dir in viewdirs:
-            JSONSource.enumerate_and_save(batch, dir, is_data)
+            JSONSource.enumerate_files(dir, file_candidate)
+
+    def build_batch(self, batch, is_data, batch_max_size):
+        for path in self.file_iter:
+            if os.path.isfile(path):
+                try:
+                    fp = open(path, 'r')
+                    dockey = JSONSource.gen_dockey(os.path.basename(path))
+                    self.save_doc(batch, dockey, fp, is_data)
+                    fp.close()
+                except IOError, error:
+                    logging.error("Fail to load json file with error" + str(error))
+                if batch.size() >= batch_max_size:
+                    return batch
+
+        #at end of enumeration, clean up working directory
+        self.done = True
+        if self.working_dir:
+            shutil.rmtree(self.working_dir)
+        return batch
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
@@ -144,21 +159,17 @@ class JSONSource(pump.Source):
         if self.done:
             return 0, None
 
-        if not self.f:
-            self.f = self.spec.replace(JSON_SCHEME, "")
-        else:
-            return 0, None
-
         batch = pump.Batch(self)
-        if self.f:
+        if self.file_iter == None:
+            self.f = self.spec.replace(JSON_SCHEME, "")
+            files = list()
             if os.path.isfile(self.f) and self.f.endswith(".zip"):
                 zfobj = zipfile.ZipFile(self.f)
-                working_dir = tempfile.mkdtemp()
-                ZipUtil(zfobj).extractall(working_dir)
-                JSONSource.enumerate_and_save(batch, working_dir, True)
-                shutil.rmtree(working_dir)
+                self.working_dir = tempfile.mkdtemp()
+                ZipUtil(zfobj).extractall(self.working_dir)
+                JSONSource.enumerate_files(self.working_dir, files)
             elif os.path.isdir(self.f):
-                JSONSource.enumerate_and_save(batch, self.f, True)
+                JSONSource.enumerate_files(self.f, files)
             else:
                 try:
                     fp = open(self.f, 'r')
@@ -168,7 +179,11 @@ class JSONSource(pump.Source):
                 except IOError, error:
                     return "error: could not open json: %s; exception: %s" % \
                         (self.f, e), None
+                return 0,batch
+            if len(files) > 0:
+                self.file_iter = iter(files)
 
-        if batch.size() <= 0:
-            return 0, None
-        return 0, batch
+        if self.file_iter:
+            return 0, self.build_batch(batch, True, self.opts.extra['batch_max_size'])
+
+        return 0, None
