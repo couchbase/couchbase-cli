@@ -354,12 +354,17 @@ EXAMPLES:
     couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
         --settings \\
         --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \\
-        --max-concurrent-reps=32   \\
         --checkpoint-interval=1800 \\
         --worker-batch-size=500    \\
         --doc-batch-size=2048      \\
         --failure-restart-interval=30 \\
         --optimistic-replication-threshold=256 \\
+        --sourceNozzlePerNode=5 \\
+        --targetNozzlePerNode=6 \\
+        --maxExpectedReplicationLag=100 \\
+        --timeoutPercentageCap=90 \\
+        --logLevel=Debug \\
+        --statsInterval=80 \\
         -u Administrator -p password
 
   List all xdcr replication streams

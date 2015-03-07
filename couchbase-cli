@@ -108,12 +108,17 @@ def main():
                 'settings',
                 'ro-username=',
                 'ro-password=',
-                'max-concurrent-reps=',
                 'checkpoint-interval=',
                 'worker-batch-size='
                 'doc-batch-size=',
                 'failure-restart-interval=',
                 'optimistic-replication-threshold=',
+                'sourceNozzlePerNode=',
+                'targetNozzlePerNode=',
+                'maxExpectedReplicationLag=',
+                'timeoutPercentageCap=',
+                'logLevel=',
+                'statsInterval=',
                 'email-recipients=',
                 'email-sender=',
                 'email-user=',
@@ -148,7 +153,9 @@ def main():
                 'ticket=',
                 'services=',
                 'help',
-                'ssl'
+                'ssl',
+                'filterExpression=',
+                'enable-clock-sync='
                 ])
     except getopt.GetoptError, err:
         usage.command_error(err)

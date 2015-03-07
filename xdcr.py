@@ -38,17 +38,23 @@ class XDCR:
         self.output = 'standard'
         self.demand_encryption = ''
         self.certificate = ''
+        self.regex = ''
 
         self.from_bucket = ''
         self.to_bucket = ''
         self.type = ''
 
-        self.max_stream = ''
         self.checkpoint_interval = ''
         self.worker_batch_size = ''
         self.doc_batch_size = ''
         self.failure_restart_interval = ''
         self.optimistic_replication_threshold = ''
+        self.source_nozzle_per_node = ''
+        self.target_nozzle_per_node = ''
+        self.max_replication_lag = ''
+        self.timeout_perc_cap = ''
+        self.log_level = ''
+        self.stats_interval = ''
 
         # the rest commands and associated URIs for various node operations
         self.REST_CMDS = {
@@ -144,8 +150,6 @@ class XDCR:
                 self.cmd = 'pause'
             elif o == '--resume':
                 self.cmd = 'resume'
-            elif o == '--max-concurrent-reps':
-                self.max_stream = int(a)
             elif o == '--checkpoint-interval':
                 self.checkpoint_interval = int(a)
             elif o == '--worker-batch-size':
@@ -160,6 +164,20 @@ class XDCR:
                 self.demand_encryption = int(a)
             elif o == '--xdcr-certificate':
                 self.certificate = a
+            elif o == '--filterExpression':
+                self.regex = a
+            elif o == '--sourceNozzlePerNode':
+                self.source_nozzle_per_node = int(a)
+            elif o == '--targetNozzlePerNode':
+                self.target_nozzle_per_node = int(a)
+            elif o == '--maxExpectedReplicationLag':
+                self.max_replication_lag = int(a)
+            elif o == '--timeoutPercentageCap':
+                self.timeout_perc_cap = int(a)
+            elif o == '--logLevel':
+                self.log_level = a
+            elif o == '--statsInterval':
+                self.stats_interval = int(a)
 
     def setup_create(self, cmd):
         rest = util.restclient_factory(self.server,
@@ -289,6 +307,9 @@ class XDCR:
         if self.replication_mode:
             rest.setParam('type', self.replication_mode)
 
+        if self.regex:
+            rest.setParam('filterExpression', self.regex)
+
         rest.setParam('replicationType', 'continuous')
 
         opts = {
@@ -413,10 +434,6 @@ class XDCR:
             print "Error: option --xdcr-replicator is needed to update replication settings"
             return
 
-        if self.max_stream:
-            rest.setParam('maxConcurrentReps', self.max_stream)
-            opts['success_msg'] += ' xdcrMaxConcurrentReps'
-
         if self.checkpoint_interval:
             rest.setParam('checkpointInterval', self.checkpoint_interval)
             opts['success_msg'] += ' xdcrCheckpointInterval'
@@ -437,6 +454,30 @@ class XDCR:
             rest.setParam('optimisticReplicationThreshold', self.optimistic_replication_threshold)
             opts['success_msg'] += ' xdcrOptimisticReplicationThreshold'
 
+        if self.source_nozzle_per_node:
+            rest.setParam('sourceNozzlePerNode', self.source_nozzle_per_node)
+            opts['success_msg'] += ' xdcrSourceNozzlePerNode'
+
+        if self.target_nozzle_per_node:
+            rest.setParam('targetNozzlePerNode', self.target_nozzle_per_node)
+            opts['success_msg'] += ' xdcrTargetNozzlePerNode'
+
+        if self.max_replication_lag:
+            rest.setParam('maxExpectedReplicationLag', self.max_replication_lag)
+            opts['success_msg'] += ' xdcrMaxExpectedReplicationLag'
+
+        if self.timeout_perc_cap:
+            rest.setParam('timeoutPercentageCap', self.timeout_perc_cap)
+            opts['success_msg'] += ' xdcrTimeoutPercentageCap'
+
+        if self.log_level:
+            rest.setParam('logLevel', self.log_level)
+            opts['success_msg'] += ' xdcrLogLevel'
+
+        if self.stats_interval:
+            rest.setParam('statsInterval', self.stats_interval)
+            opts['success_msg'] += ' xdcrStatsInterval'
+
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
                                      self.user,
@@ -453,10 +494,6 @@ class XDCR:
             'error_msg': "unable to set xdcr internal settings",
             'success_msg': "set xdcr settings"
         }
-
-        if self.max_stream:
-            rest.setParam('xdcrMaxConcurrentReps', self.max_stream)
-            opts['success_msg'] += ' xdcrMaxConcurrentReps'
 
         if self.checkpoint_interval:
             rest.setParam('xdcrCheckpointInterval', self.checkpoint_interval)
@@ -477,6 +514,30 @@ class XDCR:
         if self.optimistic_replication_threshold:
             rest.setParam('xdcrOptimisticReplicationThreshold', self.optimistic_replication_threshold)
             opts['success_msg'] += ' xdcrOptimisticReplicationThreshold'
+
+        if self.source_nozzle_per_node:
+            rest.setParam('sourceNozzlePerNode', self.source_nozzle_per_node)
+            opts['success_msg'] += ' xdcrSourceNozzlePerNode'
+
+        if self.target_nozzle_per_node:
+            rest.setParam('targetNozzlePerNode', self.target_nozzle_per_node)
+            opts['success_msg'] += ' xdcrTargetNozzlePerNode'
+
+        if self.max_replication_lag:
+            rest.setParam('maxExpectedReplicationLag', self.max_replication_lag)
+            opts['success_msg'] += ' xdcrMaxExpectedReplicationLag'
+
+        if self.timeout_perc_cap:
+            rest.setParam('timeoutPercentageCap', self.timeout_perc_cap)
+            opts['success_msg'] += ' xdcrTimeoutPercentageCap'
+
+        if self.log_level:
+            rest.setParam('logLevel', self.log_level)
+            opts['success_msg'] += ' xdcrLogLevel'
+
+        if self.stats_interval:
+            rest.setParam('statsInterval', self.stats_interval)
+            opts['success_msg'] += ' xdcrStatsInterval'
 
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
@@ -502,8 +563,6 @@ class XDCR:
         no help or cmd is unknown.
         """
 
-        max_con_reps = [("--max-concurrent-reps=[32]",
-                         "maximum concurrent replications per bucket, 8 to 256.")]
         chkpoint_interval = [("--checkpoint-interval=[1800]",
                               "intervals between checkpoints, 60 to 14400 seconds.")]
         worker_bat_size = [("--worker-batch-size=[500]",
@@ -515,6 +574,21 @@ class XDCR:
         opt_rep_theshold = [("--optimistic-replication-threshold=[256]",
                              ("document body size threshold (bytes) "
                               "to trigger optimistic replication"))]
+        src_nozzle_node = [("--sourceNozzlePerNode=[1-10]",
+                            "the number of source nozzles per source node")]
+        tgt_nozzle_node = [("--targetNozzlePerNode=[1-10]",
+                            "the number of outgoing nozzles per target node")]
+        max_replication_log= [("--maxExpectedReplicationLag=MS",
+                               ("the maximum replication lag (in millisecond) "
+                                "that can be tolerated before it is considered timeout"))]
+        timeout_perc_cap = [("--timeoutPercentageCap=[1-100]",
+                             ("the maximum allowed timeout percentage."
+"If this limit is exceeded, replication is considered as not healthy and may be restarted."))]
+        log_level =[("--logLevel=[Error|Info|Debug|Trace]",
+                     "logging level")]
+        stats_interval = [("--statsInterval=[MS]",
+                           "the interval (in milliseconds) for statistics updates")]
+
         xdcr_create = [("--create", "create a new xdcr configuration")]
         xdcr_edit = [("--edit", "modify existed xdcr configuration")]
         xdcr_delete = [("--delete", "delete existed xdcr configuration")]
@@ -544,17 +618,20 @@ class XDCR:
                              "replication protocol, either capi or xmem.")]
 
         if cmd == "setting-xdcr":
-            return (max_con_reps + chkpoint_interval + worker_bat_size +
-                    doc_bat_size + failure_restart + opt_rep_theshold)
+            return (chkpoint_interval + worker_bat_size +
+                    doc_bat_size + failure_restart + opt_rep_theshold +
+                    src_nozzle_node + tgt_nozzle_node + max_replication_log +
+                    timeout_perc_cap + log_level + stats_interval)
         elif cmd == "xdcr-setup":
             return (xdcr_create + xdcr_edit + xdcr_list + xdcr_delete +
                     remote_cluster_name + remote_hostname + remote_admin +
                     remote_pwd + encrypt + certificate)
         elif cmd == "xdcr-replicate":
             return (xdcr_create + xdcr_delete + xdcr_list + xdcr_pause + xdcr_resume +
-                    xdcr_settings + replicator_id + from_bucket + to_bucket + max_con_reps +
+                    xdcr_settings + replicator_id + from_bucket + to_bucket +
                     chkpoint_interval + worker_bat_size + doc_bat_size + failure_restart +
-                    opt_rep_theshold + replication_mode)
+                    opt_rep_theshold + src_nozzle_node + tgt_nozzle_node + max_replication_log +
+                    timeout_perc_cap + log_level + stats_interval + replication_mode)
         else:
             return None
 
