@@ -174,11 +174,12 @@ class JSONSource(pump.Source):
                 try:
                     fp = open(self.f, 'r')
                     dockey = JSONSource.gen_dockey(os.path.basename(self.f))
-                    JSONSource.save_doc(batch, dockey, fp)
+                    self.save_doc(batch, dockey, fp, True)
                     fp.close()
                 except IOError, error:
                     return "error: could not open json: %s; exception: %s" % \
                         (self.f, e), None
+                self.done = True
                 return 0,batch
             if len(files) > 0:
                 self.file_iter = iter(files)
