@@ -205,8 +205,8 @@ class MCSink(pump.Sink):
                 if r_status == couchbaseConstants.ERR_SUCCESS:
                     continue
                 elif r_status == couchbaseConstants.ERR_KEY_EEXISTS:
-                    logging.warn("item exists: %s, key: %s" %
-                                 (self.spec, key))
+                    #logging.warn("item exists: %s, key: %s" %
+                    #             (self.spec, key))
                     continue
                 elif r_status == couchbaseConstants.ERR_KEY_ENOENT:
                     if (cmd != couchbaseConstants.CMD_TAP_DELETE and
