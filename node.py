@@ -34,6 +34,8 @@ rest_cmds = {
     'setting-notification'  :'/settings/stats',
     'setting-autofailover'  :'/settings/autoFailover',
     'setting-alert'         :'/settings/alerts',
+    'setting-audit'         :'/settings/audit',
+    'setting-ldap'          :'/settings/saslauthdAuth',
     'user-manage'           :'/settings/readOnlyUser',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
@@ -75,6 +77,8 @@ methods = {
     'setting-notification'  :'POST',
     'setting-autofailover'  :'POST',
     'setting-alert'         :'POST',
+    'setting-audit'         :'POST',
+    'setting-ldap'          :'POST',
     'user-manage'           :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
@@ -170,6 +174,16 @@ class Node:
         self.customer = None
         self.ticket = ""
 
+        #auditing
+        self.audit_enabled = None
+        self.audit_log_path = None
+        self.audit_log_rotate_interval = None
+
+        #ldap
+        self.ldap_enabled = None
+        self.ldap_admins = None
+        self.ldap_roadmins = None
+
         self.services = None
 
     def runCmd(self, cmd, server, port,
@@ -244,6 +258,12 @@ class Node:
 
         elif cmd == 'setting-autofailover':
             self.autofailover()
+
+        elif cmd == 'setting-audit':
+            self.audit()
+
+        elif cmd == 'setting-ldap':
+            self.ldap()
 
         elif cmd == 'user-manage':
             self.userManage()
@@ -567,6 +587,56 @@ class Node:
                                      opts)
         print output_result
 
+    def audit(self):
+        rest = util.restclient_factory(self.server,
+                                     self.port,
+                                     {'debug':self.debug},
+                                     self.ssl)
+        if self.audit_enabled:
+            rest.setParam('audit_enabled', self.audit_enabled)
+
+        if self.audit_log_path:
+            rest.setParam('log_path', self.audit_log_path)
+
+        if self.audit_log_rotate_interval:
+            rest.setParam('rotate_interval', self.audit_log_rotate_interval)
+
+        opts = {
+            "error_msg": "unable to set audit settings",
+            "success_msg": "set audit settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def ldap(self):
+        rest = util.restclient_factory(self.server,
+                                     self.port,
+                                     {'debug':self.debug},
+                                     self.ssl)
+        if self.ldap_enabled:
+            rest.setParam('enabled', self.ldap_enabled)
+
+        if self.ldap_admins:
+            rest.setParam('admins', self.ldap_admins)
+
+        if self.ldap_roadmins:
+            rest.setParam('roAdmins', self.ldap_roadmins)
+
+        opts = {
+            "error_msg": "unable to set LDAP auth settings",
+            "success_msg": "set LDAP auth settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
     def processOpts(self, cmd, opts):
         """ Set standard opts.
             note: use of a server key keeps optional
@@ -760,6 +830,18 @@ class Node:
                 self.ticket = a
             elif o == '--services':
                 self.services = a
+            elif o == 'audit-rotate-interval':
+                self.audit_rotate_interval = a
+            elif o == 'audit-log-path':
+                self.audit_log_path = a
+            elif o == 'audit-enabled':
+                self.audit_enabled = bool_to_str(a)
+            elif o == 'ldap-enabled':
+                self.ldap_enabled = bool_to_str(a)
+            elif o == 'ldap-admins':
+                self.ldap_admins = a
+            elif o == 'ldap-roadmins':
+                slef.ldap_roadmins = a
 
         return servers
 
@@ -1565,6 +1647,16 @@ class Node:
                      "retrieve cluster certificate AND save to a pem file"),
                     ("--regenerate-cert=CERTIFICATE",
                      "regenerate cluster certificate AND save to a pem file")]
+        elif cmd == "setting-audit":
+            return [
+            ("--audit-rotate-interval=[MINUTES]", "log rotation interval"),
+            ("--audit-log-path=[PATH]", "target log directory"),
+            ("--audit-enable=[0|1]", "enable auditing or not")]
+        elif cmd == "setting-ldap":
+            return [
+            ("--ldap-admins=", "full admins"),
+            ("--ldap-roadmins=", "read only admins"),
+            ("--ladp-enable=[0|1]", "using LDAP protocol for authentication")]
         elif cmd == "collect-logs-start":
             return [
             ("--all-nodes", "Collect logs from all accessible cluster nodes"),
