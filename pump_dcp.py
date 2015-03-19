@@ -504,6 +504,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         while self.running:
             readers, writers, errors = select.select(desc, [], [], rd_timeout)
             rd_timeout = .25
+            if len(self.stream_list) == 0:
+                continue
 
             for reader in readers:
                 data = reader.recv(self.recv_min_bytes)
