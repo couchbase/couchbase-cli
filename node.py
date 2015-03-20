@@ -1588,7 +1588,7 @@ class Node:
             ("--cluster-username=USER", "new admin username"),
             ("--cluster-password=PASSWORD", "new admin password"),
             ("--cluster-port=PORT", "new cluster REST/http port"),
-            ("--cluster-ramsize=RAMSIZEMB", "per node ram quota in MB")] + servicesg
+            ("--cluster-ramsize=RAMSIZEMB", "per node ram quota in MB")] + services
         elif cmd == "node-init":
             return [
             ("--node-init-data-path=PATH", "data path for database files"),
