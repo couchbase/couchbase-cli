@@ -89,7 +89,7 @@ class CSVSource(pump.Source):
                         doc[field] = number_try_parse(vals[i])
                 if doc['id']:
                     doc_json = json.dumps(doc)
-                    msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc_json, 0, 0, 0)
+                    msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc_json, 0, 0, 0, 0)
                     batch.append(msg, len(doc))
             except StopIteration:
                 self.done = True
