@@ -214,13 +214,17 @@ class SFDSource(pump.Source):
                 else:
                     cmd = couchbaseConstants.CMD_TAP_MUTATION
                     val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
-
-                cas, exp, flg, flex_meta, dtype, conf_res = struct.unpack(SFD_REV_META, doc_info.revMeta)
-                meta = doc_info.revSequence
-                seqno = doc_info.sequence
-                nmeta = 0
-                msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res)
-                abatch[0].append(msg, len(val))
+                try:
+                    cas, exp, flg, flex_meta, dtype, conf_res = struct.unpack(SFD_REV_META, doc_info.revMeta)
+                    meta = doc_info.revSequence
+                    seqno = doc_info.sequence
+                    nmeta = 0
+                    msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res)
+                    abatch[0].append(msg, len(val))
+                except Exception, e:
+                    self.queue.put(("error: could not read couchstore file due to unsupported file format version;"
+                                    " exception: %s"% e, None))
+                    return
 
             if (abatch[0].size() >= batch_max_size or
                 abatch[0].bytes >= batch_max_bytes):
