@@ -1656,7 +1656,7 @@ class Node:
             return [
             ("--ldap-admins=", "full admins"),
             ("--ldap-roadmins=", "read only admins"),
-            ("--ladp-enable=[0|1]", "using LDAP protocol for authentication")]
+            ("--ldap-enable=[0|1]", "using LDAP protocol for authentication")]
         elif cmd == "collect-logs-start":
             return [
             ("--all-nodes", "Collect logs from all accessible cluster nodes"),
