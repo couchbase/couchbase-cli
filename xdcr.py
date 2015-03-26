@@ -617,6 +617,8 @@ class XDCR:
         replication_mode = [("--xdcr-replication-mode=[xmem|capi]",
                              "replication protocol, either capi or xmem.")]
 
+        regex = [("--filterExpression=[REGEX]",
+                  "regular expression to filter replication streams")]
         if cmd == "setting-xdcr":
             return (chkpoint_interval + worker_bat_size +
                     doc_bat_size + failure_restart + opt_rep_theshold +
@@ -631,7 +633,7 @@ class XDCR:
                     xdcr_settings + replicator_id + from_bucket + to_bucket +
                     chkpoint_interval + worker_bat_size + doc_bat_size + failure_restart +
                     opt_rep_theshold + src_nozzle_node + tgt_nozzle_node + max_replication_log +
-                    timeout_perc_cap + log_level + stats_interval + replication_mode)
+                    timeout_perc_cap + log_level + stats_interval + replication_mode+ regex)
         else:
             return None
 
