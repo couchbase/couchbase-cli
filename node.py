@@ -619,12 +619,18 @@ class Node:
                                      self.ssl)
         if self.ldap_enabled:
             rest.setParam('enabled', self.ldap_enabled)
+        else:
+            rest.setParam('enabled', 'false')
 
         if self.ldap_admins:
             rest.setParam('admins', self.ldap_admins)
+        elif self.ldap_enabled:
+            rest.setParam('admins', '')
 
         if self.ldap_roadmins:
             rest.setParam('roAdmins', self.ldap_roadmins)
+        elif self.ldap_enabled:
+            rest.setParam('roAdmins', '')
 
         opts = {
             "error_msg": "unable to set LDAP auth settings",
