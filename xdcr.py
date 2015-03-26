@@ -576,7 +576,7 @@ class XDCR:
                               "to trigger optimistic replication"))]
         src_nozzle_node = [("--sourceNozzlePerNode=[1-10]",
                             "the number of source nozzles per source node")]
-        tgt_nozzle_node = [("--targetNozzlePerNode=[1-10]",
+        tgt_nozzle_node = [("--targetNozzlePerNode=[1-100]",
                             "the number of outgoing nozzles per target node")]
         max_replication_log= [("--maxExpectedReplicationLag=MS",
                                ("the maximum replication lag (in millisecond) "
