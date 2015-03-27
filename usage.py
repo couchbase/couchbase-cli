@@ -204,14 +204,14 @@ EXAMPLES:
        --recovery-buckets="default,bucket1" \\
        -u Administrator -p password
 
-  Set the username, password, port and ram quota:
+  Set the username, password, port and data service ram quota:
     couchbase-cli cluster-init -c 192.168.0.1:8091 \\
        --cluster-username=Administrator \\
        --cluster-password=password \\
        --cluster-port=8080 \\
        --cluster-ramsize=300
 
-  change the cluster username, password, port and ram quota:
+  change the cluster username, password, port and data service ram quota:
     couchbase-cli cluster-edit -c 192.168.0.1:8091 \\
        --cluster-username=Administrator1 \\
        --cluster-password=password1 \\
