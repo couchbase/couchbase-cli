@@ -164,19 +164,19 @@ class XDCR:
                 self.demand_encryption = int(a)
             elif o == '--xdcr-certificate':
                 self.certificate = a
-            elif o == '--filterExpression':
+            elif o == '--filter-expression':
                 self.regex = a
-            elif o == '--sourceNozzlePerNode':
+            elif o == '--source-nozzle-per-node':
                 self.source_nozzle_per_node = int(a)
-            elif o == '--targetNozzlePerNode':
+            elif o == '--target-nozzle-per-node':
                 self.target_nozzle_per_node = int(a)
-            elif o == '--maxExpectedReplicationLag':
+            elif o == '--max-expected-replication-lag':
                 self.max_replication_lag = int(a)
-            elif o == '--timeoutPercentageCap':
+            elif o == '--timeout-percentage-cap':
                 self.timeout_perc_cap = int(a)
-            elif o == '--logLevel':
+            elif o == '--log-level':
                 self.log_level = a
-            elif o == '--statsInterval':
+            elif o == '--stats-interval':
                 self.stats_interval = int(a)
 
     def setup_create(self, cmd):
@@ -574,19 +574,19 @@ class XDCR:
         opt_rep_theshold = [("--optimistic-replication-threshold=[256]",
                              ("document body size threshold (bytes) "
                               "to trigger optimistic replication"))]
-        src_nozzle_node = [("--sourceNozzlePerNode=[1-10]",
+        src_nozzle_node = [("--source-nozzle-per-node=[1-10]",
                             "the number of source nozzles per source node")]
-        tgt_nozzle_node = [("--targetNozzlePerNode=[1-100]",
+        tgt_nozzle_node = [("--target-nozzle-per-node=[1-100]",
                             "the number of outgoing nozzles per target node")]
-        max_replication_log= [("--maxExpectedReplicationLag=MS",
+        max_replication_log= [("--max-expected-replication-lag=MS",
                                ("the maximum replication lag (in millisecond) "
                                 "that can be tolerated before it is considered timeout"))]
-        timeout_perc_cap = [("--timeoutPercentageCap=[1-100]",
+        timeout_perc_cap = [("--timeout-percentage-cap=[1-100]",
                              ("the maximum allowed timeout percentage."
 "If this limit is exceeded, replication is considered as not healthy and may be restarted."))]
-        log_level =[("--logLevel=[Error|Info|Debug|Trace]",
+        log_level =[("--log-level=[Error|Info|Debug|Trace]",
                      "logging level")]
-        stats_interval = [("--statsInterval=[MS]",
+        stats_interval = [("--stats-interval=[MS]",
                            "the interval (in milliseconds) for statistics updates")]
 
         xdcr_create = [("--create", "create a new xdcr configuration")]
@@ -617,7 +617,7 @@ class XDCR:
         replication_mode = [("--xdcr-replication-mode=[xmem|capi]",
                              "replication protocol, either capi or xmem.")]
 
-        regex = [("--filterExpression=[REGEX]",
+        regex = [("--filter-expression=[REGEX]",
                   "regular expression to filter replication streams")]
         if cmd == "setting-xdcr":
             return (chkpoint_interval + worker_bat_size +
