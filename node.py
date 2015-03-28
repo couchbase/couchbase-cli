@@ -597,9 +597,12 @@ class Node:
 
         if self.audit_log_path:
             rest.setParam('log_path', self.audit_log_path)
-
+        elif self.audit_enabled == "true":
+             rest.setParam('log_path', "/opt/couchbase/var/lib/couchbase/logs")
         if self.audit_log_rotate_interval:
             rest.setParam('rotate_interval', self.audit_log_rotate_interval)
+        elif self.audit_enabled == "true":
+            reset.setParam('rotate_interval', 86400)
 
         opts = {
             "error_msg": "unable to set audit settings",
@@ -624,12 +627,12 @@ class Node:
 
         if self.ldap_admins:
             rest.setParam('admins', self.ldap_admins)
-        elif self.ldap_enabled:
+        elif self.ldap_enabled == 'true':
             rest.setParam('admins', '')
 
         if self.ldap_roadmins:
             rest.setParam('roAdmins', self.ldap_roadmins)
-        elif self.ldap_enabled:
+        elif self.ldap_enabled == 'true':
             rest.setParam('roAdmins', '')
 
         opts = {
