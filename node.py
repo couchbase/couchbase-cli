@@ -30,6 +30,7 @@ rest_cmds = {
     'cluster-init'      :'/settings/web',
     'cluster-edit'      :'/settings/web',
     'node-init'         :'/nodes/self/controller/settings',
+    'setting-cluster'   :'/internalSettings/visual',
     'setting-compaction'    :'/controller/setAutoCompaction',
     'setting-notification'  :'/settings/stats',
     'setting-autofailover'  :'/settings/autoFailover',
@@ -73,6 +74,7 @@ methods = {
     'cluster-init'      :'POST',
     'cluster-edit'      :'POST',
     'node-init'         :'POST',
+    'setting-cluster'   :'POST',
     'setting-compaction'    :'POST',
     'setting-notification'  :'POST',
     'setting-autofailover'  :'POST',
@@ -114,6 +116,7 @@ class Node:
         self.sa_password = None
         self.port_new = None
         self.per_node_quota = None
+        self.cluster_name = None
         self.data_path = None
         self.index_path = None
         self.hostname = None
@@ -246,6 +249,9 @@ class Node:
 
         elif cmd == 'node-init':
             self.nodeInit()
+
+        elif cmd == 'setting-cluster':
+            self.clusterSetting()
 
         elif cmd == 'setting-compaction':
             self.compaction()
@@ -477,6 +483,29 @@ class Node:
         opts = {
             "error_msg": "unable to set compaction settings",
             "success_msg": "set compaction settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
+    def clusterSetting(self):
+        rest = util.restclient_factory(self.server,
+                                     self.port,
+                                     {'debug':self.debug},
+                                     self.ssl)
+        if not self.per_node_quota:
+            print "ERROR: option cluster-ramsize is not specified"
+            return
+        rest.setParam('memoryQuota', self.per_node_quota)
+        if self.cluster_name:
+            rest.setParam('tabName', self.cluster_name)
+
+        opts = {
+            "error_msg": "unable to set cluster configurations",
+            "success_msg": "set cluster settings"
         }
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
@@ -719,6 +748,8 @@ class Node:
                 self.port_new = a
             elif o in ('--cluster-init-ramsize', '--cluster-ramsize'):
                 self.per_node_quota = a
+            elif o == '--cluster-name':
+                self.cluster_name = a
             elif o == '--enable-auto-failover':
                 self.enable_auto_failover = bool_to_str(a)
             elif o == '--enable-notification':
@@ -1540,6 +1571,7 @@ class Node:
             "rebalance-status" :"show status of current cluster rebalancing",
             "failover" :"failover one or more servers",
             "recovery" :"recover one or more servers",
+            "setting-cluster" : "set cluster settings",
             "setting-compaction" : "set auto compaction settings",
             "setting-notification" : "set notification settings",
             "setting-alert" : "set email alert settings",
@@ -1645,6 +1677,9 @@ class Node:
              "bucket memory on a node is entirely used for metadata"),
             ("--alert-write-failed",
              "writing data to disk for a specific bucket has failed")]
+        elif cmd == "setting-cluster":
+            return [("--cluster-name=[CLUSTERNAME]", "cluster name"),
+                    ("--cluster-ramsize=[RAMSIZEMB]", "per node data service ram quota in MB")]
         elif cmd == "setting-notification":
             return [("--enable-notification=[0|1]", "allow notification")]
         elif cmd == "setting-autofailover":
