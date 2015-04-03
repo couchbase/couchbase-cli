@@ -61,7 +61,7 @@ class Buckets:
         bucketport = '11211'
         bucketpassword = ''
         bucketramsize = ''
-        bucketreplication = '1'
+        bucketreplication = ''
         bucketpriority = None
         eviction_policy = None
         output = 'default'
@@ -309,7 +309,6 @@ class Buckets:
                         "supports ASCII protocol and is auth-less")]
         bucket_password = [("--bucket-password=PASSWORD",
                             "standard port, exclusive with bucket-port")]
-        bucket_replica = [("--bucket-replica=COUNT", "replication count")]
         eviction_policy = [("--bucket-eviction-policy=[valueOnly|fullEviction]",
                             "policy how to retain meta in memory")]
         enable_flush = [("--enable-flush=[0|1]", "enable/disable flush")]
@@ -325,7 +324,7 @@ class Buckets:
 
         create_edit = (bucket_name + bucket_ramsize + bucket_replica +
                       bucket_type + bucket_priority + bucket_password +
-                      bucket_replica + eviction_policy + enable_flush + enable_clock_sync)
+                      eviction_policy + enable_flush + enable_clock_sync)
 
         if cmd == "bucket-create":
             return create_edit + enable_replica_idx + wait
