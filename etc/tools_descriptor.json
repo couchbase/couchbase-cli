@@ -1,6 +1,131 @@
 {
     "version" : 1,
     "module" : "tools",
-    "events" : []
+    "events" : [
+                {  "id" : 12288,
+                   "name" : "backup start",
+                   "description" : "Start up a backup task",
+                   "sync" : false,
+                   "enabled" : true,
+                   "mandatory_fields" : {
+                                         "timestamp" : "",
+                                         "real_userid" : {"source" : "", "user" : ""},
+                                         "mode" : ""
+                                        },
+                   "optional_fields" : {
+                                        "source_bucket" : "",
+                                        "source_node" : ""
+                                       }
+                },
+                {  "id" : 12289,
+                   "name" : "backup stop",
+                   "description" : "Backup task stops",
+                   "sync" : false,
+                   "enabled" : true,
+                   "mandatory_fields" : {
+                                         "timestamp" : "",
+                                         "real_userid" : {"source" : "", "user" : ""},
+                                         "status" : ""
+                                        },
+                   "optional_fields" : {
+                                        "source_bucket" : "",
+                                        "source_node" : ""
+                                       }
+                },
+                {  "id" : 12290,
+                   "name" : "restore start",
+                   "description" : "Start up a restore task",
+                   "sync" : false,
+                   "enabled" : true,
+                   "mandatory_fields" : {
+                                         "timestamp" : "",
+                                         "real_userid" : {"source" : "", "user" : ""},
+                                         "mode" : ""
+                                        },
+                   "optional_fields" : {
+                                        "source_bucket" : "",
+                                        "source_node" : "",
+                                        "target_bucket" : ""
+                                       }
+                },
+                {  "id" : 12291,
+                   "name" : "restore stop",
+                   "description" : "Restore task stops",
+                   "sync" : false,
+                   "enabled" : true,
+                   "mandatory_fields" : {
+                                         "timestamp" : "",
+                                         "real_userid" : {"source" : "", "user" : ""},
+                                         "status" : ""
+                                        },
+                   "optional_fields" : {
+                                        "source_bucket" : "",
+                                        "source_node" : "",
+                                        "target_bucket" : ""
+                                       }
+                },
+                {  "id" : 12292,
+                   "name" : "recovery source start",
+                   "description" : "Start up a recovery source task",
+                   "sync" : false,
+                   "enabled" : true,
+                   "mandatory_fields" : {
+                                         "timestamp" : "",
+                                         "real_userid" : {"source" : "", "user" : ""},
+                                         "mode" : ""
+                                        },
+                   "optional_fields" : {
+                                        "source_bucket" : "",
+                                        "source_node" : ""
+                                       }
+                },
+                {  "id" : 12293,
+                   "name" : "recovery source stop",
+                   "description" : "Recovery source task stops",
+                   "sync" : false,
+                   "enabled" : true,
+                   "mandatory_fields" : {
+                                         "timestamp" : "",
+                                         "real_userid" : {"source" : "", "user" : ""},
+                                         "status" : ""
+                                        },
+                   "optional_fields" : {
+                                        "source_bucket" : "",
+                                        "source_node" : "",
+                                        "target_bucket" : ""
+                                       }
+                },
+                {  "id" : 12294,
+                   "name" : "recovery sink start",
+                   "description" : "Start up a recovery sink task",
+                   "sync" : false,
+                   "enabled" : true,
+                   "mandatory_fields" : {
+                                         "timestamp" : "",
+                                         "real_userid" : {"source" : "", "user" : ""},
+                                         "mode" : ""
+                                        },
+                   "optional_fields" : {
+                                        "source_bucket" : "",
+                                        "source_node" : ""
+                                       }
+                },
+                {  "id" : 12295,
+                   "name" : "recovery sink stop",
+                   "description" : "Recovery task sink stops",
+                   "sync" : false,
+                   "enabled" : true,
+                   "mandatory_fields" : {
+                                         "timestamp" : "",
+                                         "real_userid" : {"source" : "", "user" : ""},
+                                         "status" : ""
+                                        },
+                   "optional_fields" : {
+                                        "source_bucket" : "",
+                                        "source_node" : "",
+                                        "target_bucket" : ""
+                                       }
+                }
+               ]
 }
 
