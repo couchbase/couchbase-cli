@@ -352,21 +352,9 @@ class MCSink(pump.Sink):
             cmd == couchbaseConstants.CMD_DELETE_WITH_META):
             if meta:
                 try:
-                    ext = struct.pack(">IIQQ", flg, exp, int(meta), cas)
+                    ext = struct.pack(">IIQQ", flg, exp, int(str(meta)), cas)
                 except ValueError:
-                    seq_no = str(meta)
-                    if len(seq_no) > 8:
-                        seq_no = seq_no[0:8]
-                    if len(seq_no) < 8:
-                        # The seq_no might be 32-bits from 2.0DP4, so pad with 0x00's.
-                        seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + seq_no)[-8:]
-
-                    check_seqno, = struct.unpack(">Q", seq_no)
-                    if check_seqno:
-                        ext = (struct.pack(">II", flg, exp) + seq_no +
-                               struct.pack(">Q", cas))
-                    else:
-                        ext = struct.pack(">IIQQ", flg, exp, 1, cas)
+                    ext = struct.pack(">IIQQ", flg, exp, 1, cas)
             else:
                 ext = struct.pack(">IIQQ", flg, exp, 1, cas)
             if conf_res:
