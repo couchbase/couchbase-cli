@@ -622,16 +622,16 @@ class Node:
                                      {'debug':self.debug},
                                      self.ssl)
         if self.audit_enabled:
-            rest.setParam('audit_enabled', self.audit_enabled)
+            rest.setParam('auditdEnabled', self.audit_enabled)
 
         if self.audit_log_path:
-            rest.setParam('log_path', self.audit_log_path)
+            rest.setParam('logPath', self.audit_log_path)
         elif self.audit_enabled == "true":
-             rest.setParam('log_path', "/opt/couchbase/var/lib/couchbase/logs")
+             rest.setParam('logPath', "/opt/couchbase/var/lib/couchbase/logs")
         if self.audit_log_rotate_interval:
-            rest.setParam('rotate_interval', self.audit_log_rotate_interval)
+            rest.setParam('rotateInterval', self.audit_log_rotate_interval)
         elif self.audit_enabled == "true":
-            reset.setParam('rotate_interval', 86400)
+            rest.setParam('rotateInterval', 86400)
 
         opts = {
             "error_msg": "unable to set audit settings",
@@ -870,17 +870,17 @@ class Node:
                 self.ticket = a
             elif o == '--services':
                 self.services = a
-            elif o == 'audit-rotate-interval':
+            elif o == '--audit-rotate-interval':
                 self.audit_rotate_interval = a
-            elif o == 'audit-log-path':
+            elif o == '--audit-log-path':
                 self.audit_log_path = a
-            elif o == 'audit-enabled':
+            elif o == '--audit-enabled':
                 self.audit_enabled = bool_to_str(a)
-            elif o == 'ldap-enabled':
+            elif o == '--ldap-enabled':
                 self.ldap_enabled = bool_to_str(a)
-            elif o == 'ldap-admins':
+            elif o == '--ldap-admins':
                 self.ldap_admins = a
-            elif o == 'ldap-roadmins':
+            elif o == '--ldap-roadmins':
                 slef.ldap_roadmins = a
 
         return servers
@@ -1695,7 +1695,7 @@ class Node:
             return [
             ("--audit-rotate-interval=[MINUTES]", "log rotation interval"),
             ("--audit-log-path=[PATH]", "target log directory"),
-            ("--audit-enable=[0|1]", "enable auditing or not")]
+            ("--audit-enabled=[0|1]", "enable auditing or not")]
         elif cmd == "setting-ldap":
             return [
             ("--ldap-admins=", "full admins"),
