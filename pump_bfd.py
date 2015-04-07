@@ -75,13 +75,16 @@ class BFD:
 
     @staticmethod
     def get_failover_log(parent_dir):
-        filepath = os.path.join(parent_dir, "failover.json")
-        if os.path.isfile(filepath):
-            json_file = open(filepath, "r")
-            json_data = json.load(json_file)
-            json_file.close()
-            return json_data
-        else:
+        try:
+            filepath = os.path.join(parent_dir, "failover.json")
+            if os.path.isfile(filepath):
+                json_file = open(filepath, "r")
+                json_data = json.load(json_file)
+                json_file.close()
+                return json_data
+            else:
+                return {}
+        except IOError:
             return {}
 
     @staticmethod
@@ -95,9 +98,12 @@ class BFD:
         json_data = {}
         if os.path.isfile(filepath):
             #load into existed meta data generated from previous batch run
-            json_file = open(filepath, "r")
-            json_data = json.load(json_file)
-            json_file.close()
+            try:
+                json_file = open(filepath, "r")
+                json_data = json.load(json_file)
+                json_file.close()
+            except IOError:
+                pass
 
         for i in range(BFD.NUM_VBUCKET):
             if output_data.get(i):
@@ -251,39 +257,49 @@ class BFD:
                         seqno_list.extend(recursive_glob(path, 'seqno.json'))
 
         for x in sorted(seqno_list):
-            json_file = open(x, "r")
-            json_data = json.load(json_file)
-            json_file.close()
+            try:
+                json_file = open(x, "r")
+                json_data = json.load(json_file)
+                json_file.close()
 
-            for vbid, seq in json_data.iteritems():
-                if not seq:
-                    continue
-                if seqno.get(vbid) < seq:
-                    seqno[vbid] = seq
+                for vbid, seq in json_data.iteritems():
+                    if not seq:
+                        continue
+                    if seqno.get(vbid) < seq:
+                        seqno[vbid] = seq
+            except IOError:
+                pass
 
         for log_file in sorted(failoverlog_list):
-            json_file = open(log_file, "r")
-            json_data = json.load(json_file)
-            json_file.close()
+            try:
+                json_file = open(log_file, "r")
+                json_data = json.load(json_file)
+                json_file.close()
 
-            for vbid, flogs in json_data.iteritems():
-                if not flogs:
-                    continue
-                elif vbid not in failover_log.keys():
-                    failover_log[vbid] = flogs
-                else:
-                    for logpair in flogs:
-                        if not failover_log[vbid]:
-                            failover_log[vbid] = [logpair]
-                        elif logpair not in failover_log[vbid]:
-                            failover_log[vbid].append(logpair)
+                for vbid, flogs in json_data.iteritems():
+                    if not flogs:
+                        continue
+                    elif vbid not in failover_log.keys():
+                        failover_log[vbid] = flogs
+                    else:
+                        for logpair in flogs:
+                            if not failover_log[vbid]:
+                                failover_log[vbid] = [logpair]
+                            elif logpair not in failover_log[vbid]:
+                                failover_log[vbid].append(logpair)
+            except IOError:
+                pass
+
         for snapshot in sorted(snapshot_list):
-            json_file = open(snapshot, "r")
-            json_data = json.load(json_file)
-            json_file.close()
+            try:
+                json_file = open(snapshot, "r")
+                json_data = json.load(json_file)
+                json_file.close()
 
-            for vbid, markers in json_data.iteritems():
-                snapshot_markers[vbid] = markers
+                for vbid, markers in json_data.iteritems():
+                    snapshot_markers[vbid] = markers
+            except IOError:
+                pass
 
         for i in range(BFD.NUM_VBUCKET):
             if dep[i] and dep[i] not in dep_list:
