@@ -196,6 +196,8 @@ from a source cluster into the caching layer at the destination""")
         p.add_option("-v", "--verbose",
                      action="count", default=0,
                      help="verbose logging; more -v's provide more verbosity. Max is -vvv")
+        p.add_option("", "--silent", action="store_true", default=False,
+                     help="""Reduce logging verbosity to only include errors""")
         p.add_option("-x", "--extra",
                      action="store", type="string", default=None,
                      help="""Provide extra, uncommon config parameters;
@@ -350,6 +352,10 @@ def opt_parse_helper(opts):
         logging_level = logging.INFO
     if opts.verbose >= 2:
         logging_level = logging.DEBUG
+
+    if opts.silent:
+        logging_level = logging.ERROR
+
     logging.basicConfig(format=pump.LOGGING_FORMAT, level=logging_level)
 
     opts_x = copy.deepcopy(opts)
@@ -428,4 +434,3 @@ except ImportError:
 
 if __name__ == '__main__':
     sys.exit(Transfer().main(sys.argv))
-
