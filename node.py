@@ -186,6 +186,7 @@ class Node:
         self.ldap_enabled = None
         self.ldap_admins = None
         self.ldap_roadmins = None
+        self.ldap_default = "none"
 
         self.services = None
 
@@ -656,12 +657,12 @@ class Node:
 
         if self.ldap_admins:
             rest.setParam('admins', self.ldap_admins)
-        elif self.ldap_enabled == 'true':
+        elif self.ldap_enabled == 'true' and self.ldap_default in ['none','admins']:
             rest.setParam('admins', '')
 
         if self.ldap_roadmins:
             rest.setParam('roAdmins', self.ldap_roadmins)
-        elif self.ldap_enabled == 'true':
+        elif self.ldap_enabled == 'true' and self.ldap_default in ['none', 'roadmins']:
             rest.setParam('roAdmins', '')
 
         opts = {
@@ -881,8 +882,9 @@ class Node:
             elif o == '--ldap-admins':
                 self.ldap_admins = a
             elif o == '--ldap-roadmins':
-                slef.ldap_roadmins = a
-
+                self.ldap_roadmins = a
+            elif o == '--ldap-default':
+                self.ldap_default = a
         return servers
 
     def normalize_servers(self, server_list):
@@ -1700,7 +1702,8 @@ class Node:
             return [
             ("--ldap-admins=", "full admins"),
             ("--ldap-roadmins=", "read only admins"),
-            ("--ldap-enable=[0|1]", "using LDAP protocol for authentication")]
+            ("--ldap-enabled=[0|1]", "using LDAP protocol for authentication"),
+            ("--ldap-default=[admins|roadmins|none]", "set default ldap accounts")]
         elif cmd == "collect-logs-start":
             return [
             ("--all-nodes", "Collect logs from all accessible cluster nodes"),

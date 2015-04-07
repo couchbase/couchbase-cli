@@ -160,7 +160,8 @@ def main():
                 'audit-log-rotate-interval=',
                 'ldap-enabled=',
                 'ldap-admins=',
-                'ldap-roadmins='
+                'ldap-roadmins=',
+                'ldap-default='
                 ])
     except getopt.GetoptError, err:
         usage.command_error(err)
