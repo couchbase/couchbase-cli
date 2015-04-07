@@ -116,8 +116,6 @@ def main():
                 'optimistic-replication-threshold=',
                 'source-nozzle-per-node=',
                 'target-nozzle-per-node=',
-                'max-expected-replication-lag=',
-                'timeout-percentage-cap=',
                 'log-level=',
                 'stats-interval=',
                 'email-recipients=',

@@ -51,8 +51,6 @@ class XDCR:
         self.optimistic_replication_threshold = ''
         self.source_nozzle_per_node = ''
         self.target_nozzle_per_node = ''
-        self.max_replication_lag = ''
-        self.timeout_perc_cap = ''
         self.log_level = ''
         self.stats_interval = ''
 
@@ -170,10 +168,6 @@ class XDCR:
                 self.source_nozzle_per_node = int(a)
             elif o == '--target-nozzle-per-node':
                 self.target_nozzle_per_node = int(a)
-            elif o == '--max-expected-replication-lag':
-                self.max_replication_lag = int(a)
-            elif o == '--timeout-percentage-cap':
-                self.timeout_perc_cap = int(a)
             elif o == '--log-level':
                 self.log_level = a
             elif o == '--stats-interval':
@@ -462,14 +456,6 @@ class XDCR:
             rest.setParam('targetNozzlePerNode', self.target_nozzle_per_node)
             opts['success_msg'] += ' xdcrTargetNozzlePerNode'
 
-        if self.max_replication_lag:
-            rest.setParam('maxExpectedReplicationLag', self.max_replication_lag)
-            opts['success_msg'] += ' xdcrMaxExpectedReplicationLag'
-
-        if self.timeout_perc_cap:
-            rest.setParam('timeoutPercentageCap', self.timeout_perc_cap)
-            opts['success_msg'] += ' xdcrTimeoutPercentageCap'
-
         if self.log_level:
             rest.setParam('logLevel', self.log_level)
             opts['success_msg'] += ' xdcrLogLevel'
@@ -523,14 +509,6 @@ class XDCR:
             rest.setParam('targetNozzlePerNode', self.target_nozzle_per_node)
             opts['success_msg'] += ' xdcrTargetNozzlePerNode'
 
-        if self.max_replication_lag:
-            rest.setParam('maxExpectedReplicationLag', self.max_replication_lag)
-            opts['success_msg'] += ' xdcrMaxExpectedReplicationLag'
-
-        if self.timeout_perc_cap:
-            rest.setParam('timeoutPercentageCap', self.timeout_perc_cap)
-            opts['success_msg'] += ' xdcrTimeoutPercentageCap'
-
         if self.log_level:
             rest.setParam('logLevel', self.log_level)
             opts['success_msg'] += ' xdcrLogLevel'
@@ -578,12 +556,6 @@ class XDCR:
                             "the number of source nozzles per source node")]
         tgt_nozzle_node = [("--target-nozzle-per-node=[1-100]",
                             "the number of outgoing nozzles per target node")]
-        max_replication_log= [("--max-expected-replication-lag=MS",
-                               ("the maximum replication lag (in millisecond) "
-                                "that can be tolerated before it is considered timeout"))]
-        timeout_perc_cap = [("--timeout-percentage-cap=[1-100]",
-                             ("the maximum allowed timeout percentage."
-"If this limit is exceeded, replication is considered as not healthy and may be restarted."))]
         log_level =[("--log-level=[Error|Info|Debug|Trace]",
                      "logging level")]
         stats_interval = [("--stats-interval=[MS]",
@@ -622,8 +594,7 @@ class XDCR:
         if cmd == "setting-xdcr":
             return (chkpoint_interval + worker_bat_size +
                     doc_bat_size + failure_restart + opt_rep_theshold +
-                    src_nozzle_node + tgt_nozzle_node + max_replication_log +
-                    timeout_perc_cap + log_level + stats_interval)
+                    src_nozzle_node + tgt_nozzle_node + log_level + stats_interval)
         elif cmd == "xdcr-setup":
             return (xdcr_create + xdcr_edit + xdcr_list + xdcr_delete +
                     remote_cluster_name + remote_hostname + remote_admin +
@@ -632,8 +603,8 @@ class XDCR:
             return (xdcr_create + xdcr_delete + xdcr_list + xdcr_pause + xdcr_resume +
                     xdcr_settings + replicator_id + from_bucket + to_bucket +
                     chkpoint_interval + worker_bat_size + doc_bat_size + failure_restart +
-                    opt_rep_theshold + src_nozzle_node + tgt_nozzle_node + max_replication_log +
-                    timeout_perc_cap + log_level + stats_interval + replication_mode+ regex)
+                    opt_rep_theshold + src_nozzle_node + tgt_nozzle_node +
+                    log_level + stats_interval + replication_mode+ regex)
         else:
             return None
 
