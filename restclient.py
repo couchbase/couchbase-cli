@@ -73,12 +73,7 @@ class RestClient:
 
         print 'ERROR: %s (%d) %s' % (opts['error_msg'],
                                      response.status, response.reason)
-
-        output_json = json.loads(response.read())
-        print output_json
-        if "errors" in output_json:
-            for error_code,error_message in output_json["errors"].iteritems():
-                print "ERROR: %s" % error_message
+        print response.read()
 
         sys.exit(2)
 
