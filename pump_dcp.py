@@ -502,34 +502,37 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         desc = [self.dcp_conn.s]
         extra_bytes = 0
         while self.running:
-            readers, writers, errors = select.select(desc, [], [], rd_timeout)
-            rd_timeout = .25
-            if len(self.stream_list) == 0:
-                continue
+            try:
+                readers, writers, errors = select.select(desc, [], [], rd_timeout)
+                rd_timeout = .25
+                if len(self.stream_list) == 0:
+                    continue
 
-            for reader in readers:
-                data = reader.recv(self.recv_min_bytes)
-                logging.debug("Read %d bytes off the wire" % len(data))
-                if len(data) == 0:
-                    raise exceptions.EOFError("Got empty data (remote died?).")
-                bytes_read += data
-            while len(bytes_read) >= couchbaseConstants.MIN_RECV_PACKET:
-                magic, opcode, keylen, extlen, datatype, status, bodylen, opaque, cas= \
-                    struct.unpack(couchbaseConstants.RES_PKT_FMT, \
-                                  bytes_read[0:couchbaseConstants.MIN_RECV_PACKET])
+                for reader in readers:
+                    data = reader.recv(self.recv_min_bytes)
+                    logging.debug("Read %d bytes off the wire" % len(data))
+                    if len(data) == 0:
+                        raise exceptions.EOFError("Got empty data (remote died?).")
+                    bytes_read += data
+                while len(bytes_read) >= couchbaseConstants.MIN_RECV_PACKET:
+                    magic, opcode, keylen, extlen, datatype, status, bodylen, opaque, cas= \
+                        struct.unpack(couchbaseConstants.RES_PKT_FMT, \
+                                      bytes_read[0:couchbaseConstants.MIN_RECV_PACKET])
 
-                if len(bytes_read) < (couchbaseConstants.MIN_RECV_PACKET+bodylen):
-                    extra_bytes = len(bytes_read)
-                    break
+                    if len(bytes_read) < (couchbaseConstants.MIN_RECV_PACKET+bodylen):
+                        extra_bytes = len(bytes_read)
+                        break
 
-                rd_timeout = 0
-                body = bytes_read[couchbaseConstants.MIN_RECV_PACKET : \
-                                  couchbaseConstants.MIN_RECV_PACKET+bodylen]
-                bytes_read = bytes_read[couchbaseConstants.MIN_RECV_PACKET+bodylen:]
-                self.response.put((opcode, status, opaque, cas, keylen, extlen, body, \
-                                   bodylen, datatype, \
-                                   couchbaseConstants.MIN_RECV_PACKET+bodylen+extra_bytes))
-                extra_bytes = 0
+                    rd_timeout = 0
+                    body = bytes_read[couchbaseConstants.MIN_RECV_PACKET : \
+                                      couchbaseConstants.MIN_RECV_PACKET+bodylen]
+                    bytes_read = bytes_read[couchbaseConstants.MIN_RECV_PACKET+bodylen:]
+                    self.response.put((opcode, status, opaque, cas, keylen, extlen, body, \
+                                       bodylen, datatype, \
+                                       couchbaseConstants.MIN_RECV_PACKET+bodylen+extra_bytes))
+                    extra_bytes = 0
+            except socket.error:
+                break
 
     def setup_dcp_streams(self):
         #send request to retrieve vblist and uuid for the node
