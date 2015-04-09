@@ -184,8 +184,8 @@ class Node:
 
         #ldap
         self.ldap_enabled = None
-        self.ldap_admins = None
-        self.ldap_roadmins = None
+        self.ldap_admins = ''
+        self.ldap_roadmins = ''
         self.ldap_default = "none"
 
         self.services = None
@@ -650,20 +650,17 @@ class Node:
                                      self.port,
                                      {'debug':self.debug},
                                      self.ssl)
-        if self.ldap_enabled:
-            rest.setParam('enabled', self.ldap_enabled)
+        if self.ldap_enabled == 'true':
+            rest.setParam('enabled', 'true')
+            if self.ldap_default == 'admins':
+                rest.setParam('roAdmins', self.ldap_roadmins)
+            elif self.ldap_default == 'roadmins':
+                rest.setParam('admins', self.ldap_admins)
+            else:
+                rest.setParam('admins', self.ldap_admins)
+                rest.setParam('roAdmins', self.ldap_roadmins)
         else:
             rest.setParam('enabled', 'false')
-
-        if self.ldap_admins:
-            rest.setParam('admins', self.ldap_admins)
-        elif self.ldap_enabled == 'true' and self.ldap_default in ['none','admins']:
-            rest.setParam('admins', '')
-
-        if self.ldap_roadmins:
-            rest.setParam('roAdmins', self.ldap_roadmins)
-        elif self.ldap_enabled == 'true' and self.ldap_default in ['none', 'roadmins']:
-            rest.setParam('roAdmins', '')
 
         opts = {
             "error_msg": "unable to set LDAP auth settings",
