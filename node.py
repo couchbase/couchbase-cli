@@ -871,8 +871,8 @@ class Node:
                 self.ticket = a
             elif o == '--services':
                 self.services = a
-            elif o == '--audit-rotate-interval':
-                self.audit_rotate_interval = a
+            elif o == '--audit-log-rotate-interval':
+                self.audit_log_rotate_interval = a
             elif o == '--audit-log-path':
                 self.audit_log_path = a
             elif o == '--audit-enabled':
@@ -1695,7 +1695,7 @@ class Node:
                      "regenerate cluster certificate AND save to a pem file")]
         elif cmd == "setting-audit":
             return [
-            ("--audit-rotate-interval=[MINUTES]", "log rotation interval"),
+            ("--audit-log-rotate-interval=[MINUTES]", "log rotation interval"),
             ("--audit-log-path=[PATH]", "target log directory"),
             ("--audit-enabled=[0|1]", "enable auditing or not")]
         elif cmd == "setting-ldap":
