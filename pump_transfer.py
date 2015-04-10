@@ -116,6 +116,13 @@ class Transfer:
         if err:
             return err, None, None, None
 
+        min_thread = 1
+        max_thread = 20
+        if opts.threads not in range(min_thread, max_thread):
+            return "\nError: option -t: value is out of range [%s, %s]" % \
+                   (min_thread, max_thread), \
+                   None, None, None
+
         opts.extra = opt_parse_extra(opts.extra, self.opt_extra_defaults())
         opts.safe = opt_parse_helper(opts)
 
