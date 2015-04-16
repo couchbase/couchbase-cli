@@ -404,16 +404,16 @@ EXAMPLES:
 
   Add a server to a group
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --add-servers="10.1.1.1:8091;10.1.1.2:8091" \\
+        --add-servers=10.1.1.1:8091,10.1.1.2:8091 \\
         --group-name=group1 \\
         --server-add-username=Administrator1 \\
         --server-add-password=password1 \\
-        --services="data;index;query" \\
+        --services=data,index,query \\
         -u Administrator -p password
 
   Move list of servers from group1 to group2
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --move-servers="10.1.1.1:8091;10.1.1.2:8091" \\
+        --move-servers=10.1.1.1:8091,10.1.1.2:8091 \\
         --from-group=group1 \\
         --to-group=group2 \\
         -u Administrator -p password
@@ -437,7 +437,7 @@ EXAMPLES:
   Start cluster-wide log collection for selected nodes
     couchbase-cli collect-logs-start -c 192.168.0.1:8091 \\
         -u Administrator -p password \\
-        --nodes="10.1.2.3:8091;10.1.2.4" --upload --upload-host=host.upload.com \\
+        --nodes=10.1.2.3:8091,10.1.2.4 --upload --upload-host=host.upload.com \\
         --customer="example inc" --ticket=12345
 
   Stop cluster-wide log collection

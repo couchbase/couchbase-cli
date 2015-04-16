@@ -95,7 +95,7 @@ bool_to_str = lambda value: str(bool(int(value))).lower()
 # handling HTTP response properly
 
 class Node:
-    SEP = ";"
+    SEP = ","
     def __init__(self):
         self.rest_cmd = rest_cmds['rebalance-status']
         self.method = 'GET'
@@ -205,11 +205,11 @@ class Node:
             print "INFO: servers %s" % servers
 
         if cmd == 'server-add' and not servers['add']:
-            command_error("please list one or more --server-add=HOST[:PORT];"
+            command_error("please list one or more --server-add=HOST[:PORT],"
                   " or use -h for more help.")
 
         if cmd == 'server-readd' and not servers['add']:
-            command_error("please list one or more --server-add=HOST[:PORT];"
+            command_error("please list one or more --server-add=HOST[:PORT],"
                   " or use -h for more help.")
 
         if cmd in ('server-add', 'rebalance'):
@@ -380,7 +380,11 @@ class Node:
     def process_services(self, data_required):
         if not self.services:
             self.services = "data"
-        svc_list = [w.strip() for w in self.services.split(";")]
+        sep = Node.SEP
+        if self.services.find(sep) < 0:
+            #backward compatible when using ";" as separator
+            sep = ";"
+        svc_list = [w.strip() for w in self.services.split(sep)]
         for svc in svc_list:
             if svc not in ["data", "moxi", "index", "query"]:
                 return "ERROR: invalid service: %s" % svc
@@ -886,7 +890,11 @@ class Node:
 
     def normalize_servers(self, server_list):
         slist = []
-        for server in server_list.split(Node.SEP):
+        sep = Node.SEP
+        if server_list.find(sep) < 0:
+            #backward compatible with ";" as separator
+            sep = ";"
+        for server in server_list.split(sep):
             hostport = "%s:%d" % util.hostport(server)
             slist.append(hostport)
         return slist
@@ -1603,7 +1611,7 @@ class Node:
                           "admin password for the server to be added"),
                          ("--group-name=GROUPNAME", "group that server belongs")]
 
-        services = [("--services=\"data;index;query;moxi\"",
+        services = [("--services=data,index,query,moxi",
                      "services that server runs")]
 
         if cmd == "server-add":
@@ -1617,9 +1625,9 @@ class Node:
             ("--delete", "delete an empty group"),
             ("--list", "show group/server relationship map"),
             ("--rename=NEWGROUPNAME", "rename group to new name"),
-            ("--add-servers=HOST[:PORT];HOST[:PORT]",
+            ("--add-servers=HOST[:PORT],HOST[:PORT]",
              "add a list of servers to group"),
-            ("--move-servers=HOST[:PORT];HOST[:PORT]",
+            ("--move-servers=HOST[:PORT],HOST[:PORT]",
              "move a list of servers from group"),
             ("--from-group=GROUPNAME", "group name to move servers from"),
             ("--to-group=GROUPNAME", "group name to move servers into")] + services
@@ -1704,7 +1712,7 @@ class Node:
         elif cmd == "collect-logs-start":
             return [
             ("--all-nodes", "Collect logs from all accessible cluster nodes"),
-            ("--nodes=HOST[:PORT];HOST[:PORT]",
+            ("--nodes=HOST[:PORT],HOST[:PORT]",
              "Collect logs from the specified subset of cluster nodes"),
             ("--upload", "Upload collects logs to specified host"),
             ("--upload-host=HOST",
