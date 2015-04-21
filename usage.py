@@ -359,12 +359,10 @@ EXAMPLES:
         --doc-batch-size=2048      \\
         --failure-restart-interval=30 \\
         --optimistic-replication-threshold=256 \\
-        --sourceNozzlePerNode=5 \\
-        --targetNozzlePerNode=6 \\
-        --maxExpectedReplicationLag=100 \\
-        --timeoutPercentageCap=90 \\
-        --logLevel=Debug \\
-        --statsInterval=80 \\
+        --source-nozzle-per-node=5 \\
+        --target-nozzle-per-node=6 \\
+        --log-level=Debug \\
+        --stats-interval=80 \\
         -u Administrator -p password
 
   List all xdcr replication streams
