@@ -38,6 +38,7 @@ rest_cmds = {
     'setting-audit'         :'/settings/audit',
     'setting-ldap'          :'/settings/saslauthdAuth',
     'user-manage'           :'/settings/readOnlyUser',
+    'setting-index'         :'/settings/indexes',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
     'collect-logs-start'  : '/controller/startLogsCollection',
@@ -81,6 +82,7 @@ methods = {
     'setting-alert'         :'POST',
     'setting-audit'         :'POST',
     'setting-ldap'          :'POST',
+    'setting-index'         :'POST',
     'user-manage'           :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
@@ -188,6 +190,11 @@ class Node:
         self.ldap_roadmins = ''
         self.ldap_default = "none"
 
+        #index
+        self.max_rollback_points = None
+        self.stable_snapshot_interval = None
+        self.memory_snapshot_interval = None
+        self.index_threads = None
         self.services = None
 
     def runCmd(self, cmd, server, port,
@@ -271,6 +278,9 @@ class Node:
 
         elif cmd == 'setting-ldap':
             self.ldap()
+
+        elif cmd == 'setting-index':
+            self.index()
 
         elif cmd == 'user-manage':
             self.userManage()
@@ -677,6 +687,31 @@ class Node:
                                      opts)
         print output_result
 
+    def index(self):
+        rest = util.restclient_factory(self.server,
+                                     self.port,
+                                     {'debug':self.debug},
+                                     self.ssl)
+        if self.max_rollback_points:
+            rest.setParam("maxRollbackPoints", self.max_rollback_points)
+        if self.stable_snapshot_interval:
+            rest.setParam("stableSnapshotInterval", self.stable_snapshot_interval)
+        if self.memory_snapshot_interval:
+            rest.setParam("memorySnapshotInterval", self.memory_snapshot_interval)
+        if self.index_threads:
+            rest.setParam("indexerThreads", self.index_threads)
+
+        opts = {
+            "error_msg": "unable to set index settings",
+            "success_msg": "set index settings"
+        }
+        output_result = rest.restCmd(self.method,
+                                     self.rest_cmd,
+                                     self.user,
+                                     self.password,
+                                     opts)
+        print output_result
+
     def processOpts(self, cmd, opts):
         """ Set standard opts.
             note: use of a server key keeps optional
@@ -886,6 +921,14 @@ class Node:
                 self.ldap_roadmins = a
             elif o == '--ldap-default':
                 self.ldap_default = a
+            elif o == 'index-max-rollback-points=':
+                self.max_rollback_points = a
+            elif o == 'index-stable-snapshot-interval':
+                self.stable_snapshot_interval = a
+            elif o == 'index-memory-snapshot-interval':
+                self.memory_snapshot_interval = a
+            elif o == 'index-threads':
+                self.index_threads = a
         return servers
 
     def normalize_servers(self, server_list):
@@ -1590,7 +1633,10 @@ class Node:
             "cluster-edit" : "modify cluster settings",
             "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
-            "user-manage" : "manage read only user"
+            "user-manage" : "manage read only user",
+            "setting-index" : "set index settings",
+            "setting-ldap" : "set ldap settings",
+            "setting-audit" : "set audit settings"
         }
         if cmd in command_summary:
             return command_summary[cmd]
@@ -1709,6 +1755,12 @@ class Node:
             ("--ldap-roadmins=", "read only admins"),
             ("--ldap-enabled=[0|1]", "using LDAP protocol for authentication"),
             ("--ldap-default=[admins|roadmins|none]", "set default ldap accounts")]
+        elif cmd == "setting-index":
+            return [
+            ("--index-max-rollback-points=[5]", "max roolback points"),
+            ("--index-stable-snapshot-interval=SECONDS", "stable snapshot interval"),
+            ("--index-memory-snapshot-interval=SECONDS", "in memory snapshot interval"),
+            ("--index-threads=[4]", "indexer threads")]
         elif cmd == "collect-logs-start":
             return [
             ("--all-nodes", "Collect logs from all accessible cluster nodes"),

@@ -161,7 +161,11 @@ def main():
                 'ldap-enabled=',
                 'ldap-admins=',
                 'ldap-roadmins=',
-                'ldap-default='
+                'ldap-default=',
+                'index-max-roolback-points=',
+                'index-stable-snapshot-interval=',
+                'index-memory-snapshot-interval=',
+                'index-threads=',
                 ])
     except getopt.GetoptError, err:
         usage.command_error(err)
@@ -205,6 +209,7 @@ def main():
         'setting-audit'         : node.Node,
         'setting-ldap'          : node.Node,
         'setting-xdcr'          : xdcr.XDCR,
+        'setting-index'         : node.Node,
         'xdcr-setup'            : xdcr.XDCR,
         'xdcr-replicate'        : xdcr.XDCR,
         'help'                  : usage.Usage
