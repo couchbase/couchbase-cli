@@ -118,6 +118,7 @@ class Node:
         self.sa_password = None
         self.port_new = None
         self.per_node_quota = None
+        self.cluster_index_ramsize = None
         self.cluster_name = None
         self.data_path = None
         self.index_path = None
@@ -379,7 +380,8 @@ class Node:
                                      self.ssl)
         if self.per_node_quota:
             rest.setParam('memoryQuota', self.per_node_quota)
-
+        if self.cluster_index_ramsize:
+            rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
         output_result = rest.restCmd(self.method,
                                      '/pools/default',
                                      self.user,
@@ -517,7 +519,8 @@ class Node:
         rest.setParam('memoryQuota', self.per_node_quota)
         if self.cluster_name:
             rest.setParam('tabName', self.cluster_name)
-
+        if self.cluster_index_ramsize:
+            rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
         opts = {
             "error_msg": "unable to set cluster configurations",
             "success_msg": "set cluster settings"
@@ -785,6 +788,8 @@ class Node:
                 self.port_new = a
             elif o in ('--cluster-init-ramsize', '--cluster-ramsize'):
                 self.per_node_quota = a
+            elif o == '--cluster-index-ramsize':
+                self.cluster_index_ramsize = a
             elif o == '--cluster-name':
                 self.cluster_name = a
             elif o == '--enable-auto-failover':
@@ -1682,7 +1687,8 @@ class Node:
             ("--cluster-username=USER", "new admin username"),
             ("--cluster-password=PASSWORD", "new admin password"),
             ("--cluster-port=PORT", "new cluster REST/http port"),
-            ("--cluster-ramsize=RAMSIZEMB", "per node data service ram quota in MB")] + services
+            ("--cluster-ramsize=RAMSIZEMB", "per node data service ram quota in MB"),
+            ("--cluster-index-ramsize=RAMSIZEMB", "per node index service ram quota in MB")] + services
         elif cmd == "node-init":
             return [
             ("--node-init-data-path=PATH", "data path for database files"),
@@ -1732,7 +1738,8 @@ class Node:
              "writing data to disk for a specific bucket has failed")]
         elif cmd == "setting-cluster":
             return [("--cluster-name=[CLUSTERNAME]", "cluster name"),
-                    ("--cluster-ramsize=[RAMSIZEMB]", "per node data service ram quota in MB")]
+                    ("--cluster-ramsize=[RAMSIZEMB]", "per node data service ram quota in MB"),
+                    ("--cluster-index-ramsize=[RAMSIZEMB]","per node index service ram quota in MB")]
         elif cmd == "setting-notification":
             return [("--enable-notification=[0|1]", "allow notification")]
         elif cmd == "setting-autofailover":
