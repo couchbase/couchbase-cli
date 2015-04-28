@@ -764,9 +764,9 @@ class BFDSink(BFD, pump.Sink):
         if not os.path.isdir(spec):
             try:
                 os.mkdir(spec)
-            except OSError, e:
-                if not os.path.isdir(spec):
-                    return "error: could not mkdir: %s; exception: %s" % (spec, e)
+            except OSError as error:
+                if error.errno != errno.EEXIST
+                    return "error: could not mkdir: %s; exception: %s" % (spec, error.strerror)
 
         new_session = self.ctl['new_session']
         self.ctl['new_session'] = False
