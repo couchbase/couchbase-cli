@@ -56,6 +56,15 @@ def argumentParsing():
                         help='Specify the path to cbrestore. Defaults to current directory')
     parser.add_option('--port', default='11210',
                       help='Specify the bucket port.  Defaults to 11210')
+    parser.add_option("", "--from-date",
+                      action="store", type="string", default=None,
+                      help="""restore data from the date specified as yyyy-mm-dd. By default,
+all data from the very beginning will be restored""")
+    parser.add_option("", "--to-date",
+                      action="store", type="string", default=None,
+                      help="""restore data till the date specified as yyyy-mm-dd. By default,
+all data that are collected will be restored""")
+
     options, rest = parser.parse_args()
     if len(rest) != 2:
         parser.print_help()
@@ -163,6 +172,16 @@ if __name__ == '__main__':
     else:
         path = re.sub(r' ', '\ ', path)
 
+    ssl_option = ''
+    if args.ssl:
+        ssl_option = ' -s '
+
+    from_date_option = ''
+    if args.from_date:
+        from_date_option = ' --from-date=' + args.from_date
+    to_date_option = ''
+    if args.to_date:
+        to_date_option = ' --to-date=' + args.to_date
     for bucket in bucketList:
         if not args.bucket_destination == '':
             vbucketList = getVbucketsToRestore(backupDir, args.bucket_source.strip())
@@ -183,14 +202,14 @@ if __name__ == '__main__':
                 command_line = os.path.join(path, 'cbrestore') + ' -v -t 1 -b ' + args.bucket_source.strip() \
                     + ' -B ' + args.bucket_destination + ' ' + os.path.join(backupDir, vbuckets) \
                     + ' http://' + node + ':' + rest \
-                    + ' -u ' + args.username + ' -p ' + args.password + ' 2>' + \
-                    os.path.join(backupDir, 'logs', vbuckets) + \
+                    + ' -u ' + args.username + ' -p ' + args.password + ssl_option + from_date_option + to_date_option \
+                    + ' 2>' + os.path.join(backupDir, 'logs', vbuckets) + \
                     '-restore-' + bucket + '.err'
             else:
                 command_line = os.path.join(path, 'cbrestore') + ' -v -t 1 -b ' + bucket \
                     + ' ' + os.path.join(backupDir, vbuckets) + ' http://' + node + ':' + rest \
-                    + ' -u ' + args.username + ' -p ' + args.password + ' 2>' + \
-                    os.path.join(backupDir, 'logs', vbuckets) + \
+                    + ' -u ' + args.username + ' -p ' + args.password + from_date_option + to_date_option \
+                    + ' 2>' + os.path.join(backupDir, 'logs', vbuckets) + \
                     '-restore-' + bucket + '.err'
             if args.verbose:
                 print command_line
