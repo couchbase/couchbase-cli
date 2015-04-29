@@ -304,7 +304,7 @@ class Node:
     def clusterInit(self, cmd):
         #setup services
         if cmd == "cluster-init":
-            err = self.process_services(True)
+            err, services = self.process_services(True)
             if err:
                 print err
                 return
@@ -317,7 +317,7 @@ class Node:
                                            self.port,
                                            {'debug':self.debug},
                                            self.ssl)
-            rest.setParam('services', self.services)
+            rest.setParam('services', services)
             output_result = rest.restCmd(self.method,
                                          '/node/controller/setupServices',
                                          self.user,
@@ -399,14 +399,14 @@ class Node:
         svc_list = [w.strip() for w in self.services.split(sep)]
         for svc in svc_list:
             if svc not in ["data", "moxi", "index", "query"]:
-                return "ERROR: invalid service: %s" % svc
+                return "ERROR: invalid service: %s" % svc, None
         if data_required and "data" not in svc_list:
             svc_list.append("data")
-        self.services = ",".join(svc_list)
+        services = ",".join(svc_list)
         for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
-            self.services = self.services.replace(old, new)
+            services = services.replace(old, new)
 
-        return None
+        return None, services
 
     def nodeInit(self):
         rest = util.restclient_factory(self.server,
@@ -948,19 +948,21 @@ class Node:
         return slist
 
     def addServers(self, servers):
-        err = self.process_services(True)
+        err, services = self.process_services(False)
         if err:
             print err
             return
+
         for server in servers:
             user = servers[server]['user']
             password = servers[server]['password']
             output_result = self.serverAdd(server,
                                            user,
-                                           password)
+                                           password,
+                                           services)
             print output_result
 
-    def serverAdd(self, add_server, add_with_user, add_with_password):
+    def serverAdd(self, add_server, add_with_user, add_with_password, services):
         rest = util.restclient_factory(self.server,
                                      self.port,
                                      {'debug':self.debug},
@@ -969,7 +971,7 @@ class Node:
         if add_with_user and add_with_password:
             rest.setParam('user', add_with_user)
             rest.setParam('password', add_with_password)
-        rest.setParam('services', self.services)
+        rest.setParam('services', services)
         opts = {
             'error_msg': "unable to server-add %s" % add_server,
             'success_msg': "server-add %s" % add_server
@@ -1416,13 +1418,12 @@ class Node:
         if uri is None:
             command_error("invalid group name:%s" % self.group_name)
         uri = "%s/addNode" % uri
+        groups = self.getServerGroups()
 
-        err = self.process_services(True)
+        err, services = self.process_services(False)
         if err:
             print err
             return
-
-        groups = self.getServerGroups()
         for server in self.server_list:
             rest = util.restclient_factory(self.server,
                                      self.port,
@@ -1433,7 +1434,7 @@ class Node:
                 rest.setParam('user', self.sa_username)
             if self.sa_password:
                 rest.setParam('password', self.sa_password)
-            rest.setParam("services", self.services)
+            rest.setParam("services", services)
             opts = {
                 'error_msg': "unable to add server '%s' to group '%s'" % (server, self.group_name),
                 'success_msg': "add server '%s' to group '%s'" % (server, self.group_name)
