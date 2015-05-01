@@ -238,13 +238,12 @@ class SFDSource(pump.Source):
 
             try:
                 store = couchstore.CouchStore(f, 'r')
+                store.forEachChange(0, change_callback)
+                store.close()
             except Exception, e:
-                self.queue.put(("error: could not open couchstore file: %s"
-                                "; exception: %s" % (f, e), None))
-                return
-
-            store.forEachChange(0, change_callback)
-            store.close()
+                #MB-12270: Some files may be deleted due to compaction. We can
+                #safely ingore them and move to next file.
+                pass
 
         if abatch[0].size():
             self.queue.put((0, abatch[0]))
