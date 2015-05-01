@@ -670,12 +670,12 @@ class Node:
         if self.ldap_enabled == 'true':
             rest.setParam('enabled', 'true')
             if self.ldap_default == 'admins':
-                rest.setParam('roAdmins', self.ldap_roadmins)
+                rest.setParam('roAdmins', self.ldap_roadmins.replace(Node.SEP, "\n"))
             elif self.ldap_default == 'roadmins':
-                rest.setParam('admins', self.ldap_admins)
+                rest.setParam('admins', self.ldap_admins.replace(Node.SEP, "\n"))
             else:
-                rest.setParam('admins', self.ldap_admins)
-                rest.setParam('roAdmins', self.ldap_roadmins)
+                rest.setParam('admins', self.ldap_admins.replace(Node.SEP,"\n"))
+                rest.setParam('roAdmins', self.ldap_roadmins.replace(Node.SEP, "\n"))
         else:
             rest.setParam('enabled', 'false')
 
@@ -1759,8 +1759,8 @@ class Node:
             ("--audit-enabled=[0|1]", "enable auditing or not")]
         elif cmd == "setting-ldap":
             return [
-            ("--ldap-admins=", "full admins"),
-            ("--ldap-roadmins=", "read only admins"),
+            ("--ldap-admins=", "full admins, separated by comma"),
+            ("--ldap-roadmins=", "read only admins, separated by comma"),
             ("--ldap-enabled=[0|1]", "using LDAP protocol for authentication"),
             ("--ldap-default=[admins|roadmins|none]", "set default ldap accounts")]
         elif cmd == "setting-index":
