@@ -337,6 +337,91 @@ class Buckets:
         elif cmd == "bucket-compact":
             return bucket_name + compact_data + compact_view
 
+    def getCommandExampleHelp(self, cmd):
+        """ Obtain detailed example help for command
+        Returns a list of command examples to illustrate how to use command
+        or None if there's no example help or cmd is unknown.
+        """
+
+        if cmd == "bucket-list":
+            return [("List buckets in a cluster",
+"""
+    couchbase-cli bucket-list -c 192.168.0.1:8091""")]
+        elif cmd == "bucket-create":
+            return [("Create a new dedicated port couchbase bucket",
+"""
+    couchbase-cli bucket-create -c 192.168.0.1:8091 \\
+       --bucket=test_bucket \\
+       --bucket-type=couchbase \\
+       --bucket-port=11222 \\
+       --bucket-ramsize=200 \\
+       --bucket-replica=1 \\
+       --bucket-priority=high \\
+       -u Administrator -p password"""),
+                ("Create a couchbase bucket and wait for bucket ready",
+"""
+    couchbase-cli bucket-create -c 192.168.0.1:8091 \\
+       --bucket=test_bucket \\
+       --bucket-type=couchbase \\
+       --bucket-port=11222 \\
+       --bucket-ramsize=200 \\
+       --bucket-replica=1 \\
+       --bucket-priority=low \\
+       --wait \\
+       -u Administrator -p password"""),
+                ("Create a new sasl memcached bucket",
+"""
+    couchbase-cli bucket-create -c 192.168.0.1:8091 \\
+       --bucket=test_bucket \\
+       --bucket-type=memcached \\
+       --bucket-password=password \\
+       --bucket-ramsize=200 \\
+       --bucket-eviction-policy=valueOnly \\
+       --enable-flush=1 \\
+       -u Administrator -p password""")]
+        elif cmd == "bucket-edit":
+            return [("Modify a dedicated port bucket",
+"""
+    couchbase-cli bucket-edit -c 192.168.0.1:8091 \\
+       --bucket=test_bucket \\
+       --bucket-port=11222 \\
+       --bucket-ramsize=400 \\
+       --bucket-eviction-policy=fullEviction \\
+       --enable-flush=1 \\
+       --bucket-priority=high \\
+       -u Administrator -p password""")]
+        elif cmd == "bucket-delete":
+            return [("Delete a bucket",
+"""
+    couchbase-cli bucket-delete -c 192.168.0.1:8091 \\
+       --bucket=test_bucket""")]
+        elif cmd == "bucket-compact":
+            return [("Compact a bucket for both data and view",
+"""
+    couchbase-cli bucket-compact -c 192.168.0.1:8091 \\
+        --bucket=test_bucket \\
+        -u Administrator -p password"""),
+                    ("Compact a bucket for data only",
+"""
+    couchbase-cli bucket-compact -c 192.168.0.1:8091 \\
+        --bucket=test_bucket \\
+        --data-only \\
+        -u Administrator -p password"""),
+                    ("Compact a bucket for view only",
+"""
+    couchbase-cli bucket-compact -c 192.168.0.1:8091 \\
+        --bucket=test_bucket \\
+        --view-only \\
+        -u Administrator -p password""")]
+        elif cmd == "bucket-flush":
+            return [("Flush a bucket",
+"""
+    couchbase-cli bucket-flush -c 192.168.0.1:8091 \\
+       --force \\
+       -u Administrator -p password""")]
+        else:
+            return None
+
 class BucketStats:
     def __init__(self, bucket_name):
         self.debug = False

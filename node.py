@@ -1783,3 +1783,237 @@ class Node:
              "Ticket number to associate the uploaded logs with")]
         else:
             return None
+
+    def getCommandExampleHelp(self, cmd):
+        """ Obtain detailed example help for command
+        Returns a list of command examples to illustrate how to use command
+        or None if there's no example help or cmd is unknown.
+        """
+
+        if cmd == "cluster-init":
+            return [("Set data service ram quota and index ram quota",
+"""
+    couchbase-cli cluster-init -c 192.168.0.1:8091 \\
+       --cluster-username=Administrator \\
+       --cluster-password=password \\
+       --cluster-port=8080 \\
+       --services=data,index \\
+       --cluster-ramsize=300 \\
+       --cluster-index-ramsize=200""")]
+        elif cmd == "cluster-edit":
+            return [("Change the cluster username, password, port and data service ram quota",
+"""
+    couchbase-cli cluster-edit -c 192.168.0.1:8091 \\
+       --cluster-username=Administrator1 \\
+       --cluster-password=password1 \\
+       --cluster-port=8080 \\
+       --cluster-ramsize=300 \\
+       -u Administrator -p password""")]
+        elif cmd == "node-init":
+            return [("Set data path and hostname for an unprovisioned cluster",
+"""
+    couchbse-cli node-init -c 192.168.0.1:8091 \\
+       --node-init-data-path=/tmp/data \\
+       --node-init-index-path=/tmp/index \\
+       --node-init-hostname=myhostname \\
+       -u Administrator -p password"""),
+                    ("Change the data path",
+"""
+     couchbase-cli node-init -c 192.168.0.1:8091 \\
+       --node-init-data-path=/tmp \\
+       -u Administrator -p password""")]
+        elif cmd == "server-add":
+            return [("Add a node to a cluster, but do not rebalance",
+"""
+    couchbase-cli server-add -c 192.168.0.1:8091 \\
+       --server-add=192.168.0.2:8091 \\
+       --server-add-username=Administrator1 \\
+       --server-add-password=password1 \\
+       --group-name=group1 \\
+       -u Administrator -p password"""),
+                    ("Add a node to a cluster, but do not rebalance",
+"""
+    couchbase-cli server-add -c 192.168.0.1:8091 \\
+       --server-add=192.168.0.2:8091 \\
+       --server-add-username=Administrator1 \\
+       --server-add-password=password1 \\
+       --group-name=group1 \\
+       -u Administrator -p password""")]
+        elif cmd == "rebalance":
+            return [("Add a node to a cluster and rebalance",
+"""
+    couchbase-cli rebalance -c 192.168.0.1:8091 \\
+       --server-add=192.168.0.2:8091 \\
+       --server-add-username=Administrator1 \\
+       --server-add-password=password1 \\
+       --group-name=group1 \\
+       -u Administrator -p password"""),
+                    ("Add a node to a cluster and rebalance",
+"""
+    couchbase-cli rebalance -c 192.168.0.1:8091 \\
+       --server-add=192.168.0.2:8091 \\
+       --server-add-username=Administrator1 \\
+       --server-add-password=password1 \\
+       --group-name=group1 \\
+       -u Administrator -p password"""),
+                    ("Remove a node from a cluster and rebalance",
+"""
+    couchbase-cli rebalance -c 192.168.0.1:8091 \\
+       --server-remove=192.168.0.2:8091 \\
+       -u Administrator -p password"""),
+                    ("Remove and add nodes from/to a cluster and rebalance",
+"""
+    couchbase-cli rebalance -c 192.168.0.1:8091 \\
+      --server-remove=192.168.0.2 \\
+      --server-add=192.168.0.4 \\
+      --server-add-username=Administrator1 \\
+      --server-add-password=password1 \\
+      --group-name=group1 \\
+      -u Administrator -p password""")
+       ]
+        elif cmd == "rebalance-stop":
+            return [("Stop the current rebalancing",
+"""
+    couchbase-cli rebalance-stop -c 192.168.0.1:8091 \\
+       -u Administrator -p password""")]
+        elif cmd == "recovery":
+            return [("Set recovery type to a server",
+"""
+    couchbase-cli recovery -c 192.168.0.1:8091 \\
+       --server-recovery=192.168.0.2 \\
+       --recovery-type=full \\
+       -u Administrator -p password""")]
+        elif cmd == "failover":
+            return [("Set a failover, readd, recovery and rebalance sequence operations",
+"""
+    couchbase-cli failover -c 192.168.0.1:8091 \\
+       --server-failover=192.168.0.2 \\
+       -u Administrator -p password
+
+    couchbase-cli server-readd -c 192.168.0.1:8091 \\
+       --server-add=192.168.0.2 \\
+       -u Administrator -p password
+
+    couchbase-cli recovery -c 192.168.0.1:8091 \\
+       --server-recovery=192.168.0.2 \\
+       --recovery-type=delta \\
+       -u Administrator -p password
+
+    couchbase-cli rebalance -c 192.168.0.1:8091 \\
+       --recovery-buckets="default,bucket1" \\
+       -u Administrator -p password""")]
+        elif cmd == "user-manage":
+            return [("List read only user in a cluster",
+"""
+    couchbase-cli user-manage --list -c 192.168.0.1:8091 \\
+           -u Administrator -p password"""),
+                ("Delete a read only user in a cluster",
+"""
+    couchbase-cli user-manage -c 192.168.0.1:8091 \\
+        --delete --ro-username=readonlyuser \\
+        -u Administrator -p password"""),
+                ("Create/modify a read only user in a cluster",
+"""
+    couchbase-cli user-manage -c 192.168.0.1:8091 \\
+        --set --ro-username=readonlyuser --ro-password=readonlypassword \\
+        -u Administrator -p password""")]
+        elif cmd == "group-manage":      
+            return [("Create a new group",
+"""
+    couchbase-cli group-manage -c 192.168.0.1:8091 \\
+        --create --group-name=group1 -u Administrator -p password"""),
+                ("Delete an empty group",
+"""
+    couchbase-cli group-manage -c 192.168.0.1:8091 \\
+        --delete --group-name=group1 -u Administrator -p password"""),
+                ("Rename an existed group",
+"""
+    couchbase-cli group-manage -c 192.168.0.1:8091 \\
+        --rename=newgroup --group-name=group1 -u Administrator -p password"""),
+                ("Show group/server map",
+"""
+    couchbase-cli group-manage -c 192.168.0.1:8091 \\
+        --list -u Administrator -p password"""),
+                ("Add a server to a group",
+"""
+    couchbase-cli group-manage -c 192.168.0.1:8091 \\
+        --add-servers=10.1.1.1:8091,10.1.1.2:8091 \\
+        --group-name=group1 \\
+        --server-add-username=Administrator1 \\
+        --server-add-password=password1 \\
+        --services=data,index,query \\
+        -u Administrator -p password"""),
+                ("Move list of servers from group1 to group2",
+"""
+    couchbase-cli group-manage -c 192.168.0.1:8091 \\
+        --move-servers=10.1.1.1:8091,10.1.1.2:8091 \\
+        --from-group=group1 \\
+        --to-group=group2 \\
+        -u Administrator -p password""")]
+        elif cmd == "ssl-manage":
+            return [("Download a cluster certificate",
+"""
+    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
+        --retrieve-cert=/tmp/test.pem \\
+        -u Administrator -p password"""),
+                ("Regenerate AND download a cluster certificate",
+"""
+    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
+        --regenerate-cert=/tmp/test.pem \\
+        -u Administrator -p password""")]
+        elif cmd == "collect-logs-start":
+            return [("Start cluster-wide log collection for whole cluster",
+"""
+    couchbase-cli collect-logs-start -c 192.168.0.1:8091 \\
+        -u Administrator -p password \\
+        --all-nodes --upload --upload-host=host.upload.com \\
+        --customer="example inc" --ticket=12345"""),
+                ("Start cluster-wide log collection for selected nodes",
+"""
+    couchbase-cli collect-logs-start -c 192.168.0.1:8091 \\
+        -u Administrator -p password \\
+        --nodes=10.1.2.3:8091,10.1.2.4 --upload --upload-host=host.upload.com \\
+        --customer="example inc" --ticket=12345""")]
+        elif cmd == "collect-logs-stop":
+            return [("Stop cluster-wide log collection",
+"""
+    couchbase-cli collect-logs-stop -c 192.168.0.1:8091 \\
+        -u Administrator -p password""")]
+        elif cmd == "collect-logs-status":
+            return [("Show status of cluster-wide log collection",
+"""
+    couchbase-cli collect-logs-status -c 192.168.0.1:8091 \\
+        -u Administrator -p password""")]
+        elif cmd == "setting-ldap":
+            return [("Enable LDAP with None default",
+"""
+    couchbase-cli setting-ldap -c 192.168.0.1:8091 \\
+        --ldap-enabled=1 --ldap-admins=u1,u2 --ldap-roadmins=u3,u3,u5 \\
+        -u Administrator -p password"""),
+                ("Enable LDAP with full admin default",
+"""
+    couchbase-cli setting-ldap -c 192.168.0.1:8091 \\
+        --ldap-enabled=1 --ldap-default=admins --ldap-roadmins=u3,u3,u5 \\
+        -u Administrator -p password"""),
+                ("Enable LDAP with read only default",
+"""
+    couchbase-cli setting-ldap -c 192.168.0.1:8091 \\
+        --ldap-enabled=1 --ldap-default=roadmins --ldap-admins=u1,u2 \\
+        -u Administrator -p password"""),
+                ("Disable LDAP",
+"""
+    couchbase-cli setting-ldap -c 192.168.0.1:8091 \\
+        --ldap-enabled=0  -u Administrator -p password""")]
+        elif cmd == "setting-audit":
+            return [("Enable audit",
+"""
+    couchbase-cli setting-audit -c 192.168.0.1:8091 \\
+        --audit-enabled=1 --audit-log-rotate-interva=4 \\
+        --audit-log-path="/opt/couchbase/var/lib/couchbase/logs"
+        -u Administrator -p password"""),
+                ("Disable audit",
+"""
+    couchbase-cli setting-audit -c 192.168.0.1:8091 \\
+        --audit-enabled=0 -u Administrator -p password""")]
+        else:
+            return None

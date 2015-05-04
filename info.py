@@ -56,3 +56,16 @@ class Info:
             return command_summary[cmd]
         else:
             return None
+
+    def getCommandExampleHelp(self, cmd):
+        """ Obtain detailed example help for command
+        Returns a list of command examples to illustrate how to use command
+        or None if there's no example help or cmd is unknown.
+        """
+
+        if cmd == "server-info":
+            return [("Server information",
+"""
+    couchbase-cli server-info -c 192.168.0.1:8091""")]
+        else:
+            return None

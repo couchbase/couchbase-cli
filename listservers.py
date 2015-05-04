@@ -93,3 +93,16 @@ class ListServers:
             return command_summary[cmd]
         else:
             return None
+
+    def getCommandExampleHelp(self, cmd):
+        """ Obtain detailed example help for command
+        Returns a list of command examples to illustrate how to use command
+        or None if there's no example help or cmd is unknown.
+        """
+
+        if cmd == "server-list":
+            return [("List servers in a cluster",
+"""
+    couchbase-cli server-list -c 192.168.0.1:8091""")]
+        else:
+            return None

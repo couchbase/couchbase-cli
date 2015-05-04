@@ -608,3 +608,89 @@ class XDCR:
         else:
             return None
 
+    def getCommandExampleHelp(self, cmd):
+        """ Obtain detailed example help for command
+        Returns a list of command examples to illustrate how to use command
+        or None if there's no example help or cmd is unknown.
+        """
+
+        if cmd == "xdcr-setup":
+            return [("Create a XDCR remote cluster",
+"""
+    couchbase-cli xdcr-setup -c 192.168.0.1:8091 \\
+        --create \\
+        --xdcr-cluster-name=test \\
+        --xdcr-hostname=10.1.2.3:8091 \\
+        --xdcr-username=Administrator1 \\
+        --xdcr-password=password1 \\
+        --xdcr-demand-encryption=1 \\
+        --xdcr-certificate=/tmp/test.pem \\
+        -u Administrator -p password"""),
+                    ("Delete a XDCR remote cluster",
+"""
+    couchbase-cli xdcr-setup --delete -c 192.168.0.1:8091 \\
+        --xdcr-cluster-name=test \\
+        -u Administrator -p password"""),
+                    ("List XDCR remote cluster",
+"""
+    couchbase-cli xdcr-setup --list -c 192.168.0.1:8091 \\
+        -u Administrator -p password""")]
+        elif cmd == "xdcr-replicate":
+            return [("Start a replication stream in memcached protocol",
+"""
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --create \\
+        --xdcr-cluster-name=test \\
+        --xdcr-from-bucket=default \\
+        --xdcr-to-bucket=default1 \\
+        --xdcr-replication-mode=xmem \\
+        -u Administrator -p password"""),
+            ("Start a replication stream in capi protocol",
+"""
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --create \\
+        --xdcr-cluster-name=test \\
+        --xdcr-from-bucket=default \\
+        --xdcr-to-bucket=default1 \\
+        --xdcr-replication-mode=capi \\
+        -u Administrator -p password"""),
+            ("Delete a replication stream",
+"""
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --delete \\
+        --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \\
+        -u Administrator -p password"""),
+            ("Pause a running replication stream",
+"""
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --pause \\
+        --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \\
+        -u Administrator -p password"""),
+            ("Resume a paused replication stream",
+"""
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --resume \\
+        --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \\
+        -u Administrator -p password"""),
+            ("Update settings for a replication stream",
+"""
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --settings \\
+        --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \\
+        --checkpoint-interval=1800 \\
+        --worker-batch-size=500    \\
+        --doc-batch-size=2048      \\
+        --failure-restart-interval=30 \\
+        --optimistic-replication-threshold=256 \\
+        --source-nozzle-per-node=5 \\
+        --target-nozzle-per-node=6 \\
+        --log-level=Debug \\
+        --stats-interval=80 \\
+        -u Administrator -p password"""),
+            ("List all xdcr replication streams",
+"""
+    couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\
+        --list \\
+        -u Administrator -p password""")]
+        else:
+            return None
