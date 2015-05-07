@@ -503,9 +503,13 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         extra_bytes = 0
         while self.running:
             try:
+                if self.dcp_done:
+                    time.sleep(1)
+                    continue
                 readers, writers, errors = select.select(desc, [], [], rd_timeout)
                 rd_timeout = .25
                 if len(self.stream_list) == 0:
+                    time.sleep(1)
                     continue
 
                 for reader in readers:
