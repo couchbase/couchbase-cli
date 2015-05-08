@@ -289,27 +289,29 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     meta_start = val_start + val_len
                     key = data[extlen:val_start]
                     val = data[val_start:meta_start]
-                    extra_meta = data[meta_start:]
-                    extra_index = 0
-                    version = extra_meta[extra_index]
-                    extra_index += 1
                     conf_res = 0
-                    while extra_index < metalen:
-                        id, extlen = struct.unpack(couchbaseConstants.DCP_EXTRA_META_PKG_FMT, extra_meta[extra_index:extra_index+3])
-                        extra_index += 3
-                        if id == couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION:
-                            if extlen == 1:
-                                conf_res, = struct.unpack(">B",extra_meta[extra_index:extra_index+1])
-                            elif extlen == 2:
-                                conf_res, = struct.unpack(">H",extra_meta[extra_index:extra_index+2])
-                            elif extlen == 4:
-                                conf_res, = struct.unpack(">I", extra_meta[extra_index:extra_index+4])
-                            elif extlen == 8:
-                                conf_res, = struct.unpack(">Q", extra_meta[extra_index:extra_index+8])
-                            else:
-                                logging.error("unsupported extra meta data format:%d" % extlen)
-                                conf_res = 0
-                        extra_index += extlen
+                    if meta_start < datalen:
+                        # handle extra conflict resolution fields
+                        extra_meta = data[meta_start:]
+                        extra_index = 0
+                        version = extra_meta[extra_index]
+                        extra_index += 1
+                        while extra_index < metalen:
+                            id, extlen = struct.unpack(couchbaseConstants.DCP_EXTRA_META_PKG_FMT, extra_meta[extra_index:extra_index+3])
+                            extra_index += 3
+                            if id == couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION:
+                                if extlen == 1:
+                                    conf_res, = struct.unpack(">B",extra_meta[extra_index:extra_index+1])
+                                elif extlen == 2:
+                                    conf_res, = struct.unpack(">H",extra_meta[extra_index:extra_index+2])
+                                elif extlen == 4:
+                                    conf_res, = struct.unpack(">I", extra_meta[extra_index:extra_index+4])
+                                elif extlen == 8:
+                                    conf_res, = struct.unpack(">Q", extra_meta[extra_index:extra_index+8])
+                                else:
+                                    logging.error("unsupported extra meta data format:%d" % extlen)
+                                    conf_res = 0
+                            extra_index += extlen
 
                     if not self.skip(key, vbucket_id):
                         msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno, val, seqno, dtype, \
@@ -459,7 +461,13 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                        couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
                                        str(self.batch_max_bytes * 10), opaque)
                 self.dcp_conn._handleSingleResponse(opaque)
-
+            except EOFError:
+                return "error: Fail to set up DCP connection"
+            except cb_bin_client.MemcachedError:
+                return "error: DCP connect memcached error"
+            except socket.error:
+                return "error: DCP connection error"
+            try:
                 opaque=self.r.randint(0, 2**32)
                 self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
                                        couchbaseConstants.KEY_DCP_EXT_METADATA,
@@ -468,9 +476,10 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             except EOFError:
                 return "error: Fail to set up DCP connection"
             except cb_bin_client.MemcachedError:
-                return "error: DCP connect memcached error"
+                pass
             except socket.error:
                 return "error: DCP connection error"
+
             self.running = True
             self.start()
 
