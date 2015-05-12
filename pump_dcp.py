@@ -404,6 +404,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         if not self.dcp_conn:
             host = self.source_node['hostname'].split(':')[0]
             port = self.source_node['ports']['direct']
+            if self.opts.ssl:
+                port = couchbaseConstants.SSL_PORT
             version = self.source_node['version']
 
             logging.debug("  DCPStreamSource connecting mc: " +
@@ -828,7 +830,8 @@ class DCPSink(pump_cb.CBSink):
 
         host = node.split(':')[0]
         port = node.split(':')[1]
-
+        if self.opts.ssl:
+            port = couchbaseConstants.SSL_PORT
         logging.debug("  DCPSink connecting mc: " +
                       host + ":" + str(port))
 

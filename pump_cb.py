@@ -253,6 +253,8 @@ class CBSink(pump_mc.MCSink):
         conn = mconns.get(host_port, None)
         if not conn:
             host, port = host_port.split(':')
+            if self.opts.ssl:
+                port = couchbaseConstants.SSL_PORT
             user = bucket['name']
             pswd = bucket['saslPassword']
             rv, conn = CBSink.connect_mc(host, port, user, pswd)

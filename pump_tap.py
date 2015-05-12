@@ -269,6 +269,8 @@ class TAPDumpSource(pump.Source):
         if not self.tap_conn:
             host = self.source_node['hostname'].split(':')[0]
             port = self.source_node['ports']['direct']
+            if self.opts.ssl:
+                port = couchbaseConstants.SSL_PORT
             version = self.source_node['version'] # Ex: '2.0.0-1944-rel-community' or '1.8.1-937-rel-community'.
 
             logging.debug("  TAPDumpSource connecting mc: " +

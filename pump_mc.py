@@ -293,6 +293,8 @@ class MCSink(pump.Sink):
     def check(opts, spec, source_map):
         host, port, user, pswd, path = \
             pump.parse_spec(opts, spec, int(getattr(opts, "port", 11211)))
+        if opts.ssl:
+            ports = couchbaseConstants.SSL_PORT
         rv, conn = MCSink.connect_mc(host, port, user, pswd)
         if rv != 0:
             return rv, None
@@ -317,6 +319,8 @@ class MCSink(pump.Sink):
         host, port, user, pswd, path = \
             pump.parse_spec(self.opts, self.spec,
                             int(getattr(self.opts, "port", 11211)))
+        if self.opts.ssl:
+            port = couchbaseConstants.SSL_PORT
         return MCSink.connect_mc(host, port, user, pswd)
 
     @staticmethod
