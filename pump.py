@@ -884,6 +884,9 @@ def rest_request(host, port, user, pswd, ssl, path, method='GET', body='', reaso
         reason = "; reason: %s" % (reason)
     logging.debug("rest_request: %s@%s:%s%s%s" % (user, host, port, path, reason))
     if ssl:
+        if port != couchbaseConstants.SSL_REST_PORT:
+            return ("error: invalid port %s used when ssl option is specified" +
+                    "; the suggested port is %s") % (port, couchbaseConstants.SSL_REST_PORT), None, None
         conn = httplib.HTTPSConnection(host, port)
     else:
         conn = httplib.HTTPConnection(host, port)
