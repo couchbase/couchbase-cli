@@ -459,7 +459,11 @@ class BFDSource(BFD, pump.Source):
 
                     if self.skip(key, vbucket_id):
                         continue
-                    msg = (row[0], row[1], row[2], row[3], row[4],
+                    if self.opts.extra.get('no_expiry', 0):
+                        exp = 0
+                    else:
+                        exp = row[4]
+                    msg = (row[0], row[1], row[2], row[3], exp,
                            int(row[5]), # CAS as 64-bit integer not string.
                            row[6], # revid as 64-bit integer too
                            row[7])

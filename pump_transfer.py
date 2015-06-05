@@ -224,6 +224,7 @@ such as when transferring data from an OSX server to a non-OSX cluster"),
             "uncompress":      (0,      "For value 1, restore data in uncompressed mode"),
             "backoff_cap":     (10,     "Max backoff time during rebalance period"),
             "flow_control":    (1,      "For value 0, disable flow control to improve throughput"),
+            "no_expiry":       (0,      "For value 1, at restore time, ignore ttl stored in backup so that a full snapshot can be restored"),
             }
 
     def find_handlers(self, opts, source, sink):
