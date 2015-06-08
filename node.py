@@ -1663,7 +1663,7 @@ class Node:
                           "admin password for the server to be added"),
                          ("--group-name=GROUPNAME", "group that server belongs")]
 
-        services = [("--services=data,index,query,moxi",
+        services = [("--services=data,index,query",
                      "services that server runs")]
 
         if cmd == "server-add":
