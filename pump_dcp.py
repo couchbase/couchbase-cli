@@ -63,7 +63,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         self.vbucket_list = getattr(opts, "vbucket_list", None)
         self.r=random.Random()
         self.queue = PumpQueue()
-        self.response = PumpQueue()
+        self.queue_size = int(opts.extra.get("dcp_consumer_queue_length", 1000))
+        self.response = PumpQueue(self.queue_size)
         self.running = False
         self.stream_list = {}
         self.unack_size = 0

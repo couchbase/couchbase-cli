@@ -213,6 +213,7 @@ such as when transferring data from an OSX server to a non-OSX cluster"),
             "uncompress":      (0,      "For value 1, restore data in uncompressed mode"),
             "backoff_cap":     (10,     "Max backoff time during rebalance period"),
             "flow_control":    (1,      "For value 0, disable flow control to improve throughput"),
+            "dcp_consumer_queue_length": (1000,"A DCP client needs a queue for incoming documents/messages. A large length is more efficient, but memory proportional to length*avg. doc size. Below length 150, performance degrades significantly."),
             }
 
     def find_handlers(self, opts, source, sink):
