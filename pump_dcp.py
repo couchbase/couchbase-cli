@@ -551,6 +551,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                     extra_bytes = 0
             except socket.error:
                 break
+            except Exception, e:
+                pass
 
     def setup_dcp_streams(self):
         #send request to retrieve vblist and uuid for the node
