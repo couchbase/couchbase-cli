@@ -7,6 +7,7 @@ Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 import struct
 
 SSL_PORT = 11209
+SSL_REST_PORT = 18091
 
 # Command constants
 CMD_GET = 0

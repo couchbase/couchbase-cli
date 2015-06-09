@@ -75,7 +75,9 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
     @staticmethod
     def can_handle(opts, spec):
         return (spec.startswith("http://") or
-                spec.startswith("couchbase://"))
+                spec.startswith("couchbase://") or
+                spec.startswith("https://")
+                )
 
     @staticmethod
     def check(opts, spec):

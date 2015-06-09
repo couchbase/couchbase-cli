@@ -16,6 +16,8 @@ class CBSink(pump_mc.MCSink):
     """Smart client sink to couchbase cluster."""
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
+        if spec.startswith("https://"):
+            setattr(opts, "ssl", True)
         super(CBSink, self).__init__(opts, spec, source_bucket, source_node,
                                      source_map, sink_map, ctl, cur)
 
@@ -101,7 +103,8 @@ class CBSink(pump_mc.MCSink):
     @staticmethod
     def can_handle(opts, spec):
         return (spec.startswith("http://") or
-                spec.startswith("couchbase://"))
+                spec.startswith("couchbase://") or
+                spec.startswith("https://"))
 
     @staticmethod
     def check_source(opts, source_class, source_spec, sink_class, sink_spec):

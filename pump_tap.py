@@ -35,6 +35,8 @@ class TAPDumpSource(pump.Source):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
+        if spec.startswith("https://"):
+            setattr(opts, "ssl", True)
         super(TAPDumpSource, self).__init__(opts, spec, source_bucket, source_node,
                                             source_map, sink_map, ctl, cur)
         self.tap_done = False
@@ -50,7 +52,8 @@ class TAPDumpSource(pump.Source):
     @staticmethod
     def can_handle(opts, spec):
         return (spec.startswith("http://") or
-                spec.startswith("couchbase://"))
+                spec.startswith("couchbase://") or
+                spec.startswith("https://"))
 
     @staticmethod
     def check(opts, spec):
