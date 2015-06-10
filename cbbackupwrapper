@@ -106,6 +106,8 @@ def argumentParsing():
                         help='Specify the bucket port.  Defaults to 11210')
     parser.add_option('-n', '--number', default='100',
                         help='Specify the number of vbuckets per process. Defaults to 100')
+    parser.add_option('--sequential', action='store_true',
+                      default=False, help='backup vbuckets sequentially')
     parser.add_option('-x', '--extra', default=None,
                         help="""Provide extra, uncommon config parameters;
                         comma-separated key=val(,key=val)* pairs""")
@@ -311,6 +313,7 @@ if __name__ == '__main__':
         ssl_option = ' -s '
 
     # Group the number of vbuckets per process
+    print 'Waiting for the backup to complete...'
     for i in range(0, len(vbucketList), int(args.number)):
         chunk = vbucketList[i:i + int(args.number)]
         vbucketsname = str(chunk[0]) + '-' + str(chunk[-1])
@@ -322,6 +325,9 @@ if __name__ == '__main__':
             print command_line
         p = subprocess.Popen(command_line, shell=True)
         processes[p] = vbucketsname
+        if args.sequential:
+            sys.stderr.write(".")
+            p.wait()
 
     # Did we backup anything?
     if len(processes) == 0:
@@ -329,7 +335,6 @@ if __name__ == '__main__':
         print 'Please check that you have the buckets on ' + args.node
         exit(1)
     else:
-        print 'Waiting for the backup to complete...'
         successCount = 0
         for p in processes:
             p.wait()
