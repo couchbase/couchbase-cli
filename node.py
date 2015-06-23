@@ -353,7 +353,7 @@ class Node:
 
         opts = {
             "error_msg": "unable to init/modify %s" % self.server,
-            "success_msg": "init %s" % self.server
+            "success_msg": "init/edit %s" % self.server
         }
 
         output_result = rest.restCmd(self.method,
@@ -382,11 +382,12 @@ class Node:
             rest.setParam('memoryQuota', self.per_node_quota)
         if self.cluster_index_ramsize:
             rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
-        output_result = rest.restCmd(self.method,
-                                     '/pools/default',
-                                     self.user,
-                                     self.password,
-                                     opts)
+        if rest.params:
+            output_result = rest.restCmd(self.method,
+                                         '/pools/default',
+                                         self.user,
+                                         self.password,
+                                         opts)
         print output_result
 
     def process_services(self, data_required):
