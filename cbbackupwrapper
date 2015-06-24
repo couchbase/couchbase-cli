@@ -3,6 +3,7 @@
 
 import pump_transfer
 import pump
+from cbqueue import PumpQueue
 
 import base64
 import optparse
@@ -12,6 +13,8 @@ import simplejson as json
 import socket
 import subprocess
 import sys
+import threading
+import time
 import urllib2
 
 """Written by Daniel Owen owend@couchbase.com on 27 June 2014
@@ -41,7 +44,8 @@ See the cbrestorewrapper.py script for restoring backups made with this script."
 
 bucketList = []
 vbucketList = []
-processes = {}
+process_queue = PumpQueue()
+lock = threading.Lock()
 
 def opt_extra_help(parser, extra_defaults):
     extra_help = "; ".join(["%s=%s (%s)" %
@@ -106,8 +110,8 @@ def argumentParsing():
                         help='Specify the bucket port.  Defaults to 11210')
     parser.add_option('-n', '--number', default='100',
                         help='Specify the number of vbuckets per process. Defaults to 100')
-    parser.add_option('--sequential', action='store_true',
-                      default=False, help='backup vbuckets sequentially')
+    parser.add_option('-P', '--parallelism', default='1',
+                        help='Number of vbucket backup jobs to run at a time. Defaults to 1')
     parser.add_option('-x', '--extra', default=None,
                         help="""Provide extra, uncommon config parameters;
                         comma-separated key=val(,key=val)* pairs""")
@@ -219,6 +223,26 @@ def getBuckets(node, rest_port, username, password):
         bucketsOnCluster.append(bucket)
     return bucketsOnCluster
 
+def consumer(id, verbose):
+    while True:
+        try:
+            commandline = process_queue.get(block=True, timeout=10)
+            if verbose:
+                with lock:
+                    print "T(%s): %s" %(id, commandline)
+            p = subprocess.Popen(commandline, shell=True)
+            p.wait()
+            if p.returncode == 1:
+                with lock:
+                    print 'Error with backup for running %s' % commandline
+            process_queue.task_done()
+        except PumpQueue.Empty:
+            return
+        except Exception, e:
+            with lock:
+                print 'Exception ' + str(e)
+
+        time.sleep(1)
 
 if __name__ == '__main__':
     # Parse the arguments given.
@@ -312,8 +336,14 @@ if __name__ == '__main__':
     if args.ssl:
         ssl_option = ' -s '
 
+    for i in range(int(args.parallelism)):
+        t = threading.Thread(target=consumer, args=(i, args.verbose,))
+        t.daemon = True
+        t.start()
+
     # Group the number of vbuckets per process
     print 'Waiting for the backup to complete...'
+    processes = []
     for i in range(0, len(vbucketList), int(args.number)):
         chunk = vbucketList[i:i + int(args.number)]
         vbucketsname = str(chunk[0]) + '-' + str(chunk[-1])
@@ -321,30 +351,9 @@ if __name__ == '__main__':
             + node + ':' + rest + ' ' + os.path.join(backupDir, vbucketsname) + ' -u ' + args.username \
             + ' -p ' + args.password + extra_options + mode_options + ssl_option + specific_bucket + ' 2>' + \
             os.path.join(backupDir, 'logs', vbucketsname) + '.err'
-        if args.verbose:
-            print command_line
-        p = subprocess.Popen(command_line, shell=True)
-        processes[p] = vbucketsname
-        if args.sequential:
-            sys.stderr.write(".")
-            p.wait()
+        process_queue.put(command_line)
 
-    # Did we backup anything?
-    if len(processes) == 0:
-        print 'Did not backup anything'
-        print 'Please check that you have the buckets on ' + args.node
-        exit(1)
-    else:
-        successCount = 0
-        for p in processes:
-            p.wait()
-            if p.returncode == 1:
-                print 'Error with backup - look in ' + os.path.join(backupDir, 'logs', processes[p]) + '.err for details'
-            else:
-                successCount += 1
+    process_queue.join()
 
-        if successCount == len(processes):
-            print 'SUCCESSFULLY COMPLETED!'
-        else:
-            print 'ERROR!'
-            exit(1)
+    with lock:
+        print 'SUCCESSFULLY COMPLETED!'
