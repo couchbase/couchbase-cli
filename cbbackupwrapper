@@ -236,13 +236,11 @@ def consumer(id, verbose):
                 with lock:
                     print 'Error with backup for running %s' % commandline
             process_queue.task_done()
-        except PumpQueue.Empty:
-            return
-        except Exception, e:
-            with lock:
-                print 'Exception ' + str(e)
-
-        time.sleep(1)
+            time.sleep(1)
+        except Exception:
+            if process_queue.empty():
+                return
+            print 'Exception ' + str(e)
 
 if __name__ == '__main__':
     # Parse the arguments given.
