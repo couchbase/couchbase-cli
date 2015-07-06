@@ -151,6 +151,7 @@ class Node:
         self.autofailover_max_reached = None
         self.autofailover_node_down = None
         self.autofailover_cluster_small = None
+        self.autofailover_disabled = None
         self.alert_ip_changed = None
         self.alert_disk_space = None
         self.alert_meta_overhead = None
@@ -582,6 +583,8 @@ class Node:
             alert_opts = alert_opts + 'auto_failover_other_nodes_down,'
         if self.autofailover_cluster_small:
             alert_opts = alert_opts + 'auto_failover_cluster_too_small,'
+        if self.autofailover_disabled:
+            alert_opts = alert_opts + 'auto_failover_disabled,'
         if self.alert_ip_changed:
             alert_opts = alert_opts + 'ip,'
         if self.alert_disk_space:
@@ -845,6 +848,8 @@ class Node:
                 self.autofailover_node_down = True
             elif o == '--alert-auto-failover-cluster-small':
                 self.autofailover_cluster_small = True
+            elif o == '--alert-auto-failover-disabled':
+                self.autofailover_disabled = True
             elif o == '--alert-ip-changed':
                 self.alert_ip_changed = True
             elif o == '--alert-disk-space':
@@ -1729,6 +1734,8 @@ class Node:
              "node wasn't auto failover as other nodes are down at the same time"),
             ("--alert-auto-failover-cluster-small",
              "node wasn't auto fail over as cluster was too small"),
+            ("--alert-auto-failover-disabled",
+             "node was not auto-failed-over as auto-failover for one or more services running on the node is disabled"),
             ("--alert-ip-changed", "node ip address has changed unexpectedly"),
             ("--alert-disk-space",
              "disk space used for persistent storgage has reached at least 90% capacity"),

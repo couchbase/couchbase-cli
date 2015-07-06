@@ -130,6 +130,7 @@ def main():
                 'alert-auto-failover-max-reached',
                 'alert-auto-failover-node-down',
                 'alert-auto-failover-cluster-small',
+                'alert-auto-failover-disabled',
                 'alert-ip-changed',
                 'alert-disk-space',
                 'alert-meta-overhead',
