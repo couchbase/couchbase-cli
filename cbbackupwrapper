@@ -144,7 +144,7 @@ def findAllVbucketsForBucket(node, bucket, path, port, restport, username, passw
         response = urllib2.urlopen(request)
     except:
         print('Authorization failed.  Please check username and password.')
-        exit(1)
+        sys.exit(1)
     data = json.loads(response.read())
     vbucketserverdata = data['vBucketServerMap']
     vbucketdata = vbucketserverdata['vBucketMap']
@@ -187,7 +187,7 @@ def findAllVbucketsForBucket(node, bucket, path, port, restport, username, passw
     if serverindex == -1:
         print serverindex
         print 'Could not find node:port in server list.'
-        exit(1)
+        sys.exit(1)
 
     if single_node:
         # iterate through all vbuckets and see which are active on this node
@@ -215,7 +215,7 @@ def getBuckets(node, rest_port, username, password):
         response = urllib2.urlopen(request)
     except:
         print('Authorization failed.  Please check username and password.')
-        exit(1)
+        sys.exit(1)
     bucketsOnCluster = []
     data = json.loads(response.read())
     for item in data:
@@ -249,22 +249,24 @@ if __name__ == '__main__':
     # Remove any white-spaces from start and end of strings
     backupDir = backupDir.strip()
     path = args.path.strip()
+    if path == ".":
+        path = os.path.abspath(path)
 
     # Check to see if root backup directory exists
     if not os.path.isdir(backupDir):
         try:
             os.makedirs(backupDir)
         except:
-            exit("Cannot create backup root directory:%s" % backupDir)
+            sys.exit("Cannot create backup root directory:%s" % backupDir)
 
     # Check to see if path is correct
     if not os.path.isdir(path):
         print 'The path to cbbackup does not exist'
         print 'Please run with a different path'
-        exit(1)
+        sys.exit(1)
     if not os.path.isfile(os.path.join(path, 'cbbackup')):
         print 'cbbackup could not be found in ' + path
-        exit(1)
+        sys.exit(1)
 
     # Check to see if log directory exists if not create it
     dir = os.path.join(backupDir, 'logs')
@@ -275,7 +277,7 @@ if __name__ == '__main__':
             os.mkdir(dir)
         except:
             print('Error trying to create directory ' + dir)
-            exit(1)
+            sys.exit(1)
 
     # Separate out node and REST port
     matchObj = re.match(r'^http://(.*):(\d+)$', cluster, re.I)
@@ -285,7 +287,7 @@ if __name__ == '__main__':
     else:
         print("Please enter the source as http://hostname:port")
         print("For example http://localhost:8091 or http://127.0.0.1:8091")
-        exit(1)
+        sys.exit(1)
 
     # Check to see if backing-up all buckets or just a specified bucket
     if args.bucket_source == '':
@@ -300,7 +302,7 @@ if __name__ == '__main__':
         if len(bucketList) == 0:
             print 'Bucket ' + args.bucket_source + ' does not exist'
             print 'Please enter a different bucket'
-            exit(1)
+            sys.exit(1)
 
     # For each bucket
     for item in bucketList:

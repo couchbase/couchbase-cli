@@ -87,7 +87,7 @@ def getBuckets(node, rest_port, username, password):
         response = urllib2.urlopen(request)
     except:
         print('Authorization failed.  Please check username and password.')
-        exit(1)
+        sys.exit(1)
     bucketsOnCluster = []
     data = json.loads(response.read())
     for item in data:
@@ -116,15 +116,15 @@ if __name__ == '__main__':
     if not os.path.isdir(backupDir):
         print '\n\nThe directory ' + backupDir + ' does not exist'
         print 'Please enter a different backup directory\n'
-        exit(1)
+        sys.exit(1)
     # Check to see if path is correct
     if not os.path.isdir(path):
         print 'The path to cbrestore does not exist'
         print 'Please run with a different path'
-        exit(1)
+        sys.exit(1)
     if not os.path.isfile(os.path.join(path, 'cbrestore')):
         print 'cbrestore could not be found in ' + path
-        exit(1)
+        sys.exit(1)
 
     # Check to see if log directory exists if not create it
     dir = os.path.join(backupDir, 'logs')
@@ -135,7 +135,7 @@ if __name__ == '__main__':
             os.mkdir(dir)
         except:
             print('Error trying to create directory ' + dir)
-            exit(1)
+            sys.exit(1)
 
     # Separate out node and REST port
     matchObj = re.match(r'^http://(.*):(\d+)$', cluster, re.I)
@@ -145,13 +145,13 @@ if __name__ == '__main__':
     else:
         print("Please enter the destination as http://hostname:port")
         print("For example http://localhost:8091 or http://127.0.0.1:8091")
-        exit(1)
+        sys.exit(1)
 
     # Check to see if restoring all buckets or just a specified bucket
     if args.bucket_source == '':
         if not args.bucket_destination == '':
             print 'please specify a bucket_source'
-            exit(1)
+            sys.exit(1)
         bucketList = getBuckets(
             node, rest, args.username, args.password)
     else:
@@ -167,7 +167,7 @@ if __name__ == '__main__':
         if len(bucketList) == 0:
             print 'Bucket ' + bucket_target + ' does not exist'
             print 'Please enter a different bucket'
-            exit(1)
+            sys.exit(1)
 
     # Handle the case when path has spaces
     if os.name == 'nt':
@@ -190,12 +190,12 @@ if __name__ == '__main__':
             vbucketList = getVbucketsToRestore(backupDir, args.bucket_source.strip())
             if len(vbucketList) == 0:
                 print 'Error reading source backup vBuckets for bucket', args.bucket_source.strip()
-                exit(1)
+                sys.exit(1)
         else:
             vbucketList = getVbucketsToRestore(backupDir, bucket)
             if len(vbucketList) == 0:
                 print 'Error reading source backup vBuckets for bucket', bucket
-                exit(1)
+                sys.exit(1)
         for vbuckets in vbucketList:
             # Invoke cbrestore on each of the active vbuckets that reside on
             # the node
@@ -224,7 +224,7 @@ if __name__ == '__main__':
         print 'Did not restore anything'
         print 'Please check that the backup directory contains data to restore'
         print 'Also please check that you have the correct buckets created on ' + args.node
-        exit(1)
+        sys.exit(1)
     else:
         print 'Waiting for the restore to complete...'
         successCount = 0
@@ -241,4 +241,4 @@ if __name__ == '__main__':
             print 'SUCCESSFULLY COMPLETED!'
         else:
             print 'ERROR!'
-            exit(1)
+            sys.exit(1)
