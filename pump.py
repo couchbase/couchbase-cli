@@ -11,6 +11,7 @@ import string
 import sys
 import threading
 import time
+import urllib
 import urlparse
 import zlib
 import platform
@@ -135,11 +136,10 @@ class PumpingStation(ProgressReporter):
                 sys.stderr.write("transfer design doc only. bucket msgs will be skipped.\n")
 
             if not self.opts.extra.get("data_only", 0):
-                rv = self.transfer_bucket_design(source_bucket, source_map, sink_map)
-                if rv != 0:
-                    return rv
+                self.transfer_bucket_design(source_bucket, source_map, sink_map)
+                self.transfer_bucket_index(source_bucket, source_map, sink_map)
             else:
-                sys.stderr.write("transfer data only. bucket design docs will be skipped.\n")
+                sys.stderr.write("transfer data only. bucket design docs and index meta will be skipped.\n")
 
             # TODO: (5) PumpingStation - validate bucket transfers.
 
@@ -253,6 +253,19 @@ class PumpingStation(ProgressReporter):
         if rv == 0:
             if source_design:
                 rv = self.sink_class.consume_design(self.opts,
+                                                self.sink_spec, sink_map,
+                                                source_bucket, source_map,
+                                                source_design)
+        return rv
+
+    def transfer_bucket_index(self, source_bucket, source_map, sink_map):
+        """Transfer bucket index meta."""
+        rv, source_design = \
+            self.source_class.provide_index(self.opts, self.source_spec,
+                                             source_bucket, source_map)
+        if rv == 0:
+            if source_design:
+                rv = self.sink_class.consume_index(self.opts,
                                                 self.sink_spec, sink_map,
                                                 source_bucket, source_map,
                                                 source_design)
@@ -497,6 +510,10 @@ class Source(EndPoint):
     def provide_design(opts, source_spec, source_bucket, source_map):
         assert False, "unimplemented"
 
+    @staticmethod
+    def provide_index(opts, source_spec, source_bucket, source_map):
+        return 0
+
     def provide_batch(self):
         assert False, "unimplemented"
 
@@ -542,6 +559,11 @@ class Sink(EndPoint):
     def consume_design(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_design):
         assert False, "unimplemented"
+
+    @staticmethod
+    def consume_index(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_design):
+        return 0
 
     def consume_batch_async(self, batch):
         """Subclasses should return a SinkBatchFuture."""
@@ -879,6 +901,30 @@ def parse_spec(opts, spec, port):
 
     return host, port, username, password, p[2]
 
+def publish_index(opts, sink, query_svr, stmt, args):
+        host, port, user, pwd, path = \
+            pump.parse_spec(opts, sink, 8091)
+
+        host, port = hostport(query_svr)
+
+        #retrieve a list of missing vbucket
+        url = "/query/service"
+        if args:
+            body = {'statement': stmt, 'args': args}
+        else:
+            body = {'statement': stmt}
+        headers = {'Content-type': 'application/x-www-form-urlencoded'}
+        err, conn, response = \
+            pump.rest_request(host, couchbaseConstants.QUERY_PORT, user, pwd, opts.ssl,
+                              url, method='POST', body=urllib.urlencode(body),
+                              headers=headers, reason='create index')
+        if conn:
+            conn.close()
+        if err:
+            return err
+        response = json.loads(response)
+        return 0
+
 def rest_request(host, port, user, pswd, ssl, path, method='GET', body='', reason='', headers=None):
     if reason:
         reason = "; reason: %s" % (reason)
@@ -987,6 +1033,24 @@ def rest_couchbase(opts, spec):
                        "to access all bucket(s)", None
     return 0, {'spec': spec, 'buckets': buckets, 'spec_parts': spec_parts}
 
+def filter_server(opts, spec, filtor):
+    spec = spec.replace('couchbase://', 'http://')
+
+    spec_parts = parse_spec(opts, spec, 8091)
+    host, port, user, pswd, path = spec_parts
+
+    path = '/pools/default'
+
+    err, rest_json, rest_data = \
+        rest_request_json(host, int(port), user, pswd, opts.ssl, path)
+    if err:
+        return err, None
+
+    for node in rest_data["nodes"]:
+        if filtor in node["services"] and node["status"] == "healthy":
+            return 0, node["hostname"]
+    return 0, None
+
 def filter_bucket_nodes(bucket, spec_parts):
     host, port = spec_parts[:2]
     if host in ['localhost', '127.0.0.1']:
@@ -1045,3 +1109,12 @@ def mkdirs(targetpath):
         except:
             return "Cannot create upper directories for file:%s" % targetpath
     return 0
+
+def hostport(hoststring, default_port=8091):
+    try:
+        host, port = hoststring.split(":")
+        port = int(port)
+    except ValueError:
+        host = hoststring
+        port = default_port
+    return host, port

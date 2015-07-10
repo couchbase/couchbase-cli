@@ -8,6 +8,8 @@ import struct
 
 SSL_PORT = 11209
 SSL_REST_PORT = 18091
+QUERY_PORT = 8093
+INDEX_PORT = 9102
 
 # Command constants
 CMD_GET = 0

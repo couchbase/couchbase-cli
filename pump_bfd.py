@@ -54,6 +54,19 @@ class BFD:
         return bucket_path + '/design.json'
 
     @staticmethod
+    def index_path(spec, bucket_name):
+        bucket_path = os.path.normpath(spec) + "/bucket-" + urllib.quote_plus(bucket_name)
+        if os.path.isdir(bucket_path):
+            return bucket_path + '/index.json'
+        else:
+            path, dirs = BFD.find_latest_dir(spec, None)
+            if path:
+                path, dirs = BFD.find_latest_dir(path, None)
+                if path:
+                    return path + "/bucket-" + urllib.quote_plus(bucket_name) + '/index.json'
+        return bucket_path + '/index.json'
+
+    @staticmethod
     def construct_dir(parent, bucket_name, node_name):
         return os.path.join(parent,
                     "bucket-" + urllib.quote_plus(bucket_name),
@@ -392,6 +405,20 @@ class BFDSource(BFD, pump.Source):
                         "; exception: %s") % (fname, e), None
         return 0, None
 
+    @staticmethod
+    def provide_index(opts, source_spec, source_bucket, source_map):
+        fname = BFD.index_path(source_spec, source_bucket['name'])
+        if os.path.exists(fname):
+            try:
+                f = open(fname, 'r')
+                d = f.read()
+                f.close()
+                return 0, d
+            except IOError, e:
+                return ("error: could not read design: %s" +
+                        "; exception: %s") % (fname, e), None
+        return 0, None
+
     def provide_batch(self):
         if self.done:
             return 0, None
@@ -698,6 +725,24 @@ class BFDSink(BFD, pump.Sink):
                 f.close()
             except IOError, e:
                 return ("error: could not write design: %s" +
+                        "; exception: %s") % (fname, e), None
+        return 0
+
+    @staticmethod
+    def consume_index(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_design):
+        if source_design:
+            fname = BFD.index_path(sink_spec,
+                                    source_bucket['name'])
+            try:
+                rv = pump.mkdirs(fname)
+                if rv:
+                    return rv, None
+                f = open(fname, 'w')
+                f.write(source_design)
+                f.close()
+            except IOError, e:
+                return ("error: could not write index: %s" +
                         "; exception: %s") % (fname, e), None
         return 0
 

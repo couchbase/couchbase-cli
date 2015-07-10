@@ -87,6 +87,27 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
     def provide_design(opts, source_spec, source_bucket, source_map):
         return pump_tap.TAPDumpSource.provide_design(opts, source_spec, source_bucket, source_map)
 
+    @staticmethod
+    def provide_index(opts, source_spec, source_bucket, source_map):
+        err, index_server = pump.filter_server(opts, source_spec, 'index')
+        if err or not index_server:
+            logging.warning("no index server found:%s" % err)
+            return 0, None
+
+        spec_parts = source_map.get('spec_parts')
+        if not spec_parts:
+            return "error: no design spec_parts", None
+        host, port, user, pswd, path = spec_parts
+        host, port = pump.hostport(index_server)
+        err, ddocs_json, ddocs = \
+            pump.rest_request_json(host, couchbaseConstants.INDEX_PORT, user, pswd, opts.ssl,
+                                   "/getIndexMetadata?bucket=%s" % (source_bucket['name']),
+                                   reason="provide_index")
+        if err:
+            return err, None
+
+        return 0, json.dumps(ddocs["result"])
+
     def add_start_event(self, conn):
         sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
         event = {"timestamp": self.get_timestamp(),

@@ -150,11 +150,46 @@ class CBSink(pump_mc.MCSink):
         return rv
 
     @staticmethod
+    def consume_index(opts, sink_spec, sink_map,
+                       source_bucket, source_map, source_design):
+        if not source_design:
+            return 0
+        try:
+            sd = json.loads(source_design)
+            if not sd:
+               return 0
+            print json.dumps(sd, indent=2)
+        except ValueError, e:
+            return "error: could not parse source design; exception: %s" % (e)
+
+        err, index_server = pump.filter_server(opts, sink_spec, 'index')
+        if err or not index_server:
+            logging.error("could not find index server")
+            return 0
+
+        spec_parts = pump.parse_spec(opts, sink_spec, 8091)
+        if not spec_parts:
+            return "error: design sink no spec_parts: " + sink_spec
+        host, port, user, pswd, path = spec_parts
+        host,port = pump.hostport(index_server)
+        sink_bucket = sink_map['buckets'][0]
+        url = "/restoreIndexMetadata?bucket=%s" % sink_bucket['name']
+        #post_headers = {"Content-type": "application/x-www-form-urlencoded"}
+        err, conn, response = \
+            pump.rest_request(host, couchbaseConstants.INDEX_PORT, user, pswd, opts.ssl,
+                              url, method='POST',
+                              #body=urllib.urlencode(sd),
+                              body=json.dumps(sd),
+                              #headers=post_headers,
+                              reason='restore index')
+        print response
+        return 0
+
+    @staticmethod
     def consume_design(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_design):
         if not source_design:
             return 0
-
         try:
             sd = json.loads(source_design)
         except ValueError, e:
@@ -167,75 +202,105 @@ class CBSink(pump_mc.MCSink):
             not sink_map['buckets'][0] or
             not sink_map['buckets'][0]['name']):
             return "error: design sink incorrect sink_map bucket"
-
         spec_parts = pump.parse_spec(opts, sink_spec, 8091)
         if not spec_parts:
             return "error: design sink no spec_parts: " + sink_spec
-
         sink_bucket = sink_map['buckets'][0]
         sink_nodes = pump.filter_bucket_nodes(sink_bucket, spec_parts) or \
             sink_bucket['nodes']
         if not sink_nodes:
             return "error: design sink nodes missing"
-
         couch_api_base = sink_nodes[0].get('couchApiBase')
         if not couch_api_base:
             return "error: cannot restore bucket design" \
                 " on a couchbase cluster that does not support couch API;" \
                 " the couchbase cluster may be an older, pre-2.0 version;" \
                 " please check your cluster URL: " + sink_spec
-
         host, port, user, pswd, path = \
             pump.parse_spec(opts, couch_api_base, 8092)
-
         if user is None:
             user = spec_parts[2] # Default to the main REST user/pwsd.
             pswd = spec_parts[3]
-
-        for row in sd:
-            logging.debug("design_doc row: " + str(row))
-
-            doc = row.get('doc', None)
-            if not doc:
-                return "error: missing design doc in row: %s" % (row)
-
-            if 'json' in doc and 'meta' in doc:
-                js = doc['json']
-                id = doc['meta'].get('id', None)
-                if not id:
-                    return "error: missing id for design doc: %s" % (row)
-            else:
-                # Handle design-doc from 2.0DP4.
-                js = doc
-                if '_rev' in js:
-                    del js['_rev']
-                id = row.get('id', None)
-                if not id:
-                    return "error: missing id for row: %s" % (row)
-
-            js_doc = json.dumps(js)
-            if id.startswith(CBSink.DDOC_HEAD):
-                id = CBSink.DDOC_HEAD + urllib.quote(id[len(CBSink.DDOC_HEAD):], '')
-            else:
-                id = urllib.quote(id, '')
-            logging.debug("design_doc: " + js_doc)
-            logging.debug("design_doc id: " + id + " at: " + path + "/" + id)
-
+        if type(sd) is dict:
             try:
-                err, conn, response = \
-                    pump.rest_request(host, int(port), user, pswd, opts.ssl,
-                                      path + "/" + id, method='PUT', body=js_doc,
-                                      reason="consume_design")
-                if conn:
-                    conn.close()
-                if err:
-                    return ("error: could not restore design doc id: %s" +
-                            "; response: %s; err: %s") % (id, response, err)
+                id = sd.get('_id', None)
+                if id:
+                    err, conn, response = \
+                        pump.rest_request(host, int(port), user, pswd, opts.ssl,
+                                          path + "/" + id, method='PUT', body=source_design,
+                                          reason="consume_design")
+                    if conn:
+                        conn.close()
+                    if err:
+                        return ("error: could not restore design doc id: %s" +
+                                "; response: %s; err: %s") % (id, response, err)
+                else:
+                    stmts = sd.get('statements', None)
+
+                    if not stmts:
+                        return ("error: unrecognized design doc format:%s" % sd)
+                    err, query_server = pump.filter_server(opts, sink_spec, 'n1ql')
+                    if err or not query_server:
+                        return ("error: could not find query server:%s")
+                    for stmt in stmts:
+                        err = pump.publish_index(opts, sink_spec, query_server, \
+                                           stmt["statement"], stmt.get("args", None))
+                        if err:
+                            return "error: could not create index"
+
             except Exception, e:
                 return ("error: design sink exception: %s" +
                         "; couch_api_base: %s") % (e, couch_api_base)
+        elif type(sd) is list:
+            for row in sd:
+                logging.debug("design_doc row: " + str(row))
 
-            logging.debug("design_doc created at: " + path + "/" + id)
+                doc = row.get('doc', None)
+                if not doc:
+                    stmt = row.get('statement', None)
+                    if not stmt:
+                        return "error: missing design doc or index statement in row: %s" % (row)
+                    else:
+                        #publish index
+                        return 0
+
+                if 'json' in doc and 'meta' in doc:
+                    js = doc['json']
+                    id = doc['meta'].get('id', None)
+                    if not id:
+                        return "error: missing id for design doc: %s" % (row)
+                else:
+                    # Handle design-doc from 2.0DP4.
+                    js = doc
+                    if '_rev' in js:
+                        del js['_rev']
+                    id = row.get('id', None)
+                    if not id:
+                        return "error: missing id for row: %s" % (row)
+
+                js_doc = json.dumps(js)
+                if id.startswith(CBSink.DDOC_HEAD):
+                    id = CBSink.DDOC_HEAD + urllib.quote(id[len(CBSink.DDOC_HEAD):], '')
+                else:
+                    id = urllib.quote(id, '')
+                logging.debug("design_doc: " + js_doc)
+                logging.debug("design_doc id: " + id + " at: " + path + "/" + id)
+
+                try:
+                    err, conn, response = \
+                        pump.rest_request(host, int(port), user, pswd, opts.ssl,
+                                          "/query/service", method='PUT', body=js_doc,
+                                          reason="consume_design")
+                    if conn:
+                        conn.close()
+                    if err:
+                        return ("error: could not restore design doc id: %s" +
+                                "; response: %s; err: %s") % (id, response, err)
+                except Exception, e:
+                    return ("error: design sink exception: %s" +
+                            "; couch_api_base: %s") % (e, couch_api_base)
+
+                logging.debug("design_doc created at: " + path + "/" + id)
 
         return 0
 
@@ -255,7 +320,7 @@ class CBSink(pump_mc.MCSink):
 
         conn = mconns.get(host_port, None)
         if not conn:
-            host, port = host_port.split(':')
+            host, port = pump.hostport(host_port, 11210)
             if self.opts.ssl:
                 port = couchbaseConstants.SSL_PORT
             user = bucket['name']

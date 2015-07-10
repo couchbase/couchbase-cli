@@ -113,24 +113,35 @@ class JSONSource(pump.Source):
         return os.path.splitext(os.path.basename(filename))[0]
 
     @staticmethod
-    def enumerate_files(subdir, file_candidate):
+    def enumerate_files(subdir, file_candidate, view_only):
         if not subdir:
             return
         subdirlist = list()
         viewdirs = list()
+        indexdirs = list()
         for item in os.listdir(subdir):
             path = os.path.join(subdir, item)
-            if os.path.isfile(path):
-                file_candidate.append(path)
-            else:
-                if item.find("design_docs") > 0:
-                    viewdirs.append(os.path.join(subdir, item))
+            if view_only:
+                if os.path.isfile(path):
+                    if path.find("design_docs") > 0:
+                        file_candidate.append(path)
                 else:
-                    subdirlist.append(os.path.join(subdir, item))
+                    if item.find("design_docs") > 0:
+                         viewdirs.append(path)
+                    else:
+                        subdirlist.append(path)
+            else:
+                if os.path.isfile(path):
+                    file_candidate.append(path)
+                else:
+                    if item.find("design_docs") > 0:
+                        viewdirs.append(path)
+                    else:
+                        subdirlist.append(path)
         for dir in subdirlist:
-            JSONSource.enumerate_files(dir, file_candidate)
+            JSONSource.enumerate_files(dir, file_candidate, view_only)
         for dir in viewdirs:
-            JSONSource.enumerate_files(dir, file_candidate)
+            JSONSource.enumerate_files(dir, file_candidate, view_only)
 
     def build_batch(self, batch, is_data, batch_max_size):
         for path in self.file_iter:
@@ -153,7 +164,27 @@ class JSONSource(pump.Source):
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
-        return 0, None
+        f = source_spec.replace(JSON_SCHEME, "")
+        files = list()
+        working_dir = None
+        if os.path.isfile(f) and f.endswith(".zip"):
+            zfobj = zipfile.ZipFile(f)
+            working_dir = tempfile.mkdtemp()
+            ZipUtil(zfobj).extractall(working_dir)
+            JSONSource.enumerate_files(working_dir, files, True)
+
+        design_file = None
+        for path in files:
+            if os.path.isfile(path):
+                f = open(path, 'r')
+                design_file = f.read()
+                f.close()
+                break
+
+        if working_dir:
+            shutil.rmtree(working_dir)
+
+        return 0, design_file
 
     def provide_batch(self):
         if self.done:
@@ -167,9 +198,9 @@ class JSONSource(pump.Source):
                 zfobj = zipfile.ZipFile(self.f)
                 self.working_dir = tempfile.mkdtemp()
                 ZipUtil(zfobj).extractall(self.working_dir)
-                JSONSource.enumerate_files(self.working_dir, files)
+                JSONSource.enumerate_files(self.working_dir, files, False)
             elif os.path.isdir(self.f):
-                JSONSource.enumerate_files(self.f, files)
+                JSONSource.enumerate_files(self.f, files, False)
             else:
                 try:
                     fp = open(self.f, 'r')
