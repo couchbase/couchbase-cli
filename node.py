@@ -307,7 +307,7 @@ class Node:
         if cmd == "cluster-init":
         # per node quota unfortunately runs against a different location
             if not self.per_node_quota:
-                print "ERROR: option cluster-init-ramsize is not specified"
+                print "ERROR: option cluster-ramsize is not specified"
                 return
 
             err, services = self.process_services(True)
