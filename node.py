@@ -305,6 +305,11 @@ class Node:
     def clusterInit(self, cmd):
         #setup services
         if cmd == "cluster-init":
+        # per node quota unfortunately runs against a different location
+            if not self.per_node_quota:
+                print "ERROR: option cluster-init-ramsize is not specified"
+                return
+
             err, services = self.process_services(True)
             if err:
                 print err
@@ -362,10 +367,7 @@ class Node:
                                      self.user,
                                      self.password,
                                      opts)
-        # per node quota unfortunately runs against a different location
-        if cmd == "cluster-init" and not self.per_node_quota:
-            print "ERROR: option cluster-init-ramsize is not specified"
-            return
+
         if self.port_new:
             self.port = int(self.port_new)
         if self.username_new:
