@@ -91,7 +91,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
     def provide_index(opts, source_spec, source_bucket, source_map):
         err, index_server = pump.filter_server(opts, source_spec, 'index')
         if err or not index_server:
-            logging.warning("no index server found:%s" % err)
+            logging.warning("could not find index server:%s" % err)
             return 0, None
 
         spec_parts = source_map.get('spec_parts')

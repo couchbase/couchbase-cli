@@ -512,7 +512,7 @@ class Source(EndPoint):
 
     @staticmethod
     def provide_index(opts, source_spec, source_bucket, source_map):
-        return 0
+        return 0, None
 
     def provide_batch(self):
         assert False, "unimplemented"
@@ -910,20 +910,18 @@ def publish_index(opts, sink, query_svr, stmt, args):
         #retrieve a list of missing vbucket
         url = "/query/service"
         if args:
-            body = {'statement': stmt, 'args': args}
+            body = "statement=%s&args=%s" % (stmt,args)
         else:
-            body = {'statement': stmt}
-        headers = {'Content-type': 'application/x-www-form-urlencoded'}
+            body = "statement=%s" % stmt
+        #headers = {'Content-type': 'application/x-www-form-urlencoded'}
         err, conn, response = \
             pump.rest_request(host, couchbaseConstants.QUERY_PORT, user, pwd, opts.ssl,
-                              url, method='POST', body=urllib.urlencode(body),
-                              headers=headers, reason='create index')
+                              url, method='POST', body=body,
+                              #headers=headers,
+                              reason='create index')
         if conn:
             conn.close()
-        if err:
-            return err
-        response = json.loads(response)
-        return 0
+        return err
 
 def rest_request(host, port, user, pswd, ssl, path, method='GET', body='', reason='', headers=None):
     if reason:
@@ -1040,7 +1038,6 @@ def filter_server(opts, spec, filtor):
     host, port, user, pswd, path = spec_parts
 
     path = '/pools/default'
-
     err, rest_json, rest_data = \
         rest_request_json(host, int(port), user, pswd, opts.ssl, path)
     if err:

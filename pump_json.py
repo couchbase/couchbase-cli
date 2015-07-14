@@ -172,6 +172,8 @@ class JSONSource(pump.Source):
             working_dir = tempfile.mkdtemp()
             ZipUtil(zfobj).extractall(working_dir)
             JSONSource.enumerate_files(working_dir, files, True)
+        elif os.path.isdir(f):
+            JSONSource.enumerate_files(working_dir, files, True)
 
         design_file = None
         for path in files:
