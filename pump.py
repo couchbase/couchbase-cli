@@ -910,15 +910,24 @@ def publish_index(opts, sink, query_svr, stmt, args):
         #retrieve a list of missing vbucket
         url = "/query/service"
         if args:
-            body = "statement=%s&args=%s" % (stmt,args)
+            body = {"statement": str(stmt), "args": str(args)}
         else:
-            body = "statement=%s" % stmt
+            body = {"statement": str(stmt)}
         #headers = {'Content-type': 'application/x-www-form-urlencoded'}
+        if opts.ssl:
+            port = couchbaseConstants.SSL_QUERY_PORT
+        else:
+            port = couchbaseConstants.QUERY_PORT
         err, conn, response = \
-            pump.rest_request(host, couchbaseConstants.QUERY_PORT, user, pwd, opts.ssl,
-                              url, method='POST', body=body,
-                              #headers=headers,
-                              reason='create index')
+            rest_request(host, port, user, pwd, opts.ssl,
+                         url, method='POST',
+                         body=json.dumps(body),
+                         reason='create index')
+        if response:
+            res = json.loads(response)
+            if "errors" == res["status"]:
+                for e in res["errors"]:
+                    print "query error:", e["msg"]
         if conn:
             conn.close()
         return err
@@ -928,9 +937,8 @@ def rest_request(host, port, user, pswd, ssl, path, method='GET', body='', reaso
         reason = "; reason: %s" % (reason)
     logging.debug("rest_request: %s@%s:%s%s%s" % (user, host, port, path, reason))
     if ssl:
-        if port != couchbaseConstants.SSL_REST_PORT:
-            return ("error: invalid port %s used when ssl option is specified" +
-                    "; the suggested port is %s") % (port, couchbaseConstants.SSL_REST_PORT), None, None
+        if port not in [couchbaseConstants.SSL_REST_PORT, couchbaseConstants.SSL_QUERY_PORT]:
+            return ("error: invalid port %s used when ssl option is specified") % port, None, None
         conn = httplib.HTTPSConnection(host, port)
     else:
         conn = httplib.HTTPConnection(host, port)
