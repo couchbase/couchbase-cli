@@ -15,6 +15,12 @@ from usage import command_error
 from restclient import *
 from listservers import *
 
+try:
+    import pump_bfd2
+    IS_ENTERPRISE= True
+except ImportError:
+    IS_ENTERPRISE = False
+
 MAX_LEN_PASSWORD = 24
 
 # the rest commands and associated URIs for various node operations
@@ -401,15 +407,19 @@ class Node:
             #backward compatible when using ";" as separator
             sep = ";"
         svc_list = [w.strip() for w in self.services.split(sep)]
+        svc_candidate = ["data", "index", "query"]
         for svc in svc_list:
-            if svc not in ["data", "moxi", "index", "query"]:
+            if svc not in svc_candidate:
                 return "ERROR: invalid service: %s" % svc, None
         if data_required and "data" not in svc_list:
             svc_list.append("data")
+        if not IS_ENTERPRISE:
+            if len(svc_list) != len(svc_candidate):
+                return "ERROR: Community Edition requires that all nodes provision all services"
+
         services = ",".join(svc_list)
         for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
             services = services.replace(old, new)
-
         return None, services
 
     def nodeInit(self):
