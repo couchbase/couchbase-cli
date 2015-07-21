@@ -903,7 +903,7 @@ def parse_spec(opts, spec, port):
 
 def publish_index(opts, sink, query_svr, stmt, args):
         host, port, user, pwd, path = \
-            pump.parse_spec(opts, sink, 8091)
+            parse_spec(opts, sink, 8091)
 
         host, port = hostport(query_svr)
 
