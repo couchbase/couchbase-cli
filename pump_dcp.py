@@ -228,10 +228,6 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                                         break
                         ss_start_seqno = start_seqno
                         ss_end_seqno = start_seqno
-                        if self.cur['snapshot']:
-                            pair_index = (self.source_bucket['name'], self.source_node['hostname'])
-                            if self.cur['snapshot'][pair_index].get("vbid"):
-                                ss_start_seqno, ss_end_seqno = self.cur['snapshot'][pair_index][vbid]
                         self.request_dcp_stream(vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
 
                         del self.stream_list[opaque]
@@ -505,6 +501,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 if vbid in self.cur['snapshot'][pair_index] and \
                    self.cur['snapshot'][pair_index][vbid]:
                     ss_start_seqno, ss_end_seqno = self.cur['snapshot'][pair_index][vbid]
+                    if start_seqno == ss_end_seqno:
+                        ss_start_seqno = start_seqno
             self.request_dcp_stream(int(vbid), flags, start_seqno,
                                     vb_list[vbid][DCPStreamSource.HIGH_SEQNO],
                                     uuid, ss_start_seqno, ss_end_seqno)
