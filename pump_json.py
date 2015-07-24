@@ -175,18 +175,17 @@ class JSONSource(pump.Source):
         elif os.path.isdir(f):
             JSONSource.enumerate_files(working_dir, files, True)
 
-        design_file = None
+        design_files = []
         for path in files:
             if os.path.isfile(path):
                 f = open(path, 'r')
-                design_file = f.read()
+                design_files.append(f.read())
                 f.close()
-                break
 
         if working_dir:
             shutil.rmtree(working_dir)
 
-        return 0, design_file
+        return 0, design_files
 
     def provide_batch(self):
         if self.done:

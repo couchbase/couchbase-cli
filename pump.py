@@ -252,7 +252,9 @@ class PumpingStation(ProgressReporter):
                                              source_bucket, source_map)
         if rv == 0:
             if source_design:
-                rv = self.sink_class.consume_design(self.opts,
+                sources = source_design if isinstance(source_design, list) else [source_design]
+                for source_design in sources:
+                    rv = self.sink_class.consume_design(self.opts,
                                                 self.sink_spec, sink_map,
                                                 source_bucket, source_map,
                                                 source_design)
