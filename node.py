@@ -36,7 +36,7 @@ rest_cmds = {
     'cluster-init'      :'/settings/web',
     'cluster-edit'      :'/settings/web',
     'node-init'         :'/nodes/self/controller/settings',
-    'setting-cluster'   :'/internalSettings/visual',
+    'setting-cluster'   :'/pools/default',
     'setting-compaction'    :'/controller/setAutoCompaction',
     'setting-notification'  :'/settings/stats',
     'setting-autofailover'  :'/settings/autoFailover',
@@ -527,24 +527,25 @@ class Node:
                                      self.port,
                                      {'debug':self.debug},
                                      self.ssl)
-        if not self.per_node_quota:
-            print "ERROR: option cluster-ramsize is not specified"
-            return
-        rest.setParam('memoryQuota', self.per_node_quota)
+        if self.per_node_quota:
+            rest.setParam('memoryQuota', self.per_node_quota)
         if self.cluster_name:
-            rest.setParam('tabName', self.cluster_name)
+            rest.setParam('clusterName', self.cluster_name)
         if self.cluster_index_ramsize:
             rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
         opts = {
             "error_msg": "unable to set cluster configurations",
             "success_msg": "set cluster settings"
         }
-        output_result = rest.restCmd(self.method,
+        if rest.params:
+            output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
                                      self.user,
                                      self.password,
                                      opts)
-        print output_result
+            print output_result
+        else:
+            print "Error: No parameters specified"
 
     def notification(self):
         rest = util.restclient_factory(self.server,
