@@ -168,6 +168,7 @@ def main():
                 'index-stable-snapshot-interval=',
                 'index-memory-snapshot-interval=',
                 'index-threads=',
+                'index-log-level='
                 ])
     except getopt.GetoptError, err:
         usage.command_error(err)

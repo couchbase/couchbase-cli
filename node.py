@@ -204,6 +204,7 @@ class Node:
         self.memory_snapshot_interval = None
         self.index_threads = None
         self.services = None
+        self.log_level = None
 
     def runCmd(self, cmd, server, port,
                user, password, ssl, opts):
@@ -720,6 +721,8 @@ class Node:
             rest.setParam("memorySnapshotInterval", self.memory_snapshot_interval)
         if self.index_threads:
             rest.setParam("indexerThreads", self.index_threads)
+        if self.log_level:
+            rest.setParam("logLevel", self.log_level)
 
         opts = {
             "error_msg": "unable to set index settings",
@@ -945,14 +948,16 @@ class Node:
                 self.ldap_roadmins = a
             elif o == '--ldap-default':
                 self.ldap_default = a
-            elif o == 'index-max-rollback-points=':
+            elif o == '--index-max-rollback-points':
                 self.max_rollback_points = a
-            elif o == 'index-stable-snapshot-interval':
+            elif o == '--index-stable-snapshot-interval':
                 self.stable_snapshot_interval = a
-            elif o == 'index-memory-snapshot-interval':
+            elif o == '--index-memory-snapshot-interval':
                 self.memory_snapshot_interval = a
-            elif o == 'index-threads':
+            elif o == '--index-threads':
                 self.index_threads = a
+            elif o == '--index-log-level':
+                self.log_level = a
         return servers
 
     def normalize_servers(self, server_list):
@@ -1789,7 +1794,8 @@ class Node:
             ("--index-max-rollback-points=[5]", "max roolback points"),
             ("--index-stable-snapshot-interval=SECONDS", "stable snapshot interval"),
             ("--index-memory-snapshot-interval=SECONDS", "in memory snapshot interval"),
-            ("--index-threads=[4]", "indexer threads")]
+            ("--index-threads=[4]", "indexer threads"),
+            ("--index-log-level=[debug|silent|fatal|error|warn|info|verbose|timing|trace]", "indexr log level")]
         elif cmd == "collect-logs-start":
             return [
             ("--all-nodes", "Collect logs from all accessible cluster nodes"),
@@ -2036,5 +2042,15 @@ class Node:
 """
     couchbase-cli setting-audit -c 192.168.0.1:8091 \\
         --audit-enabled=0 -u Administrator -p password""")]
+        elif cmd == "setting-index":
+            return [("Indexer setting",
+"""
+    couchbase-cli setting-index  -c 192.168.0.1:8091 \\
+        --index-max-rollback-points=5 \\
+        --index-stable-snapshot-interval=5000 \\
+        --index-memory-snapshot-interval=200 \\
+        --index-threads=5 \\
+        --index-log-level=debug \\
+        -u Administrator -p password""")]
         else:
             return None
