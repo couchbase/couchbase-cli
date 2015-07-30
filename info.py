@@ -23,9 +23,13 @@ class Info:
 
     def runCmd(self, cmd, server, port,
                user, password, ssl, opts):
+        vm = 'ns_server'
         for (o, a) in opts:
             if o == '-d' or o == '--debug':
                 self.debug = True
+
+            if o == '--vm':
+                vm = a
 
         rest = util.restclient_factory(server, port, {'debug':self.debug}, ssl)
         opts = {'error_msg': 'server-info error'}
@@ -39,12 +43,29 @@ class Info:
             if x in json:
                 del(json[x])
 
-        if cmd == 'get-server-info':
-            return json
-        elif cmd == 'server-eshell':
+        if cmd == 'server-eshell':
+            node = json['otpNode']
+            cookie = json['otpCookie']
+
+            if vm != 'ns_server':
+                rest = util.restclient_factory(server, port, {'debug':self.debug}, ssl)
+                rest.setPayload('ns_server:get_babysitter_cookie().')
+                cookie = rest.sendCmd('POST', '/diag/eval', user, password).read()
+
+                [short, _] = node.split('@')
+
+                if vm == 'babysitter':
+                    node = 'babysitter_of_%s@127.0.0.1' % short
+                elif vm == 'couchdb':
+                    node = 'couchdb_%s@127.0.0.1' % short
+                else:
+                    raise ValueError("unknown vm type \'%s\'" % vm)
+
             name = self._remoteShellName()
-            p = subprocess.call(['erl','-name',name,
-                '-setcookie',json['otpCookie'],'-hidden','-remsh',json['otpNode']])
+            p = subprocess.call(['erl', '-name', name, '-setcookie',
+                                 cookie, '-hidden', '-remsh', node])
+        elif cmd == 'get-server-info':
+            return json
         else:
             print simplejson.dumps(json, sort_keys=True, indent=2)
 
