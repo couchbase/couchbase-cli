@@ -407,7 +407,7 @@ class Node:
         if self.services.find(sep) < 0:
             #backward compatible when using ";" as separator
             sep = ";"
-        svc_list = [w.strip() for w in self.services.split(sep)]
+        svc_list = list(set([w.strip() for w in self.services.split(sep)]))
         svc_candidate = ["data", "index", "query"]
         for svc in svc_list:
             if svc not in svc_candidate:
@@ -416,7 +416,8 @@ class Node:
             svc_list.append("data")
         if not IS_ENTERPRISE:
             if len(svc_list) != len(svc_candidate):
-                return "ERROR: Community Edition requires that all nodes provision all services, please specify --services=data,index,query", None
+                if len(svc_list) != 1 or "data" not in svc_list:
+                    return "ERROR: Community Edition requires that all nodes provision all services or data service only", None
 
         services = ",".join(svc_list)
         for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
