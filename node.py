@@ -416,7 +416,7 @@ class Node:
             svc_list.append("data")
         if not IS_ENTERPRISE:
             if len(svc_list) != len(svc_candidate):
-                return "ERROR: Community Edition requires that all nodes provision all services"
+                return "ERROR: Community Edition requires that all nodes provision all services, please specify --services=data,index,query", None
 
         services = ",".join(svc_list)
         for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
