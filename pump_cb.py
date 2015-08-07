@@ -158,7 +158,6 @@ class CBSink(pump_mc.MCSink):
             sd = json.loads(source_design)
             if not sd:
                return 0
-            print json.dumps(sd, indent=2)
         except ValueError, e:
             return "error: could not parse source design; exception: %s" % (e)
 
@@ -174,7 +173,6 @@ class CBSink(pump_mc.MCSink):
         host,port = pump.hostport(index_server)
         sink_bucket = sink_map['buckets'][0]
         url = "/restoreIndexMetadata?bucket=%s" % sink_bucket['name']
-        #post_headers = {"Content-type": "application/x-www-form-urlencoded"}
         err, conn, response = \
             pump.rest_request(host, couchbaseConstants.INDEX_PORT, user, pswd, opts.ssl,
                               url, method='POST',
@@ -182,7 +180,7 @@ class CBSink(pump_mc.MCSink):
                               body=json.dumps(sd),
                               #headers=post_headers,
                               reason='restore index')
-        print response
+        logging.debug(response)
         return 0
 
     @staticmethod
@@ -289,7 +287,7 @@ class CBSink(pump_mc.MCSink):
                 try:
                     err, conn, response = \
                         pump.rest_request(host, int(port), user, pswd, opts.ssl,
-                                          "/query/service", method='PUT', body=js_doc,
+                                          path + "/" + id, method='PUT', body=js_doc,
                                           reason="consume_design")
                     if conn:
                         conn.close()
