@@ -148,7 +148,7 @@ class Buckets:
             if enable_flush:
                 rest.setParam('flushEnabled', enable_flush)
             if enable_clock_sync:
-                reset.setParam('enableClockSync', enable_clock_sync)
+                rest.setParam('enableClockSync', enable_clock_sync)
             if eviction_policy:
                 if eviction_policy in ['valueOnly', 'fullEviction']:
                     rest.setParam('evictionPolicy', eviction_policy)
@@ -357,6 +357,8 @@ class Buckets:
        --bucket-ramsize=200 \\
        --bucket-replica=1 \\
        --bucket-priority=high \\
+       --enable-clock-sync=1 \\
+       --bucket-eviction-policy=valueOnly \\
        -u Administrator -p password"""),
                 ("Create a couchbase bucket and wait for bucket ready",
 """
