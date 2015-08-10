@@ -266,9 +266,6 @@ class Buckets:
 
     def compact_view(self, rest, server, port, bucket_name):
         opts = {}
-        opts['error_msg'] = "unable to compact view; please check your username (-u) and password (-p);"
-        opts['success_msg'] = "compact view for bucket"
-
         rest_query = util.restclient_factory(server, port, {'debug':self.debug}, self.ssl)
         rest_cmd = '/pools/default/buckets/%s/ddocs' % bucket_name
         ddoc_info = rest_query.restCmd('GET', urllib.quote(rest_cmd),
@@ -276,6 +273,8 @@ class Buckets:
         json = rest_query.getJson(ddoc_info)
         for row in json["rows"]:
             cmd = row["controllers"]["compact"]
+            opts['error_msg'] = "fail to run task:%s" % cmd
+            opts['success_msg'] = "run task:%s" % cmd
             data = rest.restCmd('POST', cmd,
                                 self.user, self.password, opts)
             print data
