@@ -8,6 +8,7 @@ from cbqueue import PumpQueue
 import base64
 import optparse
 import os
+import platform
 import re
 import simplejson as json
 import socket
@@ -246,6 +247,10 @@ if __name__ == '__main__':
     # Parse the arguments given.
     args, cluster, backupDir = argumentParsing()
 
+    backup_exe = 'cbbackup'
+    if platform.system() == "Windows":
+        backup_exe = 'cbbackup.exe'
+
     # Remove any white-spaces from start and end of strings
     backupDir = backupDir.strip()
     path = args.path.strip()
@@ -264,7 +269,7 @@ if __name__ == '__main__':
         print 'The path to cbbackup does not exist'
         print 'Please run with a different path'
         sys.exit(1)
-    if not os.path.isfile(os.path.join(path, 'cbbackup')):
+    if not os.path.isfile(os.path.join(path, backup_exe)):
         print 'cbbackup could not be found in ' + path
         sys.exit(1)
 
@@ -347,7 +352,7 @@ if __name__ == '__main__':
     for i in range(0, len(vbucketList), int(args.number)):
         chunk = vbucketList[i:i + int(args.number)]
         vbucketsname = str(chunk[0]) + '-' + str(chunk[-1])
-        command_line = os.path.join(path, 'cbbackup') + ' -v -t 1 --vbucket-list=' + ''.join(str(chunk).split()) + ' http://' \
+        command_line = os.path.join(path, backup_exe) + ' -v -t 1 --vbucket-list=' + ''.join(str(chunk).split()) + ' http://' \
             + node + ':' + rest + ' ' + os.path.join(backupDir, vbucketsname) + ' -u ' + args.username \
             + ' -p ' + args.password + extra_options + mode_options + ssl_option + specific_bucket + ' 2>' + \
             os.path.join(backupDir, 'logs', vbucketsname) + '.err'
