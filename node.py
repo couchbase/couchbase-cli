@@ -629,7 +629,7 @@ class Node:
                 self.email_password = a
             elif o == '--email-host':
                 self.email_host = a
-            elif o == 'email-port':
+            elif o == '--email-port':
                 self.email_port = a
             elif o == '--enable-email-encrypt':
                 self.email_enable_encrypt = bool_to_str(a)
