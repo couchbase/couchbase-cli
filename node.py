@@ -666,7 +666,7 @@ class Node:
         elif self.audit_enabled == "true":
              rest.setParam('logPath', "/opt/couchbase/var/lib/couchbase/logs")
         if self.audit_log_rotate_interval:
-            rest.setParam('rotateInterval', self.audit_log_rotate_interval)
+            rest.setParam('rotateInterval', int(self.audit_log_rotate_interval)*60)
         elif self.audit_enabled == "true":
             rest.setParam('rotateInterval', 86400)
 
