@@ -337,43 +337,43 @@ class Node:
                                          self.password,
                                          opts)
 
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.port_new:
-            rest.setParam('port', self.port_new)
-        else:
-            rest.setParam('port', 'SAME')
-        rest.setParam('initStatus', 'done')
-        if self.username_new:
-            rest.setParam('username', self.username_new)
-        else:
-            rest.setParam('username', self.user)
-        if self.password_new:
-            rest.setParam('password', self.password_new)
-        else:
-            rest.setParam('password', self.password)
+            rest = util.restclient_factory(self.server,
+                                         self.port,
+                                         {'debug':self.debug},
+                                         self.ssl)
+            if self.port_new:
+                rest.setParam('port', self.port_new)
+            else:
+                rest.setParam('port', 'SAME')
+            rest.setParam('initStatus', 'done')
+            if self.username_new:
+                rest.setParam('username', self.username_new)
+            else:
+                rest.setParam('username', self.user)
+            if self.password_new:
+                rest.setParam('password', self.password_new)
+            else:
+                rest.setParam('password', self.password)
 
-        if not (rest.getParam('username') and rest.getParam('password')):
-            print "ERROR: Both username and password are required."
-            return
+            if not (rest.getParam('username') and rest.getParam('password')):
+                print "ERROR: Both username and password are required."
+                return
 
-        if len(rest.getParam('password')) > MAX_LEN_PASSWORD:
-            print "ERROR: Password length %s exceeds maximum number of characters allowed, which is %s" \
-                  % (len(rest.getParam('password')), MAX_LEN_PASSWORD)
-            return
+            if len(rest.getParam('password')) > MAX_LEN_PASSWORD:
+                print "ERROR: Password length %s exceeds maximum number of characters allowed, which is %s" \
+                      % (len(rest.getParam('password')), MAX_LEN_PASSWORD)
+                return
 
-        opts = {
-            "error_msg": "unable to init/modify %s" % self.server,
-            "success_msg": "init/edit %s" % self.server
-        }
+            opts = {
+                "error_msg": "unable to init/modify %s" % self.server,
+                "success_msg": "init/edit %s" % self.server
+            }
 
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
+            output_result = rest.restCmd(self.method,
+                                         self.rest_cmd,
+                                         self.user,
+                                         self.password,
+                                         opts)
 
         if self.port_new:
             self.port = int(self.port_new)
@@ -383,7 +383,10 @@ class Node:
             self.password = self.password_new
 
         #set memory quota
-        opts["error_msg"] = "unable to set memory quota"
+        opts = {
+            "error_msg": "unable to set memory quota",
+            "success_msg": "set memory quota successfully"
+        }
         rest = util.restclient_factory(self.server,
                                      self.port,
                                      {'debug':self.debug},
@@ -398,7 +401,9 @@ class Node:
                                          self.user,
                                          self.password,
                                          opts)
-        print output_result
+            print output_result
+        else:
+            print "ERROR: neither cluster-ramsize nor cluster-index-ramsize is specified"
 
     def process_services(self, data_required):
         if not self.services:
