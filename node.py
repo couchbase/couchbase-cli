@@ -1797,11 +1797,11 @@ class Node:
             ("--ldap-default=[admins|roadmins|none]", "set default ldap accounts")]
         elif cmd == "setting-index":
             return [
-            ("--index-max-rollback-points=[5]", "max roolback points"),
+            ("--index-max-rollback-points=[5]", "max rollback points"),
             ("--index-stable-snapshot-interval=SECONDS", "stable snapshot interval"),
             ("--index-memory-snapshot-interval=SECONDS", "in memory snapshot interval"),
             ("--index-threads=[4]", "indexer threads"),
-            ("--index-log-level=[debug|silent|fatal|error|warn|info|verbose|timing|trace]", "indexr log level")]
+            ("--index-log-level=[debug|silent|fatal|error|warn|info|verbose|timing|trace]", "indexer log level")]
         elif cmd == "collect-logs-start":
             return [
             ("--all-nodes", "Collect logs from all accessible cluster nodes"),
