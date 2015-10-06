@@ -71,7 +71,6 @@ class Buckets:
         force = False
         compact_data_only = False
         compact_view_only = False
-        enable_clock_sync = None
 
         for (o, a) in opts:
             if o in ('-b', '--bucket'):
@@ -106,8 +105,6 @@ class Buckets:
                 compact_data_only = True
             elif o == '--view-only':
                 compact_view_only = True
-            elif o == '--enable-clock-sync':
-                enable_clock_sync = a
 
         self.rest_cmd = rest_cmds[cmd]
         rest = util.restclient_factory(server, port, {'debug':self.debug}, self.ssl)
@@ -147,8 +144,6 @@ class Buckets:
                 rest.setParam('replicaNumber', bucketreplication)
             if enable_flush:
                 rest.setParam('flushEnabled', enable_flush)
-            if enable_clock_sync:
-                rest.setParam('enableClockSync', enable_clock_sync)
             if eviction_policy:
                 if eviction_policy in ['valueOnly', 'fullEviction']:
                     rest.setParam('evictionPolicy', eviction_policy)
@@ -311,7 +306,6 @@ class Buckets:
         eviction_policy = [("--bucket-eviction-policy=[valueOnly|fullEviction]",
                             "policy how to retain meta in memory")]
         enable_flush = [("--enable-flush=[0|1]", "enable/disable flush")]
-        enable_clock_sync = [("--enable-clock-sync=[0|1]","enable/disable clock synchronization")]
         enable_replica_idx = [("--enable-index-replica=[0|1]",
                                "enable/disable index replicas")]
         force = [("--force",
@@ -323,7 +317,7 @@ class Buckets:
 
         create_edit = (bucket_name + bucket_ramsize + bucket_replica +
                       bucket_type + bucket_priority + bucket_password +
-                      eviction_policy + enable_flush + enable_clock_sync)
+                      eviction_policy + enable_flush)
 
         if cmd == "bucket-create":
             return create_edit + enable_replica_idx + wait
@@ -356,7 +350,6 @@ class Buckets:
        --bucket-ramsize=200 \\
        --bucket-replica=1 \\
        --bucket-priority=high \\
-       --enable-clock-sync=1 \\
        --bucket-eviction-policy=valueOnly \\
        -u Administrator -p password"""),
                 ("Create a couchbase bucket and wait for bucket ready",

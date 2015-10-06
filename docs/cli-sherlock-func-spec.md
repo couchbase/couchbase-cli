@@ -60,16 +60,11 @@ Use cases:
     couchbase-cli bucket-create
     couchbase-cli bucket-edit
 
-OPTIONS:
-
-     --enable-clock-sync   enable last write wins for conflict resolution
-
 Use cases:
 
   Modify existed bucket:
 
-    couchbase-cli bucket-edit -c 192.168.0.1:8091 -u Administrator -p password \
-    --enable-clock-sync=1
+    couchbase-cli bucket-edit -c 192.168.0.1:8091 -u Administrator -p password
 
 
   Create a new bucket:
@@ -81,7 +76,6 @@ Use cases:
        --bucket-ramsize=200 \\
        --bucket-replica=1 \\
        --bucket-priority=high \\
-       --enable-clock-sync=1 \\
        -u Administrator -p password
 
   Add a new server with index service:

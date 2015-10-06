@@ -156,7 +156,6 @@ def main():
                 'help',
                 'ssl',
                 'filter-expression=',
-                'enable-clock-sync=',
                 'audit-enabled=',
                 'audit-log-path=',
                 'audit-log-rotate-interval=',
