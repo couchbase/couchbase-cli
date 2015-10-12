@@ -258,46 +258,49 @@ class Node:
             self.collectLogsStatus()
 
     def clusterInit(self, cmd):
-        rest = restclient.RestClient(self.server,
-                                     self.port,
-                                     {'debug':self.debug})
-        if self.port_new:
-            rest.setParam('port', self.port_new)
-        else:
-            rest.setParam('port', 'SAME')
-        rest.setParam('initStatus', 'done')
-        if self.username_new:
-            rest.setParam('username', self.username_new)
-        else:
-            rest.setParam('username', self.user)
-        if self.password_new:
-            rest.setParam('password', self.password_new)
-        else:
-            rest.setParam('password', self.password)
-
-        if not (rest.getParam('username') and rest.getParam('password')):
-            print "ERROR: Both username and password are required."
-            return
-
-        if len(rest.getParam('password')) > MAX_LEN_PASSWORD:
-            print "ERROR: Password length %s exceeds maximum number of characters allowed, which is %s" \
-                  % (len(rest.getParam('password')), MAX_LEN_PASSWORD)
-            return
-
         opts = {
             "error_msg": "unable to init/modify %s" % self.server,
             "success_msg": "init %s" % self.server
         }
 
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
+        if cmd == 'cluster-init' or self.port_new or self.username_new or self.password_new:
+            rest = restclient.RestClient(self.server,
+                                         self.port,
+                                         {'debug':self.debug})
+            if self.port_new:
+                rest.setParam('port', self.port_new)
+            else:
+                rest.setParam('port', 'SAME')
+            rest.setParam('initStatus', 'done')
+            if self.username_new:
+                rest.setParam('username', self.username_new)
+            else:
+                rest.setParam('username', self.user)
+            if self.password_new:
+                rest.setParam('password', self.password_new)
+            else:
+                rest.setParam('password', self.password)
+
+            if not (rest.getParam('username') and rest.getParam('password')):
+                print "ERROR: Both username and password are required."
+                return
+
+            if len(rest.getParam('password')) > MAX_LEN_PASSWORD:
+                print "ERROR: Password length %s exceeds maximum number of characters allowed, which is %s" \
+                    % (len(rest.getParam('password')), MAX_LEN_PASSWORD)
+                return
+
+            output_result = rest.restCmd(self.method,
+                                         self.rest_cmd,
+                                         self.user,
+                                         self.password,
+                                         opts)
+
         # per node quota unfortunately runs against a different location
-        if cmd == "cluster-init" and not self.per_node_quota:
+        if not self.per_node_quota:
             print "ERROR: option cluster-init-ramsize is not specified"
             return
+
         if self.port_new:
             self.port = int(self.port_new)
         if self.username_new:
@@ -308,6 +311,7 @@ class Node:
         rest = restclient.RestClient(self.server,
                                      self.port,
                                      {'debug':self.debug})
+
         if self.per_node_quota:
             rest.setParam('memoryQuota', self.per_node_quota)
 
