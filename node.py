@@ -403,7 +403,7 @@ class Node:
                                          self.password,
                                          opts)
             print output_result
-        else:
+        elif cmd == 'cluster-init':
             print "ERROR: neither cluster-ramsize nor cluster-index-ramsize is specified"
 
     def process_services(self, data_required):
