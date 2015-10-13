@@ -1832,7 +1832,7 @@ class Node:
        --cluster-port=8080 \\
        --services=data,index \\
        --cluster-ramsize=300 \\
-       --cluster-index-ramsize=200""")]
+       --cluster-index-ramsize=256""")]
         elif cmd == "cluster-edit":
             return [("Change the cluster username, password, port and data service ram quota",
 """
