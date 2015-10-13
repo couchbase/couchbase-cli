@@ -337,6 +337,7 @@ class Node:
                                          self.password,
                                          opts)
 
+        if cmd == 'cluster-init' or self.username_new or self.password_new or self.port_new:
             rest = util.restclient_factory(self.server,
                                          self.port,
                                          {'debug':self.debug},
