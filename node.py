@@ -258,6 +258,11 @@ class Node:
             self.collectLogsStatus()
 
     def clusterInit(self, cmd):
+        if not self.per_node_quota:
+            if cmd == 'cluster-init':
+                print "ERROR: option cluster-ramsize is not specified"
+            return
+
         opts = {
             "error_msg": "unable to init/modify %s" % self.server,
             "success_msg": "init %s" % self.server
@@ -295,11 +300,6 @@ class Node:
                                          self.user,
                                          self.password,
                                          opts)
-
-        # per node quota unfortunately runs against a different location
-        if not self.per_node_quota:
-            print "ERROR: option cluster-init-ramsize is not specified"
-            return
 
         if self.port_new:
             self.port = int(self.port_new)
