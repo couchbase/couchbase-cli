@@ -258,9 +258,8 @@ class Node:
             self.collectLogsStatus()
 
     def clusterInit(self, cmd):
-        if not self.per_node_quota:
-            if cmd == 'cluster-init':
-                print "ERROR: option cluster-ramsize is not specified"
+        if not self.per_node_quota and cmd == 'cluster-init':
+            print "ERROR: option cluster-ramsize is not specified"
             return
 
         opts = {
