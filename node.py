@@ -2042,7 +2042,7 @@ class Node:
             return [("Enable audit",
 """
     couchbase-cli setting-audit -c 192.168.0.1:8091 \\
-        --audit-enabled=1 --audit-log-rotate-interva=4 \\
+        --audit-enabled=1 --audit-log-rotate-interval=4 \\
         --audit-log-path="/opt/couchbase/var/lib/couchbase/logs"
         -u Administrator -p password"""),
                 ("Disable audit",
