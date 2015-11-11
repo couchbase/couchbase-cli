@@ -537,7 +537,7 @@ class Node:
                                      self.ssl)
         if self.per_node_quota:
             rest.setParam('memoryQuota', self.per_node_quota)
-        if self.cluster_name:
+        if self.cluster_name is not None:
             rest.setParam('clusterName', self.cluster_name)
         if self.cluster_index_ramsize:
             rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
