@@ -1697,7 +1697,7 @@ class Node:
         services = [("--services=data,index,query",
                      "services that server runs")]
 
-        if cmd == "server-add":
+        if cmd == "server-add" or cmd == "rebalance":
             return server_common + services
         elif cmd == "server-readd":
             return server_common
