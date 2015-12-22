@@ -328,6 +328,36 @@ class Node:
             self.alterRoles(cmd)
 
     def clusterInit(self, cmd):
+        # We need to ensure that creating the REST username/password is the
+        # last REST API that is called because once that API succeeds the
+        # cluster is initialized and cluster-init cannot be run again.
+
+        #set memory quota
+        if cmd == 'cluster-init' and not self.per_node_quota:
+            print "ERROR: option cluster-ramsize is not specified"
+            return
+        elif cmd == 'cluster-init' and not self.cluster_index_ramsize:
+            print "ERROR: option cluster-ramsize is not specified"
+
+        opts = {
+            "error_msg": "unable to set memory quota",
+            "success_msg": "set memory quota successfully"
+        }
+        rest = util.restclient_factory(self.server,
+                                       self.port,
+                                       {'debug':self.debug},
+                                       self.ssl)
+        if self.per_node_quota:
+            rest.setParam('memoryQuota', self.per_node_quota)
+        if self.cluster_index_ramsize:
+            rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
+        if rest.params:
+            output_result = rest.restCmd(self.method,
+                                         '/pools/default',
+                                         self.user,
+                                         self.password,
+                                         opts)
+
         #setup services
         if cmd == "cluster-init":
         # per node quota unfortunately runs against a different location
@@ -355,6 +385,7 @@ class Node:
                                          self.password,
                                          opts)
 
+        # setup REST credentials/REST port
         if cmd == 'cluster-init' or self.username_new or self.password_new or self.port_new:
             rest = util.restclient_factory(self.server,
                                          self.port,
@@ -393,36 +424,8 @@ class Node:
                                          self.user,
                                          self.password,
                                          opts)
+        print output_result
 
-        if self.port_new:
-            self.port = int(self.port_new)
-        if self.username_new:
-            self.user = self.username_new
-        if self.password_new:
-            self.password = self.password_new
-
-        #set memory quota
-        opts = {
-            "error_msg": "unable to set memory quota",
-            "success_msg": "set memory quota successfully"
-        }
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.per_node_quota:
-            rest.setParam('memoryQuota', self.per_node_quota)
-        if self.cluster_index_ramsize:
-            rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
-        if rest.params:
-            output_result = rest.restCmd(self.method,
-                                         '/pools/default',
-                                         self.user,
-                                         self.password,
-                                         opts)
-            print output_result
-        elif cmd == 'cluster-init':
-            print "ERROR: neither cluster-ramsize nor cluster-index-ramsize is specified"
 
     def process_services(self, data_required):
         if not self.services:
