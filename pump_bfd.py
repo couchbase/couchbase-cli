@@ -42,7 +42,7 @@ class BFD:
 
     @staticmethod
     def design_path(spec, bucket_name):
-        bucket_path = os.path.normpath(spec) + "/bucket-" + urllib.quote_plus(bucket_name)
+        bucket_path = os.path.normpath(spec) + "/bucket-" + urllib.quote_plus(bucket_name).encode('ascii')
         if os.path.isdir(bucket_path):
             return bucket_path + '/design.json'
         else:
@@ -50,12 +50,12 @@ class BFD:
             if path:
                 path, dirs = BFD.find_latest_dir(path, None)
                 if path:
-                    return path + "/bucket-" + urllib.quote_plus(bucket_name) + '/design.json'
+                    return path + "/bucket-" + urllib.quote_plus(bucket_name).encode('ascii') + '/design.json'
         return bucket_path + '/design.json'
 
     @staticmethod
     def index_path(spec, bucket_name):
-        bucket_path = os.path.normpath(spec) + "/bucket-" + urllib.quote_plus(bucket_name)
+        bucket_path = os.path.normpath(spec) + "/bucket-" + urllib.quote_plus(bucket_name).encode('ascii')
         if os.path.isdir(bucket_path):
             return bucket_path + '/index.json'
         else:
@@ -63,14 +63,14 @@ class BFD:
             if path:
                 path, dirs = BFD.find_latest_dir(path, None)
                 if path:
-                    return path + "/bucket-" + urllib.quote_plus(bucket_name) + '/index.json'
+                    return path + "/bucket-" + urllib.quote_plus(bucket_name).encode('ascii') + '/index.json'
         return bucket_path + '/index.json'
 
     @staticmethod
     def construct_dir(parent, bucket_name, node_name):
         return os.path.join(parent,
-                    "bucket-" + urllib.quote_plus(bucket_name),
-                    "node-" + urllib.quote_plus(node_name))
+                    "bucket-" + urllib.quote_plus(bucket_name).encode('ascii'),
+                    "node-" + urllib.quote_plus(node_name).encode('ascii'))
 
     @staticmethod
     def check_full_dbfiles(parent_dir):
@@ -144,8 +144,8 @@ class BFD:
     @staticmethod
     def db_dir(spec, bucket_name, node_name, tmstamp=None, mode=None, new_session=False):
         parent_dir = os.path.normpath(spec) + \
-                        '/bucket-' + urllib.quote_plus(bucket_name) + \
-                        '/node-' + urllib.quote_plus(node_name)
+                        '/bucket-' + urllib.quote_plus(bucket_name).encode('ascii') + \
+                        '/node-' + urllib.quote_plus(node_name).encode('ascii')
         if os.path.isdir(parent_dir):
             return parent_dir
 
@@ -369,7 +369,7 @@ class BFDSource(BFD, pump.Source):
                 return "error: not a bucket directory: " + bucket_dir, None
 
             bucket_name = os.path.basename(bucket_dir)[len("bucket-"):].strip()
-            bucket_name = urllib.unquote_plus(bucket_name)
+            bucket_name = urllib.unquote_plus(bucket_name).encode('ascii')
             if not bucket_name:
                 return "error: bucket_name too short: " + bucket_dir, None
 
@@ -382,7 +382,7 @@ class BFDSource(BFD, pump.Source):
                     return "error: not a node directory: " + node_dir, None
 
                 node_name = os.path.basename(node_dir)[len("node-"):].strip()
-                node_name = urllib.unquote_plus(node_name)
+                node_name = urllib.unquote_plus(node_name).encode('ascii')
                 if not node_name:
                     return "error: node_name too short: " + node_dir, None
 
