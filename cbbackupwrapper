@@ -220,8 +220,11 @@ def getBuckets(node, rest_port, username, password):
     bucketsOnCluster = []
     data = json.loads(response.read())
     for item in data:
-        bucket = item['name']
-        bucketsOnCluster.append(bucket)
+        if item['bucketType'] == 'memcached':
+            print('skipping bucket that is not a couchbase-bucket: {0}'.format(item['name']))
+        else:
+            bucket = item['name']
+            bucketsOnCluster.append(bucket)
     return bucketsOnCluster
 
 def consumer(id, verbose):
