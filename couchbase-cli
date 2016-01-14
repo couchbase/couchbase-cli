@@ -136,6 +136,7 @@ def main():
                 'alert-meta-overhead',
                 'alert-meta-oom',
                 'alert-write-failed',
+                'alert-audit-msg-dropped',
                 'group-name=',
                 'rename=',
                 'add-servers=',

@@ -163,6 +163,7 @@ class Node:
         self.alert_meta_overhead = None
         self.alert_meta_oom = None
         self.alert_write_failed = None
+        self.alert_audit_dropped = None
 
         #group management
         self.group_name = None
@@ -615,7 +616,9 @@ class Node:
         if self.alert_meta_oom:
             alert_opts = alert_opts + 'ep_oom_errors,'
         if self.alert_write_failed:
-             alert_opts = alert_opts + 'ep_item_commit_failed,'
+            alert_opts = alert_opts + 'ep_item_commit_failed,'
+        if self.alert_audit_dropped:
+            alert_opts = alert_opts + 'audit_dropped_events,'
 
         if alert_opts:
             # remove last separator
@@ -883,6 +886,8 @@ class Node:
                 self.alert_meta_oom = True
             elif o == '--alert-write-failed':
                 self.alert_write_failed = True
+            elif o == '--alert-audit-msg-dropped':
+                self.alert_audit_dropped = True
             elif o == '--create':
                 self.cmd = 'create'
             elif o == '--list':
@@ -1769,7 +1774,8 @@ class Node:
             ("--alert-meta-oom",
              "bucket memory on a node is entirely used for metadata"),
             ("--alert-write-failed",
-             "writing data to disk for a specific bucket has failed")]
+             "writing data to disk for a specific bucket has failed"),
+            ("--alert-audit-msg-dropped", "writing event to audit log has failed")]
         elif cmd == "setting-cluster":
             return [("--cluster-name=[CLUSTERNAME]", "cluster name"),
                     ("--cluster-ramsize=[RAMSIZEMB]", "per node data service ram quota in MB"),
