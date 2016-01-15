@@ -14,7 +14,6 @@ import pump_bfd
 import pump_csv
 import pump_cb
 import pump_gen
-import pump_mbf
 import pump_mc
 import pump_tap
 import pump_dcp
@@ -392,7 +391,6 @@ def opt_extra_help(parser, extra_defaults):
 SOURCES = [pump_bfd.BFDSource,
            pump_csv.CSVSource,
            pump_gen.GenSource,
-           pump_mbf.MBFSource,
            pump_dcp.DCPStreamSource,
            pump_tap.TAPDumpSource,
            pump.StdInSource]

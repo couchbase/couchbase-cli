@@ -70,7 +70,6 @@ INSTALL(FILES
         pump_csv.py
         pump_gen.py
         pump_json.py
-        pump_mbf.py
         pump_mc.py
         pump_sfd.py
         pump_tap.py
