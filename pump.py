@@ -903,37 +903,6 @@ def parse_spec(opts, spec, port):
 
     return host, port, username, password, p[2]
 
-def publish_index(opts, sink, query_svr, stmt, args):
-        host, port, user, pwd, path = \
-            parse_spec(opts, sink, 8091)
-
-        host, port = hostport(query_svr)
-
-        #retrieve a list of missing vbucket
-        url = "/query/service"
-        if args:
-            body = {"statement": str(stmt), "args": str(args)}
-        else:
-            body = {"statement": str(stmt)}
-        #headers = {'Content-type': 'application/x-www-form-urlencoded'}
-        if opts.ssl:
-            port = couchbaseConstants.SSL_QUERY_PORT
-        else:
-            port = couchbaseConstants.QUERY_PORT
-        err, conn, response = \
-            rest_request(host, port, user, pwd, opts.ssl,
-                         url, method='POST',
-                         body=json.dumps(body),
-                         reason='create index')
-        if response:
-            res = json.loads(response)
-            if "errors" == res["status"]:
-                for e in res["errors"]:
-                    print "query error:", e["msg"]
-        if conn:
-            conn.close()
-        return err
-
 def rest_request(host, port, user, pswd, ssl, path, method='GET', body='', reason='', headers=None):
     if reason:
         reason = "; reason: %s" % (reason)

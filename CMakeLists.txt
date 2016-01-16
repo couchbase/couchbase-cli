@@ -54,6 +54,7 @@ INSTALL(FILES
         cbcollections.py
         cbqueue.py
         cbsnappy.py
+        cluster_manager.py
         cluster_stats.py
         collector.py
         couchbaseConstants.py

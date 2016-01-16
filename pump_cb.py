@@ -8,6 +8,7 @@ import urllib
 import couchbaseConstants
 import pump
 import pump_mc
+import cluster_manager
 
 
 class CBSink(pump_mc.MCSink):
@@ -233,18 +234,14 @@ class CBSink(pump_mc.MCSink):
                         return ("error: could not restore design doc id: %s" +
                                 "; response: %s; err: %s") % (id, response, err)
                 else:
-                    stmts = sd.get('statements', None)
-
-                    if not stmts:
-                        return ("error: unrecognized design doc format:%s" % sd)
-                    err, query_server = pump.filter_server(opts, sink_spec, 'n1ql')
-                    if err or not query_server:
-                        return ("error: could not find query server:%s")
+                    stmts = sd.get('statements', [])
+                    cm = cluster_manager.ClusterManager(sink_spec, user, pswd)
                     for stmt in stmts:
-                        err = pump.publish_index(opts, sink_spec, query_server, \
-                                           stmt["statement"], stmt.get("args", None))
-                        if err:
-                            return "error: could not create index"
+                        result = cm.n1ql_query(stmt['statement'], stmt.get('args', None))
+
+                        if 'errors' in result:
+                            for error in result['errors']:
+                                logging.warn('N1QL query %s failed due to error `%s`' % (stmt['statement'], error['msg']))
 
             except Exception, e:
                 return ("error: design sink exception: %s" +
