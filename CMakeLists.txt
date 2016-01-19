@@ -95,3 +95,14 @@ INSTALL(FILES
         simplejson/encoder.py
         simplejson/scanner.py
         DESTINATION lib/python/simplejson)
+
+INSTALL(FILES
+        simplejson/LICENSE.txt
+        simplejson/__init__.py
+        simplejson/decoder.py
+        simplejson/encoder.py
+        simplejson/scanner.py
+        DESTINATION lib/python/simplejson)
+
+INSTALL(DIRECTORY requests
+        DESTINATION lib/python/)
