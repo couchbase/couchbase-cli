@@ -92,6 +92,20 @@ class ClusterManager(object):
 
         return hosts, None
 
+    def retrieve_cluster_certificate(self):
+        """ Retrieves the current cluster certificate
+
+        Gets the current cluster certificate."""
+        url = self.hostname + '/pools/default/certificate'
+        return self._get(url)
+
+    def regenerate_cluster_certificate(self):
+        """ Regenerates the cluster certificate
+
+        Regenerates the cluster certificate and returns the new certificate."""
+        url = self.hostname + '/controller/regenerateCertificate'
+        return self._post_form_encoded(url, None)
+
     def _get(self, url):
         response = requests.get(url, auth=(self.username, self.password))
         return _handle_response(response)

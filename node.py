@@ -2,6 +2,7 @@
   Implementation for rebalance, add, remove, stop rebalance.
 """
 
+import cluster_manager
 import time
 import os
 import sys
@@ -1529,42 +1530,21 @@ class Node:
         if self.certificate_file is None:
             command_error("please specify certificate file name for the operation")
 
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        output_result = ''
+        hostname = 'http://%s:%d' % (self.server, self.port)
+        cm = cluster_manager.ClusterManager(hostname, self.user, self.password, self.ssl)
+
         if self.cmd == 'retrieve':
-            opts = {
-                'error_msg': "unable to %s certificate" % self.cmd,
-                'success_msg': "Successfully %s certificate" % self.cmd
-            }
-            output_result = rest.restCmd('GET',
-                                         '/pools/default/certificate',
-                                        self.user,
-                                        self.password,
-                                        opts)
+            certificate, errors = cm.retrieve_cluster_certificate()
+            _exitIfErrors(errors)
+            _exitOnFileWriteFailure(self.certificate_file, certificate)
+            print "SUCCESS: %s certificate to '%s'" % (self.cmd, self.certificate_file)
         elif self.cmd  == 'regenerate':
-            opts = {
-                'error_msg': "unable to %s certificate" % self.cmd,
-                'success_msg': None
-            }
-            output_result = rest.restCmd('POST',
-                                         '/controller/regenerateCertificate',
-                                        self.user,
-                                        self.password,
-                                        opts)
+            certificate, errors = cm.regenerate_cluster_certificate()
+            _exitIfErrors(errors)
+            _exitOnFileWriteFailure(self.certificate_file, certificate)
+            print "SUCCESS: %s certificate to '%s'" % (self.cmd, self.certificate_file)
         else:
             print "ERROR: unknown request:", self.cmd
-            return
-
-        try:
-            fp = open(self.certificate_file, 'w')
-            fp.write(output_result)
-            fp.close()
-            print "SUCCESS: %s certificate to '%s'" % (self.cmd, self.certificate_file)
-        except IOError, error:
-            print "ERROR:", error
 
     def collectLogsStart(self, servers):
         """Starts a cluster-wide log collection task"""
@@ -2067,3 +2047,18 @@ class Node:
         -u Administrator -p password""")]
         else:
             return None
+
+def _exitIfErrors(errors):
+    if errors:
+        for error in errors:
+            print error
+        sys.exit(1)
+
+def _exitOnFileWriteFailure(fname, bytes):
+    try:
+        fp = open(fname, 'w')
+        fp.write(bytes)
+        fp.close()
+    except IOError, error:
+        print "ERROR:", error
+        sys.exit(1)
