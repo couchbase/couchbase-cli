@@ -239,11 +239,11 @@ class CBSink(pump_mc.MCSink):
                     for stmt in stmts:
                         result, errors = cm.n1ql_query(stmt['statement'], stmt.get('args', None))
                         if errors:
-                            logging.warn('N1QL query %s failed due to %s' % errors)
+                            logging.error('N1QL query %s failed due to %s' % errors)
 
                         if 'errors' in result:
                             for error in result['errors']:
-                                logging.warn('N1QL query %s failed due to error `%s`' % (stmt['statement'], error['msg']))
+                                logging.error('N1QL query %s failed due to error `%s`' % (stmt['statement'], error['msg']))
 
             except Exception, e:
                 return ("error: design sink exception: %s" +
