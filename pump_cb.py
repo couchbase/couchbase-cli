@@ -221,21 +221,22 @@ class CBSink(pump_mc.MCSink):
             user = spec_parts[2] # Default to the main REST user/pwsd.
             pswd = spec_parts[3]
         if type(sd) is dict:
-            try:
-                id = sd.get('_id', None)
-                if id:
-                    err, conn, response = \
-                        pump.rest_request(host, int(port), user, pswd, opts.ssl,
-                                          path + "/" + id, method='PUT', body=source_design,
-                                          reason="consume_design")
-                    if conn:
-                        conn.close()
-                    if err:
-                        return ("error: could not restore design doc id: %s" +
-                                "; response: %s; err: %s") % (id, response, err)
-                else:
-                    stmts = sd.get('statements', [])
-                    cm = cluster_manager.ClusterManager(sink_spec, user, pswd)
+
+            id = sd.get('_id', None)
+            if id:
+                err, conn, response = \
+                    pump.rest_request(host, int(port), user, pswd, opts.ssl,
+                                      path + "/" + id, method='PUT', body=source_design,
+                                      reason="consume_design")
+                if conn:
+                    conn.close()
+                if err:
+                    return ("error: could not restore design doc id: %s" +
+                            "; response: %s; err: %s") % (id, response, err)
+            else:
+                stmts = sd.get('statements', [])
+                cm = cluster_manager.ClusterManager(sink_spec, user, pswd)
+                try:
                     for stmt in stmts:
                         result, errors = cm.n1ql_query(stmt['statement'], stmt.get('args', None))
                         if errors:
@@ -244,10 +245,9 @@ class CBSink(pump_mc.MCSink):
                         if 'errors' in result:
                             for error in result['errors']:
                                 logging.error('N1QL query %s failed due to error `%s`' % (stmt['statement'], error['msg']))
-
-            except Exception, e:
-                return ("error: design sink exception: %s" +
-                        "; couch_api_base: %s") % (e, couch_api_base)
+                except cluster_manager.ServiceNotAvailableException, e:
+                    logging.error("Failed to restore indexes, cluster does not contain a" +
+                                  " query node")
         elif type(sd) is list:
             for row in sd:
                 logging.debug("design_doc row: " + str(row))
