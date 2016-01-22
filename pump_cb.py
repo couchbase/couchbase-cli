@@ -237,7 +237,9 @@ class CBSink(pump_mc.MCSink):
                     stmts = sd.get('statements', [])
                     cm = cluster_manager.ClusterManager(sink_spec, user, pswd)
                     for stmt in stmts:
-                        result = cm.n1ql_query(stmt['statement'], stmt.get('args', None))
+                        result, errors = cm.n1ql_query(stmt['statement'], stmt.get('args', None))
+                        if errors:
+                            logging.warn('N1QL query %s failed due to %s' % errors)
 
                         if 'errors' in result:
                             for error in result['errors']:
