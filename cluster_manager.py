@@ -92,11 +92,15 @@ class ClusterManager(object):
 
         return hosts, None
 
-    def retrieve_cluster_certificate(self):
+    def retrieve_cluster_certificate(self, extended=False):
         """ Retrieves the current cluster certificate
 
-        Gets the current cluster certificate."""
+        Gets the current cluster certificate. If extended is set tot True then
+        we return the extended certificate which contains the certificate type,
+        certicicate key, expiration, subject, and warnings."""
         url = self.hostname + '/pools/default/certificate'
+        if extended:
+            url += '?extended=true'
         return self._get(url)
 
     def regenerate_cluster_certificate(self):
@@ -104,6 +108,30 @@ class ClusterManager(object):
 
         Regenerates the cluster certificate and returns the new certificate."""
         url = self.hostname + '/controller/regenerateCertificate'
+        return self._post_form_encoded(url, None)
+
+    def upload_cluster_certificate(self, certificate):
+        """ Uploads a new cluster certificate"""
+        url = self.hostname + '/controller/uploadClusterCA'
+        return self._post_form_encoded(url, certificate)
+
+    def retrieve_node_certificate(self, node):
+        """ Retrieves the current node certificate
+
+        Returns the current node certificate"""
+        url = self.hostname + '/pools/default/certificate/node/' + node
+        return self._get(url)
+
+    def set_node_certificate(self):
+        """Activates the current node certificate
+
+        Grabs chain.pem and pkey.pem from the <data folder>/inbox/ directory and
+        applies them to the node. chain.pem contains the chain encoded certificates
+        starting from the node certificat and ending with the last intermediate
+        certificate before cluster CA. pkey.pem contains the pem encoded private
+        key for node certifiactes. Both files should exist on the server before
+        this API is called."""
+        url = self.hostname + '/node/controller/reloadCertificate'
         return self._post_form_encoded(url, None)
 
     def _get(self, url):

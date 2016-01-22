@@ -927,6 +927,15 @@ class Node:
             elif o == '--regenerate-cert':
                 self.cmd = 'regenerate'
                 self.certificate_file = a
+            elif o == '--cluster-cert-info':
+                self.cmd = 'cluster-cert-info'
+            elif o == '--node-cert-info':
+                self.cmd = 'node-cert-info'
+            elif o == '--upload-cluster-ca':
+                self.cmd = 'upload-cluster-ca'
+                self.certificate_file = a
+            elif o == '--set-node-certificate':
+                self.cmd = 'set-node-certificate'
             elif o == '--force':
                 self.hard_failover = True
             elif o == '--recovery-type':
@@ -1527,7 +1536,7 @@ class Node:
         print output_result
 
     def retrieveCert(self):
-        if self.certificate_file is None:
+        if self.cmd in ['retrieve', 'regenerate', 'upload-cluster-ca'] and self.certificate_file is None:
             command_error("please specify certificate file name for the operation")
 
         hostname = 'http://%s:%d' % (self.server, self.port)
@@ -1543,6 +1552,23 @@ class Node:
             _exitIfErrors(errors)
             _exitOnFileWriteFailure(self.certificate_file, certificate)
             print "SUCCESS: %s certificate to '%s'" % (self.cmd, self.certificate_file)
+        elif self.cmd == 'cluster-cert-info':
+            certificate, errors = cm.retrieve_cluster_certificate(True)
+            _exitIfErrors(errors)
+            print json.dumps(certificate, sort_keys=True, indent=2)
+        elif self.cmd == 'node-cert-info':
+            certificate, errors = cm.retrieve_node_certificate('%s:%d' % (self.server, self.port))
+            _exitIfErrors(errors)
+            print json.dumps(certificate, sort_keys=True, indent=2)
+        elif self.cmd == 'upload-cluster-ca':
+            certificate = _exitOnFileReadFailure(self.certificate_file)
+            _, errors = cm.upload_cluster_certificate(certificate)
+            _exitIfErrors(errors)
+            print "SUCCESS: uploaded certificate to '%s'" % self.certificate_file
+        elif self.cmd == 'set-node-certificate':
+            _, errors = cm.set_node_certificate()
+            _exitIfErrors(errors)
+            print "SUCCESS: node certificate set"
         else:
             print "ERROR: unknown request:", self.cmd
 
@@ -1767,10 +1793,14 @@ class Node:
                     ("--auto-failover-timeout=TIMEOUT (>=30)",
                      "specify timeout that expires to trigger auto failover")]
         elif cmd == "ssl-manage":
-            return [("--retrieve-cert=CERTIFICATE",
+            return [("--cluster-cert-info", "prints cluster certificate info"),
+                    ("--node-cert-info", "prints node certificate info"),
+                    ("--retrieve-cert=CERTIFICATE",
                      "retrieve cluster certificate AND save to a pem file"),
                     ("--regenerate-cert=CERTIFICATE",
-                     "regenerate cluster certificate AND save to a pem file")]
+                     "regenerate cluster certificate AND save to a pem file"),
+                    ("--set-node-certificate", "sets the node certificate"),
+                    ("--upload-cluster-ca", "uploads a new cluster certificate")]
         elif cmd == "setting-audit":
             return [
             ("--audit-log-rotate-interval=[MINUTES]", "log rotation interval"),
@@ -1980,6 +2010,26 @@ class Node:
 """
     couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
         --regenerate-cert=/tmp/test.pem \\
+        -u Administrator -p password"""),
+                ("Download the extended cluster certificate",
+"""
+    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
+        --cluster-cert-info \\
+        -u Administrator -p password"""),
+                ("Download the current node certificate",
+"""
+    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
+        --node-cert-info \\
+        -u Administrator -p password"""),
+                ("Upload a new cluster certificate",
+"""
+    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
+        --upload-cluster-ca=/tmp/test.pem \\
+        -u Administrator -p password"""),
+                ("Set the new node certificate",
+"""
+    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
+        --set-node-certificate --chain=/tmp/test.pem --pkey=/tmp/test.pem \\
         -u Administrator -p password""")]
         elif cmd == "collect-logs-start":
             return [("Start cluster-wide log collection for whole cluster",
@@ -2059,6 +2109,16 @@ def _exitOnFileWriteFailure(fname, bytes):
         fp = open(fname, 'w')
         fp.write(bytes)
         fp.close()
+    except IOError, error:
+        print "ERROR:", error
+        sys.exit(1)
+
+def _exitOnFileReadFailure(fname):
+    try:
+        fp = open(fname, 'r')
+        bytes = fp.read()
+        fp.close()
+        return bytes
     except IOError, error:
         print "ERROR:", error
         sys.exit(1)
