@@ -11,6 +11,9 @@ FTS_SERVICE = 'fts'
 
 DEFAULT_REQUEST_TIMEOUT = 60
 
+# Remove this once we can verify SSL certificates
+requests.packages.urllib3.disable_warnings()
+
 def request(f):
     def g(*args, **kwargs):
         cm = args[0]
@@ -33,8 +36,12 @@ class ServiceNotAvailableException(Exception):
 class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
-    def __init__(self, hostname, username, password, ssl=False, timeout=DEFAULT_REQUEST_TIMEOUT):
-        self.hostname = hostname
+    def __init__(self, host, port, username, password, ssl=False, timeout=DEFAULT_REQUEST_TIMEOUT):
+        if ssl:
+            self.hostname = 'https://%s:%s' % (host, str(port))
+        else:
+            self.hostname = 'http://%s:%s' % (host, str(port))
+
         self.username = username
         self.password = password
         self.timeout = timeout
@@ -199,25 +206,26 @@ class ClusterManager(object):
 
     @request
     def _get(self, url):
-        response = requests.get(url, auth=(self.username, self.password), timeout=self.timeout)
+        response = requests.get(url, auth=(self.username, self.password), verify=False,
+                                timeout=self.timeout)
         return _handle_response(response)
 
     @request
     def _post_form_encoded(self, url, params):
         response = requests.post(url, auth=(self.username, self.password), data=params,
-                                 timeout=self.timeout)
+                                 verify=False, timeout=self.timeout)
         return _handle_response(response)
 
     @request
     def _put(self, url, params):
         response = requests.put(url, params, auth=(self.username, self.password),
-                                timeout=self.timeout)
+                                verify=False, timeout=self.timeout)
         return _handle_response(response)
 
     @request
     def _delete(self, url):
         response = requests.delete(url, auth=(self.username, self.password),
-                                  timeout=self.timeout)
+                                   verify=False, timeout=self.timeout)
         return _handle_response(response)
 
 

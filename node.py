@@ -333,8 +333,7 @@ class Node:
         # cluster is initialized and cluster-init cannot be run again.
 
         if cmd == 'cluster-init':
-            hostname = 'http://%s:%d' % (self.server, self.port)
-            cm = cluster_manager.ClusterManager(hostname, self.user,
+            cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
                                                 self.password, self.ssl)
             data, errors = cm.pools()
             _exitIfErrors(errors)
@@ -749,8 +748,8 @@ class Node:
         print output_result
 
     def alterRoles(self,cmd):
-        hostname = 'http://%s:%d' % (self.server, self.port)
-        cm = cluster_manager.ClusterManager(hostname, self.user, self.password, self.ssl)
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
+                                            self.password, self.ssl)
 
         if cmd == 'get-roles':
             data, errors = cm.getRoles()
@@ -1607,8 +1606,7 @@ class Node:
         if self.cmd in ['retrieve', 'regenerate', 'upload-cluster-ca'] and self.certificate_file is None:
             command_error("please specify certificate file name for the operation")
 
-        hostname = 'http://%s:%d' % (self.server, self.port)
-        cm = cluster_manager.ClusterManager(hostname, self.user, self.password, self.ssl)
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user, self.password, self.ssl)
 
         if self.cmd == 'retrieve':
             print "Warning --retrieve-cert is deprecated, use --cluster-cert-info"
