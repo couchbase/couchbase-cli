@@ -240,9 +240,9 @@ class CBSink(pump_mc.MCSink):
                     for stmt in stmts:
                         result, errors = cm.n1ql_query(stmt['statement'], stmt.get('args', None))
                         if errors:
-                            logging.error('N1QL query %s failed due to %s' % errors)
+                            logging.error('N1QL query %s failed due to %s' % (stmt['statement'], errors))
 
-                        if 'errors' in result:
+                        if result and 'errors' in result:
                             for error in result['errors']:
                                 logging.error('N1QL query %s failed due to error `%s`' % (stmt['statement'], error['msg']))
                 except cluster_manager.ServiceNotAvailableException, e:
