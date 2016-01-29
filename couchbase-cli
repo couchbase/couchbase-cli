@@ -149,6 +149,7 @@ def main():
                 'node-cert-info',
                 'upload-cluster-ca=',
                 'set-node-certificate',
+                'extended',
                 'recovery-type=',
                 'recovery-buckets=',
                 'nodes=',

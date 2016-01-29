@@ -175,6 +175,7 @@ class Node:
 
         #SSL certificate management
         self.certificate_file = None
+        self.extended = False
         self.cmd = None
 
         self.hard_failover = None
@@ -929,6 +930,8 @@ class Node:
                 self.certificate_file = a
             elif o == '--cluster-cert-info':
                 self.cmd = 'cluster-cert-info'
+            elif o == '--extended':
+                self.extended = True
             elif o == '--node-cert-info':
                 self.cmd = 'node-cert-info'
             elif o == '--upload-cluster-ca':
@@ -1543,6 +1546,7 @@ class Node:
         cm = cluster_manager.ClusterManager(hostname, self.user, self.password, self.ssl)
 
         if self.cmd == 'retrieve':
+            print "Warning --retrieve-cert is deprecated, use --cluster-cert-info"
             certificate, errors = cm.retrieve_cluster_certificate()
             _exitIfErrors(errors)
             _exitOnFileWriteFailure(self.certificate_file, certificate)
@@ -1553,9 +1557,12 @@ class Node:
             _exitOnFileWriteFailure(self.certificate_file, certificate)
             print "SUCCESS: %s certificate to '%s'" % (self.cmd, self.certificate_file)
         elif self.cmd == 'cluster-cert-info':
-            certificate, errors = cm.retrieve_cluster_certificate(True)
+            certificate, errors = cm.retrieve_cluster_certificate(self.extended)
             _exitIfErrors(errors)
-            print json.dumps(certificate, sort_keys=True, indent=2)
+            if isinstance(certificate, dict):
+                print json.dumps(certificate, sort_keys=True, indent=2)
+            else:
+                print certificate
         elif self.cmd == 'node-cert-info':
             certificate, errors = cm.retrieve_node_certificate('%s:%d' % (self.server, self.port))
             _exitIfErrors(errors)
@@ -2005,6 +2012,10 @@ class Node:
 """
     couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
         --retrieve-cert=/tmp/test.pem \\
+        -u Administrator -p password
+
+    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
+        --cluster-cert-info \\
         -u Administrator -p password"""),
                 ("Regenerate AND download a cluster certificate",
 """
@@ -2014,7 +2025,7 @@ class Node:
                 ("Download the extended cluster certificate",
 """
     couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
-        --cluster-cert-info \\
+        --cluster-cert-info --extended \\
         -u Administrator -p password"""),
                 ("Download the current node certificate",
 """
