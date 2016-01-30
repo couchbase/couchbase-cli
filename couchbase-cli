@@ -175,6 +175,8 @@ def main():
                 'index-threads=',
                 'index-log-level=',
                 'vm=',
+                'roles=',
+                'users=',
                 ])
     except getopt.GetoptError, err:
         usage.command_error(err)
@@ -217,6 +219,9 @@ def main():
         'setting-alert'         : node.Node,
         'setting-audit'         : node.Node,
         'setting-ldap'          : node.Node,
+        'set-roles'             : node.Node,
+        'delete-roles'          : node.Node,
+        'get-roles'             : node.Node,
         'setting-xdcr'          : xdcr.XDCR,
         'setting-index'         : node.Node,
         'xdcr-setup'            : xdcr.XDCR,

@@ -11,10 +11,12 @@ import socket
 import simplejson as json
 import re
 import urlparse
+import json
 
 from usage import command_error
 from restclient import *
 from listservers import *
+from _csv import reader
 
 try:
     import pump_bfd2
@@ -51,6 +53,9 @@ rest_cmds = {
     'collect-logs-start'  : '/controller/startLogsCollection',
     'collect-logs-stop'   : '/controller/cancelLogsCollection',
     'collect-logs-status' : '/pools/default/tasks',
+    'set-roles'             :'/settings/rbac/users',
+    'delete-roles'          :'/settings/rbac/users',
+    'get-roles'          :'/settings/rbac/users',
 }
 
 server_no_remove = [
@@ -96,6 +101,9 @@ methods = {
     'collect-logs-start'  : 'POST',
     'collect-logs-stop'   : 'POST',
     'collect-logs-status' : 'GET',
+    'get-roles'           : 'GET',
+    'set-roles'           : 'PUT',
+    'delete-roles'        : 'PUT',
 }
 
 bool_to_str = lambda value: str(bool(int(value))).lower()
@@ -209,6 +217,10 @@ class Node:
         self.services = None
         self.log_level = None
 
+        #set-roles / delete-roles
+        self.roles = None
+        self.users = None
+
     def runCmd(self, cmd, server, port,
                user, password, ssl, opts):
         self.rest_cmd = rest_cmds[cmd]
@@ -311,6 +323,9 @@ class Node:
 
         elif cmd == 'collect-logs-status':
             self.collectLogsStatus()
+
+        elif cmd in ('set-roles', 'delete-roles', 'get-roles'):
+            self.alterRoles(cmd)
 
     def clusterInit(self, cmd):
         #setup services
@@ -720,6 +735,37 @@ class Node:
                                      opts)
         print output_result
 
+    def alterRoles(self,cmd):
+        hostname = 'http://%s:%d' % (self.server, self.port)
+        cm = cluster_manager.ClusterManager(hostname, self.user, self.password, self.ssl)
+
+        if cmd == 'get-roles':
+            data, errors = cm.getRoles()
+            _exitIfErrors(errors)
+            print json.dumps(data, indent=2)
+            return
+
+        # process params, need to rewrite roles in the form required by the SDK
+
+        if cmd == 'set-roles' and self.roles == None:
+            print "ERROR: You must specify a list of roles for the users\n  --roles=[comma-delimited list of one or more from full_admin, readonly_admin, cluster_admin, replication_admin, bucket_admin(opt bucket name), view_admin]"
+            return
+
+        # we need one or more users, we must issue a REST call for each
+
+        if self.users == None:
+            print "ERROR: You must specify one or more users.\n  --users=user1,user2"
+            return
+
+        if cmd == 'set-roles':
+            data, errors = cm.setRoles(self.users,self.roles)
+        else:
+            data, errors = cm.deleteRoles(self.users)
+
+        _exitIfErrors(errors)
+
+        print json.dumps(data,indent=2)
+
     def index(self):
         rest = util.restclient_factory(self.server,
                                      self.port,
@@ -983,6 +1029,12 @@ class Node:
                 self.index_threads = a
             elif o == '--index-log-level':
                 self.log_level = a
+
+            elif o == '--roles':
+                self.roles = a
+            elif o == '--users':
+                self.users = a
+
         return servers
 
     def normalize_servers(self, server_list):
@@ -1974,7 +2026,7 @@ class Node:
     couchbase-cli user-manage -c 192.168.0.1:8091 \\
         --set --ro-username=readonlyuser --ro-password=readonlypassword \\
         -u Administrator -p password""")]
-        elif cmd == "group-manage":      
+        elif cmd == "group-manage":
             return [("Create a new group",
 """
     couchbase-cli group-manage -c 192.168.0.1:8091 \\

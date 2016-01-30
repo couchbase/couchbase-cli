@@ -1,6 +1,8 @@
 """Management API's for Couchbase Cluster"""
 
 import requests
+import csv
+import StringIO
 
 N1QL_SERVICE = 'n1ql'
 INDEX_SERVICE = 'index'
@@ -92,6 +94,42 @@ class ClusterManager(object):
 
         return hosts, None
 
+    def setRoles(self,userList,roleList):
+        # we take a comma-delimited list of roles that needs to go into a dictionary
+        paramDict = {"roles" : roleList}
+
+        # but we need a separate REST call for each user in the comma-delimited user list
+        userF = StringIO.StringIO(userList)
+        reader = csv.reader(userF, delimiter=',')
+        for users in reader:
+            for user in users:
+                paramDict["id"] = user
+                url = self.hostname + '/settings/rbac/users/' + user
+                data, errors = self._put(url,paramDict)
+                if errors:
+                    return data, errors
+
+        return data, errors
+
+    def deleteRoles(self,userList):
+        # need a separate REST call for each user in the comma-delimited user list
+        userF = StringIO.StringIO(userList)
+        reader = csv.reader(userF, delimiter=',')
+        for users in reader:
+            for user in users:
+                url = self.hostname + '/settings/rbac/users/' + user
+                data, errors = self._delete(url)
+                if errors:
+                    return data, errors
+
+        return data, errors
+
+    def getRoles(self):
+        url = self.hostname + '/settings/rbac/users'
+        data, errors = self._get(url)
+
+        return data, errors
+
     def retrieve_cluster_certificate(self, extended=False):
         """ Retrieves the current cluster certificate
 
@@ -134,12 +172,22 @@ class ClusterManager(object):
         url = self.hostname + '/node/controller/reloadCertificate'
         return self._post_form_encoded(url, None)
 
+    # Low level methods for basic HTML operations
+
     def _get(self, url):
         response = requests.get(url, auth=(self.username, self.password))
         return _handle_response(response)
 
     def _post_form_encoded(self, url, params):
         response = requests.post(url, auth=(self.username, self.password), data=params)
+        return _handle_response(response)
+
+    def _put(self, url, params):
+        response = requests.put(url, params, auth=(self.username, self.password))
+        return _handle_response(response)
+
+    def _delete(self, url):
+        response = requests.delete(url, auth=(self.username, self.password))
         return _handle_response(response)
 
 def _handle_response(response):
