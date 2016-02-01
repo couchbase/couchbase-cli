@@ -109,7 +109,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         return 0, json.dumps(ddocs["result"])
 
     def add_start_event(self, conn):
-        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        sasl_user = str(self.source_bucket.get("name"))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
                                  "user": sasl_user,
@@ -126,7 +126,7 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         return 0
 
     def add_stop_event(self, conn):
-        sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
+        sasl_user = str(self.source_bucket.get("name"))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
                                  "user": sasl_user
@@ -439,8 +439,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             if not self.mem_conn:
                 return "error: could not connect to memcached: " + \
                     host + ":" + str(port)
-            sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
-            sasl_pswd = str(self.source_bucket.get("saslPassword", pump.get_password(self.opts.password)))
+            sasl_user = str(self.source_bucket.get("name"))
+            sasl_pswd = str(self.source_bucket.get("saslPassword"))
             if sasl_user:
                 try:
                     self.dcp_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
