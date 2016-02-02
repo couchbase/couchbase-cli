@@ -9,6 +9,21 @@ INDEX_SERVICE = 'index'
 MGMT_SERVICE = 'mgmt'
 FTS_SERVICE = 'fts'
 
+DEFAULT_REQUEST_TIMEOUT = 60
+
+def request(f):
+    def g(*args, **kwargs):
+        cm = args[0]
+        url = args[1]
+        try:
+            return f(*args, **kwargs)
+        except requests.exceptions.ConnectionError, e:
+            return None, ['Unable to connect to host at %s' % cm.hostname]
+        except requests.exceptions.ReadTimeout, e:
+            return None, ['Request to host `%s` timed out after %d seconds' % (url, cm.timeout)]
+    return g
+
+
 class ServiceNotAvailableException(Exception):
     """An exception taised when a service does not exist in the target cluster"""
 
@@ -18,10 +33,11 @@ class ServiceNotAvailableException(Exception):
 class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
-    def __init__(self, hostname, username, password, ssl=False):
+    def __init__(self, hostname, username, password, ssl=False, timeout=DEFAULT_REQUEST_TIMEOUT):
         self.hostname = hostname
         self.username = username
         self.password = password
+        self.timeout = timeout
         self.ssl = ssl
 
     def n1ql_query(self, stmt, args=None):
@@ -174,21 +190,29 @@ class ClusterManager(object):
 
     # Low level methods for basic HTML operations
 
+    @request
     def _get(self, url):
-        response = requests.get(url, auth=(self.username, self.password))
+        response = requests.get(url, auth=(self.username, self.password), timeout=self.timeout)
         return _handle_response(response)
 
+    @request
     def _post_form_encoded(self, url, params):
-        response = requests.post(url, auth=(self.username, self.password), data=params)
+        response = requests.post(url, auth=(self.username, self.password), data=params,
+                                 timeout=self.timeout)
         return _handle_response(response)
 
+    @request
     def _put(self, url, params):
-        response = requests.put(url, params, auth=(self.username, self.password))
+        response = requests.put(url, params, auth=(self.username, self.password),
+                                timeout=self.timeout)
         return _handle_response(response)
 
+    @request
     def _delete(self, url):
-        response = requests.delete(url, auth=(self.username, self.password))
+        response = requests.delete(url, auth=(self.username, self.password),
+                                  timeout=self.timeout)
         return _handle_response(response)
+
 
 def _handle_response(response):
     if response.status_code == 200:
