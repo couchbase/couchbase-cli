@@ -110,6 +110,13 @@ class ClusterManager(object):
 
         return hosts, None
 
+    def pools(self):
+        """ Retrieves information about Couchbase management pools
+
+        Returns Couchbase pools data"""
+        url = self.hostname + '/pools'
+        return self._get(url)
+
     def setRoles(self,userList,roleList):
         # we take a comma-delimited list of roles that needs to go into a dictionary
         paramDict = {"roles" : roleList}

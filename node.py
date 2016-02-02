@@ -332,6 +332,16 @@ class Node:
         # last REST API that is called because once that API succeeds the
         # cluster is initialized and cluster-init cannot be run again.
 
+        if cmd == 'cluster-init':
+            hostname = 'http://%s:%d' % (self.server, self.port)
+            cm = cluster_manager.ClusterManager(hostname, self.user,
+                                                self.password, self.ssl)
+            data, errors = cm.pools()
+            _exitIfErrors(errors)
+            if data['pools'] and len(data['pools']) > 0:
+                print "Error: cluster is already initialized, use cluster-edit to change settings"
+                return
+
         #set memory quota
         if cmd == 'cluster-init' and not self.per_node_quota:
             print "ERROR: option cluster-ramsize is not specified"
