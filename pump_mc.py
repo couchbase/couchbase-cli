@@ -377,7 +377,7 @@ class MCSink(pump.Sink):
                 extra_meta = struct.pack(">BBHH",
                                 couchbaseConstants.DCP_EXTRA_META_VERSION,
                                 couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION,
-                                con_res_len,
+                                len(conf_res),
                                 conf_res)
                 ext += struct.pack(">H", len(extra_meta))
         elif (cmd == couchbaseConstants.CMD_SET or
