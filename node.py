@@ -2092,7 +2092,7 @@ class Node:
                 ("Set the new node certificate",
 """
     couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
-        --set-node-certificate --chain=/tmp/test.pem --pkey=/tmp/test.pem \\
+        --set-node-certificate \\
         -u Administrator -p password""")]
         elif cmd == "collect-logs-start":
             return [("Start cluster-wide log collection for whole cluster",
