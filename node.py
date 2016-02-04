@@ -444,7 +444,7 @@ class Node:
             #backward compatible when using ";" as separator
             sep = ";"
         svc_list = list(set([w.strip() for w in self.services.split(sep)]))
-        svc_candidate = ["data", "index", "query"]
+        svc_candidate = ["data", "index", "query", "fts"]
         for svc in svc_list:
             if svc not in svc_candidate:
                 return "ERROR: invalid service: %s" % svc, None
