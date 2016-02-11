@@ -231,6 +231,8 @@ class ClusterManager(object):
 
 def _handle_response(response):
     if response.status_code == 200:
+        if 'Content-Type' not in response.headers:
+            return "", None
         if 'application/json' in response.headers['Content-Type']:
             return response.json(), None
         else:
