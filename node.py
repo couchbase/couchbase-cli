@@ -1634,7 +1634,7 @@ class Node:
             certificate = _exitOnFileReadFailure(self.certificate_file)
             _, errors = cm.upload_cluster_certificate(certificate)
             _exitIfErrors(errors)
-            print "SUCCESS: uploaded certificate to '%s'" % self.certificate_file
+            print "SUCCESS: uploaded cluster certificate to %s:%d" % (self.server, self.port)
         elif self.cmd == 'set-node-certificate':
             _, errors = cm.set_node_certificate()
             _exitIfErrors(errors)
