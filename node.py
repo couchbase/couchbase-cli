@@ -341,12 +341,19 @@ class Node:
                 print "Error: cluster is already initialized, use cluster-edit to change settings"
                 return
 
-        #set memory quota
-        if cmd == 'cluster-init' and not self.per_node_quota:
-            print "ERROR: option cluster-ramsize is not specified"
+        err, services = self.process_services(False)
+        if err:
+            print err
             return
-        elif cmd == 'cluster-init' and not self.cluster_index_ramsize:
-            print "ERROR: option cluster-ramsize is not specified"
+
+        #set memory quota
+        if cmd == 'cluster-init':
+            if 'kv' in services.split(',') and not self.per_node_quota:
+                print "ERROR: option cluster-ramsize is not specified"
+                return
+            elif 'index' in services.split(',') and not self.cluster_index_ramsize:
+                print "ERROR: option cluster-index-ramsize is not specified"
+                return
 
         opts = {
             "error_msg": "unable to set memory quota",
@@ -369,16 +376,6 @@ class Node:
 
         #setup services
         if cmd == "cluster-init":
-        # per node quota unfortunately runs against a different location
-            if not self.per_node_quota:
-                print "ERROR: option cluster-ramsize is not specified"
-                return
-
-            err, services = self.process_services(True)
-            if err:
-                print err
-                return
-
             opts = {
                 "error_msg": "unable to setup services",
                 "success_msg": "setup service successfully"
