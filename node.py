@@ -134,6 +134,7 @@ class Node:
         self.port_new = None
         self.per_node_quota = None
         self.cluster_index_ramsize = None
+        self.cluster_fts_ramsize = None
         self.cluster_name = None
         self.data_path = None
         self.index_path = None
@@ -354,6 +355,9 @@ class Node:
             elif 'index' in services.split(',') and not self.cluster_index_ramsize:
                 print "ERROR: option cluster-index-ramsize is not specified"
                 return
+            elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
+                print "ERROR: option fts-index-ramsize is not specified"
+                return
 
         opts = {
             "error_msg": "unable to set memory quota",
@@ -367,6 +371,8 @@ class Node:
             rest.setParam('memoryQuota', self.per_node_quota)
         if self.cluster_index_ramsize:
             rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
+        if self.cluster_fts_ramsize:
+            rest.setParam('ftsMemoryQuota', self.cluster_fts_ramsize)
         if rest.params:
             output_result = rest.restCmd(self.method,
                                          '/pools/default',
@@ -568,6 +574,8 @@ class Node:
             rest.setParam('clusterName', self.cluster_name)
         if self.cluster_index_ramsize:
             rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
+        if self.cluster_fts_ramsize:
+            rest.setParam('ftsMemoryQuota', self.cluster_fts_ramsize)
         opts = {
             "error_msg": "unable to set cluster configurations",
             "success_msg": "set cluster settings"
@@ -877,6 +885,8 @@ class Node:
                 self.per_node_quota = a
             elif o == '--cluster-index-ramsize':
                 self.cluster_index_ramsize = a
+            elif o == '--cluster-fts-ramsize':
+                self.cluster_fts_ramsize = a
             elif o == '--cluster-name':
                 self.cluster_name = a
             elif o == '--enable-auto-failover':
@@ -1798,7 +1808,8 @@ class Node:
             ("--cluster-password=PASSWORD", "new admin password"),
             ("--cluster-port=PORT", "new cluster REST/http port"),
             ("--cluster-ramsize=RAMSIZEMB", "per node data service ram quota in MB"),
-            ("--cluster-index-ramsize=RAMSIZEMB", "per node index service ram quota in MB")] + services
+            ("--cluster-index-ramsize=RAMSIZEMB", "per node index service ram quota in MB"),
+            ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB")] + services
         elif cmd == "node-init":
             return [
             ("--node-init-data-path=PATH", "data path for database files"),
@@ -1852,7 +1863,8 @@ class Node:
         elif cmd == "setting-cluster":
             return [("--cluster-name=[CLUSTERNAME]", "cluster name"),
                     ("--cluster-ramsize=[RAMSIZEMB]", "per node data service ram quota in MB"),
-                    ("--cluster-index-ramsize=[RAMSIZEMB]","per node index service ram quota in MB")]
+                    ("--cluster-index-ramsize=[RAMSIZEMB]","per node index service ram quota in MB"),
+                    ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB")]
         elif cmd == "setting-notification":
             return [("--enable-notification=[0|1]", "allow notification")]
         elif cmd == "setting-autofailover":
