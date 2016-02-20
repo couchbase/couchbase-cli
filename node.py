@@ -1232,11 +1232,11 @@ class Node:
                                      self.password,
                                      opts)
         tasks = rest.getJson(output_result)
-        if 'errorMessage' in tasks:
-            error_message = tasks['errorMessage']
-        else:
-            error_message = None
         for task in tasks:
+            error_message = None
+            if "errorMessage" in task:
+                error_message = task['errorMessage']
+
             if task["type"] == "rebalance":
                 if task["status"] == "running":
                     return task["status"], error_message
