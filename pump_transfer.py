@@ -238,21 +238,30 @@ class Backup(Transfer):
         self.name = "cbbackup"
         self.source_alias = "source"
         self.sink_alias = "backup_dir"
-        self.usage = \
-            "%prog [options] source backup_dir\n\n" \
-            "Online backup of a couchbase cluster or server node.\n\n" \
-            "Examples:\n" \
-            "   These are a full backup plus two incremental backups for a cluster. \n" \
-            "       %prog http://HOST:8091 /backup-42\n" \
-            "       %prog http://HOST:8091 /backup-42\n" \
-            "       %prog http://HOST:8091 /backup-42\n\n" \
-            "   These are a full backup plus two differentials and one accumulative for a single node. \n" \
-            "       %prog couchbase://HOST:8091 /backup-43 [-m full] --single-node\n" \
-            "       %prog couchbase://HOST:8091 /backup-43 [-m diff] --single-node\n" \
-            "       %prog couchbase://HOST:8091 /backup-43 [-m diff] --single-node\n" \
-            "       %prog couchbase://HOST:8091 /backup-43 -m accu --single-node\n\n" \
-            "Note: A full backup task is always triggered for a new sink location\n" \
-            "   no matter what backup mode is specified.\n"
+
+        if self._is_enterprise():
+            self.usage = \
+                "%prog [options] source backup_dir\n\n" \
+                "Online backup of a couchbase cluster or server node.\n\n" \
+                "Examples:\n" \
+                "   The first backup to a given directory is a full backup, any subsequent ones are incremental.\n" \
+                "       %prog http://HOST:8091 /backup-42\n\n" \
+                "   To take a differential backup after taking a full backup. \n" \
+                "       %prog couchbase://HOST:8091 /backup-43 -m diff\n\n" \
+                "   To take an accumulative backup after taking a full backup. \n" \
+                "       %prog couchbase://HOST:8091 /backup-43 -m accu --single-node\n\n" \
+                "Note: A full backup task is always triggered for a new sink location\n" \
+                "   no matter what backup mode is specified.\n"
+        else:
+            self.usage = \
+                "%prog [options] source backup_dir\n\n" \
+                "Online backup of a couchbase cluster or server node.\n\n" \
+                "Examples:\n" \
+                "   Take a full backup of a cluster. \n" \
+                "       %prog http://HOST:8091 /backup-42\n\n" \
+                "   Take a full backup for a single node. \n" \
+                "       %prog couchbase://HOST:8091 /backup-43 --single-node\n" \
+
 
     def opt_parser_options(self, p):
         p.add_option("-b", "--bucket-source",
@@ -263,12 +272,12 @@ class Backup(Transfer):
                      help="""use a single server node from the source only,
                              not all server nodes from the entire cluster;
                              this single server node is defined by the source URL""")
-        try:
-            import pump_bfd2
+        if self._is_enterprise():
             p.add_option("-m", "--mode",
                         action="store", type="string", default="diff",
                         help="backup mode: full, diff or accu [default:%default]")
-        except ImportError:
+
+        else:
             p.add_option("-m", "--mode",
                         action="store", type="string", default="full",
                         help="backup mode: full")
@@ -285,6 +294,14 @@ class Backup(Transfer):
             if mode not in ["full", "diff", "accu"]:
                 return "\nError: option mode has to be 'full', 'diff' or 'accu'"
         return None
+
+    def _is_enterprise(self):
+        try:
+            import pump_bfd2
+            return True
+        except ImportError:
+            return False
+
 
 class Restore(Transfer):
     """Entry point for 2.0 cbrestore."""
