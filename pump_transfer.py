@@ -280,7 +280,7 @@ class Backup(Transfer):
         else:
             p.add_option("-m", "--mode",
                         action="store", type="string", default="full",
-                        help="backup mode: full")
+                        help=optparse.SUPPRESS_HELP)
 
         Transfer.opt_parser_options_common(self, p)
 

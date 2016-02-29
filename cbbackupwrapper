@@ -122,9 +122,8 @@ def argumentParsing():
                         action="store", type="string", default="diff",
                         help="backup mode: full, diff or accu [default:%default]")
     except ImportError:
-        parser.add_option("-m", "--mode",
-                        action="store", type="string", default="full",
-                        help="backup mode: full")
+        pass
+
     options, rest = parser.parse_args()
     if len(rest) != 2:
         parser.print_help()
