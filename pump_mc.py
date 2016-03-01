@@ -50,6 +50,7 @@ class MCSink(pump.Sink):
         self.op_map = OP_MAP
         if opts.extra.get("try_xwm", 1):
             self.op_map = OP_MAP_WITH_META
+        self.conflict_resolve = opts.extra.get("conflict_resolve", 1)
         self.init_worker(MCSink.run)
         self.uncompress = opts.extra.get("uncompress", 0)
 
@@ -354,9 +355,13 @@ class MCSink(pump.Sink):
         if (cmd == couchbaseConstants.CMD_SET_WITH_META or
             cmd == couchbaseConstants.CMD_ADD_WITH_META or
             cmd == couchbaseConstants.CMD_DELETE_WITH_META):
+
+            force = 0
+            if int(self.conflict_resolve) == 0:
+                force = 1
             if meta:
                 try:
-                    ext = struct.pack(">IIQQ", flg, exp, int(str(meta)), cas)
+                    ext = struct.pack(">IIQQI", flg, exp, int(str(meta)), cas, force)
                 except ValueError:
                     seq_no = str(meta)
                     if len(seq_no) > 8:
@@ -368,18 +373,15 @@ class MCSink(pump.Sink):
                     check_seqno, = struct.unpack(">Q", seq_no)
                     if check_seqno:
                         ext = (struct.pack(">II", flg, exp) + seq_no +
-                        struct.pack(">Q", cas))
+                               struct.pack(">QI", cas, force))
                     else:
-                        ext = struct.pack(">IIQQ", flg, exp, 1, cas)
+                        ext = struct.pack(">IIQQI", flg, exp, 1, cas, force)
             else:
-                ext = struct.pack(">IIQQ", flg, exp, 1, cas)
-            if conf_res:
-                extra_meta = struct.pack(">BBHH",
-                                couchbaseConstants.DCP_EXTRA_META_VERSION,
-                                couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION,
-                                con_res_len,
-                                conf_res)
-                ext += struct.pack(">H", len(extra_meta))
+                ext = struct.pack(">IIQQI", flg, exp, 1, cas, force)
+            if conf_res and force == 0:
+                extra_meta = struct.pack(">BBHH", couchbaseConstants.DCP_EXTRA_META_VERSION,
+                                         couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION,
+                                         con_res_len, conf_res)
         elif (cmd == couchbaseConstants.CMD_SET or
               cmd == couchbaseConstants.CMD_ADD):
             ext = struct.pack(couchbaseConstants.SET_PKT_FMT, flg, exp)

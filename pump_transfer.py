@@ -219,6 +219,7 @@ this is needed when transferring data between clusters with different number of 
 such as when transferring data from an OSX server to a non-OSX cluster"),
             "data_only":       (0,      "For value 1, only transfer data from a backup file or cluster"),
             "design_doc_only": (0,      "For value 1, transfer design documents only from a backup file or cluster"),
+            "conflict_resolve":(1,      "By default, enable conflict resolution."),
             "seqno":           (0,      "By default, start seqno from beginning."),
             "mcd_compatible":  (1,      "For value 0, display extended fields for stdout output."),
             "uncompress":      (0,      "For value 1, restore data in uncompressed mode"),
