@@ -265,6 +265,9 @@ def main():
         if opt in ('-s', '--ssl'):
             ssl = True
 
+    if cmd == "cluster-init" and not cluster:
+        cluster = "127.0.0.1:8091"
+
     if not cluster:
         usage.command_error("please provide a CLUSTER, or use -h for more help.")
 
