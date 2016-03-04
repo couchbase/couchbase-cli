@@ -771,14 +771,20 @@ class Node:
         # get_roles
         if self.get_roles:
             data, errors = cm.getRoles()
+            if errors == None:
+                print "SUCCESS: user/role list:"
 
         # set_users
         elif self.set_users:
             data, errors = cm.setRoles(self.set_users,self.roles)
+            if errors == None:
+                print "SUCCESS: set roles for ",self.set_users,". New user/role list:"
 
         # delete_users
         else:
             data, errors = cm.deleteRoles(self.delete_users)
+            if errors == None:
+                print "SUCCESS: removed users ", self.delete_users, ". New user/role list:"
 
         _exitIfErrors(errors)
         print json.dumps(data,indent=2)
