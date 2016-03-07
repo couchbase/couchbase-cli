@@ -207,18 +207,19 @@ if __name__ == '__main__':
             if args.verbose:
                 print "vBucket: ", vbuckets
             if not args.bucket_destination == '':
-                command_line = os.path.join(path, restore_exe) + ' -v -t 1 -b ' + args.bucket_source.strip() \
-                    + ' -B ' + args.bucket_destination + ' ' + os.path.join(backupDir, vbuckets) \
+                command_line = '"' + os.path.join(path, restore_exe) + '"' + ' -v -t 1 -b ' \
+                    + args.bucket_source.strip() + ' -B ' + args.bucket_destination \
+                    + ' ' + '"' + os.path.join(backupDir, vbuckets) + '"' \
                     + ' http://' + node + ':' + rest \
                     + ' -u ' + args.username + ' -p ' + args.password + ssl_option + from_date_option + to_date_option \
-                    + ' 2>' + os.path.join(backupDir, 'logs', vbuckets) + \
-                    '-restore-' + bucket + '.err'
+                    + ' 2> ' + '"' + os.path.join(backupDir, 'logs', vbuckets) \
+                    + '-restore-' + bucket + '.err' + '"'
             else:
-                command_line = os.path.join(path, restore_exe) + ' -v -t 1 -b ' + bucket \
-                    + ' ' + os.path.join(backupDir, vbuckets) + ' http://' + node + ':' + rest \
+                command_line = '"' + os.path.join(path, restore_exe) + '"' + ' -v -t 1 -b ' + bucket \
+                    + ' ' + '"' + os.path.join(backupDir, vbuckets) + '"' + ' http://' + node + ':' + rest \
                     + ' -u ' + args.username + ' -p ' + args.password + from_date_option + to_date_option \
-                    + ' 2>' + os.path.join(backupDir, 'logs', vbuckets) + \
-                    '-restore-' + bucket + '.err'
+                    + ' 2> ' + '"' + os.path.join(backupDir, 'logs', vbuckets) \
+                    + '-restore-' + bucket + '.err' + '"'
             if args.verbose:
                 print command_line
             p = subprocess.Popen(command_line, shell=True)

@@ -353,10 +353,11 @@ if __name__ == '__main__':
     for i in range(0, len(vbucketList), int(args.number)):
         chunk = vbucketList[i:i + int(args.number)]
         vbucketsname = str(chunk[0]) + '-' + str(chunk[-1])
-        command_line = os.path.join(path, backup_exe) + ' -v -t 1 --vbucket-list=' + ''.join(str(chunk).split()) + ' http://' \
-            + node + ':' + rest + ' ' + os.path.join(backupDir, vbucketsname) + ' -u ' + args.username \
-            + ' -p ' + args.password + extra_options + mode_options + ssl_option + specific_bucket + ' 2>' + \
-            os.path.join(backupDir, 'logs', vbucketsname) + '.err'
+        command_line = '"' + os.path.join(path, backup_exe) + '"' + ' -v -t 1 --vbucket-list=' \
+            + ''.join(str(chunk).split()) + ' http://' + node + ':' + rest + ' ' \
+            + '"' + os.path.join(backupDir, vbucketsname) + '"' + ' -u ' + args.username \
+            + ' -p ' + args.password + extra_options + mode_options + ssl_option + specific_bucket \
+            + ' 2> ' + '"' + os.path.join(backupDir, 'logs', vbucketsname) + '.err' + '"'
         process_queue.put(command_line)
 
     process_queue.join()
