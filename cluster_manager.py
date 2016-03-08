@@ -124,6 +124,13 @@ class ClusterManager(object):
         url = self.hostname + '/pools'
         return self._get(url)
 
+    def index_settings(self, storageMode):
+        params = dict()
+        params["storageMode"] = storageMode
+
+        url = self.hostname + '/settings/indexes'
+        return self._post_form_encoded(url, params)
+
     def setRoles(self,userList,roleList):
         # we take a comma-delimited list of roles that needs to go into a dictionary
         paramDict = {"roles" : roleList}

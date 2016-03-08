@@ -131,6 +131,7 @@ class Node:
         self.per_node_quota = None
         self.cluster_index_ramsize = None
         self.cluster_fts_ramsize = None
+        self.index_storage_setting = None
         self.cluster_name = None
         self.data_path = None
         self.index_path = None
@@ -331,9 +332,10 @@ class Node:
         # last REST API that is called because once that API succeeds the
         # cluster is initialized and cluster-init cannot be run again.
 
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
+                                            self.password, self.ssl)
+
         if cmd == 'cluster-init':
-            cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
-                                                self.password, self.ssl)
             data, errors = cm.pools()
             _exitIfErrors(errors)
             if data['pools'] and len(data['pools']) > 0:
@@ -350,9 +352,21 @@ class Node:
             if 'kv' in services.split(',') and not self.per_node_quota:
                 print "ERROR: option cluster-ramsize is not specified"
                 return
-            elif 'index' in services.split(',') and not self.cluster_index_ramsize:
-                print "ERROR: option cluster-index-ramsize is not specified"
-                return
+            elif 'index' in services.split(','):
+                if not self.cluster_index_ramsize:
+                    print "ERROR: option cluster-index-ramsize is not specified"
+                    return
+                if not self.index_storage_setting:
+                    print "ERROR: option index-storage-setting is not specified"
+                    return
+                if self.index_storage_setting == "default":
+                    self.index_storage_setting = "forestdb"
+                elif self.index_storage_setting == "memopt":
+                    self.index_storage_setting = "memory_optimized"
+                else:
+                    print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
+                        % self.index_storage_setting
+                    return
             elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
                 print "ERROR: option fts-index-ramsize is not specified"
                 return
@@ -377,6 +391,10 @@ class Node:
                                          self.user,
                                          self.password,
                                          opts)
+        if self.index_storage_setting:
+            _, errors = cm.index_settings(self.index_storage_setting)
+            _exitIfErrors(errors)
+
 
         #setup services
         if cmd == "cluster-init":
@@ -893,6 +911,8 @@ class Node:
                 self.cluster_index_ramsize = a
             elif o == '--cluster-fts-ramsize':
                 self.cluster_fts_ramsize = a
+            elif o == '--index-storage-setting':
+                self.index_storage_setting = a
             elif o == '--cluster-name':
                 self.cluster_name = a
             elif o == '--enable-auto-failover':
@@ -1820,7 +1840,8 @@ class Node:
             ("--cluster-port=PORT", "new cluster REST/http port"),
             ("--cluster-ramsize=RAMSIZEMB", "per node data service ram quota in MB"),
             ("--cluster-index-ramsize=RAMSIZEMB", "per node index service ram quota in MB"),
-            ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB")] + services
+            ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB"),
+            ("--index-storage-setting", "index storage type [default, memopt]")] + services
         elif cmd == "node-init":
             return [
             ("--node-init-data-path=PATH", "data path for database files"),

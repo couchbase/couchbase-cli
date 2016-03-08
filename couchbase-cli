@@ -59,6 +59,7 @@ def main():
                 'cluster-name=',
                 'cluster-index-ramsize=',
                 'cluster-fts-ramsize=',
+                'index-storage-setting=',
                 'enable-auto-failover=',
                 'auto-failover-timeout=',
                 'enable-notification=',
