@@ -356,10 +356,7 @@ class Node:
                 if not self.cluster_index_ramsize:
                     print "ERROR: option cluster-index-ramsize is not specified"
                     return
-                if not self.index_storage_setting:
-                    print "ERROR: option index-storage-setting is not specified"
-                    return
-                if self.index_storage_setting == "default":
+                if not self.index_storage_setting or self.index_storage_setting == "default":
                     self.index_storage_setting = "forestdb"
                 elif self.index_storage_setting == "memopt":
                     self.index_storage_setting = "memory_optimized"
