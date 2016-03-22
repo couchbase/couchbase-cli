@@ -127,6 +127,8 @@ class JSONSource(pump.Source):
             while batch.size() < batch_max_size and self.docs:
                 path = self.docs.pop()
                 key = os.path.basename(path)
+                if key.endswith('.json'):
+                    key = key[:-5]
                 value = zf.read(path)
                 self.save_doc(batch, key, value)
             zf.close()
@@ -134,6 +136,8 @@ class JSONSource(pump.Source):
             while batch.size() < batch_max_size and self.docs:
                 path = self.docs.pop()
                 key = os.path.basename(path)
+                if key.endswith('.json'):
+                    key = key[:-5]
                 try:
                     fp = open(path, 'r')
                     value = fp.read()
