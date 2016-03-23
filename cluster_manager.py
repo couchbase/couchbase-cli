@@ -124,12 +124,53 @@ class ClusterManager(object):
         url = self.hostname + '/pools'
         return self._get(url)
 
-    def index_settings(self, storageMode):
+    def get_server_groups(self):
+        url = self.hostname + '/pools/default/serverGroups'
+        return self._get(url)
+
+    def get_server_group(self, groupName):
+        groups, errors = self.get_server_groups()
+        if errors:
+            return None, error
+
+        if not groups or not groups["groups"] or groups["groups"] == 0:
+            return None, ["No server groups found"]
+
+        if groupName:
+            for group in groups["groups"]:
+                if group["name"] == groupName:
+                    return group, None
+            return None, ["Group `%s` not found" % groupName]
+        else:
+            return groups["groups"][0], None
+
+    def add_server(self, add_server, groupName, username, password, services):
+        group, errors = self.get_server_group(groupName)
+        if errors:
+            return None, errors
+
+        url = self.hostname + group["addNodeURI"]
+        params = { "hostname": add_server,
+                   "user": username,
+                   "password": password,
+                   "services": services }
+
+        return self._post_form_encoded(url, params)
+
+    def set_index_settings(self, storageMode):
+        """ Sets global index settings"""
         params = dict()
         params["storageMode"] = storageMode
 
         url = self.hostname + '/settings/indexes'
         return self._post_form_encoded(url, params)
+
+    def index_settings(self):
+        """ Retrieves the index settings
+
+            Returns a map of all global index settings"""
+        url = self.hostname + '/settings/indexes'
+        return self._get(url)
 
     def setRoles(self,userList,roleList):
         # we take a comma-delimited list of roles that needs to go into a dictionary
@@ -245,6 +286,10 @@ def _handle_response(response):
         else:
             return response.text, None
     elif response.status_code in [400, 404]:
+        if 'application/json' in response.headers['Content-Type']:
+            errors = response.json()
+            if isinstance(errors, list):
+                return None, errors
         return None, [response.text]
     elif response.status_code == 401:
         return None, ['ERROR: unable to access the REST API - please check your username' +

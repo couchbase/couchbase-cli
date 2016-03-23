@@ -245,10 +245,7 @@ class Node:
 
         if cmd in ('server-add', 'rebalance'):
             if len(servers['add']) > 0:
-                if not self.group_name:
-                    self.addServers(servers['add'])
-                else:
-                    self.groupAddServers()
+                self.groupAddServers()
             if cmd == 'rebalance':
                 self.rebalance(servers)
 
@@ -356,11 +353,8 @@ class Node:
                 if not self.cluster_index_ramsize:
                     print "ERROR: option cluster-index-ramsize is not specified"
                     return
-                if not self.index_storage_setting or self.index_storage_setting == "default":
-                    self.index_storage_setting = "forestdb"
-                elif self.index_storage_setting == "memopt":
-                    self.index_storage_setting = "memory_optimized"
-                else:
+                param = index_storage_to_param(self.index_storage_setting)
+                if not param:
                     print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
                         % self.index_storage_setting
                     return
@@ -389,7 +383,7 @@ class Node:
                                          self.password,
                                          opts)
         if self.index_storage_setting:
-            _, errors = cm.index_settings(self.index_storage_setting)
+            _, errors = cm.set_index_settings(self.index_storage_setting)
             _exitIfErrors(errors)
 
 
@@ -451,6 +445,12 @@ class Node:
                                          opts)
         print output_result
 
+    def index_storage_to_param(self, value):
+        if not value or value == "default":
+            return "forestdb"
+        if value == "memopt":
+            return "memory_optimized"
+        return None
 
     def process_services(self, data_required):
         if not self.services:
@@ -1094,42 +1094,6 @@ class Node:
             slist.append(hostport)
         return slist
 
-    def addServers(self, servers):
-        err, services = self.process_services(False)
-        if err:
-            print err
-            return
-
-        for server in servers:
-            user = servers[server]['user']
-            password = servers[server]['password']
-            output_result = self.serverAdd(server,
-                                           user,
-                                           password,
-                                           services)
-            print output_result
-
-    def serverAdd(self, add_server, add_with_user, add_with_password, services):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        rest.setParam('hostname', add_server)
-        if add_with_user and add_with_password:
-            rest.setParam('user', add_with_user)
-            rest.setParam('password', add_with_password)
-        rest.setParam('services', services)
-        opts = {
-            'error_msg': "unable to server-add %s" % add_server,
-            'success_msg': "server-add %s" % add_server
-        }
-        output_result = rest.restCmd('POST',
-                                     rest_cmds['server-add'],
-                                     self.user,
-                                     self.password,
-                                     opts)
-        return output_result
-
     def reAddServers(self, servers):
         known_otps, eject_otps, failover_otps, readd_otps, _ = \
             self.getNodeOtps(to_readd=servers['add'])
@@ -1561,37 +1525,48 @@ class Node:
         print output_result
 
     def groupAddServers(self):
-        uri = self.getGroupUri(self.group_name)
-        if uri is None:
-            command_error("invalid group name:%s" % self.group_name)
-        uri = "%s/addNode" % uri
-        groups = self.getServerGroups()
+        # If this is the first index node added then we need to make sure to
+        # set the index storage setting.
+        indexStorageParam = self.index_storage_to_param(self.index_storage_setting)
+        if not indexStorageParam:
+            print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
+                % self.index_storage_setting
+            return
+
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
+                                            self.password, self.ssl)
+
+        settings, errors = cm.index_settings()
+        _exitIfErrors(errors)
+
+        if not settings:
+            print "Error: unable to infer the current index storage mode"
+            return
+
+        if settings['storageMode'] == "":
+            _, errors = cm.set_index_settings(indexStorageParam)
+            if errors:
+                _exitIfErrors(errors)
+        elif settings['storageMode'] != self.index_storage_setting and \
+             self.index_storage_setting:
+            print "Error: Cannot change index storage mode from `%s` to `%s`" % \
+                (settings['storageMode'], self.index_storage_setting)
+            return
 
         err, services = self.process_services(False)
         if err:
             print err
             return
         for server in self.server_list:
-            rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-            rest.setParam('hostname', server)
-            if self.sa_username:
-                rest.setParam('user', self.sa_username)
-            if self.sa_password:
-                rest.setParam('password', self.sa_password)
-            rest.setParam("services", services)
-            opts = {
-                'error_msg': "unable to add server '%s' to group '%s'" % (server, self.group_name),
-                'success_msg': "add server '%s' to group '%s'" % (server, self.group_name)
-            }
-            output_result = rest.restCmd('POST',
-                                     uri,
-                                     self.user,
-                                     self.password,
-                                     opts)
-            print output_result
+            _, errors = cm.add_server(server, self.group_name, self.sa_username,
+                                           self.sa_password, services)
+            if errors:
+                _exitIfErrors(errors, "Error: Failed to add server %s: " % server)
+
+            if self.group_name:
+                print "Server %s added to group %s" % (server, self.group_name)
+            else:
+                print "Server %s added" % server
 
     def groupMoveServer(self):
         groups = self.getServerGroups()
@@ -1814,7 +1789,8 @@ class Node:
                      "services that server runs")]
 
         if cmd == "server-add" or cmd == "rebalance":
-            return server_common + services
+            return [("--index-storage-setting=SETTING", "index storage type [default, memopt]")] \
+            + server_common + services
         elif cmd == "server-readd":
             return server_common
         elif cmd == "group-manage":
@@ -1829,7 +1805,8 @@ class Node:
             ("--move-servers=HOST[:PORT],HOST[:PORT]",
              "move a list of servers from group"),
             ("--from-group=GROUPNAME", "group name to move servers from"),
-            ("--to-group=GROUPNAME", "group name to move servers into")] + services
+            ("--to-group=GROUPNAME", "group name to move servers into"),
+            ("--index-storage-setting=SETTING", "index storage type [default, memopt]")] + services
         elif cmd == "cluster-init" or cmd == "cluster-edit":
             return [
             ("--cluster-username=USER", "new admin username"),
@@ -1964,7 +1941,8 @@ class Node:
        --cluster-port=8080 \\
        --services=data,index \\
        --cluster-ramsize=300 \\
-       --cluster-index-ramsize=256""")]
+       --cluster-index-ramsize=256\\
+       --cluster-index-storage=memopt""")]
         elif cmd == "cluster-edit":
             return [("Change the cluster username, password, port and data service ram quota",
 """
@@ -1994,7 +1972,9 @@ class Node:
        --server-add=192.168.0.2:8091 \\
        --server-add-username=Administrator1 \\
        --server-add-password=password1 \\
+
        --group-name=group1 \\
+       --cluster-index-storage=memopt \\
        -u Administrator -p password"""),
                     ("Add a node to a cluster, but do not rebalance",
 """
@@ -2239,10 +2219,10 @@ class Node:
         else:
             return None
 
-def _exitIfErrors(errors):
+def _exitIfErrors(errors, prefix=""):
     if errors:
         for error in errors:
-            print error
+            print prefix + error
         sys.exit(1)
 
 def _exitOnFileWriteFailure(fname, bytes):
