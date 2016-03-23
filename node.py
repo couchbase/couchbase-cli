@@ -245,6 +245,7 @@ class Node:
 
         if cmd in ('server-add', 'rebalance'):
             if len(servers['add']) > 0:
+                print "Warning: Adding server from group-manage is deprecated"
                 self.groupAddServers()
             if cmd == 'rebalance':
                 self.rebalance(servers)
