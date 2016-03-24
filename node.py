@@ -1815,7 +1815,7 @@ class Node:
             ("--cluster-ramsize=RAMSIZEMB", "per node data service ram quota in MB"),
             ("--cluster-index-ramsize=RAMSIZEMB", "per node index service ram quota in MB"),
             ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB"),
-            ("--index-storage-setting", "index storage type [default, memopt]")] + services
+            ("--index-storage-setting=SETTING", "index storage type [default, memopt]")] + services
         elif cmd == "node-init":
             return [
             ("--node-init-data-path=PATH", "data path for database files"),
