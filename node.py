@@ -354,7 +354,7 @@ class Node:
                 if not self.cluster_index_ramsize:
                     print "ERROR: option cluster-index-ramsize is not specified"
                     return
-                param = index_storage_to_param(self.index_storage_setting)
+                param = self.index_storage_to_param(self.index_storage_setting)
                 if not param:
                     print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
                         % self.index_storage_setting
