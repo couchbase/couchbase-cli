@@ -180,6 +180,7 @@ def main():
                 'get-roles',
                 'roles=',
                 'set-users=',
+                'set-names=',
                 'delete-users=',
                 ])
     except getopt.GetoptError, err:

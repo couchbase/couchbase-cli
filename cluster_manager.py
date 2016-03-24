@@ -28,7 +28,7 @@ def request(f):
 
 
 class ServiceNotAvailableException(Exception):
-    """An exception taised when a service does not exist in the target cluster"""
+    """An exception raised when a service does not exist in the target cluster"""
 
     def __init__(self, service):
         Exception.__init__(self, "Service %s not available in target cluster" % service)
@@ -172,20 +172,34 @@ class ClusterManager(object):
         url = self.hostname + '/settings/indexes'
         return self._get(url)
 
-    def setRoles(self,userList,roleList):
+    def setRoles(self,userList,roleList,userNameList):
         # we take a comma-delimited list of roles that needs to go into a dictionary
         paramDict = {"roles" : roleList}
-
-        # but we need a separate REST call for each user in the comma-delimited user list
+        userIds = []
+        userNames = []
         userF = StringIO.StringIO(userList)
-        reader = csv.reader(userF, delimiter=',')
-        for users in reader:
-            for user in users:
-                paramDict["id"] = user
-                url = self.hostname + '/settings/rbac/users/' + user
-                data, errors = self._put(url,paramDict)
-                if errors:
-                    return data, errors
+        for idList in csv.reader(userF, delimiter=','):
+            userIds.extend(idList)
+
+        # did they specify user names?
+        if userNameList != None:
+            userNameF = StringIO.StringIO(userNameList)
+            for nameList in csv.reader(userNameF, delimiter=','):
+                userNames.extend(nameList)
+            if len(userNames) != len(userIds):
+                return None, ["Error: specified %d user ids and %d user names, must have the same number of each." %  (len(userIds),len(userNames))]
+
+        # did they specify user names?
+        # but we need a separate REST call for each user in the comma-delimited user list
+        for index in range(len(userIds)):
+            user = userIds[index]
+            paramDict["id"] = user
+            if len(userNames) > 0:
+                paramDict["name"] = userNames[index]
+            url = self.hostname + '/settings/rbac/users/' + user
+            data, errors = self._put(url,paramDict)
+            if errors:
+                return data, errors
 
         return data, errors
 

@@ -219,6 +219,7 @@ class Node:
         self.roles = None
         self.get_roles = None
         self.set_users = None
+        self.set_names = None
         self.delete_users = None
 
     def runCmd(self, cmd, server, port,
@@ -792,7 +793,7 @@ class Node:
 
         # set_users
         elif self.set_users:
-            data, errors = cm.setRoles(self.set_users,self.roles)
+            data, errors = cm.setRoles(self.set_users,self.roles,self.set_names)
             if errors == None:
                 print "SUCCESS: set roles for ",self.set_users,". New user/role list:"
 
@@ -1079,6 +1080,8 @@ class Node:
                 self.get_roles = True
             elif o == '--set-users':
                 self.set_users = a
+            elif o == '--set-names':
+                self.set_names = a
             elif o == '--delete-users':
                 self.delete_users = a
 
@@ -1920,7 +1923,8 @@ class Node:
         elif cmd == "admin-role-manage":
             return [
             ("--get-roles", "Return list of users and roles."),
-            ("--set-users", "A comma-delimited list of users to set acess-control roles for"),
+            ("--set-users", "A comma-delimited list of user ids to set acess-control roles for"),
+            ("--set-names", "A optional quoted, comma-delimited list names, one for each specified user id"),
             ("--roles", "A comma-delimited list of roles to set for users, one or more from full_admin, readonly_admin, cluster_admin, replication_admin, bucket_admin[opt bucket name], view_admin"),
             ("--delete-users", "A comma-delimited list of users to remove from access control")
             ]
@@ -2204,7 +2208,7 @@ class Node:
                     ("Make bob and mary cluster_admins, and bucket admins for the default bucket",
 """
     couchbase-cli admin-role-manage -c 192.168.0.1:8091 \\
-        --set-users=bob,mary --roles=cluster_admin,bucket_admin[default]
+        --set-users=bob,mary --set-names="Bob Smith,Mary Jones" --roles=cluster_admin,bucket_admin[default]
             """),
                     ("Make jen bucket admins for all buckets",
 """
