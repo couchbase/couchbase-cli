@@ -1947,7 +1947,7 @@ class Node:
        --services=data,index \\
        --cluster-ramsize=300 \\
        --cluster-index-ramsize=256\\
-       --cluster-index-storage=memopt""")]
+       --index-storage-setting=memopt""")]
         elif cmd == "cluster-edit":
             return [("Change the cluster username, password, port and data service ram quota",
 """
@@ -1979,7 +1979,7 @@ class Node:
        --server-add-password=password1 \\
 
        --group-name=group1 \\
-       --cluster-index-storage=memopt \\
+       --index-storage-setting=memopt \\
        -u Administrator -p password"""),
                     ("Add a node to a cluster, but do not rebalance",
 """
