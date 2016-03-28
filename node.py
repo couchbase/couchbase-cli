@@ -2091,7 +2091,7 @@ class Node:
         --group-name=group1 \\
         --server-add-username=Administrator1 \\
         --server-add-password=password1 \\
-        --services=data,index,query \\
+        --services=data,index,query,fts \\
         -u Administrator -p password"""),
                 ("Move list of servers from group1 to group2",
 """
