@@ -3,6 +3,7 @@
 import glob
 import logging
 import os
+import Queue
 import re
 import simplejson as json
 import struct
@@ -12,8 +13,6 @@ import couchstore
 import couchbaseConstants
 import pump
 from cbcollections import defaultdict
-
-from cbqueue import PumpQueue
 
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024
@@ -155,7 +154,7 @@ class SFDSource(pump.Source):
 
         if not self.queue:
             name = "c" + threading.currentThread().getName()[1:]
-            self.queue = PumpQueue(2)
+            self.queue = Queue.Queue(2)
             self.thread = threading.Thread(target=self.loader, name=name)
             self.thread.daemon = True
             self.thread.start()

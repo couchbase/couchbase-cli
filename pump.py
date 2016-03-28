@@ -6,6 +6,7 @@ import copy
 import httplib
 import logging
 import re
+import Queue
 import simplejson as json
 import string
 import sys
@@ -19,7 +20,6 @@ import subprocess
 
 import couchbaseConstants
 from cbcollections import defaultdict
-from cbqueue import PumpQueue
 import cbsnappy as snappy
 
 # TODO: (1) optionally log into backup directory
@@ -315,7 +315,7 @@ class PumpingStation(ProgressReporter):
         if self.queue:
             return
 
-        self.queue = PumpQueue(queue_size)
+        self.queue = Queue.Queue(queue_size)
 
         threads = [threading.Thread(target=PumpingStation.run_worker,
                                     name="w" + str(i), args=(self, i))

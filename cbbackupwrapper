@@ -3,12 +3,12 @@
 
 import pump_transfer
 import pump
-from cbqueue import PumpQueue
 
 import base64
 import optparse
 import os
 import platform
+import Queue
 import re
 import simplejson as json
 import socket
@@ -45,7 +45,7 @@ See the cbrestorewrapper.py script for restoring backups made with this script."
 
 bucketList = []
 vbucketList = []
-process_queue = PumpQueue()
+process_queue = Queue.Queue()
 lock = threading.Lock()
 
 def opt_extra_help(parser, extra_defaults):
