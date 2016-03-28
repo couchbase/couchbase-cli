@@ -33,7 +33,7 @@ import cb_bin_client
 import couchbaseConstants
 
 from couchbaseConstants import *
-from cbcollections import defaultdict
+from collections import defaultdict
 
 # TODO: (1) test multiple buckets.
 # TODO: (1) test TAP ttl / time-to-live field.

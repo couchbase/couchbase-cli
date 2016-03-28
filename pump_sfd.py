@@ -12,7 +12,7 @@ import threading
 import couchstore
 import couchbaseConstants
 import pump
-from cbcollections import defaultdict
+from collections import defaultdict
 
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024

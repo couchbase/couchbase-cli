@@ -19,7 +19,7 @@ import platform
 import subprocess
 
 import couchbaseConstants
-from cbcollections import defaultdict
+from collections import defaultdict
 import cbsnappy as snappy
 
 # TODO: (1) optionally log into backup directory

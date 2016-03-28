@@ -47,7 +47,6 @@ INSTALL(PROGRAMS
 INSTALL(FILES
         buckets.py
         cb_bin_client.py
-        cbcollections.py
         cbsnappy.py
         cluster_manager.py
         cluster_stats.py
