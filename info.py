@@ -9,6 +9,8 @@ import restclient
 import simplejson
 import subprocess
 
+import os
+import sys
 import string
 import random
 import util_cli as util
@@ -62,12 +64,21 @@ class Info:
                     raise ValueError("unknown vm type \'%s\'" % vm)
 
             name = self._remoteShellName()
-            p = subprocess.call(['erl', '-name', name, '-setcookie',
+            p = subprocess.call([self.getErlPath(), '-name', name, '-setcookie',
                                  cookie, '-hidden', '-remsh', node])
         elif cmd == 'get-server-info':
             return json
         else:
             print simplejson.dumps(json, sort_keys=True, indent=2)
+
+    def getErlPath(self):
+        bin = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '..', '..', 'bin')
+        cb_erl = os.path.join(bin, 'erl')
+        if os.path.isfile(cb_erl):
+            return cb_erl
+        else:
+            print "WARNING: Cannot locate Couchbase erlang. Attempting to use non-Couchbase erlang."
+            return 'erl'
 
     def getCommandSummary(self, cmd):
         """Return one-line summary info for each supported command"""
