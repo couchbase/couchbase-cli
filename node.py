@@ -517,7 +517,7 @@ class Node:
                                          self.user,
                                          self.password,
                                          opts)
-            print output_result
+        print output_result
 
     def compaction(self):
         rest = util.restclient_factory(self.server,
