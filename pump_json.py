@@ -41,7 +41,9 @@ class JSONSource(pump.Source):
     def save_doc(self, batch, dockey, docvalue):
         cmd = couchbaseConstants.CMD_TAP_MUTATION
         vbucket_id = 0x0000ffff
-        cas, exp, flg = 0, 0, 0
+        # common flags:       0x02000000 (JSON)
+        # legacy flags:       0x00000006 (JSON)
+        cas, exp, flg = 0, 0, 0x02000006
         try:
             doc = json.loads(docvalue)
             if '_id' not in doc:
