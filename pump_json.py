@@ -153,6 +153,7 @@ class JSONSource(pump.Source):
 
     def prepare_docs(self):
         f = self.spec.replace(JSON_SCHEME, "")
+        root_name = os.path.basename(f).split('.')[0]
         if os.path.isfile(f) and f.endswith(".zip"):
             zf = zipfile.ZipFile(f)
             for path in zf.namelist():
@@ -162,6 +163,16 @@ class JSONSource(pump.Source):
                     continue
 
                 dir = os.path.basename(os.path.dirname(path))
+
+                # This condition is not allowed by the spec, but we allowing it
+                # because the training team did properly follow the spec and we
+                # don't want to break their training material. Since this tool
+                # will be deprecated soon we are making an exception and
+                # allowing this.
+                if dir == root_name:
+                    self.docs.append(path)
+                    continue
+
                 # Skip all files not in the docs directory
                 if dir != "docs":
                     continue
