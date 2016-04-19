@@ -217,6 +217,7 @@ class Node:
 
         #set-roles / delete-roles
         self.roles = None
+        self.my_roles = False
         self.get_roles = None
         self.set_users = None
         self.set_names = None
@@ -773,11 +774,17 @@ class Node:
                                             self.password, self.ssl)
 
         # need to check arguments
-        if (self.get_roles == None and self.set_users == None and self.delete_users == None):
-            print "ERROR: You must specify either '--get-roles', '--set-users', or '--delete-users'"
+        if (self.my_roles == None and self.get_roles == None and \
+            self.set_users == None and self.delete_users == None):
+            print "ERROR: You must specify either '--my-roles', '--get-roles', " \
+                "'--set-users', or '--delete-users'"
             return
 
-        if self.get_roles and (self.set_users or self.roles or self.delete_users):
+        if self.my_roles and (self.get_roles or self.set_users or self.roles or self.delete_users):
+            print "ERROR: The 'my-roles' option may not be used with any other option."
+            return
+
+        if self.get_roles and (self.my_roles or self.set_users or self.roles or self.delete_users):
             print "ERROR: The 'get-roles' option may not be used with any other option."
             return
 
@@ -785,8 +792,14 @@ class Node:
             print "ERROR: You must specify lists of both users and roles for those users.\n  --set-users=[comma delimited user list] --roles=[comma-delimited list of one or more from full_admin, readonly_admin, cluster_admin, replication_admin, bucket_admin(opt bucket name), view_admin]"
             return
 
+        # my_roles
+        if self.my_roles:
+            data, errors = cm.myRoles()
+            if errors == None:
+                print "SUCCESS: my roles:"
+
         # get_roles
-        if self.get_roles:
+        elif self.get_roles:
             data, errors = cm.getRoles()
             if errors == None:
                 print "SUCCESS: user/role list:"
@@ -1076,6 +1089,8 @@ class Node:
 
             elif o == '--roles':
                 self.roles = a
+            elif o == '--my-roles':
+                self.my_roles = True
             elif o == '--get-roles':
                 self.get_roles = True
             elif o == '--set-users':
@@ -1922,6 +1937,7 @@ class Node:
              "Ticket number to associate the uploaded logs with")]
         elif cmd == "admin-role-manage":
             return [
+            ("--my-roles", "Return a list of roles for the current user."),
             ("--get-roles", "Return list of users and roles."),
             ("--set-users", "A comma-delimited list of user ids to set acess-control roles for"),
             ("--set-names", "A optional quoted, comma-delimited list names, one for each specified user id"),
@@ -2201,7 +2217,11 @@ class Node:
         -u Administrator -p password""")]
 
         elif cmd == "admin-role-manage":
-            return [("Get a list of all users and roles",
+            return [("Show the current users roles.",
+"""
+    couchbase-cli admin-role-manage -c 192.168.0.1:8091 --my-roles
+            """),
+            ("Get a list of all users and roles",
 """
     couchbase-cli admin-role-manage -c 192.168.0.1:8091 --get-roles
             """),

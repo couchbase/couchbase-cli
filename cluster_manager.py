@@ -222,6 +222,12 @@ class ClusterManager(object):
 
         return data, errors
 
+    def myRoles(self):
+        url = self.hostname + '/whoami'
+        data, errors = self._get(url)
+
+        return data, errors
+
     def retrieve_cluster_certificate(self, extended=False):
         """ Retrieves the current cluster certificate
 

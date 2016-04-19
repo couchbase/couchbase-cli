@@ -179,6 +179,7 @@ def main():
                 'vm=',
                 'get-roles',
                 'roles=',
+                'my-roles',
                 'set-users=',
                 'set-names=',
                 'delete-users=',
