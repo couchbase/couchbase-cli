@@ -11,8 +11,6 @@ CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbtransfer)
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbclusterstats)
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen)
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery)
@@ -25,7 +23,6 @@ INSTALL(PROGRAMS
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackup
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestore
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbtransfer
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbclusterstats
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackupwrapper
@@ -37,7 +34,6 @@ INSTALL(PROGRAMS
         cbbackup
         cbrestore
         cbtransfer
-        cbclusterstats
         cbworkloadgen
         cbrecovery
         cbbackupwrapper
@@ -49,15 +45,10 @@ INSTALL(FILES
         cb_bin_client.py
         cbsnappy.py
         cluster_manager.py
-        cluster_stats.py
-        collector.py
         couchbaseConstants.py
-        diskqueue_stats.py
         info.py
         listservers.py
         node.py
-        node_stats.py
-        processor.py
         pump.py
         pump_bfd.py
         pump_bson.py
@@ -71,7 +62,6 @@ INSTALL(FILES
         pump_transfer.py
         pump_dcp.py
         restclient.py
-        stats_buffer.py
         timeout.py
         usage.py
         util_cli.py
