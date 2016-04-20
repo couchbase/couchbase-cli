@@ -4,7 +4,7 @@ import copy
 import glob
 import logging
 import os
-import simplejson as json
+import json
 import string
 import sys
 import datetime

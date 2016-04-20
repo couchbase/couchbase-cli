@@ -8,7 +8,6 @@ import os
 import sys
 import util_cli as util
 import socket
-import simplejson as json
 import re
 import urlparse
 import json

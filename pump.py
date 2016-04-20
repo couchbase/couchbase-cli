@@ -7,7 +7,7 @@ import httplib
 import logging
 import re
 import Queue
-import simplejson as json
+import json
 import string
 import sys
 import threading

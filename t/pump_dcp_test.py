@@ -11,7 +11,7 @@ import logging
 import os
 import Queue
 import select
-import simplejson as json
+import json
 import shutil
 import socket
 import struct

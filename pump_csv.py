@@ -3,7 +3,7 @@
 import csv
 import logging
 import os
-import simplejson as json
+import json
 import sys
 import struct
 import urllib

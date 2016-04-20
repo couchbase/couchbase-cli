@@ -5,8 +5,8 @@
   Provides info about a particular server.
 """
 
+import json
 import restclient
-import simplejson
 import subprocess
 
 import os
@@ -69,7 +69,7 @@ class Info:
         elif cmd == 'get-server-info':
             return json
         else:
-            print simplejson.dumps(json, sort_keys=True, indent=2)
+            print json.dumps(json, sort_keys=True, indent=2)
 
     def getErlPath(self):
         bin = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '..', '..', 'bin')

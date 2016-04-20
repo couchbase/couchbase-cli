@@ -6,7 +6,7 @@ import optparse
 import os
 import platform
 import re
-import simplejson as json
+import json
 import subprocess
 import sys
 import urllib2

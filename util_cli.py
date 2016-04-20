@@ -4,7 +4,7 @@
 import datetime
 import itertools
 import locale
-import simplejson as json
+import json
 import math
 import os
 import sys

@@ -3,7 +3,7 @@
 import logging
 import os
 import random
-import simplejson as json
+import json
 import socket
 import struct
 import time

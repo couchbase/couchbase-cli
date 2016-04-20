@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import logging
-import simplejson as json
+import json
 import time
 import urllib
 

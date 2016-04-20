@@ -5,7 +5,7 @@ import logging
 import os
 import Queue
 import re
-import simplejson as json
+import json
 import struct
 import threading
 

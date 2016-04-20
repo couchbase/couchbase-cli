@@ -2,7 +2,7 @@
 
 import bson
 import os
-import simplejson as json
+import json
 import struct
 
 import couchbaseConstants

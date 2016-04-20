@@ -2,7 +2,7 @@
 
 import logging
 import os
-import simplejson as json
+import json
 import struct
 import sys
 import shutil

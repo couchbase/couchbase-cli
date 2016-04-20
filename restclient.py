@@ -11,7 +11,7 @@ import socket
 import httplib
 import urllib
 import base64
-import simplejson as json
+import json
 import string
 
 
