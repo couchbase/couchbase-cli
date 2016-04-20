@@ -157,6 +157,41 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def create_bucket(self, bucket, ramQuotaMB, authType, saslPassword,
+                      replicaNumber, proxyPort, bucketType):
+        url = self.hostname + '/pools/default/buckets'
+
+        params = dict()
+        if authType == 'none':
+            params = { "name": bucket,
+                       "ramQuotaMB": ramQuotaMB,
+                       "authType": authType,
+                       "replicaNumber": replicaNumber,
+                       "proxyPort": proxyPort,
+                       "bucketType": bucketType }
+
+        elif authType == 'sasl':
+            params = { "name": bucket,
+                       "ramQuotaMB": ramQuotaMB,
+                       "authType": authType,
+                       "replicaNumber": replicaNumber,
+                       "proxyPort": 0,
+                       "bucketType": bucketType }
+
+        return self._post_form_encoded(url, params)
+
+    def list_buckets(self):
+        url = self.hostname + '/pools/default/buckets'
+        result, errors = self._get(url)
+        if errors:
+            return None, errors
+
+        names = list()
+        for bucket in result:
+            names.append(bucket["name"])
+
+        return names, None
+
     def set_index_settings(self, storageMode):
         """ Sets global index settings"""
         params = dict()
@@ -298,7 +333,7 @@ class ClusterManager(object):
 
 
 def _handle_response(response):
-    if response.status_code == 200:
+    if response.status_code in [200, 202]:
         if 'Content-Type' not in response.headers:
             return "", None
         if 'application/json' in response.headers['Content-Type']:
