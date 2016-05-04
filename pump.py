@@ -652,7 +652,7 @@ class Batch(object):
             if vbucket_id == 0x0000ffff or rehash == 1:
                 # Special case when the source did not supply a vbucket_id
                 # (such as stdin source), so we calculate it.
-                vbucket_id = (zlib.crc32(key) >> 16) & (vbuckets_num - 1)
+                vbucket_id = ((zlib.crc32(key) >> 16) & 0x7FFF) % vbuckets_num
                 msg = (cmd, vbucket_id) + msg[2:]
             g[vbucket_id].append(msg)
         return g
