@@ -360,6 +360,10 @@ class Node:
                     print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
                         % self.index_storage_setting
                     return
+
+                if self.index_storage_setting:
+                    _, errors = cm.set_index_settings(param)
+                    _exitIfErrors(errors)
             elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
                 print "ERROR: option fts-index-ramsize is not specified"
                 return
@@ -384,10 +388,6 @@ class Node:
                                          self.user,
                                          self.password,
                                          opts)
-        if self.index_storage_setting:
-            _, errors = cm.set_index_settings(self.index_storage_setting)
-            _exitIfErrors(errors)
-
 
         #setup services
         if cmd == "cluster-init":
