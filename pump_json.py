@@ -171,7 +171,7 @@ class JSONSource(pump.Source):
                 # don't want to break their training material. Since this tool
                 # will be deprecated soon we are making an exception and
                 # allowing this.
-                if dir == root_name:
+                if dir == "" or dir == root_name:
                     self.docs.append(path)
                     continue
 
