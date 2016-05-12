@@ -408,6 +408,8 @@ class Node:
 
         # setup REST credentials/REST port
         if cmd == 'cluster-init' or self.username_new or self.password_new or self.port_new:
+            self.enable_notification = "true"
+            self.notification(False)
             rest = util.restclient_factory(self.server,
                                          self.port,
                                          {'debug':self.debug},
@@ -605,7 +607,7 @@ class Node:
         else:
             print "Error: No parameters specified"
 
-    def notification(self):
+    def notification(self, print_status=True):
         rest = util.restclient_factory(self.server,
                                      self.port,
                                      {'debug':self.debug},
@@ -618,11 +620,13 @@ class Node:
             "success_msg": "set notification settings"
         }
         output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
+                                     '/settings/stats',
                                      self.user,
                                      self.password,
                                      opts)
-        print output_result
+
+        if print_status:
+            print output_result
 
     def alert(self):
         rest = util.restclient_factory(self.server,
