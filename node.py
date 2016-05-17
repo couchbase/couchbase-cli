@@ -1807,7 +1807,7 @@ class Node:
                           "admin password for the server to be added"),
                          ("--group-name=GROUPNAME", "group that server belongs")]
 
-        services = [("--services=data,index,query",
+        services = [("--services=data,index,query,fts",
                      "services that server runs")]
 
         if cmd == "server-add" or cmd == "rebalance":
