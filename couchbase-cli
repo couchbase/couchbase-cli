@@ -145,7 +145,6 @@ def main():
                 'move-servers=',
                 'from-group=',
                 'to-group=',
-                'retrieve-cert=',
                 'regenerate-cert=',
                 'cluster-cert-info',
                 'node-cert-info',

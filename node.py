@@ -1028,9 +1028,6 @@ class Node:
             elif o == '--rename':
                 self.group_rename = a
                 self.cmd = 'rename'
-            elif o == '--retrieve-cert':
-                self.cmd = 'retrieve'
-                self.certificate_file = a
             elif o == '--regenerate-cert':
                 self.cmd = 'regenerate'
                 self.certificate_file = a
@@ -1639,13 +1636,7 @@ class Node:
 
         cm = cluster_manager.ClusterManager(self.server, self.port, self.user, self.password, self.ssl)
 
-        if self.cmd == 'retrieve':
-            print "Warning --retrieve-cert is deprecated, use --cluster-cert-info"
-            certificate, errors = cm.retrieve_cluster_certificate()
-            _exitIfErrors(errors)
-            _exitOnFileWriteFailure(self.certificate_file, certificate)
-            print "SUCCESS: %s certificate to '%s'" % (self.cmd, self.certificate_file)
-        elif self.cmd  == 'regenerate':
+        if self.cmd  == 'regenerate':
             certificate, errors = cm.regenerate_cluster_certificate()
             _exitIfErrors(errors)
             _exitOnFileWriteFailure(self.certificate_file, certificate)
@@ -1902,8 +1893,6 @@ class Node:
         elif cmd == "ssl-manage":
             return [("--cluster-cert-info", "prints cluster certificate info"),
                     ("--node-cert-info", "prints node certificate info"),
-                    ("--retrieve-cert=CERTIFICATE",
-                     "retrieve cluster certificate AND save to a pem file"),
                     ("--regenerate-cert=CERTIFICATE",
                      "regenerate cluster certificate AND save to a pem file"),
                     ("--set-node-certificate", "sets the node certificate"),
@@ -2122,10 +2111,6 @@ class Node:
         elif cmd == "ssl-manage":
             return [("Download a cluster certificate",
 """
-    couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
-        --retrieve-cert=/tmp/test.pem \\
-        -u Administrator -p password
-
     couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
         --cluster-cert-info \\
         -u Administrator -p password"""),
