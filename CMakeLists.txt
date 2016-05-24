@@ -5,40 +5,50 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/couchbase-cli)
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackup)
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestore)
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbtransfer)
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen)
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery)
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackupwrapper)
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestorewrapper)
+
 INSTALL(PROGRAMS
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/couchbase-cli
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackup
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestore
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbtransfer
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackupwrapper
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestorewrapper
         DESTINATION bin)
 
 INSTALL(PROGRAMS
         couchbase-cli
-        cbbackup
-        cbrestore
         cbtransfer
         cbworkloadgen
         cbrecovery
-        cbbackupwrapper
-        cbrestorewrapper
         DESTINATION lib/python)
+
+IF (NOT BUILD_ENTERPRISE)
+  CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
+                  ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackup)
+  CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
+                  ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestore)
+  CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
+                  ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackupwrapper)
+  CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
+                  ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestorewrapper)
+
+  INSTALL(PROGRAMS
+          ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackup
+          ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestore
+          ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackupwrapper
+          ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestorewrapper
+          DESTINATION bin)
+
+  INSTALL(PROGRAMS
+          cbbackup
+          cbrestore
+          cbbackupwrapper
+          cbrestorewrapper
+          DESTINATION lib/python)
+ENDIF(NOT BUILD_ENTERPRISE)
 
 INSTALL(FILES
         buckets.py
