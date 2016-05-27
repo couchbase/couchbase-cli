@@ -792,7 +792,7 @@ class Node:
             return
 
         if (self.set_users and self.roles == None) or (self.set_users == None and self.roles):
-            print "ERROR: You must specify lists of both users and roles for those users.\n  --set-users=[comma delimited user list] --roles=[comma-delimited list of one or more from full_admin, readonly_admin, cluster_admin, replication_admin, bucket_admin(opt bucket name), view_admin]"
+            print "ERROR: You must specify lists of both users and roles for those users.\n  --set-users=[comma delimited user list] --roles=[comma-delimited list of one or more from admin, ro_admin, cluster_admin, replication_admin, bucket_admin[bucket name or '*'], views_admin[bucket name or '*']"
             return
 
         # my_roles
@@ -1944,7 +1944,7 @@ class Node:
             ("--get-roles", "Return list of users and roles."),
             ("--set-users", "A comma-delimited list of user ids to set acess-control roles for"),
             ("--set-names", "A optional quoted, comma-delimited list names, one for each specified user id"),
-            ("--roles", "A comma-delimited list of roles to set for users, one or more from full_admin, readonly_admin, cluster_admin, replication_admin, bucket_admin[opt bucket name], view_admin"),
+            ("--roles", "A comma-delimited list of roles to set for users, one or more from admin, ro_admin, cluster_admin, replication_admin, bucket_admin[bucket name or '*'], views_admin[bucket name or '*']"),
             ("--delete-users", "A comma-delimited list of users to remove from access control")
             ]
         else:
@@ -2236,7 +2236,7 @@ class Node:
                     ("Make jen bucket admins for all buckets",
 """
     couchbase-cli admin-role-manage -c 192.168.0.1:8091 \\
-        --set-users=jen --roles=bucket_admin
+        --set-users=jen --roles=bucket_admin[*]
             """),
             ("Remove all roles for bob",
 """
