@@ -442,23 +442,13 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             sasl_pswd = str(self.source_bucket.get("saslPassword"))
             if sasl_user:
                 try:
-                    self.dcp_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
-                    self.mem_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
-                except cb_bin_client.MemcachedError:
-                    try:
-                        self.dcp_conn.sasl_auth_plain(sasl_user, sasl_pswd)
-                        self.mem_conn.sasl_auth_plain(sasl_user, sasl_pswd)
-                    except EOFError:
-                        return "error: SASL auth error: %s:%s, user: %s" % \
-                            (host, port, sasl_user)
-                    except cb_bin_client.MemcachedError:
-                        return "error: SASL auth failed: %s:%s, user: %s" % \
-                            (host, port, sasl_user)
-                    except socket.error:
-                        return "error: SASL auth socket error: %s:%s, user: %s" % \
-                            (host, port, sasl_user)
+                    self.dcp_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                    self.mem_conn.sasl_auth_plain(sasl_user, sasl_pswd)
                 except EOFError:
                     return "error: SASL auth error: %s:%s, user: %s" % \
+                        (host, port, sasl_user)
+                except cb_bin_client.MemcachedError:
+                    return "error: SASL auth failed: %s:%s, user: %s" % \
                         (host, port, sasl_user)
                 except socket.error:
                     return "error: SASL auth socket error: %s:%s, user: %s" % \

@@ -5,7 +5,6 @@ Binary memcached test client.
 Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 """
 
-import hmac
 import socket
 import random
 import struct
@@ -247,20 +246,6 @@ class MemcachedClient(object):
     def sasl_auth_plain(self, user, password, foruser=''):
         """Perform plain auth."""
         return self.sasl_auth_start('PLAIN', '\0'.join([foruser, user, password]))
-
-    def sasl_auth_cram_md5(self, user, password):
-        """Start a plan auth session."""
-        challenge = ""
-        try:
-            self.sasl_auth_start('CRAM-MD5', '')
-        except MemcachedError, e:
-            if e.status != couchbaseConstants.ERR_AUTH_CONTINUE:
-                raise
-            challenge = e.msg
-
-        dig = hmac.HMAC(password, challenge).hexdigest()
-        return self._doCmd(couchbaseConstants.CMD_SASL_STEP, 'CRAM-MD5',
-                           user + ' ' + dig)
 
     def stop_persistence(self):
         return self._doCmd(couchbaseConstants.CMD_STOP_PERSISTENCE, '', '')

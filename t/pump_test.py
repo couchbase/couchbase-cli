@@ -355,8 +355,7 @@ class MCTestHelper(unittest.TestCase):
         return client
 
     def process_auth_without_read(self, mms, client, req, user, pwd, res):
-        #self.process_plaintext_auth(client, req, user, pwd, res)
-        self.process_cram_md5_auth(mms, client, req, user, pwd, res)
+        self.process_plaintext_auth(client, req, user, pwd, res)
 
     def check_plaintext_auth(self, req, user, pswd):
         self.assertTrue(req)
@@ -373,41 +372,6 @@ class MCTestHelper(unittest.TestCase):
     def process_plaintext_auth(self, client, req, user, pwd, res):
         cmd, _, _, _, _, opaque, _ = \
                 self.check_plaintext_auth(req, user, pwd)
-        client.client.send(self.res(cmd, res, '', '', '', opaque, 0))
-        client.go.set()
-
-    def check_cram_md5_auth(self, req, user, pswd):
-        self.assertTrue(req)
-        cmd, vbucket_id, ext, key, val, opaque, cas = \
-            self.parse_req(req)
-        self.assertEqual(couchbaseConstants.CMD_SASL_AUTH, cmd)
-        self.assertEqual(0, vbucket_id)
-        self.assertEqual('', ext)
-        self.assertEqual('CRAM-MD5', key)
-        self.assertEqual('', val)
-        self.assertEqual(0, cas)
-        return cmd, vbucket_id, ext, key, val, opaque, cas
-
-    def check_cram_md5_step(self, req, user, pswd):
-        self.assertTrue(req)
-        cmd, vbucket_id, ext, key, val, opaque, cas = \
-            self.parse_req(req)
-        self.assertEqual(couchbaseConstants.CMD_SASL_STEP, cmd)
-        self.assertEqual(0, vbucket_id)
-        self.assertEqual('', ext)
-        self.assertEqual('CRAM-MD5', key)
-        self.assertEqual(0, cas)
-        return cmd, vbucket_id, ext, key, val, opaque, cas
-
-    def process_cram_md5_auth(self, mms, client, req, user, pwd, res):
-        cmd, _, _, _, _, opaque, _ = \
-                self.check_cram_md5_auth(req, user, pwd)
-        client.client.send(self.res(cmd, 0, '', '', '', opaque, 0))
-        client.go.set()
-
-        client, req = mms.queue.get()
-        cmd, _, _, _, _, opaque, _ = \
-                self.check_cram_md5_step(req, user, pwd)
         client.client.send(self.res(cmd, res, '', '', '', opaque, 0))
         client.go.set()
 

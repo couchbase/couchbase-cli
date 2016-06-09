@@ -288,21 +288,12 @@ class TAPDumpSource(pump.Source):
             sasl_pswd = str(pump.get_password(self.source_bucket.get("saslPassword", self.opts.password)))
             if sasl_user:
                 try:
-                    self.tap_conn.sasl_auth_cram_md5(sasl_user, sasl_pswd)
-                except cb_bin_client.MemcachedError:
-                    try:
-                        self.tap_conn.sasl_auth_plain(sasl_user, sasl_pswd)
-                    except EOFError:
-                        return "error: SASL auth error: %s:%s, user: %s" % \
-                            (host, port, sasl_user), None
-                    except cb_bin_client.MemcachedError:
-                        return "error: SASL auth failed: %s:%s, user: %s" % \
-                            (host, port, sasl_user), None
-                    except socket.error:
-                        return "error: SASL auth socket error: %s:%s, user: %s" % \
-                            (host, port, sasl_user), None
+                    self.tap_conn.sasl_auth_plain(sasl_user, sasl_pswd)
                 except EOFError:
                     return "error: SASL auth error: %s:%s, user: %s" % \
+                        (host, port, sasl_user), None
+                except cb_bin_client.MemcachedError:
+                    return "error: SASL auth failed: %s:%s, user: %s" % \
                         (host, port, sasl_user), None
                 except socket.error:
                     return "error: SASL auth socket error: %s:%s, user: %s" % \
