@@ -71,14 +71,12 @@ class JSONSource(pump.Source):
         for item in os.listdir(subdir):
             path = os.path.join(subdir, item)
             if os.path.isfile(path):
-                dir = os.path.basename(os.path.dirname(path))
-                if (not skip_views and dir == "design_docs") or \
-                   (not skip_docs and dir == "docs"):
+                if (not skip_views and "design_docs" in path.split(os.path.sep)) or \
+                   (not skip_docs and "docs" in path.split(os.path.sep)):
                     file_candidate.append(path)
             else:
-                dir = os.path.basename(path)
-                if not ((skip_docs and dir == "docs") or \
-                   (skip_views and dir == "design_docs")):
+                if not ((skip_docs and "docs" in path.split(os.path.sep)) or \
+                   (skip_views and "design_docs" in path.split(os.path.sep))):
                     JSONSource.enumerate_files(path, file_candidate, skip_views, skip_docs)
 
     @staticmethod
@@ -177,7 +175,7 @@ class JSONSource(pump.Source):
                     continue
 
                 # Skip all files not in the docs directory
-                if dir != "docs":
+                if "docs" not in path.split(os.path.sep):
                     continue
 
                 self.docs.append(path)
