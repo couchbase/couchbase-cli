@@ -361,9 +361,8 @@ class Node:
                         % self.index_storage_setting
                     return
 
-                if self.index_storage_setting:
-                    _, errors = cm.set_index_settings(param)
-                    _exitIfErrors(errors)
+                _, errors = cm.set_index_settings(param)
+                _exitIfErrors(errors)
             elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
                 print "ERROR: option fts-index-ramsize is not specified"
                 return
