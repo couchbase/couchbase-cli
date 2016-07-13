@@ -367,26 +367,10 @@ class Node:
                 print "ERROR: option fts-index-ramsize is not specified"
                 return
 
-        opts = {
-            "error_msg": "unable to set memory quota",
-            "success_msg": "set memory quota successfully"
-        }
-        rest = util.restclient_factory(self.server,
-                                       self.port,
-                                       {'debug':self.debug},
-                                       self.ssl)
-        if self.per_node_quota:
-            rest.setParam('memoryQuota', self.per_node_quota)
-        if self.cluster_index_ramsize:
-            rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
-        if self.cluster_fts_ramsize:
-            rest.setParam('ftsMemoryQuota', self.cluster_fts_ramsize)
-        if rest.params:
-            output_result = rest.restCmd(self.method,
-                                         '/pools/default',
-                                         self.user,
-                                         self.password,
-                                         opts)
+        # set service ram quotas
+        _, errors = cm.set_ram_quotas(self.per_node_quota, self.cluster_index_ramsize,
+                                      self.cluster_fts_ramsize)
+        _exitIfErrors(errors)
 
         #setup services
         if cmd == "cluster-init":

@@ -124,6 +124,25 @@ class ClusterManager(object):
         url = self.hostname + '/pools'
         return self._get(url)
 
+    def set_ram_quotas(self, data_ramsize, index_ramsize, fts_ramsize):
+        """ Sets Couchbase RAM Quotas for various services
+
+        Options:
+        data_ramsize - An integer denoting the size in MB, None skips the parameter
+        index_ramsize - An integer denoting the size in MB, None skips the parameter
+        fts_ramsize - An integer denoting the size in MB, None skips the parameter
+        """
+        url = self.hostname + '/pools/default'
+        params = {}
+        if data_ramsize:
+            params["memoryQuota"] = data_ramsize
+        if index_ramsize:
+            params["indexMemoryQuota"] = index_ramsize
+        if fts_ramsize:
+            params["ftsMemoryQuota"] = fts_ramsize
+
+        return self._post_form_encoded(url, params)
+
     def setup_services(self, services):
         """ Sets the services on a node
 
