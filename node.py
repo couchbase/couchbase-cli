@@ -381,44 +381,28 @@ class Node:
         if cmd == 'cluster-init' or self.username_new or self.password_new or self.port_new:
             self.enable_notification = "true"
             self.notification(False)
-            rest = util.restclient_factory(self.server,
-                                         self.port,
-                                         {'debug':self.debug},
-                                         self.ssl)
-            if self.port_new:
-                rest.setParam('port', self.port_new)
-            else:
-                rest.setParam('port', 'SAME')
-            rest.setParam('initStatus', 'done')
-            if self.username_new:
-                rest.setParam('username', self.username_new)
-            else:
-                rest.setParam('username', self.user)
-            if self.password_new:
-                rest.setParam('password', self.password_new)
-            else:
-                rest.setParam('password', self.password)
 
-            if not (rest.getParam('username') and rest.getParam('password')):
+            username = self.user
+            if self.username_new:
+                username = self.username_new
+
+            password = self.password
+            if self.password_new:
+                password = self.password_new
+
+            if not (username and password):
                 print "ERROR: Both username and password are required."
                 return
 
-            if len(rest.getParam('password')) > MAX_LEN_PASSWORD:
+            if len(password) > MAX_LEN_PASSWORD:
                 print "ERROR: Password length %s exceeds maximum number of characters allowed, which is %s" \
-                      % (len(rest.getParam('password')), MAX_LEN_PASSWORD)
+                      % (len(password), MAX_LEN_PASSWORD)
                 return
 
-            opts = {
-                "error_msg": "unable to init/modify %s" % self.server,
-                "success_msg": "init/edit %s" % self.server
-            }
+            _, errors = cm.set_admin_credentials(username, password, self.port_new)
+            _exitIfErrors(errors)
 
-            output_result = rest.restCmd(self.method,
-                                         self.rest_cmd,
-                                         self.user,
-                                         self.password,
-                                         opts)
-        print output_result
+        print "SUCCESS: Cluster initialized"
 
     def index_storage_to_param(self, value):
         if not value or value == "default":

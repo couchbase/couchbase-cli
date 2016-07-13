@@ -154,6 +154,24 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def set_admin_credentials(self, username, password, port):
+        """Sets the admin credentials and port for a cluster
+
+        Options:
+        username - The username for the cluster
+        password - The password for the cluster
+        port - The port number for the admin console to listen on. If set to
+               None then the port is kept the same as it currently is.
+        """
+        url = self.hostname + '/settings/web'
+        params = { "username": username,
+                   "password": password,
+                   "port":     "SAME" }
+        if port:
+            params["port"] = port
+
+        return self._post_form_encoded(url, params)
+
     def get_server_groups(self):
         url = self.hostname + '/pools/default/serverGroups'
         return self._get(url)
