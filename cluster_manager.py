@@ -172,6 +172,15 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def enable_notifications(self, enable):
+        url = self.hostname + '/settings/stats'
+        params = { "sendStats": "false"}
+
+        if enable:
+            params["sendStats"] = "true"
+
+        return self._post_form_encoded(url, params)
+
     def get_server_groups(self):
         url = self.hostname + '/pools/default/serverGroups'
         return self._get(url)

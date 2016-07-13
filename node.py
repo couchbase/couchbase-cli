@@ -377,11 +377,13 @@ class Node:
             _, errors = cm.setup_services(services)
             _exitIfErrors(errors)
 
+        # Enable notifications
+        if cmd == 'cluster-init':
+            _, errors = cm.enable_notifications(True)
+            _exitIfErrors(errors)
+
         # setup REST credentials/REST port
         if cmd == 'cluster-init' or self.username_new or self.password_new or self.port_new:
-            self.enable_notification = "true"
-            self.notification(False)
-
             username = self.user
             if self.username_new:
                 username = self.username_new
