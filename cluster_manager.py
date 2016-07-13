@@ -124,6 +124,17 @@ class ClusterManager(object):
         url = self.hostname + '/pools'
         return self._get(url)
 
+    def setup_services(self, services):
+        """ Sets the services on a node
+
+        Options:
+        services - A string containing a comma separated list of services
+        """
+        url = self.hostname + '/node/controller/setupServices'
+        params = { "services": services }
+
+        return self._post_form_encoded(url, params)
+
     def get_server_groups(self):
         url = self.hostname + '/pools/default/serverGroups'
         return self._get(url)

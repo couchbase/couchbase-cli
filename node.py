@@ -390,20 +390,8 @@ class Node:
 
         #setup services
         if cmd == "cluster-init":
-            opts = {
-                "error_msg": "unable to setup services",
-                "success_msg": "setup service successfully"
-            }
-            rest = util.restclient_factory(self.server,
-                                           self.port,
-                                           {'debug':self.debug},
-                                           self.ssl)
-            rest.setParam('services', services)
-            output_result = rest.restCmd(self.method,
-                                         '/node/controller/setupServices',
-                                         self.user,
-                                         self.password,
-                                         opts)
+            _, errors = cm.setup_services(services)
+            _exitIfErrors(errors)
 
         # setup REST credentials/REST port
         if cmd == 'cluster-init' or self.username_new or self.password_new or self.port_new:
