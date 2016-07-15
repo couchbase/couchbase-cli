@@ -351,25 +351,26 @@ class Node:
             if 'kv' in services.split(',') and not self.per_node_quota:
                 print "ERROR: option cluster-ramsize is not specified"
                 return
-            elif 'index' in services.split(','):
-                if not self.cluster_index_ramsize:
-                    print "ERROR: option cluster-index-ramsize is not specified"
-                    return
-                param = self.index_storage_to_param(self.index_storage_setting)
-                if not param:
-                    print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
-                        % self.index_storage_setting
-                    return
+            elif 'index' in services.split(',') and not self.cluster_index_ramsize:
+                print "ERROR: option cluster-index-ramsize is not specified"
+                return
 
-                _, errors = cm.set_index_settings(param)
-                _exitIfErrors(errors)
             elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
                 print "ERROR: option fts-index-ramsize is not specified"
                 return
 
-        # set service ram quotas
         _, errors = cm.set_ram_quotas(self.per_node_quota, self.cluster_index_ramsize,
                                       self.cluster_fts_ramsize)
+        _exitIfErrors(errors)
+
+        # Set the index storage mode
+        param = self.index_storage_to_param(self.index_storage_setting)
+        if not param:
+            print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
+                % self.index_storage_setting
+            return
+
+        _, errors = cm.set_index_settings(param)
         _exitIfErrors(errors)
 
         #setup services
