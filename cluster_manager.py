@@ -402,6 +402,12 @@ def _handle_response(response):
             errors = response.json()
             if isinstance(errors, list):
                 return None, errors
+            if isinstance(errors, dict) and "errors" in errors:
+                if isinstance(errors["errors"], dict):
+                    rv = list()
+                    for key, value in errors["errors"].iteritems():
+                        rv.append(key + " - " + value)
+                    return None, rv
         return None, [response.text]
     elif response.status_code == 401:
         return None, ['unable to access the REST API - please check your username' +
