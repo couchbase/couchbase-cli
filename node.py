@@ -398,7 +398,7 @@ class Node:
                 return
 
             if len(password) > MAX_LEN_PASSWORD:
-                print "ERROR: Password length %s exceeds maximum number of characters allowed, which is %s" \
+                print "ERROR: Password length %s exceeds maximum length of %s characters" \
                       % (len(password), MAX_LEN_PASSWORD)
                 return
 
