@@ -338,36 +338,27 @@ class Node:
             data, errors = cm.pools()
             _exitIfErrors(errors)
             if data['pools'] and len(data['pools']) > 0:
-                print "Error: cluster is already initialized, use cluster-edit to change settings"
-                return
+                _exitIfErrors(["cluster is already initialized, use cluster-edit to change settings"])
 
         err, services = self.process_services(False)
         if err:
-            print err
-            return
+            _exitIfErrors([err])
 
         #set memory quota
         if cmd == 'cluster-init':
             if 'kv' in services.split(',') and not self.per_node_quota:
-                print "ERROR: option cluster-ramsize is not specified"
-                return
+                _exitIfErrors(["option cluster-ramsize is not specified"])
             elif 'index' in services.split(',') and not self.cluster_index_ramsize:
-                print "ERROR: option cluster-index-ramsize is not specified"
-                return
-
+                _exitIfErrors(["option cluster-index-ramsize is not specified"])
             elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
-                print "ERROR: option fts-index-ramsize is not specified"
-                return
+                _exitIfErrors(["option fts-index-ramsize is not specified"])
 
         if self.per_node_quota and not isInt(self.per_node_quota):
-            print "ERROR: --cluster-ramsize must be an integer"
-            return
+            _exitIfErrors(["--cluster-ramsize must be an integer"])
         if self.cluster_index_ramsize and not isInt(self.cluster_index_ramsize):
-            print "ERROR: --cluster-index-ramsize must be an integer"
-            return
+            _exitIfErrors(["--cluster-index-ramsize must be an integer"])
         if self.cluster_fts_ramsize and not isInt(self.cluster_fts_ramsize):
-            print "ERROR: --cluster-fts-ramsize must be an integer"
-            return
+            _exitIfErrors(["--cluster-fts-ramsize must be an integer"])
 
         _, errors = cm.set_ram_quotas(self.per_node_quota, self.cluster_index_ramsize,
                                       self.cluster_fts_ramsize)
@@ -376,8 +367,8 @@ class Node:
         # Set the index storage mode
         param = self.index_storage_to_param(self.index_storage_setting)
         if not param:
-            print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
-                % self.index_storage_setting
+            _exitIfErrors(["invalid index storage setting `%s`. Must be [default, memopt]" \
+                % self.index_storage_setting])
             return
 
         _, errors = cm.set_index_settings(param)
@@ -403,14 +394,15 @@ class Node:
             if self.password_new:
                 password = self.password_new
 
+            if self.port_new and not isInt(self.port_new):
+                _exitIfErrors(["--cluster-port must be an integer"])
+
             if not (username and password):
-                print "ERROR: Both username and password are required."
-                return
+                _exitIfErrors(["Both username and password are required."])
 
             if len(password) > MAX_LEN_PASSWORD:
-                print "ERROR: Password length %s exceeds maximum length of %s characters" \
-                      % (len(password), MAX_LEN_PASSWORD)
-                return
+                _exitIfErrors(["Password length %s exceeds maximum length of %s characters" \
+                      % (len(password), MAX_LEN_PASSWORD)])
 
             _, errors = cm.set_admin_credentials(username, password, self.port_new)
             _exitIfErrors(errors)
