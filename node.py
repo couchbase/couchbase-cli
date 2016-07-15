@@ -359,6 +359,16 @@ class Node:
                 print "ERROR: option fts-index-ramsize is not specified"
                 return
 
+        if self.per_node_quota and not isInt(self.per_node_quota):
+            print "ERROR: --cluster-ramsize must be an integer"
+            return
+        if self.cluster_index_ramsize and not isInt(self.cluster_index_ramsize):
+            print "ERROR: --cluster-index-ramsize must be an integer"
+            return
+        if self.cluster_fts_ramsize and not isInt(self.cluster_fts_ramsize):
+            print "ERROR: --cluster-fts-ramsize must be an integer"
+            return
+
         _, errors = cm.set_ram_quotas(self.per_node_quota, self.cluster_index_ramsize,
                                       self.cluster_fts_ramsize)
         _exitIfErrors(errors)
@@ -2214,3 +2224,12 @@ def _exitOnFileReadFailure(fname):
     except IOError, error:
         print "ERROR: ", error
         sys.exit(1)
+
+def isInt(s):
+    if s is None:
+        return False
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
