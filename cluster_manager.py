@@ -404,9 +404,9 @@ def _handle_response(response):
                 return None, errors
         return None, [response.text]
     elif response.status_code == 401:
-        return None, ['ERROR: unable to access the REST API - please check your username' +
+        return None, ['unable to access the REST API - please check your username' +
                       '(-u) and password (-p)']
     elif response.status_code == 500:
-        return None, ['ERROR: Internal server error, please retry your request']
+        return None, ['Internal server error, please retry your request']
     else:
-        return None, ['Error: Recieved unexpected status %d' % response.status_code]
+        return None, ['Recieved unexpected status %d' % response.status_code]
