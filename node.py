@@ -2189,10 +2189,10 @@ class Node:
         else:
             return None
 
-def _exitIfErrors(errors, prefix=""):
+def _exitIfErrors(errors):
     if errors:
         for error in errors:
-            print prefix + error
+            print "ERROR: " + error
         sys.exit(1)
 
 def _exitOnFileWriteFailure(fname, bytes):
@@ -2201,7 +2201,7 @@ def _exitOnFileWriteFailure(fname, bytes):
         fp.write(bytes)
         fp.close()
     except IOError, error:
-        print "ERROR:", error
+        print "ERROR: ", error
         sys.exit(1)
 
 def _exitOnFileReadFailure(fname):
@@ -2211,5 +2211,5 @@ def _exitOnFileReadFailure(fname):
         fp.close()
         return bytes
     except IOError, error:
-        print "ERROR:", error
+        print "ERROR: ", error
         sys.exit(1)
