@@ -336,9 +336,11 @@ class Node:
 
         if cmd == 'cluster-init':
             data, errors = cm.pools()
-            _exitIfErrors(errors)
-            if data['pools'] and len(data['pools']) > 0:
-                _exitIfErrors(["cluster is already initialized, use cluster-edit to change settings"])
+            if (errors and len(errors) == 1 and errors[0] == cluster_manager.ERR_AUTH) or \
+                (data and data['pools'] and len(data['pools']) > 0):
+                _exitIfErrors(["Cluster is already initialized, use cluster-edit to change settings"])
+            elif errors:
+                _exitIfErrors(errors)
 
         err, services = self.process_services(False)
         if err:

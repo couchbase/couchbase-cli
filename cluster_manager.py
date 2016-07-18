@@ -9,6 +9,9 @@ INDEX_SERVICE = 'index'
 MGMT_SERVICE = 'mgmt'
 FTS_SERVICE = 'fts'
 
+ERR_AUTH = 'unable to access the REST API - please check your username (-u) and password (-p)'
+ERR_INTERNAL = 'Internal server error, please retry your request'
+
 DEFAULT_REQUEST_TIMEOUT = 60
 
 # Remove this once we can verify SSL certificates
@@ -410,9 +413,8 @@ def _handle_response(response):
                     return None, rv
         return None, [response.text]
     elif response.status_code == 401:
-        return None, ['unable to access the REST API - please check your username' +
-                      '(-u) and password (-p)']
+        return None, [ERR_AUTH]
     elif response.status_code == 500:
-        return None, ['Internal server error, please retry your request']
+        return None, [ERR_INTERNAL]
     else:
         return None, ['Recieved unexpected status %d' % response.status_code]
