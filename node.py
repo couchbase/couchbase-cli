@@ -428,13 +428,13 @@ class Node:
         svc_candidate = ["data", "index", "query", "fts"]
         for svc in svc_list:
             if svc not in svc_candidate:
-                return "ERROR: invalid service: %s" % svc, None
+                return "invalid service: %s" % svc, None
         if data_required and "data" not in svc_list:
             svc_list.append("data")
         if not IS_ENTERPRISE:
             if len(svc_list) != len(svc_candidate):
                 if len(svc_list) != 1 or "data" not in svc_list:
-                    return "ERROR: Community Edition requires that all nodes provision all services or data service only", None
+                    return "Community Edition requires that all nodes provision all services or data service only", None
 
         services = ",".join(svc_list)
         for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
