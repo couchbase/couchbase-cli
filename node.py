@@ -365,14 +365,15 @@ class Node:
         _exitIfErrors(errors)
 
         # Set the index storage mode
-        param = self.index_storage_to_param(self.index_storage_setting)
-        if not param:
-            _exitIfErrors(["invalid index storage setting `%s`. Must be [default, memopt]" \
-                % self.index_storage_setting])
-            return
+        if self.index_storage_setting or 'index' in services.split(','):
+            param = self.index_storage_to_param(self.index_storage_setting)
+            if not param:
+                _exitIfErrors(["invalid index storage setting `%s`. Must be [default, memopt]" \
+                    % self.index_storage_setting])
+                return
 
-        _, errors = cm.set_index_settings(param)
-        _exitIfErrors(errors)
+            _, errors = cm.set_index_settings(param)
+            _exitIfErrors(errors)
 
         #setup services
         if cmd == "cluster-init":
