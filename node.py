@@ -570,26 +570,27 @@ class Node:
         else:
             print "Error: No parameters specified"
 
-    def notification(self, print_status=True):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.enable_notification:
-            rest.setParam('sendStats', self.enable_notification)
+    def notification(self):
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
+                                            self.password, self.ssl)
 
-        opts = {
-            "error_msg": "unable to set notification settings",
-            "success_msg": "set notification settings"
-        }
-        output_result = rest.restCmd(self.method,
-                                     '/settings/stats',
-                                     self.user,
-                                     self.password,
-                                     opts)
+        enabled = None
+        if self.enable_notification is None:
+            _exitIfErrors(["--enable-notifications is required"])
+        elif self.enable_notification == "1":
+            enabled = True
+        elif self.enable_notification == "0":
+            enabled = False
+        else:
+            _exitIfErrors(["--enable-notifications accepts 1 or 0"])
 
-        if print_status:
-            print output_result
+        _, errors = cm.enable_notifications(enabled)
+        _exitIfErrors(errors)
+
+        if enabled:
+            print "SUCCESS: Notifications enabled"
+        else:
+            print "SUCCESS: Notifications disabled"
 
     def alert(self):
         rest = util.restclient_factory(self.server,
@@ -896,7 +897,7 @@ class Node:
             elif o == '--enable-auto-failover':
                 self.enable_auto_failover = bool_to_str(a)
             elif o == '--enable-notification':
-                self.enable_notification = bool_to_str(a)
+                self.enable_notification = str(a)
             elif o == '--auto-failover-timeout':
                 self.autofailover_timeout = a
             elif o == '--compaction-db-percentage':
