@@ -362,8 +362,8 @@ class Node:
         if self.cluster_fts_ramsize and not isInt(self.cluster_fts_ramsize):
             _exitIfErrors(["--cluster-fts-ramsize must be an integer"])
 
-        _, errors = cm.set_ram_quotas(self.per_node_quota, self.cluster_index_ramsize,
-                                      self.cluster_fts_ramsize)
+        _, errors = cm.set_pools_default(self.per_node_quota, self.cluster_index_ramsize,
+                                         self.cluster_fts_ramsize, self.cluster_name)
         _exitIfErrors(errors)
 
         # Set the index storage mode
@@ -1790,6 +1790,7 @@ class Node:
             ("--cluster-password=PASSWORD", "new admin password"),
             ("--cluster-port=PORT", "new cluster REST/http port"),
             ("--cluster-ramsize=RAMSIZEMB", "per node data service ram quota in MB"),
+            ("--cluster-name=NAME", "the name of the cluster"),
             ("--cluster-index-ramsize=RAMSIZEMB", "per node index service ram quota in MB"),
             ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB"),
             ("--index-storage-setting=SETTING", "index storage type [default, memopt]")] + services
@@ -1918,6 +1919,7 @@ class Node:
        --cluster-port=8080 \\
        --services=data,index \\
        --cluster-ramsize=300 \\
+       --cluster-name=east \\
        --cluster-index-ramsize=256\\
        --index-storage-setting=memopt""")]
         elif cmd == "cluster-edit":
