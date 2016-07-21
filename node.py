@@ -23,8 +23,6 @@ try:
 except ImportError:
     IS_ENTERPRISE = False
 
-MAX_LEN_PASSWORD = 24
-
 # the rest commands and associated URIs for various node operations
 
 rest_cmds = {
@@ -275,14 +273,14 @@ class Node:
                       " or use -h for more help.")
             self.recovery(servers)
 
-        elif cmd in ('cluster-init', 'cluster-edit'):
-            self.clusterInit(cmd)
+        elif cmd in 'cluster-init':
+            self.clusterInit()
 
         elif cmd == 'node-init':
             self.nodeInit()
 
-        elif cmd == 'setting-cluster':
-            self.clusterSetting()
+        elif cmd in ('setting-cluster', 'cluster-edit'):
+            self.clusterSetting(cmd)
 
         elif cmd == 'setting-compaction':
             self.compaction()
@@ -326,34 +324,31 @@ class Node:
         elif cmd == 'admin-role-manage':
             self.alterRoles()
 
-    def clusterInit(self, cmd):
+    def clusterInit(self):
         # We need to ensure that creating the REST username/password is the
         # last REST API that is called because once that API succeeds the
         # cluster is initialized and cluster-init cannot be run again.
 
+        initialized, errors = self._is_cluster_initialized()
+        if initialized:
+            _exitIfErrors(["Cluster is already initialized, use cluster-edit to change settings"])
+        elif errors:
+            _exitIfErrors(errors)
+
         cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
                                             self.password, self.ssl)
-
-        if cmd == 'cluster-init':
-            data, errors = cm.pools()
-            if (errors and len(errors) == 1 and errors[0] == cluster_manager.ERR_AUTH) or \
-                (data and data['pools'] and len(data['pools']) > 0):
-                _exitIfErrors(["Cluster is already initialized, use cluster-edit to change settings"])
-            elif errors:
-                _exitIfErrors(errors)
 
         err, services = self.process_services(False)
         if err:
             _exitIfErrors([err])
 
         #set memory quota
-        if cmd == 'cluster-init':
-            if 'kv' in services.split(',') and not self.per_node_quota:
-                _exitIfErrors(["option cluster-ramsize is not specified"])
-            elif 'index' in services.split(',') and not self.cluster_index_ramsize:
-                _exitIfErrors(["option cluster-index-ramsize is not specified"])
-            elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
-                _exitIfErrors(["option fts-index-ramsize is not specified"])
+        if 'kv' in services.split(',') and not self.per_node_quota:
+            _exitIfErrors(["option cluster-ramsize is not specified"])
+        elif 'index' in services.split(',') and not self.cluster_index_ramsize:
+            _exitIfErrors(["option cluster-index-ramsize is not specified"])
+        elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
+            _exitIfErrors(["option fts-index-ramsize is not specified"])
 
         if self.per_node_quota and not isInt(self.per_node_quota):
             _exitIfErrors(["--cluster-ramsize must be an integer"])
@@ -378,37 +373,23 @@ class Node:
             _exitIfErrors(errors)
 
         #setup services
-        if cmd == "cluster-init":
-            _, errors = cm.setup_services(services)
-            _exitIfErrors(errors)
+        _, errors = cm.setup_services(services)
+        _exitIfErrors(errors)
 
         # Enable notifications
-        if cmd == 'cluster-init':
-            _, errors = cm.enable_notifications(True)
-            _exitIfErrors(errors)
+        _, errors = cm.enable_notifications(True)
+        _exitIfErrors(errors)
 
         # setup REST credentials/REST port
-        if cmd == 'cluster-init' or self.username_new or self.password_new or self.port_new:
-            username = self.user
-            if self.username_new:
-                username = self.username_new
+        if self.port_new and not isInt(self.port_new):
+            _exitIfErrors(["--cluster-port must be an integer"])
 
-            password = self.password
-            if self.password_new:
-                password = self.password_new
+        if not (self.username_new and self.password_new):
+            _exitIfErrors(["Both username and password are required."])
 
-            if self.port_new and not isInt(self.port_new):
-                _exitIfErrors(["--cluster-port must be an integer"])
-
-            if not (username and password):
-                _exitIfErrors(["Both username and password are required."])
-
-            if len(password) > MAX_LEN_PASSWORD:
-                _exitIfErrors(["Password length %s exceeds maximum length of %s characters" \
-                      % (len(password), MAX_LEN_PASSWORD)])
-
-            _, errors = cm.set_admin_credentials(username, password, self.port_new)
-            _exitIfErrors(errors)
+        _, errors = cm.set_admin_credentials(self.username_new, self.password_new,
+                                             self.port_new)
+        _exitIfErrors(errors)
 
         print "SUCCESS: Cluster initialized"
 
@@ -442,6 +423,16 @@ class Node:
         for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
             services = services.replace(old, new)
         return None, services
+
+    def _is_cluster_initialized(self):
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
+                                            self.password, self.ssl)
+
+        data, errors = cm.pools()
+        if (errors and len(errors) == 1 and errors[0] == cluster_manager.ERR_AUTH) or \
+            (data and data['pools'] and len(data['pools']) > 0):
+            return True, None
+        return False, errors
 
     def nodeInit(self):
         rest = util.restclient_factory(self.server,
@@ -543,32 +534,48 @@ class Node:
                                      opts)
         print output_result
 
-    def clusterSetting(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.per_node_quota:
-            rest.setParam('memoryQuota', self.per_node_quota)
-        if self.cluster_name is not None:
-            rest.setParam('clusterName', self.cluster_name)
-        if self.cluster_index_ramsize:
-            rest.setParam('indexMemoryQuota', self.cluster_index_ramsize)
-        if self.cluster_fts_ramsize:
-            rest.setParam('ftsMemoryQuota', self.cluster_fts_ramsize)
-        opts = {
-            "error_msg": "unable to set cluster configurations",
-            "success_msg": "set cluster settings"
-        }
-        if rest.params:
-            output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-            print output_result
-        else:
-            print "Error: No parameters specified"
+    def clusterSetting(self, cmd):
+        if cmd == "cluster-edit":
+            _warning("The cluster-edit command is depercated, use setting-cluster instead")
+
+        initialized, errors = self._is_cluster_initialized()
+        if not initialized:
+            _exitIfErrors(["Cluster is not initialized, use cluster-init to initialize the cluster"])
+        elif errors:
+            _exitIfErrors(errors)
+
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
+                                            self.password, self.ssl)
+
+        if self.per_node_quota and not isInt(self.per_node_quota):
+            _exitIfErrors(["--cluster-ramsize must be an integer"])
+        if self.cluster_index_ramsize and not isInt(self.cluster_index_ramsize):
+            _exitIfErrors(["--cluster-index-ramsize must be an integer"])
+        if self.cluster_fts_ramsize and not isInt(self.cluster_fts_ramsize):
+            _exitIfErrors(["--cluster-fts-ramsize must be an integer"])
+
+        if self.per_node_quota or self.cluster_index_ramsize or \
+            self.cluster_fts_ramsize or self.cluster_name is not None:
+            _, errors = cm.set_pools_default(self.per_node_quota, self.cluster_index_ramsize,
+                                            self.cluster_fts_ramsize, self.cluster_name)
+            _exitIfErrors(errors)
+
+        if self.username_new or self.password_new or self.port_new:
+            username = self.user
+            if self.username_new:
+                username = self.username_new
+
+            password = self.password
+            if self.password_new:
+                password = self.password_new
+
+            if self.port_new and not isInt(self.port_new):
+                _exitIfErrors(["--cluster-port must be an integer"])
+
+            _, errors = cm.set_admin_credentials(username, password, self.port_new)
+            _exitIfErrors(errors)
+
+        print "SUCCESS: Cluster settings modified"
 
     def notification(self):
         cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
@@ -1784,7 +1791,7 @@ class Node:
             ("--from-group=GROUPNAME", "group name to move servers from"),
             ("--to-group=GROUPNAME", "group name to move servers into"),
             ("--index-storage-setting=SETTING", "index storage type [default, memopt]")] + services
-        elif cmd == "cluster-init" or cmd == "cluster-edit":
+        elif cmd == "cluster-init":
             return [
             ("--cluster-username=USER", "new admin username"),
             ("--cluster-password=PASSWORD", "new admin password"),
@@ -1844,8 +1851,12 @@ class Node:
             ("--alert-write-failed",
              "writing data to disk for a specific bucket has failed"),
             ("--alert-audit-msg-dropped", "writing event to audit log has failed")]
-        elif cmd == "setting-cluster":
-            return [("--cluster-name=[CLUSTERNAME]", "cluster name"),
+        elif cmd == "setting-cluster" or cmd == "cluster-edit":
+            return [
+                    ("--cluster-username=USER", "new admin username"),
+                    ("--cluster-password=PASSWORD", "new admin password"),
+                    ("--cluster-port=PORT", "new cluster REST/http port"),
+                    ("--cluster-name=[CLUSTERNAME]", "cluster name"),
                     ("--cluster-ramsize=[RAMSIZEMB]", "per node data service ram quota in MB"),
                     ("--cluster-index-ramsize=[RAMSIZEMB]","per node index service ram quota in MB"),
                     ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB")]
@@ -2197,6 +2208,9 @@ class Node:
 
         else:
             return None
+
+def _warning(msg):
+    print "WARNING: " + msg
 
 def _exitIfErrors(errors):
     if errors:

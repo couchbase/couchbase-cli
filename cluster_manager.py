@@ -4,6 +4,8 @@ import requests
 import csv
 import StringIO
 
+MAX_LEN_PASSWORD = 24
+
 N1QL_SERVICE = 'n1ql'
 INDEX_SERVICE = 'index'
 MGMT_SERVICE = 'mgmt'
@@ -170,11 +172,19 @@ class ClusterManager(object):
                None then the port is kept the same as it currently is.
         """
         url = self.hostname + '/settings/web'
-        params = { "username": username,
-                   "password": password,
-                   "port":     "SAME" }
+        params = {}
+
+        if username:
+            params["username"] = username
+        if password:
+            if len(password) > MAX_LEN_PASSWORD:
+                return None, ["Password length %s exceeds maximum length of %s characters" \
+                    % (len(password), MAX_LEN_PASSWORD)]
+            params["password"] = password
         if port:
             params["port"] = port
+        else:
+            params["port"] = "SAME"
 
         return self._post_form_encoded(url, params)
 
