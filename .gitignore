@@ -22,7 +22,6 @@ tmp
 /wrapper/cbrecovery
 /wrapper/cbrestore
 /wrapper/cbtransfer
-/wrapper/cbclusterstats
 /wrapper/membase
 /wrapper/cbworkloadgen
 /CMakeFiles/
