@@ -81,8 +81,9 @@ class JSONSource(pump.Source):
 
     @staticmethod
     def check(opts, spec):
+
         return 0, {'spec': spec,
-                   'buckets': [{'name': os.path.basename(spec),
+                   'buckets': [{'name': os.path.normpath(os.path.basename(spec)),
                                 'nodes': [{'hostname': 'N/A'}]}]}
 
     def save_doc(self, batch, dockey, datafile, is_data):
