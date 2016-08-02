@@ -174,12 +174,6 @@ if __name__ == '__main__':
             print 'Please enter a different bucket'
             sys.exit(1)
 
-    # Handle the case when path has spaces
-    if os.name == 'nt':
-        path = re.sub(r' ', '^ ', path)
-    else:
-        path = re.sub(r' ', '\ ', path)
-
     ssl_option = ''
     if args.ssl:
         ssl_option = ' -s '
