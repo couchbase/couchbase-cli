@@ -610,6 +610,11 @@ class BFDSink(BFD, pump.Sink):
         for i in range(BFD.NUM_VBUCKET):
             seqno_map[i] = 0
         while not self.ctl['stop']:
+            if not db:
+                rv, db, db_dir = self.create_db(cbb)
+                if rv != 0:
+                    return self.future_done(future, rv)
+
             batch, future = self.pull_next_batch()
             if not batch:
                 if db:
@@ -622,11 +627,6 @@ class BFDSink(BFD, pump.Sink):
                 cbb += 1
                 cbb_bytes = 0
                 db_dir = None
-
-            if not db:
-                rv, db, db_dir = self.create_db(cbb)
-                if rv != 0:
-                    return self.future_done(future, rv)
 
                 meta_file = os.path.join(db_dir, "meta.json")
                 json_file = open(meta_file, "w")
