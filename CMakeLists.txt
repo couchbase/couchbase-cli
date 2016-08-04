@@ -51,8 +51,8 @@ IF (NOT BUILD_ENTERPRISE)
 ENDIF(NOT BUILD_ENTERPRISE)
 
 INSTALL(FILES
-        buckets.py
         cb_bin_client.py
+	cbmgr.py
         cbsnappy.py
         cluster_manager.py
         couchbaseConstants.py

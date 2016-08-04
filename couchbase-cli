@@ -5,12 +5,13 @@
 couchbase-cli - command-line cluster administration tool
 """
 
+import cbmgr as cbcli
+
 import getopt
 import sys
 import os
 
 import listservers
-import buckets
 import node
 import xdcr
 import info
@@ -20,6 +21,30 @@ from timeout import TimeoutException
 
 CB_USERNAME = 'CB_REST_USERNAME'
 CB_PASSWORD = 'CB_REST_PASSWORD'
+
+class StubCommand():
+    """A temoporary stub class to maintain functionality during command refactoring"""
+
+    def __init__(self):
+        pass
+
+    def runCmd():
+        raise NotImplementedError
+
+    def getCommandSummary(self, cmd):
+        """Return one-line summary info for each supported command"""
+        command_summary = {
+            "bucket-list" : "list all buckets in a cluster",
+            "bucket-create" : "add a new bucket to the cluster",
+            "bucket-edit" : "modify an existing bucket",
+            "bucket-delete" : "delete an existing bucket",
+            "bucket-flush" : "flush all data from disk for a given bucket",
+            "bucket-compact" : "compact database and index data"}
+        if cmd in command_summary:
+            return command_summary[cmd]
+
+        return None
+
 
 def main():
 
@@ -211,12 +236,12 @@ def main():
         'collect-logs-start'  : node.Node,
         'collect-logs-stop'   : node.Node,
         'collect-logs-status' : node.Node,
-        'bucket-list'       : buckets.Buckets,
-        'bucket-create'     : buckets.Buckets,
-        'bucket-edit'       : buckets.Buckets,
-        'bucket-delete'     : buckets.Buckets,
-        'bucket-flush'      : buckets.Buckets,
-        'bucket-compact'    : buckets.Buckets,
+        'bucket-list'       : StubCommand,
+        'bucket-create'     : StubCommand,
+        'bucket-edit'       : StubCommand,
+        'bucket-delete'     : StubCommand,
+        'bucket-flush'      : StubCommand,
+        'bucket-compact'    : StubCommand,
         'setting-cluster'   : node.Node,
         'setting-compaction'    : node.Node,
         'setting-notification'  : node.Node,
@@ -236,6 +261,9 @@ def main():
         usage.short_usage(commands)
 
     cmd = sys.argv[1]
+
+    if cbcli.parse_command():
+        return
 
     if cmd not in commands:
         # cmd not a command, maybe help is needed.

@@ -3,6 +3,7 @@
 import requests
 import csv
 import StringIO
+import time
 
 MAX_LEN_PASSWORD = 24
 
@@ -77,6 +78,13 @@ class ClusterManager(object):
             return None, errors
 
         return result, None
+
+    def is_cluster_initialized(self):
+        data, errors = self.pools()
+        if (errors and len(errors) == 1 and errors[0] == ERR_AUTH) or \
+            (data and data['pools'] and len(data['pools']) > 0):
+            return True, None
+        return False, errors
 
     def get_hostnames_for_service(self, service_name):
         """ Gets all hostnames that run a service
@@ -230,40 +238,153 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def create_bucket(self, bucket, ramQuotaMB, authType, saslPassword,
-                      replicaNumber, proxyPort, bucketType):
+    def create_bucket(self, name, password, bucket_type, memory_quota,
+                      eviction_policy, replicas, replica_indexes,
+                      threads_number, flush_enabled, sync, timeout=60):
         url = self.hostname + '/pools/default/buckets'
 
-        params = dict()
-        if authType == 'none':
-            params = { "name": bucket,
-                       "ramQuotaMB": ramQuotaMB,
-                       "authType": authType,
-                       "replicaNumber": replicaNumber,
-                       "proxyPort": proxyPort,
-                       "bucketType": bucketType }
+        if name is None:
+            return None ["The bucket name is required when creating a bucket"]
+        if password is None:
+            return None ["The bucket password is required when creating a bucket"]
+        if bucket_type is None:
+            return None ["The bucket type is required when creating a bucket"]
+        if memory_quota is None:
+            return None ["The bucket memory quota is required when creating a bucket"]
 
-        elif authType == 'sasl':
-            params = { "name": bucket,
-                       "ramQuotaMB": ramQuotaMB,
-                       "authType": authType,
-                       "replicaNumber": replicaNumber,
-                       "proxyPort": 0,
-                       "bucketType": bucketType }
+        params = { "name": name,
+                   "authType": "sasl",
+                   "bucketType": bucket_type,
+                   "saslPassword": password,
+                   "ramQuotaMB": memory_quota }
+
+        if eviction_policy is not None:
+            params["evictionPolicy"] = eviction_policy
+        if replicas is not None:
+            params["replicaNumber"] = replicas
+        if replica_indexes is not None:
+            params["replicaIndex"] = replica_indexes
+        if threads_number is not None:
+            params["threadsNumber"] = threads_number
+        if flush_enabled is not None:
+            params["flushEnabled"] = flush_enabled
+
+        result, errors = self._post_form_encoded(url, params)
+        if errors:
+            return None, errors
+
+        if sync:
+            all_node_ready = False
+            start = time.time()
+            while (time.time() - start) <= timeout and not all_node_ready:
+                buckets, errors = self.list_buckets()
+                if name not in buckets:
+                    time.sleep(1)
+                    continue
+
+                url = self.hostname + '/pools/default/buckets/' + name
+                content, errors = self._get(url)
+                if errors:
+                    return None, errors
+
+                all_node_ready = True
+                for node in content["nodes"]:
+                    if node["status"] != "healthy":
+                        all_node_ready = False
+                        break
+                if not all_node_ready:
+                    time.sleep(1)
+
+            if not all_node_ready:
+                return None, ["Bucket created, but not ready after %d seconds" % timeout]
+
+        return result, None
+
+
+    def edit_bucket(self, name, password, memory_quota, eviction_policy,
+                    replicas, threads_number, flush_enabled):
+        url = self.hostname + '/pools/default/buckets/' + name
+
+        if name is None:
+            return None ["The bucket name is required when editing a bucket"]
+
+        params = {}
+        if password is not None:
+            params["saslPassword"] = password
+        if memory_quota is not None:
+            params["ramQuotaMB"] = memory_quota
+        if eviction_policy is not None:
+            params["evictionPolicy"] = eviction_policy
+        if replicas is not None:
+            params["replicaNumber"] = replicas
+        if threads_number is not None:
+            params["threadsNumber"] = threads_number
+        if flush_enabled is not None:
+            params["flushEnabled"] = flush_enabled
 
         return self._post_form_encoded(url, params)
 
-    def list_buckets(self):
+    def delete_bucket(self, name):
+        url = self.hostname + '/pools/default/buckets/' + name
+        return self._delete(url)
+
+    def flush_bucket(self, name):
+        if name is None:
+            return None ["The bucket name is required when flushing a bucket"]
+
+        url = self.hostname + '/pools/default/buckets/' + name + '/controller/doFlush'
+        return self._post_form_encoded(url, None)
+
+    def compact_bucket(self, name, view_only, data_only):
+        if data_only and not view_only:
+            url = self.hostname + '/pools/default/buckets/' + name + \
+                '/controller/compactDatabases'
+            return self._post_form_encoded(url, None)
+        elif view_only and not data_only:
+            url = self.hostname + '/pools/default/buckets/' + name + '/ddocs'
+            ddocs, errors = self._get(url)
+            if errors:
+                return None, errors
+
+            for row in ddocs["rows"]:
+                url = self.hostname + row["controllers"]["compact"]
+                _, errors = self._post_form_encoded(url, None)
+                if errors:
+                    return None, errors
+            return None, None
+        elif not data_only and not view_only:
+            url = self.hostname + '/pools/default/buckets/' + name + \
+                '/controller/compactBucket'
+            return self._post_form_encoded(url, None)
+        else:
+            return None, ["Cannot compact data only and view only, pick one or neither"]
+
+    def list_buckets(self, extended=False):
         url = self.hostname + '/pools/default/buckets'
         result, errors = self._get(url)
         if errors:
             return None, errors
+
+        if extended:
+            return result, errors
 
         names = list()
         for bucket in result:
             names.append(bucket["name"])
 
         return names, None
+
+    def get_bucket(self, name):
+        url = self.hostname + '/pools/default/buckets'
+        result, errors = self._get(url)
+        if errors:
+            return None, errors
+
+        for bucket in result:
+            if bucket["name"] == name:
+                return bucket, None
+
+        return None, ["Bucket not found"]
 
     def set_index_settings(self, storageMode):
         """ Sets global index settings"""
