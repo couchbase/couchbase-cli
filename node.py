@@ -14,7 +14,6 @@ import json
 
 from usage import command_error
 from restclient import *
-from listservers import *
 from _csv import reader
 
 try:
@@ -1109,12 +1108,12 @@ class Node:
     def getNodeOtps(self, to_eject=[], to_failover=[], to_readd=[]):
         """ Convert known nodes into otp node id's.
             """
-        listservers = ListServers()
-        known_nodes_list = listservers.getNodes(
-                                listservers.getData(self.server,
-                                                    self.port,
-                                                    self.user,
-                                                    self.password))
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
+                                            self.password, self.ssl)
+        result, errors = cm.pools('default')
+        _exitIfErrors(errors)
+
+        known_nodes_list = result["nodes"]
         known_otps = []
         eject_otps = []
         failover_otps = []

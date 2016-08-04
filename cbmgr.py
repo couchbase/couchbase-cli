@@ -35,6 +35,8 @@ def parse_command():
         "bucket-edit": BucketEdit,
         "bucket-flush": BucketFlush,
         "bucket-list": BucketList,
+        "host-list": HostList,
+        "server-list": ServerList,
     }
 
     if sys.argv[1] not in subcommands:
@@ -437,3 +439,40 @@ class BucketList(Command):
                 print ' numReplicas: %s' % bucket['replicaNumber']
                 print ' ramQuota: %s' % bucket['quota']['ram']
                 print ' ramUsed: %s' % bucket['basicStats']['memUsed']
+
+
+class HostList(Command):
+    """The host list subcommand"""
+
+    def __init__(self):
+        super(HostList, self).__init__()
+        self.parser.set_usage("couchbase-cli host-list [options]")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        result, errors = rest.pools('default')
+        _exitIfErrors(errors)
+
+        for node in result['nodes']:
+            print node['hostname']
+
+
+class ServerList(Command):
+    """The server list subcommand"""
+
+    def __init__(self):
+        super(ServerList, self).__init__()
+        self.parser.set_usage("couchbase-cli server-list [options]")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        result, errors = rest.pools('default')
+        _exitIfErrors(errors)
+
+        for node in result['nodes']:
+            if node.get('otpNode') is None:
+                raise Exception("could not access node")
+
+            print node['otpNode'], node['hostname'], node['status'], node['clusterMembership']

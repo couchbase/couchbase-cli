@@ -52,12 +52,11 @@ ENDIF(NOT BUILD_ENTERPRISE)
 
 INSTALL(FILES
         cb_bin_client.py
-	cbmgr.py
+        cbmgr.py
         cbsnappy.py
         cluster_manager.py
         couchbaseConstants.py
         info.py
-        listservers.py
         node.py
         pump.py
         pump_bfd.py

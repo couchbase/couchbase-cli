@@ -11,7 +11,6 @@ import getopt
 import sys
 import os
 
-import listservers
 import node
 import xdcr
 import info
@@ -39,7 +38,9 @@ class StubCommand():
             "bucket-edit" : "modify an existing bucket",
             "bucket-delete" : "delete an existing bucket",
             "bucket-flush" : "flush all data from disk for a given bucket",
-            "bucket-compact" : "compact database and index data"}
+            "bucket-compact" : "compact database and index data",
+            "host-list" : "list all hosts in a cluster",
+            "server-list" : "list all servers in a cluster"}
         if cmd in command_summary:
             return command_summary[cmd]
 
@@ -215,8 +216,8 @@ def main():
                        " please see -h for more help.") % _args
         usage.command_error(err_message)
     commands = {
-        'host-list'         : listservers.ListServers,
-        'server-list'       : listservers.ListServers,
+        'host-list'         : StubCommand,
+        'server-list'       : StubCommand,
         'server-info'       : info.Info,
         'server-eshell'     : info.Info,
         'server-add'        : node.Node,

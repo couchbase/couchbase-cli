@@ -10,7 +10,6 @@ import urllib
 
 from usage import command_error
 import restclient
-import listservers
 import util_cli as util
 import node
 
