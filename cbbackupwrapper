@@ -325,13 +325,6 @@ if __name__ == '__main__':
             if item not in vbucketList:
                 vbucketList.append(item)
 
-    # Handle the case when path has spaces
-    # i.e. /Applications/Couchbase Server.app/Contents/...
-    if os.name == 'nt':
-        path = re.sub(r' ', '^ ', path)
-    else:
-        path = re.sub(r' ', '\ ', path)
-
     # If a bucket was specfified then set-up the string to pass to cbbackup.
     specific_bucket = ''
     if len(bucketList) == 1:
