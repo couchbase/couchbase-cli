@@ -37,7 +37,6 @@ rest_cmds = {
     'node-init'         :'/nodes/self/controller/settings',
     'setting-cluster'   :'/pools/default',
     'setting-compaction'    :'/controller/setAutoCompaction',
-    'setting-notification'  :'/settings/stats',
     'setting-autofailover'  :'/settings/autoFailover',
     'setting-alert'         :'/settings/alerts',
     'setting-audit'         :'/settings/audit',
@@ -83,7 +82,6 @@ methods = {
     'node-init'         :'POST',
     'setting-cluster'   :'POST',
     'setting-compaction'    :'POST',
-    'setting-notification'  :'POST',
     'setting-autofailover'  :'POST',
     'setting-alert'         :'POST',
     'setting-audit'         :'POST',
@@ -133,7 +131,6 @@ class Node:
         self.index_path = None
         self.hostname = None
         self.enable_auto_failover = None
-        self.enable_notification = None
         self.autofailover_timeout = None
         self.enable_email_alert = None
 
@@ -283,9 +280,6 @@ class Node:
 
         elif cmd == 'setting-compaction':
             self.compaction()
-
-        elif cmd == 'setting-notification':
-            self.notification()
 
         elif cmd == 'setting-alert':
             self.alert()
@@ -575,28 +569,6 @@ class Node:
             _exitIfErrors(errors)
 
         print "SUCCESS: Cluster settings modified"
-
-    def notification(self):
-        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
-                                            self.password, self.ssl)
-
-        enabled = None
-        if self.enable_notification is None:
-            _exitIfErrors(["--enable-notifications is required"])
-        elif self.enable_notification == "1":
-            enabled = True
-        elif self.enable_notification == "0":
-            enabled = False
-        else:
-            _exitIfErrors(["--enable-notifications accepts 1 or 0"])
-
-        _, errors = cm.enable_notifications(enabled)
-        _exitIfErrors(errors)
-
-        if enabled:
-            print "SUCCESS: Notifications enabled"
-        else:
-            print "SUCCESS: Notifications disabled"
 
     def alert(self):
         rest = util.restclient_factory(self.server,
@@ -902,8 +874,6 @@ class Node:
                 self.cluster_name = a
             elif o == '--enable-auto-failover':
                 self.enable_auto_failover = bool_to_str(a)
-            elif o == '--enable-notification':
-                self.enable_notification = str(a)
             elif o == '--auto-failover-timeout':
                 self.autofailover_timeout = a
             elif o == '--compaction-db-percentage':
@@ -1733,7 +1703,6 @@ class Node:
             "recovery" :"recover one or more servers",
             "setting-cluster" : "set cluster settings",
             "setting-compaction" : "set auto compaction settings",
-            "setting-notification" : "set notification settings",
             "setting-alert" : "set email alert settings",
             "setting-autofailover" : "set auto failover settings",
             "collect-logs-start" : "start a cluster-wide log collection",
@@ -1859,8 +1828,6 @@ class Node:
                     ("--cluster-ramsize=[RAMSIZEMB]", "per node data service ram quota in MB"),
                     ("--cluster-index-ramsize=[RAMSIZEMB]","per node index service ram quota in MB"),
                     ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB")]
-        elif cmd == "setting-notification":
-            return [("--enable-notification=[0|1]", "allow notification")]
         elif cmd == "setting-autofailover":
             return [("--enable-auto-failover=[0|1]", "allow auto failover"),
                     ("--auto-failover-timeout=TIMEOUT (>=30)",

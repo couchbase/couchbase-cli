@@ -40,7 +40,8 @@ class StubCommand():
             "bucket-flush" : "flush all data from disk for a given bucket",
             "bucket-compact" : "compact database and index data",
             "host-list" : "list all hosts in a cluster",
-            "server-list" : "list all servers in a cluster"}
+            "server-list" : "list all servers in a cluster",
+            "setting-notification" : "set notification settings"}
         if cmd in command_summary:
             return command_summary[cmd]
 
@@ -245,7 +246,7 @@ def main():
         'bucket-compact'    : StubCommand,
         'setting-cluster'   : node.Node,
         'setting-compaction'    : node.Node,
-        'setting-notification'  : node.Node,
+        'setting-notification'  : StubCommand,
         'setting-autofailover'  : node.Node,
         'setting-alert'         : node.Node,
         'setting-audit'         : node.Node,

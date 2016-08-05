@@ -37,6 +37,7 @@ def parse_command():
         "bucket-list": BucketList,
         "host-list": HostList,
         "server-list": ServerList,
+        "setting-notification": SettingNotification,
     }
 
     if sys.argv[1] not in subcommands:
@@ -476,3 +477,28 @@ class ServerList(Command):
                 raise Exception("could not access node")
 
             print node['otpNode'], node['hostname'], node['status'], node['clusterMembership']
+
+
+class SettingNotification(Command):
+    """The settings notification subcommand"""
+
+    def __init__(self):
+        super(SettingNotification, self).__init__()
+        self.parser.set_usage("couchbase-cli setting-notification [options]")
+        self.add_required("--enable-notifications", dest="enabled",
+                          choices=["0", "1"], help="Enables/disable notifications")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+
+        enabled = None
+        if opts.enabled == "1":
+            enabled = True
+        elif opts.enabled == "0":
+            enabled = False
+
+        _, errors = rest.enable_notifications(enabled)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Notification settings updated"
