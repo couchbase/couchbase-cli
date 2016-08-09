@@ -388,6 +388,20 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
+    def set_autofailover_settings(self, enabled, timeout):
+        url = self.hostname + '/settings/autoFailover'
+
+        if timeout and timeout < 30:
+            return None, ["Timeout value must be at least 30 seconds"]
+
+        params = dict()
+        if enabled:
+            params["enabled"] = enabled
+        if timeout:
+            params["timeout"] = timeout
+
+        return self._post_form_encoded(url, params)
+
     def set_index_settings(self, storageMode, maxRollbackPoints, stableSnapInterval,
                            memSnapInterval, threads, logLevel):
         """ Sets global index settings"""

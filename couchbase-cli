@@ -41,6 +41,7 @@ class StubCommand():
             "bucket-compact" : "compact database and index data",
             "host-list" : "list all hosts in a cluster",
             "server-list" : "list all servers in a cluster",
+            "setting-autofailover": "set auto failover settings",
             "setting-index" : "set index settings",
             "setting-notification" : "set notification settings"}
         if cmd in command_summary:
@@ -248,7 +249,7 @@ def main():
         'setting-cluster'   : node.Node,
         'setting-compaction'    : node.Node,
         'setting-notification'  : StubCommand,
-        'setting-autofailover'  : node.Node,
+        'setting-autofailover'  : StubCommand,
         'setting-alert'         : node.Node,
         'setting-audit'         : node.Node,
         'setting-ldap'          : node.Node,

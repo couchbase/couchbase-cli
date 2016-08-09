@@ -4,7 +4,7 @@ import sys
 
 from optparse import HelpFormatter, OptionContainer, OptionGroup, OptionParser
 from cluster_manager import ClusterManager
-from node import _exitIfErrors
+from node import _exitIfErrors, _warning
 
 try:
     from gettext import gettext
@@ -37,6 +37,7 @@ def parse_command():
         "bucket-list": BucketList,
         "host-list": HostList,
         "server-list": ServerList,
+        "setting-autofailover": SettingAutoFailover,
         "setting-index": SettingIndex,
         "setting-notification": SettingNotification,
     }
@@ -487,6 +488,39 @@ class ServerList(Command):
                 raise Exception("could not access node")
 
             print node['otpNode'], node['hostname'], node['status'], node['clusterMembership']
+
+
+class SettingAutoFailover(Command):
+    """The settings auto-failover subcommand"""
+
+    def __init__(self):
+        super(SettingAutoFailover, self).__init__()
+        self.parser.set_usage("couchbase-cli setting-autofailover [options]")
+        self.add_optional("--enable-auto-failover", dest="enabled",
+                          choices=["0", "1"], help="Enable/disable auto-failover")
+        self.add_optional("--auto-failover-timeout", dest="timeout",
+                          type=(int), help="The auto-failover timeout")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        if opts.enabled == "1":
+            opts.enabled = "true"
+        elif opts.enabled == "0":
+            opts.enabled = "false"
+
+        if not (opts.enabled or opts.timeout):
+            _exitIfErrors(["No settings specified to be changed"])
+
+        if (opts.enabled is None or opts.enabled == "false") and opts.timeout:
+            _warning("Timeout specified will not take affect because auto-failover is being disabled")
+
+        _, errors = rest.set_autofailover_settings(opts.enabled, opts.timeout)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Auto-failover settings modified"
 
 
 class SettingIndex(Command):

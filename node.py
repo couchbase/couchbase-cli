@@ -37,7 +37,6 @@ rest_cmds = {
     'node-init'         :'/nodes/self/controller/settings',
     'setting-cluster'   :'/pools/default',
     'setting-compaction'    :'/controller/setAutoCompaction',
-    'setting-autofailover'  :'/settings/autoFailover',
     'setting-alert'         :'/settings/alerts',
     'setting-audit'         :'/settings/audit',
     'setting-ldap'          :'/settings/saslauthdAuth',
@@ -81,7 +80,6 @@ methods = {
     'node-init'         :'POST',
     'setting-cluster'   :'POST',
     'setting-compaction'    :'POST',
-    'setting-autofailover'  :'POST',
     'setting-alert'         :'POST',
     'setting-audit'         :'POST',
     'setting-ldap'          :'POST',
@@ -128,8 +126,6 @@ class Node:
         self.data_path = None
         self.index_path = None
         self.hostname = None
-        self.enable_auto_failover = None
-        self.autofailover_timeout = None
         self.enable_email_alert = None
 
         #compaction related settings
@@ -276,9 +272,6 @@ class Node:
 
         elif cmd == 'setting-alert':
             self.alert()
-
-        elif cmd == 'setting-autofailover':
-            self.autofailover()
 
         elif cmd == 'setting-audit':
             self.audit()
@@ -621,32 +614,6 @@ class Node:
                                      opts)
         print output_result
 
-    def autofailover(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.autofailover_timeout:
-            if int(self.autofailover_timeout) < 30:
-                print "ERROR: Timeout value must be larger than 30 second."
-                return
-            else:
-                rest.setParam('timeout', self.autofailover_timeout)
-
-        if self.enable_auto_failover:
-            rest.setParam('enabled', self.enable_auto_failover)
-
-        opts = {
-            "error_msg": "unable to set auto failover settings",
-            "success_msg": "set auto failover settings"
-        }
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
     def audit(self):
         rest = util.restclient_factory(self.server,
                                      self.port,
@@ -835,10 +802,6 @@ class Node:
                 self.index_storage_setting = a
             elif o == '--cluster-name':
                 self.cluster_name = a
-            elif o == '--enable-auto-failover':
-                self.enable_auto_failover = bool_to_str(a)
-            elif o == '--auto-failover-timeout':
-                self.autofailover_timeout = a
             elif o == '--compaction-db-percentage':
                 self.compaction_db_percentage = a
             elif o == '--compaction-db-size':
@@ -1657,7 +1620,6 @@ class Node:
             "setting-cluster" : "set cluster settings",
             "setting-compaction" : "set auto compaction settings",
             "setting-alert" : "set email alert settings",
-            "setting-autofailover" : "set auto failover settings",
             "collect-logs-start" : "start a cluster-wide log collection",
             "collect-logs-stop" : "stop a cluster-wide log collection",
             "collect-logs-status" : "show the status of cluster-wide log collection",
@@ -1780,10 +1742,6 @@ class Node:
                     ("--cluster-ramsize=[RAMSIZEMB]", "per node data service ram quota in MB"),
                     ("--cluster-index-ramsize=[RAMSIZEMB]","per node index service ram quota in MB"),
                     ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB")]
-        elif cmd == "setting-autofailover":
-            return [("--enable-auto-failover=[0|1]", "allow auto failover"),
-                    ("--auto-failover-timeout=TIMEOUT (>=30)",
-                     "specify timeout that expires to trigger auto failover")]
         elif cmd == "ssl-manage":
             return [("--cluster-cert-info", "prints cluster certificate info"),
                     ("--node-cert-info", "prints node certificate info"),
