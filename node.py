@@ -42,7 +42,6 @@ rest_cmds = {
     'setting-audit'         :'/settings/audit',
     'setting-ldap'          :'/settings/saslauthdAuth',
     'user-manage'           :'/settings/readOnlyUser',
-    'setting-index'         :'/settings/indexes',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
     'collect-logs-start'  : '/controller/startLogsCollection',
@@ -86,7 +85,6 @@ methods = {
     'setting-alert'         :'POST',
     'setting-audit'         :'POST',
     'setting-ldap'          :'POST',
-    'setting-index'         :'POST',
     'user-manage'           :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
@@ -201,12 +199,7 @@ class Node:
         self.ldap_default = "none"
 
         #index
-        self.max_rollback_points = None
-        self.stable_snapshot_interval = None
-        self.memory_snapshot_interval = None
-        self.index_threads = None
         self.services = None
-        self.log_level = None
 
         #set-roles / delete-roles
         self.roles = None
@@ -293,9 +286,6 @@ class Node:
         elif cmd == 'setting-ldap':
             self.ldap()
 
-        elif cmd == 'setting-index':
-            self.index()
-
         elif cmd == 'user-manage':
             self.userManage()
 
@@ -362,7 +352,7 @@ class Node:
                     % self.index_storage_setting])
                 return
 
-            _, errors = cm.set_index_settings(param)
+            _, errors = cm.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
         #setup services
@@ -764,33 +754,6 @@ class Node:
         _exitIfErrors(errors)
         print json.dumps(data,indent=2)
 
-    def index(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.max_rollback_points:
-            rest.setParam("maxRollbackPoints", self.max_rollback_points)
-        if self.stable_snapshot_interval:
-            rest.setParam("stableSnapshotInterval", self.stable_snapshot_interval)
-        if self.memory_snapshot_interval:
-            rest.setParam("memorySnapshotInterval", self.memory_snapshot_interval)
-        if self.index_threads:
-            rest.setParam("indexerThreads", self.index_threads)
-        if self.log_level:
-            rest.setParam("logLevel", self.log_level)
-
-        opts = {
-            "error_msg": "unable to set index settings",
-            "success_msg": "set index settings"
-        }
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
     def processOpts(self, cmd, opts):
         """ Set standard opts.
             note: use of a server key keeps optional
@@ -1016,17 +979,6 @@ class Node:
                 self.ldap_roadmins = a
             elif o == '--ldap-default':
                 self.ldap_default = a
-            elif o == '--index-max-rollback-points':
-                self.max_rollback_points = a
-            elif o == '--index-stable-snapshot-interval':
-                self.stable_snapshot_interval = a
-            elif o == '--index-memory-snapshot-interval':
-                self.memory_snapshot_interval = a
-            elif o == '--index-threads':
-                self.index_threads = a
-            elif o == '--index-log-level':
-                self.log_level = a
-
             elif o == '--roles':
                 self.roles = a
             elif o == '--my-roles':
@@ -1503,7 +1455,8 @@ class Node:
             return
 
         if settings['storageMode'] == "":
-            _, errors = cm.set_index_settings(indexStorageParam)
+            _, errors = cm.set_index_settings(indexStorageParam, None, None, None,
+                                              None, None)
             if errors:
                 _exitIfErrors(errors)
         elif settings['storageMode'] != self.index_storage_setting and \
@@ -1713,7 +1666,6 @@ class Node:
             "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
             "user-manage" : "manage read only user",
-            "setting-index" : "set index settings",
             "setting-ldap" : "set ldap settings",
             "setting-audit" : "set audit settings",
             "admin-role-manage" : "set access-control roles for users"
@@ -1850,13 +1802,6 @@ class Node:
             ("--ldap-roadmins=", "read only admins, separated by comma"),
             ("--ldap-enabled=[0|1]", "using LDAP protocol for authentication"),
             ("--ldap-default=[admins|roadmins|none]", "set default ldap accounts")]
-        elif cmd == "setting-index":
-            return [
-            ("--index-max-rollback-points=[5]", "max rollback points"),
-            ("--index-stable-snapshot-interval=SECONDS", "stable snapshot interval"),
-            ("--index-memory-snapshot-interval=SECONDS", "in memory snapshot interval"),
-            ("--index-threads=[4]", "indexer threads"),
-            ("--index-log-level=[debug|silent|fatal|error|warn|info|verbose|timing|trace]", "indexer log level")]
         elif cmd == "collect-logs-start":
             return [
             ("--all-nodes", "Collect logs from all accessible cluster nodes"),
@@ -2136,17 +2081,6 @@ class Node:
 """
     couchbase-cli setting-audit -c 192.168.0.1:8091 \\
         --audit-enabled=0 -u Administrator -p password""")]
-        elif cmd == "setting-index":
-            return [("Indexer setting",
-"""
-    couchbase-cli setting-index  -c 192.168.0.1:8091 \\
-        --index-max-rollback-points=5 \\
-        --index-stable-snapshot-interval=5000 \\
-        --index-memory-snapshot-interval=200 \\
-        --index-threads=5 \\
-        --index-log-level=debug \\
-        -u Administrator -p password""")]
-
         elif cmd == "admin-role-manage":
             return [("Show the current users roles.",
 """

@@ -388,10 +388,22 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
-    def set_index_settings(self, storageMode):
+    def set_index_settings(self, storageMode, maxRollbackPoints, stableSnapInterval,
+                           memSnapInterval, threads, logLevel):
         """ Sets global index settings"""
         params = dict()
-        params["storageMode"] = storageMode
+        if storageMode:
+            params["storageMode"] = storageMode
+        if maxRollbackPoints:
+            params["maxRollbackPoints"] = maxRollbackPoints
+        if stableSnapInterval:
+            params["stableSnapshotInterval"] = stableSnapInterval
+        if memSnapInterval:
+            params["memorySnapshotInterval"] = memSnapInterval
+        if threads:
+            params["indexerThreads"] = threads
+        if logLevel:
+            params["logLevel"] = logLevel
 
         url = self.hostname + '/settings/indexes'
         return self._post_form_encoded(url, params)

@@ -41,6 +41,7 @@ class StubCommand():
             "bucket-compact" : "compact database and index data",
             "host-list" : "list all hosts in a cluster",
             "server-list" : "list all servers in a cluster",
+            "setting-index" : "set index settings",
             "setting-notification" : "set notification settings"}
         if cmd in command_summary:
             return command_summary[cmd]
@@ -253,7 +254,7 @@ def main():
         'setting-ldap'          : node.Node,
         'admin-role-manage'     : node.Node,
         'setting-xdcr'          : xdcr.XDCR,
-        'setting-index'         : node.Node,
+        'setting-index'         : StubCommand,
         'xdcr-setup'            : xdcr.XDCR,
         'xdcr-replicate'        : xdcr.XDCR,
         'help'                  : usage.Usage

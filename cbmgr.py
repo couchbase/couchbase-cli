@@ -37,6 +37,7 @@ def parse_command():
         "bucket-list": BucketList,
         "host-list": HostList,
         "server-list": ServerList,
+        "setting-index": SettingIndex,
         "setting-notification": SettingNotification,
     }
 
@@ -72,6 +73,15 @@ def host_port(url):
     "Splits a url into it's host and port"
 
     return url.split(":")[0], url.split(":")[1]
+
+def index_storage_mode_to_param(value):
+    """Converts the index storage mode to what Couchbase understands"""
+    if value == "default":
+        return "forestdb"
+    elif value == "memopt":
+        return "memory_optimized"
+    else:
+        return value
 
 class CLIOptionParser(OptionParser):
     """A custom parser for subcommands"""
@@ -477,6 +487,45 @@ class ServerList(Command):
                 raise Exception("could not access node")
 
             print node['otpNode'], node['hostname'], node['status'], node['clusterMembership']
+
+
+class SettingIndex(Command):
+    """The setting index subcommand"""
+
+    def __init__(self):
+        super(SettingIndex, self).__init__()
+        self.parser.set_usage("couchbase-cli setting-index [options]")
+        self.add_optional("--index-max-rollback-points", dest="max_rollback",
+                          type=(int), help="Max rollback points")
+        self.add_optional("--index-stable-snapshot-interval", dest="stable_snap",
+                          type=(int), help="Stable snapshot interval in seconds")
+        self.add_optional("--index-memory-snapshot-interval", dest="mem_snap",
+                          type=(int), help="Stable snapshot interval in seconds")
+        self.add_optional("--index-storage-setting", dest="storage_mode",
+                          choices=["default", "memopt"], help="The index storage backend")
+        self.add_optional("--index-threads", dest="threads",
+                          type=(int), help="The number of indexer threads")
+        self.add_optional("--index-log-level", dest="log_level",
+                          choices=["debug", "silent", "fatal", "error", "warn",
+                                   "info", "verbose", "timing", "trace"],
+                          help="The indexer log level")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        if not (opts.max_rollback or opts.stable_snap or opts.mem_snap or \
+            opts.storage_mode or opts.threads or opts.log_level):
+            _exitIfErrors(["No settings specified to be changed"])
+
+        opts.storage_mode = index_storage_mode_to_param(opts.storage_mode)
+        _, errors = rest.set_index_settings(opts.storage_mode, opts.max_rollback,
+                                            opts.stable_snap, opts.mem_snap,
+                                            opts.threads, opts.log_level)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Indexer settings modified"
 
 
 class SettingNotification(Command):
