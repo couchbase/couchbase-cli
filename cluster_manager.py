@@ -388,6 +388,10 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
+    def stop_rebalance(self):
+        url = self.hostname + '/controller/stopRebalance'
+        return self._post_form_encoded(url, dict())
+
     def set_audit_settings(self, enabled, log_path, rotate_interval):
         url = self.hostname + '/settings/audit'
 

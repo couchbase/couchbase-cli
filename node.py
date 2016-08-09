@@ -26,7 +26,6 @@ except ImportError:
 
 rest_cmds = {
     'rebalance'         :'/controller/rebalance',
-    'rebalance-stop'    :'/controller/stopRebalance',
     'rebalance-status'  :'/pools/default/rebalanceProgress',
     'server-add'        :'/controller/addNode',
     'server-readd'      :'/controller/reAddNode',
@@ -49,7 +48,6 @@ rest_cmds = {
 }
 
 server_no_remove = [
-    'rebalance-stop',
     'rebalance-status',
     'server-add',
     'server-readd',
@@ -57,7 +55,6 @@ server_no_remove = [
     'recovery',
 ]
 server_no_add = [
-    'rebalance-stop',
     'rebalance-status',
     'failover',
     'recovery',
@@ -67,7 +64,6 @@ server_no_add = [
 
 methods = {
     'rebalance'         :'POST',
-    'rebalance-stop'    :'POST',
     'rebalance-status'  :'GET',
     'eject-server'      :'POST',
     'server-add'        :'POST',
@@ -232,10 +228,6 @@ class Node:
 
         elif cmd == 'rebalance-status':
             output_result = self.rebalanceStatus()
-            print output_result
-
-        elif cmd == 'rebalance-stop':
-            output_result = self.rebalanceStop()
             print output_result
 
         elif cmd == 'failover':
@@ -1080,24 +1072,6 @@ class Node:
 
         return "unknown", error_message
 
-    def rebalanceStop(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-
-        opts = {
-            'success_msg': 'rebalance cluster stopped',
-            'error_msg': 'unable to stop rebalance'
-        }
-        output_result = rest.restCmd('POST',
-                                     rest_cmds['rebalance-stop'],
-                                     self.user,
-                                     self.password,
-                                     opts)
-        return output_result
-
-
     def failover(self, servers):
         known_otps, eject_otps, failover_otps, readd_otps, _ = \
             self.getNodeOtps(to_failover=servers['failover'])
@@ -1569,7 +1543,6 @@ class Node:
             "server-readd" :"readd a server that was failed over",
             "group-manage" :"manage server groups",
             "rebalance" :"start a cluster rebalancing",
-            "rebalance-stop" :"stop current cluster rebalancing",
             "rebalance-status" :"show status of current cluster rebalancing",
             "failover" :"failover one or more servers",
             "recovery" :"recover one or more servers",
@@ -1825,11 +1798,6 @@ class Node:
       --group-name=group1 \\
       -u Administrator -p password""")
        ]
-        elif cmd == "rebalance-stop":
-            return [("Stop the current rebalancing",
-"""
-    couchbase-cli rebalance-stop -c 192.168.0.1:8091 \\
-       -u Administrator -p password""")]
         elif cmd == "recovery":
             return [("Set recovery type to a server",
 """

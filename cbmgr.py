@@ -36,6 +36,7 @@ def parse_command():
         "bucket-flush": BucketFlush,
         "bucket-list": BucketList,
         "host-list": HostList,
+        "rebalance-stop": RebalanceStop,
         "server-list": ServerList,
         "setting-audit": SettingAudit,
         "setting-autofailover": SettingAutoFailover,
@@ -469,6 +470,23 @@ class HostList(Command):
 
         for node in result['nodes']:
             print node['hostname']
+
+
+class RebalanceStop(Command):
+    """The rebalance stop subcommand"""
+
+    def __init__(self):
+        super(RebalanceStop, self).__init__()
+        self.parser.set_usage("couchbase-cli rebalance-stop [options]")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+        _, errors = rest.stop_rebalance()
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Rebalance stopped"
 
 
 class ServerList(Command):
