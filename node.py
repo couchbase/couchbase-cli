@@ -38,7 +38,6 @@ rest_cmds = {
     'setting-cluster'   :'/pools/default',
     'setting-compaction'    :'/controller/setAutoCompaction',
     'setting-alert'         :'/settings/alerts',
-    'setting-audit'         :'/settings/audit',
     'setting-ldap'          :'/settings/saslauthdAuth',
     'user-manage'           :'/settings/readOnlyUser',
     'group-manage'          :'/pools/default/serverGroups',
@@ -81,7 +80,6 @@ methods = {
     'setting-cluster'   :'POST',
     'setting-compaction'    :'POST',
     'setting-alert'         :'POST',
-    'setting-audit'         :'POST',
     'setting-ldap'          :'POST',
     'user-manage'           :'POST',
     'group-manage'          :'POST',
@@ -183,11 +181,6 @@ class Node:
         self.customer = None
         self.ticket = ""
 
-        #auditing
-        self.audit_enabled = None
-        self.audit_log_path = None
-        self.audit_log_rotate_interval = None
-
         #ldap
         self.ldap_enabled = None
         self.ldap_admins = ''
@@ -272,9 +265,6 @@ class Node:
 
         elif cmd == 'setting-alert':
             self.alert()
-
-        elif cmd == 'setting-audit':
-            self.audit()
 
         elif cmd == 'setting-ldap':
             self.ldap()
@@ -614,34 +604,6 @@ class Node:
                                      opts)
         print output_result
 
-    def audit(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.audit_enabled:
-            rest.setParam('auditdEnabled', self.audit_enabled)
-
-        if self.audit_log_path:
-            rest.setParam('logPath', self.audit_log_path)
-        elif self.audit_enabled == "true":
-             rest.setParam('logPath', "/opt/couchbase/var/lib/couchbase/logs")
-        if self.audit_log_rotate_interval:
-            rest.setParam('rotateInterval', int(self.audit_log_rotate_interval)*60)
-        elif self.audit_enabled == "true":
-            rest.setParam('rotateInterval', 86400)
-
-        opts = {
-            "error_msg": "unable to set audit settings",
-            "success_msg": "set audit settings"
-        }
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
     def ldap(self):
         rest = util.restclient_factory(self.server,
                                      self.port,
@@ -928,12 +890,6 @@ class Node:
                 self.ticket = a
             elif o == '--services':
                 self.services = a
-            elif o == '--audit-log-rotate-interval':
-                self.audit_log_rotate_interval = a
-            elif o == '--audit-log-path':
-                self.audit_log_path = a
-            elif o == '--audit-enabled':
-                self.audit_enabled = bool_to_str(a)
             elif o == '--ldap-enabled':
                 self.ldap_enabled = bool_to_str(a)
             elif o == '--ldap-admins':
@@ -1629,7 +1585,6 @@ class Node:
             "ssl-manage" : "manage cluster certificate",
             "user-manage" : "manage read only user",
             "setting-ldap" : "set ldap settings",
-            "setting-audit" : "set audit settings",
             "admin-role-manage" : "set access-control roles for users"
         }
         if cmd in command_summary:
@@ -1749,11 +1704,6 @@ class Node:
                      "regenerate cluster certificate AND save to a pem file"),
                     ("--set-node-certificate", "sets the node certificate"),
                     ("--upload-cluster-ca", "uploads a new cluster certificate")]
-        elif cmd == "setting-audit":
-            return [
-            ("--audit-log-rotate-interval=[MINUTES]", "log rotation interval"),
-            ("--audit-log-path=[PATH]", "target log directory"),
-            ("--audit-enabled=[0|1]", "enable auditing or not")]
         elif cmd == "setting-ldap":
             return [
             ("--ldap-admins=", "full admins, separated by comma"),
@@ -2028,17 +1978,6 @@ class Node:
 """
     couchbase-cli setting-ldap -c 192.168.0.1:8091 \\
         --ldap-enabled=0  -u Administrator -p password""")]
-        elif cmd == "setting-audit":
-            return [("Enable audit",
-"""
-    couchbase-cli setting-audit -c 192.168.0.1:8091 \\
-        --audit-enabled=1 --audit-log-rotate-interval=900 \\
-        --audit-log-path="/opt/couchbase/var/lib/couchbase/logs"
-        -u Administrator -p password"""),
-                ("Disable audit",
-"""
-    couchbase-cli setting-audit -c 192.168.0.1:8091 \\
-        --audit-enabled=0 -u Administrator -p password""")]
         elif cmd == "admin-role-manage":
             return [("Show the current users roles.",
 """

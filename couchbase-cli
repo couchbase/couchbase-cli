@@ -41,6 +41,7 @@ class StubCommand():
             "bucket-compact" : "compact database and index data",
             "host-list" : "list all hosts in a cluster",
             "server-list" : "list all servers in a cluster",
+            "setting-audit": "set audit settings",
             "setting-autofailover": "set auto failover settings",
             "setting-index" : "set index settings",
             "setting-notification" : "set notification settings"}
@@ -251,7 +252,7 @@ def main():
         'setting-notification'  : StubCommand,
         'setting-autofailover'  : StubCommand,
         'setting-alert'         : node.Node,
-        'setting-audit'         : node.Node,
+        'setting-audit'         : StubCommand,
         'setting-ldap'          : node.Node,
         'admin-role-manage'     : node.Node,
         'setting-xdcr'          : xdcr.XDCR,

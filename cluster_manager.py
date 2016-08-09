@@ -388,6 +388,25 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
+    def set_audit_settings(self, enabled, log_path, rotate_interval):
+        url = self.hostname + '/settings/audit'
+
+        params, errors = self._get(url)
+        if errors:
+            return None, errors
+
+        if enabled:
+            params["auditdEnabled"] = enabled
+        if log_path:
+            params["logPath"] = log_path
+        if rotate_interval:
+            params["rotateInterval"] = rotate_interval
+
+        if "logPath" not in params and params["auditdEnabled"] == "true":
+            return None, ["The audit log path must be specified when auditing is first set up"]
+
+        return self._post_form_encoded(url, params)
+
     def set_autofailover_settings(self, enabled, timeout):
         url = self.hostname + '/settings/autoFailover'
 

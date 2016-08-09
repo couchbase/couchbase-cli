@@ -37,6 +37,7 @@ def parse_command():
         "bucket-list": BucketList,
         "host-list": HostList,
         "server-list": ServerList,
+        "setting-audit": SettingAudit,
         "setting-autofailover": SettingAutoFailover,
         "setting-index": SettingIndex,
         "setting-notification": SettingNotification,
@@ -488,6 +489,39 @@ class ServerList(Command):
                 raise Exception("could not access node")
 
             print node['otpNode'], node['hostname'], node['status'], node['clusterMembership']
+
+
+class SettingAudit(Command):
+    """The settings audit subcommand"""
+
+    def __init__(self):
+        super(SettingAudit, self).__init__()
+        self.parser.set_usage("couchbase-cli setting-audit [options]")
+        self.add_optional("--audit-enabled", dest="enabled",
+                          choices=["0", "1"], help="Enable/disable auditing")
+        self.add_optional("--audit-log-path", dest="log_path",
+                          help="The audit log path")
+        self.add_optional("--audit-log-rotate-interval", dest="rotate_interval",
+                          type=(int), help="The audit log rotate interval")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        if not (opts.enabled or opts.log_path or opts.rotate_interval):
+            _exitIfErrors(["No settings specified to be changed"])
+
+        if opts.enabled == "1":
+            opts.enabled = "true"
+        elif opts.enabled == "0":
+            opts.enabled = "false"
+
+        _, errors = rest.set_audit_settings(opts.enabled, opts.log_path,
+                                            opts.rotate_interval)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Audit settings modified"
 
 
 class SettingAutoFailover(Command):
