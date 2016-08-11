@@ -33,6 +33,7 @@ class StubCommand():
     def getCommandSummary(self, cmd):
         """Return one-line summary info for each supported command"""
         command_summary = {
+            "cluster-init" : "set the username,password and port of the cluster",
             "bucket-list" : "list all buckets in a cluster",
             "bucket-create" : "add a new bucket to the cluster",
             "bucket-edit" : "modify an existing bucket",
@@ -234,7 +235,7 @@ def main():
         'eject-server'      : node.Node,
         'failover'          : node.Node,
         'recovery'          : node.Node,
-        'cluster-init'      : node.Node,
+        'cluster-init'      : StubCommand,
         'cluster-edit'      : node.Node,
         'ssl-manage'        : node.Node,
         'node-init'         : node.Node,

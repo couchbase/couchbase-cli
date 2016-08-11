@@ -29,6 +29,7 @@ def parse_command():
         return False
 
     subcommands = {
+        "cluster-init": ClusterInit,
         "bucket-compact": BucketCompact,
         "bucket-create": BucketCreate,
         "bucket-delete": BucketDelete,
@@ -85,6 +86,26 @@ def index_storage_mode_to_param(value):
         return "memory_optimized"
     else:
         return value
+
+def process_services(services, is_enterprise):
+    """Converts services to a format Couchbase understands"""
+    sep = ","
+    if services.find(sep) < 0:
+        #backward compatible when using ";" as separator
+        sep = ";"
+    svc_list = list(set([w.strip() for w in services.split(sep)]))
+    svc_candidate = ["data", "index", "query", "fts"]
+    for svc in svc_list:
+        if svc not in svc_candidate:
+            return None, ["`%s` is not a valid service" % svc]
+    if not is_enterprise:
+        if len(svc_list) != len(svc_candidate) and (len(svc_list) != 1 or "data" not in svc_list):
+            return None, ["Community Edition requires that all nodes provision all services or data service only"]
+
+    services = ",".join(svc_list)
+    for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
+        services = services.replace(old, new)
+    return services, None
 
 class CLIOptionParser(OptionParser):
     """A custom parser for subcommands"""
@@ -219,6 +240,93 @@ class Command(object):
     def execute(self, opts, args):
         """Executes the subcommand"""
         raise NotImplementedError
+
+
+class ClusterInit(Command):
+    """The cluster initialization subcommand"""
+
+    def __init__(self):
+        super(ClusterInit, self).__init__()
+        self.parser.set_usage("couchbase-cli cluster-init [options]")
+        self.add_required("--cluster-username", dest="username",
+                          help="The cluster administrator username")
+        self.add_required("--cluster-password", dest="password",
+                          help="Only compact the data files")
+        self.add_optional("--cluster-port", dest="port", type=(int),
+                          help="The cluster administration console port")
+        self.add_optional("--cluster-ramsize", dest="data_mem_quota", type=(int),
+                          help="The data service memory quota (Megabytes)")
+        self.add_optional("--cluster-index-ramsize", dest="index_mem_quota", type=(int),
+                          help="The index service memory quota (Megabytes)")
+        self.add_optional("--cluster-fts-ramsize", dest="fts_mem_quota", type=(int),
+                          help="The full-text service memory quota (Megabytes)")
+        self.add_optional("--cluster-name", dest="name", help="The cluster name")
+        self.add_optional("--index-storage-setting", dest="index_storage_mode",
+                          choices=["default", "memopt"],
+                          help="The index storage backend (Defaults to \"default)\"")
+        self.add_optional("--services", dest="services", default="data",
+                          help="The services to run on this server")
+
+    def execute(self, opts, args):
+        # We need to ensure that creating the REST username/password is the
+        # last REST API that is called because once that API succeeds the
+        # cluster is initialized and cluster-init cannot be run again.
+
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+
+        initialized, errors = rest.is_cluster_initialized()
+        _exitIfErrors(errors)
+        if initialized:
+            _exitIfErrors(["Cluster is already initialized, use setting-cluster to change settings"])
+
+        enterprise, errors = rest.is_enterprise()
+        _exitIfErrors(errors)
+
+        services, errors = process_services(opts.services, enterprise)
+        _exitIfErrors(errors)
+
+        if 'kv' not in services.split(','):
+            _exitIfErrors(["Cannot set up first cluster node without the data service"])
+
+        #Set memory quota
+        msg = "Option required, but not specified when %s service enabled: %s"
+        if 'kv' in services.split(',') and not opts.data_mem_quota:
+            _exitIfErrors([msg % ("data", "--cluster-ramsize")])
+        elif 'index' in services.split(',') and not opts.index_mem_quota:
+            _exitIfErrors([msg % ("index", "--cluster-index-ramsize")])
+        elif 'fts' in services.split(',') and not opts.fts_mem_quota:
+            _exitIfErrors([msg % ("fts", "--cluster-fts-ramsize")])
+
+
+
+        _, errors = rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota,
+                                           opts.fts_mem_quota, opts.name)
+        _exitIfErrors(errors)
+
+        # Set the index storage mode
+        if not opts.index_storage_mode and 'index' in services.split(','):
+            opts.index_storage_mode = "default"
+
+        if opts.index_storage_mode:
+            param = index_storage_mode_to_param(opts.index_storage_mode)
+            _, errors = rest.set_index_settings(param, None, None, None, None, None)
+            _exitIfErrors(errors)
+
+        # Setup services
+        _, errors = rest.setup_services(services)
+        _exitIfErrors(errors)
+
+        # Enable notifications
+        _, errors = rest.enable_notifications(True)
+        _exitIfErrors(errors)
+
+        # Setup Administrator credentials and Admin Console port
+        _, errors = rest.set_admin_credentials(opts.username, opts.password,
+                                               opts.port)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Cluster initialized"
 
 
 class BucketCompact(Command):

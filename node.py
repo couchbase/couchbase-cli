@@ -31,7 +31,6 @@ rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
     'recovery'          :'/controller/setRecoveryType',
-    'cluster-init'      :'/settings/web',
     'cluster-edit'      :'/settings/web',
     'node-init'         :'/nodes/self/controller/settings',
     'setting-cluster'   :'/pools/default',
@@ -70,7 +69,6 @@ methods = {
     'server-readd'      :'POST',
     'failover'          :'POST',
     'recovery'          :'POST',
-    'cluster-init'      :'POST',
     'cluster-edit'      :'POST',
     'node-init'         :'POST',
     'setting-cluster'   :'POST',
@@ -243,9 +241,6 @@ class Node:
                       " or use -h for more help.")
             self.recovery(servers)
 
-        elif cmd in 'cluster-init':
-            self.clusterInit()
-
         elif cmd == 'node-init':
             self.nodeInit()
 
@@ -281,75 +276,6 @@ class Node:
 
         elif cmd == 'admin-role-manage':
             self.alterRoles()
-
-    def clusterInit(self):
-        # We need to ensure that creating the REST username/password is the
-        # last REST API that is called because once that API succeeds the
-        # cluster is initialized and cluster-init cannot be run again.
-
-        initialized, errors = self._is_cluster_initialized()
-        if initialized:
-            _exitIfErrors(["Cluster is already initialized, use cluster-edit to change settings"])
-        elif errors:
-            _exitIfErrors(errors)
-
-        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
-                                            self.password, self.ssl)
-
-        err, services = self.process_services(False)
-        if err:
-            _exitIfErrors([err])
-
-        #set memory quota
-        if 'kv' in services.split(',') and not self.per_node_quota:
-            _exitIfErrors(["option cluster-ramsize is not specified"])
-        elif 'index' in services.split(',') and not self.cluster_index_ramsize:
-            _exitIfErrors(["option cluster-index-ramsize is not specified"])
-        elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
-            _exitIfErrors(["option fts-index-ramsize is not specified"])
-
-        if self.per_node_quota and not isInt(self.per_node_quota):
-            _exitIfErrors(["--cluster-ramsize must be an integer"])
-        if self.cluster_index_ramsize and not isInt(self.cluster_index_ramsize):
-            _exitIfErrors(["--cluster-index-ramsize must be an integer"])
-        if self.cluster_fts_ramsize and not isInt(self.cluster_fts_ramsize):
-            _exitIfErrors(["--cluster-fts-ramsize must be an integer"])
-
-        _, errors = cm.set_pools_default(self.per_node_quota, self.cluster_index_ramsize,
-                                         self.cluster_fts_ramsize, self.cluster_name)
-        _exitIfErrors(errors)
-
-        # Set the index storage mode
-        if self.index_storage_setting or 'index' in services.split(','):
-            param = self.index_storage_to_param(self.index_storage_setting)
-            if not param:
-                _exitIfErrors(["invalid index storage setting `%s`. Must be [default, memopt]" \
-                    % self.index_storage_setting])
-                return
-
-            _, errors = cm.set_index_settings(param, None, None, None, None, None)
-            _exitIfErrors(errors)
-
-        #setup services
-        _, errors = cm.setup_services(services)
-        _exitIfErrors(errors)
-
-        # Enable notifications
-        _, errors = cm.enable_notifications(True)
-        _exitIfErrors(errors)
-
-        # setup REST credentials/REST port
-        if self.port_new and not isInt(self.port_new):
-            _exitIfErrors(["--cluster-port must be an integer"])
-
-        if not (self.username_new and self.password_new):
-            _exitIfErrors(["Both username and password are required."])
-
-        _, errors = cm.set_admin_credentials(self.username_new, self.password_new,
-                                             self.port_new)
-        _exitIfErrors(errors)
-
-        print "SUCCESS: Cluster initialized"
 
     def index_storage_to_param(self, value):
         if not value or value == "default":
@@ -1552,7 +1478,6 @@ class Node:
             "collect-logs-start" : "start a cluster-wide log collection",
             "collect-logs-stop" : "stop a cluster-wide log collection",
             "collect-logs-status" : "show the status of cluster-wide log collection",
-            "cluster-init" : "set the username,password and port of the cluster",
             "cluster-edit" : "modify cluster settings",
             "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
@@ -1600,16 +1525,6 @@ class Node:
              "move a list of servers from group"),
             ("--from-group=GROUPNAME", "group name to move servers from"),
             ("--to-group=GROUPNAME", "group name to move servers into"),
-            ("--index-storage-setting=SETTING", "index storage type [default, memopt]")] + services
-        elif cmd == "cluster-init":
-            return [
-            ("--cluster-username=USER", "new admin username"),
-            ("--cluster-password=PASSWORD", "new admin password"),
-            ("--cluster-port=PORT", "new cluster REST/http port"),
-            ("--cluster-ramsize=RAMSIZEMB", "per node data service ram quota in MB"),
-            ("--cluster-name=NAME", "the name of the cluster"),
-            ("--cluster-index-ramsize=RAMSIZEMB", "per node index service ram quota in MB"),
-            ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB"),
             ("--index-storage-setting=SETTING", "index storage type [default, memopt]")] + services
         elif cmd == "node-init":
             return [
@@ -1713,19 +1628,7 @@ class Node:
         or None if there's no example help or cmd is unknown.
         """
 
-        if cmd == "cluster-init":
-            return [("Set data service ram quota and index ram quota",
-"""
-    couchbase-cli cluster-init -c 192.168.0.1:8091 \\
-       --cluster-username=Administrator \\
-       --cluster-password=password \\
-       --cluster-port=8080 \\
-       --services=data,index \\
-       --cluster-ramsize=300 \\
-       --cluster-name=east \\
-       --cluster-index-ramsize=256\\
-       --index-storage-setting=memopt""")]
-        elif cmd == "cluster-edit":
+        if cmd == "cluster-edit":
             return [("Change the cluster username, password, port and data service ram quota",
 """
     couchbase-cli cluster-edit -c 192.168.0.1:8091 \\
