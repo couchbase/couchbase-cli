@@ -27,7 +27,6 @@ rest_cmds = {
     'node-init'         :'/nodes/self/controller/settings',
     'setting-compaction'    :'/controller/setAutoCompaction',
     'setting-alert'         :'/settings/alerts',
-    'setting-ldap'          :'/settings/saslauthdAuth',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
     'collect-logs-start'  : '/controller/startLogsCollection',
@@ -53,7 +52,6 @@ methods = {
     'node-init'         :'POST',
     'setting-compaction'    :'POST',
     'setting-alert'         :'POST',
-    'setting-ldap'          :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
     'collect-logs-start'  : 'POST',
@@ -143,12 +141,6 @@ class Node:
         self.customer = None
         self.ticket = ""
 
-        #ldap
-        self.ldap_enabled = None
-        self.ldap_admins = ''
-        self.ldap_roadmins = ''
-        self.ldap_default = "none"
-
         #index
         self.services = None
 
@@ -195,9 +187,6 @@ class Node:
 
         elif cmd == 'setting-alert':
             self.alert()
-
-        elif cmd == 'setting-ldap':
-            self.ldap()
 
         elif cmd == 'group-manage':
             self.groupManage()
@@ -370,34 +359,6 @@ class Node:
         opts = {
             "error_msg": "unable to set alert settings",
             "success_msg": "set alert settings"
-        }
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
-    def ldap(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.ldap_enabled == 'true':
-            rest.setParam('enabled', 'true')
-            if self.ldap_default == 'admins':
-                rest.setParam('roAdmins', self.ldap_roadmins.replace(Node.SEP, "\n"))
-            elif self.ldap_default == 'roadmins':
-                rest.setParam('admins', self.ldap_admins.replace(Node.SEP, "\n"))
-            else:
-                rest.setParam('admins', self.ldap_admins.replace(Node.SEP,"\n"))
-                rest.setParam('roAdmins', self.ldap_roadmins.replace(Node.SEP, "\n"))
-        else:
-            rest.setParam('enabled', 'false')
-
-        opts = {
-            "error_msg": "unable to set LDAP auth settings",
-            "success_msg": "set LDAP auth settings"
         }
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
@@ -640,14 +601,6 @@ class Node:
                 self.ticket = a
             elif o == '--services':
                 self.services = a
-            elif o == '--ldap-enabled':
-                self.ldap_enabled = bool_to_str(a)
-            elif o == '--ldap-admins':
-                self.ldap_admins = a
-            elif o == '--ldap-roadmins':
-                self.ldap_roadmins = a
-            elif o == '--ldap-default':
-                self.ldap_default = a
             elif o == '--roles':
                 self.roles = a
             elif o == '--my-roles':
@@ -1054,7 +1007,6 @@ class Node:
             "collect-logs-status" : "show the status of cluster-wide log collection",
             "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
-            "setting-ldap" : "set ldap settings",
             "admin-role-manage" : "set access-control roles for users"
         }
         if cmd in command_summary:
@@ -1138,12 +1090,6 @@ class Node:
                      "regenerate cluster certificate AND save to a pem file"),
                     ("--set-node-certificate", "sets the node certificate"),
                     ("--upload-cluster-ca", "uploads a new cluster certificate")]
-        elif cmd == "setting-ldap":
-            return [
-            ("--ldap-admins=", "full admins, separated by comma"),
-            ("--ldap-roadmins=", "read only admins, separated by comma"),
-            ("--ldap-enabled=[0|1]", "using LDAP protocol for authentication"),
-            ("--ldap-default=[admins|roadmins|none]", "set default ldap accounts")]
         elif cmd == "collect-logs-start":
             return [
             ("--all-nodes", "Collect logs from all accessible cluster nodes"),
@@ -1272,26 +1218,6 @@ class Node:
 """
     couchbase-cli collect-logs-status -c 192.168.0.1:8091 \\
         -u Administrator -p password""")]
-        elif cmd == "setting-ldap":
-            return [("Enable LDAP with None default",
-"""
-    couchbase-cli setting-ldap -c 192.168.0.1:8091 \\
-        --ldap-enabled=1 --ldap-admins=u1,u2 --ldap-roadmins=u3,u3,u5 \\
-        -u Administrator -p password"""),
-                ("Enable LDAP with full admin default",
-"""
-    couchbase-cli setting-ldap -c 192.168.0.1:8091 \\
-        --ldap-enabled=1 --ldap-default=admins --ldap-roadmins=u3,u3,u5 \\
-        -u Administrator -p password"""),
-                ("Enable LDAP with read only default",
-"""
-    couchbase-cli setting-ldap -c 192.168.0.1:8091 \\
-        --ldap-enabled=1 --ldap-default=roadmins --ldap-admins=u1,u2 \\
-        -u Administrator -p password"""),
-                ("Disable LDAP",
-"""
-    couchbase-cli setting-ldap -c 192.168.0.1:8091 \\
-        --ldap-enabled=0  -u Administrator -p password""")]
         elif cmd == "admin-role-manage":
             return [("Show the current users roles.",
 """

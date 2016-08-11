@@ -50,6 +50,7 @@ def parse_command():
         "setting-autofailover": SettingAutoFailover,
         "setting-cluster": SettingCluster,
         "setting-index": SettingIndex,
+        "setting-ldap": SettingLdap,
         "setting-notification": SettingNotification,
         "user-manage": UserManage,
     }
@@ -941,6 +942,58 @@ class SettingIndex(Command):
 
         print "SUCCESS: Indexer settings modified"
 
+
+class SettingLdap(Command):
+    """The setting ldap subcommand"""
+
+    def __init__(self):
+        super(SettingLdap, self).__init__()
+        self.parser.set_usage("couchbase-cli setting-ldap [options]")
+        self.add_required("--ldap-enabled", dest="enabled",
+                          choices=["0", "1"], help="Enable/disable LDAP")
+        self.add_optional("--ldap-admins", dest="admins",
+                          help="A comma separated list of full admins")
+        self.add_optional("--ldap-roadmins", dest="roadmins",
+                          help="A comma separated list of read only admins")
+        self.add_optional("--ldap-default", dest="default", default="none",
+                          choices=["admins", "roadmins", "none"],
+                          help="Enable/disable LDAP")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        admins = ""
+        if opts.admins:
+            admins = opts.admins.replace(",", "\n")
+
+        ro_admins = ""
+        if opts.roadmins:
+            ro_admins = opts.roadmins.replace(",", "\n")
+
+        errors = None
+        if opts.enabled == '1':
+            if opts.default == 'admins':
+                if ro_admins:
+                    _warning("--ldap-ro-admins option ignored since default is read only admins")
+                _, errors = rest.ldap_settings('true', ro_admins, None)
+            elif opts.default == 'roadmins':
+                if admins:
+                    _warning("--ldap-admins option ignored since default is admins")
+                _, errors = rest.ldap_settings('true', None, admins)
+            else:
+                _, errors = rest.ldap_settings('true', ro_admins, admins)
+        else:
+            if admins:
+                _warning("--ldap-admins option ignored since ldap is being disabled")
+            if ro_admins:
+                _warning("--ldap-roadmins option ignored since ldap is being disabled")
+            _, errors = rest.ldap_settings('false', "", "")
+
+        _exitIfErrors(errors)
+
+        print "SUCCESS: LDAP settings modified"
 
 class SettingNotification(Command):
     """The settings notification subcommand"""

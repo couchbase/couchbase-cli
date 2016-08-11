@@ -53,6 +53,7 @@ class StubCommand():
             "setting-autofailover": "set auto failover settings",
             "setting-index" : "set index settings",
             "setting-notification" : "set notification settings",
+            "setting-ldap" : "set ldap settings",
             "user-manage" : "manage read only user",}
         if cmd in command_summary:
             return command_summary[cmd]
@@ -240,13 +241,13 @@ def main():
         'rebalance-stop'    : StubCommand,
         'rebalance-status'  : StubCommand,
         'eject-server'      : node.Node,
-        'failover'          : node.Node,
+        'failover'          : StubCommand,
         'recovery'          : node.Node,
         'cluster-init'      : StubCommand,
         'cluster-edit'      : StubCommand,
         'ssl-manage'        : node.Node,
         'node-init'         : node.Node,
-        'user-manage'       : node.Node,
+        'user-manage'       : StubCommand,
         'collect-logs-start'  : node.Node,
         'collect-logs-stop'   : node.Node,
         'collect-logs-status' : node.Node,
@@ -262,7 +263,7 @@ def main():
         'setting-autofailover'  : StubCommand,
         'setting-alert'         : node.Node,
         'setting-audit'         : StubCommand,
-        'setting-ldap'          : node.Node,
+        'setting-ldap'          : StubCommand,
         'admin-role-manage'     : node.Node,
         'setting-xdcr'          : xdcr.XDCR,
         'setting-index'         : StubCommand,

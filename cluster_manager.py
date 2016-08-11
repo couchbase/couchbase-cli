@@ -559,6 +559,24 @@ class ClusterManager(object):
         url = self.hostname + '/settings/indexes'
         return self._get(url)
 
+    def ldap_settings(self, enabled, read_only_admins, admins):
+        """ Sets LDAP Settings
+
+        enabled - The string "true" or "false"
+        admins - A new line separated list or the string "asterisk"
+        read_only_admins - A new line separated list or the string "asterisk"
+        """
+
+        url = self.hostname + '/settings/saslauthdAuth'
+        params = { "enabled": enabled }
+
+        if read_only_admins is not None:
+            params["roAdmins"] = read_only_admins
+        if admins is not None:
+            params["admins"] = admins
+
+        return self._post_form_encoded(url, params)
+
     def setRoles(self,userList,roleList,userNameList):
         # we take a comma-delimited list of roles that needs to go into a dictionary
         paramDict = {"roles" : roleList}
