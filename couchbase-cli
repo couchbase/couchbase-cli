@@ -33,6 +33,7 @@ class StubCommand():
     def getCommandSummary(self, cmd):
         """Return one-line summary info for each supported command"""
         command_summary = {
+            "cluster-edit" : "modify cluster settings",
             "cluster-init" : "set the username,password and port of the cluster",
             "bucket-list" : "list all buckets in a cluster",
             "bucket-create" : "add a new bucket to the cluster",
@@ -43,6 +44,7 @@ class StubCommand():
             "host-list" : "list all hosts in a cluster",
             "rebalance-stop": "stop current cluster rebalancing",
             "server-list" : "list all servers in a cluster",
+            "setting-cluster" : "set cluster settings",
             "setting-audit": "set audit settings",
             "setting-autofailover": "set auto failover settings",
             "setting-index" : "set index settings",
@@ -236,7 +238,7 @@ def main():
         'failover'          : node.Node,
         'recovery'          : node.Node,
         'cluster-init'      : StubCommand,
-        'cluster-edit'      : node.Node,
+        'cluster-edit'      : StubCommand,
         'ssl-manage'        : node.Node,
         'node-init'         : node.Node,
         'user-manage'       : node.Node,
@@ -249,7 +251,7 @@ def main():
         'bucket-delete'     : StubCommand,
         'bucket-flush'      : StubCommand,
         'bucket-compact'    : StubCommand,
-        'setting-cluster'   : node.Node,
+        'setting-cluster'   : StubCommand,
         'setting-compaction'    : node.Node,
         'setting-notification'  : StubCommand,
         'setting-autofailover'  : StubCommand,

@@ -31,9 +31,7 @@ rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
     'recovery'          :'/controller/setRecoveryType',
-    'cluster-edit'      :'/settings/web',
     'node-init'         :'/nodes/self/controller/settings',
-    'setting-cluster'   :'/pools/default',
     'setting-compaction'    :'/controller/setAutoCompaction',
     'setting-alert'         :'/settings/alerts',
     'setting-ldap'          :'/settings/saslauthdAuth',
@@ -69,9 +67,7 @@ methods = {
     'server-readd'      :'POST',
     'failover'          :'POST',
     'recovery'          :'POST',
-    'cluster-edit'      :'POST',
     'node-init'         :'POST',
-    'setting-cluster'   :'POST',
     'setting-compaction'    :'POST',
     'setting-alert'         :'POST',
     'setting-ldap'          :'POST',
@@ -105,16 +101,9 @@ class Node:
         self.ro_password = ''
         self.params = {}
         self.output = 'standard'
-        self.password_new = None
-        self.username_new = None
         self.sa_username = None
         self.sa_password = None
-        self.port_new = None
-        self.per_node_quota = None
-        self.cluster_index_ramsize = None
-        self.cluster_fts_ramsize = None
         self.index_storage_setting = None
-        self.cluster_name = None
         self.data_path = None
         self.index_path = None
         self.hostname = None
@@ -243,9 +232,6 @@ class Node:
 
         elif cmd == 'node-init':
             self.nodeInit()
-
-        elif cmd in ('setting-cluster', 'cluster-edit'):
-            self.clusterSetting(cmd)
 
         elif cmd == 'setting-compaction':
             self.compaction()
@@ -417,49 +403,6 @@ class Node:
                                      self.password,
                                      opts)
         print output_result
-
-    def clusterSetting(self, cmd):
-        if cmd == "cluster-edit":
-            _warning("The cluster-edit command is depercated, use setting-cluster instead")
-
-        initialized, errors = self._is_cluster_initialized()
-        if not initialized:
-            _exitIfErrors(["Cluster is not initialized, use cluster-init to initialize the cluster"])
-        elif errors:
-            _exitIfErrors(errors)
-
-        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
-                                            self.password, self.ssl)
-
-        if self.per_node_quota and not isInt(self.per_node_quota):
-            _exitIfErrors(["--cluster-ramsize must be an integer"])
-        if self.cluster_index_ramsize and not isInt(self.cluster_index_ramsize):
-            _exitIfErrors(["--cluster-index-ramsize must be an integer"])
-        if self.cluster_fts_ramsize and not isInt(self.cluster_fts_ramsize):
-            _exitIfErrors(["--cluster-fts-ramsize must be an integer"])
-
-        if self.per_node_quota or self.cluster_index_ramsize or \
-            self.cluster_fts_ramsize or self.cluster_name is not None:
-            _, errors = cm.set_pools_default(self.per_node_quota, self.cluster_index_ramsize,
-                                            self.cluster_fts_ramsize, self.cluster_name)
-            _exitIfErrors(errors)
-
-        if self.username_new or self.password_new or self.port_new:
-            username = self.user
-            if self.username_new:
-                username = self.username_new
-
-            password = self.password
-            if self.password_new:
-                password = self.password_new
-
-            if self.port_new and not isInt(self.port_new):
-                _exitIfErrors(["--cluster-port must be an integer"])
-
-            _, errors = cm.set_admin_credentials(username, password, self.port_new)
-            _exitIfErrors(errors)
-
-        print "SUCCESS: Cluster settings modified"
 
     def alert(self):
         rest = util.restclient_factory(self.server,
@@ -666,22 +609,8 @@ class Node:
             elif o in ('-d', '--debug'):
                 self.debug = True
                 server = None
-            elif o in ('--cluster-init-password', '--cluster-password'):
-                self.password_new = a
-            elif o in ('--cluster-init-username', '--cluster-username'):
-                self.username_new = a
-            elif o in ('--cluster-init-port', '--cluster-port'):
-                self.port_new = a
-            elif o in ('--cluster-init-ramsize', '--cluster-ramsize'):
-                self.per_node_quota = a
-            elif o == '--cluster-index-ramsize':
-                self.cluster_index_ramsize = a
-            elif o == '--cluster-fts-ramsize':
-                self.cluster_fts_ramsize = a
             elif o == '--index-storage-setting':
                 self.index_storage_setting = a
-            elif o == '--cluster-name':
-                self.cluster_name = a
             elif o == '--compaction-db-percentage':
                 self.compaction_db_percentage = a
             elif o == '--compaction-db-size':
@@ -1472,13 +1401,11 @@ class Node:
             "rebalance-status" :"show status of current cluster rebalancing",
             "failover" :"failover one or more servers",
             "recovery" :"recover one or more servers",
-            "setting-cluster" : "set cluster settings",
             "setting-compaction" : "set auto compaction settings",
             "setting-alert" : "set email alert settings",
             "collect-logs-start" : "start a cluster-wide log collection",
             "collect-logs-stop" : "stop a cluster-wide log collection",
             "collect-logs-status" : "show the status of cluster-wide log collection",
-            "cluster-edit" : "modify cluster settings",
             "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
             "user-manage" : "manage read only user",
@@ -1576,15 +1503,6 @@ class Node:
             ("--alert-write-failed",
              "writing data to disk for a specific bucket has failed"),
             ("--alert-audit-msg-dropped", "writing event to audit log has failed")]
-        elif cmd == "setting-cluster" or cmd == "cluster-edit":
-            return [
-                    ("--cluster-username=USER", "new admin username"),
-                    ("--cluster-password=PASSWORD", "new admin password"),
-                    ("--cluster-port=PORT", "new cluster REST/http port"),
-                    ("--cluster-name=[CLUSTERNAME]", "cluster name"),
-                    ("--cluster-ramsize=[RAMSIZEMB]", "per node data service ram quota in MB"),
-                    ("--cluster-index-ramsize=[RAMSIZEMB]","per node index service ram quota in MB"),
-                    ("--cluster-fts-ramsize=RAMSIZEMB", "per node fts service ram quota in MB")]
         elif cmd == "ssl-manage":
             return [("--cluster-cert-info", "prints cluster certificate info"),
                     ("--node-cert-info", "prints node certificate info"),
@@ -1628,16 +1546,7 @@ class Node:
         or None if there's no example help or cmd is unknown.
         """
 
-        if cmd == "cluster-edit":
-            return [("Change the cluster username, password, port and data service ram quota",
-"""
-    couchbase-cli cluster-edit -c 192.168.0.1:8091 \\
-       --cluster-username=Administrator1 \\
-       --cluster-password=password1 \\
-       --cluster-port=8080 \\
-       --cluster-ramsize=300 \\
-       -u Administrator -p password""")]
-        elif cmd == "node-init":
+        if cmd == "node-init":
             return [("Set data path and hostname for an unprovisioned cluster",
 """
     couchbse-cli node-init -c 192.168.0.1:8091 \\

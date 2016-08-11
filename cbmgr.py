@@ -29,6 +29,7 @@ def parse_command():
         return False
 
     subcommands = {
+        "cluster-edit": ClusterEdit,
         "cluster-init": ClusterInit,
         "bucket-compact": BucketCompact,
         "bucket-create": BucketCreate,
@@ -41,6 +42,7 @@ def parse_command():
         "server-list": ServerList,
         "setting-audit": SettingAudit,
         "setting-autofailover": SettingAutoFailover,
+        "setting-cluster": SettingCluster,
         "setting-index": SettingIndex,
         "setting-notification": SettingNotification,
     }
@@ -681,6 +683,64 @@ class SettingAutoFailover(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Auto-failover settings modified"
+
+
+class SettingCluster(Command):
+    """The settings cluster subcommand"""
+
+    def __init__(self):
+        super(SettingCluster, self).__init__()
+        self.parser.set_usage("couchbase-cli setting-cluster [options]")
+        self.add_optional("--cluster-username", dest="new_username",
+                          help="The cluster administrator username")
+        self.add_optional("--cluster-password", dest="new_password",
+                          help="Only compact the data files")
+        self.add_optional("--cluster-port", dest="port", type=(int),
+                          help="The cluster administration console port")
+        self.add_optional("--cluster-ramsize", dest="data_mem_quota", type=(int),
+                          help="The data service memory quota (Megabytes)")
+        self.add_optional("--cluster-index-ramsize", dest="index_mem_quota", type=(int),
+                          help="The index service memory quota (Megabytes)")
+        self.add_optional("--cluster-fts-ramsize", dest="fts_mem_quota", type=(int),
+                          help="The full-text service memory quota (Megabytes)")
+        self.add_optional("--cluster-name", dest="name", help="The cluster name")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or \
+            opts.name is not None:
+            _, errors = rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota,
+                                               opts.fts_mem_quota, opts.name)
+            _exitIfErrors(errors)
+
+        if opts.new_username or opts.new_password or opts.port:
+            username = opts.username
+            if opts.new_username:
+                username = opts.new_username
+
+            password = opts.password
+            if opts.new_password:
+                password = opts.new_password
+
+            _, errors = rest.set_admin_credentials(username, password, opts.port)
+            _exitIfErrors(errors)
+
+        print "SUCCESS: Cluster settings modified"
+
+
+class ClusterEdit(SettingCluster):
+    """The cluster edit subcommand (Deprecated)"""
+
+    def __init__(self):
+        super(ClusterEdit, self).__init__()
+        self.parser.set_usage("couchbase-cli cluster-edit [options]")
+
+    def execute(self, opts, args):
+        _warning("The cluster-edit command is depercated, use setting-cluster instead")
+        super(ClusterEdit, self).execute(opts, args)
 
 
 class SettingIndex(Command):
