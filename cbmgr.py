@@ -39,6 +39,7 @@ def parse_command():
         "bucket-list": BucketList,
         "host-list": HostList,
         "rebalance-stop": RebalanceStop,
+        "server-add": ServerAdd,
         "server-list": ServerList,
         "setting-audit": SettingAudit,
         "setting-autofailover": SettingAutoFailover,
@@ -598,6 +599,53 @@ class RebalanceStop(Command):
 
         print "SUCCESS: Rebalance stopped"
 
+
+class ServerAdd(Command):
+    """The server add command"""
+
+    def __init__(self):
+        super(ServerAdd, self).__init__()
+        self.parser.set_usage("couchbase-cli server-list [options]")
+        self.add_required("--server-add", dest="server",
+                          help="The server to add")
+        self.add_required("--server-add-username", dest="server_username",
+                          help="The username for the server to add")
+        self.add_required("--server-add-password", dest="server_password",
+                          help="The password for the server to add")
+        self.add_optional("--group-name", dest="group_name",
+                          help="The server group to add this server into")
+        self.add_optional("--services", dest="services", default="data",
+                          help="The services this server will run")
+        self.add_optional("--index-storage-setting", dest="storage_mode",
+                          choices=["default", "memopt"], help="The index storage mode")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        enterprise, errors = rest.is_enterprise()
+        _exitIfErrors(errors)
+
+        opts.services, errors = process_services(opts.services, enterprise)
+        _exitIfErrors(errors)
+
+        settings, errors = rest.index_settings()
+        _exitIfErrors(errors)
+
+        if opts.storage_mode is None and settings['storageMode'] == "" and "index" in opts.services:
+            opts.storage_mode = "default"
+
+        if opts.storage_mode:
+            param = index_storage_mode_to_param(opts.storage_mode)
+            _, errors = rest.set_index_settings(param, None, None, None, None, None)
+            _exitIfErrors(errors)
+
+        _, errors = rest.add_server(opts.server, opts.group_name, opts.server_username,
+                                    opts.server_password, opts.services)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Server added"
 
 class ServerList(Command):
     """The server list subcommand"""

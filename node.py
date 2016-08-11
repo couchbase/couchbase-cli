@@ -27,7 +27,6 @@ except ImportError:
 rest_cmds = {
     'rebalance'         :'/controller/rebalance',
     'rebalance-status'  :'/pools/default/rebalanceProgress',
-    'server-add'        :'/controller/addNode',
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
     'recovery'          :'/controller/setRecoveryType',
@@ -46,7 +45,6 @@ rest_cmds = {
 
 server_no_remove = [
     'rebalance-status',
-    'server-add',
     'server-readd',
     'failover',
     'recovery',
@@ -63,7 +61,6 @@ methods = {
     'rebalance'         :'POST',
     'rebalance-status'  :'GET',
     'eject-server'      :'POST',
-    'server-add'        :'POST',
     'server-readd'      :'POST',
     'failover'          :'POST',
     'recovery'          :'POST',
@@ -195,15 +192,11 @@ class Node:
         if self.debug:
             print "INFO: servers %s" % servers
 
-        if cmd == 'server-add' and not servers['add']:
-            command_error("please list one or more --server-add=HOST[:PORT],"
-                  " or use -h for more help.")
-
         if cmd == 'server-readd' and not servers['add']:
             command_error("please list one or more --server-add=HOST[:PORT],"
                   " or use -h for more help.")
 
-        if cmd in ('server-add', 'rebalance'):
+        if cmd == 'rebalance':
             if len(servers['add']) > 0:
                 self.groupAddServers()
             if cmd == 'rebalance':
@@ -1391,7 +1384,6 @@ class Node:
         command_summary = {
             "server-list" :"list all servers in a cluster",
             "server-info" :"show details on one server",
-            "server-add" :"add one or more servers to the cluster",
             "server-readd" :"readd a server that was failed over",
             "group-manage" :"manage server groups",
             "rebalance" :"start a cluster rebalancing",
@@ -1431,7 +1423,7 @@ class Node:
         services = [("--services=data,index,query,fts",
                      "services that server runs")]
 
-        if cmd == "server-add" or cmd == "rebalance":
+        if cmd == "rebalance":
             return [("--index-storage-setting=SETTING", "index storage type [default, memopt]")] \
             + server_common + services
         elif cmd == "server-readd":
@@ -1552,25 +1544,6 @@ class Node:
 """
      couchbase-cli node-init -c 192.168.0.1:8091 \\
        --node-init-data-path=/tmp \\
-       -u Administrator -p password""")]
-        elif cmd == "server-add":
-            return [("Add a node to a cluster, but do not rebalance",
-"""
-    couchbase-cli server-add -c 192.168.0.1:8091 \\
-       --server-add=192.168.0.2:8091 \\
-       --server-add-username=Administrator1 \\
-       --server-add-password=password1 \\
-
-       --group-name=group1 \\
-       --index-storage-setting=memopt \\
-       -u Administrator -p password"""),
-                    ("Add a node to a cluster, but do not rebalance",
-"""
-    couchbase-cli server-add -c 192.168.0.1:8091 \\
-       --server-add=192.168.0.2:8091 \\
-       --server-add-username=Administrator1 \\
-       --server-add-password=password1 \\
-       --group-name=group1 \\
        -u Administrator -p password""")]
         elif cmd == "rebalance":
             return [("Add a node to a cluster and rebalance",
