@@ -205,7 +205,6 @@ class Node:
 
         if cmd in ('server-add', 'rebalance'):
             if len(servers['add']) > 0:
-                print "Warning: Adding server from group-manage is deprecated"
                 self.groupAddServers()
             if cmd == 'rebalance':
                 self.rebalance(servers)
@@ -1069,8 +1068,6 @@ class Node:
                 self.groupDelete()
             elif self.cmd == 'create':
                 self.groupCreate()
-            elif self.cmd == 'add-servers':
-                self.groupAddServers()
             elif self.cmd == 'rename':
                 self.groupRename()
             else:
@@ -1446,13 +1443,10 @@ class Node:
             ("--delete", "delete an empty group"),
             ("--list", "show group/server relationship map"),
             ("--rename=NEWGROUPNAME", "rename group to new name"),
-            ("--add-servers=HOST[:PORT],HOST[:PORT]",
-             "add a list of servers to group"),
             ("--move-servers=HOST[:PORT],HOST[:PORT]",
              "move a list of servers from group"),
             ("--from-group=GROUPNAME", "group name to move servers from"),
-            ("--to-group=GROUPNAME", "group name to move servers into"),
-            ("--index-storage-setting=SETTING", "index storage type [default, memopt]")] + services
+            ("--to-group=GROUPNAME", "group name to move servers into")]
         elif cmd == "node-init":
             return [
             ("--node-init-data-path=PATH", "data path for database files"),
@@ -1668,15 +1662,6 @@ class Node:
 """
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
         --list -u Administrator -p password"""),
-                ("Add a server to a group",
-"""
-    couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --add-servers=10.1.1.1:8091,10.1.1.2:8091 \\
-        --group-name=group1 \\
-        --server-add-username=Administrator1 \\
-        --server-add-password=password1 \\
-        --services=data,index,query,fts \\
-        -u Administrator -p password"""),
                 ("Move list of servers from group1 to group2",
 """
     couchbase-cli group-manage -c 192.168.0.1:8091 \\
