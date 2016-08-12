@@ -26,7 +26,6 @@ rest_cmds = {
     'recovery'          :'/controller/setRecoveryType',
     'node-init'         :'/nodes/self/controller/settings',
     'setting-compaction'    :'/controller/setAutoCompaction',
-    'setting-alert'         :'/settings/alerts',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
     'collect-logs-start'  : '/controller/startLogsCollection',
@@ -51,7 +50,6 @@ methods = {
     'recovery'          :'POST',
     'node-init'         :'POST',
     'setting-compaction'    :'POST',
-    'setting-alert'         :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
     'collect-logs-start'  : 'POST',
@@ -97,26 +95,6 @@ class Node:
         self.enable_compaction_abort = None
         self.enable_compaction_parallel = None
         self.purge_interval = None
-
-        #alert settings
-        self.email_recipient = None
-        self.email_sender = None
-        self.email_user = None
-        self.email_password = None
-        self.email_host = None
-        self.email_port = None
-        self.email_enable_encrypt = None
-        self.autofailover_node = None
-        self.autofailover_max_reached = None
-        self.autofailover_node_down = None
-        self.autofailover_cluster_small = None
-        self.autofailover_disabled = None
-        self.alert_ip_changed = None
-        self.alert_disk_space = None
-        self.alert_meta_overhead = None
-        self.alert_meta_oom = None
-        self.alert_write_failed = None
-        self.alert_audit_dropped = None
 
         #group management
         self.group_name = None
@@ -184,9 +162,6 @@ class Node:
 
         elif cmd == 'setting-compaction':
             self.compaction()
-
-        elif cmd == 'setting-alert':
-            self.alert()
 
         elif cmd == 'group-manage':
             self.groupManage()
@@ -298,67 +273,6 @@ class Node:
         opts = {
             "error_msg": "unable to set compaction settings",
             "success_msg": "set compaction settings"
-        }
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
-    def alert(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        alert_opts = ''
-        if self.enable_email_alert:
-            rest.setParam('enabled', self.enable_email_alert)
-        if self.email_recipient:
-            rest.setParam('recipients', self.email_recipient)
-        if self.email_sender:
-            rest.setParam('sender', self.email_sender)
-        if self.email_user:
-            rest.setParam('emailUser', self.email_user)
-        if self.email_password:
-            rest.setParam('emailPass', self.email_password)
-        if self.email_host:
-            rest.setParam('emailHost', self.email_host)
-        if self.email_port:
-            rest.setParam('emailPort', self.email_port)
-        if self.email_enable_encrypt:
-            rest.setParam('emailEncrypt', self.email_enable_encrypt)
-        if self.autofailover_node:
-            alert_opts = alert_opts + 'auto_failover_node,'
-        if self.autofailover_max_reached:
-            alert_opts = alert_opts + 'auto_failover_maximum_reached,'
-        if self.autofailover_node_down:
-            alert_opts = alert_opts + 'auto_failover_other_nodes_down,'
-        if self.autofailover_cluster_small:
-            alert_opts = alert_opts + 'auto_failover_cluster_too_small,'
-        if self.autofailover_disabled:
-            alert_opts = alert_opts + 'auto_failover_disabled,'
-        if self.alert_ip_changed:
-            alert_opts = alert_opts + 'ip,'
-        if self.alert_disk_space:
-            alert_opts = alert_opts + 'disk,'
-        if self.alert_meta_overhead:
-            alert_opts = alert_opts + 'overhead,'
-        if self.alert_meta_oom:
-            alert_opts = alert_opts + 'ep_oom_errors,'
-        if self.alert_write_failed:
-            alert_opts = alert_opts + 'ep_item_commit_failed,'
-        if self.alert_audit_dropped:
-            alert_opts = alert_opts + 'audit_dropped_events,'
-
-        if alert_opts:
-            # remove last separator
-            alert_opts = alert_opts[:-1]
-            rest.setParam('alerts', alert_opts)
-
-        opts = {
-            "error_msg": "unable to set alert settings",
-            "success_msg": "set alert settings"
         }
         output_result = rest.restCmd(self.method,
                                      self.rest_cmd,
@@ -505,42 +419,6 @@ class Node:
                 self.index_path = a
             elif o == '--node-init-hostname':
                 self.hostname = a
-            elif o == '--email-recipients':
-                self.email_recipient = a
-            elif o == '--email-sender':
-                self.email_sender = a
-            elif o == '--email-user':
-                self.email_user = a
-            elif o == '--email-password':
-                self.email_password = a
-            elif o == '--email-host':
-                self.email_host = a
-            elif o == '--email-port':
-                self.email_port = a
-            elif o == '--enable-email-encrypt':
-                self.email_enable_encrypt = bool_to_str(a)
-            elif o == '--alert-auto-failover-node':
-                self.autofailover_node = True
-            elif o == '--alert-auto-failover-max-reached':
-                self.autofailover_max_reached = True
-            elif o == '--alert-auto-failover-node-down':
-                self.autofailover_node_down = True
-            elif o == '--alert-auto-failover-cluster-small':
-                self.autofailover_cluster_small = True
-            elif o == '--alert-auto-failover-disabled':
-                self.autofailover_disabled = True
-            elif o == '--alert-ip-changed':
-                self.alert_ip_changed = True
-            elif o == '--alert-disk-space':
-                self.alert_disk_space = True
-            elif o == '--alert-meta-overhead':
-                self.alert_meta_overhead = True
-            elif o == '--alert-meta-oom':
-                self.alert_meta_oom = True
-            elif o == '--alert-write-failed':
-                self.alert_write_failed = True
-            elif o == '--alert-audit-msg-dropped':
-                self.alert_audit_dropped = True
             elif o == '--create':
                 self.cmd = 'create'
             elif o == '--list':
@@ -1001,7 +879,6 @@ class Node:
             "group-manage" :"manage server groups",
             "recovery" :"recover one or more servers",
             "setting-compaction" : "set auto compaction settings",
-            "setting-alert" : "set email alert settings",
             "collect-logs-start" : "start a cluster-wide log collection",
             "collect-logs-stop" : "stop a cluster-wide log collection",
             "collect-logs-status" : "show the status of cluster-wide log collection",
@@ -1053,36 +930,6 @@ class Node:
             ("--server-recovery=HOST[:PORT]", "server to recover"),
             ("--recovery-type=TYPE[delta|full]",
              "type of recovery to be performed for a node")]
-        elif cmd == "setting-alert":
-            return [
-            ("--enable-email-alert=[0|1]", "allow email alert"),
-            ("--email-recipients=RECIPIENT",
-             "email recipients, separate addresses with , or ;"),
-            ("--email-sender=SENDER", "sender email address"),
-            ("--email-user=USER", "email server username"),
-            ("--email-password=PWD", "email server password"),
-            ("--email-host=HOST", "email server host"),
-            ("--email-port=PORT", "email server port"),
-            ("--enable-email-encrypt=[0|1]", "email encrypt"),
-            ("--alert-auto-failover-node", "node was auto failover"),
-            ("--alert-auto-failover-max-reached",
-             "maximum number of auto failover nodes was reached"),
-            ("--alert-auto-failover-node-down",
-             "node wasn't auto failover as other nodes are down at the same time"),
-            ("--alert-auto-failover-cluster-small",
-             "node wasn't auto fail over as cluster was too small"),
-            ("--alert-auto-failover-disabled",
-             "node was not auto-failed-over as auto-failover for one or more services running on the node is disabled"),
-            ("--alert-ip-changed", "node ip address has changed unexpectedly"),
-            ("--alert-disk-space",
-             "disk space used for persistent storgage has reached at least 90% capacity"),
-            ("--alert-meta-overhead",
-             "metadata overhead is more than 50%"),
-            ("--alert-meta-oom",
-             "bucket memory on a node is entirely used for metadata"),
-            ("--alert-write-failed",
-             "writing data to disk for a specific bucket has failed"),
-            ("--alert-audit-msg-dropped", "writing event to audit log has failed")]
         elif cmd == "ssl-manage":
             return [("--cluster-cert-info", "prints cluster certificate info"),
                     ("--node-cert-info", "prints node certificate info"),

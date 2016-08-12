@@ -552,6 +552,33 @@ class ClusterManager(object):
         url = self.hostname + '/settings/indexes'
         return self._post_form_encoded(url, params)
 
+    def set_alert_settings(self, enabled_email_alerts, email_recipients,
+                           email_sender, email_user, email_pass, email_host,
+                           email_port, email_encrypted, alerts):
+        url = self.hostname + '/settings/alerts'
+        params = dict()
+
+        if enabled_email_alerts:
+            params["enabled"] = enabled_email_alerts
+        if email_recipients:
+            params["recipients"] = email_recipients
+        if email_sender:
+            params["sender"] = email_sender
+        if email_user:
+            params["emailUser"] = email_user
+        if email_pass:
+            params["emailPass"] = email_pass
+        if email_host:
+            params["emailHost"] = email_host
+        if email_port:
+            params["emailPort"] = email_port
+        if email_encrypted:
+            params["emailEncrypt"] = email_encrypted
+        if alerts is not None:
+            params["alerts"] = alerts
+
+        return self._post_form_encoded(url, params)
+
     def index_settings(self):
         """ Retrieves the index settings
 

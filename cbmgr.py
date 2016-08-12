@@ -46,6 +46,7 @@ def parse_command():
         "rebalance-stop": RebalanceStop,
         "server-add": ServerAdd,
         "server-list": ServerList,
+        "setting-alert": SettingAlert,
         "setting-audit": SettingAudit,
         "setting-autofailover": SettingAutoFailover,
         "setting-cluster": SettingCluster,
@@ -779,6 +780,107 @@ class ServerList(Command):
 
             print node['otpNode'], node['hostname'], node['status'], node['clusterMembership']
 
+
+class SettingAlert(Command):
+    """The setting alert subcommand"""
+
+    def __init__(self):
+        super(SettingAlert, self).__init__()
+        self.parser.set_usage("couchbase-cli setting-alert [options]")
+        self.add_required("--enable-email-alert", dest="enabled",
+                          choices=["0", "1"], help="Enable/disable email alerts")
+        self.add_optional("--email-recipients", dest="email_recipients",
+                          help="A comma separated list of email addresses")
+        self.add_optional("--email-sender", dest="email_sender",
+                          help="The sender email address")
+        self.add_optional("--email-user", dest="email_username",
+                          default="", help="The email server username")
+        self.add_optional("--email-password", dest="email_password",
+                          default="", help="The email server password")
+        self.add_optional("--email-host", dest="email_host",
+                          help="The email server host")
+        self.add_optional("--email-port", dest="email_port",
+                          help="The email server port")
+        self.add_optional("--enable-email-encrypt", dest="email_encrypt",
+                          choices=["0", "1"], help="Enable SSL encryption for emails")
+        self.add_optional("--alert-auto-failover-node", dest="alert_af_node",
+                          action="store_true", help="Alert when a node is auto-failed over")
+        self.add_optional("--alert-auto-failover-max-reached", dest="alert_af_max_reached",
+                          action="store_true",
+                          help="Alert when the max number of auto-failover nodes was reached")
+        self.add_optional("--alert-auto-failover-node-down", dest="alert_af_node_down",
+                          action="store_true",
+                          help="Alert when a node wasn't auto-failed over because other nodes were down")
+        self.add_optional("--alert-auto-failover-cluster-small", dest="alert_af_small",
+                          action="store_true",
+                          help="Alert when a node wasn't auto-failed over because cluster was too small")
+        self.add_optional("--alert-auto-failover-disable", dest="alert_af_disable",
+                          action="store_true",
+                          help="Alert when a node wasn't auto-failed over because auto-failover is disabled")
+        self.add_optional("--alert-ip-changed", dest="alert_ip_changed",
+                          action="store_true", help="Alert when a nodes IP address changed")
+        self.add_optional("--alert-disk-space", dest="alert_disk_space",
+                          action="store_true", help="Alert when disk usage on a node reaches 90%")
+        self.add_optional("--alert-meta-overhead", dest="alert_meta_overhead",
+                          action="store_true", help="Alert when metadata overhead is more than 50%")
+        self.add_optional("--alert-meta-oom", dest="alert_meta_oom",
+                          action="store_true", help="Alert when all bucket memory is used for metadata")
+        self.add_optional("--alert-write-failed", dest="alert_write_failed",
+                          action="store_true", help="Alert when writing data to disk has failed")
+        self.add_optional("--alert-audit-msg-dropped", dest="alert_audit_dropped",
+                          action="store_true", help="Alert when writing event to audit log failed")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        if opts.enabled == "1":
+            if opts.email_recipients is None:
+                _exitIfErrors(["--email-recipient must be set when email alerts are enabled"])
+            if opts.email_sender is None:
+                _exitIfErrors(["--email-sender must be set when email alerts are enabled"])
+            if opts.email_host is None:
+                _exitIfErrors(["--email-host must be set when email alerts are enabled"])
+            if opts.email_port is None:
+                _exitIfErrors(["--email-port must be set when email alerts are enabled"])
+
+        alerts = list()
+        if opts.alert_af_node:
+            alerts.append('auto_failover_node')
+        if opts.alert_af_max_reached:
+            alerts.append('auto_failover_maximum_reached')
+        if opts.alert_af_node_down:
+            alerts.append('auto_failover_other_nodes_down')
+        if opts.alert_af_small:
+            alerts.append('auto_failover_cluster_too_small')
+        if opts.alert_af_disable:
+            alerts.append('auto_failover_disabled')
+        if opts.alert_ip_changed:
+            alerts.append('ip')
+        if opts.alert_disk_space:
+            alerts.append('disk')
+        if opts.alert_meta_overhead:
+            alerts.append('overhead')
+        if opts.alert_meta_oom:
+            alerts.append('ep_oom_errors')
+        if opts.alert_write_failed:
+            alerts.append('ep_item_commit_failed')
+        if opts.alert_audit_dropped:
+            alerts.append('audit_dropped_events')
+
+        enabled = "true"
+        if opts.enabled == "0":
+            enabled = "false"
+
+        _, errors = rest.set_alert_settings(enabled, opts.email_recipients,
+                                            opts.email_sender, opts.email_username,
+                                            opts.email_password, opts.email_host,
+                                            opts.email_port, opts.email_encrypt,
+                                            ",".join(alerts))
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Email alert settings modified"
 
 class SettingAudit(Command):
     """The settings audit subcommand"""
