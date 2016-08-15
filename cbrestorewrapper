@@ -222,12 +222,6 @@ if __name__ == '__main__':
             print 'Please enter a different bucket'
             sys.exit(1)
 
-    # Handle the case when path has spaces
-    if os.name == 'nt':
-        path = re.sub(r' ', '^ ', path)
-    else:
-        path = re.sub(r' ', '\ ', path)
-
     extra_options = ''
     if args.extra:
         extra_options = ' -x ' + args.extra

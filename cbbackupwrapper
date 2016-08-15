@@ -126,7 +126,9 @@ def argumentParsing():
                         action="store", type="string", default="diff",
                         help="backup mode: full, diff or accu [default:%default]")
     except ImportError:
-        pass
+        parser.add_option("-m", "--mode",
+                        action="store", type="string", default="full",
+                        help=optparse.SUPPRESS_HELP)
 
     options, rest = parser.parse_args()
     if len(rest) != 2:
@@ -322,13 +324,6 @@ if __name__ == '__main__':
         for item in perbucketvbucketlist:
             if item not in vbucketList:
                 vbucketList.append(item)
-
-    # Handle the case when path has spaces
-    # i.e. /Applications/Couchbase Server.app/Contents/...
-    if os.name == 'nt':
-        path = re.sub(r' ', '^ ', path)
-    else:
-        path = re.sub(r' ', '\ ', path)
 
     # If a bucket was specfified then set-up the string to pass to cbbackup.
     specific_bucket = ''
