@@ -39,15 +39,15 @@ class Info:
         data = rest.restCmd('GET', '/nodes/self',
                             user, password, opts)
 
-        json = rest.getJson(data)
+        result = rest.getJson(data)
 
         for x in ['license', 'licenseValid', 'licenseValidUntil']:
-            if x in json:
-                del(json[x])
+            if x in result:
+                del(result[x])
 
         if cmd == 'server-eshell':
-            node = json['otpNode']
-            cookie = json['otpCookie']
+            node = result['otpNode']
+            cookie = result['otpCookie']
 
             if vm != 'ns_server':
                 rest = util.restclient_factory(server, port, {'debug':self.debug}, ssl)
@@ -67,9 +67,9 @@ class Info:
             p = subprocess.call([self.getErlPath(), '-name', name, '-setcookie',
                                  cookie, '-hidden', '-remsh', node])
         elif cmd == 'get-server-info':
-            return json
+            return result
         else:
-            print json.dumps(json, sort_keys=True, indent=2)
+            print json.dumps(result, sort_keys=True, indent=2)
 
     def getErlPath(self):
         bin = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '..', '..', 'bin')
