@@ -42,6 +42,7 @@ class StubCommand():
             "bucket-flush" : "flush all data from disk for a given bucket",
             "bucket-compact" : "compact database and index data",
             "host-list" : "list all hosts in a cluster",
+            "rebalance": "start a cluster rebalancing",
             "rebalance-status": "show status of current cluster rebalancing",
             "rebalance-stop": "stop current cluster rebalancing",
             "server-add": "add one or more servers to the cluster",
@@ -233,7 +234,7 @@ def main():
         'server-add'        : StubCommand,
         'server-readd'      : node.Node,
         'group-manage'      : node.Node,
-        'rebalance'         : node.Node,
+        'rebalance'         : StubCommand,
         'rebalance-stop'    : StubCommand,
         'rebalance-status'  : StubCommand,
         'eject-server'      : node.Node,
@@ -340,9 +341,9 @@ Please use -p or set environment variable %s." % CB_PASSWORD)
     except KeyboardInterrupt:
         print "INTERRUPTED: command: %s: %s:%d" % (cmd, server, port)
         sys.exit(1)
-    except Exception, err:
-        print "ERROR: command: %s: %s:%d, %s" % (cmd, server, port, err)
-        sys.exit(1)
+    #except Exception, err:
+    #    print "ERROR: command: %s: %s:%d, %s" % (cmd, server, port, err)
+    #    sys.exit(1)
 
 if __name__ == '__main__':
     main()

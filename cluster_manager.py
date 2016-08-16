@@ -246,6 +246,20 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def rebalance(self, remove_nodes):
+        url = self.hostname + '/controller/rebalance'
+        all, eject, _, _, _, errors = self._get_otps_names(eject_nodes=remove_nodes)
+        if errors:
+            return None, errors
+
+        if len(eject) != len(remove_nodes):
+            return None, ["Some nodes specified to be removed are not part of the cluster"]
+
+        params = { "knownNodes": ','.join(all),
+                   "ejectedNodes": ','.join(eject) }
+
+        return self._post_form_encoded(url, params)
+
     def rebalance_status(self):
         url = self.hostname + '/pools/default/tasks'
         result, errors = self._get(url)
@@ -269,6 +283,35 @@ class ClusterManager(object):
             return (task["status"], err_msg), None
 
         return ("unknown", None), None
+
+    def _get_otps_names(self, eject_nodes=[], failover_nodes=[], readd_nodes=[]):
+        result, errors = self.pools('default')
+        if errors:
+            return None, None, None, None, None, errors
+
+        all = list()
+        eject = list()
+        failover = list()
+        readd = list()
+        hostnames = list()
+        for node in result["nodes"]:
+            if "otpNode" not in node:
+                return [], [], [], [], [], ["Unable to get otp names"]
+            all.append(node['otpNode'])
+            hostnames.append(node['hostname'])
+            if node['hostname'] in eject_nodes:
+                eject.append(node['otpNode'])
+            if node['hostname'] in failover_nodes:
+                if node['clusterMembership'] != 'active':
+                    return [], [], [], [], [], ["Can't failover a node that isn't in the cluster"]
+                else:
+                    failover.append((node['otpNode'], node['status']))
+            _, host = node['otpNode'].split('@')
+            hostport = "%s:%d" % (host, 8091)
+            if node['hostname'] in readd_nodes or hostport in readd_nodes:
+                readd_otps.append(node['otpNode'])
+
+        return all, eject, failover, readd, hostnames, None
 
     def create_bucket(self, name, password, bucket_type, memory_quota,
                       eviction_policy, replicas, replica_indexes,

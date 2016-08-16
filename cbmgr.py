@@ -1,6 +1,8 @@
 """A Couchbase  CLI subcommand"""
 
+import os
 import sys
+import time
 
 from optparse import HelpFormatter, OptionContainer, OptionGroup, OptionParser
 from cluster_manager import ClusterManager
@@ -38,6 +40,7 @@ def parse_command():
         "bucket-flush": BucketFlush,
         "bucket-list": BucketList,
         "host-list": HostList,
+        "rebalance": Rebalance,
         "rebalance-status": RebalanceStatus,
         "rebalance-stop": RebalanceStop,
         "server-add": ServerAdd,
@@ -584,6 +587,49 @@ class HostList(Command):
             print node['hostname']
 
 
+class Rebalance(Command):
+    """The rebalance subcommand"""
+
+    def __init__(self):
+        super(Rebalance, self).__init__()
+        self.parser.set_usage("couchbase-cli rebalance [options]")
+        self.add_optional("--server-remove", dest="server_remove",
+                          help="A list of servers to remove from the cluster")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        eject_nodes = []
+        if opts.server_remove:
+            eject_nodes = opts.server_remove.split(",")
+
+        _, errors = rest.rebalance(eject_nodes)
+        _exitIfErrors(errors)
+
+        time.sleep(1)
+        status, errors = rest.rebalance_status()
+        _exitIfErrors(errors)
+
+        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+        newline = False
+        while status[0] in['running', 'unknown']:
+            print ".",
+            time.sleep(1)
+            status, errors = rest.rebalance_status()
+            _exitIfErrors(errors)
+            newline = True
+
+        if newline:
+            print "\n"
+        if status[1]:
+            _exitIfErrors([status[1]])
+
+        print "SUCCESS: Rebalance complete"
+
+
 class RebalanceStatus(Command):
     """The rebalance status subcommand"""
 
@@ -623,9 +669,9 @@ class ServerAdd(Command):
 
     def __init__(self):
         super(ServerAdd, self).__init__()
-        self.parser.set_usage("couchbase-cli server-list [options]")
-        self.add_required("--server-add", dest="server",
-                          help="The server to add")
+        self.parser.set_usage("couchbase-cli server-add [options]")
+        self.add_required("--server-add", dest="servers",
+                          help="The list of servers to add")
         self.add_required("--server-add-username", dest="server_username",
                           help="The username for the server to add")
         self.add_required("--server-add-password", dest="server_password",
@@ -659,11 +705,13 @@ class ServerAdd(Command):
             _, errors = rest.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
-        _, errors = rest.add_server(opts.server, opts.group_name, opts.server_username,
-                                    opts.server_password, opts.services)
-        _exitIfErrors(errors)
+        for server in opts.servers.split(","):
+            _, errors = rest.add_server(server, opts.group_name, opts.server_username,
+                                        opts.server_password, opts.services)
+            _exitIfErrors(errors)
 
         print "SUCCESS: Server added"
+
 
 class ServerList(Command):
     """The server list subcommand"""

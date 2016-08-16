@@ -1,6 +1,3 @@
-"""
-  Implementation for rebalance, add, remove, stop rebalance.
-"""
 
 import cluster_manager
 import time
@@ -25,7 +22,6 @@ except ImportError:
 # the rest commands and associated URIs for various node operations
 
 rest_cmds = {
-    'rebalance'         :'/controller/rebalance',
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
     'recovery'          :'/controller/setRecoveryType',
@@ -55,7 +51,6 @@ server_no_add = [
 # Map of operations and the HTTP methods used against the REST interface
 
 methods = {
-    'rebalance'         :'POST',
     'eject-server'      :'POST',
     'server-readd'      :'POST',
     'failover'          :'POST',
@@ -192,12 +187,6 @@ class Node:
             command_error("please list one or more --server-add=HOST[:PORT],"
                   " or use -h for more help.")
 
-        if cmd == 'rebalance':
-            if len(servers['add']) > 0:
-                self.groupAddServers()
-            if cmd == 'rebalance':
-                self.rebalance(servers)
-
         elif cmd == 'server-readd':
             self.reAddServers(servers)
 
@@ -246,47 +235,6 @@ class Node:
 
         elif cmd == 'admin-role-manage':
             self.alterRoles()
-
-    def index_storage_to_param(self, value):
-        if not value or value == "default":
-            return "forestdb"
-        if value == "memopt":
-            return "memory_optimized"
-        return None
-
-    def process_services(self, data_required):
-        if not self.services:
-            self.services = "data"
-        sep = Node.SEP
-        if self.services.find(sep) < 0:
-            #backward compatible when using ";" as separator
-            sep = ";"
-        svc_list = list(set([w.strip() for w in self.services.split(sep)]))
-        svc_candidate = ["data", "index", "query", "fts"]
-        for svc in svc_list:
-            if svc not in svc_candidate:
-                return "invalid service: %s" % svc, None
-        if data_required and "data" not in svc_list:
-            svc_list.append("data")
-        if not IS_ENTERPRISE:
-            if len(svc_list) != len(svc_candidate):
-                if len(svc_list) != 1 or "data" not in svc_list:
-                    return "Community Edition requires that all nodes provision all services or data service only", None
-
-        services = ",".join(svc_list)
-        for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
-            services = services.replace(old, new)
-        return None, services
-
-    def _is_cluster_initialized(self):
-        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
-                                            self.password, self.ssl)
-
-        data, errors = cm.pools()
-        if (errors and len(errors) == 1 and errors[0] == cluster_manager.ERR_AUTH) or \
-            (data and data['pools'] and len(data['pools']) > 0):
-            return True, None
-        return False, errors
 
     def nodeInit(self):
         rest = util.restclient_factory(self.server,
@@ -835,49 +783,6 @@ class Node:
                                          opts)
             print output_result
 
-    def rebalance(self, servers):
-        known_otps, eject_otps, failover_otps, readd_otps, _ = \
-            self.getNodeOtps(to_eject=servers['remove'])
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        rest.setParam('knownNodes', ','.join(known_otps))
-        rest.setParam('ejectedNodes', ','.join(eject_otps))
-        if self.recovery_buckets:
-            rest.setParam('requireDeltaRecoveryBuckets', self.recovery_buckets)
-        opts = {
-            'success_msg': 'rebalanced cluster',
-            'error_msg': 'unable to rebalance cluster'
-        }
-        output_result = rest.restCmd('POST',
-                                     rest_cmds['rebalance'],
-                                     self.user,
-                                     self.password,
-                                     opts)
-        if self.debug:
-            print "INFO: rebalance started: %s" % output_result
-
-        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-
-        print "INFO: rebalancing",
-
-        status, error = self.rebalanceStatus(prefix='\n')
-        while status in['running', 'unknown']:
-            print ".",
-            time.sleep(0.5)
-            try:
-                status, error = self.rebalanceStatus(prefix='\n')
-            except socket.error:
-                time.sleep(2)
-                status, error = self.rebalanceStatus(prefix='\n')
-
-        if error:
-            print '\n' + error
-            sys.exit(1)
-        else:
-            print '\n' + output_result
-
     def rebalanceStatus(self, prefix=''):
         cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
                                             self.password, self.ssl)
@@ -1141,51 +1046,6 @@ class Node:
                                      opts)
         print output_result
 
-    def groupAddServers(self):
-        # If this is the first index node added then we need to make sure to
-        # set the index storage setting.
-        indexStorageParam = self.index_storage_to_param(self.index_storage_setting)
-        if not indexStorageParam:
-            print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
-                % self.index_storage_setting
-            return
-
-        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
-                                            self.password, self.ssl)
-
-        settings, errors = cm.index_settings()
-        _exitIfErrors(errors)
-
-        if not settings:
-            print "Error: unable to infer the current index storage mode"
-            return
-
-        if settings['storageMode'] == "":
-            _, errors = cm.set_index_settings(indexStorageParam, None, None, None,
-                                              None, None)
-            if errors:
-                _exitIfErrors(errors)
-        elif settings['storageMode'] != self.index_storage_setting and \
-             self.index_storage_setting:
-            print "Error: Cannot change index storage mode from `%s` to `%s`" % \
-                (settings['storageMode'], self.index_storage_setting)
-            return
-
-        err, services = self.process_services(False)
-        if err:
-            print err
-            return
-        for server in self.server_list:
-            _, errors = cm.add_server(server, self.group_name, self.sa_username,
-                                           self.sa_password, services)
-            if errors:
-                _exitIfErrors(errors, "Error: Failed to add server %s: " % server)
-
-            if self.group_name:
-                print "Server %s added to group %s" % (server, self.group_name)
-            else:
-                print "Server %s added" % server
-
     def groupMoveServer(self):
         groups = self.getServerGroups()
         node_info = {}
@@ -1354,7 +1214,6 @@ class Node:
             "server-info" :"show details on one server",
             "server-readd" :"readd a server that was failed over",
             "group-manage" :"manage server groups",
-            "rebalance" :"start a cluster rebalancing",
             "failover" :"failover one or more servers",
             "recovery" :"recover one or more servers",
             "setting-compaction" : "set auto compaction settings",
@@ -1390,10 +1249,7 @@ class Node:
         services = [("--services=data,index,query,fts",
                      "services that server runs")]
 
-        if cmd == "rebalance":
-            return [("--index-storage-setting=SETTING", "index storage type [default, memopt]")] \
-            + server_common + services
-        elif cmd == "server-readd":
+        if cmd == "server-readd":
             return server_common
         elif cmd == "group-manage":
             return [
@@ -1512,38 +1368,6 @@ class Node:
      couchbase-cli node-init -c 192.168.0.1:8091 \\
        --node-init-data-path=/tmp \\
        -u Administrator -p password""")]
-        elif cmd == "rebalance":
-            return [("Add a node to a cluster and rebalance",
-"""
-    couchbase-cli rebalance -c 192.168.0.1:8091 \\
-       --server-add=192.168.0.2:8091 \\
-       --server-add-username=Administrator1 \\
-       --server-add-password=password1 \\
-       --group-name=group1 \\
-       -u Administrator -p password"""),
-                    ("Add a node to a cluster and rebalance",
-"""
-    couchbase-cli rebalance -c 192.168.0.1:8091 \\
-       --server-add=192.168.0.2:8091 \\
-       --server-add-username=Administrator1 \\
-       --server-add-password=password1 \\
-       --group-name=group1 \\
-       -u Administrator -p password"""),
-                    ("Remove a node from a cluster and rebalance",
-"""
-    couchbase-cli rebalance -c 192.168.0.1:8091 \\
-       --server-remove=192.168.0.2:8091 \\
-       -u Administrator -p password"""),
-                    ("Remove and add nodes from/to a cluster and rebalance",
-"""
-    couchbase-cli rebalance -c 192.168.0.1:8091 \\
-      --server-remove=192.168.0.2 \\
-      --server-add=192.168.0.4 \\
-      --server-add-username=Administrator1 \\
-      --server-add-password=password1 \\
-      --group-name=group1 \\
-      -u Administrator -p password""")
-       ]
         elif cmd == "recovery":
             return [("Set recovery type to a server",
 """
@@ -1565,10 +1389,6 @@ class Node:
     couchbase-cli recovery -c 192.168.0.1:8091 \\
        --server-recovery=192.168.0.2 \\
        --recovery-type=delta \\
-       -u Administrator -p password
-
-    couchbase-cli rebalance -c 192.168.0.1:8091 \\
-       --recovery-buckets="default,bucket1" \\
        -u Administrator -p password""")]
         elif cmd == "user-manage":
             return [("List read only user in a cluster",
