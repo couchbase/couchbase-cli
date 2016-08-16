@@ -246,6 +246,30 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def rebalance_status(self):
+        url = self.hostname + '/pools/default/tasks'
+        result, errors = self._get(url)
+        if errors:
+            return (None, None), errors
+
+        for task in result:
+            if task["type"] != "rebalance":
+                continue
+
+            err_msg = None
+            if "errorMessage" in task:
+                err_msg = task['errorMessage']
+            if task["status"] == "running":
+                return (task["status"], err_msg), None
+            if task["status"] == "notRunning":
+                if "statusIsStale" in task:
+                    if task["statusIsStale"] or task["statusIsStale"] == "true":
+                        return ("unknown", err_msg), None
+
+            return (task["status"], err_msg), None
+
+        return ("unknown", None), None
+
     def create_bucket(self, name, password, bucket_type, memory_quota,
                       eviction_policy, replicas, replica_indexes,
                       threads_number, flush_enabled, sync, timeout=60):

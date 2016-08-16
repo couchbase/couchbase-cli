@@ -26,7 +26,6 @@ except ImportError:
 
 rest_cmds = {
     'rebalance'         :'/controller/rebalance',
-    'rebalance-status'  :'/pools/default/rebalanceProgress',
     'server-readd'      :'/controller/reAddNode',
     'failover'          :'/controller/failOver',
     'recovery'          :'/controller/setRecoveryType',
@@ -44,13 +43,11 @@ rest_cmds = {
 }
 
 server_no_remove = [
-    'rebalance-status',
     'server-readd',
     'failover',
     'recovery',
 ]
 server_no_add = [
-    'rebalance-status',
     'failover',
     'recovery',
 ]
@@ -59,7 +56,6 @@ server_no_add = [
 
 methods = {
     'rebalance'         :'POST',
-    'rebalance-status'  :'GET',
     'eject-server'      :'POST',
     'server-readd'      :'POST',
     'failover'          :'POST',
@@ -85,7 +81,7 @@ bool_to_str = lambda value: str(bool(int(value))).lower()
 class Node:
     SEP = ","
     def __init__(self):
-        self.rest_cmd = rest_cmds['rebalance-status']
+        self.rest_cmd = None
         self.method = 'GET'
         self.debug = False
         self.server = ''
@@ -204,10 +200,6 @@ class Node:
 
         elif cmd == 'server-readd':
             self.reAddServers(servers)
-
-        elif cmd == 'rebalance-status':
-            output_result = self.rebalanceStatus()
-            print output_result
 
         elif cmd == 'failover':
             if len(servers['failover']) <= 0:
@@ -887,37 +879,13 @@ class Node:
             print '\n' + output_result
 
     def rebalanceStatus(self, prefix=''):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
+                                            self.password, self.ssl)
 
-        opts = {
-            'error_msg': "unable to obtain rebalance status",
-            'success_msg': "retrieve replication status successfully"
-        }
-        output_result = rest.restCmd('GET',
-                                     '/pools/default/tasks',
-                                     self.user,
-                                     self.password,
-                                     opts)
-        tasks = rest.getJson(output_result)
-        for task in tasks:
-            error_message = None
-            if "errorMessage" in task:
-                error_message = task['errorMessage']
+        status, errors = cm.rebalance_status()
+        _exitIfErrors(errors)
 
-            if task["type"] == "rebalance":
-                if task["status"] == "running":
-                    return task["status"], error_message
-                if task["status"] == "notRunning":
-                    if task.has_key("statusIsStale"):
-                        if task["statusIsStale"] or task["statusIsStale"] == "true":
-                            return "unknown", error_message
-
-                return task["status"], error_message
-
-        return "unknown", error_message
+        return status[0], status[1]
 
     def failover(self, servers):
         known_otps, eject_otps, failover_otps, readd_otps, _ = \
@@ -1387,7 +1355,6 @@ class Node:
             "server-readd" :"readd a server that was failed over",
             "group-manage" :"manage server groups",
             "rebalance" :"start a cluster rebalancing",
-            "rebalance-status" :"show status of current cluster rebalancing",
             "failover" :"failover one or more servers",
             "recovery" :"recover one or more servers",
             "setting-compaction" : "set auto compaction settings",
