@@ -23,7 +23,6 @@ except ImportError:
 
 rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
-    'failover'          :'/controller/failOver',
     'recovery'          :'/controller/setRecoveryType',
     'node-init'         :'/nodes/self/controller/settings',
     'setting-compaction'    :'/controller/setAutoCompaction',
@@ -40,11 +39,9 @@ rest_cmds = {
 
 server_no_remove = [
     'server-readd',
-    'failover',
     'recovery',
 ]
 server_no_add = [
-    'failover',
     'recovery',
 ]
 
@@ -53,7 +50,6 @@ server_no_add = [
 methods = {
     'eject-server'      :'POST',
     'server-readd'      :'POST',
-    'failover'          :'POST',
     'recovery'          :'POST',
     'node-init'         :'POST',
     'setting-compaction'    :'POST',
@@ -140,7 +136,6 @@ class Node:
         self.extended = False
         self.cmd = None
 
-        self.hard_failover = None
         self.recovery_type = None
         self.recovery_buckets = None
 
@@ -189,13 +184,6 @@ class Node:
 
         elif cmd == 'server-readd':
             self.reAddServers(servers)
-
-        elif cmd == 'failover':
-            if len(servers['failover']) <= 0:
-                command_error("please list one or more --server-failover=HOST[:PORT];"
-                      " or use -h for more help.")
-
-            self.failover(servers)
 
         elif cmd == 'recovery':
             if len(servers['recovery']) <= 0:
@@ -523,10 +511,6 @@ class Node:
                 server = "%s:%d" % util.hostport(a)
                 servers['remove'][server] = True
                 server = None
-            elif o in ( "--server-failover"):
-                server = "%s:%d" % util.hostport(a)
-                servers['failover'][server] = True
-                server = None
             elif o in ( "--server-recovery"):
                 server = "%s:%d" % util.hostport(a)
                 servers['recovery'][server] = True
@@ -649,8 +633,6 @@ class Node:
                 self.certificate_file = a
             elif o == '--set-node-certificate':
                 self.cmd = 'set-node-certificate'
-            elif o == '--force':
-                self.hard_failover = True
             elif o == '--recovery-type':
                 self.recovery_type = a
             elif o == '--recovery-buckets':
@@ -782,68 +764,6 @@ class Node:
                                          self.password,
                                          opts)
             print output_result
-
-    def rebalanceStatus(self, prefix=''):
-        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
-                                            self.password, self.ssl)
-
-        status, errors = cm.rebalance_status()
-        _exitIfErrors(errors)
-
-        return status[0], status[1]
-
-    def failover(self, servers):
-        known_otps, eject_otps, failover_otps, readd_otps, _ = \
-            self.getNodeOtps(to_failover=servers['failover'])
-
-        if len(failover_otps) <= 0:
-            command_error("specified servers are not part of the cluster: %s" %
-                  servers['failover'].keys())
-
-        for failover_otp, node_status in failover_otps:
-            rest = util.restclient_factory(self.server,
-                                         self.port,
-                                         {'debug':self.debug},
-                                         self.ssl)
-            opts = {
-                'error_msg': "unable to failover %s" % failover_otp,
-                'success_msg': "failover %s" % failover_otp
-            }
-            rest.setParam('otpNode', failover_otp)
-            if self.hard_failover or node_status != 'healthy':
-                output_result = rest.restCmd('POST',
-                                             rest_cmds['failover'],
-                                             self.user,
-                                             self.password,
-                                             opts)
-                print output_result
-            else:
-                output_result = rest.restCmd('POST',
-                                             '/controller/startGracefulFailover',
-                                             self.user,
-                                             self.password,
-                                             opts)
-                if self.debug:
-                    print "INFO: rebalance started: %s" % output_result
-
-                sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-
-                print "INFO: graceful failover",
-
-                status, error = self.rebalanceStatus(prefix='\n')
-                while status == 'running':
-                    print ".",
-                    time.sleep(0.5)
-                    try:
-                        status, error = self.rebalanceStatus(prefix='\n')
-                    except socket.error:
-                        time.sleep(2)
-                        status, error = self.rebalanceStatus(prefix='\n')
-
-                if error:
-                    print '\n' + error
-                else:
-                    print '\n' + output_result
 
     def userManage(self):
         if self.cmd == 'list':
@@ -1214,7 +1134,6 @@ class Node:
             "server-info" :"show details on one server",
             "server-readd" :"readd a server that was failed over",
             "group-manage" :"manage server groups",
-            "failover" :"failover one or more servers",
             "recovery" :"recover one or more servers",
             "setting-compaction" : "set auto compaction settings",
             "setting-alert" : "set email alert settings",
@@ -1266,10 +1185,6 @@ class Node:
             return [
             ("--node-init-data-path=PATH", "data path for database files"),
             ("--node-init-index-path=PATH", "index path for view data")]
-        elif cmd == "failover":
-            return [
-            ("--server-failover=HOST[:PORT]", "server to failover"),
-            ("--force", "failover node from cluster right away")]
         elif cmd == "recovery":
             return [
             ("--server-recovery=HOST[:PORT]", "server to recover"),
@@ -1374,21 +1289,6 @@ class Node:
     couchbase-cli recovery -c 192.168.0.1:8091 \\
        --server-recovery=192.168.0.2 \\
        --recovery-type=full \\
-       -u Administrator -p password""")]
-        elif cmd == "failover":
-            return [("Set a failover, readd, recovery and rebalance sequence operations",
-"""
-    couchbase-cli failover -c 192.168.0.1:8091 \\
-       --server-failover=192.168.0.2 \\
-       -u Administrator -p password
-
-    couchbase-cli server-readd -c 192.168.0.1:8091 \\
-       --server-add=192.168.0.2 \\
-       -u Administrator -p password
-
-    couchbase-cli recovery -c 192.168.0.1:8091 \\
-       --server-recovery=192.168.0.2 \\
-       --recovery-type=delta \\
        -u Administrator -p password""")]
         elif cmd == "user-manage":
             return [("List read only user in a cluster",

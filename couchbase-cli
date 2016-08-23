@@ -41,6 +41,7 @@ class StubCommand():
             "bucket-delete" : "delete an existing bucket",
             "bucket-flush" : "flush all data from disk for a given bucket",
             "bucket-compact" : "compact database and index data",
+            "failover": "failover one or more servers",
             "host-list" : "list all hosts in a cluster",
             "rebalance": "start a cluster rebalancing",
             "rebalance-status": "show status of current cluster rebalancing",
@@ -341,9 +342,9 @@ Please use -p or set environment variable %s." % CB_PASSWORD)
     except KeyboardInterrupt:
         print "INTERRUPTED: command: %s: %s:%d" % (cmd, server, port)
         sys.exit(1)
-    #except Exception, err:
-    #    print "ERROR: command: %s: %s:%d, %s" % (cmd, server, port, err)
-    #    sys.exit(1)
+    except Exception, err:
+        print "ERROR: command: %s: %s:%d, %s" % (cmd, server, port, err)
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

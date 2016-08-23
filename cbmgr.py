@@ -39,6 +39,7 @@ def parse_command():
         "bucket-edit": BucketEdit,
         "bucket-flush": BucketFlush,
         "bucket-list": BucketList,
+        "failover": Failover,
         "host-list": HostList,
         "rebalance": Rebalance,
         "rebalance-status": RebalanceStatus,
@@ -569,6 +570,50 @@ class BucketList(Command):
                 print ' ramQuota: %s' % bucket['quota']['ram']
                 print ' ramUsed: %s' % bucket['basicStats']['memUsed']
 
+
+class Failover(Command):
+    """The failover subcommand"""
+
+    def __init__(self):
+        super(Failover, self).__init__()
+        self.parser.set_usage("couchbase-cli failover [options]")
+        self.add_required("--server-failover", dest="server_failover",
+                          help="The server to failover")
+        self.add_optional("--force", dest="force", action="store_true",
+                          help="Hard failover the server")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        _, errors = rest.failover(opts.server_failover, opts.force)
+        _exitIfErrors(errors)
+
+        if not opts.force:
+            _, errors = rest.rebalance([])
+            _exitIfErrors(errors)
+
+            time.sleep(1)
+            status, errors = rest.rebalance_status()
+            _exitIfErrors(errors)
+
+            sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+            newline = False
+            while status[0] in['running', 'unknown']:
+                print ".",
+                time.sleep(1)
+                status, errors = rest.rebalance_status()
+                _exitIfErrors(errors)
+                newline = True
+
+            if newline:
+                print "\n"
+            if status[1]:
+                _exitIfErrors([status[1]])
+
+        print "SUCCESS: Server failed over"
 
 class HostList(Command):
     """The host list subcommand"""

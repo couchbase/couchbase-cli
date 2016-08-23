@@ -246,6 +246,26 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def failover(self, server, force):
+        _, _, failover, _, _, errors = self._get_otps_names(failover_nodes=[server])
+        if errors:
+            return None, errors
+
+        if len(failover) == 0:
+            return None, ["Server can't be failed over because it's not part of the cluster"]
+
+        failover_node, node_status = failover[0]
+        params = { "otpNode": failover_node }
+
+        if force:
+            url = self.hostname + '/controller/failOver'
+            return self._post_form_encoded(url, params)
+        else:
+            if node_status != 'healthy':
+                return None, ["% can't be gracefully failed over because the node is not healthy", server]
+            url = self.hostname + '/controller/startGracefulFailover'
+            return self._post_form_encoded(url, params)
+
     def rebalance(self, remove_nodes):
         url = self.hostname + '/controller/rebalance'
         all, eject, _, _, _, errors = self._get_otps_names(eject_nodes=remove_nodes)
