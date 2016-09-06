@@ -52,7 +52,8 @@ class StubCommand():
             "setting-audit": "set audit settings",
             "setting-autofailover": "set auto failover settings",
             "setting-index" : "set index settings",
-            "setting-notification" : "set notification settings"}
+            "setting-notification" : "set notification settings",
+            "user-manage" : "manage read only user",}
         if cmd in command_summary:
             return command_summary[cmd]
 

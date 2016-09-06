@@ -51,6 +51,7 @@ def parse_command():
         "setting-cluster": SettingCluster,
         "setting-index": SettingIndex,
         "setting-notification": SettingNotification,
+        "user-manage": UserManage,
     }
 
     if sys.argv[1] not in subcommands:
@@ -964,3 +965,77 @@ class SettingNotification(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Notification settings updated"
+
+
+class UserManage(Command):
+    """The user manage subcommand"""
+
+    def __init__(self):
+        super(UserManage, self).__init__()
+        self.parser.set_usage("couchbase-cli user-manage [options]")
+        self.add_optional("--list", dest="list", action="store_true",
+                          default=False, help="List the local read-only user")
+        self.add_optional("--delete", dest="delete", action="store_true",
+                          default=False, help="Delete the local read-only user")
+        self.add_optional("--set", dest="set", action="store_true",
+                          default=False, help="Set the local read-only user")
+        self.add_optional("--ro-username", dest="ro_user",
+                          help="The read-only username")
+        self.add_optional("--ro-password", dest="ro_pass",
+                          help="The read-only password")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        num_selectors = sum([opts.list, opts.delete, opts.set])
+        if num_selectors == 0:
+            _exitIfErrors(["Must specify --delete, --list, or --set"])
+        elif num_selectors != 1:
+            _exitIfErrors(["Only one of the following can be specified: --delete, --list, or --set"])
+
+        if opts.delete:
+            self._delete(rest, opts, args)
+        elif opts.list:
+            self._list(rest, opts, args)
+        elif opts.set:
+            self._set(rest, opts, args)
+
+    def _delete(self, rest, opts, args):
+        if opts.ro_user is not None:
+            _warning("--ro-username is not used with the --delete command")
+        if opts.ro_pass is not None:
+            _warning("--ro-password is not used with the --delete command")
+
+        _, errors = rest.delete_local_read_only_user()
+        _exitIfErrors(errors)
+        print "SUCCESS: Local read-only user deleted"
+
+    def _list(self, rest, opts, args):
+        if opts.ro_user is not None:
+            _warning("--ro-username is not used with the --list command")
+        if opts.ro_pass is not None:
+            _warning("--ro-password is not used with the --list command")
+
+        result, errors = rest.list_local_read_only_user()
+        if errors and errors[0] == "Requested resource not found.\r\n":
+            errors[0] = "There is no internal read-only user"
+        _exitIfErrors(errors)
+        print result
+
+    def _set(self, rest, opts, args):
+        if opts.ro_user is None:
+            _exitIfErrors(["--ro-username is required with the --set command"])
+        if opts.ro_pass is None:
+            _exitIfErrors(["--ro-password is required with the --set command"])
+
+        cur_ro_user, errors = rest.list_local_read_only_user()
+        if not errors and cur_ro_user != opts.ro_user:
+            _exitIfErrors(["The internal read-only user already exists"])
+        elif errors and errors[0] != "Requested resource not found.\r\n":
+            _exitIfErrors(errors)
+
+        _, errors = rest.set_local_read_only_user(opts.ro_user, opts.ro_pass)
+        _exitIfErrors(errors)
+        print "SUCCESS: Local read-only user created"

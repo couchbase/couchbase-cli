@@ -28,7 +28,6 @@ rest_cmds = {
     'setting-compaction'    :'/controller/setAutoCompaction',
     'setting-alert'         :'/settings/alerts',
     'setting-ldap'          :'/settings/saslauthdAuth',
-    'user-manage'           :'/settings/readOnlyUser',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
     'collect-logs-start'  : '/controller/startLogsCollection',
@@ -55,7 +54,6 @@ methods = {
     'setting-compaction'    :'POST',
     'setting-alert'         :'POST',
     'setting-ldap'          :'POST',
-    'user-manage'           :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
     'collect-logs-start'  : 'POST',
@@ -81,8 +79,6 @@ class Node:
         self.password = ''
         self.ssl = False
 
-        self.ro_username = ''
-        self.ro_password = ''
         self.params = {}
         self.output = 'standard'
         self.sa_username = None
@@ -202,9 +198,6 @@ class Node:
 
         elif cmd == 'setting-ldap':
             self.ldap()
-
-        elif cmd == 'user-manage':
-            self.userManage()
 
         elif cmd == 'group-manage':
             self.groupManage()
@@ -595,10 +588,6 @@ class Node:
                 self.cmd = 'delete'
             elif o == '--set':
                 self.cmd = 'set'
-            elif o == '--ro-username':
-                self.ro_username = a
-            elif o == '--ro-password':
-                self.ro_password = a
             elif o == '--metadata-purge-interval':
                 self.purge_interval = a
             elif o == '--group-name':
@@ -764,83 +753,6 @@ class Node:
                                          self.password,
                                          opts)
             print output_result
-
-    def userManage(self):
-        if self.cmd == 'list':
-            self.roUserList()
-        elif self.cmd == 'delete':
-            self.roUserDelete()
-        elif self.cmd == 'set':
-            self.roUserSet()
-
-    def roUserList(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        opts = { 'error_msg':'not any read only user defined'}
-        try:
-            output_result = rest.restCmd('GET',
-                                         '/settings/readOnlyAdminName',
-                                         self.user,
-                                         self.password,
-                                         opts)
-            json = rest.getJson(output_result)
-            print json
-        except:
-            pass
-
-    def roUserDelete(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-
-        opts = {
-            'success_msg': 'readOnly user deleted',
-            'error_msg': 'unable to delete readOnly user'
-        }
-        output_result = rest.restCmd('DELETE',
-                                     "/settings/readOnlyUser",
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
-    def roUserSet(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        try:
-            output_result = rest.restCmd('GET',
-                                         '/settings/readOnlyAdminName',
-                                         self.user,
-                                         self.password)
-            json = rest.getJson(output_result)
-            print "ERROR: readonly user %s exist already. Delete it before creating a new one" % json
-            return
-        except:
-            pass
-
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.ro_username:
-            rest.setParam('username', self.ro_username)
-        if self.ro_password:
-            rest.setParam('password', self.ro_password)
-        opts = {
-            'success_msg': 'readOnly user created',
-            'error_msg': 'fail to create readOnly user'
-        }
-        output_result = rest.restCmd('POST',
-                                     "/settings/readOnlyUser",
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
 
     def groupManage(self):
         if self.cmd == 'move-servers':
@@ -1142,7 +1054,6 @@ class Node:
             "collect-logs-status" : "show the status of cluster-wide log collection",
             "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
-            "user-manage" : "manage read only user",
             "setting-ldap" : "set ldap settings",
             "admin-role-manage" : "set access-control roles for users"
         }
@@ -1190,13 +1101,6 @@ class Node:
             ("--server-recovery=HOST[:PORT]", "server to recover"),
             ("--recovery-type=TYPE[delta|full]",
              "type of recovery to be performed for a node")]
-        elif cmd == "user-manage":
-            return [
-            ("--set", "create/modify a read only user"),
-            ("--list", "list any read only user"),
-            ("--delete", "delete read only user"),
-            ("--ro-username=USERNAME", "readonly user name"),
-            ("--ro-password=PASSWORD", "readonly user password")]
         elif cmd == "setting-alert":
             return [
             ("--enable-email-alert=[0|1]", "allow email alert"),
@@ -1290,21 +1194,6 @@ class Node:
        --server-recovery=192.168.0.2 \\
        --recovery-type=full \\
        -u Administrator -p password""")]
-        elif cmd == "user-manage":
-            return [("List read only user in a cluster",
-"""
-    couchbase-cli user-manage --list -c 192.168.0.1:8091 \\
-           -u Administrator -p password"""),
-                ("Delete a read only user in a cluster",
-"""
-    couchbase-cli user-manage -c 192.168.0.1:8091 \\
-        --delete --ro-username=readonlyuser \\
-        -u Administrator -p password"""),
-                ("Create/modify a read only user in a cluster",
-"""
-    couchbase-cli user-manage -c 192.168.0.1:8091 \\
-        --set --ro-username=readonlyuser --ro-password=readonlypassword \\
-        -u Administrator -p password""")]
         elif cmd == "group-manage":
             return [("Create a new group",
 """

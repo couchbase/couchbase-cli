@@ -485,6 +485,20 @@ class ClusterManager(object):
         url = self.hostname + '/controller/stopRebalance'
         return self._post_form_encoded(url, dict())
 
+    def delete_local_read_only_user(self):
+        url = self.hostname + '/settings/readOnlyUser'
+        return self._delete(url)
+
+    def list_local_read_only_user(self):
+        url = self.hostname + '/settings/readOnlyAdminName'
+        return self._get(url)
+
+    def set_local_read_only_user(self, username, password):
+        url = self.hostname + '/settings/readOnlyUser'
+        params = { "username": username,
+                   "password": password }
+        return self._post_form_encoded(url, params)
+
     def set_audit_settings(self, enabled, log_path, rotate_interval):
         url = self.hostname + '/settings/audit'
 
