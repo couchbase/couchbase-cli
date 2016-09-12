@@ -250,6 +250,33 @@ class ClusterManager(object):
         url = self.hostname + '/pools/default/tasks'
         return self._get(url)
 
+    def collect_logs_start(self, servers, upload, upload_host, upload_customer, upload_ticket):
+        url = self.hostname + '/controller/startLogsCollection'
+        params = dict()
+
+        if servers == "*":
+            params["nodes"] = servers
+        else:
+            nodes = servers.split(",")
+            known, _, _, readd, _, errors = self._get_otps_names(readd_nodes=nodes)
+            if errors:
+                return None, errors
+
+            if len(nodes) != len(readd):
+                return None, ["Servers list contains invalid servers"]
+
+            params["nodes"] = ",".join(readd)
+
+        if upload:
+            if upload_host is not None:
+                params["uploadHost"] = upload_host
+            if upload_customer is not None:
+                params["customer"] = upload_customer
+            if upload_ticket is not None:
+                params["ticket"] = upload_ticket
+
+        return self._post_form_encoded(url, params)
+
     def collect_logs_stop(self):
         url = self.hostname + '/controller/cancelLogsCollection'
         return self._post_form_encoded(url, dict())
@@ -336,7 +363,7 @@ class ClusterManager(object):
             _, host = node['otpNode'].split('@')
             hostport = "%s:%d" % (host, 8091)
             if node['hostname'] in readd_nodes or hostport in readd_nodes:
-                readd_otps.append(node['otpNode'])
+                readd.append(node['otpNode'])
 
         return all, eject, failover, readd, hostnames, None
 

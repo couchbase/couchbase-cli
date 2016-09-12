@@ -39,6 +39,7 @@ def parse_command():
         "bucket-edit": BucketEdit,
         "bucket-flush": BucketFlush,
         "bucket-list": BucketList,
+        "collect-logs-start": CollectLogsStart,
         "collect-logs-status": CollectLogsStatus,
         "collect-logs-stop": CollectLogsStop,
         "failover": Failover,
@@ -574,6 +575,59 @@ class BucketList(Command):
                 print ' numReplicas: %s' % bucket['replicaNumber']
                 print ' ramQuota: %s' % bucket['quota']['ram']
                 print ' ramUsed: %s' % bucket['basicStats']['memUsed']
+
+
+class CollectLogsStart(Command):
+    """The collect-logs-start subcommand"""
+
+    def __init__(self):
+        super(CollectLogsStart, self).__init__()
+        self.parser.set_usage("couchbase-cli collect-logs-start [options]")
+        self.add_optional("--all-nodes", dest="all_nodes", action="store_true",
+                          default=False, help="Collect logs for all nodes")
+        self.add_optional("--nodes", dest="nodes",
+                          help="A comma separated list of nodes to collect logs from")
+        self.add_optional("--upload", dest="upload", action="store_true",
+                          default=False, help="Logs should be uploaded for Couchbase support")
+        self.add_optional("--upload-host", dest="upload_host",
+                          help="The host to upload logs to")
+        self.add_optional("--customer", dest="upload_customer",
+                          help="The name of the customer uploading logs")
+        self.add_optional("--ticket", dest="upload_ticket",
+                          help="The ticket number the logs correspond to")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        if opts.nodes is None and opts.all_nodes is False:
+            _exitIfErrors(["Must specify either --all-nodes or --nodes"])
+
+        if opts.nodes is not None and opts.all_nodes is True:
+            _exitIfErrors(["Cannot specify both --all-nodes and --nodes"])
+
+        if opts.upload:
+            if opts.upload_host is None:
+                _exitIfErrors(["--upload-host is required when --upload is specified"])
+            if opts.upload_customer is None:
+                _exitIfErrors(["--upload-customer is required when --upload is specified"])
+        else:
+            if opts.upload_host is not None:
+                _warning("--upload-host has has no effect with specifying --upload")
+
+            if opts.upload_customer is not None:
+                _warning("--upload-customer has has no effect with specifying --upload")
+
+        servers = opts.nodes
+        if opts.all_nodes:
+            servers = "*"
+
+        _, errors = rest.collect_logs_start(servers, opts.upload, opts.upload_host,
+                                            opts.upload_customer, opts.upload_ticket)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Log collection started"
 
 
 class CollectLogsStatus(Command):

@@ -28,7 +28,6 @@ rest_cmds = {
     'setting-compaction'    :'/controller/setAutoCompaction',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
-    'collect-logs-start'  : '/controller/startLogsCollection',
     'admin-role-manage'   : '/settings/rbac/users',
 }
 
@@ -50,7 +49,6 @@ methods = {
     'setting-compaction'    :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
-    'collect-logs-start'  : 'POST',
     'admin-role-manage'   : 'PUT',
 }
 
@@ -164,9 +162,6 @@ class Node:
 
         elif cmd == 'ssl-manage':
             self.retrieveCert()
-
-        elif cmd == 'collect-logs-start':
-            self.collectLogsStart(servers)
 
         elif cmd == 'admin-role-manage':
             self.alterRoles()
@@ -776,49 +771,6 @@ class Node:
         else:
             print "ERROR: unknown request:", self.cmd
 
-    def collectLogsStart(self, servers):
-        """Starts a cluster-wide log collection task"""
-        if (servers['log'] is None) and (self.all_nodes is not True):
-            command_error("please specify a list of nodes to collect logs from, " +
-                  " or 'all-nodes'")
-
-        rest = util.restclient_factory(self.server, self.port,
-                                     {'debug': self.debug}, self.ssl)
-        if self.all_nodes:
-            rest.setParam("nodes", "*")
-        else:
-            known_otps, eject_otps, failover_otps, readd_otps, hostnames = \
-                self.getNodeOtps(to_readd=servers['log'])
-            if not len(readd_otps):
-                msg = ",".join(hostnames)
-                command_error("invalid node name specified for collecting logs, available nodes are:\n"+msg)
-
-            nodelist = ",".join(readd_otps)
-            rest.setParam("nodes", nodelist)
-            print "NODES:", nodelist
-
-        if self.upload:
-            if self.upload_host is None:
-                command_error("please specify an upload-host when using --upload")
-
-            rest.setParam("uploadHost", self.upload_host)
-
-            if not self.customer:
-                command_error("please specify a value for --customer when using" +
-                      " --upload")
-
-            rest.setParam("customer", self.customer)
-            rest.setParam("ticket", self.ticket)
-
-        opts = {
-            'error_msg': "unable to start log collection:",
-            'success_msg': "Log collection started"
-        }
-
-        output_result = rest.restCmd(self.method, self.rest_cmd, self.user,
-                                     self.password, opts)
-        print output_result
-
     def getCommandSummary(self, cmd):
         """Return one-line summary info for each supported command"""
         command_summary = {
@@ -828,7 +780,6 @@ class Node:
             "group-manage" :"manage server groups",
             "recovery" :"recover one or more servers",
             "setting-compaction" : "set auto compaction settings",
-            "collect-logs-start" : "start a cluster-wide log collection",
             "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
             "admin-role-manage" : "set access-control roles for users"
@@ -884,18 +835,6 @@ class Node:
                      "regenerate cluster certificate AND save to a pem file"),
                     ("--set-node-certificate", "sets the node certificate"),
                     ("--upload-cluster-ca", "uploads a new cluster certificate")]
-        elif cmd == "collect-logs-start":
-            return [
-            ("--all-nodes", "Collect logs from all accessible cluster nodes"),
-            ("--nodes=HOST[:PORT],HOST[:PORT]",
-             "Collect logs from the specified subset of cluster nodes"),
-            ("--upload", "Upload collects logs to specified host"),
-            ("--upload-host=HOST",
-             "Host to upload logs to (Manditory when --upload specified)"),
-            ("--customer=CUSTOMER",
-             "Customer name to use when uploading logs (Mandatory when --upload specified)"),
-            ("--ticket=TICKET_NUMBER",
-             "Ticket number to associate the uploaded logs with")]
         elif cmd == "admin-role-manage":
             return [
             ("--my-roles", "Return a list of roles for the current user."),
@@ -989,19 +928,6 @@ class Node:
     couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
         --set-node-certificate \\
         -u Administrator -p password""")]
-        elif cmd == "collect-logs-start":
-            return [("Start cluster-wide log collection for whole cluster",
-"""
-    couchbase-cli collect-logs-start -c 192.168.0.1:8091 \\
-        -u Administrator -p password \\
-        --all-nodes --upload --upload-host=host.upload.com \\
-        --customer="example inc" --ticket=12345"""),
-                ("Start cluster-wide log collection for selected nodes",
-"""
-    couchbase-cli collect-logs-start -c 192.168.0.1:8091 \\
-        -u Administrator -p password \\
-        --nodes=10.1.2.3:8091,10.1.2.4 --upload --upload-host=host.upload.com \\
-        --customer="example inc" --ticket=12345""")]
         elif cmd == "admin-role-manage":
             return [("Show the current users roles.",
 """

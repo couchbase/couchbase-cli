@@ -41,6 +41,7 @@ class StubCommand():
             "bucket-delete" : "delete an existing bucket",
             "bucket-flush" : "flush all data from disk for a given bucket",
             "bucket-compact" : "compact database and index data",
+            "collect-logs-start" : "start a cluster-wide log collection",
             "collect-logs-status" : "show the status of cluster-wide log collection",
             "collect-logs-stop" : "stop a cluster-wide log collection",
             "failover": "failover one or more servers",
