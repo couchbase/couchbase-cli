@@ -39,6 +39,7 @@ def parse_command():
         "bucket-edit": BucketEdit,
         "bucket-flush": BucketFlush,
         "bucket-list": BucketList,
+        "collect-logs-stop": CollectLogsStop,
         "failover": Failover,
         "host-list": HostList,
         "rebalance": Rebalance,
@@ -572,6 +573,24 @@ class BucketList(Command):
                 print ' numReplicas: %s' % bucket['replicaNumber']
                 print ' ramQuota: %s' % bucket['quota']['ram']
                 print ' ramUsed: %s' % bucket['basicStats']['memUsed']
+
+
+class CollectLogsStop(Command):
+    """The collect-logs-stop subcommand"""
+
+    def __init__(self):
+        super(CollectLogsStop, self).__init__()
+        self.parser.set_usage("couchbase-cli collect-logs-stop [options]")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        _, errors = rest.collect_logs_stop()
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Log collection stopped"
 
 
 class Failover(Command):

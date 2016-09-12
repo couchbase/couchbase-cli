@@ -246,6 +246,10 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def collect_logs_stop(self):
+        url = self.hostname + '/controller/cancelLogsCollection'
+        return self._post_form_encoded(url, dict())
+
     def failover(self, server, force):
         _, _, failover, _, _, errors = self._get_otps_names(failover_nodes=[server])
         if errors:

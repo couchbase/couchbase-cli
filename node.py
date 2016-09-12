@@ -29,7 +29,6 @@ rest_cmds = {
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
     'collect-logs-start'  : '/controller/startLogsCollection',
-    'collect-logs-stop'   : '/controller/cancelLogsCollection',
     'collect-logs-status' : '/pools/default/tasks',
     'admin-role-manage'   : '/settings/rbac/users',
 }
@@ -53,7 +52,6 @@ methods = {
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
     'collect-logs-start'  : 'POST',
-    'collect-logs-stop'   : 'POST',
     'collect-logs-status' : 'GET',
     'admin-role-manage'   : 'PUT',
 }
@@ -171,9 +169,6 @@ class Node:
 
         elif cmd == 'collect-logs-start':
             self.collectLogsStart(servers)
-
-        elif cmd == 'collect-logs-stop':
-            self.collectLogsStop()
 
         elif cmd == 'collect-logs-status':
             self.collectLogsStatus()
@@ -829,19 +824,6 @@ class Node:
                                      self.password, opts)
         print output_result
 
-    def collectLogsStop(self):
-        """Stops a cluster-wide log collection task"""
-        rest = util.restclient_factory(self.server, self.port,
-                                     {'debug': self.debug}, self.ssl)
-
-        opts = {
-            'success_msg': 'collect logs successfully stopped',
-            'error_msg': 'unable to stop collect logs'
-        }
-        output_result = rest.restCmd(self.method, self.rest_cmd, self.user,
-                                     self.password, opts)
-        print output_result
-
     def collectLogsStatus(self):
         """Shows the current status of log collection task"""
         rest = util.restclient_factory(self.server, self.port,
@@ -880,7 +862,6 @@ class Node:
             "recovery" :"recover one or more servers",
             "setting-compaction" : "set auto compaction settings",
             "collect-logs-start" : "start a cluster-wide log collection",
-            "collect-logs-stop" : "stop a cluster-wide log collection",
             "collect-logs-status" : "show the status of cluster-wide log collection",
             "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
@@ -1055,11 +1036,6 @@ class Node:
         -u Administrator -p password \\
         --nodes=10.1.2.3:8091,10.1.2.4 --upload --upload-host=host.upload.com \\
         --customer="example inc" --ticket=12345""")]
-        elif cmd == "collect-logs-stop":
-            return [("Stop cluster-wide log collection",
-"""
-    couchbase-cli collect-logs-stop -c 192.168.0.1:8091 \\
-        -u Administrator -p password""")]
         elif cmd == "collect-logs-status":
             return [("Show status of cluster-wide log collection",
 """
