@@ -246,6 +246,10 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def get_tasks(self):
+        url = self.hostname + '/pools/default/tasks'
+        return self._get(url)
+
     def collect_logs_stop(self):
         url = self.hostname + '/controller/cancelLogsCollection'
         return self._post_form_encoded(url, dict())
@@ -285,8 +289,7 @@ class ClusterManager(object):
         return self._post_form_encoded(url, params)
 
     def rebalance_status(self):
-        url = self.hostname + '/pools/default/tasks'
-        result, errors = self._get(url)
+        result, errors = self.get_tasks()
         if errors:
             return (None, None), errors
 

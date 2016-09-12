@@ -39,6 +39,7 @@ def parse_command():
         "bucket-edit": BucketEdit,
         "bucket-flush": BucketFlush,
         "bucket-list": BucketList,
+        "collect-logs-status": CollectLogsStatus,
         "collect-logs-stop": CollectLogsStop,
         "failover": Failover,
         "host-list": HostList,
@@ -574,6 +575,42 @@ class BucketList(Command):
                 print ' ramQuota: %s' % bucket['quota']['ram']
                 print ' ramUsed: %s' % bucket['basicStats']['memUsed']
 
+
+class CollectLogsStatus(Command):
+    """The collect-logs-status subcommand"""
+
+    def __init__(self):
+        super(CollectLogsStatus, self).__init__()
+        self.parser.set_usage("couchbase-cli collect-logs-status [options]")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        tasks, errors = rest.get_tasks()
+        _exitIfErrors(errors)
+
+        found = False
+        for task in tasks:
+            if isinstance(task, dict) and 'type' in task and task['type'] == 'clusterLogsCollection':
+                found = True
+                self._print_task(task)
+
+        if not found:
+            print "No log collection tasks were found"
+
+    def _print_task(self, task):
+        print "Status: %s" % task['status']
+        if 'perNode' in task:
+            print "Details:"
+            for node, node_status in task["perNode"].iteritems():
+                print '\tNode:', node
+                print '\tStatus:', node_status['status']
+                for field in ["path", "statusCode", "url", "uploadStatusCode", "uploadOutput"]:
+                    if field in node_status:
+                        print '\t', field, ":", node_status[field]
+            print
 
 class CollectLogsStop(Command):
     """The collect-logs-stop subcommand"""

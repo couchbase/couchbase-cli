@@ -29,7 +29,6 @@ rest_cmds = {
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
     'collect-logs-start'  : '/controller/startLogsCollection',
-    'collect-logs-status' : '/pools/default/tasks',
     'admin-role-manage'   : '/settings/rbac/users',
 }
 
@@ -52,7 +51,6 @@ methods = {
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
     'collect-logs-start'  : 'POST',
-    'collect-logs-status' : 'GET',
     'admin-role-manage'   : 'PUT',
 }
 
@@ -169,9 +167,6 @@ class Node:
 
         elif cmd == 'collect-logs-start':
             self.collectLogsStart(servers)
-
-        elif cmd == 'collect-logs-status':
-            self.collectLogsStatus()
 
         elif cmd == 'admin-role-manage':
             self.alterRoles()
@@ -824,34 +819,6 @@ class Node:
                                      self.password, opts)
         print output_result
 
-    def collectLogsStatus(self):
-        """Shows the current status of log collection task"""
-        rest = util.restclient_factory(self.server, self.port,
-                                     {'debug': self.debug}, self.ssl)
-
-        opts = {
-            'error_msg': 'unable to obtain collect logs status'
-        }
-        output_result = rest.restCmd(self.method, self.rest_cmd, self.user,
-                                     self.password, opts)
-
-        output_json = rest.getJson(output_result)
-
-        for e in output_json:
-            if ((type(e) == type(dict()) and ('type' in e) and
-                (e['type'] == 'clusterLogsCollection'))):
-                print "Status:   %s" % e['status']
-                if 'perNode' in e:
-                    print "Details:"
-                    for node, ns in e["perNode"].iteritems():
-                        print '\tNode:', node
-                        print '\tStatus:', ns['status']
-                        for f in ["path", "statusCode", "url", "uploadStatusCode", "uploadOutput"]:
-                            if f in ns:
-                                print '\t', f, ":", ns[f]
-                        print
-                return
-
     def getCommandSummary(self, cmd):
         """Return one-line summary info for each supported command"""
         command_summary = {
@@ -862,7 +829,6 @@ class Node:
             "recovery" :"recover one or more servers",
             "setting-compaction" : "set auto compaction settings",
             "collect-logs-start" : "start a cluster-wide log collection",
-            "collect-logs-status" : "show the status of cluster-wide log collection",
             "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
             "admin-role-manage" : "set access-control roles for users"
@@ -1036,11 +1002,6 @@ class Node:
         -u Administrator -p password \\
         --nodes=10.1.2.3:8091,10.1.2.4 --upload --upload-host=host.upload.com \\
         --customer="example inc" --ticket=12345""")]
-        elif cmd == "collect-logs-status":
-            return [("Show status of cluster-wide log collection",
-"""
-    couchbase-cli collect-logs-status -c 192.168.0.1:8091 \\
-        -u Administrator -p password""")]
         elif cmd == "admin-role-manage":
             return [("Show the current users roles.",
 """
