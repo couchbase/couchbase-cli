@@ -515,6 +515,23 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
+    def set_data_paths(self, data_path, index_path):
+        url = self.hostname + '/nodes/self/controller/settings'
+        params = dict()
+
+        if data_path is not None:
+            params["path"] = data_path
+
+        if index_path is not None:
+            params["index_path"] = index_path
+
+        return self._post_form_encoded(url, params)
+
+    def set_hostname(self, hostname):
+        url = self.hostname + '/nodes/self/controller/settings'
+        params = { "hostname": hostname }
+        return self._post_form_encoded(url, params)
+
     def stop_rebalance(self):
         url = self.hostname + '/controller/stopRebalance'
         return self._post_form_encoded(url, dict())

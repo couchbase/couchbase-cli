@@ -44,6 +44,7 @@ def parse_command():
         "collect-logs-stop": CollectLogsStop,
         "failover": Failover,
         "host-list": HostList,
+        "node-init": NodeInit,
         "rebalance": Rebalance,
         "rebalance-status": RebalanceStatus,
         "rebalance-stop": RebalanceStop,
@@ -743,6 +744,38 @@ class HostList(Command):
 
         for node in result['nodes']:
             print node['hostname']
+
+
+class NodeInit(Command):
+    """The node initialization subcommand"""
+
+    def __init__(self):
+        super(NodeInit, self).__init__()
+        self.parser.set_usage("couchbase-cli node-init [options]")
+        self.add_optional("--node-init-data-path", dest="data_path",
+                          help="The path to store database files")
+        self.add_optional("--node-init-index-path", dest="index_path",
+                          help="The path to store index files")
+        self.add_optional("--node-init-hostname", dest="hostname",
+                          help="Sets the hostname for this server")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        # Cluster does not need to be initialized for this command
+
+        if opts.data_path is None and opts.index_path is None and opts.hostname is None:
+            _exitIfErrors(["No node initialization parameters specified"])
+
+        if opts.data_path or opts.index_path:
+            _, errors = rest.set_data_paths(opts.data_path, opts.index_path)
+            _exitIfErrors(errors)
+
+        if opts.hostname:
+            _, errors = rest.set_hostname(opts.hostname)
+            _exitIfErrors(errors)
+
+        print "SUCCESS: Node initialized"
 
 
 class Rebalance(Command):

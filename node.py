@@ -24,7 +24,6 @@ except ImportError:
 rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
     'recovery'          :'/controller/setRecoveryType',
-    'node-init'         :'/nodes/self/controller/settings',
     'setting-compaction'    :'/controller/setAutoCompaction',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
@@ -45,7 +44,6 @@ methods = {
     'eject-server'      :'POST',
     'server-readd'      :'POST',
     'recovery'          :'POST',
-    'node-init'         :'POST',
     'setting-compaction'    :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
@@ -74,9 +72,6 @@ class Node:
         self.sa_username = None
         self.sa_password = None
         self.index_storage_setting = None
-        self.data_path = None
-        self.index_path = None
-        self.hostname = None
         self.enable_email_alert = None
 
         #compaction related settings
@@ -151,9 +146,6 @@ class Node:
                       " or use -h for more help.")
             self.recovery(servers)
 
-        elif cmd == 'node-init':
-            self.nodeInit()
-
         elif cmd == 'setting-compaction':
             self.compaction()
 
@@ -165,47 +157,6 @@ class Node:
 
         elif cmd == 'admin-role-manage':
             self.alterRoles()
-
-    def nodeInit(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.data_path:
-            rest.setParam('path', self.data_path)
-
-        if self.index_path:
-            rest.setParam('index_path', self.index_path)
-
-        opts = {
-            "error_msg": "unable to init %s" % self.server,
-            "success_msg": "init %s" % self.server
-        }
-
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        if self.hostname:
-            rest = util.restclient_factory(self.server,
-                                         self.port,
-                                         {'debug':self.debug},
-                                         self.ssl)
-            if self.hostname:
-                rest.setParam('hostname', self.hostname)
-
-            opts = {
-                "error_msg": "unable to set hostname for %s" % self.server,
-                "success_msg": "set hostname for %s" % self.server
-            }
-
-            output_result = rest.restCmd('POST',
-                                         '/node/controller/rename',
-                                         self.user,
-                                         self.password,
-                                         opts)
-        print output_result
 
     def compaction(self):
         rest = util.restclient_factory(self.server,
@@ -398,12 +349,6 @@ class Node:
                 self.enable_compaction_parallel = bool_to_str(a)
             elif o == '--enable-email-alert':
                 self.enable_email_alert = bool_to_str(a)
-            elif o == '--node-init-data-path':
-                self.data_path = a
-            elif o == '--node-init-index-path':
-                self.index_path = a
-            elif o == '--node-init-hostname':
-                self.hostname = a
             elif o == '--create':
                 self.cmd = 'create'
             elif o == '--list':
@@ -780,7 +725,6 @@ class Node:
             "group-manage" :"manage server groups",
             "recovery" :"recover one or more servers",
             "setting-compaction" : "set auto compaction settings",
-            "node-init" : "set node specific parameters",
             "ssl-manage" : "manage cluster certificate",
             "admin-role-manage" : "set access-control roles for users"
         }
@@ -819,10 +763,6 @@ class Node:
              "move a list of servers from group"),
             ("--from-group=GROUPNAME", "group name to move servers from"),
             ("--to-group=GROUPNAME", "group name to move servers into")]
-        elif cmd == "node-init":
-            return [
-            ("--node-init-data-path=PATH", "data path for database files"),
-            ("--node-init-index-path=PATH", "index path for view data")]
         elif cmd == "recovery":
             return [
             ("--server-recovery=HOST[:PORT]", "server to recover"),
@@ -853,20 +793,7 @@ class Node:
         or None if there's no example help or cmd is unknown.
         """
 
-        if cmd == "node-init":
-            return [("Set data path and hostname for an unprovisioned cluster",
-"""
-    couchbse-cli node-init -c 192.168.0.1:8091 \\
-       --node-init-data-path=/tmp/data \\
-       --node-init-index-path=/tmp/index \\
-       --node-init-hostname=myhostname \\
-       -u Administrator -p password"""),
-                    ("Change the data path",
-"""
-     couchbase-cli node-init -c 192.168.0.1:8091 \\
-       --node-init-data-path=/tmp \\
-       -u Administrator -p password""")]
-        elif cmd == "recovery":
+        if cmd == "recovery":
             return [("Set recovery type to a server",
 """
     couchbase-cli recovery -c 192.168.0.1:8091 \\
