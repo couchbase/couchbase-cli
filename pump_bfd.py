@@ -615,6 +615,11 @@ class BFDSink(BFD, pump.Sink):
                 if rv != 0:
                     return self.future_done(future, rv)
 
+                meta_file = os.path.join(db_dir, "meta.json")
+                json_file = open(meta_file, "w")
+                json.dump({'pred': dep}, json_file, ensure_ascii=False)
+                json_file.close()
+
             batch, future = self.pull_next_batch()
             if not batch:
                 if db:
@@ -627,11 +632,6 @@ class BFDSink(BFD, pump.Sink):
                 cbb += 1
                 cbb_bytes = 0
                 db_dir = None
-
-                meta_file = os.path.join(db_dir, "meta.json")
-                json_file = open(meta_file, "w")
-                json.dump({'pred': dep}, json_file, ensure_ascii=False)
-                json_file.close()
 
             if (self.bucket_name(), self.node_name()) in self.cur['failoverlog']:
                 BFD.write_json_file(db_dir,
