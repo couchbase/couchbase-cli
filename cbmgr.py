@@ -54,6 +54,7 @@ def parse_command():
         "setting-audit": SettingAudit,
         "setting-autofailover": SettingAutoFailover,
         "setting-cluster": SettingCluster,
+        "setting-compaction": SettingCompaction,
         "setting-index": SettingIndex,
         "setting-ldap": SettingLdap,
         "setting-notification": SettingNotification,
@@ -1147,6 +1148,139 @@ class ClusterEdit(SettingCluster):
     def execute(self, opts, args):
         _warning("The cluster-edit command is depercated, use setting-cluster instead")
         super(ClusterEdit, self).execute(opts, args)
+
+
+class SettingCompaction(Command):
+    """The setting compaction subcommand"""
+
+    def __init__(self):
+        super(SettingCompaction, self).__init__()
+        self.parser.set_usage("couchbase-cli setting-compaction [options]")
+        self.add_optional("--compaction-db-percentage", dest="db_perc", type=(int),
+                          help="Compacts the db once the fragmentation reaches this percentage")
+        self.add_optional("--compaction-db-size", dest="db_size", type=(int),
+                          help="Compacts db once the fragmentation reaches this size (MB)")
+        self.add_optional("--compaction-view-percentage", dest="view_perc", type=(int),
+                          help="Compacts the view once the fragmentation reaches this percentage")
+        self.add_optional("--compaction-view-size", dest="view_size", type=(int),
+                          help="Compacts view once the fragmentation reaches this size (MB)")
+        self.add_optional("--compaction-period-from", dest="from_period",
+                          help="Only run compaction after this time")
+        self.add_optional("--compaction-period-to", dest="to_period",
+                          help="Only run compaction before this time")
+        self.add_optional("--enable-compaction-abort", dest="enable_abort",
+                          choices=["0", "1"], help="Allow compactions to be aborted")
+        self.add_optional("--enable-compaction-parallel", dest="enable_parallel",
+                          choices=["0", "1"], help="Allow parallel compactions")
+        self.add_optional("--metadata-purge-interval", dest="purge_interval", type=(float),
+                          help="The metadata purge interval")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        if opts.db_perc is not None and (opts.db_perc < 2 or opts.db_perc > 100):
+            _exitIfErrors(["--compaction-db-percentage must be between 2 and 100"])
+
+        if opts.view_perc is not None and (opts.view_perc < 2 or opts.view_perc > 100):
+            _exitIfErrors(["--compaction-view-percentage must be between 2 and 100"])
+
+        if opts.db_size is not None:
+            if int(opts.db_size) < 1:
+                _exitIfErrors(["--compaction-db-size must be between greater than 1 or infinity"])
+            opts.db_size = int(opts.db_size) * 1024**2
+
+        if opts.view_size is not None:
+            if int(opts.view_size) < 1:
+                _exitIfErrors(["--compaction-view-size must be between greater than 1 or infinity"])
+            opts.view_size = int(opts.view_size) * 1024**2
+
+        if opts.from_period and not (opts.to_period and opts.enable_abort):
+            errors = []
+            if opts.to_period is None:
+                errors.append("--compaction-period-to is required when using --compaction-period-from")
+            if opts.enable_abort is None:
+                errors.append("--enable-compaction-abort is required when using --compaction-period-from")
+            _exitIfErrors(errors)
+
+        if opts.to_period and not (opts.from_period and opts.enable_abort):
+            errors = []
+            if opts.from_period is None:
+                errors.append("--compaction-period-from is required when using --compaction-period-to")
+            if opts.enable_abort is None:
+                errors.append("--enable-compaction-abort is required when using --compaction-period-to")
+            _exitIfErrors(errors)
+
+        if opts.enable_abort and not (opts.from_period and opts.to_period):
+            errors = []
+            if opts.from_period is None:
+                errors.append("--compaction-period-from is required when using --enable-compaction-abort")
+            if opts.to_period is None:
+                errors.append("--compaction-period-to is required when using --enable-compaction-abort")
+            _exitIfErrors(errors)
+
+        from_hour = None
+        from_min = None
+        if opts.from_period:
+            if opts.from_period.find(':') == -1:
+                _exitIfErrors(["Invalid value for --compaction-period-from, must be in form XX:XX"])
+            from_hour, from_min = opts.from_period.split(':', 1)
+            try:
+                from_hour = int(from_hour)
+            except:
+                _exitIfErrors(["Invalid hour value for --compaction-period-from, must be an integer"])
+            if from_hour not in range(24):
+                _exitIfErrors(["Invalid hour value for --compaction-period-from, must be 0-23"])
+
+            try:
+                from_min = int(from_min)
+            except ValueError:
+                _exitIfErrors(["Invalid minute value for --compaction-period-from, must be an integer"])
+            if from_min not in range(60):
+                _exitIfErrors(["Invalid minute value for --compaction-period-from, must be 0-59"])
+
+
+        to_hour = None
+        to_min = None
+        if opts.to_period:
+            if opts.to_period.find(':') == -1:
+                _exitIfErrors(["Invalid value for --compaction-period-to, must be in form XX:XX"])
+            to_hour, to_min = opts.to_period.split(':', 1)
+            try:
+                to_hour = int(to_hour)
+            except:
+                _exitIfErrors(["Invalid hour value for --compaction-period-to, must be an integer"])
+            if to_hour not in range(24):
+                _exitIfErrors(["Invalid hour value for --compaction-period-to, must be 0-23"])
+
+            try:
+                to_min = int(to_min)
+            except ValueError:
+                _exitIfErrors(["Invalid minute value for --compaction-period-to, must be an integer"])
+            if to_min not in range(60):
+                _exitIfErrors(["Invalid minute value for --compaction-period-to, must be 0-59"])
+
+        if opts.enable_abort == "1":
+            opts.enable_abort = "true"
+        elif opts.enable_abort == "0":
+            opts.enable_abort = "false"
+
+        if opts.enable_parallel == "1":
+            opts.enable_parallel = "true"
+        else:
+            opts.enable_parallel = "false"
+
+        if opts.purge_interval is not None and (opts.purge_interval < 0.04 or opts.purge_interval > 60.0):\
+            _exitIfErrors(["--metadata-purge-interval must be between 0.04 and 60.0"])
+
+        _, errors = rest.set_compaction_settings(opts.db_perc, opts.db_size, opts.view_perc,
+                                                 opts.view_size, from_hour, from_min, to_hour,
+                                                 to_min, opts.enable_abort, opts.enable_parallel,
+                                                 opts.purge_interval)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Compaction settings modified"
 
 
 class SettingIndex(Command):

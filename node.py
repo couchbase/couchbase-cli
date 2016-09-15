@@ -24,7 +24,6 @@ except ImportError:
 rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
     'recovery'          :'/controller/setRecoveryType',
-    'setting-compaction'    :'/controller/setAutoCompaction',
     'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
     'admin-role-manage'   : '/settings/rbac/users',
@@ -44,7 +43,6 @@ methods = {
     'eject-server'      :'POST',
     'server-readd'      :'POST',
     'recovery'          :'POST',
-    'setting-compaction'    :'POST',
     'group-manage'          :'POST',
     'ssl-manage'            :'GET',
     'admin-role-manage'   : 'PUT',
@@ -73,17 +71,6 @@ class Node:
         self.sa_password = None
         self.index_storage_setting = None
         self.enable_email_alert = None
-
-        #compaction related settings
-        self.compaction_db_percentage = None
-        self.compaction_db_size = None
-        self.compaction_view_percentage = None
-        self.compaction_view_size = None
-        self.compaction_period_from = None
-        self.compaction_period_to = None
-        self.enable_compaction_abort = None
-        self.enable_compaction_parallel = None
-        self.purge_interval = None
 
         #group management
         self.group_name = None
@@ -146,9 +133,6 @@ class Node:
                       " or use -h for more help.")
             self.recovery(servers)
 
-        elif cmd == 'setting-compaction':
-            self.compaction()
-
         elif cmd == 'group-manage':
             self.groupManage()
 
@@ -157,65 +141,6 @@ class Node:
 
         elif cmd == 'admin-role-manage':
             self.alterRoles()
-
-    def compaction(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-
-        if self.compaction_db_percentage:
-            rest.setParam('databaseFragmentationThreshold[percentage]', self.compaction_db_percentage)
-        if self.compaction_db_size:
-            self.compaction_db_size = int(self.compaction_db_size) * 1024**2
-            rest.setParam('databaseFragmentationThreshold[size]', self.compaction_db_size)
-        if self.compaction_view_percentage:
-            rest.setParam('viewFragmentationThreshold[percentage]', self.compaction_view_percentage)
-        if self.compaction_view_size:
-            self.compaction_view_size = int(self.compaction_view_size) * 1024**2
-            rest.setParam('viewFragmentationThreshold[size]', self.compaction_view_size)
-        if self.compaction_period_from:
-            hour, minute = self.compaction_period_from.split(':')
-            if (int(hour) not in range(24)) or (int(minute) not in range(60)):
-                print "ERROR: invalid hour or minute value for compaction period"
-                return
-            else:
-                rest.setParam('allowedTimePeriod[fromHour]', int(hour))
-                rest.setParam('allowedTimePeriod[fromMinute]', int(minute))
-        if self.compaction_period_to:
-            hour, minute = self.compaction_period_to.split(':')
-            if (int(hour) not in range(24)) or (int(minute) not in range(60)):
-                print "ERROR: invalid hour or minute value for compaction"
-                return
-            else:
-                rest.setParam('allowedTimePeriod[toHour]', hour)
-                rest.setParam('allowedTimePeriod[toMinute]', minute)
-        if self.enable_compaction_abort:
-            rest.setParam('allowedTimePeriod[abortOutside]', self.enable_compaction_abort)
-        if self.enable_compaction_parallel:
-            rest.setParam('parallelDBAndViewCompaction', self.enable_compaction_parallel)
-        else:
-            self.enable_compaction_parallel = bool_to_str(0)
-            rest.setParam('parallelDBAndViewCompaction', self.enable_compaction_parallel)
-
-        if self.compaction_period_from or self.compaction_period_to or self.enable_compaction_abort:
-            if not (self.compaction_period_from and self.compaction_period_to and \
-                    self.enable_compaction_abort):
-                print "ERROR: compaction-period-from, compaction-period-to and enable-compaction-abort have to be specified at the same time"
-                return
-        if self.purge_interval:
-            rest.setParam('purgeInterval', self.purge_interval)
-
-        opts = {
-            "error_msg": "unable to set compaction settings",
-            "success_msg": "set compaction settings"
-        }
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
 
     # Role-Based Access Control
     def alterRoles(self):
@@ -331,22 +256,6 @@ class Node:
                 server = None
             elif o == '--index-storage-setting':
                 self.index_storage_setting = a
-            elif o == '--compaction-db-percentage':
-                self.compaction_db_percentage = a
-            elif o == '--compaction-db-size':
-                self.compaction_db_size = a
-            elif o == '--compaction-view-percentage':
-                self.compaction_view_percentage = a
-            elif o == '--compaction-view-size':
-                self.compaction_view_size = a
-            elif o == '--compaction-period-from':
-                self.compaction_period_from = a
-            elif o == '--compaction-period-to':
-                self.compaction_period_to = a
-            elif o == '--enable-compaction-abort':
-                self.enable_compaction_abort = bool_to_str(a)
-            elif o == '--enable-compaction-parallel':
-                self.enable_compaction_parallel = bool_to_str(a)
             elif o == '--enable-email-alert':
                 self.enable_email_alert = bool_to_str(a)
             elif o == '--create':
@@ -724,7 +633,6 @@ class Node:
             "server-readd" :"readd a server that was failed over",
             "group-manage" :"manage server groups",
             "recovery" :"recover one or more servers",
-            "setting-compaction" : "set auto compaction settings",
             "ssl-manage" : "manage cluster certificate",
             "admin-role-manage" : "set access-control roles for users"
         }

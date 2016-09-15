@@ -53,6 +53,7 @@ class StubCommand():
             "server-add": "add one or more servers to the cluster",
             "server-list" : "list all servers in a cluster",
             "setting-cluster" : "set cluster settings",
+            "setting-compaction" : "set auto compaction settings",
             "setting-alert" : "set email alert settings",
             "setting-audit": "set audit settings",
             "setting-autofailover": "set auto failover settings",

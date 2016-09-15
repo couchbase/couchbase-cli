@@ -583,6 +583,37 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def set_compaction_settings(self, dbFragPerc, dbFragSize, viewFragPerc, viewFragSize,
+                                fromHour, fromMin, toHour, toMin, abortOutside,
+                                parallelDBAndViewCompact, purgeInterval):
+        url = self.hostname + '/controller/setAutoCompaction'
+        params = dict()
+
+        if dbFragPerc is not None:
+            params["databaseFragmentationThreshold[percentage]"] = dbFragPerc
+        if dbFragSize is not None:
+            params["databaseFragmentationThreshold[size]"] = dbFragSize
+        if viewFragPerc is not None:
+            params["viewFragmentationThreshold[percentage]"] = viewFragPerc
+        if viewFragSize is not None:
+            params["viewFragmentationThreshold[size]"] = viewFragSize
+        if fromHour is not None:
+            params["allowedTimePeriod[fromHour]"] = fromHour
+        if fromMin is not None:
+            params["allowedTimePeriod[fromMinute]"] = fromMin
+        if toHour is not None:
+            params["allowedTimePeriod[toHour]"] = toHour
+        if fromMin is not None:
+            params["allowedTimePeriod[toMinute]"] = toMin
+        if abortOutside is not None:
+            params["allowedTimePeriod[abortOutside]"] = abortOutside
+        if parallelDBAndViewCompact is not None:
+            params["parallelDBAndViewCompaction"] = parallelDBAndViewCompact
+        if purgeInterval is not None:
+            params["purgeInterval"] = purgeInterval
+
+        return self._post_form_encoded(url, params)
+
     def set_index_settings(self, storageMode, maxRollbackPoints, stableSnapInterval,
                            memSnapInterval, threads, logLevel):
         """ Sets global index settings"""
