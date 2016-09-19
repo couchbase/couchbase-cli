@@ -66,10 +66,6 @@ class Info:
             name = self._remoteShellName()
             p = subprocess.call([self.getErlPath(), '-name', name, '-setcookie',
                                  cookie, '-hidden', '-remsh', node])
-        elif cmd == 'get-server-info':
-            return result
-        else:
-            print json.dumps(result, sort_keys=True, indent=2)
 
     def getErlPath(self):
         bin = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '..', '..', 'bin')
@@ -81,23 +77,7 @@ class Info:
             return 'erl'
 
     def getCommandSummary(self, cmd):
-        """Return one-line summary info for each supported command"""
-        command_summary = {
-            "server-info" : "show details on one server"}
-        if cmd in command_summary:
-            return command_summary[cmd]
-        else:
-            return None
+        return None
 
     def getCommandExampleHelp(self, cmd):
-        """ Obtain detailed example help for command
-        Returns a list of command examples to illustrate how to use command
-        or None if there's no example help or cmd is unknown.
-        """
-
-        if cmd == "server-info":
-            return [("Server information",
-"""
-    couchbase-cli server-info -c 192.168.0.1:8091""")]
-        else:
-            return None
+        return None

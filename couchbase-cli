@@ -51,6 +51,7 @@ class StubCommand():
             "rebalance-status": "show status of current cluster rebalancing",
             "rebalance-stop": "stop current cluster rebalancing",
             "server-add": "add one or more servers to the cluster",
+            "server-info" : "show details on one server",
             "server-list" : "list all servers in a cluster",
             "setting-cluster" : "set cluster settings",
             "setting-compaction" : "set auto compaction settings",

@@ -527,6 +527,10 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def node_info(self):
+        url = self.hostname + '/nodes/self'
+        return self._get(url)
+
     def set_hostname(self, hostname):
         url = self.hostname + '/nodes/self/controller/settings'
         params = { "hostname": hostname }

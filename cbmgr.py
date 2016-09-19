@@ -1,5 +1,6 @@
 """A Couchbase  CLI subcommand"""
 
+import json
 import os
 import sys
 import time
@@ -51,6 +52,7 @@ def parse_command():
         "rebalance-status": RebalanceStatus,
         "rebalance-stop": RebalanceStop,
         "server-add": ServerAdd,
+        "server-info": ServerInfo,
         "server-list": ServerList,
         "setting-alert": SettingAlert,
         "setting-audit": SettingAudit,
@@ -909,6 +911,24 @@ class ServerAdd(Command):
             _exitIfErrors(errors)
 
         print "SUCCESS: Server added"
+
+
+class ServerInfo(Command):
+    """The server info subcommand"""
+
+    def __init__(self):
+        super(ServerInfo, self).__init__()
+        self.parser.set_usage("couchbase-cli server-info [options]")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        # Cluster does not need to be initialized for this command
+
+        result, errors = rest.node_info()
+        _exitIfErrors(errors)
+
+        print json.dumps(result, sort_keys=True, indent=2)
 
 
 class ServerList(Command):
