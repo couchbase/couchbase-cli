@@ -15,6 +15,8 @@ except ImportError:
         """Stub gettext method"""
         return message
 
+COUCHBASE_DEFAULT_PORT = 8091
+
 BUCKET_PRIORITY_HIGH_INT = 8
 BUCKET_PRIORITY_HIGH_STR = "high"
 BUCKET_PRIORITY_LOW_INT = 3
@@ -91,6 +93,10 @@ def check_cluster_initialized(rest):
 
 def host_port(url):
     "Splits a url into it's host and port"
+
+    hostport = url.split(":", 1)
+    if len(hostport) == 1:
+        return hostport[0], COUCHBASE_DEFAULT_PORT
 
     return url.split(":")[0], url.split(":")[1]
 
