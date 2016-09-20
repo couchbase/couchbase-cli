@@ -1311,7 +1311,7 @@ class SettingCompaction(Command):
             from_hour, from_min = opts.from_period.split(':', 1)
             try:
                 from_hour = int(from_hour)
-            except:
+            except ValueError:
                 _exitIfErrors(["Invalid hour value for --compaction-period-from, must be an integer"])
             if from_hour not in range(24):
                 _exitIfErrors(["Invalid hour value for --compaction-period-from, must be 0-23"])
@@ -1332,7 +1332,7 @@ class SettingCompaction(Command):
             to_hour, to_min = opts.to_period.split(':', 1)
             try:
                 to_hour = int(to_hour)
-            except:
+            except ValueError:
                 _exitIfErrors(["Invalid hour value for --compaction-period-to, must be an integer"])
             if to_hour not in range(24):
                 _exitIfErrors(["Invalid hour value for --compaction-period-to, must be 0-23"])
