@@ -2,6 +2,9 @@
 
 import json
 import os
+import random
+import string
+import subprocess
 import sys
 import time
 
@@ -52,6 +55,7 @@ def parse_command():
         "rebalance-status": RebalanceStatus,
         "rebalance-stop": RebalanceStop,
         "server-add": ServerAdd,
+        "server-eshell": ServerEshell,
         "server-info": ServerInfo,
         "server-list": ServerList,
         "setting-alert": SettingAlert,
@@ -912,6 +916,59 @@ class ServerAdd(Command):
 
         print "SUCCESS: Server added"
 
+
+class ServerEshell(Command):
+    """The server eshell subcommand"""
+
+    def __init__(self):
+        super(ServerEshell, self).__init__()
+        self.parser.set_usage("couchbase-cli server-eshell [options]")
+        self.add_optional("--vm", dest="vm", default="ns_server",
+                          help="The vm to connect to")
+        self.add_optional("--erl-path", dest="erl_path",
+                          help="Override the path to the erl executable")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        # Cluster does not need to be initialized for this command
+
+        result, errors = rest.node_info()
+        _exitIfErrors(errors)
+
+        node = result['otpNode']
+        cookie = result['otpCookie']
+
+        if opts.vm != 'ns_server':
+            cookie, errors = rest.get_babysitter_cookie()
+            _exitIfErrors(errors)
+
+            [short, _] = node.split('@')
+
+            if opts.vm == 'babysitter':
+                node = 'babysitter_of_%s@127.0.0.1' % short
+            elif opts.vm == 'couchdb':
+                node = 'couchdb_%s@127.0.0.1' % short
+            else:
+                _exitIfErrors(["Unknown vm type `%s`" % opts.vm])
+
+        rand_chars = ''.join(random.choice(string.ascii_letters) for i in xrange(20))
+        name = 'ctl-%s@127.0.0.1' % rand_chars
+
+        path = opts.erl_path
+        if opts.erl_path is None:
+            bin_dir = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '..', '..', 'bin')
+            cb_erl = os.path.join(bin_dir, 'erl')
+            if os.path.isfile(cb_erl):
+                path = cb_erl
+            else:
+                _warning("Cannot locate Couchbase erlang. Attempting to use non-Couchbase erlang")
+                path = 'erl'
+
+        try:
+            subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node])
+        except OSError:
+            _exitIfErrors(["Unable to find the erl executable"])
 
 class ServerInfo(Command):
     """The server info subcommand"""
