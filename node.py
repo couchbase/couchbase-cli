@@ -24,7 +24,6 @@ except ImportError:
 rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
     'recovery'          :'/controller/setRecoveryType',
-    'group-manage'          :'/pools/default/serverGroups',
     'ssl-manage'            :'/pools/default/certificate',
     'admin-role-manage'   : '/settings/rbac/users',
 }
@@ -43,7 +42,6 @@ methods = {
     'eject-server'      :'POST',
     'server-readd'      :'POST',
     'recovery'          :'POST',
-    'group-manage'          :'POST',
     'ssl-manage'            :'GET',
     'admin-role-manage'   : 'PUT',
 }
@@ -75,9 +73,6 @@ class Node:
         #group management
         self.group_name = None
         self.server_list = []
-        self.from_group = None
-        self.to_group = None
-        self.group_rename = None
 
         #SSL certificate management
         self.certificate_file = None
@@ -132,9 +127,6 @@ class Node:
                 command_error("please list one or more --server-recovery=HOST[:PORT];"
                       " or use -h for more help.")
             self.recovery(servers)
-
-        elif cmd == 'group-manage':
-            self.groupManage()
 
         elif cmd == 'ssl-manage':
             self.retrieveCert()
@@ -279,13 +271,6 @@ class Node:
             elif o == '--move-servers':
                 self.server_list = self.normalize_servers(a)
                 self.cmd = 'move-servers'
-            elif o == '--from-group':
-                self.from_group = a
-            elif o == '--to-group':
-                self.to_group = a
-            elif o == '--rename':
-                self.group_rename = a
-                self.cmd = 'rename'
             elif o == '--regenerate-cert':
                 self.cmd = 'regenerate'
                 self.certificate_file = a
@@ -424,173 +409,6 @@ class Node:
                                          opts)
             print output_result
 
-    def groupManage(self):
-        if self.cmd == 'move-servers':
-            self.groupMoveServer()
-        elif self.cmd == 'list':
-             self.groupList()
-        else:
-            if self.group_name is None:
-                command_error("please specify --group-name for the operation")
-            elif self.cmd == 'delete':
-                self.groupDelete()
-            elif self.cmd == 'create':
-                self.groupCreate()
-            elif self.cmd == 'rename':
-                self.groupRename()
-            else:
-                print "Unknown group command:%s" % self.cmd
-
-    def getGroupUri(self, groupName):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        output_result = rest.restCmd('GET',
-                                     '/pools/default/serverGroups',
-                                     self.user,
-                                     self.password)
-        groups = rest.getJson(output_result)
-        for group in groups["groups"]:
-            if groupName == group["name"]:
-                return group["uri"]
-        return None
-
-    def getServerGroups(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        output_result = rest.restCmd('GET',
-                                     '/pools/default/serverGroups',
-                                     self.user,
-                                     self.password)
-        return rest.getJson(output_result)
-
-    def groupList(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        output_result = rest.restCmd('GET',
-                                     '/pools/default/serverGroups',
-                                     self.user,
-                                     self.password)
-        groups = rest.getJson(output_result)
-        found = False
-        for group in groups["groups"]:
-            if self.group_name is None or self.group_name == group['name']:
-                found = True
-                print '%s' % group['name']
-                for node in group['nodes']:
-                    print ' server: %s' % node["hostname"]
-        if not found and self.group_name:
-            print "Invalid group name: %s" % self.group_name
-
-    def groupCreate(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        rest.setParam('name', self.group_name)
-        opts = {
-            'error_msg': "unable to create group %s" % self.group_name,
-            'success_msg': "group created %s" % self.group_name
-        }
-        output_result = rest.restCmd('POST',
-                                     '/pools/default/serverGroups',
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
-    def groupRename(self):
-        uri = self.getGroupUri(self.group_name)
-        if uri is None:
-            command_error("invalid group name:%s" % self.group_name)
-        if self.group_rename is None:
-            command_error("invalid group name:%s" % self.group_name)
-
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        rest.setParam('name', self.group_rename)
-        opts = {
-            'error_msg': "unable to rename group %s" % self.group_name,
-            'success_msg': "group renamed %s" % self.group_name
-        }
-        output_result = rest.restCmd('PUT',
-                                     uri,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
-    def groupDelete(self):
-        uri = self.getGroupUri(self.group_name)
-        if uri is None:
-            command_error("invalid group name:%s" % self.group_name)
-
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        rest.setParam('name', self.group_name)
-        opts = {
-            'error_msg': "unable to delete group %s" % self.group_name,
-            'success_msg': "group deleted %s" % self.group_name
-        }
-        output_result = rest.restCmd('DELETE',
-                                     uri,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
-    def groupMoveServer(self):
-        groups = self.getServerGroups()
-        node_info = {}
-        for group in groups["groups"]:
-            if self.from_group == group['name']:
-                for server in self.server_list:
-                    for node in group["nodes"]:
-                        if server == node["hostname"]:
-                            node_info[server] = node
-                            group["nodes"].remove(node)
-        if not node_info:
-            print "No servers removed from group '%s'" % self.from_group
-            return
-
-        for group in groups["groups"]:
-            if self.to_group == group['name']:
-                for server in self.server_list:
-                    found = False
-                    for node in group["nodes"]:
-                        if server == node["hostname"]:
-                            found = True
-                            break
-                    if not found:
-                        group["nodes"].append(node_info[server])
-
-        payload = json.dumps(groups)
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        rest.setPayload(payload)
-
-        opts = {
-            'error_msg': "unable to move servers from group '%s' to group '%s'" % (self.from_group, self.to_group),
-            'success_msg': "move servers from group '%s' to group '%s'" % (self.from_group, self.to_group)
-        }
-        output_result = rest.restCmd('PUT',
-                                     groups["uri"],
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
     def retrieveCert(self):
         if self.cmd in ['retrieve', 'regenerate', 'upload-cluster-ca'] and self.certificate_file is None:
             command_error("please specify certificate file name for the operation")
@@ -631,7 +449,6 @@ class Node:
             "server-list" :"list all servers in a cluster",
             "server-info" :"show details on one server",
             "server-readd" :"readd a server that was failed over",
-            "group-manage" :"manage server groups",
             "recovery" :"recover one or more servers",
             "ssl-manage" : "manage cluster certificate",
             "admin-role-manage" : "set access-control roles for users"
@@ -660,17 +477,6 @@ class Node:
 
         if cmd == "server-readd":
             return server_common
-        elif cmd == "group-manage":
-            return [
-            ("--group-name=GROUPNAME", "group name"),
-            ("--create", "create a new group"),
-            ("--delete", "delete an empty group"),
-            ("--list", "show group/server relationship map"),
-            ("--rename=NEWGROUPNAME", "rename group to new name"),
-            ("--move-servers=HOST[:PORT],HOST[:PORT]",
-             "move a list of servers from group"),
-            ("--from-group=GROUPNAME", "group name to move servers from"),
-            ("--to-group=GROUPNAME", "group name to move servers into")]
         elif cmd == "recovery":
             return [
             ("--server-recovery=HOST[:PORT]", "server to recover"),
@@ -708,30 +514,6 @@ class Node:
        --server-recovery=192.168.0.2 \\
        --recovery-type=full \\
        -u Administrator -p password""")]
-        elif cmd == "group-manage":
-            return [("Create a new group",
-"""
-    couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --create --group-name=group1 -u Administrator -p password"""),
-                ("Delete an empty group",
-"""
-    couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --delete --group-name=group1 -u Administrator -p password"""),
-                ("Rename an existed group",
-"""
-    couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --rename=newgroup --group-name=group1 -u Administrator -p password"""),
-                ("Show group/server map",
-"""
-    couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --list -u Administrator -p password"""),
-                ("Move list of servers from group1 to group2",
-"""
-    couchbase-cli group-manage -c 192.168.0.1:8091 \\
-        --move-servers=10.1.1.1:8091,10.1.1.2:8091 \\
-        --from-group=group1 \\
-        --to-group=group2 \\
-        -u Administrator -p password""")]
         elif cmd == "ssl-manage":
             return [("Download a cluster certificate",
 """

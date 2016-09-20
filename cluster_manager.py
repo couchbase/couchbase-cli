@@ -455,7 +455,7 @@ class ClusterManager(object):
 
     def delete_bucket(self, name):
         url = self.hostname + '/pools/default/buckets/' + name
-        return self._delete(url)
+        return self._delete(url, None)
 
     def flush_bucket(self, name):
         if name is None:
@@ -544,9 +544,85 @@ class ClusterManager(object):
         url = self.hostname + '/controller/stopRebalance'
         return self._post_form_encoded(url, dict())
 
+    def create_server_group(self, name):
+        url = self.hostname + '/pools/default/serverGroups'
+        params = { "name": name }
+        return self._post_form_encoded(url, params)
+
+    def delete_server_group(self, name):
+        uri, errors = self._get_server_group_uri(name)
+        if errors:
+            return None, errors
+
+        url = self.hostname + uri
+        params = { "name": name }
+        return self._delete(url, params)
+
+    def rename_server_group(self, name, new_name):
+        uri, errors = self._get_server_group_uri(name)
+        if errors:
+            return None, errors
+
+        url = self.hostname + uri
+        params = { "name": new_name }
+        return self._put(url, params)
+
+    def move_servers_between_groups(self, servers, from_group, to_group):
+        groups, errors = self.get_server_groups()
+        if errors:
+            return None, errors
+
+        # Find the groups to move servers between
+        move_from_group = None
+        move_to_group = None
+        for group in groups["groups"]:
+            if from_group == group['name']:
+                move_from_group = group
+            if to_group == group['name']:
+                move_to_group = group
+
+        if move_from_group is None:
+            return None, ["Group to move servers from `%s` not found" % from_group]
+        if move_to_group is None:
+            return None, ["Group to move servers to `%s` not found" % from_group]
+
+        # Find the servers to move in the from group
+        nodes_to_move = []
+        for server in servers:
+            found = False
+            for node in move_from_group["nodes"]:
+                if server == node["hostname"]:
+                    nodes_to_move.append(node)
+                    move_from_group["nodes"].remove(node)
+                    found = True
+
+            if not found:
+                return None, ["Can't move %s because it doesn't exist in '%s'" % (server, from_group)]
+
+        # Move the servers to the to group
+        for node in nodes_to_move:
+            move_to_group["nodes"].append(node)
+
+        url = self.hostname + groups["uri"]
+        return self._put_json(url, groups)
+
+    def get_server_groups(self):
+        url = self.hostname + '/pools/default/serverGroups'
+        return self._get(url)
+
+    def _get_server_group_uri(self, name):
+        groups, errors = self.get_server_groups()
+        if errors:
+            return errors
+
+        for group in groups["groups"]:
+            if name == group["name"]:
+                return group["uri"], None
+        return None, ["Group `%s` not found" % name]
+
     def delete_local_read_only_user(self):
         url = self.hostname + '/settings/readOnlyUser'
-        return self._delete(url)
+        return self._delete(url, None)
 
     def list_local_read_only_user(self):
         url = self.hostname + '/settings/readOnlyAdminName'
@@ -732,13 +808,12 @@ class ClusterManager(object):
         for users in reader:
             for user in users:
                 url = self.hostname + '/settings/rbac/users/' + user
-                data, errors = self._delete(url)
+                data, errors = self._delete(url, None)
                 if errors:
                     return data, errors
 
         return data, errors
 
-    def getRoles(self):
         url = self.hostname + '/settings/rbac/users'
         data, errors = self._get(url)
 
@@ -813,9 +888,15 @@ class ClusterManager(object):
         return _handle_response(response)
 
     @request
-    def _delete(self, url):
+    def _put_json(self, url, params):
+        response = requests.put(url, auth=(self.username, self.password), json=params,
+                                verify=False, timeout=self.timeout)
+        return _handle_response(response)
+
+    @request
+    def _delete(self, url, params):
         response = requests.delete(url, auth=(self.username, self.password),
-                                   verify=False, timeout=self.timeout)
+                                   data=params, verify=False, timeout=self.timeout)
         return _handle_response(response)
 
 
@@ -832,12 +913,13 @@ def _handle_response(response):
             errors = response.json()
             if isinstance(errors, list):
                 return None, errors
-            if isinstance(errors, dict) and "errors" in errors:
-                if isinstance(errors["errors"], dict):
-                    rv = list()
-                    for key, value in errors["errors"].iteritems():
-                        rv.append(key + " - " + value)
-                    return None, rv
+            if isinstance(errors, dict):
+                if "errors" in errors and isinstance(errors["errors"], dict):
+                    errors = errors["errors"]
+                rv = list()
+                for key, value in errors.iteritems():
+                    rv.append(key + " - " + value)
+                return None, rv
         return None, [response.text]
     elif response.status_code == 401:
         return None, [ERR_AUTH]

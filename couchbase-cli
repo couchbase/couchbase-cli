@@ -44,6 +44,7 @@ class StubCommand():
             "collect-logs-status" : "show the status of cluster-wide log collection",
             "collect-logs-stop" : "stop a cluster-wide log collection",
             "failover": "failover one or more servers",
+            "group-manage" :"manage server groups",
             "host-list" : "list all hosts in a cluster",
             "node-init" : "set node specific parameters",
             "rebalance": "start a cluster rebalancing",

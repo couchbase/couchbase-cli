@@ -49,6 +49,7 @@ def parse_command():
         "collect-logs-status": CollectLogsStatus,
         "collect-logs-stop": CollectLogsStop,
         "failover": Failover,
+        "group-manage": GroupManage,
         "host-list": HostList,
         "node-init": NodeInit,
         "rebalance": Rebalance,
@@ -741,6 +742,100 @@ class Failover(Command):
                 _exitIfErrors([status[1]])
 
         print "SUCCESS: Server failed over"
+
+
+class GroupManage(Command):
+    """The group manage subcommand"""
+
+    def __init__(self):
+        super(GroupManage, self).__init__()
+        self.parser.set_usage("couchbase-cli host-list [options]")
+        self.add_optional("--create", dest="create", action="store_true",
+                          help="Create a new server group")
+        self.add_optional("--delete", dest="delete", action="store_true",
+                          help="Delete a server group")
+        self.add_optional("--list", dest="list", action="store_true",
+                          help="List all server groups")
+        self.add_optional("--rename", dest="rename", help="Rename a server group")
+        self.add_optional("--group-name", dest="name",
+                          help="The name of the server group")
+        self.add_optional("--move-servers", dest="move_servers",
+                          help="A list of servers to move between groups")
+        self.add_optional("--from-group", dest="from_group",
+                          help="The group to move servers from")
+        self.add_optional("--to-group", dest="to_group",
+                          help="The group to move servers to")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
+        if sum(cmd is not None for cmd in cmds) == 0:
+            _exitIfErrors(["Must specify one of the following: --create, " +
+                           "--delete, --list, --move-servers, or --rename"])
+        elif sum(cmd is not None for cmd in cmds) != 1:
+            _exitIfErrors(["Only one of the following may be specified: --create" +
+                           ", --delete, --list, --move-servers, or --rename"])
+
+        if opts.create:
+            self._create(rest, opts, args)
+        elif opts.delete:
+            self._delete(rest, opts, args)
+        elif opts.list:
+            self._list(rest, opts, args)
+        elif opts.rename:
+            self._rename(rest, opts, args)
+        elif opts.move_servers is not None:
+            self._move(rest, opts, args)
+
+    def _create(self, rest, opts, args):
+        if opts.name is None:
+            _exitIfErrors(["--group-name is required with --create flag"])
+        _, errors = rest.create_server_group(opts.name)
+        _exitIfErrors(errors)
+        print "SUCCESS: Server group created"
+
+    def _delete(self, rest, opts, args):
+        if opts.name is None:
+            _exitIfErrors(["--group-name is required with --delete flag"])
+        _, errors = rest.delete_server_group(opts.name)
+        _exitIfErrors(errors)
+        print "SUCCESS: Server group deleted"
+
+    def _list(self, rest, opts, args):
+        groups, errors = rest.get_server_groups()
+        _exitIfErrors(errors)
+
+        found = False
+        for group in groups["groups"]:
+            if opts.name is None or opts.name == group['name']:
+                found = True
+                print '%s' % group['name']
+                for node in group['nodes']:
+                    print ' server: %s' % node["hostname"]
+        if not found and opts.name:
+            _exitIfErrors(["Invalid group name: %s" % opts.name])
+
+    def _move(self, rest, opts, args):
+        if opts.from_group is None:
+            _exitIfErrors(["--from-group is required with --move-servers"])
+        if opts.to_group is None:
+            _exitIfErrors(["--to-group is required with --move-servers"])
+
+        servers = opts.move_servers.split(",")
+        _, errors = rest.move_servers_between_groups(servers, opts.from_group, opts.to_group)
+        _exitIfErrors(errors)
+        print "SUCCESS: Servers moved between groups"
+
+    def _rename(self, rest, opts, args):
+        if opts.name is None:
+            _exitIfErrors(["--group-name is required with --rename option"])
+        _, errors = rest.rename_server_group(opts.rename, opts.name)
+        _exitIfErrors(errors)
+        print "SUCCESS: Server group renamed"
+
 
 class HostList(Command):
     """The host list subcommand"""
