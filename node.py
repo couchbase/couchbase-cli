@@ -22,22 +22,13 @@ except ImportError:
 # the rest commands and associated URIs for various node operations
 
 rest_cmds = {
-    'server-readd'      :'/controller/reAddNode',
     'ssl-manage'            :'/pools/default/certificate',
     'admin-role-manage'   : '/settings/rbac/users',
 }
 
-server_no_remove = [
-    'server-readd',
-]
-server_no_add = [
-]
-
 # Map of operations and the HTTP methods used against the REST interface
 
 methods = {
-    'eject-server'      :'POST',
-    'server-readd'      :'POST',
     'ssl-manage'            :'GET',
     'admin-role-manage'   : 'PUT',
 }
@@ -107,13 +98,6 @@ class Node:
         servers = self.processOpts(cmd, opts)
         if self.debug:
             print "INFO: servers %s" % servers
-
-        if cmd == 'server-readd' and not servers['add']:
-            command_error("please list one or more --server-add=HOST[:PORT],"
-                  " or use -h for more help.")
-
-        elif cmd == 'server-readd':
-            self.reAddServers(servers)
 
         elif cmd == 'ssl-manage':
             self.retrieveCert()
@@ -189,15 +173,6 @@ class Node:
 
         for o, a in opts:
             command_error_msg = "option '%s' is not used with command '%s'" % (o, cmd)
-
-            if o in ( "-r", "--server-remove"):
-                if cmd in server_no_remove:
-                    command_error(command_error_msg)
-            elif o in ( "-a", "--server-add",
-                        "--server-add-username",
-                        "--server-add-password"):
-                if cmd in server_no_add:
-                    command_error(command_error_msg)
 
         server = None
         for o, a in opts:
@@ -312,62 +287,6 @@ class Node:
             slist.append(hostport)
         return slist
 
-    def reAddServers(self, servers):
-        known_otps, eject_otps, failover_otps, readd_otps, _ = \
-            self.getNodeOtps(to_readd=servers['add'])
-
-        for readd_otp in readd_otps:
-            rest = util.restclient_factory(self.server,
-                                         self.port,
-                                         {'debug':self.debug},
-                                         self.ssl)
-            rest.setParam('otpNode', readd_otp)
-
-            opts = {
-                'error_msg': "unable to re-add %s" % readd_otp,
-                'success_msg': "re-add %s" % readd_otp
-            }
-            output_result = rest.restCmd('POST',
-                                         rest_cmds['server-readd'],
-                                         self.user,
-                                         self.password,
-                                         opts)
-            print output_result
-
-    def getNodeOtps(self, to_eject=[], to_failover=[], to_readd=[]):
-        """ Convert known nodes into otp node id's.
-            """
-        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
-                                            self.password, self.ssl)
-        result, errors = cm.pools('default')
-        _exitIfErrors(errors)
-
-        known_nodes_list = result["nodes"]
-        known_otps = []
-        eject_otps = []
-        failover_otps = []
-        readd_otps = []
-        hostnames = []
-
-        for node in known_nodes_list:
-            if node.get('otpNode') is None:
-                raise Exception("could not access node")
-            known_otps.append(node['otpNode'])
-            hostnames.append(node['hostname'])
-            if node['hostname'] in to_eject:
-                eject_otps.append(node['otpNode'])
-            if node['hostname'] in to_failover:
-                if node['clusterMembership'] != 'active':
-                    raise Exception('node %s is not active' % node['hostname'])
-                else:
-                    failover_otps.append((node['otpNode'], node['status']))
-            _, host = node['otpNode'].split('@')
-            hostport = "%s:%d" % util.hostport(host)
-            if node['hostname'] in to_readd or hostport in to_readd:
-                readd_otps.append(node['otpNode'])
-
-        return (known_otps, eject_otps, failover_otps, readd_otps, hostnames)
-
     def retrieveCert(self):
         if self.cmd in ['retrieve', 'regenerate', 'upload-cluster-ca'] and self.certificate_file is None:
             command_error("please specify certificate file name for the operation")
@@ -407,7 +326,6 @@ class Node:
         command_summary = {
             "server-list" :"list all servers in a cluster",
             "server-info" :"show details on one server",
-            "server-readd" :"readd a server that was failed over",
             "ssl-manage" : "manage cluster certificate",
             "admin-role-manage" : "set access-control roles for users"
         }
@@ -422,20 +340,8 @@ class Node:
         no help or cmd is unknown.
         """
 
-        # Some common flags for server- commands
-        server_common = [("--server-add=HOST[:PORT]", "server to be added,"),
-                         ("--server-add-username=USERNAME",
-                          "admin username for the server to be added"),
-                         ("--server-add-password=PASSWORD",
-                          "admin password for the server to be added"),
-                         ("--group-name=GROUPNAME", "group that server belongs")]
 
-        services = [("--services=data,index,query,fts",
-                     "services that server runs")]
-
-        if cmd == "server-readd":
-            return server_common
-        elif cmd == "ssl-manage":
+        if cmd == "ssl-manage":
             return [("--cluster-cert-info", "prints cluster certificate info"),
                     ("--node-cert-info", "prints node certificate info"),
                     ("--regenerate-cert=CERTIFICATE",

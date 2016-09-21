@@ -246,6 +246,19 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def readd_server(self, server):
+        _, _, _, readd, _, errors = self._get_otps_names(readd_nodes=[server])
+        if errors:
+            return None, errors
+
+        if len(readd) != 1:
+            return None, ["Server not found %s" % server]
+
+        url = self.hostname + '/controller/reAddNode'
+        params = { "otpNode": readd[0] }
+
+        return self._post_form_encoded(url, params)
+
     def get_tasks(self):
         url = self.hostname + '/pools/default/tasks'
         return self._get(url)

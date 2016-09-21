@@ -60,6 +60,7 @@ def parse_command():
         "server-eshell": ServerEshell,
         "server-info": ServerInfo,
         "server-list": ServerList,
+        "server-readd": ServerReadd,
         "setting-alert": SettingAlert,
         "setting-audit": SettingAudit,
         "setting-autofailover": SettingAutoFailover,
@@ -136,6 +137,9 @@ def process_services(services, is_enterprise):
     for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
         services = services.replace(old, new)
     return services, None
+
+def _deprecated(msg):
+    print "DEPRECATED: " + msg
 
 class CLIOptionParser(OptionParser):
     """A custom parser for subcommands"""
@@ -1127,6 +1131,37 @@ class ServerList(Command):
                 raise Exception("could not access node")
 
             print node['otpNode'], node['hostname'], node['status'], node['clusterMembership']
+
+
+class ServerReadd(Command):
+    """The setting alert subcommand"""
+
+    def __init__(self):
+        super(ServerReadd, self).__init__()
+        self.parser.set_usage("couchbase-cli server-readd [options]")
+        self.add_required("--server-add", dest="servers",
+                          help="The list of servers to recover")
+        # The parameters are unused, but kept for backwards compatibility
+        self.add_optional("--server-username", dest="server_username",
+                          help="The admin username for the server")
+        self.add_optional("--server-password", dest="server_username",
+                          help="The admin password for the server")
+        self.add_optional("--group-name", dest="name",
+                          help="The name of the server group")
+
+    def execute(self, opts, args):
+        _deprecated("This command is deprecated and has been replaced by the " +
+                    "recovery command")
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        servers = opts.servers.split(",")
+        for server in servers:
+            _, errors = rest.readd_server(server)
+            _exitIfErrors(errors)
+
+        print "SUCCESS: Servers recovered"
 
 
 class SettingAlert(Command):
