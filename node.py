@@ -23,17 +23,14 @@ except ImportError:
 
 rest_cmds = {
     'server-readd'      :'/controller/reAddNode',
-    'recovery'          :'/controller/setRecoveryType',
     'ssl-manage'            :'/pools/default/certificate',
     'admin-role-manage'   : '/settings/rbac/users',
 }
 
 server_no_remove = [
     'server-readd',
-    'recovery',
 ]
 server_no_add = [
-    'recovery',
 ]
 
 # Map of operations and the HTTP methods used against the REST interface
@@ -41,7 +38,6 @@ server_no_add = [
 methods = {
     'eject-server'      :'POST',
     'server-readd'      :'POST',
-    'recovery'          :'POST',
     'ssl-manage'            :'GET',
     'admin-role-manage'   : 'PUT',
 }
@@ -78,9 +74,6 @@ class Node:
         self.certificate_file = None
         self.extended = False
         self.cmd = None
-
-        self.recovery_type = None
-        self.recovery_buckets = None
 
         # Collect logs
         self.nodes = None
@@ -121,12 +114,6 @@ class Node:
 
         elif cmd == 'server-readd':
             self.reAddServers(servers)
-
-        elif cmd == 'recovery':
-            if len(servers['recovery']) <= 0:
-                command_error("please list one or more --server-recovery=HOST[:PORT];"
-                      " or use -h for more help.")
-            self.recovery(servers)
 
         elif cmd == 'ssl-manage':
             self.retrieveCert()
@@ -285,10 +272,6 @@ class Node:
                 self.certificate_file = a
             elif o == '--set-node-certificate':
                 self.cmd = 'set-node-certificate'
-            elif o == '--recovery-type':
-                self.recovery_type = a
-            elif o == '--recovery-buckets':
-                self.recovery_buckets = a
             elif o == '--nodes':
                 self.nodes = a
             elif o == '--all-nodes':
@@ -385,30 +368,6 @@ class Node:
 
         return (known_otps, eject_otps, failover_otps, readd_otps, hostnames)
 
-    def recovery(self, servers):
-        known_otps, eject_otps, failover_otps, readd_otps, _ = \
-            self.getNodeOtps(to_readd=servers['recovery'])
-        for readd_otp in readd_otps:
-            rest = util.restclient_factory(self.server,
-                                         self.port,
-                                         {'debug':self.debug},
-                                         self.ssl)
-            opts = {
-                'error_msg': "unable to setRecoveryType for node %s" % readd_otp,
-                'success_msg': "setRecoveryType for node %s" % readd_otp
-            }
-            rest.setParam('otpNode', readd_otp)
-            if self.recovery_type:
-                rest.setParam('recoveryType', self.recovery_type)
-            else:
-                rest.setParam('recoveryType', 'delta')
-            output_result = rest.restCmd('POST',
-                                         '/controller/setRecoveryType',
-                                         self.user,
-                                         self.password,
-                                         opts)
-            print output_result
-
     def retrieveCert(self):
         if self.cmd in ['retrieve', 'regenerate', 'upload-cluster-ca'] and self.certificate_file is None:
             command_error("please specify certificate file name for the operation")
@@ -449,7 +408,6 @@ class Node:
             "server-list" :"list all servers in a cluster",
             "server-info" :"show details on one server",
             "server-readd" :"readd a server that was failed over",
-            "recovery" :"recover one or more servers",
             "ssl-manage" : "manage cluster certificate",
             "admin-role-manage" : "set access-control roles for users"
         }
@@ -477,11 +435,6 @@ class Node:
 
         if cmd == "server-readd":
             return server_common
-        elif cmd == "recovery":
-            return [
-            ("--server-recovery=HOST[:PORT]", "server to recover"),
-            ("--recovery-type=TYPE[delta|full]",
-             "type of recovery to be performed for a node")]
         elif cmd == "ssl-manage":
             return [("--cluster-cert-info", "prints cluster certificate info"),
                     ("--node-cert-info", "prints node certificate info"),
@@ -507,14 +460,7 @@ class Node:
         or None if there's no example help or cmd is unknown.
         """
 
-        if cmd == "recovery":
-            return [("Set recovery type to a server",
-"""
-    couchbase-cli recovery -c 192.168.0.1:8091 \\
-       --server-recovery=192.168.0.2 \\
-       --recovery-type=full \\
-       -u Administrator -p password""")]
-        elif cmd == "ssl-manage":
+        if cmd == "ssl-manage":
             return [("Download a cluster certificate",
 """
     couchbase-cli ssl-manage -c 192.168.0.1:8091 \\

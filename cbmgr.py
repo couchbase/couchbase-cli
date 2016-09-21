@@ -55,6 +55,7 @@ def parse_command():
         "rebalance": Rebalance,
         "rebalance-status": RebalanceStatus,
         "rebalance-stop": RebalanceStop,
+        "recovery": Recovery,
         "server-add": ServerAdd,
         "server-eshell": ServerEshell,
         "server-info": ServerInfo,
@@ -961,6 +962,31 @@ class RebalanceStop(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Rebalance stopped"
+
+
+class Recovery(Command):
+    """The recovery command"""
+
+    def __init__(self):
+        super(Recovery, self).__init__()
+        self.parser.set_usage("couchbase-cli server-add [options]")
+        self.add_required("--server-recovery", dest="servers",
+                          help="The list of servers to recover")
+        self.add_optional("--recovery-type", dest="recovery_type",
+                          choices=["delta", "full"], default="delta",
+                          help="The recovery type (delta or full)")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        servers = opts.servers.split(",")
+        for server in servers:
+            _, errors = rest.recovery(server, opts.recovery_type)
+            _exitIfErrors(errors)
+
+        print "SUCCESS: Servers recovered"
 
 
 class ServerAdd(Command):

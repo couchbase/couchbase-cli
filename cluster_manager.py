@@ -301,6 +301,20 @@ class ClusterManager(object):
             url = self.hostname + '/controller/startGracefulFailover'
             return self._post_form_encoded(url, params)
 
+    def recovery(self, server, recovery_type):
+        _, _, _, readd, _, errors = self._get_otps_names(readd_nodes=[server])
+        if errors:
+            return None, errors
+
+        if len(readd) != 1:
+            return None, ["Server not found %s" % server]
+
+        url = self.hostname + '/controller/setRecoveryType'
+        params = { "otpNode": readd[0],
+                   "recoveryType": recovery_type }
+
+        return self._post_form_encoded(url, params)
+
     def rebalance(self, remove_nodes):
         url = self.hostname + '/controller/rebalance'
         all, eject, _, _, _, errors = self._get_otps_names(eject_nodes=remove_nodes)
