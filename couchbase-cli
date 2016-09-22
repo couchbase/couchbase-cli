@@ -32,6 +32,7 @@ class StubCommand():
     def getCommandSummary(self, cmd):
         """Return one-line summary info for each supported command"""
         command_summary = {
+            "admin-role-manage" : "set access-control roles for users",
             "cluster-edit" : "modify cluster settings",
             "cluster-init" : "set the username,password and port of the cluster",
             "bucket-list" : "list all buckets in a cluster",
@@ -245,12 +246,11 @@ def main():
         'server-info'       : StubCommand,
         'server-eshell'     : StubCommand,
         'server-add'        : StubCommand,
-        'server-readd'      : node.Node,
+        'server-readd'      : StubCommand,
         'group-manage'      : StubCommand,
         'rebalance'         : StubCommand,
         'rebalance-stop'    : StubCommand,
         'rebalance-status'  : StubCommand,
-        'eject-server'      : node.Node,
         'failover'          : StubCommand,
         'recovery'          : StubCommand,
         'cluster-init'      : StubCommand,
@@ -274,7 +274,7 @@ def main():
         'setting-alert'         : StubCommand,
         'setting-audit'         : StubCommand,
         'setting-ldap'          : StubCommand,
-        'admin-role-manage'     : node.Node,
+        'admin-role-manage'     : StubCommand,
         'setting-xdcr'          : xdcr.XDCR,
         'setting-index'         : StubCommand,
         'xdcr-setup'            : xdcr.XDCR,

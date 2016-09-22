@@ -846,6 +846,12 @@ class ClusterManager(object):
 
         return data, errors
 
+    def getRoles(self):
+        url = self.hostname + '/settings/rbac/users'
+        data, errors = self._get(url)
+
+        return data, errors
+
     def myRoles(self):
         url = self.hostname + '/whoami'
         data, errors = self._get(url)

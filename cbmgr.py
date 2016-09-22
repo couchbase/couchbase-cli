@@ -37,14 +37,15 @@ def parse_command():
         return False
 
     subcommands = {
-        "cluster-edit": ClusterEdit,
-        "cluster-init": ClusterInit,
+        "admin-role-manage": AdminRoleManage,
         "bucket-compact": BucketCompact,
         "bucket-create": BucketCreate,
         "bucket-delete": BucketDelete,
         "bucket-edit": BucketEdit,
         "bucket-flush": BucketFlush,
         "bucket-list": BucketList,
+        "cluster-edit": ClusterEdit,
+        "cluster-init": ClusterInit,
         "collect-logs-start": CollectLogsStart,
         "collect-logs-status": CollectLogsStatus,
         "collect-logs-stop": CollectLogsStop,
@@ -274,6 +275,72 @@ class Command(object):
     def execute(self, opts, args):
         """Executes the subcommand"""
         raise NotImplementedError
+
+
+class AdminRoleManage(Command):
+    """The administrator role manage subcommand"""
+
+    def __init__(self):
+        super(AdminRoleManage, self).__init__()
+        self.parser.set_usage("couchbase-cli admin-role-manage [options]")
+        self.add_optional("--my-roles", dest="my_roles", action="store_true",
+                          help="Show the current users roles")
+        self.add_optional("--get-roles", dest="get_roles", action="store_true",
+                          help="Show all valid users and roles")
+        self.add_optional("--set-users", dest="set_users",
+                          help="A comma-delimited list of user ids to set " +
+                          "acess-control roles for")
+        self.add_optional("--set-names", dest="set_names",
+                          help="A optional quoted, comma-delimited list names, " +
+                          "one for each specified user id ")
+        self.add_optional("--roles", dest="roles",
+                          help="A comma-delimited list of roles to set for users")
+        self.add_optional("--delete-users", dest="delete_users",
+                          help="A comma-delimited list of users to remove from" +
+                          " access control")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        if opts.my_roles is None and opts.get_roles is None and \
+            opts.set_users is None and opts.delete_users is None:
+            _exitIfErrors(["You must specify either '--my-roles', '--get-roles', " +
+                           "'--set-users', or '--delete-users'"])
+
+        if opts.my_roles and (opts.get_roles or opts.set_users or opts.roles or opts.delete_users):
+            _exitIfErrors(["The '--my-roles' option may not be used with any other" +
+                           " option."])
+
+        if opts.get_roles and (opts.my_roles or opts.set_users or opts.roles or opts.delete_users):
+            _exitIfErrors(["The '--get-roles' option may not be used with any " +
+                           "other option."])
+
+        if (opts.set_users and opts.roles is None) or (opts.set_users is None and opts.roles):
+            _exitIfErrors(["You must specify lists of both users and roles for those" +
+                           " users.\n--set-users=[comma delimited user list] " +
+                           "--roles=[comma-delimited list of one or more from admin," +
+                           " ro_admin, cluster_admin, replication_admin, " +
+                           "bucket_admin[bucket name or '*'], views_admin[bucket" +
+                           " name or '*']"])
+
+        if opts.my_roles:
+            data, errors = rest.myRoles()
+            _exitIfErrors(errors)
+            print json.dumps(data, indent=2)
+        elif opts.get_roles:
+            data, errors = rest.getRoles()
+            _exitIfErrors(errors)
+            print json.dumps(data, indent=2)
+        elif opts.set_users:
+            data, errors = rest.setRoles(opts.set_users, opts.roles, opts.set_names)
+            _exitIfErrors(errors)
+            print "SUCCESS: New users and roles added"
+        else:
+            data, errors = rest.deleteRoles(opts.delete_users)
+            _exitIfErrors(errors)
+            print "SUCCESS: Users deleted"
 
 
 class ClusterInit(Command):

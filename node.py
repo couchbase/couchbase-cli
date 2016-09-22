@@ -23,14 +23,12 @@ except ImportError:
 
 rest_cmds = {
     'ssl-manage'            :'/pools/default/certificate',
-    'admin-role-manage'   : '/settings/rbac/users',
 }
 
 # Map of operations and the HTTP methods used against the REST interface
 
 methods = {
     'ssl-manage'            :'GET',
-    'admin-role-manage'   : 'PUT',
 }
 
 bool_to_str = lambda value: str(bool(int(value))).lower()
@@ -77,14 +75,6 @@ class Node:
         #index
         self.services = None
 
-        #set-roles / delete-roles
-        self.roles = None
-        self.my_roles = False
-        self.get_roles = None
-        self.set_users = None
-        self.set_names = None
-        self.delete_users = None
-
     def runCmd(self, cmd, server, port,
                user, password, ssl, opts):
         self.rest_cmd = rest_cmds[cmd]
@@ -99,62 +89,8 @@ class Node:
         if self.debug:
             print "INFO: servers %s" % servers
 
-        elif cmd == 'ssl-manage':
+        if cmd == 'ssl-manage':
             self.retrieveCert()
-
-        elif cmd == 'admin-role-manage':
-            self.alterRoles()
-
-    # Role-Based Access Control
-    def alterRoles(self):
-        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
-                                            self.password, self.ssl)
-
-        # need to check arguments
-        if (self.my_roles == None and self.get_roles == None and \
-            self.set_users == None and self.delete_users == None):
-            print "ERROR: You must specify either '--my-roles', '--get-roles', " \
-                "'--set-users', or '--delete-users'"
-            return
-
-        if self.my_roles and (self.get_roles or self.set_users or self.roles or self.delete_users):
-            print "ERROR: The 'my-roles' option may not be used with any other option."
-            return
-
-        if self.get_roles and (self.my_roles or self.set_users or self.roles or self.delete_users):
-            print "ERROR: The 'get-roles' option may not be used with any other option."
-            return
-
-        if (self.set_users and self.roles == None) or (self.set_users == None and self.roles):
-            print "ERROR: You must specify lists of both users and roles for those users.\n  --set-users=[comma delimited user list] --roles=[comma-delimited list of one or more from admin, ro_admin, cluster_admin, replication_admin, bucket_admin[bucket name or '*'], views_admin[bucket name or '*']"
-            return
-
-        # my_roles
-        if self.my_roles:
-            data, errors = cm.myRoles()
-            if errors == None:
-                print "SUCCESS: my roles:"
-
-        # get_roles
-        elif self.get_roles:
-            data, errors = cm.getRoles()
-            if errors == None:
-                print "SUCCESS: user/role list:"
-
-        # set_users
-        elif self.set_users:
-            data, errors = cm.setRoles(self.set_users,self.roles,self.set_names)
-            if errors == None:
-                print "SUCCESS: set roles for ",self.set_users,". New user/role list:"
-
-        # delete_users
-        else:
-            data, errors = cm.deleteRoles(self.delete_users)
-            if errors == None:
-                print "SUCCESS: removed users ", self.delete_users, ". New user/role list:"
-
-        _exitIfErrors(errors)
-        print json.dumps(data,indent=2)
 
     def processOpts(self, cmd, opts):
         """ Set standard opts.
@@ -261,18 +197,6 @@ class Node:
                 self.ticket = a
             elif o == '--services':
                 self.services = a
-            elif o == '--roles':
-                self.roles = a
-            elif o == '--my-roles':
-                self.my_roles = True
-            elif o == '--get-roles':
-                self.get_roles = True
-            elif o == '--set-users':
-                self.set_users = a
-            elif o == '--set-names':
-                self.set_names = a
-            elif o == '--delete-users':
-                self.delete_users = a
 
         return servers
 
@@ -327,7 +251,6 @@ class Node:
             "server-list" :"list all servers in a cluster",
             "server-info" :"show details on one server",
             "ssl-manage" : "manage cluster certificate",
-            "admin-role-manage" : "set access-control roles for users"
         }
         if cmd in command_summary:
             return command_summary[cmd]
@@ -348,15 +271,6 @@ class Node:
                      "regenerate cluster certificate AND save to a pem file"),
                     ("--set-node-certificate", "sets the node certificate"),
                     ("--upload-cluster-ca", "uploads a new cluster certificate")]
-        elif cmd == "admin-role-manage":
-            return [
-            ("--my-roles", "Return a list of roles for the current user."),
-            ("--get-roles", "Return list of users and roles."),
-            ("--set-users", "A comma-delimited list of user ids to set acess-control roles for"),
-            ("--set-names", "A optional quoted, comma-delimited list names, one for each specified user id"),
-            ("--roles", "A comma-delimited list of roles to set for users, one or more from admin, ro_admin, cluster_admin, replication_admin, bucket_admin[bucket name or '*'], views_admin[bucket name or '*']"),
-            ("--delete-users", "A comma-delimited list of users to remove from access control")
-            ]
         else:
             return None
 
@@ -397,31 +311,6 @@ class Node:
     couchbase-cli ssl-manage -c 192.168.0.1:8091 \\
         --set-node-certificate \\
         -u Administrator -p password""")]
-        elif cmd == "admin-role-manage":
-            return [("Show the current users roles.",
-"""
-    couchbase-cli admin-role-manage -c 192.168.0.1:8091 --my-roles
-            """),
-            ("Get a list of all users and roles",
-"""
-    couchbase-cli admin-role-manage -c 192.168.0.1:8091 --get-roles
-            """),
-                    ("Make bob and mary cluster_admins, and bucket admins for the default bucket",
-"""
-    couchbase-cli admin-role-manage -c 192.168.0.1:8091 \\
-        --set-users=bob,mary --set-names="Bob Smith,Mary Jones" --roles=cluster_admin,bucket_admin[default]
-            """),
-                    ("Make jen bucket admins for all buckets",
-"""
-    couchbase-cli admin-role-manage -c 192.168.0.1:8091 \\
-        --set-users=jen --roles=bucket_admin[*]
-            """),
-            ("Remove all roles for bob",
-"""
-    couchbase-cli admin-role-manage -c 192.168.0.1:8091 --delete-users=bob
-            """)
-            ]
-
         else:
             return None
 
