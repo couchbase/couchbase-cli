@@ -11,7 +11,6 @@ import getopt
 import sys
 import os
 
-import node
 import xdcr
 import util_cli as util
 import usage
@@ -64,6 +63,7 @@ class StubCommand():
             "setting-index" : "set index settings",
             "setting-notification" : "set notification settings",
             "setting-ldap" : "set ldap settings",
+            "ssl-manage" : "manage cluster certificate",
             "user-manage" : "manage read only user",}
         if cmd in command_summary:
             return command_summary[cmd]
@@ -255,7 +255,7 @@ def main():
         'recovery'          : StubCommand,
         'cluster-init'      : StubCommand,
         'cluster-edit'      : StubCommand,
-        'ssl-manage'        : node.Node,
+        'ssl-manage'        : StubCommand,
         'node-init'         : StubCommand,
         'user-manage'       : StubCommand,
         'collect-logs-start'  : StubCommand,

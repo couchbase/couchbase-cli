@@ -11,7 +11,8 @@ import urllib
 from usage import command_error
 import restclient
 import util_cli as util
-import node
+
+bool_to_str = lambda value: str(bool(int(value))).lower()
 
 # Map of HTTP success code, success message and error message for
 # handling HTTP response properly
@@ -374,9 +375,9 @@ class XDCR:
                                      self.ssl)
         self.rest_cmd = '/settings/replications/' + urllib.quote_plus(self.replicator)
         if self.cmd == "pause":
-            rest.setParam('pauseRequested', node.bool_to_str(1))
+            rest.setParam('pauseRequested', bool_to_str(1))
         elif self.cmd == "resume":
-            rest.setParam('pauseRequested', node.bool_to_str(0))
+            rest.setParam('pauseRequested', bool_to_str(0))
 
         opts = {
             'error_msg': "unable to %s replication" % self.cmd,

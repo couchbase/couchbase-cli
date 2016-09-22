@@ -10,7 +10,6 @@ import time
 
 from optparse import HelpFormatter, OptionContainer, OptionGroup, OptionParser
 from cluster_manager import ClusterManager
-from node import _exitIfErrors, _warning
 
 try:
     from gettext import gettext
@@ -70,6 +69,7 @@ def parse_command():
         "setting-index": SettingIndex,
         "setting-ldap": SettingLdap,
         "setting-notification": SettingNotification,
+        "ssl-manage": SSLManage,
         "user-manage": UserManage,
     }
 
@@ -142,6 +142,32 @@ def process_services(services, is_enterprise):
 def _deprecated(msg):
     print "DEPRECATED: " + msg
 
+def _warning(msg):
+    print "WARNING: " + msg
+
+def _exitIfErrors(errors):
+    if errors:
+        for error in errors:
+            print "ERROR: " + error
+        sys.exit(1)
+
+def _exit_on_file_write_failure(fname, to_write):
+    try:
+        wfile = open(fname, 'w')
+        wfile.write(to_write)
+        wfile.close()
+    except IOError, error:
+        _exitIfErrors([error])
+
+def _exit_on_file_read_failure(fname):
+    try:
+        rfile = open(fname, 'r')
+        read_bytes = rfile.read()
+        rfile.close()
+        return read_bytes
+    except IOError, error:
+        _exitIfErrors([error])
+
 class CLIOptionParser(OptionParser):
     """A custom parser for subcommands"""
 
@@ -187,7 +213,7 @@ class CLIHelpFormatter(HelpFormatter):
         self._long_opt_fmt = "%s"
 
     def format_usage(self, usage):
-        return gettext("%s\n") % usage
+        return gettext("usage: %s\n") % usage
 
     def format_heading(self, heading):
         return "%*s%s:\n" % (self.current_indent, "", heading)
@@ -1704,6 +1730,66 @@ class SettingNotification(Command):
 
         print "SUCCESS: Notification settings updated"
 
+
+class SSLManage(Command):
+    """The user manage subcommand"""
+
+    def __init__(self):
+        super(SSLManage, self).__init__()
+        self.parser.set_usage("couchbase-cli ssl-manage --cluster-cert-info [--extended]\n" +
+                              "   or: couchbase-cli ssl-manage --node-cert-info\n" +
+                              "   or: couchbase-cli ssl-manage --regenerate-cert <path>\n" +
+                              "   or: couchbase-cli ssl-manage --set-node-certificate\n" +
+                              "   or: couchbase-cli ssl-manage --upload-cluster-ca <path>")
+        self.add_optional("--cluster-cert-info", dest="cluster_cert", action="store_true",
+                          default=False, help="Gets the cluster certificate")
+        self.add_optional("--node-cert-info", dest="node_cert", action="store_true",
+                          default=False, help="Gets the node certificate")
+        self.add_optional("--regenerate-cert", dest="regenerate",
+                          help="Regenerate the cluster certificat and save it to a file")
+        self.add_optional("--set-node-certificate", dest="set_cert", action="store_true",
+                          default=False, help="Sets the node certificate")
+        self.add_optional("--upload-cluster-ca", dest="upload_cert",
+                          help="Upload a new cluster certificate")
+        self.add_optional("--extended", dest="extended", action="store_true",
+                          default=False, help="Print extended certificate information")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        if opts.regenerate is not None:
+            try:
+                open(opts.regenerate, 'a').close()
+            except IOError:
+                _exitIfErrors(["Unable to create file at `%s`" % opts.regenerate])
+            certificate, errors = rest.regenerate_cluster_certificate()
+            _exitIfErrors(errors)
+            _exit_on_file_write_failure(opts.regenerate, certificate)
+            print "SUCCESS: Certificate regenerate and copied to '%s'" % (opts.regenerate)
+        elif opts.cluster_cert is not None:
+            certificate, errors = rest.retrieve_cluster_certificate(opts.extended)
+            _exitIfErrors(errors)
+            if isinstance(certificate, dict):
+                print json.dumps(certificate, sort_keys=True, indent=2)
+            else:
+                print certificate
+        elif opts.node_cert is not None:
+            certificate, errors = rest.retrieve_node_certificate('%s:%d' % (host, port))
+            _exitIfErrors(errors)
+            print json.dumps(certificate, sort_keys=True, indent=2)
+        elif opts.upload_cert:
+            certificate = _exit_on_file_read_failure(opts.upload_cert)
+            _, errors = rest.upload_cluster_certificate(certificate)
+            _exitIfErrors(errors)
+            print "SUCCESS: Uploaded cluster certificate to %s:%d" % (host, port)
+        elif opts.set_cert:
+            _, errors = rest.set_node_certificate()
+            _exitIfErrors(errors)
+            print "SUCCESS: Node certificate set"
+        else:
+            _exitIfErrors(["No options specified"])
 
 class UserManage(Command):
     """The user manage subcommand"""
