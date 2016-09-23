@@ -1,0 +1,84 @@
+couchbase-cli-setting-ldap(1)
+=============================
+
+NAME
+----
+couchbase-cli-setting-ldap - Modifies LDAP settings
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli setting-ldap' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--ldap-admins <admins_list>]
+	  [--ldap-roadmins <ro_admin_list>] [--ldap-default <default>]
+	  [--ldap-enable <num>]
+
+DESCRIPTION
+-----------
+
+This command allows users to enable LDAP on their cluster as well as add
+administrator and read-only administrator LDAP users to their cluster.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--ldap-admins <admins_list>::
+	A list of LDAP users who should have administrator privileges on this
+	cluster. This list should be comma separated if multiple users are being
+	added.
+
+--ldap-roadmins <ro_admin_list>::
+	A list of LDAP users who should have read-only administrator privileges on
+	this cluster. This list should be comma separated if multiple users are
+	being added.
+
+--ldap-enabled <num>::
+	Enables or disables LDAP on this cluster. To enable LDAP set this option to
+	"1". To disable LDAP set this parameter to "0".
+
+--ldap-default <default>::
+	Specifies the default role for LDAP users who have not been explicitly been
+	added to the cluster. This option may be set to "admins", "ro_admins", or
+	"none". If this option is set to "admins" then all LDAP users not explicitly
+	add to this cluster have administrator privileges. If this option is set to
+	"roadmins" then all LDAP users not explicitly add to this cluster have
+	read-only administrator privileges. If this option is set to "none" then all
+	LDAP users not explicitly add to this cluster will have no access. This
+	option default to "none".
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To enable LDAP on a cluster run the following command.
+
+	$ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
+	 --password password --enable-ldap 1
+
+To add users alice and barry as Administrators and users clair and daniel as
+Read-Only Administrators run the following command.
+
+	$ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
+	 --password password --enable-ldap 1 --ldap-admins alice,barry \
+	 --ldap-ro-admins clair,daniel
+
+To enable LDAP and allow all LDAP users to have Amdinistrator access run the
+following command.
+
+	$ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
+	 --password password --enable-ldap 1 --ldap-default admins
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+linkcbdoc:couchbase-cli-admin-role-manage[1].
+linkcbdoc:couchbase-cli-user-manage[1].
+
+include::part-footer.txt[]

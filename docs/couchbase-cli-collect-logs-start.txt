@@ -1,0 +1,103 @@
+couchbase-cli-collect-logs-start(1)
+===================================
+
+NAME
+----
+couchbase-cli-collect-logs-start - Start log collection
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli collect-logs-start' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--all-nodes] [--nodes <node_list>] [--upload]
+	  [--upload-host <host>] [--customer <customer>] [--ticket <ticket>]
+
+DESCRIPTION
+-----------
+
+This command collects all Couchbase log files from one or more nodes in the
+cluster. Log collection is useful when there are failures in the cluster and you
+need to figure out what is going on. Since there are many log files on various
+different server the collect-logs-start command helps in aggregating all of the
+different log file Couchbase Server creates.
+
+To get the location of the collected log files you can run the
+collect-logs-status command either while the log collection task is running or
+after the log collection task has completed. If the --upload flag is specified
+then the logs will also be uploaded to the host specified in the --upload-host
+flag. The upload flag is intended mainly for Couchbase Enterprise Edition users
+who need to upload logs to the Couchbase Support Team to aid in diagnosing
+support tickets that they have filed.
+
+Note that only one log collection task may be running at any given time in the
+cluster.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--all-nodes::
+	Specifies that log collection shoue take place on all nodes in the cluster.
+	May not be specified at the same time as --nodes.
+
+--nodes <node_list>::
+	A list of one or more nodes to collect logs from. The list should be comma
+	separated. This parameter may not be specified at the same time as the
+	--nodes option.
+
+--upload::
+	Specifies that the logs should be uploaded to the the host specified with
+	the --upload-host option. This option should be used by Couchbase Enterprise
+	customers when uploading logs for the Couchbase Support Team.
+
+--upload-host <host>::
+	Once log collection is completed the logs zip file should be uploaded to
+	this URL. This parameter is required if the --upload flag is specified.
+
+--customer <name>::
+	The name of the customer who is uploading these logs. This option is
+	required when the --upload flag is specified.
+
+--ticket <num>::
+	The ticket number that the support team has created to track the issue
+	filed. This parameter is optional when specifying the --upload flag, but
+	recommended if the customer has a ticket number.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To collect logs on all nodes without uploading them run the following command.
+
+	$ couchbase-cli collect-logs-start -c 192.168.1.5 --username Administrator \
+	 --password password --all-nodes
+
+If we have a three node cluster with IP addresses 192.168.1.5, 192.168.1.6, and
+192.168.1.7 and we only want to collect logs on the first two nodes and we don't
+want to upload the logs then we would run the command below.
+
+	$ couchbase-cli collect-logs-start -c 192.168.1.5 --username Administrator \
+	 --password password --nodes 192.168.1.5:8091,192.168.1.6:8091
+
+I you are a Couchbase Enterprise Edition user and you need to upload logs for
+all nodes for support ticket then you can run the following command.
+
+	$ couchbase-cli collect-logs-start -c 192.168.1.5 --username Administrator \
+	 --password password --all-nodes --upload --upload-customer customer_name \
+	 --upload-host s3.amazonaws.com/cb-customers --ticket 12345
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-collect-logs-status[1].
+linkcbdoc:couchbase-cli-collect-logs-stop[1].
+
+include::part-footer.txt[]

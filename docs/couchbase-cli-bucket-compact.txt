@@ -1,0 +1,78 @@
+couchbase-cli-bucket-compact(1)
+===============================
+
+NAME
+----
+couchbase-cli-bucket-compact - Compact a Couchbase data bucket
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli bucket-compact' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--bucket <name>]
+
+DESCRIPTION
+-----------
+
+Starts compaction for view indexes and data files for the specified bucket.
+If only the views need to be compacted then the --views-only flag should be
+specified. If only the data files should be compacted then the --data-only flag
+should be specified.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--bucket::
+	The name of the bucket to compact.
+
+--data-only::
+	Indicates that only the data files should be compacted and that compaction
+	for the view index files should be skipped. This option cannot be
+	specified at the same time as the --view-only flag.
+
+--view-only::
+	Indicates that only the view index files should be compacted and that
+	compaction for the data files should be skipped. This option cannot be
+	specified at the same time as the --data-only flag.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To force start compaction of the data and view index files for a bucket named
+"travel-data" run the following command.
+
+	$ couchbase-cli host-list -c 192.168.1.5:8091 --username Administrator \
+	 --password password --bucket travel-data
+
+If only the view index files for a specific bucket should be compacted and the
+data files should be skipped run the following command.
+
+	$ couchbase-cli host-list -c 192.168.1.5:8091 --username Administrator \
+	 --password password --bucket travel-data --view-only
+
+If only the data files for a specific bucket should be compacted and the view
+index files should be skipped run the following command.
+
+	$ couchbase-cli host-list -c 192.168.1.5:8091 --username Administrator \
+	 --password password --bucket travel-data --data-only
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-bucket-compact[1].
+linkcbdoc:couchbase-cli-bucket-create[1].
+linkcbdoc:couchbase-cli-bucket-delete[1].
+linkcbdoc:couchbase-cli-bucket-edit[1].
+linkcbdoc:couchbase-cli-bucket-flush[1].
+
+include::part-footer.txt[]

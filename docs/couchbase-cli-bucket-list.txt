@@ -1,0 +1,60 @@
+couchbase-cli-bucket-list(1)
+============================
+
+NAME
+----
+couchbase-cli-bucket-list - List all Couchbase data buckets
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli bucket-list' [--cluster <url>] [--username <user>]
+	  [--password <password>]
+
+DESCRIPTION
+-----------
+
+Lists all buckets in the cluster. Each bucket is printed to stdout on a separate
+line.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To get a list of bucket names for each bucket in the cluster you can run the
+command below.
+
+	$ couchbase-cli bucket-list -c 192.168.1.5:8091 --username Administrator \
+	 --password password
+
+	 travel-data
+	 airline-data
+	 flisht-data
+
+DISCUSSION
+----------
+
+TBD
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-bucket-compact[1].
+linkcbdoc:couchbase-cli-bucket-create[1].
+linkcbdoc:couchbase-cli-bucket-delete[1].
+linkcbdoc:couchbase-cli-bucket-edit[1].
+linkcbdoc:couchbase-cli-bucket-flush[1].
+
+include::part-footer.txt[]

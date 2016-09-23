@@ -1,0 +1,45 @@
+couchbase-cli-server-info(1)
+============================
+
+NAME
+----
+couchbase-cli-server-info - Displays server level information and statistics
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli server-info' [--cluster <url>] [--username <username>]
+	  [--password <password>]
+
+DESCRIPTION
+-----------
+
+Prints information about the server specified.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To get server information for localhost we can run the following command.
+
+	$ couchbase-cli server-info -c 127.0.0.1 --username Administrator \
+	 --password password
+
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+linkcbdoc:couchbase-cli-host-list[1].
+linkcbdoc:couchbase-cli-server-list[1].
+
+include::part-footer.txt[]

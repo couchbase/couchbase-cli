@@ -1,0 +1,83 @@
+couchbase-cli-server-eshell(1)
+==============================
+
+NAME
+----
+couchbase-cli-server-eshell - Opens a shell to talk to the cluster manager process
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli server-eshell' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--vm <vm_name>] [--erl <path>]
+
+DESCRIPTION
+-----------
+
+This is a hidden command and is not intended for typical production use. This
+command allows the user to connect to the cluster manager process in order to
+make unsupported changes in the cluster manager. This command is typically used
+as last resort in order to address uncommon production issues. Check with the
+Couchbase Support team before running this command because improper use can lead
+to the cluster being placed in an unusable state.
+
+When this command is executed it connects to the cluster manager process
+specified and starts a shell so that the user can interact with the cluster
+manager.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--vm::
+	The part of the cluster manager to connect to. This option can either be set
+	to babysitter, couchdb, or ns_server. The babysitter vm is a monitor that
+	ensures the cluster manager is always running and is restarted in the event
+	of a crash or error. The couchdb vm runs the views service on each data node
+	and the ns_server vm corresponds to the cluster manager. By default the vm
+	option is set to ns_server.
+
+--erl::
+	Specified the location of the erlang process. This parameter should be set
+	if the default erlang process that is shipped with Couchbase is not the
+	correct executable to connect to the cluster manager with.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To connect to the cluster manager process you can run the following command
+below.
+
+	$ couchbase-cli server-eshell -c 192.168.1.5:8091 --username Administrator \
+	 --password password
+
+	Erlang R16B03-1 (erts-5.10.4.0.0.1)
+
+	Eshell V5.10.4.0.0.1  (abort with ^G)
+	(n_0@192.168.1.5)1>
+
+When the command is executed it will bring up a shell that is connected to the
+vm specified in the command. Since the --vm parameter is not specified we
+connect to the default ns_server vm.
+
+To connect to the babysitter vm the following command would be run.
+
+	$ couchbase-cli server-eshell -c 192.168.1.5:8091 --username Administrator \
+	 --password password --vm babysitter
+
+	Erlang R16B03-1 (erts-5.10.4.0.0.1)
+
+	Eshell V5.10.4.0.0.1  (abort with ^G)
+	(n_0@192.168.1.5)1>
+
+To exit the shell send the SIGINT signal. This can be done by typing Ctrl-C.
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+include::part-footer.txt[]

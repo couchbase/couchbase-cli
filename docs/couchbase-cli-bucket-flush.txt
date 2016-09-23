@@ -1,0 +1,54 @@
+couchbase-cli-bucket-flush(1)
+=============================
+
+NAME
+----
+couchbase-cli-bucket-flush - Flush a Couchbase data bucket
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli bucket-flush' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--bucket <name>]
+
+DESCRIPTION
+-----------
+
+Deletes all data in a bucket. All indexes and bucket configuration will remain
+unchanged. This operation will not delete the actual bucket, it will only delete
+the data it contains.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--bucket <name>::
+	The name of the bucket to flush.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To flush a bucket named "travel-data" run the command below.
+
+	$ couchbase-cli bucket-flush -c 192.168.1.5:8091 --username Administrator \
+	 --password password --bucket travel-data
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-bucket-compact[1].
+linkcbdoc:couchbase-cli-bucket-create[1].
+linkcbdoc:couchbase-cli-bucket-delete[1].
+linkcbdoc:couchbase-cli-bucket-edit[1].
+linkcbdoc:couchbase-cli-bucket-list[1].
+
+include::part-footer.txt[]

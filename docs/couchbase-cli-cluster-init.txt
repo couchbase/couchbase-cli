@@ -1,0 +1,154 @@
+couchbase-cli-cluster-init(1)
+=============================
+
+NAME
+----
+couchbase-cli-cluster-init - Initializes a Couchbase cluster
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli cluster-init' [--cluster <url>] [--cluster-username <username>]
+	  [--cluster-password <password>] [--cluster-port <port>]
+      [--cluster-ramsize <megabytes>] [--cluster-name <name>]
+      [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
+      [--index-storage-setting <setting>] [--services <services>]
+
+DESCRIPTION
+-----------
+Initializes the first node in a Couchbase cluster. Before initializing a cluster
+you need to decide which services you will be running on this individual node as
+well as the memory quota for each service you are starting. Services started
+with cluster-init will be local on this server only and future servers that are
+added to this cluster may be configured with different or similar services
+running on them. Note that the data service is always required on the first
+node. Memory quotas for each service are global settings and will apply to each
+node added to the cluster. The memory quota for a service only applies if that
+service is running on a given server. You may also define the index storage mode
+using the --index-storage-setting which will determine how the global secondary
+indexes (GSI) are created. See the index storage mode parameter below for more
+details on how this parameter is set with cluster-init.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--cluster-username::
+	Specifies the username for the initial Couchbase administrator user.
+
+--cluster-password::
+	Specifies the password for the initial Couchbase administrator user.
+
+--cluster-ramsize::
+	Specifies the data services memory quota. This quota will be assigned to all
+	future nodes added to the cluster with the data service.
+
+--cluster-fts-ramsize::
+	Sets the full-text service memory quota. This parameter is required if the
+	full-text service is specified in the --services option. This quota will be
+	assigned to all future nodes added to the cluster with the full-text
+	service.
+
+--cluster-index-ramsize::
+	Sets the index service memory quota. This parameter is required if the index
+	service is specified in the --services option. This quota will be assigned
+	to all future nodes added to the cluster with the index service.
+
+--cluster-name::
+	Sets the name for this cluster. Naming clusters is useful when you have
+	multiple Couchbase clusters in your deployment.
+
+--cluster-port::
+	Specifies the port for the Couchbase Administration Console. Defaults to
+	port 8091.
+
+--index-storage-setting::
+	Specifies the index storage mode for the index service. Accepted storage
+	modes are "default" for the forestdb index backend or "memopt" for memory
+	optimized indexes. If the index service is specified to be started with the
+	--services command then this parameter defaults to "default". If the index
+	service is not specified to be started then the index storage mode will not
+	be set. You will then be required to set the index storage mode when the
+	first index service is started on a server in the cluster. You may also
+	define the index storage mode even if an index service is not started on the
+	first node and it will be remembered when the first index service is added
+	in the future. You may not change this parameter after it has been set.
+
+--services::
+	Specifies the services to start on this cluster. You may not change the
+	services running on this node once the cluster has been initialized. This
+	options takes a comma separated list of services. Accepted services are
+	"data", "index", "query", and "fts". If a user wants to start a cluster with
+	the index and data service then they would specify \-\-service data,index.
+	This parameter defaults to "data" to add only the data service.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To create a Couchbase cluster with only the data service on the first node and a
+memory quota of 4096MB run the following command.
+
+	$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
+	 --cluster-password password --services data --cluster-ramsize 4096
+
+If we want to create a Couchbase cluster with the data and index service then we
+also need to set the memory quotas for each service as well as the index storage
+mode since we are starting the index service.
+
+To create a cluster with an index memory quota of 1024MB, a data service memory
+quota of 2048MB and a memory optimized index storage mode run the following
+command.
+
+	$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
+	 --cluster-password password --services data,index --cluster-ramsize 2048 \
+	 --cluster-index-ramsize 1024 --index-storage-setting memopt
+
+If we want to create a Couchbase cluster with all services then we need to set
+the memory quotas for the data, index, and full-text service. We will set the
+quotas to 2048MB, 1024MB, and 1024MB respectively. We do not need to set a quota
+for the query service since it does not have a memory quota. We also need to set
+the index storage mode for the index service which we will set to "default"
+since we will be starting that service on our first node.
+
+	$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
+	 --cluster-password password --services data,index,query,fts \
+	 --cluster-ramsize 2048 --cluster-index-ramsize 1024 \
+	 --cluster-fts-ramsize 1024 --index-storage-setting default \
+
+If we want to change the port number we can do so with the --cluster-port
+option. In the example below we will set up a cluster on port 5000 and start
+only the data service. We will set the memory quota of the data service to 2048MB.
+
+	$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
+	 --cluster-password password --services data --cluster-ramsize 2048 \
+	 --cluster-port 5000
+
+DISCUSSION
+----------
+
+The cluster-init subcommand sets up the first node on a Couchbase cluster. To
+set per node settings such as the data storage directory, index storage
+directory, or hostname see the linkcli:couchbase-cli-node-init[1] command. To
+add nodes to a currently initialized cluster use the
+linkcli:couchbase-cli-server-add[1] command. Some cluster settings may be
+changed after a cluster is initialized. Use the
+linkcli:couchbase-cli-setting-cluster[1] command to edit these settings.
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+linkcbdoc:couchbase-cli-cluster-edit[1].
+linkcbdoc:couchbase-cli-node-init[1].
+linkcbdoc:couchbase-cli-server-add[1].
+
+COUCHBASE-CLI
+-------------
+Part of the linkgit:couchbase-cli[1] suite

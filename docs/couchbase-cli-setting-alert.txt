@@ -1,0 +1,159 @@
+couchbase-cli-setting-alert(1)
+==============================
+
+NAME
+----
+couchbase-cli-setting-alert - Modifies alert settings
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli setting-alert' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--enable-email-alert <num>]
+	  [--email-recipients <email_list>] [--email-sender <email>]
+	  [--email-user <user>] [--email-password <password>] [--email-host <host>]
+	  [--email-port <port>] [--enable-email-encrypt <num>]
+	  [--alert-auto-failover-node] [--alert-auto-failover-max-reached]
+	  [--alert-auto-failover-node-down] [--alert-auto-failover-cluster-small]
+	  [--alert-auto-failover-disable] [--alert-ip-changed] [--alert-disk-space]
+	  [--alert-meta-overhead] [--alert-meta-oom] [--alert-write-failed]
+	  [--alert-audit-msg-dropped]
+
+DESCRIPTION
+-----------
+
+This command is used to set up email alerts on a cluster. Couchbase provides
+alerts for various issues that may arise in the cluster where it is recommended
+that the cluster administrator take action to ensure that applications continue
+to function properly. When setting up email alerts administrator can decide who
+gets alert emails and which alerts are sent.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--enable-email-alert <num>::
+	Enables email alerts on this cluster. Set this option to "1" to enable
+	alerts or "0" to disable alerts. This parameter is required.
+
+--email-recipients <email_list>::
+	A comma separated list of users to email when an alert is raised in the
+	server.
+
+--email-sender <email>::
+	If email alerts an enabled then this option will set the sender email
+	address.
+
+--email-user <user>::
+	The email server username for the sender email address. This field is
+	required if the email address provided requires authentication.
+
+--email-password <password>::
+	The email server password for the sender email address. This field is
+	required if the email address provided requires authentication.
+
+--email-host <host>::
+	The email server hostname that hosts the email address specified by the
+	--sender-email option.
+
+--email-port <port>::
+	The email server port number of the server that hosts the email address
+	specified by the --sender-email option.
+
+--enable-email-encrypt <num>::
+	Enables SSL encryption when connecting to the email server. Set this option
+	to "1" to enable encryption or "0" to disable encryption. If this option is
+	not set then encryption will be disabled.
+
+--alert-auto-failover-node::
+	Specifies that an email alert should be sent when a node is automatically
+	failed over.
+
+--alert-auto-failover-max-reached::
+	Specifies that an email alert should be sent when the maximum amount of
+	auto-failovers is reached.
+
+--alert-auto-failover-node-down::
+	Specifies that an email alert should be sent when auto-failover could not be
+	completed because another node in the cluster was already down.
+
+--alert-auto-failover-cluster-small::
+	Specifies that an email alert should be sent when auto-failover could not be
+	completed because the cluster is too small.
+
+--alert-auto-failover-disable::
+	Specifies that an email alert should be sent when auto-failover could not be
+	completed because auto-failover is disabled on this cluster.
+
+--alert-ip-changed::
+	Specifies that an email alert should be sent when the IP address on a node
+	in the cluster changes.
+
+--alert-disk-space::
+	Specifies that an email alert should be sent when the disk usage on a node
+	in the cluster reaches 90% of the available disk space.
+
+
+--alert-meta-overhead::
+	Specifies that an email alert should be sent when the metadata overhead on
+	the data service is more than 50%.
+
+--alert-meta-oom::
+	Specifies that an email alert should be sent when all of the memory in the
+	cache for a bucket is used by metadata. If this condition is hit the bucket
+	will be unusable until more memory is added to the bucket cache.
+
+--alert-write-failed::
+	Specifies that an email alert should be sent when writing data to disk on
+	the data service has failed.
+
+--alert-audit-msg-dropped::
+	Specifies that an email alert should be sent when writing event to audit log
+	fails.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To enable failover related email alerts for two users without email encryption
+run the following command below:
+
+	$ couchbase-cli setting-alert -c 192.168.1.5 --username Administrator \
+	 --password password --enable-email-alert 1 --email-user admin \
+	 --email-password password --email-host mail.couchbase.com --email-port 25 \
+	 --email-recipients user1@couchbase.com,user2@couchbase.com \
+	 --email-sender noreply@couchbase.com --enable-email-encrypt 0 \
+	 --alert-auto-failover-node --alert-auto-failover-max-reached \
+	 --alert-auto-failover-node-down --alert-auto-failover-cluster-small \
+
+To enable all email alerts for a single users with email encryption run the
+following command below:
+
+	$ couchbase-cli setting-alert -c 192.168.1.5 --username Administrator \
+	 --password password --enable-email-alert 1 --email-user admin \
+	 --email-password password --email-host mail.couchbase.com --email-port 25 \
+	 --email-recipients user@couchbase.com --email-sender noreply@couchbase.com \
+	 --enable-email-encrypt 1 --alert-auto-failover-node \
+	 --alert-auto-failover-max-reached --alert-auto-failover-node-down \
+	 --alert-auto-failover-cluster-small --alert-auto-failover-disable \
+	 --alert-ip-changed --alert-disk-space --alert-meta-overhead \
+	 --alert-meta-oom --alert-write-failed --alert-audit-msg-dropped
+
+To disable email alerts run the following command:
+
+	$ couchbase-cli setting-alert -c 192.168.1.5 --username Administrator \
+	 --password password --enable-email-alert 0
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-setting-notification[1].
+
+include::part-footer.txt[]

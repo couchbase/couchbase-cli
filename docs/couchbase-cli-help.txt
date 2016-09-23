@@ -1,0 +1,44 @@
+couchbase-cli-help(1)
+=====================
+
+NAME
+----
+couchbase-cli-help - Show extended couchbase-cli help
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli help'
+
+DESCRIPTION
+-----------
+This page is not yet completed.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+TBD
+
+DISCUSSION
+----------
+
+TBD
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+TBD
+
+include::part-footer.txt[]

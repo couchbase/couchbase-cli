@@ -1,0 +1,52 @@
+couchbase-cli-collect-logs-stop(1)
+==================================
+
+NAME
+----
+couchbase-cli-collect-logs-stop - Stop the current log collection task
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli collect-logs-stop' [--cluster <url>] [--username <user>]
+	  [--password <password>]
+
+DESCRIPTION
+-----------
+
+This command cancels the currently running log collection task.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To stop the currently running log collection task run the following command
+below.
+
+	$ couchbase-cli collect-logs-stop -c 192.168.1.5 --username Administrator \
+	 --password password
+
+DISCUSSION
+----------
+
+TBD
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-collect-logs-start[1].
+linkcbdoc:couchbase-cli-collect-logs-status[1].
+
+include::part-footer.txt[]

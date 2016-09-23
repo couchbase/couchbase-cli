@@ -1,0 +1,72 @@
+couchbase-cli-user-manage(1)
+============================
+
+NAME
+----
+couchbase-cli-user-manage - Manage the read-only user
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli user-manage' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--delete] [--list] [--set]
+	  [--ro-username <username>] [--ro-password <password>]
+
+DESCRIPTION
+-----------
+
+This command allows users to manage the local Couchbase read-only user.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--list::
+	Lists all local read-only users.
+
+--delete::
+	Deletes the local read-only user if one exists.
+
+--set::
+	Sets or updates the local read only user.
+
+--ro-username <username>::
+	Sets or updates the username for the local read-only user. This parameter is
+	user only when using the --set flag.
+
+--ro-password <password>::
+	Sets or updates the password for the local read-only user. This parameter is
+	user only when using the --set flag.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To set or update the read-only user login credential run the following command.
+
+	$ couchbase-cli setting-notification -c 127.0.0.1:8091 -u Administrator \
+	 -p password --set --ro-username my_username --ro-password my_password
+
+To list the current local read only user run the following command.
+
+	$ couchbase-cli setting-notification -c 127.0.0.1:8091 -u Administrator \
+	 -p password --list
+
+To delete the current local read only user run the following command.
+
+	$ couchbase-cli setting-notification -c 127.0.0.1:8091 -u Administrator \
+	 -p password --delete
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+linkcbdoc:couchbase-cli-admin-role-manage[1]
+linkcbdoc:couchbase-cli-setting-ldap[1]
+
+include::part-footer.txt[]

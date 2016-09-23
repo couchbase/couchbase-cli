@@ -1,0 +1,97 @@
+couchbase-cli-rebalance(1)
+==========================
+
+NAME
+----
+couchbase-cli-rebalance - Rebalances data across nodes in a cluster
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli rebalance' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--server-remove <servers>]
+
+DESCRIPTION
+-----------
+
+Rebalances data across all servers in the cluster. This command should be used
+after servers are added, removed, or failed over from the cluster in order to
+ensure that each node in the cluster has a similar "balanced" amount of data.
+
+To add servers use the linkcbdoc:couchbase-server-add[1] subcommand. To remove
+servers specify the list of servers to remove using the --server-remove option
+in the rebalance subcommand. To failover servers see the
+linkcbdoc:couchbase-failover[1] subcommand. After running the
+linkcbdoc:couchbase-server-add[1] or linkcbdoc:couchbase-failover[1] subcommands
+ensure that you run the rebalance command to ensure data is balance dacross the
+cluster.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--server-remove <servers>
+	A comma separated list of servers to remove from the cluster. The each
+	server in the list should correspond to the hostname or IP address of that
+	server.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+When to rebalance a new node into the cluster we would first add a server using
+the linkcbdoc:couchbase-server-add[1] command and the we would start the balance
+with the rebalance command.
+
+	$ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
+	 --password password --server-add 192.168.1.6:8091 \
+	 --server-add-username Administrator --server-add-password password
+
+	$ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+	 --password password
+
+If we just want to remove a server from the cluster and start a rebalance we
+would just need to run the rebalance command.
+
+	$ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+	 --password password --server-remove 192.168.1.6:8091
+
+We could also remove multiple servers at once and run the rebalance with the
+command below. Note that rebalance will be faster removing multiple servers as
+once as opposed to removing them one at a time.
+
+	$ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+	 --password password --server-remove 192.168.1.6:8091,192.168.1.7:8091
+
+To add a server and remove another server we would again need to invoke the
+linkcbdoc:couchbase-server-add[1] command before starting the rebalance as
+shown below.
+
+	$ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
+	 --password password --server-add 192.168.1.6:8091 \
+	 --server-add-username Administrator --server-add-password password
+
+	$ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+	 --password password --server-remove 192.168.1.7:8091
+
+If you add one server to the cluster and remove a server during the same
+rebalance Couchbase will do a "swap rebalance". This means data from the node
+being removed is moved to the one being added. This means the rebalance will
+only occur between two nodes in the cluster as opposed to shifting data around
+the entire cluster.
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+linkcbdoc:couchbase-failover[1].
+linkcbdoc:couchbase-recovery[1].
+linkcbdoc:couchbase-server-add[1].
+
+include::part-footer.txt[]

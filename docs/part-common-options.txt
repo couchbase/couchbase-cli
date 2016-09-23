@@ -1,0 +1,18 @@
+-c::
+--cluster::
+	Specfies the hostname of the cluster to initialize. See the HOST FORMATS
+	section for more information on specifying a hostname.
+
+-u::
+--user <username>::
+	When starting a new cluster you need to create a Couchbase user for the
+	cluster. This user account will be used to access the Couchbase
+	Administration Console as well as be used for data access and future
+	configuration. This option specifies the username for this new account.
+
+-p::
+--password <password>::
+	When starting a new cluster you need to create a Couchbase user for the
+	cluster. This user account will be used to access the Couchbase
+	Administration Console as well as be used for data access and future
+	configuration. This option specifies the password for this new account.

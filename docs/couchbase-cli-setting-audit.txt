@@ -1,0 +1,73 @@
+couchbase-cli-setting-audit(1)
+==============================
+
+NAME
+----
+couchbase-cli-setting-audit - Modifies audit log settings
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli setting-audit' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--audit-enabled <num>] [--audit-log-path <path>]
+	  [--audit-log-rotate-interval <seconds>]
+
+DESCRIPTION
+-----------
+
+Auditing is used to observe the action of users in the cluster. It is usually
+turned on for security purposes to ensure that those without permission to
+access information do not access it. By default auditing is disabled in
+Couchbase. The setting-audit command can be used to enable auditing, set the
+auditing log path, and change the auditing log rotation interval.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--audit-enabled <num>::
+	Specifies whether or not auditing is enabled. To enabled auditing set this
+	option to "1". To disable auditing set this option to "0".
+
+--audit-log-path <path>::
+	Specifies The auditing log path. This should be a path should be a path to a
+	folder where the auditing log is kept. The folder must exist on all servers
+	in the cluster.
+
+--audit-log-rotate-interval <seconds>::
+	Specifies the audit log rotate interval. This is the interval in which the
+	current audit log will be replaced with a new empty audit log file. The log
+	file is rotated to ensure that the audit log does not consume too much disk
+	space. The minimum audit log rotate interval is 15 minutes (900 seconds).
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To enable auditing on a cluster and set the audit log to the default logs folder
+on a linux installation with a log rotate interval of 7 days run the command
+below.
+
+	$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
+	 --password password --enabled 1 --audit-log-rotate-interval 604800 \
+	 --audit-log-path /opt/couchbase/var/lib/couchbase/logs
+
+To disable auditing run the following command.
+
+	$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
+	 --password password --enabled 1
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-admin-role-manage[1].
+linkcbdoc:couchbase-ssl-manage[1].
+
+include::part-footer.txt[]

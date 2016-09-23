@@ -1,0 +1,3 @@
+COUCHBASE-CLI
+-------------
+Part of the linkcbdoc:couchbase-cli[1] suite

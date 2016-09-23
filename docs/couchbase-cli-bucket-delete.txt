@@ -1,0 +1,53 @@
+couchbase-cli-bucket-delete(1)
+==============================
+
+NAME
+----
+couchbase-cli-bucket-delete - Delete a Couchbase data bucket
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli bucket-delete' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--bucket <name>]
+
+DESCRIPTION
+-----------
+
+Deletes a bucket in the cluster. When the bucket is deleted all indexes on that
+bucket will also be deleted.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--bucket <name>::
+	The name of the bucket to delete.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To delete a bucket named "travel-data" run the command below.
+
+	$ couchbase-cli bucket-delete -c 192.168.1.5 --username Administrator \
+	 --password password --bucket travel-data
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-bucket-compact[1].
+linkcbdoc:couchbase-cli-bucket-create[1].
+linkcbdoc:couchbase-cli-bucket-edit[1].
+linkcbdoc:couchbase-cli-bucket-flush[1].
+linkcbdoc:couchbase-cli-bucket-list[1].
+
+include::part-footer.txt[]

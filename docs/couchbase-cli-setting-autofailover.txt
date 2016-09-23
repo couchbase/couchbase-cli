@@ -1,0 +1,81 @@
+couchbase-cli-setting-autofailover(1)
+=====================================
+
+NAME
+----
+couchbase-cli-setting-autofailover - Modifies auto-failover settings
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli setting-autofailover' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--enable-auto-failover <num>]
+	  [--auto-failover-timeout <seconds>]
+
+DESCRIPTION
+-----------
+
+Auto-failover allows unresponsive servers to be failed over automatically by the
+cluster manager. Data paritions in Couchbase are always served from a single
+master node. As a result if a server is down in the cluster data from that
+server will be not be available while that server is down. The server will
+either need to be manually or automatically failed over in order to promote
+replica data partitions on replica servers to active data partitions so that
+they can be accessed by the application.
+
+Since the administrator will not always be able to manually fail servers over
+quickly enough to avoid application down time Couchbase provides an
+auto-failover feature. This feature allows the cluster manager to automatically
+fail over down nodes over and bring the cluster back to a healthy state as
+quickly as possible.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--enable-auto-failover <num>::
+	Specifies whether or not autofailover is enabled. Set this option to "1" to
+	enable autofailover or "0" to disable autofailover.
+
+--auto-failover-timeout <seconds>::
+	Specifies the auto-failover timeout. This is the amount of time a node must
+	be unresponsive before the cluster manager considers the node to be down and
+	fails it over. The minimum auto-failover timeout is 30 seconds.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To enable autofailover with a 30 second auto-failover timeout run the following
+command.
+
+	$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
+	 --password password --enable-auto-failover 1 --auto-failover-timeout 30
+
+To enable autofailover with a 120 second auto-failover timeout run the following
+command.
+
+	$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
+	 --password password --enable-auto-failover 1 --auto-failover-timeout 120
+
+To disable autofailover run the following
+command.
+
+	$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
+	 --password password --enable-auto-failover 0
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-failover[1].
+linkcbdoc:couchbase-cli-recovery[1].
+linkcbdoc:couchbase-cli-setting-alert[1].
+
+include::part-footer.txt[]

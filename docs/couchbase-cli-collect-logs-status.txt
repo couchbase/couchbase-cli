@@ -1,0 +1,70 @@
+couchbase-cli-collect-logs-status(1)
+====================================
+
+NAME
+----
+couchbase-cli-collect-logs-status - Get log collection status
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli collect-logs-status' [--cluster <url>] [--username <user>]
+	  [--password <password>]
+
+DESCRIPTION
+-----------
+
+This command is used to check the status of the log collection task that is
+either currently running or last completed. This command is especially useful
+since it list the exact location of the collected files on each node. Upon a
+successful run of this command the output will either be one of the two messages
+below.
+
+	No log collection tasks were found
+
+	or
+
+	Status: <running | cancelled | completed>
+	Details:
+		Node: <node name>
+		Status: <started | collected>
+		path: <path to the location of the collected logs>
+
+If logs for multiple nodes were collected then multple nodes will be listed in
+the details section.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To see the status of a running or completed log collection task run the command
+below.
+
+	$ couchbase-cli collect-logs-status -c 192.168.1.5 --username Administrator \
+	 --password password
+
+	Status: completed
+	Details:
+		Node: n_0@192.168.1.5
+		Status: collected
+		path: /opt/couchbase/var/lib/couchbase/tmp/collectinfo-2016-09-27T005502-n_0@192.168.1.5.zip
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-collect-logs-start[1].
+linkcbdoc:couchbase-cli-collect-logs-stop[1].
+
+include::part-footer.txt[]

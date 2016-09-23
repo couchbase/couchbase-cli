@@ -27,3 +27,5 @@ tmp
 /CMakeFiles/
 /CTestTestfile.cmake
 /cmake_install.cmake
+/docs/html/
+/man/

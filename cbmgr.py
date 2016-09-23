@@ -8,8 +8,9 @@ import subprocess
 import sys
 import time
 
-from optparse import HelpFormatter, OptionContainer, OptionGroup, OptionParser
 from cluster_manager import ClusterManager
+from optparse import HelpFormatter, OptionContainer, OptionGroup, OptionParser
+from subprocess import call
 
 try:
     from gettext import gettext
@@ -35,51 +36,10 @@ def parse_command():
     if len(sys.argv) == 1:
         return False
 
-    subcommands = {
-        "admin-role-manage": AdminRoleManage,
-        "bucket-compact": BucketCompact,
-        "bucket-create": BucketCreate,
-        "bucket-delete": BucketDelete,
-        "bucket-edit": BucketEdit,
-        "bucket-flush": BucketFlush,
-        "bucket-list": BucketList,
-        "cluster-edit": ClusterEdit,
-        "cluster-init": ClusterInit,
-        "collect-logs-start": CollectLogsStart,
-        "collect-logs-status": CollectLogsStatus,
-        "collect-logs-stop": CollectLogsStop,
-        "failover": Failover,
-        "group-manage": GroupManage,
-        "host-list": HostList,
-        "node-init": NodeInit,
-        "rebalance": Rebalance,
-        "rebalance-status": RebalanceStatus,
-        "rebalance-stop": RebalanceStop,
-        "recovery": Recovery,
-        "server-add": ServerAdd,
-        "server-eshell": ServerEshell,
-        "server-info": ServerInfo,
-        "server-list": ServerList,
-        "server-readd": ServerReadd,
-        "setting-alert": SettingAlert,
-        "setting-audit": SettingAudit,
-        "setting-autofailover": SettingAutoFailover,
-        "setting-cluster": SettingCluster,
-        "setting-compaction": SettingCompaction,
-        "setting-index": SettingIndex,
-        "setting-ldap": SettingLdap,
-        "setting-xdcr": SettingXDCR,
-        "setting-notification": SettingNotification,
-        "ssl-manage": SSLManage,
-        "user-manage": UserManage,
-        "xdcr-setup": XDCRSetup,
-        "xdcr-replicate": XDCRReplicate,
-    }
-
-    if sys.argv[1] not in subcommands:
+    if sys.argv[1] not in SUBCOMMANDS:
         return False
 
-    subcommand = subcommands[sys.argv[1]]()
+    subcommand = SUBCOMMANDS[sys.argv[1]]()
     options, args = subcommand.parse(sys.argv[2:])
     errors = subcommand.execute(options, args)
     if errors:
@@ -94,7 +54,7 @@ def help_callback(option, opt_str, value, parser, *args, **kwargs):
     if opt_str == "-h":
         command.short_help()
     elif opt_str == "--help":
-        command.short_help()
+        _show_man_page(SUBCOMMANDS[sys.argv[1]].get_man_page_name())
 
 def check_cluster_initialized(rest):
     """Checks to see if the cluster is initialized"""
@@ -103,6 +63,19 @@ def check_cluster_initialized(rest):
         _exitIfErrors(["Cluster is not initialized, use cluster-init to initialize the cluster"])
     elif errors:
         _exitIfErrors(errors)
+
+def _show_man_page(page):
+    """Shows a manual page"""
+    exe_path = os.path.abspath(sys.argv[0])
+    base_path = os.path.dirname(exe_path)
+
+    if os.name == "nt":
+        manpath = os.path.join(base_path, "..", "..", "share", "html")
+        call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(manpath, page)])
+    else:
+        manpath = os.path.join(base_path, "..", "..", "share", "man", "man1")
+        call(["man", os.path.join(manpath, page)])
+    sys.exit(0)
 
 def host_port(url):
     "Splits a url into it's host and port"
@@ -305,6 +278,11 @@ class Command(object):
         """Executes the subcommand"""
         raise NotImplementedError
 
+    @staticmethod
+    def get_man_page_name():
+        """Returns the man page name"""
+        raise NotImplementedError
+
 
 class AdminRoleManage(Command):
     """The administrator role manage subcommand"""
@@ -370,6 +348,10 @@ class AdminRoleManage(Command):
             data, errors = rest.deleteRoles(opts.delete_users)
             _exitIfErrors(errors)
             print "SUCCESS: Users deleted"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-admin-role-manage" + ".1" if os.name != "nt" else ".html"
 
 
 class ClusterInit(Command):
@@ -458,6 +440,10 @@ class ClusterInit(Command):
 
         print "SUCCESS: Cluster initialized"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-cluster-init" + ".1" if os.name != "nt" else ".html"
+
 
 class BucketCompact(Command):
     """The bucket compact subcommand"""
@@ -487,6 +473,10 @@ class BucketCompact(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Bucket compaction started"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-bucket-compact" + ".1" if os.name != "nt" else ".html"
 
 
 class BucketCreate(Command):
@@ -552,6 +542,10 @@ class BucketCreate(Command):
 
         print "SUCCESS: Bucket created"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-bucket-create" + ".1" if os.name != "nt" else ".html"
+
 
 class BucketDelete(Command):
     """The bucket delete subcommand"""
@@ -574,6 +568,10 @@ class BucketDelete(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Bucket deleted"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-bucket-delete" + ".1" if os.name != "nt" else ".html"
 
 
 class BucketEdit(Command):
@@ -632,6 +630,10 @@ class BucketEdit(Command):
 
         print "SUCCESS: Bucket edited"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-bucket-edit" + ".1" if os.name != "nt" else ".html"
+
 
 class BucketFlush(Command):
     """The bucket edit subcommand"""
@@ -664,6 +666,10 @@ class BucketFlush(Command):
 
         print "SUCCESS: Bucket flushed"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-bucket-flush" + ".1" if os.name != "nt" else ".html"
+
 
 class BucketList(Command):
     """The bucket list subcommand"""
@@ -691,6 +697,10 @@ class BucketList(Command):
                 print ' numReplicas: %s' % bucket['replicaNumber']
                 print ' ramQuota: %s' % bucket['quota']['ram']
                 print ' ramUsed: %s' % bucket['basicStats']['memUsed']
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-bucket-list" + ".1" if os.name != "nt" else ".html"
 
 
 class CollectLogsStart(Command):
@@ -745,6 +755,10 @@ class CollectLogsStart(Command):
 
         print "SUCCESS: Log collection started"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-collect-logs-start" + ".1" if os.name != "nt" else ".html"
+
 
 class CollectLogsStatus(Command):
     """The collect-logs-status subcommand"""
@@ -782,6 +796,11 @@ class CollectLogsStatus(Command):
                         print '\t', field, ":", node_status[field]
             print
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-collect-logs-status" + ".1" if os.name != "nt" else ".html"
+
+
 class CollectLogsStop(Command):
     """The collect-logs-stop subcommand"""
 
@@ -798,6 +817,10 @@ class CollectLogsStop(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Log collection stopped"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-collect-logs-stop" + ".1" if os.name != "nt" else ".html"
 
 
 class Failover(Command):
@@ -843,6 +866,10 @@ class Failover(Command):
                 _exitIfErrors([status[1]])
 
         print "SUCCESS: Server failed over"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-failover" + ".1" if os.name != "nt" else ".html"
 
 
 class GroupManage(Command):
@@ -937,6 +964,10 @@ class GroupManage(Command):
         _exitIfErrors(errors)
         print "SUCCESS: Server group renamed"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-group-manage" + ".1" if os.name != "nt" else ".html"
+
 
 class HostList(Command):
     """The host list subcommand"""
@@ -953,6 +984,10 @@ class HostList(Command):
 
         for node in result['nodes']:
             print node['hostname']
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-host-list" + ".1" if os.name != "nt" else ".html"
 
 
 class NodeInit(Command):
@@ -985,6 +1020,10 @@ class NodeInit(Command):
             _exitIfErrors(errors)
 
         print "SUCCESS: Node initialized"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-node-init" + ".1" if os.name != "nt" else ".html"
 
 
 class Rebalance(Command):
@@ -1029,6 +1068,10 @@ class Rebalance(Command):
 
         print "SUCCESS: Rebalance complete"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-rebalance" + ".1" if os.name != "nt" else ".html"
+
 
 class RebalanceStatus(Command):
     """The rebalance status subcommand"""
@@ -1046,6 +1089,10 @@ class RebalanceStatus(Command):
 
         print status[0], status[1]
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-rebalance-status" + ".1" if os.name != "nt" else ".html"
+
 
 class RebalanceStop(Command):
     """The rebalance stop subcommand"""
@@ -1062,6 +1109,10 @@ class RebalanceStop(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Rebalance stopped"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-rebalance-stop" + ".1" if os.name != "nt" else ".html"
 
 
 class Recovery(Command):
@@ -1087,6 +1138,10 @@ class Recovery(Command):
             _exitIfErrors(errors)
 
         print "SUCCESS: Servers recovered"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-recovery" + ".1" if os.name != "nt" else ".html"
 
 
 class ServerAdd(Command):
@@ -1136,6 +1191,10 @@ class ServerAdd(Command):
             _exitIfErrors(errors)
 
         print "SUCCESS: Server added"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-server-add" + ".1" if os.name != "nt" else ".html"
 
 
 class ServerEshell(Command):
@@ -1191,6 +1250,11 @@ class ServerEshell(Command):
         except OSError:
             _exitIfErrors(["Unable to find the erl executable"])
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-server-eshell" + ".1" if os.name != "nt" else ".html"
+
+
 class ServerInfo(Command):
     """The server info subcommand"""
 
@@ -1207,6 +1271,10 @@ class ServerInfo(Command):
         _exitIfErrors(errors)
 
         print json.dumps(result, sort_keys=True, indent=2)
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-server-info" + ".1" if os.name != "nt" else ".html"
 
 
 class ServerList(Command):
@@ -1227,6 +1295,10 @@ class ServerList(Command):
                 raise Exception("could not access node")
 
             print node['otpNode'], node['hostname'], node['status'], node['clusterMembership']
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-server-list" + ".1" if os.name != "nt" else ".html"
 
 
 class ServerReadd(Command):
@@ -1258,6 +1330,10 @@ class ServerReadd(Command):
             _exitIfErrors(errors)
 
         print "SUCCESS: Servers recovered"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-server-readd" + ".1" if os.name != "nt" else ".html"
 
 
 class SettingAlert(Command):
@@ -1361,6 +1437,11 @@ class SettingAlert(Command):
 
         print "SUCCESS: Email alert settings modified"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-alert" + ".1" if os.name != "nt" else ".html"
+
+
 class SettingAudit(Command):
     """The settings audit subcommand"""
 
@@ -1392,6 +1473,10 @@ class SettingAudit(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Audit settings modified"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-audit" + ".1" if os.name != "nt" else ".html"
 
 
 class SettingAutoFailover(Command):
@@ -1425,6 +1510,10 @@ class SettingAutoFailover(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Auto-failover settings modified"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-autofailover" + ".1" if os.name != "nt" else ".html"
 
 
 class SettingCluster(Command):
@@ -1472,6 +1561,10 @@ class SettingCluster(Command):
 
         print "SUCCESS: Cluster settings modified"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-cluster" + ".1" if os.name != "nt" else ".html"
+
 
 class ClusterEdit(SettingCluster):
     """The cluster edit subcommand (Deprecated)"""
@@ -1483,6 +1576,10 @@ class ClusterEdit(SettingCluster):
     def execute(self, opts, args):
         _warning("The cluster-edit command is depercated, use setting-cluster instead")
         super(ClusterEdit, self).execute(opts, args)
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-cluster-edit" + ".1" if os.name != "nt" else ".html"
 
 
 class SettingCompaction(Command):
@@ -1617,6 +1714,10 @@ class SettingCompaction(Command):
 
         print "SUCCESS: Compaction settings modified"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-compaction" + ".1" if os.name != "nt" else ".html"
+
 
 class SettingIndex(Command):
     """The setting index subcommand"""
@@ -1656,6 +1757,10 @@ class SettingIndex(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Indexer settings modified"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-index" + ".1" if os.name != "nt" else ".html"
 
 
 class SettingLdap(Command):
@@ -1710,6 +1815,11 @@ class SettingLdap(Command):
 
         print "SUCCESS: LDAP settings modified"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-ldap" + ".1" if os.name != "nt" else ".html"
+
+
 class SettingNotification(Command):
     """The settings notification subcommand"""
 
@@ -1733,6 +1843,10 @@ class SettingNotification(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Notification settings updated"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-notification" + ".1" if os.name != "nt" else ".html"
 
 
 class SettingXDCR(Command):
@@ -1774,6 +1888,10 @@ class SettingXDCR(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Global XDCR settings updated"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-xdcr" + ".1" if os.name != "nt" else ".html"
 
 
 class SSLManage(Command):
@@ -1835,6 +1953,11 @@ class SSLManage(Command):
             print "SUCCESS: Node certificate set"
         else:
             _exitIfErrors(["No options specified"])
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-ssl-manage" + ".1" if os.name != "nt" else ".html"
+
 
 class UserManage(Command):
     """The user manage subcommand"""
@@ -1908,6 +2031,10 @@ class UserManage(Command):
         _, errors = rest.set_local_read_only_user(opts.ro_user, opts.ro_pass)
         _exitIfErrors(errors)
         print "SUCCESS: Local read-only user created"
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-user-manage" + ".1" if os.name != "nt" else ".html"
 
 
 class XDCRReplicate(Command):
@@ -2047,6 +2174,11 @@ class XDCRReplicate(Command):
 
         print "SUCCESS: XDCR replicator settings updated"
 
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-xdcr-replicate" + ".1" if os.name != "nt" else ".html"
+
+
 class XDCRSetup(Command):
     """The xdcr setup subcommand"""
 
@@ -2144,3 +2276,50 @@ class XDCRSetup(Command):
                 print "   host name: %s" % cluster["hostname"]
                 print "   user name: %s" % cluster["username"]
                 print "         uri: %s" % cluster["uri"]
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-xdcr-setup" + ".1" if os.name != "nt" else ".html"
+
+
+SUBCOMMANDS = {
+    "admin-role-manage": AdminRoleManage,
+    "bucket-compact": BucketCompact,
+    "bucket-create": BucketCreate,
+    "bucket-delete": BucketDelete,
+    "bucket-edit": BucketEdit,
+    "bucket-flush": BucketFlush,
+    "bucket-list": BucketList,
+    "cluster-edit": ClusterEdit,
+    "cluster-init": ClusterInit,
+    "collect-logs-start": CollectLogsStart,
+    "collect-logs-status": CollectLogsStatus,
+    "collect-logs-stop": CollectLogsStop,
+    "failover": Failover,
+    "group-manage": GroupManage,
+    "host-list": HostList,
+    "node-init": NodeInit,
+    "rebalance": Rebalance,
+    "rebalance-status": RebalanceStatus,
+    "rebalance-stop": RebalanceStop,
+    "recovery": Recovery,
+    "server-add": ServerAdd,
+    "server-eshell": ServerEshell,
+    "server-info": ServerInfo,
+    "server-list": ServerList,
+    "server-readd": ServerReadd,
+    "setting-alert": SettingAlert,
+    "setting-audit": SettingAudit,
+    "setting-autofailover": SettingAutoFailover,
+    "setting-cluster": SettingCluster,
+    "setting-compaction": SettingCompaction,
+    "setting-index": SettingIndex,
+    "setting-ldap": SettingLdap,
+    "setting-xdcr": SettingXDCR,
+    "setting-notification": SettingNotification,
+    "ssl-manage": SSLManage,
+    "user-manage": UserManage,
+    "xdcr-setup": XDCRSetup,
+    "xdcr-replicate": XDCRReplicate,
+}
+

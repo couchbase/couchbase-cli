@@ -1,0 +1,71 @@
+couchbase-cli-failover(1)
+=========================
+
+NAME
+----
+couchbase-cli-failover - Failover a server in the cluster
+
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli failover' [--cluster <url>] [--username <user>]
+	  [--password <password>][--server-failover <server_list>] [--force]
+
+DESCRIPTION
+-----------
+
+This command fails over one or more servers. Servers can be either hard failed
+over or gracefully failed over. A hard failover means that the failover happens
+immediately, but risk potential data loss. Graceful failover ensures that
+replication is up to date before the server is failed over so that there is no
+data loss, but the failover is not immediate. Using the --force flag means that
+the failover should be a hard failover. If the --force flag is not specified
+then the failover will be graceful. Note that if a server is already down you
+must hard fail it over.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--server-failover <server_list>::
+	A comma separated list of servers to failover.
+
+--force::
+	Specifying this flag signifies that the nodes to be failed over should be
+	hard failed over. A hard failover means that the failover is immediate, but
+	you risk potential data loss. If this flag is not specified then the
+	failover will occur only once replication is up to date. This means there
+	will be no data loss, but the failover is not immediate. Note that if a
+	server is already down you must hard fail it over.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To hard fail over a server run the following command:
+
+	$ couchbase-cli failover -c 192.168.1.5:8091 --username Administrator \
+	 --password password --server-failover 192.168.1.6:8091 --force
+
+To gracefully failover a server run the following command:
+
+	$ couchbase-cli failover -c 192.168.1.5:8091 --username Administrator \
+	 --password password --server-failover 192.168.1.6:8091
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-rebalance[1].
+linkcbdoc:couchbase-cli-recovery[1].
+linkcbdoc:couchbase-cli-server-add[1].
+linkcbdoc:couchbase-cli-setting-autofailover[1].
+
+include::part-footer.txt[]
