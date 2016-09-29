@@ -743,6 +743,8 @@ class Node:
         print output_result
 
     def ldap(self):
+        print "DEPRECATED: The settings ldap command is deprecated and will be " + \
+              "removed in a future release. Please use admin-role-manage instead."
         rest = util.restclient_factory(self.server,
                                      self.port,
                                      {'debug':self.debug},
