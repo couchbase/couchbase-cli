@@ -246,7 +246,6 @@ class Node:
 
         if cmd in ('server-add', 'rebalance'):
             if len(servers['add']) > 0:
-                print "Warning: Adding server from group-manage is deprecated"
                 self.groupAddServers()
             if cmd == 'rebalance':
                 self.rebalance(servers)
@@ -1434,6 +1433,7 @@ class Node:
             elif self.cmd == 'create':
                 self.groupCreate()
             elif self.cmd == 'add-servers':
+                print "DEPRECATED: Adding server from group-manage is deprecated, use server-add instead"
                 self.groupAddServers()
             elif self.cmd == 'rename':
                 self.groupRename()
