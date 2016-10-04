@@ -246,6 +246,10 @@ class Node:
 
         if cmd in ('server-add', 'rebalance'):
             if len(servers['add']) > 0:
+                if cmd == 'rebalance':
+                    print "DEPRECATED: Adding server from the rebalance command is " + \
+                          "deprecated and will be removed in future release, use " + \
+                          "the server-add command to add servers instead."
                 self.groupAddServers()
             if cmd == 'rebalance':
                 self.rebalance(servers)
