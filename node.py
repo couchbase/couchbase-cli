@@ -1117,6 +1117,8 @@ class Node:
         return slist
 
     def reAddServers(self, servers):
+        print "DEPRECATED: The server-readd command is deprecated and will be " + \
+              "removed in a future release. Please use recovery instead."
         known_otps, eject_otps, failover_otps, readd_otps, _ = \
             self.getNodeOtps(to_readd=servers['add'])
 
