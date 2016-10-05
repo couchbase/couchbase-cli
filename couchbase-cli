@@ -87,6 +87,7 @@ def main():
                 'bucket-eviction-policy=',
                 'enable-flush=',
                 'enable-index-replica=',
+                'enable-timestamps',
                 'wait',
                 'force',
                 'data-only',
