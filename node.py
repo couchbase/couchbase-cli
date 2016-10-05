@@ -269,6 +269,9 @@ class Node:
             if len(servers['failover']) <= 0:
                 command_error("please list one or more --server-failover=HOST[:PORT];"
                       " or use -h for more help.")
+            if len(servers['failover'].keys()[0].split(',')) > 1:
+                print "DEPRECATED: Failing over more than one server at a time is deprecated" + \
+                    "and will not be allowed in future release."
 
             self.failover(servers)
 
