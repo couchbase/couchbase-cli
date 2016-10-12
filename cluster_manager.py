@@ -397,7 +397,8 @@ class ClusterManager(object):
 
     def create_bucket(self, name, password, bucket_type, memory_quota,
                       eviction_policy, replicas, replica_indexes,
-                      threads_number, flush_enabled, sync, timeout=60):
+                      threads_number, conflict_resolution, flush_enabled,
+                      timestamps, sync, timeout=60):
         url = self.hostname + '/pools/default/buckets'
 
         if name is None:
@@ -423,6 +424,8 @@ class ClusterManager(object):
             params["replicaIndex"] = replica_indexes
         if threads_number is not None:
             params["threadsNumber"] = threads_number
+        if conflict_resolution is not None:
+            params["conflictResolutionType"] = conflict_resolution
         if flush_enabled is not None:
             params["flushEnabled"] = flush_enabled
 

@@ -560,6 +560,9 @@ class BucketCreate(Subcommand):
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
                            choices=["valueOnly", "fullEviction"],
                            help="The bucket eviction policy (valueOnly or fullEviction)")
+        group.add_argument("--conflict-resolution", dest="conflict_resolution", default=None,
+                           choices=["sequence", "timestamp"], metavar="<type>",
+                           help="The XDCR conflict resolution type (timestamp or sequence)")
         group.add_argument("--enable-flush", dest="enable_flush", metavar="<0|1>",
                            choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
         group.add_argument("--enable-index-replica", dest="replica_indexes", metavar="<0|1>",
@@ -575,6 +578,8 @@ class BucketCreate(Subcommand):
         if opts.type == "memcached":
             if opts.replica_count is not None:
                 _exitIfErrors(["--bucket-replica cannot be specified for a memcached bucket"])
+            if opts.conflict_resolution is not None:
+                _exitIfErrors(["--conflict-resolution cannot be specified for a memcached bucket"])
             if opts.replica_indexes is not None:
                 _exitIfErrors(["--enable-index-replica cannot be specified for a memcached bucket"])
             if opts.priority is not None:
@@ -589,12 +594,20 @@ class BucketCreate(Subcommand):
             elif opts.priority == BUCKET_PRIORITY_LOW_STR:
                 priority = BUCKET_PRIORITY_LOW_INT
 
+        conflict_resolution_type = None
+        if opts.conflict_resolution is not None:
+            if opts.conflict_resolution == "sequence":
+                conflict_resolution_type = "seqno"
+            elif opts.conflict_resolution == "timestamp":
+                conflict_resolution_type = "lww"
 
         _, errors = rest.create_bucket(opts.bucket_name, opts.bucket_password,
                                        opts.type, opts.memory_quota,
                                        opts.eviction_policy, opts.replica_count,
                                        opts.replica_indexes, priority,
-                                       opts.enable_flush, opts.wait)
+                                       conflict_resolution_type,
+                                       opts.enable_flush, conflict_resolution_type,
+                                       opts.wait)
         _exitIfErrors(errors)
 
         print "SUCCESS: Bucket created"
