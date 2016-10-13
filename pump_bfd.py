@@ -759,29 +759,6 @@ class BFDSink(BFD, pump.Sink):
         if rv != 0:
             return rv, None, None
 
-        try:
-            import copy
-            tmp_map = copy.deepcopy(self.source_map)
-            if 'spec_parts' in tmp_map:
-                del tmp_map['spec_parts']
-            cur = db.cursor()
-            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("source_bucket.json",
-                         json.dumps(cleanse(self.source_bucket))))
-            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("source_node.json",
-                         json.dumps(cleanse(tmp_map))))
-            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("source_map.json",
-                         json.dumps(cleanse(self.source_map))))
-            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("start.datetime", time.strftime("%Y/%m/%d-%H:%M:%S")))
-            db.commit()
-        except sqlite3.Error, e:
-            return "error: create_db error: " + str(e), None, None
-        except Exception, e:
-            return "error: create_db exception: " + str(e), None, None
-
         return 0, db, dir
 
     def mkdirs(self):
@@ -858,9 +835,6 @@ def create_db(db_path, opts):
                       dtype integer,
                       meta_size integer,
                       conf_res integer);
-                  CREATE TABLE cbb_meta
-                     (key text,
-                      val blob);
                   pragma user_version=%s;
                   COMMIT;
                 """ % (CBB_VERSION[2]))
