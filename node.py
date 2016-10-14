@@ -150,6 +150,12 @@ class Node:
         self.enable_compaction_abort = None
         self.enable_compaction_parallel = None
         self.purge_interval = None
+        self.gsi_compact_mode = None
+        self.gsi_compact_perc = None
+        self.gsi_compact_interval = None
+        self.gsi_compact_period_from = None
+        self.gsi_compact_period_to = None
+        self.gsi_compact_abort = None
 
         #alert settings
         self.email_recipient = None
@@ -574,6 +580,43 @@ class Node:
         if self.purge_interval:
             rest.setParam('purgeInterval', self.purge_interval)
 
+        if self.gsi_compact_mode is not None and self.gsi_compact_mode not in ["append", "circular"]:
+            _exitIfErrors(["ERROR: --gsi-compaction-mode must be \"append\" or \"circular\""])
+
+        if self.gsi_compact_mode == "append":
+            rest.setParam('indexCompactionMode', "full")
+            if self.gsi_compact_perc is None:
+                _exitIfErrors(["ERROR: --compaction-gsi-percentage must be specified when --gsi-compaction-mode is append"])
+
+            if self.gsi_compact_perc is not None:
+                rest.setParam('indexFragmentationThreshold[percentage]', self.gsi_compact_perc)
+        elif self.gsi_compact_mode == "circular":
+            rest.setParam('indexCompactionMode', "circular")
+
+            if self.gsi_compact_interval is None:
+                self.gsi_compact_interval = ""
+            rest.setParam('indexCircularCompaction[daysOfWeek]', self.gsi_compact_interval)
+
+            if self.gsi_compact_period_from is not None:
+                hour, minute = self.gsi_compact_period_from.split(':')
+                if (int(hour) not in range(24)) or (int(minute) not in range(60)):
+                    _exitIfErrors(["ERROR: invalid hour or minute value for gsi compaction from period"])
+                else:
+                    rest.setParam('indexCircularCompaction[interval][fromHour]', int(hour))
+                    rest.setParam('indexCircularCompaction[interval][fromMinute]', int(minute))
+            if self.gsi_compact_period_to is not None:
+                hour, minute = self.gsi_compact_period_to.split(':')
+                if (int(hour) not in range(24)) or (int(minute) not in range(60)):
+                    _exitIfErrors(["ERROR: invalid hour or minute value for gsi compaction to period"])
+                else:
+                    rest.setParam('indexCircularCompaction[interval][toHour]', hour)
+                    rest.setParam('indexCircularCompaction[interval][toMinute]', minute)
+
+            if self.enable_compaction_abort is not None:
+                rest.setParam('indexCircularCompaction[interval][abortOutside]', self.gsi_compact_abort)
+            else:
+                rest.setParam('indexCircularCompaction[interval][abortOutside]', "false")
+
         opts = {
             "error_msg": "unable to set compaction settings",
             "success_msg": "set compaction settings"
@@ -959,6 +1002,18 @@ class Node:
                 self.enable_compaction_abort = bool_to_str(a)
             elif o == '--enable-compaction-parallel':
                 self.enable_compaction_parallel = bool_to_str(a)
+            elif o == '--gsi-compaction-mode':
+                self.gsi_compact_mode = a
+            elif o == '--compaction-gsi-percentage':
+                self.gsi_compact_perc = a
+            elif o == '--compaction-gsi-interval':
+                self.gsi_compact_interval = a
+            elif o == '--compaction-gsi-period-from':
+                self.gsi_compact_period_from = a
+            elif o == '--compaction-gsi-period-to':
+                self.gsi_compact_period_to = a
+            elif o == '--enable-gsi-compaction-abort':
+                self.gsi_compact_abort = bool_to_str(a)
             elif o == '--enable-email-alert':
                 self.enable_email_alert = bool_to_str(a)
             elif o == '--node-init-data-path':
@@ -1868,6 +1923,36 @@ class Node:
             ("--delete", "delete read only user"),
             ("--ro-username=USERNAME", "readonly user name"),
             ("--ro-password=PASSWORD", "readonly user password")]
+        elif cmd == "setting-compaction":
+            return [
+            ("", ""),
+            ("Data/View compaction settings:", ""),
+            ("  --compaction-db-percentage=PERC",
+            "Starts compaction once data file fragmentation has reached this percentage"),
+            ("  --compaction-db-size=SIZE",
+             "Starts compaction once data file fragmentation has reached this size"),
+            ("  --compaction-view-percentage=PERC",
+            "Starts compaction once view file fragmentation has reached this percentage"),
+            ("  --compaction-view-size=SIZE",
+             "Starts compaction once view file fragmentation has reached this size"),
+            ("  --compaction-period-from=HH:MM", "Allow compaction to run after this time"),
+            ("  --compaction-period-to=HH:MM", "Allow compaction to run before this time"),
+            ("  --enable-compaction-abort=[0|1]",
+            "Abort compaction if when run outside of the accepted interval"),
+            ("  --enable-compaction-parallel=[0|1]", "Allow view/data file compaction at the same time"),
+            ("", ""),
+            ("GSI index compaction settings:", ""),
+            ("  --gsi-compaction-mode", "Sets the gsi compaction mode [append|circular]"),
+            ("  --compaction-gsi-percentage=PERC",
+            "Starts compaction once gsi file fragmentation has reached this percentage (Append mode only)"),
+            ("  --compaction-gsi-interval",
+            "A comma separated list of days compaction can run (Circular mode only)"),
+            ("  --compaction-gsi-period-from=HH:MM",
+            "Allow gsi compaction to run after this time (Circular mode only)"),
+            ("  --compaction-gsi-period-to=HH:MM",
+            "Allow gsi compaction to run before this time (Circular mode only)"),
+            ("  --enable-gsi-compaction-abort=[0|1]",
+            "Abort gsi compaction if when run outside of the accepted interaval (Circular mode only)")]
         elif cmd == "setting-alert":
             return [
             ("--enable-email-alert=[0|1]", "allow email alert"),
