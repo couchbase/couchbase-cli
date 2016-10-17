@@ -701,7 +701,9 @@ class ClusterManager(object):
 
     def set_compaction_settings(self, dbFragPerc, dbFragSize, viewFragPerc, viewFragSize,
                                 fromHour, fromMin, toHour, toMin, abortOutside,
-                                parallelDBAndViewCompact, purgeInterval):
+                                parallelDBAndViewCompact, purgeInterval, gsiMode, gsiPerc,
+                                gsiInterval, gsiFromHour, gsiFromMin, gsiToHour, gsiToMin,
+                                enableGsiAbort):
         url = self.hostname + '/controller/setAutoCompaction'
         params = dict()
 
@@ -727,6 +729,22 @@ class ClusterManager(object):
             params["parallelDBAndViewCompaction"] = parallelDBAndViewCompact
         if purgeInterval is not None:
             params["purgeInterval"] = purgeInterval
+        if gsiMode is not None:
+            params["indexCompactionMode"] = gsiMode
+        if gsiPerc is not None:
+            params["indexFragmentationThreshold[percentage]"] = gsiPerc
+        if gsiInterval is not None:
+            params["indexCircularCompaction[daysOfWeek]"] = gsiInterval
+        if gsiFromHour is not None:
+            params["indexCircularCompaction[interval][fromHour]"] = gsiFromHour
+        if gsiFromMin is not None:
+            params["indexCircularCompaction[interval][fromMinute]"] = gsiFromMin
+        if gsiToHour is not None:
+            params["indexCircularCompaction[interval][toHour]"] = gsiToHour
+        if gsiToMin is not None:
+            params["indexCircularCompaction[interval][toMinute]"] = gsiToMin
+        if enableGsiAbort is not None:
+            params["indexCircularCompaction[interval][abortOutside]"] = enableGsiAbort
 
         return self._post_form_encoded(url, params)
 

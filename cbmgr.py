@@ -1803,6 +1803,20 @@ class SettingCompaction(Subcommand):
                            choices=["0", "1"], help="Allow parallel compactions")
         group.add_argument("--metadata-purge-interval", dest="purge_interval", metavar="<float>",
                            type=(float), help="The metadata purge interval")
+        group.add_argument("--gsi-compaction-mode", dest="gsi_mode",
+                          choices=["append", "circular"],
+                          help="Sets the gsi compaction mode (append or circular)")
+        group.add_argument("--compaction-gsi-percentage", dest="gsi_perc", type=(int), metavar="<perc>",
+                          help="Starts compaction once gsi file fragmentation has reached this percentage (Append mode only)")
+        group.add_argument("--compaction-gsi-interval", dest="gsi_interval", metavar="<days>",
+                          help="A comma separated list of days compaction can run (Circular mode only)")
+        group.add_argument("--compaction-gsi-period-from", dest="gsi_from_period", metavar="<HH:MM>",
+                          help="Allow gsi compaction to run after this time (Circular mode only)")
+        group.add_argument("--compaction-gsi-period-to", dest="gsi_to_period", metavar="<HH:MM>",
+                          help="Allow gsi compaction to run before this time (Circular mode only)")
+        group.add_argument("--enable-gsi-compaction-abort", dest="enable_gsi_abort", metavar="<1|0>",
+                          choices=["0", "1"],
+                          help="Abort gsi compaction if when run outside of the accepted interaval (Circular mode only)")
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
@@ -1849,46 +1863,9 @@ class SettingCompaction(Subcommand):
                 errors.append("--compaction-period-to is required when using --enable-compaction-abort")
             _exitIfErrors(errors)
 
-        from_hour = None
-        from_min = None
-        if opts.from_period:
-            if opts.from_period.find(':') == -1:
-                _exitIfErrors(["Invalid value for --compaction-period-from, must be in form XX:XX"])
-            from_hour, from_min = opts.from_period.split(':', 1)
-            try:
-                from_hour = int(from_hour)
-            except ValueError:
-                _exitIfErrors(["Invalid hour value for --compaction-period-from, must be an integer"])
-            if from_hour not in range(24):
-                _exitIfErrors(["Invalid hour value for --compaction-period-from, must be 0-23"])
-
-            try:
-                from_min = int(from_min)
-            except ValueError:
-                _exitIfErrors(["Invalid minute value for --compaction-period-from, must be an integer"])
-            if from_min not in range(60):
-                _exitIfErrors(["Invalid minute value for --compaction-period-from, must be 0-59"])
-
-
-        to_hour = None
-        to_min = None
-        if opts.to_period:
-            if opts.to_period.find(':') == -1:
-                _exitIfErrors(["Invalid value for --compaction-period-to, must be in form XX:XX"])
-            to_hour, to_min = opts.to_period.split(':', 1)
-            try:
-                to_hour = int(to_hour)
-            except ValueError:
-                _exitIfErrors(["Invalid hour value for --compaction-period-to, must be an integer"])
-            if to_hour not in range(24):
-                _exitIfErrors(["Invalid hour value for --compaction-period-to, must be 0-23"])
-
-            try:
-                to_min = int(to_min)
-            except ValueError:
-                _exitIfErrors(["Invalid minute value for --compaction-period-to, must be an integer"])
-            if to_min not in range(60):
-                _exitIfErrors(["Invalid minute value for --compaction-period-to, must be 0-59"])
+        from_hour, from_min = self._handle_timevalue(opts.from_period,
+                                                     "--compaction-period-from")
+        to_hour, to_min = self._handle_timevalue(opts.to_period, "--compaction-period-to")
 
         if opts.enable_abort == "1":
             opts.enable_abort = "true"
@@ -1903,13 +1880,63 @@ class SettingCompaction(Subcommand):
         if opts.purge_interval is not None and (opts.purge_interval < 0.04 or opts.purge_interval > 60.0):\
             _exitIfErrors(["--metadata-purge-interval must be between 0.04 and 60.0"])
 
+        g_from_hour = None
+        g_from_min = None
+        g_to_hour = None
+        g_to_min = None
+        if opts.gsi_mode == "append":
+            opts.gsi_mode = "full"
+            if opts.gsi_perc is None:
+                _exitIfErrors(["--compaction-gsi-percentage must be specified when" +
+                               " --gsi-compaction-mode is set to append"])
+        elif opts.gsi_mode == "circular":
+            if opts.gsi_from_period is not None and opts.gsi_to_period is None:
+                _exitIfErrors(["--compaction-gsi-period-to is required with --compaction-gsi-period-from"])
+            if opts.gsi_to_period is not None and opts.gsi_from_period is None:
+                _exitIfErrors(["--compaction-gsi-period-from is required with --compaction-gsi-period-to"])
+
+            g_from_hour, g_from_min = self._handle_timevalue(opts.gsi_from_period,
+                                                             "--compaction-gsi-period-from")
+            g_to_hour, g_to_min = self._handle_timevalue(opts.gsi_to_period,
+                                                            "--compaction-gsi-period-to")
+
+            if opts.enable_gsi_abort == "1":
+                opts.enable_gsi_abort = "true"
+            else:
+                opts.enable_gsi_abort = "false"
+
         _, errors = rest.set_compaction_settings(opts.db_perc, opts.db_size, opts.view_perc,
                                                  opts.view_size, from_hour, from_min, to_hour,
                                                  to_min, opts.enable_abort, opts.enable_parallel,
-                                                 opts.purge_interval)
+                                                 opts.purge_interval, opts.gsi_mode,
+                                                 opts.gsi_perc, opts.gsi_interval, g_from_hour,
+                                                 g_from_min, g_to_hour, g_to_min,
+                                                 opts.enable_gsi_abort)
         _exitIfErrors(errors)
 
         _success("Compaction settings modified")
+
+    def _handle_timevalue(self, opt_value, opt_name):
+        hour = None
+        minute = None
+        if opt_value:
+            if opt_value.find(':') == -1:
+                _exitIfErrors(["Invalid value for %s, must be in form XX:XX" % opt_name])
+            hour, minute = opt_value.split(':', 1)
+            try:
+                hour = int(hour)
+            except ValueError:
+                _exitIfErrors(["Invalid hour value for %s, must be an integer" % opt_name])
+            if hour not in range(24):
+                _exitIfErrors(["Invalid hour value for %s, must be 0-23" % opt_name])
+
+            try:
+                minute = int(minute)
+            except ValueError:
+                _exitIfErrors(["Invalid minute value for %s, must be an integer" % opt_name])
+            if minute not in range(60):
+                _exitIfErrors(["Invalid minute value for %s, must be 0-59" % opt_name])
+        return hour, minute
 
     @staticmethod
     def get_man_page_name():
