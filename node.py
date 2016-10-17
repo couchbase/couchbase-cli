@@ -53,6 +53,7 @@ rest_cmds = {
     'collect-logs-stop'   : '/controller/cancelLogsCollection',
     'collect-logs-status' : '/pools/default/tasks',
     'admin-role-manage'   : '/settings/rbac/users',
+    'master-password'     : '/node/controller/changeMasterPassword'
 }
 
 server_no_remove = [
@@ -99,6 +100,7 @@ methods = {
     'collect-logs-stop'   : 'POST',
     'collect-logs-status' : 'GET',
     'admin-role-manage'   : 'PUT',
+    'master-password'     : 'POST',
 }
 
 bool_to_str = lambda value: str(bool(int(value))).lower()
@@ -228,6 +230,10 @@ class Node:
         self.set_names = None
         self.delete_users = None
 
+        # master password
+        self.new_master_password = None
+        self.rotate_data_key = False
+
     def runCmd(self, cmd, server, port,
                user, password, ssl, opts):
         self.rest_cmd = rest_cmds[cmd]
@@ -290,6 +296,9 @@ class Node:
         elif cmd in ('cluster-init', 'cluster-edit'):
             self.clusterInit(cmd)
 
+        elif cmd == 'master-password':
+            self.masterPassword()
+
         elif cmd == 'node-init':
             self.nodeInit()
 
@@ -337,6 +346,37 @@ class Node:
 
         elif cmd == 'admin-role-manage':
             self.alterRoles()
+
+    def masterPassword(self):
+        if self.new_master_password is None and not self.rotate_data_key:
+            _exitIfErrors(["ERROR: no parameters set"])
+
+        if self.new_master_password is not None:
+            opts = {
+                "error_msg": "Unable to set master password",
+                "success_msg": "Master password set"
+            }
+            rest = util.restclient_factory(self.server, self.port, {'debug':self.debug}, self.ssl)
+            rest.setParam('newPassword', self.new_master_password)
+            output_result = rest.restCmd(self.method,
+                                         '/node/controller/changeMasterPassword',
+                                         self.user,
+                                         self.password,
+                                         opts)
+            print output_result
+
+        if self.rotate_data_key:
+            opts = {
+                "error_msg": "Unable to rotate data key",
+                "success_msg": "Data key rotated"
+            }
+            rest = util.restclient_factory(self.server, self.port, {'debug':self.debug}, self.ssl)
+            output_result = rest.restCmd(self.method,
+                                         '/node/controller/rotateDataKey',
+                                         self.user,
+                                         self.password,
+                                         opts)
+            print output_result
 
     def clusterInit(self, cmd):
         # We need to ensure that creating the REST username/password is the
@@ -1016,6 +1056,10 @@ class Node:
                 self.gsi_compact_abort = bool_to_str(a)
             elif o == '--enable-email-alert':
                 self.enable_email_alert = bool_to_str(a)
+            elif o == '--new-master-password':
+                self.new_master_password = a
+            elif o == '--rotate-data-key':
+                self.rotate_data_key = True
             elif o == '--node-init-data-path':
                 self.data_path = a
             elif o == '--node-init-index-path':
@@ -2042,6 +2086,11 @@ class Node:
             ("--roles", "A comma-delimited list of roles to set for users, one or more from admin, ro_admin, cluster_admin, replication_admin, bucket_admin[bucket name or '*'], views_admin[bucket name or '*']"),
             ("--delete-users", "A comma-delimited list of users to remove from access control")
             ]
+        elif cmd == "master-password":
+            return [
+            ("--new-master-password", "Changes the master password on this node."),
+            ("--rotate-data-key", "Rotates the master password data key."),
+            ]
         else:
             return None
 
@@ -2337,6 +2386,18 @@ class Node:
 """
     couchbase-cli admin-role-manage -c 192.168.0.1:8091 --delete-users=bob
             """)
+            ]
+        elif cmd == "master-password":
+            return [("Change the master password",
+"""
+    couchbase-cli master-password -c 192.168.0.1:8091 -u Administrator \\
+        -p password --new-master-password password123
+            """),
+            ("Rotate the master password data key",
+"""
+    couchbase-cli master-password -c 192.168.0.1:8091 -u Administrator \\
+        -p password --rotate-data-key
+            """),
             ]
 
         else:
