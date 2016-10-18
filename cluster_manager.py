@@ -4,6 +4,7 @@ import requests
 import csv
 import StringIO
 import time
+import urllib
 
 MAX_LEN_PASSWORD = 24
 
@@ -899,6 +900,47 @@ class ClusterManager(object):
         this API is called."""
         url = self.hostname + '/node/controller/reloadCertificate'
         return self._post_form_encoded(url, None)
+
+    def create_xdcr_reference(self, name, hostname, username, password, encrypted,
+                              certificate):
+        return self._set_xdcr_reference(False, name, hostname, username,
+                                        password, encrypted, certificate)
+
+    def edit_xdcr_reference(self, name, hostname, username, password, encrypted,
+                            certificate):
+        return self._set_xdcr_reference(True, name, hostname, username,
+                                        password, encrypted, certificate)
+
+    def _set_xdcr_reference(self, edit, name, hostname, username, password,
+                            encrypted, certificate):
+        url = self.hostname + '/pools/default/remoteClusters'
+        params = {}
+
+        if edit:
+            url += '/' + urllib.quote(name)
+
+        if name is not None:
+            params["name"] = name
+        if hostname is not None:
+            params["hostname"] = hostname
+        if username is not None:
+            params["username"] = username
+        if password is not None:
+            params["password"] = password
+        if encrypted is not None:
+            params["demandEncryption"] = encrypted
+        if certificate is not None:
+            params["certificate"] = certificate
+
+        return self._post_form_encoded(url, params)
+
+    def delete_xdcr_reference(self, name):
+        url = self.hostname + '/pools/default/remoteClusters/' + urllib.quote(name)
+        return self._delete(url, None)
+
+    def list_xdcr_references(self):
+        url = self.hostname + '/pools/default/remoteClusters/'
+        return self._get(url)
 
     # Low level methods for basic HTML operations
 

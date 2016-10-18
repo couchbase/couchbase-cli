@@ -64,7 +64,8 @@ class StubCommand():
             "setting-notification" : "set notification settings",
             "setting-ldap" : "set ldap settings",
             "ssl-manage" : "manage cluster certificate",
-            "user-manage" : "manage read only user",}
+            "user-manage" : "manage read only user",
+            "xdcr-setup" : "set up XDCR connection",}
         if cmd in command_summary:
             return command_summary[cmd]
 
@@ -277,7 +278,7 @@ def main():
         'admin-role-manage'     : StubCommand,
         'setting-xdcr'          : xdcr.XDCR,
         'setting-index'         : StubCommand,
-        'xdcr-setup'            : xdcr.XDCR,
+        'xdcr-setup'            : StubCommand,
         'xdcr-replicate'        : xdcr.XDCR,
         'help'                  : usage.Usage
         }

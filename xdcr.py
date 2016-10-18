@@ -27,17 +27,12 @@ class XDCR:
         self.user = ''
         self.password = ''
         self.ssl = False
-        self.remote_username = ''
-        self.remote_password = ''
-        self.remote_hostname = ''
         self.remote_cluster = ''
         self.replication_mode = ''
         self.cmd = 'create'
         self.replicator = ''
         self.params = {}
         self.output = 'standard'
-        self.demand_encryption = ''
-        self.certificate = ''
         self.regex = ''
 
         self.from_bucket = ''
@@ -56,14 +51,12 @@ class XDCR:
 
         # the rest commands and associated URIs for various node operations
         self.REST_CMDS = {
-            'xdcr-setup': '/pools/default/remoteClusters',
             'xdcr-replicate': '/controller/createReplication',
             'setting-xdcr': '/internalSettings'
         }
 
         # Map of operations and the HTTP methods used against the REST interface
         self.METHODS = {
-            'xdcr-setup': 'POST',
             'xdcr-replicate': 'POST',
             'setting-xdcr': 'POST',
         }
@@ -81,13 +74,6 @@ class XDCR:
         if self.debug:
             print "INFO: server %s" % server
 
-        if cmd == 'xdcr-setup':
-            if self.cmd in('create', 'edit'):
-                self.setup_create(self.cmd)
-            elif self.cmd == 'delete':
-                self.setup_delete()
-            elif self.cmd == 'list':
-                self.setup_list()
         if cmd == 'xdcr-replicate':
             if self.cmd == 'create':
                 self.replicate_start()
@@ -118,12 +104,6 @@ class XDCR:
                 self.output = a
             elif o == '--xdcr-cluster-name':
                 self.remote_cluster = a
-            elif o == '--xdcr-hostname':
-                self.remote_hostname = a
-            elif o == '--xdcr-username':
-                self.remote_username = a
-            elif o == '--xdcr-password':
-                self.remote_password = a
             elif o == '--xdcr-from-bucket':
                 self.from_bucket = a
             elif o == '--xdcr-to-bucket':
@@ -158,10 +138,6 @@ class XDCR:
                 self.failure_restart_interval = int(a)
             elif o == '--optimistic-replication-threshold':
                 self.optimistic_replication_threshold = int(a)
-            elif o == '--xdcr-demand-encryption':
-                self.demand_encryption = int(a)
-            elif o == '--xdcr-certificate':
-                self.certificate = a
             elif o == '--filter-expression':
                 self.regex = a
             elif o == '--source-nozzle-per-node':
@@ -172,117 +148,6 @@ class XDCR:
                 self.log_level = a
             elif o == '--stats-interval':
                 self.stats_interval = int(a)
-
-    def setup_create(self, cmd):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if not self.remote_cluster:
-            print "Error: --xdcr-cluster-name is required to create/edit cluster connection"
-            return
-        else:
-            rest.setParam('name', self.remote_cluster)
-            if cmd == 'edit':
-                self.rest_cmd = self.rest_cmd + "/" + urllib.quote(self.remote_cluster)
-
-        if self.remote_hostname:
-            rest.setParam('hostname', self.remote_hostname)
-        else:
-            print "Error: hostname (ip) is missing"
-            return
-
-        if self.remote_username:
-            rest.setParam('username', self.remote_username)
-        else:
-            rest.setParam('username', "username")
-        if self.remote_password:
-            rest.setParam('password', self.remote_password)
-        else:
-            rest.setParam('password', "password")
-
-        if self.demand_encryption:
-            if self.demand_encryption not in [0, 1]:
-                print "ERROR: xdcr-demand-encryption can only be either 0 or 1."
-                return
-            rest.setParam("demandEncryption", self.demand_encryption)
-            if self.certificate:
-                if os.path.isfile(self.certificate):
-                    try:
-                        fp = open(self.certificate, 'r')
-                        raw_data = fp.read()
-                        fp.close()
-                        rest.setParam("certificate", raw_data)
-                    except IOError, error:
-                        print "Error:", error
-                        return
-                else:
-                    print "ERROR: Fail to open certificate file from %s" % self.certificate
-                    return
-            else:
-                print "ERROR: certificate required if encryption is demanded."
-                return
-        else:
-            rest.setParam("demandEncryption", str(int(0)))
-
-        opts = {
-            'error_msg': "unable to set up xdcr remote site %s" % self.remote_cluster,
-            'success_msg': "init/edit %s" % self.remote_cluster
-        }
-        output_result = rest.restCmd('POST',
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
-    def setup_delete(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        if self.remote_cluster:
-            self.rest_cmd = self.rest_cmd + "/" + urllib.quote(self.remote_cluster)
-        else:
-            print "Error: Cluster name is needed to delete cluster connections"
-            return
-
-        opts = {
-            'error_msg': "unable to delete xdcr remote site %s" % self.server,
-            'success_msg': "delete %s" % self.remote_cluster
-        }
-        output_result = rest.restCmd('DELETE',
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
-    def setup_list(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        opts = {
-            'error_msg': "unable to list xdcr remote cluster",
-            'success_msg': "list remote cluster successfully",
-        }
-        output_result = rest.restCmd('GET',
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        clusters = rest.getJson(output_result)
-        if self.output == 'json':
-            print output_result
-        else:
-            for cluster in clusters:
-                if not cluster.get('deleted'):
-                    print "cluster name: %s" % cluster["name"]
-                    print "        uuid: %s" % cluster["uuid"]
-                    print "   host name: %s" % cluster["hostname"]
-                    print "   user name: %s" % cluster["username"]
-                    print "         uri: %s" % cluster["uri"]
 
     def replicate_start(self):
         rest = util.restclient_factory(self.server,
@@ -528,8 +393,7 @@ class XDCR:
         """Return one-line summary info for each supported command"""
         command_summary = {
             "setting-xdcr" : "set xdcr related settings",
-            "xdcr-replicate" : "xdcr operations",
-            "xdcr-setup" : "set up XDCR connection"}
+            "xdcr-replicate" : "xdcr operations"}
         if cmd in command_summary:
             return command_summary[cmd]
         else:
@@ -562,25 +426,11 @@ class XDCR:
                            "the interval (in milliseconds) for statistics updates")]
 
         xdcr_create = [("--create", "create a new xdcr configuration")]
-        xdcr_edit = [("--edit", "modify existed xdcr configuration")]
         xdcr_delete = [("--delete", "delete existed xdcr configuration")]
         xdcr_list = [("--list", "list all xdcr configurations")]
-        remote_cluster_name = [("--xdcr-cluster-name=CLUSTERNAME",
-                                "remote cluster to replicate to")]
         xdcr_pause = [("--pause", "pause the replication")]
         xdcr_resume = [("--resume", "resume the replication")]
         xdcr_settings = [("--settings", "update settings for the replication")]
-        remote_hostname = [("--xdcr-hostname=HOSTNAME",
-                            "remote host name to connect to")]
-        remote_admin = [("--xdcr-username=USERNAME",
-                         "remote cluster admin username")]
-        remote_pwd = [("--xdcr-password=PASSWORD",
-                       "remote cluster admin password")]
-        encrypt = [("--xdcr-demand-encryption=[0|1]",
-                    "allow data encrypted using ssl")]
-        certificate = [("--xdcr-certificate=CERTIFICATE",
-                        ("pem-encoded certificate. "
-                        "Need be present if xdcr-demand-encryption is true"))]
         replicator_id = [("--xdcr-replicator=REPLICATOR", "replication id")]
         from_bucket = [("--xdcr-from-bucket=BUCKET",
                        "local bucket name to replicate from")]
@@ -595,10 +445,6 @@ class XDCR:
             return (chkpoint_interval + worker_bat_size +
                     doc_bat_size + failure_restart + opt_rep_theshold +
                     src_nozzle_node + tgt_nozzle_node + log_level + stats_interval)
-        elif cmd == "xdcr-setup":
-            return (xdcr_create + xdcr_edit + xdcr_list + xdcr_delete +
-                    remote_cluster_name + remote_hostname + remote_admin +
-                    remote_pwd + encrypt + certificate)
         elif cmd == "xdcr-replicate":
             return (xdcr_create + xdcr_delete + xdcr_list + xdcr_pause + xdcr_resume +
                     xdcr_settings + replicator_id + from_bucket + to_bucket +
@@ -614,28 +460,7 @@ class XDCR:
         or None if there's no example help or cmd is unknown.
         """
 
-        if cmd == "xdcr-setup":
-            return [("Create a XDCR remote cluster",
-"""
-    couchbase-cli xdcr-setup -c 192.168.0.1:8091 \\
-        --create \\
-        --xdcr-cluster-name=test \\
-        --xdcr-hostname=10.1.2.3:8091 \\
-        --xdcr-username=Administrator1 \\
-        --xdcr-password=password1 \\
-        --xdcr-demand-encryption=1 \\
-        --xdcr-certificate=/tmp/test.pem \\
-        -u Administrator -p password"""),
-                    ("Delete a XDCR remote cluster",
-"""
-    couchbase-cli xdcr-setup --delete -c 192.168.0.1:8091 \\
-        --xdcr-cluster-name=test \\
-        -u Administrator -p password"""),
-                    ("List XDCR remote cluster",
-"""
-    couchbase-cli xdcr-setup --list -c 192.168.0.1:8091 \\
-        -u Administrator -p password""")]
-        elif cmd == "xdcr-replicate":
+        if cmd == "xdcr-replicate":
             return [("Start a replication stream in memcached protocol",
 """
     couchbase-cli xdcr-replicate -c 192.168.0.1:8091 \\

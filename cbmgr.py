@@ -71,6 +71,7 @@ def parse_command():
         "setting-notification": SettingNotification,
         "ssl-manage": SSLManage,
         "user-manage": UserManage,
+        "xdcr-setup": XDCRSetup,
     }
 
     if sys.argv[1] not in subcommands:
@@ -1863,3 +1864,102 @@ class UserManage(Command):
         _, errors = rest.set_local_read_only_user(opts.ro_user, opts.ro_pass)
         _exitIfErrors(errors)
         print "SUCCESS: Local read-only user created"
+
+
+class XDCRSetup(Command):
+    """The xdcr setup subcommand"""
+
+    def __init__(self):
+        super(XDCRSetup, self).__init__()
+        self.parser.set_usage("couchbase-cli xdcr-setup [options]")
+        self.add_optional("--create", dest="create", action="store_true",
+                          default=False, help="Create an XDCR remote reference")
+        self.add_optional("--delete", dest="delete", action="store_true",
+                          default=False, help="Delete an XDCR remote reference")
+        self.add_optional("--edit", dest="edit", action="store_true",
+                          default=False, help="Set the local read-only user")
+        self.add_optional("--list", dest="list", action="store_true",
+                          default=False, help="List all XDCR remote references")
+        self.add_optional("--xdcr-cluster-name", dest="name",
+                          help="The name for the remote cluster reference")
+        self.add_optional("--xdcr-hostname", dest="hostname",
+                          help="The hostname of the remote cluster reference")
+        self.add_optional("--xdcr-username", dest="r_username",
+                          help="The username of the remote cluster reference")
+        self.add_optional("--xdcr-password", dest="r_password",
+                          help="The password of the remote cluster reference")
+        self.add_optional("--xdcr-demand-encryption", dest="encrypt",
+                          choices=["0", "1"], default="0",
+                          help="Enable SSL when replicating with this cluster")
+        self.add_optional("--xdcr-certificate", dest="certificate",
+                          help="The certificate used for encryption")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        actions = sum([opts.create, opts.delete, opts.edit, opts.list])
+        if actions == 0:
+            _exitIfErrors(["Must specify one of --create, --delete, --edit, --list"])
+        elif actions > 1:
+            _exitIfErrors(["The --create, --delete, --edit, --list flags may not " +
+                           "be specified at the same time"])
+        elif opts.create or opts.edit:
+            self._set(rest, opts, args)
+        elif opts.delete:
+            self._delete(rest, opts, args)
+        elif opts.list:
+            self._list(rest, opts, args)
+
+    def _set(self, rest, opts, args):
+        cmd = "create"
+        if opts.edit:
+            cmd = "edit"
+
+        if opts.name is None:
+            _exitIfErrors(["--xdcr-cluster-name is required to %s a cluster connection" % cmd])
+        if opts.hostname is None:
+            _exitIfErrors(["--xdcr-hostname is required to %s a cluster connections" % cmd])
+        if opts.username is None:
+            _exitIfErrors(["--xdcr-username is required to %s a cluster connections" % cmd])
+        if opts.password is None:
+            _exitIfErrors(["--xdcr-password is required to %s a cluster connections" % cmd])
+
+        raw_cert = None
+        if opts.encrypt == "1":
+            if opts.certificate is None:
+                _exitIfErrors(["certificate required if encryption is demanded"])
+            raw_cert = _exit_on_file_read_failure(opts.certificate)
+
+        if opts.create:
+            _, errors = rest.create_xdcr_reference(opts.name, opts.hostname, opts.username,
+                                                   opts.password, opts.encrypt, raw_cert)
+            _exitIfErrors(errors)
+            print "SUCCESS: Cluster reference created"
+        else:
+            _, errors = rest.edit_xdcr_reference(opts.name, opts.hostname, opts.username,
+                                                 opts.password, opts.encrypt, raw_cert)
+            _exitIfErrors(errors)
+            print "SUCCESS: Cluster reference edited"
+
+    def _delete(self, rest, opts, args):
+        if opts.name is None:
+            _exitIfErrors(["--xdcr-cluster-name is required to deleta a cluster connection"])
+
+        _, errors = rest.delete_xdcr_reference(opts.name)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Cluster reference deleted"
+
+    def _list(self, rest, opts, args):
+        clusters, errors = rest.list_xdcr_references()
+        _exitIfErrors(errors)
+
+        for cluster in clusters:
+            if not cluster["deleted"]:
+                print "cluster name: %s" % cluster["name"]
+                print "        uuid: %s" % cluster["uuid"]
+                print "   host name: %s" % cluster["hostname"]
+                print "   user name: %s" % cluster["username"]
+                print "         uri: %s" % cluster["uri"]
