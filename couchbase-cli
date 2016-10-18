@@ -11,7 +11,6 @@ import getopt
 import sys
 import os
 
-import xdcr
 import util_cli as util
 import usage
 from timeout import TimeoutException
@@ -66,7 +65,8 @@ class StubCommand():
             "setting-xdcr" : "set xdcr related settings",
             "ssl-manage" : "manage cluster certificate",
             "user-manage" : "manage read only user",
-            "xdcr-setup" : "set up XDCR connection",}
+            "xdcr-setup" : "set up XDCR connection",
+            "xdcr-replicate" : "xdcr operations",}
         if cmd in command_summary:
             return command_summary[cmd]
 
@@ -280,7 +280,7 @@ def main():
         'setting-xdcr'          : StubCommand,
         'setting-index'         : StubCommand,
         'xdcr-setup'            : StubCommand,
-        'xdcr-replicate'        : xdcr.XDCR,
+        'xdcr-replicate'        : StubCommand,
         'help'                  : usage.Usage
         }
 

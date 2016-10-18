@@ -942,6 +942,16 @@ class ClusterManager(object):
         url = self.hostname + '/pools/default/remoteClusters/'
         return self._get(url)
 
+    def xdcr_replicator_settings(self, chk_interval, worker_batch_size,
+                                 doc_batch_size, fail_interval, replication_thresh,
+                                 src_nozzles, dst_nozzles, log_level, stats_interval,
+                                 replicator_id):
+        url = self.hostname + '/settings/replications/' + urllib.quote_plus(replicator_id)
+        params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
+                                       fail_interval, replication_thresh, src_nozzles,
+                                       dst_nozzles, log_level, stats_interval)
+        return self._post_form_encoded(url, params)
+
     def xdcr_global_settings(self, chk_interval, worker_batch_size, doc_batch_size,
                              fail_interval, replication_threshold, src_nozzles,
                              dst_nozzles, log_level, stats_interval):
@@ -973,8 +983,38 @@ class ClusterManager(object):
             params["logLevel"] = log_level
         if stats_interval is not None:
             params["statsInterval"] = stats_interval
-
         return params
+
+    def create_xdcr_replication(self, name, to_bucket, from_bucket, filter, rep_mode):
+        url = self.hostname + '/controller/createReplication'
+        params = { "replicationType": "continuous" }
+
+        if to_bucket is not None:
+            params["toBucket"] = to_bucket
+        if name is not None:
+            params["toCluster"] = name
+        if from_bucket is not None:
+            params["fromBucket"] = from_bucket
+        if rep_mode is not None:
+            params["type"] = rep_mode
+        if filter is not None:
+            params["filterExpression"] = filter
+
+        return self._post_form_encoded(url, params)
+
+    def delete_xdcr_replicator(self, replicator_id):
+        url = self.hostname + '/controller/cancelXCDR/' + urllib.quote_plus(replicator_id)
+        return self._delete(url, None)
+
+    def pause_xdcr_replication(self, replicator_id):
+        url = self.hostname + '/settings/replications/' + urllib.quote_plus(replicator_id)
+        params = { "pauseRequested": "true" }
+        return self._post_form_encoded(url, params)
+
+    def resume_xdcr_replication(self, replicator_id):
+        url = self.hostname + '/settings/replications/' + urllib.quote_plus(replicator_id)
+        params = { "pauseRequested": "false" }
+        return self._post_form_encoded(url, params)
 
     # Low level methods for basic HTML operations
 

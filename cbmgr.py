@@ -73,6 +73,7 @@ def parse_command():
         "ssl-manage": SSLManage,
         "user-manage": UserManage,
         "xdcr-setup": XDCRSetup,
+        "xdcr-replicate": XDCRReplicate,
     }
 
     if sys.argv[1] not in subcommands:
@@ -1908,6 +1909,143 @@ class UserManage(Command):
         _exitIfErrors(errors)
         print "SUCCESS: Local read-only user created"
 
+
+class XDCRReplicate(Command):
+    """The xdcr replicate subcommand"""
+
+    def __init__(self):
+        super(XDCRReplicate, self).__init__()
+        self.parser.set_usage("couchbase-cli xdcr-replicate [options]")
+        self.add_optional("--create", dest="create", action="store_true",
+                          default=False, help="Create an XDCR replication")
+        self.add_optional("--delete", dest="delete", action="store_true",
+                          default=False, help="Delete an XDCR replication")
+        self.add_optional("--pause", dest="pause", action="store_true",
+                          default=False, help="Pause an XDCR replication")
+        self.add_optional("--list", dest="list", action="store_true",
+                          default=False, help="List all XDCR replications")
+        self.add_optional("--resume", dest="resume", action="store_true",
+                          default=False, help="Resume an XDCR replication")
+        self.add_optional("--settings", dest="settings", action="store_true",
+                          default=False, help="Set advanced settings for an XDCR replication")
+        self.add_optional("--xdcr-from-bucket", dest="from_bucket",
+                          help="The name bucket to replicate data from")
+        self.add_optional("--xdcr-to-bucket", dest="to_bucket",
+                          help="The name bucket to replicate data to")
+        self.add_optional("--xdcr-cluster-name", dest="cluster_name",
+                          help="The name of the cluster reference to replicate to")
+        self.add_optional("--xdcr-replication-mode", dest="rep_mode",
+                          choices=["xmem", "capi"],
+                          help="The replication protocol (capi or xmem)")
+        self.add_optional("--filter-expression", dest="filter",
+                          help="Regular expression to filter replication streams")
+        self.add_optional("--xdcr-replicator", dest="replicator_id",
+                          help="Replication ID")
+        self.add_optional("--checkpoint-interval", dest="chk_int", type=(int),
+                          help="Intervals between checkpoints in seconds (60 to 14400)")
+        self.add_optional("--worker-batch-size", dest="worker_batch_size", type=(int),
+                          help="Doc batch size (500 to 10000)")
+        self.add_optional("--doc-batch-size", dest="doc_batch_size", type=(int),
+                          help="Document batching size in KB (10 to 100000)")
+        self.add_optional("--failure-restart-interval", dest="fail_interval", type=(int),
+                          help="Interval for restarting failed xdcr in seconds (1 to 300)")
+        self.add_optional("--optimistic-replication-threshold", dest="rep_thresh", type=(int),
+                          help="Document body size threshold (bytes) to trigger optimistic replication")
+        self.add_optional("--source-nozzle-per-node", dest="src_nozzles", type=(int),
+                          help="The number of source nozzles per source node (1 to 10)")
+        self.add_optional("--target-nozzle-per-node", dest="dst_nozzles", type=(int),
+                          help="The number of outgoing nozzles per target node (1 to 10)")
+        self.add_optional("--log-level", dest="log_level",
+                          choices=["Error", "Info", "Debug", "Trace"],
+                          help="The XDCR log level")
+        self.add_optional("--stats-interval", dest="stats_interval",
+                          help="The interval for statistics updates (in milliseconds)")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        actions = sum([opts.create, opts.delete, opts.pause, opts.list, opts.resume,
+                       opts.settings])
+        if actions == 0:
+            _exitIfErrors(["Must specify one of --create, --delete, --pause, --list," +
+                           " --resume, --settings"])
+        elif actions > 1:
+            _exitIfErrors(["The --create, --delete, --pause, --list, --resume, --settings" +
+                           " flags may not be specified at the same time"])
+        elif opts.create:
+            self._create(rest, opts, args)
+        elif opts.delete:
+            self._delete(rest, opts, args)
+        elif opts.pause or opts.resume:
+            self._pause_resume(rest, opts, args)
+        elif opts.list:
+            self._list(rest, opts, args)
+        elif opts.settings:
+            self._settings(rest, opts, args)
+
+    def _create(self, rest, opts, args):
+        _, errors = rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket,
+                                                 opts.from_bucket, opts.filter,
+                                                 opts.rep_mode)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: XDCR replication created"
+
+    def _delete(self, rest, opts, args):
+        if opts.replicator_id is None:
+            _exitIfErrors(["--xdcr-replicator is needed to delete a replication"])
+
+        _, errors = rest.delete_xdcr_replicator(opts.replicator_id)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: XDCR replication deleted"
+
+    def _pause_resume(self, rest, opts, args):
+        if opts.replicator_id is None:
+            _exitIfErrors(["--xdcr-replicator is needed to pause or resume a replication"])
+
+        tasks, errors = rest.get_tasks()
+        _exitIfErrors(errors)
+        for task in tasks:
+            if task["type"] == "xdcr" and task["id"] == opts.replicator_id:
+                if opts.pause and task["status"] == "notRunning":
+                    _exitIfErrors(["The replication is not running yet. Pause is not needed"])
+                if opts.resume and task["status"] == "running":
+                    _exitIfErrors(["The replication is running already. Resume is not needed"])
+                break
+
+        if opts.pause:
+            _, errors = rest.pause_xdcr_replication(opts.replicator_id)
+            _exitIfErrors(errors)
+            print "SUCCESS: XDCR replication paused"
+        elif opts.resume:
+            _, errors = rest.resume_xdcr_replication(opts.replicator_id)
+            _exitIfErrors(errors)
+            print "SUCCESS: XDCR replication resume"
+
+    def _list(self, rest, opts, args):
+        tasks, errors = rest.get_tasks()
+        _exitIfErrors(errors)
+        for task in tasks:
+            if task["type"] == "xdcr":
+                print 'stream id: %s' % task['id']
+                print "   status: %s" % task["status"]
+                print "   source: %s" % task["source"]
+                print "   target: %s" % task["target"]
+
+    def _settings(self, rest, opts, args):
+        if opts.replicator_id is None:
+            _exitIfErrors(["--xdcr-replicator is needed to change a replicators settings"])
+        _, errors = rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size,
+                                                  opts.doc_batch_size, opts.fail_interval,
+                                                  opts.rep_thresh, opts.src_nozzles,
+                                                  opts.dst_nozzles, opts.log_level,
+                                                  opts.stats_interval, opts.replicator_id)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: XDCR replicator settings updated"
 
 class XDCRSetup(Command):
     """The xdcr setup subcommand"""

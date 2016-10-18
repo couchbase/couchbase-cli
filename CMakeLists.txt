@@ -72,7 +72,6 @@ INSTALL(FILES
         timeout.py
         usage.py
         util_cli.py
-        xdcr.py
         DESTINATION lib/python)
 IF (BUILD_ENTERPRISE)
     INSTALL(FILES
