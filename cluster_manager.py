@@ -942,6 +942,40 @@ class ClusterManager(object):
         url = self.hostname + '/pools/default/remoteClusters/'
         return self._get(url)
 
+    def xdcr_global_settings(self, chk_interval, worker_batch_size, doc_batch_size,
+                             fail_interval, replication_threshold, src_nozzles,
+                             dst_nozzles, log_level, stats_interval):
+        url = self.hostname + '/settings/replications'
+        params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
+                                       fail_interval, replication_threshold, src_nozzles,
+                                       dst_nozzles, log_level, stats_interval)
+        return self._post_form_encoded(url, params)
+
+    def _get_xdcr_params(self, chk_interval, worker_batch_size, doc_batch_size,
+                         fail_interval, replication_threshold, src_nozzles,
+                         dst_nozzles, log_level, stats_interval):
+        params = {}
+        if chk_interval is not None:
+            params["checkpointInterval"] = chk_interval
+        if worker_batch_size is not None:
+            params["workerBatchSize"] = worker_batch_size
+        if doc_batch_size is not None:
+            params["docBatchSizeKb"] = doc_batch_size
+        if fail_interval is not None:
+            params["failureRestartInterval"] = fail_interval
+        if replication_threshold is not None:
+            params["optimisticReplicationThreshold"] = replication_threshold
+        if src_nozzles is not None:
+            params["sourceNozzlePerNode"] = src_nozzles
+        if dst_nozzles is not None:
+            params["targetNozzlePerNode"] = dst_nozzles
+        if log_level is not None:
+            params["logLevel"] = log_level
+        if stats_interval is not None:
+            params["statsInterval"] = stats_interval
+
+        return params
+
     # Low level methods for basic HTML operations
 
     @request

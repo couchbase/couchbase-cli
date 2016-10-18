@@ -63,6 +63,7 @@ class StubCommand():
             "setting-index" : "set index settings",
             "setting-notification" : "set notification settings",
             "setting-ldap" : "set ldap settings",
+            "setting-xdcr" : "set xdcr related settings",
             "ssl-manage" : "manage cluster certificate",
             "user-manage" : "manage read only user",
             "xdcr-setup" : "set up XDCR connection",}
@@ -276,7 +277,7 @@ def main():
         'setting-audit'         : StubCommand,
         'setting-ldap'          : StubCommand,
         'admin-role-manage'     : StubCommand,
-        'setting-xdcr'          : xdcr.XDCR,
+        'setting-xdcr'          : StubCommand,
         'setting-index'         : StubCommand,
         'xdcr-setup'            : StubCommand,
         'xdcr-replicate'        : xdcr.XDCR,

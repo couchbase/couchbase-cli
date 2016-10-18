@@ -52,13 +52,11 @@ class XDCR:
         # the rest commands and associated URIs for various node operations
         self.REST_CMDS = {
             'xdcr-replicate': '/controller/createReplication',
-            'setting-xdcr': '/internalSettings'
         }
 
         # Map of operations and the HTTP methods used against the REST interface
         self.METHODS = {
             'xdcr-replicate': 'POST',
-            'setting-xdcr': 'POST',
         }
 
     def runCmd(self, cmd, server, port,
@@ -87,9 +85,6 @@ class XDCR:
                 self.replicate_settings()
             else:
                 print "ERROR: unsupported replicate command:", cmd
-
-        if cmd == 'setting-xdcr':
-            self.setting()
 
     def processOpts(self, cmd, opts):
         """ Set standard opts.
@@ -336,59 +331,6 @@ class XDCR:
                                      opts)
         print output_result
 
-    def setting(self):
-        rest = util.restclient_factory(self.server,
-                                     self.port,
-                                     {'debug':self.debug},
-                                     self.ssl)
-        opts = {
-            'error_msg': "unable to set xdcr internal settings",
-            'success_msg': "set xdcr settings"
-        }
-
-        if self.checkpoint_interval:
-            rest.setParam('xdcrCheckpointInterval', self.checkpoint_interval)
-            opts['success_msg'] += ' xdcrCheckpointInterval'
-
-        if self.worker_batch_size:
-            rest.setParam('xdcrWorkerBatchSize', self.worker_batch_size)
-            opts['success_msg'] += ' xdcrWorkerBatchSize'
-
-        if self.doc_batch_size:
-            rest.setParam('xdcrDocBatchSizeKb', self.doc_batch_size)
-            opts['success_msg'] += ' xdcrDocBatchSizeKb'
-
-        if self.failure_restart_interval:
-            rest.setParam('xdcrFailureRestartInterval', self.failure_restart_interval)
-            opts['success_msg'] += ' xdcrFailureRestartInterval'
-
-        if self.optimistic_replication_threshold:
-            rest.setParam('xdcrOptimisticReplicationThreshold', self.optimistic_replication_threshold)
-            opts['success_msg'] += ' xdcrOptimisticReplicationThreshold'
-
-        if self.source_nozzle_per_node:
-            rest.setParam('sourceNozzlePerNode', self.source_nozzle_per_node)
-            opts['success_msg'] += ' xdcrSourceNozzlePerNode'
-
-        if self.target_nozzle_per_node:
-            rest.setParam('targetNozzlePerNode', self.target_nozzle_per_node)
-            opts['success_msg'] += ' xdcrTargetNozzlePerNode'
-
-        if self.log_level:
-            rest.setParam('logLevel', self.log_level)
-            opts['success_msg'] += ' xdcrLogLevel'
-
-        if self.stats_interval:
-            rest.setParam('statsInterval', self.stats_interval)
-            opts['success_msg'] += ' xdcrStatsInterval'
-
-        output_result = rest.restCmd(self.method,
-                                     self.rest_cmd,
-                                     self.user,
-                                     self.password,
-                                     opts)
-        print output_result
-
     def getCommandSummary(self, cmd):
         """Return one-line summary info for each supported command"""
         command_summary = {
@@ -441,11 +383,7 @@ class XDCR:
 
         regex = [("--filter-expression=[REGEX]",
                   "regular expression to filter replication streams")]
-        if cmd == "setting-xdcr":
-            return (chkpoint_interval + worker_bat_size +
-                    doc_bat_size + failure_restart + opt_rep_theshold +
-                    src_nozzle_node + tgt_nozzle_node + log_level + stats_interval)
-        elif cmd == "xdcr-replicate":
+        if cmd == "xdcr-replicate":
             return (xdcr_create + xdcr_delete + xdcr_list + xdcr_pause + xdcr_resume +
                     xdcr_settings + replicator_id + from_bucket + to_bucket +
                     chkpoint_interval + worker_bat_size + doc_bat_size + failure_restart +

@@ -68,6 +68,7 @@ def parse_command():
         "setting-compaction": SettingCompaction,
         "setting-index": SettingIndex,
         "setting-ldap": SettingLdap,
+        "setting-xdcr": SettingXDCR,
         "setting-notification": SettingNotification,
         "ssl-manage": SSLManage,
         "user-manage": UserManage,
@@ -1730,6 +1731,47 @@ class SettingNotification(Command):
         _exitIfErrors(errors)
 
         print "SUCCESS: Notification settings updated"
+
+
+class SettingXDCR(Command):
+    """The setting xdcr subcommand"""
+
+    def __init__(self):
+        super(SettingXDCR, self).__init__()
+        self.parser.set_usage("couchbase-cli setting-xdcr [options]")
+        self.add_optional("--checkpoint-interval", dest="chk_int", type=(int),
+                          help="Intervals between checkpoints in seconds (60 to 14400)")
+        self.add_optional("--worker-batch-size", dest="worker_batch_size", type=(int),
+                          help="Doc batch size (500 to 10000)")
+        self.add_optional("--doc-batch-size", dest="doc_batch_size", type=(int),
+                          help="Document batching size in KB (10 to 100000)")
+        self.add_optional("--failure-restart-interval", dest="fail_interval", type=(int),
+                          help="Interval for restarting failed xdcr in seconds (1 to 300)")
+        self.add_optional("--optimistic-replication-threshold", dest="rep_thresh", type=(int),
+                          help="Document body size threshold (bytes) to trigger optimistic replication")
+        self.add_optional("--source-nozzle-per-node", dest="src_nozzles", type=(int),
+                          help="The number of source nozzles per source node (1 to 10)")
+        self.add_optional("--target-nozzle-per-node", dest="dst_nozzles", type=(int),
+                          help="The number of outgoing nozzles per target node (1 to 10)")
+        self.add_optional("--log-level", dest="log_level",
+                          choices=["Error", "Info", "Debug", "Trace"],
+                          help="The XDCR log level")
+        self.add_optional("--stats-interval", dest="stats_interval",
+                          help="The interval for statistics updates (in milliseconds)")
+
+    def execute(self, opts, args):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        check_cluster_initialized(rest)
+
+        _, errors = rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size,
+                                              opts.doc_batch_size, opts.fail_interval,
+                                              opts.rep_thresh, opts.src_nozzles,
+                                              opts.dst_nozzles, opts.log_level,
+                                              opts.stats_interval)
+        _exitIfErrors(errors)
+
+        print "SUCCESS: Global XDCR settings updated"
 
 
 class SSLManage(Command):
