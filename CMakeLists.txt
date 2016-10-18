@@ -68,8 +68,6 @@ INSTALL(FILES
         pump_tap.py
         pump_transfer.py
         pump_dcp.py
-        restclient.py
-        timeout.py
         usage.py
         util_cli.py
         DESTINATION lib/python)

@@ -13,7 +13,6 @@ import os
 
 import util_cli as util
 import usage
-from timeout import TimeoutException
 
 CB_USERNAME = 'CB_REST_USERNAME'
 CB_PASSWORD = 'CB_REST_PASSWORD'
@@ -353,9 +352,6 @@ Please use -p or set environment variable %s." % CB_PASSWORD)
     c = commands[cmd]()
     try:
         c.runCmd(cmd, server, port, user, password, ssl, opts)
-    except TimeoutException, err:
-        print "TIMED OUT: command: %s: %s:%d, %s" % (cmd, server, port, err)
-        sys.exit(1)
     except KeyboardInterrupt:
         print "INTERRUPTED: command: %s: %s:%d" % (cmd, server, port)
         sys.exit(1)

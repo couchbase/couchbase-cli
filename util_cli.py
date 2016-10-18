@@ -8,7 +8,6 @@ import json
 import math
 import os
 import sys
-import restclient
 
 try:
     locale.setlocale(locale.LC_ALL, '')
@@ -206,9 +205,3 @@ def pretty_datetime(number, timeonly=False):
     else:
         timestamp = datetime.datetime.fromtimestamp(number/1000)
         return timestamp.strftime('%x') + ' ' + str(timestamp.time())
-
-def restclient_factory(server, port, debug, ssl=False):
-    if ssl:
-        return restclient.SslRestClient(server, port, debug)
-    else:
-        return restclient.RestClient(server, port, debug)
