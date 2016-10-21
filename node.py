@@ -398,6 +398,9 @@ class Node:
             print err
             return
 
+        allowDefault = 'index' in services.split(',')
+        param = self.index_storage_to_param(self.index_storage_setting, allowDefault)
+
         #set memory quota
         if cmd == 'cluster-init':
             if 'kv' in services.split(',') and not self.per_node_quota:
@@ -407,17 +410,17 @@ class Node:
                 if not self.cluster_index_ramsize:
                     print "ERROR: option cluster-index-ramsize is not specified"
                     return
-                param = self.index_storage_to_param(self.index_storage_setting)
-                if not param:
+                if param is None:
                     print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
                         % self.index_storage_setting
                     return
-
-                _, errors = cm.set_index_settings(param)
-                _exitIfErrors(errors)
             elif 'fts' in services.split(',') and not self.cluster_fts_ramsize:
                 print "ERROR: option fts-index-ramsize is not specified"
                 return
+
+        if param is not None:
+            _, errors = cm.set_index_settings(param)
+            _exitIfErrors(errors)
 
         opts = {
             "error_msg": "unable to set memory quota",
@@ -500,8 +503,8 @@ class Node:
                                          opts)
         print output_result
 
-    def index_storage_to_param(self, value):
-        if not value or value == "default":
+    def index_storage_to_param(self, value, allowDefault):
+        if (not value and allowDefault) or value == "default":
             return "forestdb"
         if value == "memopt":
             return "memory_optimized"
@@ -1658,7 +1661,7 @@ class Node:
     def groupAddServers(self):
         # If this is the first index node added then we need to make sure to
         # set the index storage setting.
-        indexStorageParam = self.index_storage_to_param(self.index_storage_setting)
+        indexStorageParam = self.index_storage_to_param(self.index_storage_setting, False)
         if not indexStorageParam:
             print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
                 % self.index_storage_setting
