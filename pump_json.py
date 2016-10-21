@@ -175,7 +175,10 @@ class JSONSource(pump.Source):
                     continue
 
                 # Skip all files not in the docs directory
-                if "docs" not in path.split(os.path.sep):
+                # Note that we use a forward slash for all operating systems
+                # because this is a zip file and zip paths always use a forward
+                # slash
+                if "docs" not in path.split("/"):
                     continue
 
                 self.docs.append(path)
