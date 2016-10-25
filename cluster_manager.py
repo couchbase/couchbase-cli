@@ -207,6 +207,15 @@ class ClusterManager(object):
         url = self.hostname + '/settings/indexes'
         return self._get(url)
 
+    def rotate_master_pwd(self):
+        url = self.hostname + '/node/controller/rotateDataKey'
+        return self._post_form_encoded(url, None)
+
+    def set_master_pwd(self, password):
+        url = self.hostname + '/node/controller/changeMasterPassword'
+        params = { "newPassword": password }
+        return self._post_form_encoded(url, params)
+
     def setRoles(self,userList,roleList,userNameList):
         # we take a comma-delimited list of roles that needs to go into a dictionary
         paramDict = {"roles" : roleList}

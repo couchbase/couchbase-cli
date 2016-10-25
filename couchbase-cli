@@ -95,8 +95,10 @@ def main():
                 'enable-flush=',
                 'enable-index-replica=',
                 'enable-timestamps',
-                'new-master-password=',
+                'new-password',
                 'rotate-data-key',
+                'send-password',
+                'config-path=',
                 'wait',
                 'force',
                 'data-only',
@@ -285,7 +287,7 @@ def main():
     if not cluster:
         usage.command_error("please provide a CLUSTER, or use -h for more help.")
 
-    if cmd != "cluster-init":
+    if cmd != "cluster-init" and cmd != "master-password":
         if not user:
             if CB_USERNAME in os.environ:
                 user = os.environ[CB_USERNAME]

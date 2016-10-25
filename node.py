@@ -2,7 +2,11 @@
   Implementation for rebalance, add, remove, stop rebalance.
 """
 
+import platform
 import cluster_manager
+import getpass
+import random
+import subprocess
 import time
 import os
 import sys
@@ -231,8 +235,10 @@ class Node:
         self.delete_users = None
 
         # master password
-        self.new_master_password = None
+        self.new_master_password = False
         self.rotate_data_key = False
+        self.send_password = False
+        self.config_path = None
 
     def runCmd(self, cmd, server, port,
                user, password, ssl, opts):
@@ -348,35 +354,92 @@ class Node:
             self.alterRoles()
 
     def masterPassword(self):
-        if self.new_master_password is None and not self.rotate_data_key:
+        cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
+                                                self.password, self.ssl)
+        if self.new_master_password:
+            newPassword = getpass.getpass("\nEnter new master password:")
+            _, errors = cm.set_master_pwd(newPassword)
+            _exitIfErrors(errors)
+            print "SUCCESS: New master password set"
+        elif self.rotate_data_key:
+            _, errors = cm.rotate_master_pwd()
+            _exitIfErrors(errors)
+            print "SUCCESS: Data key rotated"
+        elif self.send_password:
+            mydir = os.path.join(os.path.dirname(sys.argv[0]), "..", "..", "bin")
+            path = [mydir, os.environ['PATH']]
+            if os.name == 'posix':
+                os.environ['PATH'] = ':'.join(path)
+            else:
+                os.environ['PATH'] = ';'.join(path)
+
+            if self.config_path == None:
+                self.config_path = os.path.abspath(os.path.join(mydir, "..", "var", "lib", "couchbase"))
+
+            cookiefile = self.find_master_pwd_path("couchbase-server.cookie", self.config_path)
+            if cookiefile == None:
+                _exitIfErrors(["File couchbase-server.cookie is not found under the specified root"])
+
+            cookie = _exitOnFileReadFailure(cookiefile).rstrip()
+
+            node = "babysitter_of_ns_1@127.0.0.1"
+            nodefile = self.find_master_pwd_path("couchbase-server.babysitter.node", self.config_path)
+            if nodefile != None:
+                node = _exitOnFileReadFailure(nodefile).rstrip()
+
+            self.prompt_for_master_pwd(node, cookie)
+        else :
             _exitIfErrors(["ERROR: no parameters set"])
 
-        if self.new_master_password is not None:
-            opts = {
-                "error_msg": "Unable to set master password",
-                "success_msg": "Master password set"
-            }
-            rest = util.restclient_factory(self.server, self.port, {'debug':self.debug}, self.ssl)
-            rest.setParam('newPassword', self.new_master_password)
-            output_result = rest.restCmd(self.method,
-                                         '/node/controller/changeMasterPassword',
-                                         self.user,
-                                         self.password,
-                                         opts)
-            print output_result
+    def run_process(self, name, args):
+        try:
+            if platform.system() == 'Windows':
+                name = name + ".exe"
 
-        if self.rotate_data_key:
-            opts = {
-                "error_msg": "Unable to rotate data key",
-                "success_msg": "Data key rotated"
-            }
-            rest = util.restclient_factory(self.server, self.port, {'debug':self.debug}, self.ssl)
-            output_result = rest.restCmd(self.method,
-                                         '/node/controller/rotateDataKey',
-                                         self.user,
-                                         self.password,
-                                         opts)
-            print output_result
+            args.insert(0, name)
+            p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            output = p.stdout.read()
+            error = p.stderr.read()
+            p.wait()
+            rc = p.returncode
+            return output, error
+        except OSError:
+            _exitIfErrors(["Could not locate the %s executable" % name])
+
+    def find_master_pwd_path(self, filename, user_path):
+        variants = [os.path.abspath(os.path.join(user_path, filename)),
+                    "/opt/couchbase/var/lib/couchbase/" + filename,
+                    os.path.expanduser("~/Library/Application Support/Couchbase/var/lib/couchbase/" + filename)]
+        for path in variants:
+            if os.path.isfile(path):
+                return path
+
+        return None
+
+    def prompt_for_master_pwd(self, node, cookie):
+        password = getpass.getpass("\nEnter master password:")
+        password = "\"" + password.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+        randChars = ''.join(random.choice(string.ascii_letters) for i in xrange(20))
+        name = 'cb-%s@127.0.0.1' % randChars
+
+        instr = "Res = rpc:call('" + node + "', encryption_service, set_password, [" \
+                + password + "]), io:format(\"~p~n\", [Res])."
+        args = ["-noinput", "-name", name, "-setcookie", cookie, "-eval", \
+                instr, "-run", "init", "stop"]
+
+        res, error = self.run_process("erl", args)
+        res = res.strip(' \t\n\r')
+
+        if res == "ok":
+            print "SUCCESS: Password accepted. Node started booting."
+        elif res == "retry":
+            _exitIfErrors(["Incorrect password."])
+            prompt_for_password(node, cookie)
+        elif res == "{badrpc,nodedown}":
+            _exitIfErrors(["Either the node is down or password was already supplied"])
+        else:
+            _exitIfErrors(["Incorrect password. Node shuts down."])
 
     def clusterInit(self, cmd):
         # We need to ensure that creating the REST username/password is the
@@ -1059,10 +1122,14 @@ class Node:
                 self.gsi_compact_abort = bool_to_str(a)
             elif o == '--enable-email-alert':
                 self.enable_email_alert = bool_to_str(a)
-            elif o == '--new-master-password':
-                self.new_master_password = a
+            elif o == '--new-password':
+                self.new_master_password = True
             elif o == '--rotate-data-key':
                 self.rotate_data_key = True
+            elif o == '--send-password':
+                self.send_password = True
+            elif o == '--config-path':
+                self.config_path = a
             elif o == '--node-init-data-path':
                 self.data_path = a
             elif o == '--node-init-index-path':
@@ -2091,8 +2158,9 @@ class Node:
             ]
         elif cmd == "master-password":
             return [
-            ("--new-master-password", "Changes the master password on this node."),
+            ("--new-password", "Prompts user for a new master password on this node."),
             ("--rotate-data-key", "Rotates the master password data key."),
+            ("--send-password", "Prompts for the master password to start the server."),
             ]
         else:
             return None
@@ -2394,12 +2462,16 @@ class Node:
             return [("Change the master password",
 """
     couchbase-cli master-password -c 192.168.0.1:8091 -u Administrator \\
-        -p password --new-master-password password123
+        -p password --new-password
             """),
             ("Rotate the master password data key",
 """
     couchbase-cli master-password -c 192.168.0.1:8091 -u Administrator \\
         -p password --rotate-data-key
+            """),
+            ("Send the master password to the server",
+"""
+    couchbase-cli master-password -c 192.168.0.1:8091 --send-password
             """),
             ]
 
