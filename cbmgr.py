@@ -1643,8 +1643,9 @@ class SettingIndex(Command):
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
 
-        if not (opts.max_rollback or opts.stable_snap or opts.mem_snap or \
-            opts.storage_mode or opts.threads or opts.log_level):
+        if opts.max_rollback is None and opts.stable_snap is None \
+            and opts.mem_snap is None and opts.storage_mode is None \
+            and opts.threads is None and opts.log_level is None:
             _exitIfErrors(["No settings specified to be changed"])
 
         opts.storage_mode = index_storage_mode_to_param(opts.storage_mode)

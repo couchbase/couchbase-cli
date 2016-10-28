@@ -730,17 +730,17 @@ class ClusterManager(object):
                            memSnapInterval, threads, logLevel):
         """ Sets global index settings"""
         params = dict()
-        if storageMode:
+        if storageMode is not None:
             params["storageMode"] = storageMode
-        if maxRollbackPoints:
+        if maxRollbackPoints is not None:
             params["maxRollbackPoints"] = maxRollbackPoints
-        if stableSnapInterval:
+        if stableSnapInterval is not None:
             params["stableSnapshotInterval"] = stableSnapInterval
-        if memSnapInterval:
+        if memSnapInterval is not None:
             params["memorySnapshotInterval"] = memSnapInterval
-        if threads:
+        if threads is not None:
             params["indexerThreads"] = threads
-        if logLevel:
+        if logLevel is not None:
             params["logLevel"] = logLevel
 
         url = self.hostname + '/settings/indexes'
