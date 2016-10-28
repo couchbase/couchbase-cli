@@ -1,23 +1,18 @@
 """A Couchbase  CLI subcommand"""
 
+import inspect
 import json
 import os
 import random
+import re
 import string
 import subprocess
 import sys
 import time
 
+from argparse import ArgumentParser, HelpFormatter, Action, SUPPRESS
 from cluster_manager import ClusterManager
-from optparse import HelpFormatter, OptionContainer, OptionGroup, OptionParser
 from subprocess import call
-
-try:
-    from gettext import gettext
-except ImportError:
-    def gettext(message):
-        """Stub gettext method"""
-        return message
 
 COUCHBASE_DEFAULT_PORT = 8091
 
@@ -28,33 +23,6 @@ BUCKET_PRIORITY_LOW_STR = "low"
 
 BUCKET_TYPE_COUCHBASE = "membase"
 BUCKET_TYPE_MEMCACHED = "memcached"
-
-def parse_command():
-    """Parses a couchbase-cli command and routes the request to the appropriate handler
-
-    Returns true if the command was handled"""
-    if len(sys.argv) == 1:
-        return False
-
-    if sys.argv[1] not in SUBCOMMANDS:
-        return False
-
-    subcommand = SUBCOMMANDS[sys.argv[1]]()
-    options, args = subcommand.parse(sys.argv[2:])
-    errors = subcommand.execute(options, args)
-    if errors:
-        _exitIfErrors(errors)
-
-    return True
-
-def help_callback(option, opt_str, value, parser, *args, **kwargs):
-
-    """Help callback allowing us to show short help or a man page"""
-    command = args[0]
-    if opt_str == "-h":
-        command.short_help()
-    elif opt_str == "--help":
-        _show_man_page(SUBCOMMANDS[sys.argv[1]].get_man_page_name())
 
 def check_cluster_initialized(rest):
     """Checks to see if the cluster is initialized"""
@@ -115,6 +83,17 @@ def process_services(services, is_enterprise):
         services = services.replace(old, new)
     return services, None
 
+def find_subcommands():
+    """Finds all subcommand classes"""
+    clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    subclasses = [cls for cls in clsmembers if issubclass(cls[1], Subcommand) and cls[1] != Subcommand]
+
+    subcommands = []
+    for subclass in subclasses:
+        name = '-'.join([part.lower() for part in re.findall('[A-Z][a-z]*', subclass[0])])
+        subcommands.append((name, subclass[1]))
+    return subcommands
+
 def _deprecated(msg):
     print "DEPRECATED: " + msg
 
@@ -144,137 +123,118 @@ def _exit_on_file_read_failure(fname):
     except IOError, error:
         _exitIfErrors([error])
 
-class CLIOptionParser(OptionParser):
-    """A custom parser for subcommands"""
-
-    def __init__(self, *args, **kwargs):
-        OptionParser.__init__(self, *args, **kwargs)
-
-    def format_option_help(self, formatter=None):
-        if formatter is None:
-            formatter = self.formatter
-        formatter.store_option_strings(self)
-        result = []
-        if self.option_list:
-            result.append(OptionContainer.format_option_help(self, formatter))
-            result.append("\n")
-        for group in self.option_groups:
-            result.append(group.format_help(formatter))
-            result.append("\n")
-        # Drop the last "\n", or the header if no options or option groups:
-        return "".join(result[:-1])
-
-    def error(self, msg):
-        """error(msg : string)
-
-        Print a usage message incorporating 'msg' to stderr and exit.
-        If you override this in a subclass, it should not return -- it
-        should either exit or raise an exception.
-        """
-        sys.stdout.write("ERROR: %s\n\n" % (msg))
-        self.print_help()
-        self.exit(1)
-
 class CLIHelpFormatter(HelpFormatter):
     """Format help with indented section bodies"""
 
-    def __init__(self,
-                 indent_increment=2,
-                 max_help_position=30,
-                 width=None,
-                 short_first=1):
-        HelpFormatter.__init__(self, indent_increment, max_help_position,
-                               width, short_first)
-        self._short_opt_fmt = "%s"
-        self._long_opt_fmt = "%s"
+    def __init__(self, prog, indent_increment=2, max_help_position=28, width=None):
+        HelpFormatter.__init__(self, prog, indent_increment, max_help_position, width)
 
-    def format_usage(self, usage):
-        return gettext("usage: %s\n") % usage
+    def add_argument(self, action):
+        if action.help is not SUPPRESS:
 
-    def format_heading(self, heading):
-        return "%*s%s:\n" % (self.current_indent, "", heading)
+            # find all invocations
+            get_invocation = self._format_action_invocation
+            invocations = [get_invocation(action)]
+            for subaction in self._iter_indented_subactions(action):
+                invocations.append(get_invocation(subaction))
 
-    def format_option_strings(self, option):
-        """Return a comma-separated list of option strings & metavariables."""
-        if option.takes_value():
-            short_opts = [self._short_opt_fmt % (sopt)
-                          for sopt in option._short_opts]
-            long_opts = [self._long_opt_fmt % (lopt)
-                         for lopt in option._long_opts]
+            # update the maximum item length
+            invocation_length = max([len(s) for s in invocations])
+            action_length = invocation_length + self._current_indent + 2
+            self._action_max_length = max(self._action_max_length,
+                                          action_length)
+
+            # add the item to the list
+            self._add_item(self._format_action, [action])
+
+    def _format_action_invocation(self, action):
+        if not action.option_strings:
+            metavar, = self._metavar_formatter(action, action.dest)(1)
+            return metavar
         else:
-            short_opts = option._short_opts
-            long_opts = option._long_opts
+            parts = []
+            if action.nargs == 0:
+                parts.extend(action.option_strings)
+                return ','.join(parts)
+            else:
+                default = action.dest
+                args_string = self._format_args(action, default)
+                for option_string in action.option_strings:
+                    parts.append(option_string)
+                return ','.join(parts) + ' ' +  args_string
 
-        if self.short_first:
-            opts = short_opts + long_opts
+
+class CBEnvAction(Action):
+    """Allows the custom handling of environment variables for command line options"""
+
+    def __init__(self, envvar, required=True, default=None, **kwargs):
+        if not default and envvar:
+            if envvar in os.environ:
+                default = os.environ[envvar]
+        if required and default:
+            required = False
+        super(CBEnvAction, self).__init__(default=default, required=required,
+                                          **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
+
+
+class CBHelpAction(Action):
+    """Allows the custom handling of the help command line argument"""
+
+    def __init__(self, option_strings, klass, dest=SUPPRESS, default=SUPPRESS, help=None):
+        super(CBHelpAction, self).__init__(option_strings=option_strings, dest=dest,
+                                           default=default, nargs=0, help=help)
+        self.klass = klass
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if option_string == "-h":
+            parser.print_help()
         else:
-            opts = long_opts + short_opts
+            CBHelpAction._show_man_page(self.klass.get_man_page_name())
+        parser.exit()
 
-        return ", ".join(opts)
+    @staticmethod
+    def _show_man_page(page):
+        exe_path = os.path.abspath(sys.argv[0])
+        base_path = os.path.dirname(exe_path)
+
+        if os.name == "nt":
+            manpath = os.path.join(base_path, "..", "..", "share", "html")
+            call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(manpath, page)])
+        else:
+            manpath = os.path.join(base_path, "..", "..", "share", "man", "man1")
+            call(["man", os.path.join(manpath, page)])
+
+class CliParser(ArgumentParser):
+
+    def __init__(self, *args, **kwargs):
+        super(CliParser, self).__init__(*args, **kwargs)
+
+    def error(self, message):
+        self.exit(2, ('ERROR: %s\n') % (message))
+
 
 class Command(object):
-    """A Couchbase CLI Subcommand"""
+    """A Couchbase CLI Command"""
 
     def __init__(self):
-        self.parser = CLIOptionParser(formatter=CLIHelpFormatter(), add_help_option=False)
-        self._required_opt_check = []
-
-        self.required = OptionGroup(self.parser, "Required")
-        self.add_required("-c", "--cluster", dest="cluster",
-                          help="The hostname of the Couchbase cluster")
-        self.add_required("-u", "--username", dest="username",
-                          help="The username for the Couchbase cluster")
-        self.add_required("-p", "--password", dest="password",
-                          help="The password for the Couchbase cluster")
-        self.parser.add_option_group(self.required)
-
-        self.optional = OptionGroup(self.parser, "Optional")
-        self.add_optional("-o", "--output", dest="output", default="standard",
-                          choices=["json", "standard"],
-                          help="The output type (json or standard)")
-        self.add_optional("-d", "--debug", dest="debug", action="store_true",
-                          help="Run the command with extra logging")
-        self.add_optional("-s", "--ssl", dest="ssl", action="store_true",
-                          help="Use ssl when connecting to Couchbase")
-        self.add_optional("-h", "--help", action="callback",
-                          help="Prints the short or long help message",
-                          callback=help_callback, callback_args=(self,))
-        self.parser.add_option_group(self.optional)
-
-    def add_required(self, *args, **kwargs):
-        """Adds a required option to the subcommand"""
-        self.required.add_option(*args, **kwargs)
-        if "dest" in kwargs:
-            self._required_opt_check.append((kwargs["dest"], ", ".join(args)))
-
-    def add_optional(self, *args, **kwargs):
-        """Adds an optional option to the subcommand"""
-        self.optional.add_option(*args, **kwargs)
+        self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False)
 
     def parse(self, args):
         """Parses the subcommand"""
         if len(args) == 0:
             self.short_help()
 
-        errored = False
-        opts, args = self.parser.parse_args(args)
-        for (req_opt, flags) in self._required_opt_check:
-            if not hasattr(opts, req_opt) or getattr(opts, req_opt) is None:
-                sys.stdout.write("ERROR: Option required, but not specified: %s\n" % flags)
-                errored = True
-
-        if errored:
-            sys.stdout.write("\n")
-            self.short_help(1)
-
-        return opts, args
+        return self.parser.parse_args(args)
 
     def short_help(self, code=0):
         """Prints the short help message and exits"""
         self.parser.print_help()
         self.parser.exit(code)
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         """Executes the subcommand"""
         raise NotImplementedError
 
@@ -283,30 +243,112 @@ class Command(object):
         """Returns the man page name"""
         raise NotImplementedError
 
+    @staticmethod
+    def get_description():
+        """Returns the command description"""
+        raise NotImplementedError
 
-class AdminRoleManage(Command):
+
+class CouchbaseCLI(Command):
+    """A Couchbase CLI command"""
+
+    def __init__(self):
+        super(CouchbaseCLI, self).__init__()
+        self.parser.prog = "couchbase-cli"
+        subparser = self.parser.add_subparsers(title="Commands", metavar="")
+
+        for (name, klass) in find_subcommands():
+            subcommand = subparser.add_parser(name, help=klass.get_description())
+            subcommand.set_defaults(klass=klass)
+
+        group = self.parser.add_argument_group("Options")
+        group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
+                           help="Prints the short or long help message")
+
+    def parse(self, args):
+        if len(sys.argv) == 1:
+            self.parser.print_help()
+            self.parser.exit(1)
+
+        l1_args = self.parser.parse_args(args[1:2])
+        l2_args = l1_args.klass().parse(args[2:])
+        setattr(l2_args, 'klass', l1_args.klass)
+        return l2_args
+
+    def execute(self, opts):
+        opts.klass().execute(opts)
+
+    @staticmethod
+    def get_man_page_name():
+        """Returns the man page name"""
+        return "couchbase-cli" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "A Couchbase cluster administration utility"
+
+
+class Subcommand(Command):
+    """A Couchbase CLI Subcommand"""
+
+    def __init__(self, omit_username=False, omit_password=False, cluster_default=None):
+        super(Subcommand, self).__init__()
+        self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False)
+        group = self.parser.add_argument_group("Cluster options")
+        group.add_argument("-c", "--cluster", dest="cluster", required=True, metavar="<cluster>",
+                           default=cluster_default, help="The hostname of the Couchbase cluster")
+        if not omit_username:
+            group.add_argument("-u", "--username", dest="username", required=True,
+                               action=CBEnvAction, envvar='CB_REST_USERNAME',
+                               metavar="<username>", help="The username for the Couchbase cluster")
+        if not omit_password:
+            group.add_argument("-p", "--password", dest="password", required=True,
+                               action=CBEnvAction, envvar='CB_REST_PASSWORD',
+                               metavar="<password>", help="The password for the Couchbase cluster")
+        group.add_argument("-o", "--output", dest="output", default="standard", metavar="<output>",
+                           choices=["json", "standard"], help="The output type (json or standard)")
+        group.add_argument("-d", "--debug", dest="debug", action="store_true",
+                           help="Run the command with extra logging")
+        group.add_argument("-s", "--ssl", dest="ssl", action="store_true",
+                           help="Use ssl when connecting to Couchbase")
+        group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
+                           help="Prints the short or long help message")
+
+    def execute(self, opts):
+        super(Subcommand, self).execute(opts)
+
+    @staticmethod
+    def get_man_page_name():
+        return Command.get_man_page_name()
+
+    @staticmethod
+    def get_description():
+        return Command.get_description()
+
+
+class AdminRoleManage(Subcommand):
     """The administrator role manage subcommand"""
 
     def __init__(self):
         super(AdminRoleManage, self).__init__()
-        self.parser.set_usage("couchbase-cli admin-role-manage [options]")
-        self.add_optional("--my-roles", dest="my_roles", action="store_true",
-                          help="Show the current users roles")
-        self.add_optional("--get-roles", dest="get_roles", action="store_true",
-                          help="Show all valid users and roles")
-        self.add_optional("--set-users", dest="set_users",
-                          help="A comma-delimited list of user ids to set " +
-                          "acess-control roles for")
-        self.add_optional("--set-names", dest="set_names",
-                          help="A optional quoted, comma-delimited list names, " +
-                          "one for each specified user id ")
-        self.add_optional("--roles", dest="roles",
-                          help="A comma-delimited list of roles to set for users")
-        self.add_optional("--delete-users", dest="delete_users",
-                          help="A comma-delimited list of users to remove from" +
-                          " access control")
+        self.parser.prog = "couchbase-cli admin-role-manage"
 
-    def execute(self, opts, args):
+        group = self.parser.add_argument_group("Admin role manage options")
+        group.add_argument("--my-roles", dest="my_roles", action="store_true",
+                           help="Show the current users roles")
+        group.add_argument("--get-roles", dest="get_roles", action="store_true",
+                           help="Show all valid users and roles")
+        group.add_argument("--set-users", dest="set_users", metavar="<user_list>",
+                           help="A comma-delimited list of user ids to set acess-control roles for")
+        group.add_argument("--set-names", dest="set_names", metavar="<name_list>",
+                           help="A optional quoted, comma-delimited list names, one for each " +
+                           "specified user id ")
+        group.add_argument("--roles", dest="roles", metavar="<role_list>",
+                           help="A comma-delimited list of roles to set for users")
+        group.add_argument("--delete-users", dest="delete_users", metavar="<user_list>",
+                           help="A comma-delimited list of users to remove from access control")
+
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -353,33 +395,39 @@ class AdminRoleManage(Command):
     def get_man_page_name():
         return "couchbase-cli-admin-role-manage" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Set access-control roles for users"
 
-class ClusterInit(Command):
+
+class ClusterInit(Subcommand):
     """The cluster initialization subcommand"""
 
     def __init__(self):
-        super(ClusterInit, self).__init__()
-        self.parser.set_usage("couchbase-cli cluster-init [options]")
-        self.add_required("--cluster-username", dest="username",
-                          help="The cluster administrator username")
-        self.add_required("--cluster-password", dest="password",
-                          help="Only compact the data files")
-        self.add_optional("--cluster-port", dest="port", type=(int),
-                          help="The cluster administration console port")
-        self.add_optional("--cluster-ramsize", dest="data_mem_quota", type=(int),
-                          help="The data service memory quota (Megabytes)")
-        self.add_optional("--cluster-index-ramsize", dest="index_mem_quota", type=(int),
-                          help="The index service memory quota (Megabytes)")
-        self.add_optional("--cluster-fts-ramsize", dest="fts_mem_quota", type=(int),
-                          help="The full-text service memory quota (Megabytes)")
-        self.add_optional("--cluster-name", dest="name", help="The cluster name")
-        self.add_optional("--index-storage-setting", dest="index_storage_mode",
-                          choices=["default", "memopt"],
-                          help="The index storage backend (Defaults to \"default)\"")
-        self.add_optional("--services", dest="services", default="data",
-                          help="The services to run on this server")
+        super(ClusterInit, self).__init__(True, True, "127.0.0.1:8091")
+        self.parser.prog = "couchbase-cli cluster-init"
+        group = self.parser.add_argument_group("Cluster initialization options")
+        group.add_argument("--cluster-username", dest="username", required=True,
+                           metavar="<username>", help="The cluster administrator username")
+        group.add_argument("--cluster-password", dest="password", required=True,
+                           metavar="<password>", help="Only compact the data files")
+        group.add_argument("--cluster-port", dest="port", type=(int),
+                           metavar="<port>", help="The cluster administration console port")
+        group.add_argument("--cluster-ramsize", dest="data_mem_quota", type=(int),
+                           metavar="<quota>", help="The data service memory quota in megabytes")
+        group.add_argument("--cluster-index-ramsize", dest="index_mem_quota", type=(int),
+                           metavar="<quota>", help="The index service memory quota in megabytes")
+        group.add_argument("--cluster-fts-ramsize", dest="fts_mem_quota", type=(int),
+                           metavar="<quota>",
+                           help="The full-text service memory quota in Megabytes")
+        group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
+        group.add_argument("--index-storage-setting", dest="index_storage_mode",
+                           choices=["default", "memopt"], metavar="<mode>",
+                           help="The index storage backend (Defaults to \"default)\"")
+        group.add_argument("--services", dest="services", default="data", metavar="<service_list>",
+                           help="The services to run on this server")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         # We need to ensure that creating the REST username/password is the
         # last REST API that is called because once that API succeeds the
         # cluster is initialized and cluster-init cannot be run again.
@@ -444,21 +492,25 @@ class ClusterInit(Command):
     def get_man_page_name():
         return "couchbase-cli-cluster-init" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Initialize a Couchbase cluster"
 
-class BucketCompact(Command):
+class BucketCompact(Subcommand):
     """The bucket compact subcommand"""
 
     def __init__(self):
         super(BucketCompact, self).__init__()
-        self.parser.set_usage("couchbase-cli bucket-compact [options]")
-        self.add_required("--bucket", dest="bucket_name",
-                          help="The name of bucket to compact")
-        self.add_optional("--data-only", dest="data_only", action="store_true",
-                          help="Only compact the data files")
-        self.add_optional("--view-only", dest="view_only", action="store_true",
-                          help="Only compact the view files")
+        self.parser.prog = "couchbase-cli bucket-compact"
+        group = self.parser.add_argument_group("Bucket compaction options")
+        group.add_argument("--bucket", dest="bucket_name", metavar="<name>",
+                           help="The name of bucket to compact")
+        group.add_argument("--data-only", dest="data_only", action="store_true",
+                           help="Only compact the data files")
+        group.add_argument("--view-only", dest="view_only", action="store_true",
+                           help="Only compact the view files")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -478,39 +530,44 @@ class BucketCompact(Command):
     def get_man_page_name():
         return "couchbase-cli-bucket-compact" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Compact database and view data"
 
-class BucketCreate(Command):
+
+class BucketCreate(Subcommand):
     """The bucket create subcommand"""
 
     def __init__(self):
         super(BucketCreate, self).__init__()
-        self.parser.set_usage("couchbase-cli bucket-create [options]")
-        self.add_required("--bucket", dest="bucket_name",
-                          help="The name of bucket to create")
-        self.add_required("--bucket-type", dest="type",
-                          choices=["couchbase", "memcached"],
-                          help="The bucket type (memcached or couchbase)")
-        self.add_required("--bucket-ramsize", dest="memory_quota",
-                          type=(int), help="The amount of memory to allocate the bucket")
-        self.add_optional("--bucket-replica", dest="replica_count",
-                          choices=["0", "1", "2", "3"],
-                          help="The replica count for the bucket")
-        self.add_optional("--bucket-priority", dest="priority",
-                          choices=[BUCKET_PRIORITY_LOW_STR, BUCKET_PRIORITY_HIGH_STR],
-                          help="The bucket disk io priority (low or high)")
-        self.add_optional("--bucket-password", default="",
-                          dest="bucket_password", help="The bucket password")
-        self.add_optional("--bucket-eviction-policy", dest="eviction_policy",
-                          choices=["valueOnly", "fullEviction"],
-                          help="The bucket eviction policy (valueOnly or fullEviction)")
-        self.add_optional("--enable-flush", dest="enable_flush",
-                          choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
-        self.add_optional("--enable-index-replica", dest="replica_indexes",
-                          choices=["0", "1"], help="Enable replica indexes (0 or 1)")
-        self.add_optional("--wait", dest="wait", action="store_true",
-                          help="Wait for bucket creation to complete")
+        self.parser.prog = "couchbase-cli bucket-create"
+        group = self.parser.add_argument_group("Bucket create options")
+        group.add_argument("--bucket", dest="bucket_name", metavar="<name>", required=True,
+                           help="The name of bucket to create")
+        group.add_argument("--bucket-type", dest="type", metavar="<type>", required=True,
+                           choices=["couchbase", "memcached"],
+                           help="The bucket type (memcached or couchbase)")
+        group.add_argument("--bucket-ramsize", dest="memory_quota", metavar="<quota>", type=(int),
+                           required=True, help="The amount of memory to allocate the bucket")
+        group.add_argument("--bucket-replica", dest="replica_count", metavar="<num>",
+                           choices=["0", "1", "2", "3"],
+                           help="The replica count for the bucket")
+        group.add_argument("--bucket-priority", dest="priority", metavar="<priority>",
+                           choices=[BUCKET_PRIORITY_LOW_STR, BUCKET_PRIORITY_HIGH_STR],
+                           help="The bucket disk io priority (low or high)")
+        group.add_argument("--bucket-password", default="", metavar="<password>",
+                           dest="bucket_password", help="The bucket password")
+        group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
+                           choices=["valueOnly", "fullEviction"],
+                           help="The bucket eviction policy (valueOnly or fullEviction)")
+        group.add_argument("--enable-flush", dest="enable_flush", metavar="<0|1>",
+                           choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
+        group.add_argument("--enable-index-replica", dest="replica_indexes", metavar="<0|1>",
+                           choices=["0", "1"], help="Enable replica indexes (0 or 1)")
+        group.add_argument("--wait", dest="wait", action="store_true",
+                           help="Wait for bucket creation to complete")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -546,17 +603,22 @@ class BucketCreate(Command):
     def get_man_page_name():
         return "couchbase-cli-bucket-create" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Add a new bucket to the cluster"
 
-class BucketDelete(Command):
+
+class BucketDelete(Subcommand):
     """The bucket delete subcommand"""
 
     def __init__(self):
         super(BucketDelete, self).__init__()
-        self.parser.set_usage("couchbase-cli bucket-delete [options]")
-        self.add_required("--bucket", dest="bucket_name",
-                          help="The name of bucket to delete")
+        self.parser.prog = "couchbase-cli bucket-delete"
+        group = self.parser.add_argument_group("Bucket delete options")
+        group.add_argument("--bucket", dest="bucket_name", metavar="<name>", required=True,
+                           help="The name of bucket to delete")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -573,31 +635,36 @@ class BucketDelete(Command):
     def get_man_page_name():
         return "couchbase-cli-bucket-delete" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Delete an existing bucket"
 
-class BucketEdit(Command):
+
+class BucketEdit(Subcommand):
     """The bucket edit subcommand"""
 
     def __init__(self):
         super(BucketEdit, self).__init__()
-        self.parser.set_usage("couchbase-cli bucket-edit [options]")
-        self.add_required("--bucket", dest="bucket_name",
-                          help="The name of bucket to create")
-        self.add_optional("--bucket-ramsize", dest="memory_quota",
-                          type=(int), help="The amount of memory to allocate the bucket")
-        self.add_optional("--bucket-replica", dest="replica_count",
-                          choices=["0", "1", "2", "3"],
-                          help="The replica count for the bucket")
-        self.add_optional("--bucket-priority", dest="priority",
-                          choices=["low", "high"], help="The bucket disk io priority (low or high)")
-        self.add_optional("--bucket-password", default="",
-                          dest="bucket_password", help="The bucket password")
-        self.add_optional("--bucket-eviction-policy", dest="eviction_policy",
-                          choices=["valueOnly", "fullEviction"],
-                          help="The bucket eviction policy (valueOnly or fullEviction)")
-        self.add_optional("--enable-flush", dest="enable_flush",
-                          choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
+        self.parser.prog = "couchbase-cli bucket-edit"
+        group = self.parser.add_argument_group("Bucket edit options")
+        group.add_argument("--bucket", dest="bucket_name", metavar="<name>", required=True,
+                           help="The name of bucket to create")
+        group.add_argument("--bucket-ramsize", dest="memory_quota", metavar="<quota>",
+                           type=(int), help="The amount of memory to allocate the bucket")
+        group.add_argument("--bucket-replica", dest="replica_count", metavar="<num>",
+                           choices=["0", "1", "2", "3"],
+                           help="The replica count for the bucket")
+        group.add_argument("--bucket-priority", dest="priority", metavar="<priority>",
+                           choices=["low", "high"], help="The bucket disk io priority (low or high)")
+        group.add_argument("--bucket-password", default="", metavar="<password>",
+                           dest="bucket_password", help="The bucket password")
+        group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
+                           choices=["valueOnly", "fullEviction"],
+                           help="The bucket eviction policy (valueOnly or fullEviction)")
+        group.add_argument("--enable-flush", dest="enable_flush", metavar="<0|1>",
+                           choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -634,19 +701,24 @@ class BucketEdit(Command):
     def get_man_page_name():
         return "couchbase-cli-bucket-edit" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify settings for an existing bucket"
 
-class BucketFlush(Command):
+
+class BucketFlush(Subcommand):
     """The bucket edit subcommand"""
 
     def __init__(self):
         super(BucketFlush, self).__init__()
-        self.parser.set_usage("couchbase-cli bucket-flush [options]")
-        self.add_required("--bucket", dest="bucket_name",
-                          help="The name of bucket to delete")
-        self.add_optional("--force", dest="force", action="store_true",
-                          help="Execute the command without asking to confirm")
+        self.parser.prog = "couchbase-cli bucket-flush"
+        group = self.parser.add_argument_group("Bucket flush options")
+        group.add_argument("--bucket", dest="bucket_name", metavar="<name>", required=True,
+                           help="The name of bucket to delete")
+        group.add_argument("--force", dest="force", action="store_true",
+                           help="Execute the command without asking to confirm")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -670,15 +742,19 @@ class BucketFlush(Command):
     def get_man_page_name():
         return "couchbase-cli-bucket-flush" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Flush all data from disk for a given bucket"
 
-class BucketList(Command):
+
+class BucketList(Subcommand):
     """The bucket list subcommand"""
 
     def __init__(self):
         super(BucketList, self).__init__()
-        self.parser.set_usage("couchbase-cli bucket-list [options]")
+        self.parser.prog = "couchbase-cli bucket-list"
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -702,27 +778,32 @@ class BucketList(Command):
     def get_man_page_name():
         return "couchbase-cli-bucket-list" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "List all buckets in a cluster"
 
-class CollectLogsStart(Command):
+
+class CollectLogsStart(Subcommand):
     """The collect-logs-start subcommand"""
 
     def __init__(self):
         super(CollectLogsStart, self).__init__()
-        self.parser.set_usage("couchbase-cli collect-logs-start [options]")
-        self.add_optional("--all-nodes", dest="all_nodes", action="store_true",
-                          default=False, help="Collect logs for all nodes")
-        self.add_optional("--nodes", dest="nodes",
-                          help="A comma separated list of nodes to collect logs from")
-        self.add_optional("--upload", dest="upload", action="store_true",
-                          default=False, help="Logs should be uploaded for Couchbase support")
-        self.add_optional("--upload-host", dest="upload_host",
-                          help="The host to upload logs to")
-        self.add_optional("--customer", dest="upload_customer",
-                          help="The name of the customer uploading logs")
-        self.add_optional("--ticket", dest="upload_ticket",
-                          help="The ticket number the logs correspond to")
+        self.parser.prog = "couchbase-cli collect-logs-start"
+        group = self.parser.add_argument_group("Collect logs start options")
+        group.add_argument("--all-nodes", dest="all_nodes", action="store_true",
+                           default=False, help="Collect logs for all nodes")
+        group.add_argument("--nodes", dest="nodes", metavar="<node_list>",
+                           help="A comma separated list of nodes to collect logs from")
+        group.add_argument("--upload", dest="upload", action="store_true",
+                           default=False, help="Logs should be uploaded for Couchbase support")
+        group.add_argument("--upload-host", dest="upload_host", metavar="<host>",
+                           help="The host to upload logs to")
+        group.add_argument("--customer", dest="upload_customer", metavar="<name>",
+                           help="The name of the customer uploading logs")
+        group.add_argument("--ticket", dest="upload_ticket", metavar="<num>",
+                           help="The ticket number the logs correspond to")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -759,15 +840,19 @@ class CollectLogsStart(Command):
     def get_man_page_name():
         return "couchbase-cli-collect-logs-start" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Start cluster log collection"
 
-class CollectLogsStatus(Command):
+
+class CollectLogsStatus(Subcommand):
     """The collect-logs-status subcommand"""
 
     def __init__(self):
         super(CollectLogsStatus, self).__init__()
-        self.parser.set_usage("couchbase-cli collect-logs-status [options]")
+        self.parser.prog = "couchbase-cli collect-logs-status"
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -800,15 +885,19 @@ class CollectLogsStatus(Command):
     def get_man_page_name():
         return "couchbase-cli-collect-logs-status" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "View the status of cluster log collection"
 
-class CollectLogsStop(Command):
+
+class CollectLogsStop(Subcommand):
     """The collect-logs-stop subcommand"""
 
     def __init__(self):
         super(CollectLogsStop, self).__init__()
-        self.parser.set_usage("couchbase-cli collect-logs-stop [options]")
+        self.parser.prog = "couchbase-cli collect-logs-stop"
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -822,19 +911,24 @@ class CollectLogsStop(Command):
     def get_man_page_name():
         return "couchbase-cli-collect-logs-stop" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Stop cluster log collection"
 
-class Failover(Command):
+
+class Failover(Subcommand):
     """The failover subcommand"""
 
     def __init__(self):
         super(Failover, self).__init__()
-        self.parser.set_usage("couchbase-cli failover [options]")
-        self.add_required("--server-failover", dest="server_failover",
-                          help="The server to failover")
-        self.add_optional("--force", dest="force", action="store_true",
-                          help="Hard failover the server")
+        self.parser.prog = "couchbase-cli failover"
+        group = self.parser.add_argument_group("Failover options")
+        group.add_argument("--server-failover", dest="server_failover", metavar="<server_list>",
+                           required=True, help="The server to failover")
+        group.add_argument("--force", dest="force", action="store_true",
+                           help="Hard failover the server")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -871,35 +965,41 @@ class Failover(Command):
     def get_man_page_name():
         return "couchbase-cli-failover" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Failover one or more servers"
 
-class GroupManage(Command):
+
+class GroupManage(Subcommand):
     """The group manage subcommand"""
 
     def __init__(self):
         super(GroupManage, self).__init__()
-        self.parser.set_usage("couchbase-cli host-list [options]")
-        self.add_optional("--create", dest="create", action="store_true",
-                          help="Create a new server group")
-        self.add_optional("--delete", dest="delete", action="store_true",
-                          help="Delete a server group")
-        self.add_optional("--list", dest="list", action="store_true",
-                          help="List all server groups")
-        self.add_optional("--rename", dest="rename", help="Rename a server group")
-        self.add_optional("--group-name", dest="name",
-                          help="The name of the server group")
-        self.add_optional("--move-servers", dest="move_servers",
-                          help="A list of servers to move between groups")
-        self.add_optional("--from-group", dest="from_group",
-                          help="The group to move servers from")
-        self.add_optional("--to-group", dest="to_group",
-                          help="The group to move servers to")
+        self.parser.prog = "couchbase-cli group-manage"
+        group = self.parser.add_argument_group("Group manage options")
+        group.add_argument("--create", dest="create", action="store_true",
+                           default=None, help="Create a new server group")
+        group.add_argument("--delete", dest="delete", action="store_true",
+                           default=None, help="Delete a server group")
+        group.add_argument("--list", dest="list", action="store_true",
+                           default=None, help="List all server groups")
+        group.add_argument("--rename", dest="rename", help="Rename a server group")
+        group.add_argument("--group-name", dest="name", metavar="<name>",
+                           help="The name of the server group")
+        group.add_argument("--move-servers", dest="move_servers", metavar="<server_list>",
+                           help="A list of servers to move between groups")
+        group.add_argument("--from-group", dest="from_group", metavar="<group>",
+                           help="The group to move servers from")
+        group.add_argument("--to-group", dest="to_group", metavar="<group>",
+                           help="The group to move servers to")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
 
         cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
+        print cmds
         if sum(cmd is not None for cmd in cmds) == 0:
             _exitIfErrors(["Must specify one of the following: --create, " +
                            "--delete, --list, --move-servers, or --rename"])
@@ -908,31 +1008,31 @@ class GroupManage(Command):
                            ", --delete, --list, --move-servers, or --rename"])
 
         if opts.create:
-            self._create(rest, opts, args)
+            self._create(rest, opts)
         elif opts.delete:
-            self._delete(rest, opts, args)
+            self._delete(rest, opts)
         elif opts.list:
-            self._list(rest, opts, args)
+            self._list(rest, opts)
         elif opts.rename:
-            self._rename(rest, opts, args)
+            self._rename(rest, opts)
         elif opts.move_servers is not None:
-            self._move(rest, opts, args)
+            self._move(rest, opts)
 
-    def _create(self, rest, opts, args):
+    def _create(self, rest, opts):
         if opts.name is None:
             _exitIfErrors(["--group-name is required with --create flag"])
         _, errors = rest.create_server_group(opts.name)
         _exitIfErrors(errors)
         print "SUCCESS: Server group created"
 
-    def _delete(self, rest, opts, args):
+    def _delete(self, rest, opts):
         if opts.name is None:
             _exitIfErrors(["--group-name is required with --delete flag"])
         _, errors = rest.delete_server_group(opts.name)
         _exitIfErrors(errors)
         print "SUCCESS: Server group deleted"
 
-    def _list(self, rest, opts, args):
+    def _list(self, rest, opts):
         groups, errors = rest.get_server_groups()
         _exitIfErrors(errors)
 
@@ -946,7 +1046,7 @@ class GroupManage(Command):
         if not found and opts.name:
             _exitIfErrors(["Invalid group name: %s" % opts.name])
 
-    def _move(self, rest, opts, args):
+    def _move(self, rest, opts):
         if opts.from_group is None:
             _exitIfErrors(["--from-group is required with --move-servers"])
         if opts.to_group is None:
@@ -957,7 +1057,7 @@ class GroupManage(Command):
         _exitIfErrors(errors)
         print "SUCCESS: Servers moved between groups"
 
-    def _rename(self, rest, opts, args):
+    def _rename(self, rest, opts):
         if opts.name is None:
             _exitIfErrors(["--group-name is required with --rename option"])
         _, errors = rest.rename_server_group(opts.rename, opts.name)
@@ -968,15 +1068,19 @@ class GroupManage(Command):
     def get_man_page_name():
         return "couchbase-cli-group-manage" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Manage server groups"
 
-class HostList(Command):
+
+class HostList(Subcommand):
     """The host list subcommand"""
 
     def __init__(self):
         super(HostList, self).__init__()
-        self.parser.set_usage("couchbase-cli host-list [options]")
+        self.parser.prog = "couchbase-cli host-list"
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         result, errors = rest.pools('default')
@@ -989,21 +1093,26 @@ class HostList(Command):
     def get_man_page_name():
         return "couchbase-cli-host-list" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "List all hosts in a cluster"
 
-class NodeInit(Command):
+
+class NodeInit(Subcommand):
     """The node initialization subcommand"""
 
     def __init__(self):
         super(NodeInit, self).__init__()
-        self.parser.set_usage("couchbase-cli node-init [options]")
-        self.add_optional("--node-init-data-path", dest="data_path",
-                          help="The path to store database files")
-        self.add_optional("--node-init-index-path", dest="index_path",
-                          help="The path to store index files")
-        self.add_optional("--node-init-hostname", dest="hostname",
-                          help="Sets the hostname for this server")
+        self.parser.prog = "couchbase-cli node-init"
+        group = self.parser.add_argument_group("Node initialization options")
+        group.add_argument("--node-init-data-path", dest="data_path", metavar="<path>",
+                           help="The path to store database files")
+        group.add_argument("--node-init-index-path", dest="index_path", metavar="<path>",
+                           help="The path to store index files")
+        group.add_argument("--node-init-hostname", dest="hostname", metavar="<hostname>",
+                           help="Sets the hostname for this server")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         # Cluster does not need to be initialized for this command
@@ -1025,17 +1134,22 @@ class NodeInit(Command):
     def get_man_page_name():
         return "couchbase-cli-node-init" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Set node specific settings"
 
-class Rebalance(Command):
+
+class Rebalance(Subcommand):
     """The rebalance subcommand"""
 
     def __init__(self):
         super(Rebalance, self).__init__()
-        self.parser.set_usage("couchbase-cli rebalance [options]")
-        self.add_optional("--server-remove", dest="server_remove",
-                          help="A list of servers to remove from the cluster")
+        self.parser.prog = "couchbase-cli rebalance"
+        group = self.parser.add_argument_group("Rebalance options")
+        group.add_argument("--server-remove", dest="server_remove", metavar="<server_list>",
+                           help="A list of servers to remove from the cluster")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1072,15 +1186,19 @@ class Rebalance(Command):
     def get_man_page_name():
         return "couchbase-cli-rebalance" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Start a cluster rebalancing"
 
-class RebalanceStatus(Command):
+
+class RebalanceStatus(Subcommand):
     """The rebalance status subcommand"""
 
     def __init__(self):
         super(RebalanceStatus, self).__init__()
-        self.parser.set_usage("couchbase-cli rebalance-status [options]")
+        self.parser.prog = "couchbase-cli rebalance-status"
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1093,15 +1211,19 @@ class RebalanceStatus(Command):
     def get_man_page_name():
         return "couchbase-cli-rebalance-status" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Show rebalance status"
 
-class RebalanceStop(Command):
+
+class RebalanceStop(Subcommand):
     """The rebalance stop subcommand"""
 
     def __init__(self):
         super(RebalanceStop, self).__init__()
-        self.parser.set_usage("couchbase-cli rebalance-stop [options]")
+        self.parser.prog = "couchbase-cli rebalance-stop"
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1114,20 +1236,25 @@ class RebalanceStop(Command):
     def get_man_page_name():
         return "couchbase-cli-rebalance-stop" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Stop a rebalance"
 
-class Recovery(Command):
+
+class Recovery(Subcommand):
     """The recovery command"""
 
     def __init__(self):
         super(Recovery, self).__init__()
-        self.parser.set_usage("couchbase-cli server-add [options]")
-        self.add_required("--server-recovery", dest="servers",
-                          help="The list of servers to recover")
-        self.add_optional("--recovery-type", dest="recovery_type",
-                          choices=["delta", "full"], default="delta",
-                          help="The recovery type (delta or full)")
+        self.parser.prog = "couchbase-cli server-add"
+        group = self.parser.add_argument_group("Recovery options")
+        group.add_argument("--server-recovery", dest="servers", metavar="<server_list>",
+                           required=True, help="The list of servers to recover")
+        group.add_argument("--recovery-type", dest="recovery_type", metavar="type",
+                           choices=["delta", "full"], default="delta",
+                           help="The recovery type (delta or full)")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1143,27 +1270,32 @@ class Recovery(Command):
     def get_man_page_name():
         return "couchbase-cli-recovery" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Recover one or more servers"
 
-class ServerAdd(Command):
+
+class ServerAdd(Subcommand):
     """The server add command"""
 
     def __init__(self):
         super(ServerAdd, self).__init__()
-        self.parser.set_usage("couchbase-cli server-add [options]")
-        self.add_required("--server-add", dest="servers",
-                          help="The list of servers to add")
-        self.add_required("--server-add-username", dest="server_username",
-                          help="The username for the server to add")
-        self.add_required("--server-add-password", dest="server_password",
-                          help="The password for the server to add")
-        self.add_optional("--group-name", dest="group_name",
-                          help="The server group to add this server into")
-        self.add_optional("--services", dest="services", default="data",
-                          help="The services this server will run")
-        self.add_optional("--index-storage-setting", dest="storage_mode",
-                          choices=["default", "memopt"], help="The index storage mode")
+        self.parser.prog = "couchbase-cli server-add"
+        group = self.parser.add_argument_group("Server add options")
+        group.add_argument("--server-add", dest="servers", metavar="<server_list>", required=True,
+                           help="The list of servers to add")
+        group.add_argument("--server-add-username", dest="server_username", metavar="<username>",
+                           required=True, help="The username for the server to add")
+        group.add_argument("--server-add-password", dest="server_password", metavar="<password>",
+                           required=True, help="The password for the server to add")
+        group.add_argument("--group-name", dest="group_name", metavar="<name>",
+                           help="The server group to add this server into")
+        group.add_argument("--services", dest="services", default="data", metavar="<services>",
+                           help="The services this server will run")
+        group.add_argument("--index-storage-setting", dest="storage_mode", metavar="<mode>",
+                           choices=["default", "memopt"], help="The index storage mode")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1196,19 +1328,24 @@ class ServerAdd(Command):
     def get_man_page_name():
         return "couchbase-cli-server-add" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Add servers to the cluster"
 
-class ServerEshell(Command):
+
+class ServerEshell(Subcommand):
     """The server eshell subcommand"""
 
     def __init__(self):
         super(ServerEshell, self).__init__()
-        self.parser.set_usage("couchbase-cli server-eshell [options]")
-        self.add_optional("--vm", dest="vm", default="ns_server",
-                          help="The vm to connect to")
-        self.add_optional("--erl-path", dest="erl_path",
-                          help="Override the path to the erl executable")
+        self.parser.prog = "couchbase-cli server-eshell"
+        group = self.parser.add_argument_group("Server eshell options")
+        group.add_argument("--vm", dest="vm", default="ns_server", metavar="<name>",
+                           help="The vm to connect to")
+        group.add_argument("--erl-path", dest="erl_path", metavar="<path>",
+                           help="Override the path to the erl executable")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         # Cluster does not need to be initialized for this command
@@ -1254,15 +1391,19 @@ class ServerEshell(Command):
     def get_man_page_name():
         return "couchbase-cli-server-eshell" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Opens a shell to the Couchbase cluster manager"
 
-class ServerInfo(Command):
+
+class ServerInfo(Subcommand):
     """The server info subcommand"""
 
     def __init__(self):
         super(ServerInfo, self).__init__()
-        self.parser.set_usage("couchbase-cli server-info [options]")
+        self.parser.prog = "couchbase-cli server-info"
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         # Cluster does not need to be initialized for this command
@@ -1276,15 +1417,19 @@ class ServerInfo(Command):
     def get_man_page_name():
         return "couchbase-cli-server-info" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Show details of a node in the cluster"
 
-class ServerList(Command):
+
+class ServerList(Subcommand):
     """The server list subcommand"""
 
     def __init__(self):
         super(ServerList, self).__init__()
-        self.parser.set_usage("couchbase-cli server-list [options]")
+        self.parser.prog = "couchbase-cli server-list"
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         result, errors = rest.pools('default')
@@ -1300,24 +1445,29 @@ class ServerList(Command):
     def get_man_page_name():
         return "couchbase-cli-server-list" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "List all nodes in a cluster"
 
-class ServerReadd(Command):
+
+class ServerReadd(Subcommand):
     """The setting alert subcommand"""
 
     def __init__(self):
         super(ServerReadd, self).__init__()
-        self.parser.set_usage("couchbase-cli server-readd [options]")
-        self.add_required("--server-add", dest="servers",
-                          help="The list of servers to recover")
+        self.parser.prog = "couchbase-cli server-readd"
+        group = self.parser.add_argument_group("Server re-add options")
+        group.add_argument("--server-add", dest="servers", metavar="<server_list>", required=True,
+                           help="The list of servers to recover")
         # The parameters are unused, but kept for backwards compatibility
-        self.add_optional("--server-username", dest="server_username",
-                          help="The admin username for the server")
-        self.add_optional("--server-password", dest="server_username",
-                          help="The admin password for the server")
-        self.add_optional("--group-name", dest="name",
-                          help="The name of the server group")
+        group.add_argument("--server-username", dest="server_username", metavar="<username>",
+                           help="The admin username for the server")
+        group.add_argument("--server-password", dest="server_password", metavar="<password>",
+                           help="The admin password for the server")
+        group.add_argument("--group-name", dest="name", metavar="<name>",
+                           help="The name of the server group")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         _deprecated("This command is deprecated and has been replaced by the " +
                     "recovery command")
         host, port = host_port(opts.cluster)
@@ -1335,57 +1485,65 @@ class ServerReadd(Command):
     def get_man_page_name():
         return "couchbase-cli-server-readd" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Add failed server back to the cluster"
 
-class SettingAlert(Command):
+
+class SettingAlert(Subcommand):
     """The setting alert subcommand"""
 
     def __init__(self):
         super(SettingAlert, self).__init__()
-        self.parser.set_usage("couchbase-cli setting-alert [options]")
-        self.add_required("--enable-email-alert", dest="enabled",
-                          choices=["0", "1"], help="Enable/disable email alerts")
-        self.add_optional("--email-recipients", dest="email_recipients",
-                          help="A comma separated list of email addresses")
-        self.add_optional("--email-sender", dest="email_sender",
-                          help="The sender email address")
-        self.add_optional("--email-user", dest="email_username",
-                          default="", help="The email server username")
-        self.add_optional("--email-password", dest="email_password",
-                          default="", help="The email server password")
-        self.add_optional("--email-host", dest="email_host",
-                          help="The email server host")
-        self.add_optional("--email-port", dest="email_port",
-                          help="The email server port")
-        self.add_optional("--enable-email-encrypt", dest="email_encrypt",
-                          choices=["0", "1"], help="Enable SSL encryption for emails")
-        self.add_optional("--alert-auto-failover-node", dest="alert_af_node",
-                          action="store_true", help="Alert when a node is auto-failed over")
-        self.add_optional("--alert-auto-failover-max-reached", dest="alert_af_max_reached",
-                          action="store_true",
-                          help="Alert when the max number of auto-failover nodes was reached")
-        self.add_optional("--alert-auto-failover-node-down", dest="alert_af_node_down",
-                          action="store_true",
-                          help="Alert when a node wasn't auto-failed over because other nodes were down")
-        self.add_optional("--alert-auto-failover-cluster-small", dest="alert_af_small",
-                          action="store_true",
-                          help="Alert when a node wasn't auto-failed over because cluster was too small")
-        self.add_optional("--alert-auto-failover-disable", dest="alert_af_disable",
-                          action="store_true",
-                          help="Alert when a node wasn't auto-failed over because auto-failover is disabled")
-        self.add_optional("--alert-ip-changed", dest="alert_ip_changed",
-                          action="store_true", help="Alert when a nodes IP address changed")
-        self.add_optional("--alert-disk-space", dest="alert_disk_space",
-                          action="store_true", help="Alert when disk usage on a node reaches 90%")
-        self.add_optional("--alert-meta-overhead", dest="alert_meta_overhead",
-                          action="store_true", help="Alert when metadata overhead is more than 50%")
-        self.add_optional("--alert-meta-oom", dest="alert_meta_oom",
-                          action="store_true", help="Alert when all bucket memory is used for metadata")
-        self.add_optional("--alert-write-failed", dest="alert_write_failed",
-                          action="store_true", help="Alert when writing data to disk has failed")
-        self.add_optional("--alert-audit-msg-dropped", dest="alert_audit_dropped",
-                          action="store_true", help="Alert when writing event to audit log failed")
+        self.parser.prog = "couchbase-cli setting-alert"
+        group = self.parser.add_argument_group("Alert settings")
+        group.add_argument("--enable-email-alert", dest="enabled", metavar="<1|0>", required=True,
+                           choices=["0", "1"], help="Enable/disable email alerts")
+        group.add_argument("--email-recipients", dest="email_recipients", metavar="<email_list>",
+                           help="A comma separated list of email addresses")
+        group.add_argument("--email-sender", dest="email_sender", metavar="<email_addr>",
+                           help="The sender email address")
+        group.add_argument("--email-user", dest="email_username", metavar="<username>",
+                           default="", help="The email server username")
+        group.add_argument("--email-password", dest="email_password", metavar="<password>",
+                           default="", help="The email server password")
+        group.add_argument("--email-host", dest="email_host", metavar="<host>",
+                           help="The email server host")
+        group.add_argument("--email-port", dest="email_port", metavar="<port>",
+                           help="The email server port")
+        group.add_argument("--enable-email-encrypt", dest="email_encrypt", metavar="<1|0>",
+                           choices=["0", "1"], help="Enable SSL encryption for emails")
+        group.add_argument("--alert-auto-failover-node", dest="alert_af_node",
+                           action="store_true", help="Alert when a node is auto-failed over")
+        group.add_argument("--alert-auto-failover-max-reached", dest="alert_af_max_reached",
+                           action="store_true",
+                           help="Alert when the max number of auto-failover nodes was reached")
+        group.add_argument("--alert-auto-failover-node-down", dest="alert_af_node_down",
+                           action="store_true",
+                           help="Alert when a node wasn't auto-failed over because other nodes " +
+                           "were down")
+        group.add_argument("--alert-auto-failover-cluster-small", dest="alert_af_small",
+                           action="store_true",
+                           help="Alert when a node wasn't auto-failed over because cluster was" +
+                           " too small")
+        group.add_argument("--alert-auto-failover-disable", dest="alert_af_disable",
+                           action="store_true",
+                           help="Alert when a node wasn't auto-failed over because auto-failover" +
+                           " is disabled")
+        group.add_argument("--alert-ip-changed", dest="alert_ip_changed", action="store_true",
+                           help="Alert when a nodes IP address changed")
+        group.add_argument("--alert-disk-space", dest="alert_disk_space", action="store_true",
+                           help="Alert when disk usage on a node reaches 90%%")
+        group.add_argument("--alert-meta-overhead", dest="alert_meta_overhead", action="store_true",
+                           help="Alert when metadata overhead is more than 50%%")
+        group.add_argument("--alert-meta-oom", dest="alert_meta_oom", action="store_true",
+                           help="Alert when all bucket memory is used for metadata")
+        group.add_argument("--alert-write-failed", dest="alert_write_failed", action="store_true",
+                           help="Alert when writing data to disk has failed")
+        group.add_argument("--alert-audit-msg-dropped", dest="alert_audit_dropped",
+                           action="store_true", help="Alert when writing event to audit log failed")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1441,21 +1599,26 @@ class SettingAlert(Command):
     def get_man_page_name():
         return "couchbase-cli-setting-alert" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify email alert settings"
 
-class SettingAudit(Command):
+
+class SettingAudit(Subcommand):
     """The settings audit subcommand"""
 
     def __init__(self):
         super(SettingAudit, self).__init__()
-        self.parser.set_usage("couchbase-cli setting-audit [options]")
-        self.add_optional("--audit-enabled", dest="enabled",
-                          choices=["0", "1"], help="Enable/disable auditing")
-        self.add_optional("--audit-log-path", dest="log_path",
-                          help="The audit log path")
-        self.add_optional("--audit-log-rotate-interval", dest="rotate_interval",
-                          type=(int), help="The audit log rotate interval")
+        self.parser.prog = "couchbase-cli setting-audit"
+        group = self.parser.add_argument_group("Audit settings")
+        group.add_argument("--audit-enabled", dest="enabled", metavar="<1|0>", choices=["0", "1"],
+                           help="Enable/disable auditing")
+        group.add_argument("--audit-log-path", dest="log_path", metavar="<path>",
+                           help="The audit log path")
+        group.add_argument("--audit-log-rotate-interval", dest="rotate_interval", type=(int),
+                           metavar="<seconds>", help="The audit log rotate interval")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1478,19 +1641,24 @@ class SettingAudit(Command):
     def get_man_page_name():
         return "couchbase-cli-setting-audit" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify audit settings"
 
-class SettingAutoFailover(Command):
+
+class SettingAutofailover(Subcommand):
     """The settings auto-failover subcommand"""
 
     def __init__(self):
-        super(SettingAutoFailover, self).__init__()
-        self.parser.set_usage("couchbase-cli setting-autofailover [options]")
-        self.add_optional("--enable-auto-failover", dest="enabled",
-                          choices=["0", "1"], help="Enable/disable auto-failover")
-        self.add_optional("--auto-failover-timeout", dest="timeout",
-                          type=(int), help="The auto-failover timeout")
+        super(SettingAutofailover, self).__init__()
+        self.parser.prog = "couchbase-cli setting-autofailover"
+        group = self.parser.add_argument_group("Auto-failover settings")
+        group.add_argument("--enable-auto-failover", dest="enabled", metavar="<1|0>",
+                           choices=["0", "1"], help="Enable/disable auto-failover")
+        group.add_argument("--auto-failover-timeout", dest="timeout", metavar="<seconds>",
+                           type=(int), help="The auto-failover timeout")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1515,28 +1683,33 @@ class SettingAutoFailover(Command):
     def get_man_page_name():
         return "couchbase-cli-setting-autofailover" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify auto failover settings"
 
-class SettingCluster(Command):
+
+class SettingCluster(Subcommand):
     """The settings cluster subcommand"""
 
     def __init__(self):
         super(SettingCluster, self).__init__()
-        self.parser.set_usage("couchbase-cli setting-cluster [options]")
-        self.add_optional("--cluster-username", dest="new_username",
-                          help="The cluster administrator username")
-        self.add_optional("--cluster-password", dest="new_password",
-                          help="Only compact the data files")
-        self.add_optional("--cluster-port", dest="port", type=(int),
-                          help="The cluster administration console port")
-        self.add_optional("--cluster-ramsize", dest="data_mem_quota", type=(int),
-                          help="The data service memory quota (Megabytes)")
-        self.add_optional("--cluster-index-ramsize", dest="index_mem_quota", type=(int),
-                          help="The index service memory quota (Megabytes)")
-        self.add_optional("--cluster-fts-ramsize", dest="fts_mem_quota", type=(int),
-                          help="The full-text service memory quota (Megabytes)")
-        self.add_optional("--cluster-name", dest="name", help="The cluster name")
+        self.parser.prog = "couchbase-cli setting-cluster"
+        group = self.parser.add_argument_group("Cluster settings")
+        group.add_argument("--cluster-username", dest="new_username", metavar="<username>",
+                           help="The cluster administrator username")
+        group.add_argument("--cluster-password", dest="new_password", metavar="<password>",
+                           help="Only compact the data files")
+        group.add_argument("--cluster-port", dest="port", type=(int), metavar="<port>",
+                           help="The cluster administration console port")
+        group.add_argument("--cluster-ramsize", dest="data_mem_quota", metavar="<quota>",
+                           type=(int), help="The data service memory quota in megabytes")
+        group.add_argument("--cluster-index-ramsize", dest="index_mem_quota", metavar="<quota>",
+                           type=(int), help="The index service memory quota in megabytes")
+        group.add_argument("--cluster-fts-ramsize", dest="fts_mem_quota", metavar="<quota>",
+                           type=(int), help="The full-text service memory quota in megabytes")
+        group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1565,49 +1738,58 @@ class SettingCluster(Command):
     def get_man_page_name():
         return "couchbase-cli-setting-cluster" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify cluster settings"
+
 
 class ClusterEdit(SettingCluster):
     """The cluster edit subcommand (Deprecated)"""
 
     def __init__(self):
         super(ClusterEdit, self).__init__()
-        self.parser.set_usage("couchbase-cli cluster-edit [options]")
+        self.parser.prog = "couchbase-cli cluster-edit"
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         _warning("The cluster-edit command is depercated, use setting-cluster instead")
-        super(ClusterEdit, self).execute(opts, args)
+        super(ClusterEdit, self).execute(opts)
 
     @staticmethod
     def get_man_page_name():
         return "couchbase-cli-cluster-edit" + ".1" if os.name != "nt" else ".html"
 
 
-class SettingCompaction(Command):
+class SettingCompaction(Subcommand):
     """The setting compaction subcommand"""
 
     def __init__(self):
         super(SettingCompaction, self).__init__()
-        self.parser.set_usage("couchbase-cli setting-compaction [options]")
-        self.add_optional("--compaction-db-percentage", dest="db_perc", type=(int),
-                          help="Compacts the db once the fragmentation reaches this percentage")
-        self.add_optional("--compaction-db-size", dest="db_size", type=(int),
-                          help="Compacts db once the fragmentation reaches this size (MB)")
-        self.add_optional("--compaction-view-percentage", dest="view_perc", type=(int),
-                          help="Compacts the view once the fragmentation reaches this percentage")
-        self.add_optional("--compaction-view-size", dest="view_size", type=(int),
-                          help="Compacts view once the fragmentation reaches this size (MB)")
-        self.add_optional("--compaction-period-from", dest="from_period",
-                          help="Only run compaction after this time")
-        self.add_optional("--compaction-period-to", dest="to_period",
-                          help="Only run compaction before this time")
-        self.add_optional("--enable-compaction-abort", dest="enable_abort",
-                          choices=["0", "1"], help="Allow compactions to be aborted")
-        self.add_optional("--enable-compaction-parallel", dest="enable_parallel",
-                          choices=["0", "1"], help="Allow parallel compactions")
-        self.add_optional("--metadata-purge-interval", dest="purge_interval", type=(float),
-                          help="The metadata purge interval")
+        self.parser.prog = "couchbase-cli setting-compaction"
+        group = self.parser.add_argument_group("Compaction settings")
+        group.add_argument("--compaction-db-percentage", dest="db_perc", metavar="<perc>",
+                           type=(int),
+                           help="Compacts the db once the fragmentation reaches this percentage")
+        group.add_argument("--compaction-db-size", dest="db_size", metavar="<megabytes>",
+                           type=(int),
+                           help="Compacts db once the fragmentation reaches this size (MB)")
+        group.add_argument("--compaction-view-percentage", dest="view_perc", metavar="<perc>",
+                           type=(int),
+                           help="Compacts the view once the fragmentation reaches this percentage")
+        group.add_argument("--compaction-view-size", dest="view_size", metavar="<megabytes>",
+                           type=(int),
+                           help="Compacts view once the fragmentation reaches this size (MB)")
+        group.add_argument("--compaction-period-from", dest="from_period", metavar="<HH:MM>",
+                           help="Only run compaction after this time")
+        group.add_argument("--compaction-period-to", dest="to_period", metavar="<HH:MM>",
+                           help="Only run compaction before this time")
+        group.add_argument("--enable-compaction-abort", dest="enable_abort", metavar="<1|0>",
+                           choices=["0", "1"], help="Allow compactions to be aborted")
+        group.add_argument("--enable-compaction-parallel", dest="enable_parallel", metavar="<1|0>",
+                           choices=["0", "1"], help="Allow parallel compactions")
+        group.add_argument("--metadata-purge-interval", dest="purge_interval", metavar="<float>",
+                           type=(float), help="The metadata purge interval")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1718,29 +1900,34 @@ class SettingCompaction(Command):
     def get_man_page_name():
         return "couchbase-cli-setting-compaction" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify auto-compaction settings"
 
-class SettingIndex(Command):
+
+class SettingIndex(Subcommand):
     """The setting index subcommand"""
 
     def __init__(self):
         super(SettingIndex, self).__init__()
-        self.parser.set_usage("couchbase-cli setting-index [options]")
-        self.add_optional("--index-max-rollback-points", dest="max_rollback",
-                          type=(int), help="Max rollback points")
-        self.add_optional("--index-stable-snapshot-interval", dest="stable_snap",
-                          type=(int), help="Stable snapshot interval in seconds")
-        self.add_optional("--index-memory-snapshot-interval", dest="mem_snap",
-                          type=(int), help="Stable snapshot interval in seconds")
-        self.add_optional("--index-storage-setting", dest="storage_mode",
-                          choices=["default", "memopt"], help="The index storage backend")
-        self.add_optional("--index-threads", dest="threads",
-                          type=(int), help="The number of indexer threads")
-        self.add_optional("--index-log-level", dest="log_level",
-                          choices=["debug", "silent", "fatal", "error", "warn",
-                                   "info", "verbose", "timing", "trace"],
-                          help="The indexer log level")
+        self.parser.prog = "couchbase-cli setting-index"
+        group = self.parser.add_argument_group("Index settings")
+        group.add_argument("--index-max-rollback-points", dest="max_rollback", metavar="<num>",
+                           type=(int), help="Max rollback points")
+        group.add_argument("--index-stable-snapshot-interval", dest="stable_snap", type=(int),
+                           metavar="<seconds>", help="Stable snapshot interval in seconds")
+        group.add_argument("--index-memory-snapshot-interval", dest="mem_snap", metavar="<ms>",
+                           type=(int), help="Stable snapshot interval in milliseconds")
+        group.add_argument("--index-storage-setting", dest="storage_mode", metavar="<mode>",
+                           choices=["default", "memopt"], help="The index storage backend")
+        group.add_argument("--index-threads", dest="threads", metavar="<num>",
+                           type=(int), help="The number of indexer threads")
+        group.add_argument("--index-log-level", dest="log_level", metavar="<level>",
+                           choices=["debug", "silent", "fatal", "error", "warn", "info", "verbose",
+                                    "timing", "trace"],
+                           help="The indexer log level")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1762,24 +1949,29 @@ class SettingIndex(Command):
     def get_man_page_name():
         return "couchbase-cli-setting-index" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify index settings"
 
-class SettingLdap(Command):
+
+class SettingLdap(Subcommand):
     """The setting ldap subcommand"""
 
     def __init__(self):
         super(SettingLdap, self).__init__()
-        self.parser.set_usage("couchbase-cli setting-ldap [options]")
-        self.add_required("--ldap-enabled", dest="enabled",
-                          choices=["0", "1"], help="Enable/disable LDAP")
-        self.add_optional("--ldap-admins", dest="admins",
-                          help="A comma separated list of full admins")
-        self.add_optional("--ldap-roadmins", dest="roadmins",
-                          help="A comma separated list of read only admins")
-        self.add_optional("--ldap-default", dest="default", default="none",
-                          choices=["admins", "roadmins", "none"],
-                          help="Enable/disable LDAP")
+        self.parser.prog = "couchbase-cli setting-ldap"
+        group = self.parser.add_argument_group("LDAP settings")
+        group.add_argument("--ldap-enabled", dest="enabled", metavar="<1|0>", required=True,
+                           choices=["0", "1"], help="Enable/disable LDAP")
+        group.add_argument("--ldap-admins", dest="admins", metavar="<user_list>",
+                           help="A comma separated list of full admins")
+        group.add_argument("--ldap-roadmins", dest="roadmins", metavar="<user_list>",
+                           help="A comma separated list of read only admins")
+        group.add_argument("--ldap-default", dest="default", default="none",
+                           choices=["admins", "roadmins", "none"], metavar="<default>",
+                           help="Enable/disable LDAP")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1819,17 +2011,22 @@ class SettingLdap(Command):
     def get_man_page_name():
         return "couchbase-cli-setting-ldap" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify LDAP settings"
 
-class SettingNotification(Command):
+
+class SettingNotification(Subcommand):
     """The settings notification subcommand"""
 
     def __init__(self):
         super(SettingNotification, self).__init__()
-        self.parser.set_usage("couchbase-cli setting-notification [options]")
-        self.add_required("--enable-notifications", dest="enabled",
-                          choices=["0", "1"], help="Enables/disable notifications")
+        self.parser.prog = "couchbase-cli setting-notification"
+        group = self.parser.add_argument_group("Notification Settings")
+        group.add_argument("--enable-notifications", dest="enabled", metavar="<1|0>", required=True,
+                           choices=["0", "1"], help="Enables/disable notifications")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
 
@@ -1848,34 +2045,44 @@ class SettingNotification(Command):
     def get_man_page_name():
         return "couchbase-cli-setting-notification" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify email notification settings"
 
-class SettingXDCR(Command):
+
+class SettingXdcr(Subcommand):
     """The setting xdcr subcommand"""
 
     def __init__(self):
-        super(SettingXDCR, self).__init__()
-        self.parser.set_usage("couchbase-cli setting-xdcr [options]")
-        self.add_optional("--checkpoint-interval", dest="chk_int", type=(int),
-                          help="Intervals between checkpoints in seconds (60 to 14400)")
-        self.add_optional("--worker-batch-size", dest="worker_batch_size", type=(int),
-                          help="Doc batch size (500 to 10000)")
-        self.add_optional("--doc-batch-size", dest="doc_batch_size", type=(int),
-                          help="Document batching size in KB (10 to 100000)")
-        self.add_optional("--failure-restart-interval", dest="fail_interval", type=(int),
-                          help="Interval for restarting failed xdcr in seconds (1 to 300)")
-        self.add_optional("--optimistic-replication-threshold", dest="rep_thresh", type=(int),
-                          help="Document body size threshold (bytes) to trigger optimistic replication")
-        self.add_optional("--source-nozzle-per-node", dest="src_nozzles", type=(int),
-                          help="The number of source nozzles per source node (1 to 10)")
-        self.add_optional("--target-nozzle-per-node", dest="dst_nozzles", type=(int),
-                          help="The number of outgoing nozzles per target node (1 to 10)")
-        self.add_optional("--log-level", dest="log_level",
-                          choices=["Error", "Info", "Debug", "Trace"],
-                          help="The XDCR log level")
-        self.add_optional("--stats-interval", dest="stats_interval",
-                          help="The interval for statistics updates (in milliseconds)")
+        super(SettingXdcr, self).__init__()
+        self.parser.prog = "couchbase-cli setting-xdcr"
+        group = self.parser.add_argument_group("XDCR Settings")
+        group.add_argument("--checkpoint-interval", dest="chk_int", type=(int), metavar="<num>",
+                           help="Intervals between checkpoints in seconds (60 to 14400)")
+        group.add_argument("--worker-batch-size", dest="worker_batch_size", metavar="<num>",
+                           type=(int), help="Doc batch size (500 to 10000)")
+        group.add_argument("--doc-batch-size", dest="doc_batch_size", type=(int), metavar="<KB>",
+                           help="Document batching size in KB (10 to 100000)")
+        group.add_argument("--failure-restart-interval", dest="fail_interval", metavar="<seconds>",
+                           type=(int),
+                           help="Interval for restarting failed xdcr in seconds (1 to 300)")
+        group.add_argument("--optimistic-replication-threshold", dest="rep_thresh", type=(int),
+                           metavar="<bytes>",
+                           help="Document body size threshold (bytes) to trigger optimistic " +
+                           "replication")
+        group.add_argument("--source-nozzle-per-node", dest="src_nozzles", metavar="<num>",
+                           type=(int),
+                           help="The number of source nozzles per source node (1 to 10)")
+        group.add_argument("--target-nozzle-per-node", dest="dst_nozzles", metavar="<num>",
+                           type=(int),
+                           help="The number of outgoing nozzles per target node (1 to 10)")
+        group.add_argument("--log-level", dest="log_level", metavar="<level>",
+                           choices=["Error", "Info", "Debug", "Trace"],
+                           help="The XDCR log level")
+        group.add_argument("--stats-interval", dest="stats_interval", metavar="<ms>",
+                           help="The interval for statistics updates (in milliseconds)")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1893,31 +2100,32 @@ class SettingXDCR(Command):
     def get_man_page_name():
         return "couchbase-cli-setting-xdcr" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Modify XDCR related settings"
 
-class SSLManage(Command):
+
+class SslManage(Subcommand):
     """The user manage subcommand"""
 
     def __init__(self):
-        super(SSLManage, self).__init__()
-        self.parser.set_usage("couchbase-cli ssl-manage --cluster-cert-info [--extended]\n" +
-                              "   or: couchbase-cli ssl-manage --node-cert-info\n" +
-                              "   or: couchbase-cli ssl-manage --regenerate-cert <path>\n" +
-                              "   or: couchbase-cli ssl-manage --set-node-certificate\n" +
-                              "   or: couchbase-cli ssl-manage --upload-cluster-ca <path>")
-        self.add_optional("--cluster-cert-info", dest="cluster_cert", action="store_true",
-                          default=False, help="Gets the cluster certificate")
-        self.add_optional("--node-cert-info", dest="node_cert", action="store_true",
-                          default=False, help="Gets the node certificate")
-        self.add_optional("--regenerate-cert", dest="regenerate",
-                          help="Regenerate the cluster certificat and save it to a file")
-        self.add_optional("--set-node-certificate", dest="set_cert", action="store_true",
-                          default=False, help="Sets the node certificate")
-        self.add_optional("--upload-cluster-ca", dest="upload_cert",
-                          help="Upload a new cluster certificate")
-        self.add_optional("--extended", dest="extended", action="store_true",
-                          default=False, help="Print extended certificate information")
+        super(SslManage, self).__init__()
+        self.parser.prog = "couchbase-cli ssl-manage"
+        group = self.parser.add_argument_group("SSL manage options")
+        group.add_argument("--cluster-cert-info", dest="cluster_cert", action="store_true",
+                           default=False, help="Gets the cluster certificate")
+        group.add_argument("--node-cert-info", dest="node_cert", action="store_true",
+                           default=False, help="Gets the node certificate")
+        group.add_argument("--regenerate-cert", dest="regenerate", metavar="<path>",
+                           help="Regenerate the cluster certificate and save it to a file")
+        group.add_argument("--set-node-certificate", dest="set_cert", action="store_true",
+                           default=False, help="Sets the node certificate")
+        group.add_argument("--upload-cluster-ca", dest="upload_cert", metavar="<path>",
+                           help="Upload a new cluster certificate")
+        group.add_argument("--extended", dest="extended", action="store_true",
+                           default=False, help="Print extended certificate information")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1958,25 +2166,30 @@ class SSLManage(Command):
     def get_man_page_name():
         return "couchbase-cli-ssl-manage" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Manage cluster certificates"
 
-class UserManage(Command):
+
+class UserManage(Subcommand):
     """The user manage subcommand"""
 
     def __init__(self):
         super(UserManage, self).__init__()
-        self.parser.set_usage("couchbase-cli user-manage [options]")
-        self.add_optional("--list", dest="list", action="store_true",
-                          default=False, help="List the local read-only user")
-        self.add_optional("--delete", dest="delete", action="store_true",
-                          default=False, help="Delete the local read-only user")
-        self.add_optional("--set", dest="set", action="store_true",
-                          default=False, help="Set the local read-only user")
-        self.add_optional("--ro-username", dest="ro_user",
-                          help="The read-only username")
-        self.add_optional("--ro-password", dest="ro_pass",
-                          help="The read-only password")
+        self.parser.prog = "couchbase-cli user-manage"
+        group = self.parser.add_argument_group("User manage options")
+        group.add_argument("--list", dest="list", action="store_true", default=False,
+                           help="List the local read-only user")
+        group.add_argument("--delete", dest="delete", action="store_true", default=False,
+                           help="Delete the local read-only user")
+        group.add_argument("--set", dest="set", action="store_true", default=False,
+                           help="Set the local read-only user")
+        group.add_argument("--ro-username", dest="ro_user", metavar="<username>",
+                           help="The read-only username")
+        group.add_argument("--ro-password", dest="ro_pass", metavar="<password>",
+                           help="The read-only password")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -1988,13 +2201,13 @@ class UserManage(Command):
             _exitIfErrors(["Only one of the following can be specified: --delete, --list, or --set"])
 
         if opts.delete:
-            self._delete(rest, opts, args)
+            self._delete(rest, opts)
         elif opts.list:
-            self._list(rest, opts, args)
+            self._list(rest, opts)
         elif opts.set:
-            self._set(rest, opts, args)
+            self._set(rest, opts)
 
-    def _delete(self, rest, opts, args):
+    def _delete(self, rest, opts):
         if opts.ro_user is not None:
             _warning("--ro-username is not used with the --delete command")
         if opts.ro_pass is not None:
@@ -2004,7 +2217,7 @@ class UserManage(Command):
         _exitIfErrors(errors)
         print "SUCCESS: Local read-only user deleted"
 
-    def _list(self, rest, opts, args):
+    def _list(self, rest, opts):
         if opts.ro_user is not None:
             _warning("--ro-username is not used with the --list command")
         if opts.ro_pass is not None:
@@ -2016,7 +2229,7 @@ class UserManage(Command):
         _exitIfErrors(errors)
         print result
 
-    def _set(self, rest, opts, args):
+    def _set(self, rest, opts):
         if opts.ro_user is None:
             _exitIfErrors(["--ro-username is required with the --set command"])
         if opts.ro_pass is None:
@@ -2036,59 +2249,69 @@ class UserManage(Command):
     def get_man_page_name():
         return "couchbase-cli-user-manage" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Manage the read-only user"
 
-class XDCRReplicate(Command):
+
+class XdcrReplicate(Subcommand):
     """The xdcr replicate subcommand"""
 
     def __init__(self):
-        super(XDCRReplicate, self).__init__()
-        self.parser.set_usage("couchbase-cli xdcr-replicate [options]")
-        self.add_optional("--create", dest="create", action="store_true",
-                          default=False, help="Create an XDCR replication")
-        self.add_optional("--delete", dest="delete", action="store_true",
-                          default=False, help="Delete an XDCR replication")
-        self.add_optional("--pause", dest="pause", action="store_true",
-                          default=False, help="Pause an XDCR replication")
-        self.add_optional("--list", dest="list", action="store_true",
-                          default=False, help="List all XDCR replications")
-        self.add_optional("--resume", dest="resume", action="store_true",
-                          default=False, help="Resume an XDCR replication")
-        self.add_optional("--settings", dest="settings", action="store_true",
-                          default=False, help="Set advanced settings for an XDCR replication")
-        self.add_optional("--xdcr-from-bucket", dest="from_bucket",
-                          help="The name bucket to replicate data from")
-        self.add_optional("--xdcr-to-bucket", dest="to_bucket",
-                          help="The name bucket to replicate data to")
-        self.add_optional("--xdcr-cluster-name", dest="cluster_name",
-                          help="The name of the cluster reference to replicate to")
-        self.add_optional("--xdcr-replication-mode", dest="rep_mode",
-                          choices=["xmem", "capi"],
-                          help="The replication protocol (capi or xmem)")
-        self.add_optional("--filter-expression", dest="filter",
-                          help="Regular expression to filter replication streams")
-        self.add_optional("--xdcr-replicator", dest="replicator_id",
-                          help="Replication ID")
-        self.add_optional("--checkpoint-interval", dest="chk_int", type=(int),
-                          help="Intervals between checkpoints in seconds (60 to 14400)")
-        self.add_optional("--worker-batch-size", dest="worker_batch_size", type=(int),
-                          help="Doc batch size (500 to 10000)")
-        self.add_optional("--doc-batch-size", dest="doc_batch_size", type=(int),
-                          help="Document batching size in KB (10 to 100000)")
-        self.add_optional("--failure-restart-interval", dest="fail_interval", type=(int),
-                          help="Interval for restarting failed xdcr in seconds (1 to 300)")
-        self.add_optional("--optimistic-replication-threshold", dest="rep_thresh", type=(int),
-                          help="Document body size threshold (bytes) to trigger optimistic replication")
-        self.add_optional("--source-nozzle-per-node", dest="src_nozzles", type=(int),
-                          help="The number of source nozzles per source node (1 to 10)")
-        self.add_optional("--target-nozzle-per-node", dest="dst_nozzles", type=(int),
-                          help="The number of outgoing nozzles per target node (1 to 10)")
-        self.add_optional("--log-level", dest="log_level",
-                          choices=["Error", "Info", "Debug", "Trace"],
-                          help="The XDCR log level")
-        self.add_optional("--stats-interval", dest="stats_interval",
-                          help="The interval for statistics updates (in milliseconds)")
+        super(XdcrReplicate, self).__init__()
+        self.parser.prog = "couchbase-cli xdcr-replicate"
+        group = self.parser.add_argument_group("XDCR replicate options")
+        group.add_argument("--create", dest="create", action="store_true",
+                           default=False, help="Create an XDCR replication")
+        group.add_argument("--delete", dest="delete", action="store_true",
+                           default=False, help="Delete an XDCR replication")
+        group.add_argument("--pause", dest="pause", action="store_true",
+                           default=False, help="Pause an XDCR replication")
+        group.add_argument("--list", dest="list", action="store_true",
+                           default=False, help="List all XDCR replications")
+        group.add_argument("--resume", dest="resume", action="store_true",
+                           default=False, help="Resume an XDCR replication")
+        group.add_argument("--settings", dest="settings", action="store_true",
+                           default=False, help="Set advanced settings for an XDCR replication")
+        group.add_argument("--xdcr-from-bucket", dest="from_bucket", metavar="<bucket>",
+                           help="The name bucket to replicate data from")
+        group.add_argument("--xdcr-to-bucket", dest="to_bucket", metavar="<bucket>",
+                           help="The name bucket to replicate data to")
+        group.add_argument("--xdcr-cluster-name", dest="cluster_name", metavar="<name>",
+                           help="The name of the cluster reference to replicate to")
+        group.add_argument("--xdcr-replication-mode", dest="rep_mode", metavar="<mode>",
+                           choices=["xmem", "capi"],
+                           help="The replication protocol (capi or xmem)")
+        group.add_argument("--filter-expression", dest="filter", metavar="<regex>",
+                           help="Regular expression to filter replication streams")
+        group.add_argument("--xdcr-replicator", dest="replicator_id", metavar="<id>",
+                           help="Replication ID")
+        group.add_argument("--checkpoint-interval", dest="chk_int", type=(int), metavar="<seconds>",
+                           help="Intervals between checkpoints in seconds (60 to 14400)")
+        group.add_argument("--worker-batch-size", dest="worker_batch_size", type=(int),
+                           metavar="<num>", help="Doc batch size (500 to 10000)")
+        group.add_argument("--doc-batch-size", dest="doc_batch_size", type=(int), metavar="<KB>",
+                           help="Document batching size in KB (10 to 100000)")
+        group.add_argument("--failure-restart-interval", dest="fail_interval", type=(int),
+                           metavar="<seconds>",
+                           help="Interval for restarting failed xdcr in seconds (1 to 300)")
+        group.add_argument("--optimistic-replication-threshold", dest="rep_thresh", type=(int),
+                           metavar="<bytes>",
+                           help="Document body size threshold to trigger optimistic replication" +
+                           " (bytes)")
+        group.add_argument("--source-nozzle-per-node", dest="src_nozzles", type=(int),
+                           metavar="<num>",
+                           help="The number of source nozzles per source node (1 to 10)")
+        group.add_argument("--target-nozzle-per-node", dest="dst_nozzles", type=(int),
+                           metavar="<num>",
+                           help="The number of outgoing nozzles per target node (1 to 10)")
+        group.add_argument("--log-level", dest="log_level", metavar="<level>",
+                           choices=["Error", "Info", "Debug", "Trace"],
+                           help="The XDCR log level")
+        group.add_argument("--stats-interval", dest="stats_interval", metavar="<ms>",
+                           help="The interval for statistics updates (in milliseconds)")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -2102,17 +2325,17 @@ class XDCRReplicate(Command):
             _exitIfErrors(["The --create, --delete, --pause, --list, --resume, --settings" +
                            " flags may not be specified at the same time"])
         elif opts.create:
-            self._create(rest, opts, args)
+            self._create(rest, opts)
         elif opts.delete:
-            self._delete(rest, opts, args)
+            self._delete(rest, opts)
         elif opts.pause or opts.resume:
-            self._pause_resume(rest, opts, args)
+            self._pause_resume(rest, opts)
         elif opts.list:
-            self._list(rest, opts, args)
+            self._list(rest, opts)
         elif opts.settings:
-            self._settings(rest, opts, args)
+            self._settings(rest, opts)
 
-    def _create(self, rest, opts, args):
+    def _create(self, rest, opts):
         _, errors = rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket,
                                                  opts.from_bucket, opts.filter,
                                                  opts.rep_mode)
@@ -2120,7 +2343,7 @@ class XDCRReplicate(Command):
 
         print "SUCCESS: XDCR replication created"
 
-    def _delete(self, rest, opts, args):
+    def _delete(self, rest, opts):
         if opts.replicator_id is None:
             _exitIfErrors(["--xdcr-replicator is needed to delete a replication"])
 
@@ -2129,7 +2352,7 @@ class XDCRReplicate(Command):
 
         print "SUCCESS: XDCR replication deleted"
 
-    def _pause_resume(self, rest, opts, args):
+    def _pause_resume(self, rest, opts):
         if opts.replicator_id is None:
             _exitIfErrors(["--xdcr-replicator is needed to pause or resume a replication"])
 
@@ -2152,7 +2375,7 @@ class XDCRReplicate(Command):
             _exitIfErrors(errors)
             print "SUCCESS: XDCR replication resume"
 
-    def _list(self, rest, opts, args):
+    def _list(self, rest, opts):
         tasks, errors = rest.get_tasks()
         _exitIfErrors(errors)
         for task in tasks:
@@ -2162,7 +2385,7 @@ class XDCRReplicate(Command):
                 print "   source: %s" % task["source"]
                 print "   target: %s" % task["target"]
 
-    def _settings(self, rest, opts, args):
+    def _settings(self, rest, opts):
         if opts.replicator_id is None:
             _exitIfErrors(["--xdcr-replicator is needed to change a replicators settings"])
         _, errors = rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size,
@@ -2178,36 +2401,40 @@ class XDCRReplicate(Command):
     def get_man_page_name():
         return "couchbase-cli-xdcr-replicate" + ".1" if os.name != "nt" else ".html"
 
+    @staticmethod
+    def get_description():
+        return "Manage XDCR cluster references"
 
-class XDCRSetup(Command):
+
+class XdcrSetup(Subcommand):
     """The xdcr setup subcommand"""
 
     def __init__(self):
-        super(XDCRSetup, self).__init__()
-        self.parser.set_usage("couchbase-cli xdcr-setup [options]")
-        self.add_optional("--create", dest="create", action="store_true",
-                          default=False, help="Create an XDCR remote reference")
-        self.add_optional("--delete", dest="delete", action="store_true",
-                          default=False, help="Delete an XDCR remote reference")
-        self.add_optional("--edit", dest="edit", action="store_true",
-                          default=False, help="Set the local read-only user")
-        self.add_optional("--list", dest="list", action="store_true",
-                          default=False, help="List all XDCR remote references")
-        self.add_optional("--xdcr-cluster-name", dest="name",
-                          help="The name for the remote cluster reference")
-        self.add_optional("--xdcr-hostname", dest="hostname",
-                          help="The hostname of the remote cluster reference")
-        self.add_optional("--xdcr-username", dest="r_username",
-                          help="The username of the remote cluster reference")
-        self.add_optional("--xdcr-password", dest="r_password",
-                          help="The password of the remote cluster reference")
-        self.add_optional("--xdcr-demand-encryption", dest="encrypt",
-                          choices=["0", "1"], default="0",
-                          help="Enable SSL when replicating with this cluster")
-        self.add_optional("--xdcr-certificate", dest="certificate",
-                          help="The certificate used for encryption")
+        super(XdcrSetup, self).__init__()
+        self.parser.prog = "couchbase-cli xdcr-setup"
+        group = self.parser.add_argument_group("XDCR setup options")
+        group.add_argument("--create", dest="create", action="store_true",
+                           default=False, help="Create an XDCR remote reference")
+        group.add_argument("--delete", dest="delete", action="store_true",
+                           default=False, help="Delete an XDCR remote reference")
+        group.add_argument("--edit", dest="edit", action="store_true",
+                           default=False, help="Set the local read-only user")
+        group.add_argument("--list", dest="list", action="store_true",
+                           default=False, help="List all XDCR remote references")
+        group.add_argument("--xdcr-cluster-name", dest="name", metavar="<name>",
+                           help="The name for the remote cluster reference")
+        group.add_argument("--xdcr-hostname", dest="hostname", metavar="<hostname>",
+                           help="The hostname of the remote cluster reference")
+        group.add_argument("--xdcr-username", dest="r_username", metavar="<username>",
+                           help="The username of the remote cluster reference")
+        group.add_argument("--xdcr-password", dest="r_password", metavar="<password>",
+                           help="The password of the remote cluster reference")
+        group.add_argument("--xdcr-demand-encryption", dest="encrypt", choices=["0", "1"],
+                           default="0", help="Enable SSL when replicating with this cluster")
+        group.add_argument("--xdcr-certificate", dest="certificate", metavar="<path>",
+                           help="The certificate used for encryption")
 
-    def execute(self, opts, args):
+    def execute(self, opts):
         host, port = host_port(opts.cluster)
         rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
         check_cluster_initialized(rest)
@@ -2219,13 +2446,13 @@ class XDCRSetup(Command):
             _exitIfErrors(["The --create, --delete, --edit, --list flags may not " +
                            "be specified at the same time"])
         elif opts.create or opts.edit:
-            self._set(rest, opts, args)
+            self._set(rest, opts)
         elif opts.delete:
-            self._delete(rest, opts, args)
+            self._delete(rest, opts)
         elif opts.list:
-            self._list(rest, opts, args)
+            self._list(rest, opts)
 
-    def _set(self, rest, opts, args):
+    def _set(self, rest, opts):
         cmd = "create"
         if opts.edit:
             cmd = "edit"
@@ -2256,7 +2483,7 @@ class XDCRSetup(Command):
             _exitIfErrors(errors)
             print "SUCCESS: Cluster reference edited"
 
-    def _delete(self, rest, opts, args):
+    def _delete(self, rest, opts):
         if opts.name is None:
             _exitIfErrors(["--xdcr-cluster-name is required to deleta a cluster connection"])
 
@@ -2265,7 +2492,7 @@ class XDCRSetup(Command):
 
         print "SUCCESS: Cluster reference deleted"
 
-    def _list(self, rest, opts, args):
+    def _list(self, rest, opts):
         clusters, errors = rest.list_xdcr_references()
         _exitIfErrors(errors)
 
@@ -2281,45 +2508,6 @@ class XDCRSetup(Command):
     def get_man_page_name():
         return "couchbase-cli-xdcr-setup" + ".1" if os.name != "nt" else ".html"
 
-
-SUBCOMMANDS = {
-    "admin-role-manage": AdminRoleManage,
-    "bucket-compact": BucketCompact,
-    "bucket-create": BucketCreate,
-    "bucket-delete": BucketDelete,
-    "bucket-edit": BucketEdit,
-    "bucket-flush": BucketFlush,
-    "bucket-list": BucketList,
-    "cluster-edit": ClusterEdit,
-    "cluster-init": ClusterInit,
-    "collect-logs-start": CollectLogsStart,
-    "collect-logs-status": CollectLogsStatus,
-    "collect-logs-stop": CollectLogsStop,
-    "failover": Failover,
-    "group-manage": GroupManage,
-    "host-list": HostList,
-    "node-init": NodeInit,
-    "rebalance": Rebalance,
-    "rebalance-status": RebalanceStatus,
-    "rebalance-stop": RebalanceStop,
-    "recovery": Recovery,
-    "server-add": ServerAdd,
-    "server-eshell": ServerEshell,
-    "server-info": ServerInfo,
-    "server-list": ServerList,
-    "server-readd": ServerReadd,
-    "setting-alert": SettingAlert,
-    "setting-audit": SettingAudit,
-    "setting-autofailover": SettingAutoFailover,
-    "setting-cluster": SettingCluster,
-    "setting-compaction": SettingCompaction,
-    "setting-index": SettingIndex,
-    "setting-ldap": SettingLdap,
-    "setting-xdcr": SettingXDCR,
-    "setting-notification": SettingNotification,
-    "ssl-manage": SSLManage,
-    "user-manage": UserManage,
-    "xdcr-setup": XDCRSetup,
-    "xdcr-replicate": XDCRReplicate,
-}
-
+    @staticmethod
+    def get_description():
+        return "Manage XDCR replications"

@@ -69,8 +69,6 @@ INSTALL(FILES
         pump_tap.py
         pump_transfer.py
         pump_dcp.py
-        usage.py
-        util_cli.py
         DESTINATION lib/python)
 IF (BUILD_ENTERPRISE)
     INSTALL(FILES
