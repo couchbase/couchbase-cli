@@ -68,7 +68,7 @@ class Buckets:
         wait_for_bucket_ready = False
         enable_flush = None
         enable_replica_index = None
-        enable_timestamps = False
+        conflict_resolution = 'sequence'
         force = False
         compact_data_only = False
         compact_view_only = False
@@ -98,8 +98,8 @@ class Buckets:
                 enable_flush = a
             elif o == '--enable-index-replica':
                 enable_replica_index = a
-            elif o == '--enable-timestamps':
-                enable_timestamps = True
+            elif o == '--conflict-resolution':
+                conflict_resolution = a
             elif o == '--wait':
                 wait_for_bucket_ready = True
             elif o == '--force':
@@ -154,11 +154,13 @@ class Buckets:
                     command_error("eviction policy value should be either 'valueOnly' or 'fullEviction'.")
             if enable_replica_index and cmd == 'bucket-create':
                 rest.setParam('replicaIndex', enable_replica_index)
-            if enable_timestamps and cmd == 'bucket-create':
-                if enable_timestamps:
-                    rest.setParam('timeSynchronization', 'enabledWithoutDrift')
+            if cmd == 'bucket-create':
+                if conflict_resolution == 'timestamp':
+                    rest.setParam('conflictResolutionType', 'lww')
+                elif conflict_resolution == 'sequence':
+                    rest.setParam('conflictResolutionType', 'seqno')
                 else:
-                    rest.setParam('timeSynchronization', 'disabled')
+                    command_error("--conflict-resolution must be timestamp or sequence")
 
             if bucketpriority:
                 if bucketpriority in priority:
@@ -317,8 +319,8 @@ class Buckets:
         enable_flush = [("--enable-flush=[0|1]", "enable/disable flush")]
         enable_replica_idx = [("--enable-index-replica=[0|1]",
                                "enable/disable index replicas")]
-        enable_timestamps = [("--enable-timestamps",
-                              "enable timestamps for all documents")]
+        conflict_resolution = [("--conflict-resolution",
+                                "Specifies the XDCR conflict resolution type (timestamp or sequence)")]
 
         force = [("--force",
                   "force to execute command without asking for confirmation")]
@@ -332,7 +334,7 @@ class Buckets:
                       eviction_policy + enable_flush)
 
         if cmd == "bucket-create":
-            return create_edit + enable_replica_idx + enable_timestamps + wait
+            return create_edit + enable_replica_idx + conflict_resolution + wait
         elif cmd == "bucket-edit":
             return create_edit
         elif cmd == "bucket-delete":
@@ -363,7 +365,7 @@ class Buckets:
        --bucket-replica=1 \\
        --bucket-priority=high \\
        --bucket-eviction-policy=valueOnly \\
-       --enable-timestamps \\
+       --conflict-resolution=timestamp \\
        -u Administrator -p password"""),
                 ("Create a couchbase bucket and wait for bucket ready",
 """

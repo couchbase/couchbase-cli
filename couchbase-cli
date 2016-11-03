@@ -94,7 +94,7 @@ def main():
                 'bucket-eviction-policy=',
                 'enable-flush=',
                 'enable-index-replica=',
-                'enable-timestamps',
+                'conflict-resolution=',
                 'new-password',
                 'rotate-data-key',
                 'send-password',
