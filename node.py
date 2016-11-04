@@ -1728,7 +1728,7 @@ class Node:
     def groupAddServers(self):
         # If this is the first index node added then we need to make sure to
         # set the index storage setting.
-        indexStorageParam = self.index_storage_to_param(self.index_storage_setting, False)
+        indexStorageParam = self.index_storage_to_param(self.index_storage_setting, True)
         if not indexStorageParam:
             print "ERROR: invalid index storage setting `%s`. Must be [default, memopt]" \
                 % self.index_storage_setting
