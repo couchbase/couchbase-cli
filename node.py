@@ -898,8 +898,9 @@ class Node:
         print output_result
 
     def ldap(self):
-        print "DEPRECATED: The settings ldap command is deprecated and will be " + \
-              "removed in a future release. Please use admin-role-manage instead."
+        print "DEPRECATED: Adding ldap users from setting-ldap is deprecated and will not " + \
+              "be allowed in future releases. Please use admin-role-manage instead. " + \
+              "setting-ldap should only be used to enable and disable ldap on a cluster."
         rest = util.restclient_factory(self.server,
                                      self.port,
                                      {'debug':self.debug},
