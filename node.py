@@ -2021,7 +2021,8 @@ class Node:
         elif cmd == "node-init":
             return [
             ("--node-init-data-path=PATH", "data path for database files"),
-            ("--node-init-index-path=PATH", "index path for view data")]
+            ("--node-init-index-path=PATH", "index path for view data"),
+            ("--node-init-hostname=HOSTNAME", "the hostname of this node")]
         elif cmd == "failover":
             return [
             ("--server-failover=HOST[:PORT]", "server to failover"),
