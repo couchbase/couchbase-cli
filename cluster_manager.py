@@ -124,6 +124,17 @@ class ClusterManager(object):
         url = self.hostname + '/pools'
         return self._get(url)
 
+    def set_admin_password(self, password):
+        url = self.hostname + '/controller/resetAdminPassword'
+        params = { "password": password }
+
+        return self._post_form_encoded(url, params)
+
+    def regenerate_admin_password(self):
+        url = self.hostname + '/controller/resetAdminPassword?generate=1'
+
+        return self._post_form_encoded(url, None)
+
     def get_server_groups(self):
         url = self.hostname + '/pools/default/serverGroups'
         return self._get(url)

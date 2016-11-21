@@ -42,6 +42,7 @@ rest_cmds = {
     'cluster-init'      :'/settings/web',
     'cluster-edit'      :'/settings/web',
     'node-init'         :'/nodes/self/controller/settings',
+    'reset-admin-password'  :'/controller/resetAdminPassword',
     'setting-cluster'   :'/pools/default',
     'setting-compaction'    :'/controller/setAutoCompaction',
     'setting-notification'  :'/settings/stats',
@@ -89,6 +90,7 @@ methods = {
     'cluster-init'      :'POST',
     'cluster-edit'      :'POST',
     'node-init'         :'POST',
+    'reset-admin-password'  :'POST',
     'setting-cluster'   :'POST',
     'setting-compaction'    :'POST',
     'setting-notification'  :'POST',
@@ -242,6 +244,9 @@ class Node:
         self.send_password = ''
         self.config_path = None
 
+        # reset admin password
+        self.regenerate = False
+
     def runCmd(self, cmd, server, port,
                user, password, ssl, opts):
         self.rest_cmd = rest_cmds[cmd]
@@ -334,6 +339,9 @@ class Node:
         elif cmd == 'setting-index':
             self.index()
 
+        elif cmd == 'reset-admin-password':
+            self.resetAdminPassword()
+
         elif cmd == 'user-manage':
             self.userManage()
 
@@ -354,6 +362,32 @@ class Node:
 
         elif cmd == 'admin-role-manage':
             self.alterRoles()
+
+    def resetAdminPassword(self):
+
+        if self.config_path == None:
+            self.config_path = os.path.abspath(os.path.join(mydir, "..", "var", "lib", "couchbase"))
+
+        token_file = self.find_config_path("localtoken", self.config_path)
+        if token_file == None:
+            _exitIfErrors(["File localtoken is not found under the specified config path"])
+
+        token = _exitOnFileReadFailure(token_file).rstrip()
+        cm = cluster_manager.ClusterManager(self.server, self.port, "@localtoken", token, self.ssl)
+
+        if self.new_password_specified:
+            newPassword = self.new_password
+            if self.new_password == '':
+                newPassword = getpass.getpass("\nEnter new master password:")
+            _, errors = cm.set_admin_password(newPassword)
+            _exitIfErrors(errors)
+            print "SUCCESS: Administrator password changed"
+        elif self.regenerate:
+            result, errors = cm.regenerate_admin_password()
+            _exitIfErrors(errors)
+            print result["password"]
+        else:
+            _exitIfErrors(["No parameters specfied"])
 
     def masterPassword(self):
         cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
@@ -380,14 +414,14 @@ class Node:
             if self.config_path == None:
                 self.config_path = os.path.abspath(os.path.join(mydir, "..", "var", "lib", "couchbase"))
 
-            cookiefile = self.find_master_pwd_path("couchbase-server.cookie", self.config_path)
+            cookiefile = self.find_config_path("couchbase-server.cookie", self.config_path)
             if cookiefile == None:
                 _exitIfErrors(["File couchbase-server.cookie is not found under the specified root"])
 
             cookie = _exitOnFileReadFailure(cookiefile).rstrip()
 
             node = "babysitter_of_ns_1@127.0.0.1"
-            nodefile = self.find_master_pwd_path("couchbase-server.babysitter.node", self.config_path)
+            nodefile = self.find_config_path("couchbase-server.babysitter.node", self.config_path)
             if nodefile != None:
                 node = _exitOnFileReadFailure(nodefile).rstrip()
 
@@ -410,7 +444,7 @@ class Node:
         except OSError:
             _exitIfErrors(["Could not locate the %s executable" % name])
 
-    def find_master_pwd_path(self, filename, user_path):
+    def find_config_path(self, filename, user_path):
         variants = [os.path.abspath(os.path.join(user_path, filename)),
                     "/opt/couchbase/var/lib/couchbase/" + filename,
                     os.path.expanduser("~/Library/Application Support/Couchbase/var/lib/couchbase/" + filename)]
@@ -1141,6 +1175,8 @@ class Node:
                 self.send_password = a
             elif o == '--config-path':
                 self.config_path = a
+            elif o == '--regenerate':
+                self.regenerate = True
             elif o == '--node-init-data-path':
                 self.data_path = a
             elif o == '--node-init-index-path':
@@ -1977,7 +2013,8 @@ class Node:
             "setting-ldap" : "set ldap settings",
             "setting-audit" : "set audit settings",
             "admin-role-manage" : "set access-control roles for users",
-            "master-password" : "sets and sends the master password"
+            "master-password" : "sets and sends the master password",
+            "reset-admin-password": "reset the administrator password"
         }
         if cmd in command_summary:
             return command_summary[cmd]
@@ -2174,6 +2211,11 @@ class Node:
             ("--new-password", "Prompts user for a new master password on this node."),
             ("--rotate-data-key", "Rotates the master password data key."),
             ("--send-password", "Prompts for the master password to start the server."),
+            ]
+        elif cmd == "reset-admin-password":
+            return [
+            ("--new-password", "Set the new admin password"),
+            ("--regenerate", "Generates a new admin password and prints it to stdout"),
             ]
         else:
             return None
@@ -2487,7 +2529,18 @@ class Node:
     couchbase-cli master-password -c 192.168.0.1:8091 --send-password
             """),
             ]
-
+        elif cmd == "reset-admin-password":
+            return [("Set a new admin password",
+"""
+    couchbase-cli reset-admin-password -c 192.168.0.1:8091 -u Administrator \\
+        -p password --new-password password
+            """),
+            ("Generate a new admin password",
+"""
+    couchbase-cli reset-admin-password -c 192.168.0.1:8091 -u Administrator \\
+        -p password --regenerate
+            """),
+            ]
         else:
             return None
 
