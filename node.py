@@ -1976,7 +1976,8 @@ class Node:
             "setting-index" : "set index settings",
             "setting-ldap" : "set ldap settings",
             "setting-audit" : "set audit settings",
-            "admin-role-manage" : "set access-control roles for users"
+            "admin-role-manage" : "set access-control roles for users",
+            "master-password" : "sets and sends the master password"
         }
         if cmd in command_summary:
             return command_summary[cmd]
