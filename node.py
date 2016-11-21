@@ -235,9 +235,11 @@ class Node:
         self.delete_users = None
 
         # master password
-        self.new_master_password = False
+        self.new_password_specified = False
+        self.new_password = ''
         self.rotate_data_key = False
-        self.send_password = False
+        self.send_password_specified = False
+        self.send_password = ''
         self.config_path = None
 
     def runCmd(self, cmd, server, port,
@@ -356,8 +358,10 @@ class Node:
     def masterPassword(self):
         cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
                                                 self.password, self.ssl)
-        if self.new_master_password:
-            newPassword = getpass.getpass("\nEnter new master password:")
+        if self.new_password_specified:
+            newPassword = self.new_password
+            if self.new_password == '':
+                newPassword = getpass.getpass("\nEnter new master password:")
             _, errors = cm.set_master_pwd(newPassword)
             _exitIfErrors(errors)
             print "SUCCESS: New master password set"
@@ -365,7 +369,7 @@ class Node:
             _, errors = cm.rotate_master_pwd()
             _exitIfErrors(errors)
             print "SUCCESS: Data key rotated"
-        elif self.send_password:
+        elif self.send_password_specified:
             mydir = os.path.join(os.path.dirname(sys.argv[0]), "..", "..", "bin")
             path = [mydir, os.environ['PATH']]
             if os.name == 'posix':
@@ -417,7 +421,9 @@ class Node:
         return None
 
     def prompt_for_master_pwd(self, node, cookie):
-        password = getpass.getpass("\nEnter master password:")
+        password = self.send_password
+        if password == '':
+            password = getpass.getpass("\nEnter master password:")
         password = "\"" + password.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
         randChars = ''.join(random.choice(string.ascii_letters) for i in xrange(20))
@@ -434,6 +440,8 @@ class Node:
         if res == "ok":
             print "SUCCESS: Password accepted. Node started booting."
         elif res == "retry":
+            if self.send_password != '':
+                _exitIfErrors(["Incorrect password, please retry"])
             print "Incorrect password."
             self.prompt_for_master_pwd(node, cookie)
         elif res == "{badrpc,nodedown}":
@@ -1124,11 +1132,13 @@ class Node:
             elif o == '--enable-email-alert':
                 self.enable_email_alert = bool_to_str(a)
             elif o == '--new-password':
-                self.new_master_password = True
+                self.new_password_specified = True
+                self.new_password = a
             elif o == '--rotate-data-key':
                 self.rotate_data_key = True
             elif o == '--send-password':
-                self.send_password = True
+                self.send_password_specified = True
+                self.send_password = a
             elif o == '--config-path':
                 self.config_path = a
             elif o == '--node-init-data-path':

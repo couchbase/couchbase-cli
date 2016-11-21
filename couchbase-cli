@@ -21,6 +21,66 @@ from timeout import TimeoutException
 CB_USERNAME = 'CB_REST_USERNAME'
 CB_PASSWORD = 'CB_REST_PASSWORD'
 
+HAS_NO_ARG = 1
+MAYBE_HAS_ARG = 2
+HAS_ARG = 3
+
+#Return:
+#   has_arg?
+#   full option name
+def _long_has_args(opt, longopts):
+    possibilities = [o for o in longopts if o.startswith(opt)]
+    if not possibilities:
+        raise GetoptError(_('option --%s not recognized') % opt, opt)
+    # Is there an exact match?
+    if opt in possibilities:
+        return HAS_NO_ARG, opt
+    elif opt + '=' in possibilities:
+        return HAS_ARG, opt
+    elif opt + '?' in possibilities:
+        return MAYBE_HAS_ARG, opt
+    # No exact match, so better be unique.
+    if len(possibilities) > 1:
+        # XXX since possibilities contains all valid continuations, might be
+        # nice to work them into the error msg
+        raise GetoptError(_('option --%s not a unique prefix') % opt, opt)
+    assert len(possibilities) == 1
+    unique_match = possibilities[0]
+    has_arg = HAS_NO_ARG
+    if unique_match.endswith('='):
+        has_arg = HAS_ARG
+    if unique_match.endswith('?'):
+        has_arg = MAYBE_HAS_ARG
+    if has_arg == HAS_ARG or has_arg == MAYBE_HAS_ARG:
+        unique_match = unique_match[:-1]
+    return has_arg, unique_match
+
+def _do_longs (opts, opt, longopts, args):
+    try:
+        i = opt.index('=')
+    except ValueError:
+        optarg = None
+    else:
+        opt, optarg = opt[:i], opt[i+1:]
+
+    has_arg, opt = _long_has_args(opt, longopts)
+    if has_arg == HAS_ARG or has_arg == MAYBE_HAS_ARG:
+        if optarg is None:
+            if has_arg == HAS_ARG:
+                if not args:
+                    raise getopt.GetoptError('option --%s requires argument' % opt, opt)
+                else:
+                    optarg, args = args[0], args[1:]
+            elif has_arg == MAYBE_HAS_ARG:
+                if args and not (args[0].startswith("--") or args[0].startswith("-")):
+                    optarg, args = args[0], args[1:]
+    elif optarg is not None:
+        raise getopt.GetoptError('option --%s must not have an argument' % opt, opt)
+    opts.append(('--' + opt, optarg or ''))
+    return opts, args
+
+getopt.do_longs = _do_longs
+
 def main():
 
     debug = False
@@ -95,9 +155,9 @@ def main():
                 'enable-flush=',
                 'enable-index-replica=',
                 'conflict-resolution=',
-                'new-password',
+                'new-password?',
                 'rotate-data-key',
-                'send-password',
+                'send-password?',
                 'config-path=',
                 'wait',
                 'force',
