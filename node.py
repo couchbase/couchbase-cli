@@ -434,8 +434,8 @@ class Node:
         if res == "ok":
             print "SUCCESS: Password accepted. Node started booting."
         elif res == "retry":
-            _exitIfErrors(["Incorrect password."])
-            prompt_for_password(node, cookie)
+            print "Incorrect password."
+            self.prompt_for_master_pwd(node, cookie)
         elif res == "{badrpc,nodedown}":
             _exitIfErrors(["Either the node is down or password was already supplied"])
         else:
