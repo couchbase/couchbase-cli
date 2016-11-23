@@ -1,4 +1,4 @@
-**Newly added commands for 2.0 features:**
+**Newly added commands for 2.0.2 features:**
 
     couchbase-cli COMMAND
     COMMAND:
@@ -13,7 +13,7 @@
     setting-autofailover     set auto failover settings
     setting-xdcr             set xdcr related settings
 
-**Newly added options for existed commands**
+**Newly added options for existed commands as of 2.0.2**
 
     bucket-create
     --enable-flush=[0|1]            enable/disable flush [MB-7235]
