@@ -364,7 +364,7 @@ class Node:
             self.alterRoles()
 
     def resetAdminPassword(self):
-
+        mydir = os.path.join(os.path.dirname(sys.argv[0]), "..", "..", "bin")
         if self.config_path == None:
             self.config_path = os.path.abspath(os.path.join(mydir, "..", "var", "lib", "couchbase"))
 
