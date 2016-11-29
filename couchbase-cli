@@ -31,7 +31,7 @@ HAS_ARG = 3
 def _long_has_args(opt, longopts):
     possibilities = [o for o in longopts if o.startswith(opt)]
     if not possibilities:
-        raise GetoptError(_('option --%s not recognized') % opt, opt)
+        raise getopt.GetoptError(('option --%s not recognized') % opt, opt)
     # Is there an exact match?
     if opt in possibilities:
         return HAS_NO_ARG, opt
@@ -43,7 +43,7 @@ def _long_has_args(opt, longopts):
     if len(possibilities) > 1:
         # XXX since possibilities contains all valid continuations, might be
         # nice to work them into the error msg
-        raise GetoptError(_('option --%s not a unique prefix') % opt, opt)
+        raise getopt.GetoptError(('option --%s not a unique prefix') % opt, opt)
     assert len(possibilities) == 1
     unique_match = possibilities[0]
     has_arg = HAS_NO_ARG
