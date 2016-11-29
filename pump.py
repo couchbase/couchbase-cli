@@ -292,22 +292,41 @@ class PumpingStation(ProgressReporter):
                                        self.opts,
                                        self.sink_spec,
                                        curx)
-            rv = Pump(self.opts,
-                      self.source_class(self.opts, self.source_spec,
-                                        source_bucket, source_node,
-                                        source_map, sink_map, self.ctl, curx),
-                      self.sink_class(self.opts, self.sink_spec,
-                                      source_bucket, source_node,
-                                      source_map, sink_map, self.ctl, curx),
-                      source_map, sink_map, self.ctl, curx).run()
 
-            for k, v in curx.items():
-                if isinstance(v, int):
-                    self.cur[k] = self.cur.get(k, 0) + v
+            source = self.source_class(self.opts, self.source_spec, source_bucket,
+                                       source_node, source_map, sink_map, self.ctl,
+                                       curx)
+            sink = self.sink_class(self.opts, self.sink_spec, source_bucket,
+                                   source_node, source_map, sink_map, self.ctl,
+                                   curx)
 
-            logging.debug(" node: %s, done; rv: %s" % (hostname, rv))
-            if self.ctl['rv'] == 0 and rv != 0:
-                self.ctl['rv'] = rv
+            src_conf_res = source.get_conflict_resolution_type()
+            snk_conf_res = sink.get_conflict_resolution_type()
+            _, snk_bucket = find_sink_bucket_name(self.opts, source_bucket["name"])
+
+            forced = False
+            if int(self.opts.extra.get("try_xwm", 1)) == 0:
+                forced = True
+
+            if int(self.opts.extra.get("conflict_resolve", 1)) == 0:
+                forced = True
+
+            if not forced and snk_conf_res != "any" and src_conf_res != "any" and src_conf_res != snk_conf_res:
+                logging.error("Cannot transfer data, source bucket `%s` uses " +
+                             "%s conflict resolution but sink bucket `%s` uses " +
+                             "%s conflict resolution", source_bucket["name"],
+                             src_conf_res, snk_bucket, snk_conf_res)
+            else:
+                rv = Pump(self.opts, source, sink, source_map, sink_map, self.ctl,
+                          curx).run()
+
+                for k, v in curx.items():
+                    if isinstance(v, int):
+                        self.cur[k] = self.cur.get(k, 0) + v
+
+                logging.debug(" node: %s, done; rv: %s" % (hostname, rv))
+                if self.ctl['rv'] == 0 and rv != 0:
+                    self.ctl['rv'] = rv
 
             self.queue.task_done()
 
@@ -451,6 +470,9 @@ class EndPoint(object):
         cur['failoverlog'] = {}
         cur['snapshot'] = {}
         return 0
+
+    def get_conflict_resolution_type(self):
+        return "any"
 
     def __repr__(self):
         return "%s(%s@%s)" % \

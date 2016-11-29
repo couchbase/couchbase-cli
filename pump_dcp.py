@@ -107,6 +107,12 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
         return 0, json.dumps(ddocs["result"])
 
+    def get_conflict_resolution_type(self):
+        confResType = "seqno"
+        if "conflictResolutionType" in self.source_bucket:
+            confResType = self.source_bucket["conflictResolutionType"]
+        return confResType
+
     def add_start_event(self, conn):
         sasl_user = str(self.source_bucket.get("name"))
         event = {"timestamp": self.get_timestamp(),
