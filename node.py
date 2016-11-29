@@ -387,7 +387,7 @@ class Node:
             _exitIfErrors(errors)
             print result["password"]
         else:
-            _exitIfErrors(["No parameters specfied"])
+            _exitIfErrors(["No parameters specified"])
 
     def masterPassword(self):
         cm = cluster_manager.ClusterManager(self.server, self.port, self.user,
