@@ -364,7 +364,7 @@ class Node:
             self.alterRoles()
 
     def resetAdminPassword(self):
-        mydir = os.path.join(os.path.dirname(sys.argv[0]), "..", "..", "bin")
+        mydir = os.path.join(os.path.dirname(__file__), "..", "..", "bin")
         if self.config_path == None:
             self.config_path = os.path.abspath(os.path.join(mydir, "..", "var", "lib", "couchbase"))
 
@@ -404,7 +404,7 @@ class Node:
             _exitIfErrors(errors)
             print "SUCCESS: Data key rotated"
         elif self.send_password_specified:
-            mydir = os.path.join(os.path.dirname(sys.argv[0]), "..", "..", "bin")
+            mydir = os.path.join(os.path.dirname(__file__), "..", "..", "bin")
             path = [mydir, os.environ['PATH']]
             if os.name == 'posix':
                 os.environ['PATH'] = ':'.join(path)
