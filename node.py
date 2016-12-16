@@ -760,7 +760,7 @@ class Node:
                     rest.setParam('indexCircularCompaction[interval][toHour]', hour)
                     rest.setParam('indexCircularCompaction[interval][toMinute]', minute)
 
-            if self.enable_compaction_abort is not None:
+            if self.gsi_compact_abort is not None:
                 rest.setParam('indexCircularCompaction[interval][abortOutside]', self.gsi_compact_abort)
             else:
                 rest.setParam('indexCircularCompaction[interval][abortOutside]', "false")
