@@ -112,6 +112,7 @@ class CSVSink(pump.Sink):
                  source_map, sink_map, ctl, cur):
         super(CSVSink, self).__init__(opts, spec, source_bucket, source_node,
                                       source_map, sink_map, ctl, cur)
+        self.csvfile = None
         self.writer = None
         self.fields = None
 
