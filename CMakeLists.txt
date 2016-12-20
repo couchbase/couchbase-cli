@@ -51,6 +51,7 @@ IF (NOT BUILD_ENTERPRISE)
 ENDIF(NOT BUILD_ENTERPRISE)
 
 INSTALL(FILES
+        argparse.py
         cb_bin_client.py
         cbmgr.py
         cbsnappy.py
