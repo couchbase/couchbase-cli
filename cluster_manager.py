@@ -161,11 +161,11 @@ class ClusterManager(object):
         """
         url = self.hostname + '/pools/default'
         params = {}
-        if data_ramsize:
+        if data_ramsize is not None:
             params["memoryQuota"] = data_ramsize
-        if index_ramsize:
+        if index_ramsize is not None:
             params["indexMemoryQuota"] = index_ramsize
-        if fts_ramsize:
+        if fts_ramsize is not None:
             params["ftsMemoryQuota"] = fts_ramsize
         if cluster_name is not None:
             params["clusterName"] = cluster_name

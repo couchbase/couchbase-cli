@@ -452,18 +452,9 @@ class ClusterInit(Subcommand):
         if 'kv' not in services.split(','):
             _exitIfErrors(["Cannot set up first cluster node without the data service"])
 
-        #Set memory quota
-        msg = "Option required, but not specified when %s service enabled: %s"
-        if 'kv' in services.split(',') and not opts.data_mem_quota:
-            _exitIfErrors([msg % ("data", "--cluster-ramsize")])
-        elif 'index' in services.split(',') and not opts.index_mem_quota:
-            _exitIfErrors([msg % ("index", "--cluster-index-ramsize")])
-        elif 'fts' in services.split(',') and not opts.fts_mem_quota:
-            _exitIfErrors([msg % ("fts", "--cluster-fts-ramsize")])
-
-
-
-        _, errors = rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota,
+        if opts.data_mem_quota is not None or opts.index_mem_quota is not None or \
+            opts.fts_mem_quota is not None or opts.name is not None:
+            _, errors = rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota,
                                            opts.fts_mem_quota, opts.name)
         _exitIfErrors(errors)
 
