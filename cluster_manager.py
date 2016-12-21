@@ -687,9 +687,6 @@ class ClusterManager(object):
     def set_autofailover_settings(self, enabled, timeout):
         url = self.hostname + '/settings/autoFailover'
 
-        if timeout and timeout < 30:
-            return None, ["Timeout value must be at least 30 seconds"]
-
         params = dict()
         if enabled:
             params["enabled"] = enabled
