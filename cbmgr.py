@@ -94,6 +94,9 @@ def find_subcommands():
         subcommands.append((name, subclass[1]))
     return subcommands
 
+def _success(msg):
+    print "SUCCESS: " + msg
+
 def _deprecated(msg):
     print "DEPRECATED: " + msg
 
@@ -385,11 +388,11 @@ class AdminRoleManage(Subcommand):
         elif opts.set_users:
             data, errors = rest.setRoles(opts.set_users, opts.roles, opts.set_names)
             _exitIfErrors(errors)
-            print "SUCCESS: New users and roles added"
+            _success("New users and roles added")
         else:
             data, errors = rest.deleteRoles(opts.delete_users)
             _exitIfErrors(errors)
-            print "SUCCESS: Users deleted"
+            _success("Users deleted")
 
     @staticmethod
     def get_man_page_name():
@@ -486,7 +489,7 @@ class ClusterInit(Subcommand):
                                                opts.port)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Cluster initialized"
+        _success("Cluster initialized")
 
     @staticmethod
     def get_man_page_name():
@@ -524,7 +527,7 @@ class BucketCompact(Subcommand):
         _, errors = rest.compact_bucket(opts.bucket_name, opts.data_only, opts.view_only)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Bucket compaction started"
+        _success("Bucket compaction started")
 
     @staticmethod
     def get_man_page_name():
@@ -609,8 +612,7 @@ class BucketCreate(Subcommand):
                                        opts.enable_flush, conflict_resolution_type,
                                        opts.wait)
         _exitIfErrors(errors)
-
-        print "SUCCESS: Bucket created"
+        _success("Bucket created")
 
     @staticmethod
     def get_man_page_name():
@@ -642,7 +644,7 @@ class BucketDelete(Subcommand):
         _, errors = rest.delete_bucket(opts.bucket_name)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Bucket deleted"
+        _success("Bucket deleted")
 
     @staticmethod
     def get_man_page_name():
@@ -708,7 +710,7 @@ class BucketEdit(Subcommand):
                                      opts.enable_flush)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Bucket edited"
+        _success("Bucket edited")
 
     @staticmethod
     def get_man_page_name():
@@ -749,7 +751,7 @@ class BucketFlush(Subcommand):
         _, errors = rest.flush_bucket(opts.bucket_name)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Bucket flushed"
+        _success("Bucket flushed")
 
     @staticmethod
     def get_man_page_name():
@@ -847,7 +849,7 @@ class CollectLogsStart(Subcommand):
                                             opts.upload_customer, opts.upload_ticket)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Log collection started"
+        _success("Log collection started")
 
     @staticmethod
     def get_man_page_name():
@@ -918,7 +920,7 @@ class CollectLogsStop(Subcommand):
         _, errors = rest.collect_logs_stop()
         _exitIfErrors(errors)
 
-        print "SUCCESS: Log collection stopped"
+        _success("Log collection stopped")
 
     @staticmethod
     def get_man_page_name():
@@ -972,7 +974,7 @@ class Failover(Subcommand):
             if status[1]:
                 _exitIfErrors([status[1]])
 
-        print "SUCCESS: Server failed over"
+        _success("Server failed over")
 
     @staticmethod
     def get_man_page_name():
@@ -1036,14 +1038,14 @@ class GroupManage(Subcommand):
             _exitIfErrors(["--group-name is required with --create flag"])
         _, errors = rest.create_server_group(opts.name)
         _exitIfErrors(errors)
-        print "SUCCESS: Server group created"
+        _success("Server group created")
 
     def _delete(self, rest, opts):
         if opts.name is None:
             _exitIfErrors(["--group-name is required with --delete flag"])
         _, errors = rest.delete_server_group(opts.name)
         _exitIfErrors(errors)
-        print "SUCCESS: Server group deleted"
+        _success("Server group deleted")
 
     def _list(self, rest, opts):
         groups, errors = rest.get_server_groups()
@@ -1068,14 +1070,14 @@ class GroupManage(Subcommand):
         servers = opts.move_servers.split(",")
         _, errors = rest.move_servers_between_groups(servers, opts.from_group, opts.to_group)
         _exitIfErrors(errors)
-        print "SUCCESS: Servers moved between groups"
+        _success("Servers moved between groups")
 
     def _rename(self, rest, opts):
         if opts.name is None:
             _exitIfErrors(["--group-name is required with --rename option"])
         _, errors = rest.rename_server_group(opts.rename, opts.name)
         _exitIfErrors(errors)
-        print "SUCCESS: Server group renamed"
+        _success("Server group renamed")
 
     @staticmethod
     def get_man_page_name():
@@ -1141,7 +1143,7 @@ class NodeInit(Subcommand):
             _, errors = rest.set_hostname(opts.hostname)
             _exitIfErrors(errors)
 
-        print "SUCCESS: Node initialized"
+        _success("Node initialized")
 
     @staticmethod
     def get_man_page_name():
@@ -1193,7 +1195,7 @@ class Rebalance(Subcommand):
         if status[1]:
             _exitIfErrors([status[1]])
 
-        print "SUCCESS: Rebalance complete"
+        _success("Rebalance complete")
 
     @staticmethod
     def get_man_page_name():
@@ -1243,7 +1245,7 @@ class RebalanceStop(Subcommand):
         _, errors = rest.stop_rebalance()
         _exitIfErrors(errors)
 
-        print "SUCCESS: Rebalance stopped"
+        _success("Rebalance stopped")
 
     @staticmethod
     def get_man_page_name():
@@ -1277,7 +1279,7 @@ class Recovery(Subcommand):
             _, errors = rest.recovery(server, opts.recovery_type)
             _exitIfErrors(errors)
 
-        print "SUCCESS: Servers recovered"
+        _success("Servers recovered")
 
     @staticmethod
     def get_man_page_name():
@@ -1335,7 +1337,7 @@ class ServerAdd(Subcommand):
                                         opts.server_password, opts.services)
             _exitIfErrors(errors)
 
-        print "SUCCESS: Server added"
+        _success("Server added")
 
     @staticmethod
     def get_man_page_name():
@@ -1492,7 +1494,7 @@ class ServerReadd(Subcommand):
             _, errors = rest.readd_server(server)
             _exitIfErrors(errors)
 
-        print "SUCCESS: Servers recovered"
+        _success("Servers recovered")
 
     @staticmethod
     def get_man_page_name():
@@ -1606,7 +1608,7 @@ class SettingAlert(Subcommand):
                                             ",".join(alerts))
         _exitIfErrors(errors)
 
-        print "SUCCESS: Email alert settings modified"
+        _success("Email alert settings modified")
 
     @staticmethod
     def get_man_page_name():
@@ -1648,7 +1650,7 @@ class SettingAudit(Subcommand):
                                             opts.rotate_interval)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Audit settings modified"
+        _success("Audit settings modified")
 
     @staticmethod
     def get_man_page_name():
@@ -1690,7 +1692,7 @@ class SettingAutofailover(Subcommand):
         _, errors = rest.set_autofailover_settings(opts.enabled, opts.timeout)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Auto-failover settings modified"
+        _success("Auto-failover settings modified")
 
     @staticmethod
     def get_man_page_name():
@@ -1745,7 +1747,7 @@ class SettingCluster(Subcommand):
             _, errors = rest.set_admin_credentials(username, password, opts.port)
             _exitIfErrors(errors)
 
-        print "SUCCESS: Cluster settings modified"
+        _success("Cluster settings modified")
 
     @staticmethod
     def get_man_page_name():
@@ -1907,7 +1909,7 @@ class SettingCompaction(Subcommand):
                                                  opts.purge_interval)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Compaction settings modified"
+        _success("Compaction settings modified")
 
     @staticmethod
     def get_man_page_name():
@@ -1956,7 +1958,7 @@ class SettingIndex(Subcommand):
                                             opts.threads, opts.log_level)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Indexer settings modified"
+        _success("Indexer settings modified")
 
     @staticmethod
     def get_man_page_name():
@@ -2018,7 +2020,7 @@ class SettingLdap(Subcommand):
 
         _exitIfErrors(errors)
 
-        print "SUCCESS: LDAP settings modified"
+        _success("LDAP settings modified")
 
     @staticmethod
     def get_man_page_name():
@@ -2052,7 +2054,7 @@ class SettingNotification(Subcommand):
         _, errors = rest.enable_notifications(enabled)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Notification settings updated"
+        _success("Notification settings updated")
 
     @staticmethod
     def get_man_page_name():
@@ -2107,7 +2109,7 @@ class SettingXdcr(Subcommand):
                                               opts.stats_interval)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Global XDCR settings updated"
+        _success("Global XDCR settings updated")
 
     @staticmethod
     def get_man_page_name():
@@ -2151,7 +2153,7 @@ class SslManage(Subcommand):
             certificate, errors = rest.regenerate_cluster_certificate()
             _exitIfErrors(errors)
             _exit_on_file_write_failure(opts.regenerate, certificate)
-            print "SUCCESS: Certificate regenerate and copied to '%s'" % (opts.regenerate)
+            _success("Certificate regenerate and copied to '%s'" % (opts.regenerate))
         elif opts.cluster_cert is not None:
             certificate, errors = rest.retrieve_cluster_certificate(opts.extended)
             _exitIfErrors(errors)
@@ -2167,11 +2169,11 @@ class SslManage(Subcommand):
             certificate = _exit_on_file_read_failure(opts.upload_cert)
             _, errors = rest.upload_cluster_certificate(certificate)
             _exitIfErrors(errors)
-            print "SUCCESS: Uploaded cluster certificate to %s:%d" % (host, port)
+            success("Uploaded cluster certificate to %s:%d" % (host, port))
         elif opts.set_cert:
             _, errors = rest.set_node_certificate()
             _exitIfErrors(errors)
-            print "SUCCESS: Node certificate set"
+            _success("Node certificate set")
         else:
             _exitIfErrors(["No options specified"])
 
@@ -2228,7 +2230,7 @@ class UserManage(Subcommand):
 
         _, errors = rest.delete_local_read_only_user()
         _exitIfErrors(errors)
-        print "SUCCESS: Local read-only user deleted"
+        _success("Local read-only user deleted")
 
     def _list(self, rest, opts):
         if opts.ro_user is not None:
@@ -2256,7 +2258,7 @@ class UserManage(Subcommand):
 
         _, errors = rest.set_local_read_only_user(opts.ro_user, opts.ro_pass)
         _exitIfErrors(errors)
-        print "SUCCESS: Local read-only user created"
+        _success("Local read-only user created")
 
     @staticmethod
     def get_man_page_name():
@@ -2354,7 +2356,7 @@ class XdcrReplicate(Subcommand):
                                                  opts.rep_mode)
         _exitIfErrors(errors)
 
-        print "SUCCESS: XDCR replication created"
+        _success("XDCR replication created")
 
     def _delete(self, rest, opts):
         if opts.replicator_id is None:
@@ -2363,7 +2365,7 @@ class XdcrReplicate(Subcommand):
         _, errors = rest.delete_xdcr_replicator(opts.replicator_id)
         _exitIfErrors(errors)
 
-        print "SUCCESS: XDCR replication deleted"
+        _success("XDCR replication deleted")
 
     def _pause_resume(self, rest, opts):
         if opts.replicator_id is None:
@@ -2382,11 +2384,11 @@ class XdcrReplicate(Subcommand):
         if opts.pause:
             _, errors = rest.pause_xdcr_replication(opts.replicator_id)
             _exitIfErrors(errors)
-            print "SUCCESS: XDCR replication paused"
+            _success("XDCR replication paused")
         elif opts.resume:
             _, errors = rest.resume_xdcr_replication(opts.replicator_id)
             _exitIfErrors(errors)
-            print "SUCCESS: XDCR replication resume"
+            _success("XDCR replication resume")
 
     def _list(self, rest, opts):
         tasks, errors = rest.get_tasks()
@@ -2408,7 +2410,7 @@ class XdcrReplicate(Subcommand):
                                                   opts.stats_interval, opts.replicator_id)
         _exitIfErrors(errors)
 
-        print "SUCCESS: XDCR replicator settings updated"
+        _success("XDCR replicator settings updated")
 
     @staticmethod
     def get_man_page_name():
@@ -2489,12 +2491,12 @@ class XdcrSetup(Subcommand):
             _, errors = rest.create_xdcr_reference(opts.name, opts.hostname, opts.username,
                                                    opts.password, opts.encrypt, raw_cert)
             _exitIfErrors(errors)
-            print "SUCCESS: Cluster reference created"
+            _success("Cluster reference created")
         else:
             _, errors = rest.edit_xdcr_reference(opts.name, opts.hostname, opts.username,
                                                  opts.password, opts.encrypt, raw_cert)
             _exitIfErrors(errors)
-            print "SUCCESS: Cluster reference edited"
+            _success("Cluster reference edited")
 
     def _delete(self, rest, opts):
         if opts.name is None:
@@ -2503,7 +2505,7 @@ class XdcrSetup(Subcommand):
         _, errors = rest.delete_xdcr_reference(opts.name)
         _exitIfErrors(errors)
 
-        print "SUCCESS: Cluster reference deleted"
+        _success("Cluster reference deleted")
 
     def _list(self, rest, opts):
         clusters, errors = rest.list_xdcr_references()
