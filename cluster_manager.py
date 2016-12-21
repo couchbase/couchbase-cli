@@ -1,7 +1,9 @@
 """Management API's for Couchbase Cluster"""
 
-import requests
+
 import csv
+import json
+import requests
 import StringIO
 import time
 import urllib
@@ -43,7 +45,8 @@ class ServiceNotAvailableException(Exception):
 class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
-    def __init__(self, host, port, username, password, ssl=False, timeout=DEFAULT_REQUEST_TIMEOUT):
+    def __init__(self, host, port, username, password, ssl=False, debug=False,
+                 timeout=DEFAULT_REQUEST_TIMEOUT):
         if ssl:
             self.hostname = 'https://%s:%s' % (host, str(port))
         else:
@@ -53,6 +56,7 @@ class ClusterManager(object):
         self.password = password
         self.timeout = timeout
         self.ssl = ssl
+        self.debug = debug
 
     def n1ql_query(self, stmt, args=None):
         """Sends a N1QL query
@@ -1020,36 +1024,48 @@ class ClusterManager(object):
 
     @request
     def _get(self, url):
+        if self.debug:
+            print "GET %s" % url
         response = requests.get(url, auth=(self.username, self.password), verify=False,
                                 timeout=self.timeout)
-        return _handle_response(response)
+        return _handle_response(response, self.debug)
 
     @request
     def _post_form_encoded(self, url, params):
+        if self.debug:
+            print "POST %s %s" % (url, urllib.urlencode(params))
         response = requests.post(url, auth=(self.username, self.password), data=params,
                                  verify=False, timeout=self.timeout)
-        return _handle_response(response)
+        return _handle_response(response, self.debug)
 
     @request
     def _put(self, url, params):
+        if self.debug:
+            print "PUT %s %s" % (url, urllib.urlencode(params))
         response = requests.put(url, params, auth=(self.username, self.password),
                                 verify=False, timeout=self.timeout)
-        return _handle_response(response)
+        return _handle_response(response, self.debug)
 
     @request
     def _put_json(self, url, params):
+        if self.debug:
+            print "PUT %s %s" % (url, json.dumps(params))
         response = requests.put(url, auth=(self.username, self.password), json=params,
                                 verify=False, timeout=self.timeout)
-        return _handle_response(response)
+        return _handle_response(response, self.debug)
 
     @request
     def _delete(self, url, params):
+        if self.debug:
+            print "DELETE %s %s" % (url, urllib.urlencode(params))
         response = requests.delete(url, auth=(self.username, self.password),
                                    data=params, verify=False, timeout=self.timeout)
-        return _handle_response(response)
+        return _handle_response(response, self.debug)
 
 
-def _handle_response(response):
+def _handle_response(response, debug):
+    if debug:
+        print response.status_code, response.text
     if response.status_code in [200, 202]:
         if 'Content-Type' not in response.headers:
             return "", None

@@ -350,7 +350,7 @@ class AdminRoleManage(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.my_roles is None and opts.get_roles is None and \
@@ -433,7 +433,7 @@ class ClusterInit(Subcommand):
         # cluster is initialized and cluster-init cannot be run again.
 
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
 
         initialized, errors = rest.is_cluster_initialized()
         _exitIfErrors(errors)
@@ -512,7 +512,7 @@ class BucketCompact(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         bucket, errors = rest.get_bucket(opts.bucket_name)
@@ -572,7 +572,7 @@ class BucketCreate(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.type == "memcached":
@@ -633,7 +633,7 @@ class BucketDelete(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.get_bucket(opts.bucket_name)
@@ -679,7 +679,7 @@ class BucketEdit(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         bucket, errors = rest.get_bucket(opts.bucket_name)
@@ -733,7 +733,7 @@ class BucketFlush(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.get_bucket(opts.bucket_name)
@@ -769,7 +769,7 @@ class BucketList(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         result, errors = rest.list_buckets(extended=True)
@@ -818,7 +818,7 @@ class CollectLogsStart(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.nodes is None and opts.all_nodes is False:
@@ -867,7 +867,7 @@ class CollectLogsStatus(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         tasks, errors = rest.get_tasks()
@@ -912,7 +912,7 @@ class CollectLogsStop(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.collect_logs_stop()
@@ -943,7 +943,7 @@ class Failover(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.failover(opts.server_failover, opts.force)
@@ -1008,7 +1008,7 @@ class GroupManage(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
@@ -1095,7 +1095,7 @@ class HostList(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         result, errors = rest.pools('default')
         _exitIfErrors(errors)
 
@@ -1127,7 +1127,7 @@ class NodeInit(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         # Cluster does not need to be initialized for this command
 
         if opts.data_path is None and opts.index_path is None and opts.hostname is None:
@@ -1164,7 +1164,7 @@ class Rebalance(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         eject_nodes = []
@@ -1213,7 +1213,7 @@ class RebalanceStatus(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
         status, errors = rest.rebalance_status()
         _exitIfErrors(errors)
@@ -1238,7 +1238,7 @@ class RebalanceStop(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
         _, errors = rest.stop_rebalance()
         _exitIfErrors(errors)
@@ -1269,7 +1269,7 @@ class Recovery(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         servers = opts.servers.split(",")
@@ -1310,7 +1310,7 @@ class ServerAdd(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         enterprise, errors = rest.is_enterprise()
@@ -1360,7 +1360,7 @@ class ServerEshell(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         # Cluster does not need to be initialized for this command
 
         result, errors = rest.node_info()
@@ -1418,7 +1418,7 @@ class ServerInfo(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         # Cluster does not need to be initialized for this command
 
         result, errors = rest.node_info()
@@ -1444,7 +1444,7 @@ class ServerList(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         result, errors = rest.pools('default')
         _exitIfErrors(errors)
 
@@ -1484,7 +1484,7 @@ class ServerReadd(Subcommand):
         _deprecated("This command is deprecated and has been replaced by the " +
                     "recovery command")
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         servers = opts.servers.split(",")
@@ -1558,7 +1558,7 @@ class SettingAlert(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.enabled == "1":
@@ -1633,7 +1633,7 @@ class SettingAudit(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if not (opts.enabled or opts.log_path or opts.rotate_interval):
@@ -1673,7 +1673,7 @@ class SettingAutofailover(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.enabled == "1":
@@ -1724,7 +1724,7 @@ class SettingCluster(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or \
@@ -1804,7 +1804,7 @@ class SettingCompaction(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.db_perc is not None and (opts.db_perc < 2 or opts.db_perc > 100):
@@ -1942,7 +1942,7 @@ class SettingIndex(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.max_rollback is None and opts.stable_snap is None \
@@ -1986,7 +1986,7 @@ class SettingLdap(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         admins = ""
@@ -2041,7 +2041,7 @@ class SettingNotification(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
 
         enabled = None
         if opts.enabled == "1":
@@ -2097,7 +2097,7 @@ class SettingXdcr(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size,
@@ -2140,7 +2140,7 @@ class SslManage(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.regenerate is not None:
@@ -2204,7 +2204,7 @@ class UserManage(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         num_selectors = sum([opts.list, opts.delete, opts.set])
@@ -2326,7 +2326,7 @@ class XdcrReplicate(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         actions = sum([opts.create, opts.delete, opts.pause, opts.list, opts.resume,
@@ -2449,7 +2449,7 @@ class XdcrSetup(Subcommand):
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         actions = sum([opts.create, opts.delete, opts.edit, opts.list])
