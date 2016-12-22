@@ -1548,6 +1548,10 @@ class SettingAlert(Subcommand):
                            help="Alert when writing data to disk has failed")
         group.add_argument("--alert-audit-msg-dropped", dest="alert_audit_dropped",
                            action="store_true", help="Alert when writing event to audit log failed")
+        group.add_argument("--alert-indexer-max-ram", dest="alert_indexer_max_ram",
+                           action="store_true", help="Alert when indexer is using all of its allocated memory")
+        group.add_argument("--alert-timestamp-drift-exceeded", dest="alert_cas_drift",
+                           action="store_true", help="Alert when mutation timestamp drift exceeds threshold")
 
     def execute(self, opts):
         host, port = host_port(opts.cluster)
@@ -1587,6 +1591,10 @@ class SettingAlert(Subcommand):
             alerts.append('ep_item_commit_failed')
         if opts.alert_audit_dropped:
             alerts.append('audit_dropped_events')
+        if opts.alert_indexer_max_ram:
+            alerts.append('indexer_ram_max_usage')
+        if opts.alert_cas_drift:
+            alerts.append('ep_clock_cas_drift_threshold_exceeded')
 
         enabled = "true"
         if opts.enabled == "0":
