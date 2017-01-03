@@ -25,6 +25,9 @@ BUCKET_PRIORITY_LOW_STR = "low"
 BUCKET_TYPE_COUCHBASE = "membase"
 BUCKET_TYPE_MEMCACHED = "memcached"
 
+CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
+CB_CFG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "var", "lib", "couchbase"))
+
 def check_cluster_initialized(rest):
     """Checks to see if the cluster is initialized"""
     initialized, errors = rest.is_cluster_initialized()
@@ -1296,6 +1299,51 @@ class Recovery(Subcommand):
     @staticmethod
     def get_description():
         return "Recover one or more servers"
+
+
+class ResetAdminPassword(Subcommand):
+    """The reset admin password command"""
+
+    def __init__(self):
+        super(ResetAdminPassword, self).__init__(omit_username=True, omit_password=True)
+        self.parser.prog = "couchbase-cli reset-admin-password"
+        group = self.parser.add_argument_group("Reset password options")
+        group.add_argument("--new-password", dest="new_password", metavar="<password>",
+                           required=False, action=CBNonEchoedAction, envvar=None,
+                           prompt_text="Enter new administrator password:",
+                           help="The new administrator password")
+        group.add_argument("--regenerate", dest="regenerate", action="store_true",
+                           help="Generates a random administrator password")
+        group.add_argument("--config-path", dest="config_path", metavar="<path>",
+                           default=CB_CFG_PATH, help=SUPPRESS)
+
+    def execute(self, opts):
+        host, port = host_port(opts.cluster)
+
+        token = _exit_on_file_read_failure(opts.config_path + "localtoken").rstrip()
+        rest = ClusterManager(host, port, "@localtoken", token, opts.ssl, opts.debug)
+        check_cluster_initialized(rest)
+
+        if opts.new_password is not None and opts.regenerate == True:
+            _exitIfErrors(["Cannot specify both --new-password and --regenerate at the same time"])
+        elif opts.new_password is not None:
+            _, errors = rest.set_admin_password(opts.new_password)
+            _exitIfErrors(errors)
+            _success("Administrator password changed")
+        elif opts.regenerate:
+            result, errors = rest.regenerate_admin_password()
+            _exitIfErrors(errors)
+            print result["password"]
+        else:
+            _exitIfErrors(["No parameters specified"])
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-reset-admin-password" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Resets the administrator password"
 
 
 class ServerAdd(Subcommand):

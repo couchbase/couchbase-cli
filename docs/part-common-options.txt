@@ -1,7 +1,4 @@
--c::
---cluster::
-	Specfies the hostname of a node in the cluster. See the HOST FORMATS
-	section for more information on specifying a hostname.
+include::part-common-cluster.txt[]
 
 -u::
 --user <username>::

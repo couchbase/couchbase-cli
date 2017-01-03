@@ -150,6 +150,17 @@ class ClusterManager(object):
             url += '/' + pool
         return self._get(url)
 
+    def set_admin_password(self, password):
+        url = self.hostname + '/controller/resetAdminPassword'
+        params = { "password": password }
+
+        return self._post_form_encoded(url, params)
+
+    def regenerate_admin_password(self):
+        url = self.hostname + '/controller/resetAdminPassword?generate=1'
+
+        return self._post_form_encoded(url, None)
+
     def set_pools_default(self, data_ramsize, index_ramsize, fts_ramsize, cluster_name):
         """ Sets Couchbase RAM Quotas for various services
 
