@@ -1,5 +1,6 @@
 """A Couchbase  CLI subcommand"""
 
+import getpass
 import inspect
 import json
 import os
@@ -183,6 +184,22 @@ class CBEnvAction(Action):
         setattr(namespace, self.dest, values)
 
 
+class CBNonEchoedAction(CBEnvAction):
+    """Allows an argument to be specified by use of a non-echoed value passed through
+    stdin, through an environment variable, or as a value to the argument"""
+
+    def __init__(self, envvar, prompt_text="Enter password:", required=True,
+                 default=None, nargs='?', **kwargs):
+        self.prompt_text = prompt_text
+        super(CBNonEchoedAction, self).__init__(envvar, required=required, default=default,
+                                                nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values == None:
+            values = getpass.getpass("\n" + self.prompt_text)
+        super(CBNonEchoedAction, self).__call__(parser, namespace, values, option_string=None)
+
+
 class CBHelpAction(Action):
     """Allows the custom handling of the help command line argument"""
 
@@ -306,7 +323,7 @@ class Subcommand(Command):
                                metavar="<username>", help="The username for the Couchbase cluster")
         if not omit_password:
             group.add_argument("-p", "--password", dest="password", required=True,
-                               action=CBEnvAction, envvar='CB_REST_PASSWORD',
+                               action=CBNonEchoedAction, envvar='CB_REST_PASSWORD',
                                metavar="<password>", help="The password for the Couchbase cluster")
         group.add_argument("-o", "--output", dest="output", default="standard", metavar="<output>",
                            choices=["json", "standard"], help="The output type (json or standard)")
