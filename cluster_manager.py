@@ -161,6 +161,15 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, None)
 
+    def rotate_master_pwd(self):
+        url = self.hostname + '/node/controller/rotateDataKey'
+        return self._post_form_encoded(url, None)
+
+    def set_master_pwd(self, password):
+        url = self.hostname + '/node/controller/changeMasterPassword'
+        params = { "newPassword": password }
+        return self._post_form_encoded(url, params)
+
     def set_pools_default(self, data_ramsize, index_ramsize, fts_ramsize, cluster_name):
         """ Sets Couchbase RAM Quotas for various services
 

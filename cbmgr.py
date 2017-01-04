@@ -4,6 +4,7 @@ import getpass
 import inspect
 import json
 import os
+import platform
 import random
 import re
 import string
@@ -128,7 +129,7 @@ def _exit_on_file_read_failure(fname):
         rfile.close()
         return read_bytes
     except IOError, error:
-        _exitIfErrors([error])
+        _exitIfErrors([error.strerror + " `" + fname + "`"])
 
 class CLIHelpFormatter(HelpFormatter):
     """Format help with indented section bodies"""
@@ -1122,6 +1123,105 @@ class HostList(Subcommand):
     @staticmethod
     def get_description():
         return "List all hosts in a cluster"
+
+
+class MasterPassword(Subcommand):
+    """The master password subcommand"""
+
+    def __init__(self):
+        super(MasterPassword, self).__init__()
+        self.parser.prog = "couchbase-cli master-password"
+        group = self.parser.add_argument_group("Master password options")
+        group.add_argument("--new-password", dest="new_password", metavar="<password>",
+                           required=False, action=CBNonEchoedAction, envvar=None,
+                           prompt_text="Enter new master password:",
+                           help="Sets a new master password")
+        group.add_argument("--rotate-data-key", dest="rotate_data_key", action="store_true",
+                           help="Rotates the master password data key")
+        group.add_argument("--send-password", dest="send_password", metavar="<password>",
+                           required=False, action=CBNonEchoedAction, envvar=None,
+                           prompt_text="Enter master password:",
+                           help="Sends the master password to start the server")
+        group.add_argument("--config-path", dest="config_path", metavar="<path>",
+                           default=CB_CFG_PATH, help=SUPPRESS)
+
+    def execute(self, opts):
+        host, port = host_port(opts.cluster)
+        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+
+        if opts.new_password is not None:
+            _, errors = rest.set_master_pwd(opts.new_password)
+            _exitIfErrors(errors)
+            _success("New master password set")
+        elif opts.rotate_data_key == True:
+            _, errors = rest.rotate_master_pwd()
+            _exitIfErrors(errors)
+            _success("Data key rotated")
+        elif opts.send_password is not None:
+            path = [CB_BIN_PATH, os.environ['PATH']]
+            if os.name == 'posix':
+                os.environ['PATH'] = ':'.join(path)
+            else:
+                os.environ['PATH'] = ';'.join(path)
+
+            cookiefile = os.path.join(opts.config_path, "couchbase-server.cookie")
+            cookie = _exit_on_file_read_failure(cookiefile).rstrip()
+
+            nodefile = os.path.join(opts.config_path, "couchbase-server.babysitter.node")
+            node = _exit_on_file_read_failure(nodefile).rstrip()
+
+            self.prompt_for_master_pwd(node, cookie, opts.send_password)
+        else :
+            _exitIfErrors(["No parameters set"])
+
+    def prompt_for_master_pwd(self, node, cookie, password):
+        if password == '':
+            password = getpass.getpass("\nEnter master password:")
+        password = "\"" + password.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+        randChars = ''.join(random.choice(string.ascii_letters) for i in xrange(20))
+        name = 'cb-%s@127.0.0.1' % randChars
+
+        instr = "Res = rpc:call('" + node + "', encryption_service, set_password, [" \
+                + password + "]), io:format(\"~p~n\", [Res])."
+        args = ["-noinput", "-name", name, "-setcookie", cookie, "-eval", \
+                instr, "-run", "init", "stop"]
+
+        res, error = self.run_process("erl", args)
+        res = res.strip(' \t\n\r')
+
+        if res == "ok":
+            print "SUCCESS: Password accepted. Node started booting."
+        elif res == "retry":
+            print "Incorrect password."
+            self.prompt_for_master_pwd(node, cookie, '')
+        elif res == "{badrpc,nodedown}":
+            _exitIfErrors(["Either the node is down or password was already supplied"])
+        else:
+            _exitIfErrors(["Incorrect password. Node shuts down."])
+
+    def run_process(self, name, args):
+        try:
+            if platform.system() == 'Windows':
+                name = name + ".exe"
+
+            args.insert(0, name)
+            p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            output = p.stdout.read()
+            error = p.stderr.read()
+            p.wait()
+            rc = p.returncode
+            return output, error
+        except OSError:
+            _exitIfErrors(["Could not locate the %s executable" % name])
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-reset-admin-password" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Resets the administrator password"
 
 
 class NodeInit(Subcommand):
