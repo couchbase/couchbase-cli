@@ -33,13 +33,25 @@ details on how this parameter is set with cluster-init.
 OPTIONS
 -------
 
-include::part-common-options.txt[]
+-c::
+--cluster::
+	Specfies the hostname of the cluster to initialize. By default, this
+	parameter is set to localhost:8091 for this command. See the HOST FORMATS
+	section for more information on specifying a hostname.
 
 --cluster-username::
-	Specifies the username for the initial Couchbase administrator user.
+	When starting a new cluster you need to create the Couchbase administrator
+	user for the cluster. This user will be able to access the Couchbase
+	Administration Console as well as be used for data access and future
+	configuration. This option specifies the username for the administrator
+	user.
 
 --cluster-password::
-	Specifies the password for the initial Couchbase administrator user.
+	When starting a new cluster you need to create the Couchbase administrator
+	user for the cluster. This user will be able to access the Couchbase
+	Administration Console as well as be used for data access and future
+	configuration. This option specifies the password for the administrator
+	user.
 
 --cluster-ramsize::
 	Specifies the data services memory quota. This quota will be assigned to all

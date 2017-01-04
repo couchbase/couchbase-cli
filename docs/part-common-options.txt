@@ -1,18 +1,19 @@
 -c::
 --cluster::
-	Specfies the hostname of the cluster to initialize. See the HOST FORMATS
+	Specfies the hostname of a node in the cluster. See the HOST FORMATS
 	section for more information on specifying a hostname.
 
 -u::
 --user <username>::
-	When starting a new cluster you need to create a Couchbase user for the
-	cluster. This user account will be used to access the Couchbase
-	Administration Console as well as be used for data access and future
-	configuration. This option specifies the username for this new account.
+	Specifies the username of the user executing the command. If you do not have
+	a user account with permision to execute the command then it will fail with
+	an unauthorized error.
 
 -p::
 --password <password>::
-	When starting a new cluster you need to create a Couchbase user for the
-	cluster. This user account will be used to access the Couchbase
-	Administration Console as well as be used for data access and future
-	configuration. This option specifies the password for this new account.
+	Specifies the password of the user executing the command. If you do not have
+	a user account with permision to execute the command then it will fail with
+	an unauthorized error. If this argument is specified, but no password is
+	given then the command will prompt the user for a password through
+	non-echoed stdin. You may also specify your password by using the
+	environment variable CB_REST_PASSWORD.
