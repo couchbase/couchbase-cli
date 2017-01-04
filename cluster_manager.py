@@ -1062,6 +1062,8 @@ class ClusterManager(object):
     @request
     def _post_form_encoded(self, url, params):
         if self.debug:
+            if params is None:
+                params = {}
             print "POST %s %s" % (url, urllib.urlencode(params))
         response = requests.post(url, auth=(self.username, self.password), data=params,
                                  verify=False, timeout=self.timeout)
@@ -1070,6 +1072,8 @@ class ClusterManager(object):
     @request
     def _put(self, url, params):
         if self.debug:
+            if params is None:
+                params = {}
             print "PUT %s %s" % (url, urllib.urlencode(params))
         response = requests.put(url, params, auth=(self.username, self.password),
                                 verify=False, timeout=self.timeout)
@@ -1078,6 +1082,8 @@ class ClusterManager(object):
     @request
     def _put_json(self, url, params):
         if self.debug:
+            if params is None:
+                params = {}
             print "PUT %s %s" % (url, json.dumps(params))
         response = requests.put(url, auth=(self.username, self.password), json=params,
                                 verify=False, timeout=self.timeout)
@@ -1086,6 +1092,8 @@ class ClusterManager(object):
     @request
     def _delete(self, url, params):
         if self.debug:
+            if params is None:
+                params = {}
             print "DELETE %s %s" % (url, urllib.urlencode(params))
         response = requests.delete(url, auth=(self.username, self.password),
                                    data=params, verify=False, timeout=self.timeout)
