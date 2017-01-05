@@ -14,6 +14,10 @@ SYNOPSIS
 	  [--compaction-view-size <megabytes>] [--compaction-period-from <HH:MM>]
 	  [--compaction-period-to <HH:MM>] [--enable-compaction-abort <num>]
 	  [--enable-compaction-parallel <num>] [--metadata-purge-interval <num>]
+	  [--gsi-compaction-mode <mode>] [--compaction-gsi-percentage <percent>]
+	  [--compaction-gsi-interval <list_of_days>]
+	  [--compaction-gsi-period-from <HH:MM>]
+	  [--compaction-gsi-period-to <HH:MM>] [--enable-gsi-compaction-abort <1|0>]
 
 DESCRIPTION
 -----------
@@ -92,6 +96,63 @@ include::part-common-options.txt[]
 	disk that are more than 7 days old. The value of this option must be between
 	0.04 (1 hour) and 60 (days).
 
+--gsi-compaction-mode <mode>::
+	Specifies the strategy for compaction in GSI Indexes. This option may be set
+	to either append or circular. The append compaction strategy works by
+	creating a new index file, moving the active data to the new index file, and
+	then removing the old index file. This strategy will cause increased disk
+	usage during compaction, but will cause the new index file to be smaller
+	than the old one and as a result will free up disk space. The circular
+	compaction strategy uses the same file, but moves data around in the file to
+	create contigious free space which can be reused. This strategy uses no new
+	space during compaction, but the resulting file size will not be decreased
+	since the compacted file will result in a section of active data and free
+	space.
+
+--compaction-gsi-percentage <percent>::
+	Specifies that gsi compaction should be started when the fragmentation in an
+	index file has exceeded this percentage. This parameter only applies if the
+	append compaction mode is used.
+
+--compaction-gsi-interval <list_of_days>::
+	Specifies that gsi compaction should only run on the specified days. This
+	option takes a comma separated list of days where the name of the day is
+	capitalized. Accepted values are Monday, Tuesday, Wednesday, Thursday,
+	Friday, Saturday, and Sunday. If you only want compaction to run on Monday
+	and Tuesday then the value of this option should be set to "Monday,Tuesday".
+	This parameter only applies if circular compaction mode is used.
+
+--compaction-gsi-period-from <HH:MM>::
+	This option is unsed in conjunction with the --compaction-gsi-period-to
+	option and is used to specify a time period where gsi compaction is allowed
+	to run. You could for example specify that gsi compaction should only run
+	between midnight and 5AM each day by setting the gsi compaction from period
+	to "00:00" and the gsi compaction to period to "5:00". When setting the
+	value for this option you must use the format HH:MM when HH corresponds to
+	the hour and MM corresponds to the minute. If this option is not specified
+	then compaction will run at any time of the day. This parameter only
+	applies if circular compaction mode is used.
+
+--compaction-gsi-period-to <HH:MM>::
+	This option is unsed in conjunction with the --compaction-gsi-period-from
+	option and is used to specify a time period where gsi compaction is allowed
+	to run. You could for example specify that gsi compaction should only run
+	between midnight and 5AM each day by setting the gsi compaction from period
+	to "00:00" and the gsi compaction to period to "5:00". When setting the
+	value for this option you must use the format HH:MM when HH corresponds to
+	the hour and MM corresponds to the minute. If this option is not specified
+	then gsi compaction will run at any time of the day. This parameter only
+	applies if circular compaction mode is used.
+
+--enable-gsi-compaction-abort <1|0>::
+	If a gsi compaction from period and gsi compaction to period are specified
+	then this flag tells the server how to respond if a compaction starts during
+	the allowed gsi compaction interval and is still running after the allowed
+	interval has ended. If this option is set to "1" then the gsi compaction
+	will be aborted. If it is set to "0" then the gsi compaction will be allowed
+	to complete. By default this option is set to "0". This parameter only
+	applies if circular compaction mode is used.
+
 include::part-host-formats.txt[]
 
 EXAMPLES
@@ -138,6 +199,26 @@ the metadata purge interval to 2 days then we would run the following command.
 	 --password password --compaction-view-size 1024 --compaction-db-size 1024 \
 	 --compaction-view-percentage 30 --compaction-db-percentage 30 \
 	 --meta-data-purge-interval 2
+
+If you need to change the GSI index compaction settings to use the append
+compaction mode and want gsi compaction only to happen once your file is 50%
+fragmented specify the following command.
+
+	$ couchbase-cli setting-compaction -c 192.168.1.5 --username Administrator \
+	 --password password --gsi-compaction-mode append \
+	 --compaction-gsi-percentage 50
+
+If you want to change the GSI index compaction settings to use the circular
+compaction mode and want gsi compaction only to happen on Tuesdays and Thursdays
+between midnight and 3AM and don't want gsi compaction running outside of those
+time windows even if the compaction started at a valid time specify the
+following command.
+
+	$ couchbase-cli setting-compaction -c 192.168.1.5 --username Administrator \
+	 --password password --gsi-compaction-mode circular \
+	 --compaction-gsi-interval Tuesday,Thursday \
+	 --compaction-gsi-period-from 00:00 \
+	 --compaction-gsi-period-to 3:00 --enable-gsi-compaction-abort 1
 
 ENVIRONMENT AND CONFIGURATION VARIABLES
 ---------------------------------------
