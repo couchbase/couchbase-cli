@@ -1513,7 +1513,7 @@ class ServerEshell(Subcommand):
         group = self.parser.add_argument_group("Server eshell options")
         group.add_argument("--vm", dest="vm", default="ns_server", metavar="<name>",
                            help="The vm to connect to")
-        group.add_argument("--erl-path", dest="erl_path", metavar="<path>",
+        group.add_argument("--erl-path", dest="erl_path", metavar="<path>", default=CB_BIN_PATH,
                            help="Override the path to the erl executable")
 
     def execute(self, opts):
@@ -1543,15 +1543,12 @@ class ServerEshell(Subcommand):
         rand_chars = ''.join(random.choice(string.ascii_letters) for i in xrange(20))
         name = 'ctl-%s@127.0.0.1' % rand_chars
 
-        path = opts.erl_path
-        if opts.erl_path is None:
-            bin_dir = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '..', '..', 'bin')
-            cb_erl = os.path.join(bin_dir, 'erl')
-            if os.path.isfile(cb_erl):
-                path = cb_erl
-            else:
-                _warning("Cannot locate Couchbase erlang. Attempting to use non-Couchbase erlang")
-                path = 'erl'
+        cb_erl = os.path.join(opts.erl_path, 'erl')
+        if os.path.isfile(cb_erl):
+            path = cb_erl
+        else:
+            _warning("Cannot locate Couchbase erlang. Attempting to use non-Couchbase erlang")
+            path = 'erl'
 
         try:
             subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node])
