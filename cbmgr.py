@@ -160,6 +160,10 @@ class CBHostAction(Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         parsed = urlparse.urlparse(values)
+
+        if parsed.scheme == "":
+            parsed = urlparse.urlparse("http://" + values)
+
         if parsed.path != "" or parsed.params != "" or parsed.query != "" or parsed.fragment != "":
             raise ArgumentError(self, "%s is not an accepted hostname" % values)
 
@@ -176,10 +180,6 @@ class CBHostAction(Action):
                 port = 18091
             if scheme == "couchbases":
                 scheme = "https"
-        elif scheme == "":
-            if port == None:
-                port = 8091
-            scheme = "http"
         else:
             raise ArgumentError(self, "%s is not an accepted scheme" % scheme)
 
