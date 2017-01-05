@@ -27,6 +27,12 @@ BUCKET_TYPE_MEMCACHED = "memcached"
 
 CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
 CB_CFG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "var", "lib", "couchbase"))
+CB_MAN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "share", "man", "man1"))
+
+if os.name == "nt":
+    CB_MAN_PATH = os.path.join(CB_MAN_PATH, "html")
+else:
+    CB_MAN_PATH = os.path.join(CB_MAN_PATH, "man", "man1")
 
 def check_cluster_initialized(rest):
     """Checks to see if the cluster is initialized"""
@@ -211,11 +217,9 @@ class CBHelpAction(Action):
         base_path = os.path.dirname(exe_path)
 
         if os.name == "nt":
-            manpath = os.path.join(base_path, "..", "..", "share", "html")
-            call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(manpath, page)])
+            call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
         else:
-            manpath = os.path.join(base_path, "..", "..", "share", "man", "man1")
-            call(["man", os.path.join(manpath, page)])
+            call(["man", os.path.join(CB_MAN_PATH, page)])
 
 class CliParser(ArgumentParser):
 
