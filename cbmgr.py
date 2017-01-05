@@ -37,19 +37,6 @@ def check_cluster_initialized(rest):
     elif errors:
         _exitIfErrors(errors)
 
-def _show_man_page(page):
-    """Shows a manual page"""
-    exe_path = os.path.abspath(sys.argv[0])
-    base_path = os.path.dirname(exe_path)
-
-    if os.name == "nt":
-        manpath = os.path.join(base_path, "..", "..", "share", "html")
-        call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(manpath, page)])
-    else:
-        manpath = os.path.join(base_path, "..", "..", "share", "man", "man1")
-        call(["man", os.path.join(manpath, page)])
-    sys.exit(0)
-
 def host_port(url):
     "Splits a url into it's host and port"
 
