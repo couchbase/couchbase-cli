@@ -26,7 +26,7 @@ BUCKET_TYPE_MEMCACHED = "memcached"
 
 CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
 CB_CFG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "var", "lib", "couchbase"))
-CB_MAN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "share", "man", "man1"))
+CB_MAN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "share"))
 
 if os.name == "nt":
     CB_MAN_PATH = os.path.join(CB_MAN_PATH, "html")
