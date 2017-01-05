@@ -13,7 +13,6 @@ import time
 
 from argparse import ArgumentParser, HelpFormatter, Action, SUPPRESS
 from cluster_manager import ClusterManager
-from subprocess import call
 
 COUCHBASE_DEFAULT_PORT = 8091
 
