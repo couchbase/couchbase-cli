@@ -4,7 +4,6 @@ import getpass
 import inspect
 import json
 import os
-import platform
 import random
 import re
 import string
@@ -1189,7 +1188,7 @@ class MasterPassword(Subcommand):
 
     def run_process(self, name, args):
         try:
-            if platform.system() == 'Windows':
+            if os.name == "nt":
                 name = name + ".exe"
 
             args.insert(0, name)
