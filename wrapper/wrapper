@@ -7,6 +7,11 @@ lib="`pwd`"
 root="$lib/python"
 cd "$CWD"
 
+# We need to set COUCHBASE_TOP on OS X so that dependent executables can be
+# linked properly.
+COUCHBASE_TOP="$CWD/$D0/.."
+export COUCHBASE_TOP
+
 if test -z "$PYTHONPATH"
 then
    PYTHONPATH="$root"
