@@ -7,6 +7,7 @@ import requests
 import StringIO
 import time
 import urllib
+import urlparse
 
 MAX_LEN_PASSWORD = 24
 
@@ -45,12 +46,12 @@ class ServiceNotAvailableException(Exception):
 class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
-    def __init__(self, host, port, username, password, ssl=False, debug=False,
+    def __init__(self, hostname, username, password, ssl=False, debug=False,
                  timeout=DEFAULT_REQUEST_TIMEOUT):
-        if ssl:
-            self.hostname = 'https://%s:%s' % (host, str(port))
-        else:
-            self.hostname = 'http://%s:%s' % (host, str(port))
+        self.hostname = hostname
+        parsed = urlparse.urlparse(hostname)
+        if ssl and parsed.scheme == "http":
+            self.hostname = "https://" + parsed.hostname + ":18091"
 
         self.username = username
         self.password = password

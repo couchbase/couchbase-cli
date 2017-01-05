@@ -235,7 +235,8 @@ class CBSink(pump_mc.MCSink):
                             "; response: %s; err: %s") % (id, response, err)
             else:
                 stmts = sd.get('statements', [])
-                cm = cluster_manager.ClusterManager(spec_parts[0], spec_parts[1], user, pswd, opts.ssl)
+                hostname = 'http://' + spec_parts[0] + ':' + str(spec_parts[1])
+                cm = cluster_manager.ClusterManager(hostname, user, pswd, opts.ssl)
                 try:
                     for stmt in stmts:
                         result, errors = cm.n1ql_query(stmt['statement'], stmt.get('args', None))

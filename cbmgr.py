@@ -9,9 +9,10 @@ import re
 import string
 import subprocess
 import sys
+import urlparse
 import time
 
-from argparse import ArgumentParser, HelpFormatter, Action, SUPPRESS
+from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
 from cluster_manager import ClusterManager
 
 COUCHBASE_DEFAULT_PORT = 8091
@@ -40,15 +41,6 @@ def check_cluster_initialized(rest):
         _exitIfErrors(["Cluster is not initialized, use cluster-init to initialize the cluster"])
     elif errors:
         _exitIfErrors(errors)
-
-def host_port(url):
-    "Splits a url into it's host and port"
-
-    hostport = url.split(":", 1)
-    if len(hostport) == 1:
-        return hostport[0], COUCHBASE_DEFAULT_PORT
-
-    return url.split(":")[0], url.split(":")[1]
 
 def index_storage_mode_to_param(value):
     """Converts the index storage mode to what Couchbase understands"""
@@ -163,6 +155,37 @@ class CLIHelpFormatter(HelpFormatter):
                 return ','.join(parts) + ' ' +  args_string
 
 
+class CBHostAction(Action):
+    """Allows the handling of hostnames on the command line"""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parsed = urlparse.urlparse(values)
+        if parsed.path != "" or parsed.params != "" or parsed.query != "" or parsed.fragment != "":
+            raise ArgumentError(self, "%s is not an accepted hostname" % values)
+
+        scheme = parsed.scheme
+        port = parsed.port
+        hostname = parsed.hostname
+        if scheme in ["http", "couchbase"]:
+            if port == None:
+                port = 8091
+            if scheme == "couchbase":
+                scheme = "http"
+        elif scheme in ["https", "couchbases"]:
+            if port == None:
+                port = 18091
+            if scheme == "couchbases":
+                scheme = "https"
+        elif scheme == "":
+            if port == None:
+                port = 8091
+            scheme = "http"
+        else:
+            raise ArgumentError(self, "%s is not an accepted scheme" % scheme)
+
+        setattr(namespace, self.dest, (scheme + "://" + hostname + ":" + str(port)))
+
+
 class CBEnvAction(Action):
     """Allows the custom handling of environment variables for command line options"""
 
@@ -219,6 +242,7 @@ class CBHelpAction(Action):
             call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
         else:
             call(["man", os.path.join(CB_MAN_PATH, page)])
+
 
 class CliParser(ArgumentParser):
 
@@ -309,7 +333,8 @@ class Subcommand(Command):
         self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False)
         group = self.parser.add_argument_group("Cluster options")
         group.add_argument("-c", "--cluster", dest="cluster", required=True, metavar="<cluster>",
-                           default=cluster_default, help="The hostname of the Couchbase cluster")
+                           action=CBHostAction, default=cluster_default,
+                           help="The hostname of the Couchbase cluster")
         if not omit_username:
             group.add_argument("-u", "--username", dest="username", required=True,
                                action=CBEnvAction, envvar='CB_REST_USERNAME',
@@ -362,8 +387,7 @@ class AdminRoleManage(Subcommand):
                            help="A comma-delimited list of users to remove from access control")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.my_roles is None and opts.get_roles is None and \
@@ -445,8 +469,7 @@ class ClusterInit(Subcommand):
         # last REST API that is called because once that API succeeds the
         # cluster is initialized and cluster-init cannot be run again.
 
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
 
         initialized, errors = rest.is_cluster_initialized()
         _exitIfErrors(errors)
@@ -515,8 +538,7 @@ class BucketCompact(Subcommand):
                            help="Only compact the view files")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         bucket, errors = rest.get_bucket(opts.bucket_name)
@@ -575,8 +597,7 @@ class BucketCreate(Subcommand):
                            help="Wait for bucket creation to complete")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.type == "memcached":
@@ -635,8 +656,7 @@ class BucketDelete(Subcommand):
                            help="The name of bucket to delete")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.get_bucket(opts.bucket_name)
@@ -681,8 +701,7 @@ class BucketEdit(Subcommand):
                            choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         bucket, errors = rest.get_bucket(opts.bucket_name)
@@ -735,8 +754,7 @@ class BucketFlush(Subcommand):
                            help="Execute the command without asking to confirm")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.get_bucket(opts.bucket_name)
@@ -771,8 +789,7 @@ class BucketList(Subcommand):
         self.parser.prog = "couchbase-cli bucket-list"
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         result, errors = rest.list_buckets(extended=True)
@@ -820,8 +837,7 @@ class CollectLogsStart(Subcommand):
                            help="The ticket number the logs correspond to")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.nodes is None and opts.all_nodes is False:
@@ -869,8 +885,7 @@ class CollectLogsStatus(Subcommand):
         self.parser.prog = "couchbase-cli collect-logs-status"
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         tasks, errors = rest.get_tasks()
@@ -914,8 +929,7 @@ class CollectLogsStop(Subcommand):
         self.parser.prog = "couchbase-cli collect-logs-stop"
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.collect_logs_stop()
@@ -945,8 +959,7 @@ class Failover(Subcommand):
                            help="Hard failover the server")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.failover(opts.server_failover, opts.force)
@@ -1010,8 +1023,7 @@ class GroupManage(Subcommand):
                            help="The group to move servers to")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
@@ -1097,8 +1109,7 @@ class HostList(Subcommand):
         self.parser.prog = "couchbase-cli host-list"
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         result, errors = rest.pools('default')
         _exitIfErrors(errors)
 
@@ -1135,8 +1146,7 @@ class MasterPassword(Subcommand):
                            default=CB_CFG_PATH, help=SUPPRESS)
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
 
         if opts.new_password is not None:
             _, errors = rest.set_master_pwd(opts.new_password)
@@ -1228,8 +1238,7 @@ class NodeInit(Subcommand):
                            help="Sets the hostname for this server")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         # Cluster does not need to be initialized for this command
 
         if opts.data_path is None and opts.index_path is None and opts.hostname is None:
@@ -1265,8 +1274,7 @@ class Rebalance(Subcommand):
                            help="A list of servers to remove from the cluster")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         eject_nodes = []
@@ -1314,8 +1322,7 @@ class RebalanceStatus(Subcommand):
         self.parser.prog = "couchbase-cli rebalance-status"
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
         status, errors = rest.rebalance_status()
         _exitIfErrors(errors)
@@ -1339,8 +1346,7 @@ class RebalanceStop(Subcommand):
         self.parser.prog = "couchbase-cli rebalance-stop"
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
         _, errors = rest.stop_rebalance()
         _exitIfErrors(errors)
@@ -1370,8 +1376,7 @@ class Recovery(Subcommand):
                            help="The recovery type (delta or full)")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         servers = opts.servers.split(",")
@@ -1407,10 +1412,8 @@ class ResetAdminPassword(Subcommand):
                            default=CB_CFG_PATH, help=SUPPRESS)
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-
         token = _exit_on_file_read_failure(opts.config_path + "localtoken").rstrip()
-        rest = ClusterManager(host, port, "@localtoken", token, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, "@localtoken", token, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.new_password is not None and opts.regenerate == True:
@@ -1456,8 +1459,7 @@ class ServerAdd(Subcommand):
                            choices=["default", "memopt"], help="The index storage mode")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         enterprise, errors = rest.is_enterprise()
@@ -1506,8 +1508,7 @@ class ServerEshell(Subcommand):
                            help="Override the path to the erl executable")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         # Cluster does not need to be initialized for this command
 
         result, errors = rest.node_info()
@@ -1561,8 +1562,7 @@ class ServerInfo(Subcommand):
         self.parser.prog = "couchbase-cli server-info"
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         # Cluster does not need to be initialized for this command
 
         result, errors = rest.node_info()
@@ -1587,8 +1587,7 @@ class ServerList(Subcommand):
         self.parser.prog = "couchbase-cli server-list"
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         result, errors = rest.pools('default')
         _exitIfErrors(errors)
 
@@ -1627,8 +1626,7 @@ class ServerReadd(Subcommand):
     def execute(self, opts):
         _deprecated("This command is deprecated and has been replaced by the " +
                     "recovery command")
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         servers = opts.servers.split(",")
@@ -1705,8 +1703,7 @@ class SettingAlert(Subcommand):
                            action="store_true", help="Alert when mutation timestamp drift exceeds threshold")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.enabled == "1":
@@ -1784,8 +1781,7 @@ class SettingAudit(Subcommand):
                            metavar="<seconds>", help="The audit log rotate interval")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if not (opts.enabled or opts.log_path or opts.rotate_interval):
@@ -1824,8 +1820,7 @@ class SettingAutofailover(Subcommand):
                            type=(int), help="The auto-failover timeout")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.enabled == "1":
@@ -1875,8 +1870,7 @@ class SettingCluster(Subcommand):
         group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or \
@@ -1969,8 +1963,7 @@ class SettingCompaction(Subcommand):
                           help="Abort gsi compaction if when run outside of the accepted interaval (Circular mode only)")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.db_perc is not None and (opts.db_perc < 2 or opts.db_perc > 100):
@@ -2120,8 +2113,7 @@ class SettingIndex(Subcommand):
                            help="The indexer log level")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.max_rollback is None and opts.stable_snap is None \
@@ -2164,8 +2156,7 @@ class SettingLdap(Subcommand):
                            help="Enable/disable LDAP")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         admins = ""
@@ -2219,8 +2210,7 @@ class SettingNotification(Subcommand):
                            choices=["0", "1"], help="Enables/disable notifications")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
 
         enabled = None
         if opts.enabled == "1":
@@ -2275,8 +2265,7 @@ class SettingXdcr(Subcommand):
                            help="The interval for statistics updates (in milliseconds)")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         _, errors = rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size,
@@ -2318,8 +2307,7 @@ class SslManage(Subcommand):
                            default=False, help="Print extended certificate information")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         if opts.regenerate is not None:
@@ -2382,8 +2370,7 @@ class UserManage(Subcommand):
                            help="The read-only password")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         num_selectors = sum([opts.list, opts.delete, opts.set])
@@ -2504,8 +2491,7 @@ class XdcrReplicate(Subcommand):
                            help="The interval for statistics updates (in milliseconds)")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         actions = sum([opts.create, opts.delete, opts.pause, opts.list, opts.resume,
@@ -2627,8 +2613,7 @@ class XdcrSetup(Subcommand):
                            help="The certificate used for encryption")
 
     def execute(self, opts):
-        host, port = host_port(opts.cluster)
-        rest = ClusterManager(host, port, opts.username, opts.password, opts.ssl, opts.debug)
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
         actions = sum([opts.create, opts.delete, opts.edit, opts.list])
