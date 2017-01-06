@@ -373,7 +373,7 @@ class Subcommand(Command):
 
 
 class AdminRoleManage(Subcommand):
-    """The administrator role manage subcommand"""
+    """The administrator role manage subcommand (Deprecated)"""
 
     def __init__(self):
         super(AdminRoleManage, self).__init__()
@@ -395,6 +395,8 @@ class AdminRoleManage(Subcommand):
                            help="A comma-delimited list of users to remove from access control")
 
     def execute(self, opts):
+        # Deprecated in 5.0
+        _deprecated("Please use the user-manage command instead")
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
@@ -442,7 +444,7 @@ class AdminRoleManage(Subcommand):
 
     @staticmethod
     def get_description():
-        return "Set access-control roles for users"
+        return "Set access-control roles for users (Deprecated)"
 
 
 class ClusterInit(Subcommand):
