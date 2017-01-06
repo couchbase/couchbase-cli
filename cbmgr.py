@@ -1621,7 +1621,7 @@ class ServerList(Subcommand):
 
 
 class ServerReadd(Subcommand):
-    """The setting alert subcommand"""
+    """The server readd subcommand (Deprecated)"""
 
     def __init__(self):
         super(ServerReadd, self).__init__()
@@ -1638,8 +1638,7 @@ class ServerReadd(Subcommand):
                            help="The name of the server group")
 
     def execute(self, opts):
-        _deprecated("This command is deprecated and has been replaced by the " +
-                    "recovery command")
+        _deprecated("Please use the recovery command instead")
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
@@ -1657,6 +1656,11 @@ class ServerReadd(Subcommand):
     @staticmethod
     def get_description():
         return "Add failed server back to the cluster"
+
+    @staticmethod
+    def is_hidden():
+        # Deprecated command in 4.6, hidden in 5.0, pending removal
+        return True
 
 
 class SettingAlert(Subcommand):
@@ -1924,12 +1928,17 @@ class ClusterEdit(SettingCluster):
         self.parser.prog = "couchbase-cli cluster-edit"
 
     def execute(self, opts):
-        _warning("The cluster-edit command is depercated, use setting-cluster instead")
+        _deprecated("Please use the setting-cluster command instead")
         super(ClusterEdit, self).execute(opts)
 
     @staticmethod
     def get_man_page_name():
         return "couchbase-cli-cluster-edit" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def is_hidden():
+        # Deprecated command in 4.6, hidden in 5.0, pending removal
+        return True
 
 
 class SettingCompaction(Subcommand):
