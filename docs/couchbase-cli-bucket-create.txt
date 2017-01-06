@@ -14,7 +14,7 @@ SYNOPSIS
 	  [--bucket-ramsize <size>] [--bucket-replica <num>]
 	  [--bucket-priority <priority>] [--bucket-password <password>]
 	  [--bucket-eviction-policy <policy>] [--enable-flush <num>]
-	  [--enable-index-replica <num>] [--wait]
+	  [--enable-index-replica <num>] [--conflict-resolution <type>] [--wait]
 
 DESCRIPTION
 -----------
@@ -84,6 +84,23 @@ include::part-common-options.txt[]
 	replica index. To enable replica indexes set the value of this option to
 	"1". To disable replica indexes set the value of this option to "0". By
 	default replica indexes are disabled.
+
+--conflict-resolution <type>::
+	Specifies the conflict resolution mechanism used for this bucket. Conflict
+	resolution is used for resolving conflicts when using cross data center
+	replication (XDCR). Couchbase supports sequence and timestamp based conflict
+	resolution. Sequence based timestamp conflict resolution works by picking
+	the document that has been updated the most times. For example, if one
+	cluster has updated a document two times since the last sync and the other
+	cluster has updated the document three times then the document that was
+	updated three times will win conflict resolution regardless of the specific
+	time the updates took place. Timestamp resolution is based on the time that
+	a document was recieved. The latest document update will always win conflict
+	resolution if timestamp conflict resolution is specified. Keep in mind
+	however that if you use timestamp resolution that it is very important that
+	the clocks on all of the nodes in all of your clusters are synchronized as
+	precisely as possible. If they are not synchronized then you will experince
+	behavior with timestamp conflict resolution.
 
 --wait
 	The create bucket command is asynchronous by default. Specifying this flag
