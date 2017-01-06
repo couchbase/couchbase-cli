@@ -17,7 +17,8 @@ SYNOPSIS
 	  [--alert-auto-failover-node-down] [--alert-auto-failover-cluster-small]
 	  [--alert-auto-failover-disable] [--alert-ip-changed] [--alert-disk-space]
 	  [--alert-meta-overhead] [--alert-meta-oom] [--alert-write-failed]
-	  [--alert-audit-msg-dropped]
+	  [--alert-audit-msg-dropped] [--alert-indexer-max-ram]
+	  [--alert-timestamp-drift-exceeded]
 
 DESCRIPTION
 -----------
@@ -112,6 +113,16 @@ include::part-common-options.txt[]
 	Specifies that an email alert should be sent when writing event to audit log
 	fails.
 
+--alert-indexer-max-ram::
+	Specifies that an email alert should be sent when the memory usage for the
+	indexer service on a specific node exceeds the per node memory usage limit.
+	This warning is only shown for if the index storage type is Memory Optimized
+	Indexes (MOI).
+
+--alert-timestamp-drift-exceeded
+	Specifies that an email alert should be sent if the clocks on two different
+	machines in the cluster are more that five seconds apart.
+
 include::part-host-formats.txt[]
 
 EXAMPLES
@@ -139,7 +150,8 @@ following command below:
 	 --alert-auto-failover-max-reached --alert-auto-failover-node-down \
 	 --alert-auto-failover-cluster-small --alert-auto-failover-disable \
 	 --alert-ip-changed --alert-disk-space --alert-meta-overhead \
-	 --alert-meta-oom --alert-write-failed --alert-audit-msg-dropped
+	 --alert-meta-oom --alert-write-failed --alert-audit-msg-dropped \
+	 --alert-indexer-max-ram --alert-timestamp-drift-exceeded \
 
 To disable email alerts run the following command:
 

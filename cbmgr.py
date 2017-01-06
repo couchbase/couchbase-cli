@@ -1700,7 +1700,7 @@ class SettingAlert(Subcommand):
         group.add_argument("--alert-indexer-max-ram", dest="alert_indexer_max_ram",
                            action="store_true", help="Alert when indexer is using all of its allocated memory")
         group.add_argument("--alert-timestamp-drift-exceeded", dest="alert_cas_drift",
-                           action="store_true", help="Alert when mutation timestamp drift exceeds threshold")
+                           action="store_true", help="Alert when clocks on two servers are more than five seconds apart")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
