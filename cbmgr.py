@@ -423,11 +423,11 @@ class AdminRoleManage(Subcommand):
                            " name or '*']"])
 
         if opts.my_roles:
-            data, errors = rest.myRoles()
+            data, errors = rest.my_roles()
             _exitIfErrors(errors)
             print json.dumps(data, indent=2)
         elif opts.get_roles:
-            data, errors = rest.getRoles()
+            data, errors = rest.get_roles()
             _exitIfErrors(errors)
             print json.dumps(data, indent=2)
         elif opts.set_users:
@@ -2373,71 +2373,110 @@ class UserManage(Subcommand):
         super(UserManage, self).__init__()
         self.parser.prog = "couchbase-cli user-manage"
         group = self.parser.add_argument_group("User manage options")
-        group.add_argument("--list", dest="list", action="store_true", default=False,
-                           help="List the local read-only user")
         group.add_argument("--delete", dest="delete", action="store_true", default=False,
-                           help="Delete the local read-only user")
+                           help="Delete an existing RBAC user")
+        group.add_argument("--list", dest="list", action="store_true", default=False,
+                           help="List all RBAC users and their roles")
+        group.add_argument("--my-roles", dest="my_roles", action="store_true", default=False,
+                           help="List my roles")
         group.add_argument("--set", dest="set", action="store_true", default=False,
-                           help="Set the local read-only user")
-        group.add_argument("--ro-username", dest="ro_user", metavar="<username>",
-                           help="The read-only username")
-        group.add_argument("--ro-password", dest="ro_pass", metavar="<password>",
-                           help="The read-only password")
+                           help="Create a new RBAC user")
+        group.add_argument("--rbac-username", dest="rbac_user", metavar="<username>",
+                           help="The RBAC username")
+        group.add_argument("--rbac-password", dest="rbac_pass", metavar="<password>",
+                           help="The RBAC username")
+        group.add_argument("--rbac-name", dest="rbac_name", metavar="<name>",
+                           help="The RBAC password")
+        group.add_argument("--roles", dest="roles", metavar="<roles_list>",
+                           help="The roles for the specified user")
+        group.add_argument("--auth-type", dest="auth_type", metavar="<roles_list>",
+                           help="The authentication tpe for the specified user")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
-        num_selectors = sum([opts.list, opts.delete, opts.set])
+        num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set])
         if num_selectors == 0:
-            _exitIfErrors(["Must specify --delete, --list, or --set"])
+            _exitIfErrors(["Must specify --delete, --list, --my_roles or --set"])
         elif num_selectors != 1:
-            _exitIfErrors(["Only one of the following can be specified: --delete, --list, or --set"])
+            _exitIfErrors(["Only one of the following can be specified: --delete, --list, --my_roles or --set"])
 
         if opts.delete:
             self._delete(rest, opts)
         elif opts.list:
             self._list(rest, opts)
+        elif opts.my_roles:
+            self._my_roles(rest, opts)
         elif opts.set:
             self._set(rest, opts)
 
     def _delete(self, rest, opts):
-        if opts.ro_user is not None:
-            _warning("--ro-username is not used with the --delete command")
-        if opts.ro_pass is not None:
-            _warning("--ro-password is not used with the --delete command")
+        if opts.rbac_user is None:
+            _exitIfErrors(["--rbac-username is required with the --delete option"])
+        if opts.rbac_pass is not None:
+            _warning("--rbac-password is not used with the --delete option")
+        if opts.rbac_name is not None:
+            _warning("--rbac-name is not used with the --delete option")
+        if opts.roles is not None:
+            _warning("--roles is not used with the --delete option")
+        if opts.auth_type is None:
+            _exitIfErrors(["--auth-type is required with the --delete option"])
 
-        _, errors = rest.delete_local_read_only_user()
+        _, errors = rest.delete_rbac_user(opts.rbac_user, opts.auth_type)
         _exitIfErrors(errors)
-        _success("Local read-only user deleted")
+        _success("RBAC user removed")
 
     def _list(self, rest, opts):
-        if opts.ro_user is not None:
-            _warning("--ro-username is not used with the --list command")
-        if opts.ro_pass is not None:
-            _warning("--ro-password is not used with the --list command")
+        if opts.rbac_user is not None:
+            _warning("--rbac-username is not used with the --list option")
+        if opts.rbac_pass is not None:
+            _warning("--rbac-password is not used with the --list option")
+        if opts.rbac_name is not None:
+            _warning("--rbac-name is not used with the --list option")
+        if opts.roles is not None:
+            _warning("--roles is not used with the --list option")
+        if opts.auth_type is not None:
+            _warning("--auth-type is not used with the --list option")
 
-        result, errors = rest.list_local_read_only_user()
-        if errors and errors[0] == "Requested resource not found.\r\n":
-            errors[0] = "There is no internal read-only user"
+        result, errors = rest.list_rbac_users()
         _exitIfErrors(errors)
-        print result
+        print json.dumps(result, indent=2)
+
+    def _my_roles(self, rest, opts):
+        if opts.rbac_user is not None:
+            _warning("--rbac-username is not used with the --my-roles option")
+        if opts.rbac_pass is not None:
+            _warning("--rbac-password is not used with the --my-roles option")
+        if opts.rbac_name is not None:
+            _warning("--rbac-name is not used with the --my-roles option")
+        if opts.roles is not None:
+            _warning("--roles is not used with the --my-roles option")
+        if opts.auth_type is not None:
+            _warning("--auth-type is not used with the --my-roles option")
+
+        result, errors = rest.my_roles()
+        _exitIfErrors(errors)
+        print json.dumps(result, indent=2)
 
     def _set(self, rest, opts):
-        if opts.ro_user is None:
-            _exitIfErrors(["--ro-username is required with the --set command"])
-        if opts.ro_pass is None:
-            _exitIfErrors(["--ro-password is required with the --set command"])
+        if opts.rbac_user is None:
+            _exitIfErrors(["--rbac-username is required with the --set option"])
+        if opts.rbac_pass is None and opts.auth_type == "builtin":
+            _exitIfErrors(["--rbac-password is required with the --set option"])
+        if opts.rbac_pass is not None and opts.auth_type == "saslauthd":
+            _warning("--rbac-password is not used with the --set command")
+            opts.rbac_pass = None
+        if opts.rbac_name is None:
+            _exitIfErrors(["--rbac-name is requires with the --set option"])
+        if opts.roles is None:
+            _exitIfErrors(["--roles is required with the --set option"])
+        if opts.auth_type is None:
+            _exitIfErrors(["--auth-type is required with the --set option"])
 
-        cur_ro_user, errors = rest.list_local_read_only_user()
-        if not errors and cur_ro_user != opts.ro_user:
-            _exitIfErrors(["The internal read-only user already exists"])
-        elif errors and errors[0] != "Requested resource not found.\r\n":
-            _exitIfErrors(errors)
-
-        _, errors = rest.set_local_read_only_user(opts.ro_user, opts.ro_pass)
+        _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.roles, opts.auth_type)
         _exitIfErrors(errors)
-        _success("Local read-only user created")
+        _success("RBAC user set")
 
     @staticmethod
     def get_man_page_name():

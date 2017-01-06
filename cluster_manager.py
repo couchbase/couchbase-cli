@@ -711,19 +711,35 @@ class ClusterManager(object):
                 return group["uri"], None
         return None, ["Group `%s` not found" % name]
 
-    def delete_local_read_only_user(self):
-        url = self.hostname + '/settings/readOnlyUser'
+    def delete_rbac_user(self, username, auth_type):
+        url = self.hostname + '/settings/rbac/users/%s/%s' % (auth_type, username)
         return self._delete(url, None)
 
-    def list_local_read_only_user(self):
-        url = self.hostname + '/settings/readOnlyAdminName'
+    def list_rbac_users(self):
+        url = self.hostname + '/settings/rbac/users'
         return self._get(url)
 
-    def set_local_read_only_user(self, username, password):
-        url = self.hostname + '/settings/readOnlyUser'
-        params = { "username": username,
-                   "password": password }
-        return self._post_form_encoded(url, params)
+    def my_roles(self):
+        url = self.hostname + '/whoami'
+        return self._get(url)
+
+    def set_rbac_user(self, username, password, roles, auth_type):
+        if auth_type is None:
+            return None, ["The authentication type is required"]
+
+        if username is None:
+            return None, ["The username is required"]
+
+        url = self.hostname + '/settings/rbac/users/%s/%s' % (auth_type, username)
+
+        params = {}
+        if username is not None:
+            params["name"] = username
+        if password is not None:
+            params["password"] = password
+        if roles is not None:
+            params["roles"] = roles
+        return self._put(url, params)
 
     def set_audit_settings(self, enabled, log_path, rotate_interval):
         url = self.hostname + '/settings/audit'
@@ -921,18 +937,6 @@ class ClusterManager(object):
         return data, errors
 
         url = self.hostname + '/settings/rbac/users'
-        data, errors = self._get(url)
-
-        return data, errors
-
-    def getRoles(self):
-        url = self.hostname + '/settings/rbac/users'
-        data, errors = self._get(url)
-
-        return data, errors
-
-    def myRoles(self):
-        url = self.hostname + '/whoami'
         data, errors = self._get(url)
 
         return data, errors
