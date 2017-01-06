@@ -295,7 +295,10 @@ class CouchbaseCLI(Command):
         subparser = self.parser.add_subparsers(title="Commands", metavar="")
 
         for (name, klass) in find_subcommands():
-            subcommand = subparser.add_parser(name, help=klass.get_description())
+            if klass.is_hidden():
+                subcommand = subparser.add_parser(name)
+            else:
+                subcommand = subparser.add_parser(name, help=klass.get_description())
             subcommand.set_defaults(klass=klass)
 
         group = self.parser.add_argument_group("Options")
@@ -362,6 +365,11 @@ class Subcommand(Command):
     @staticmethod
     def get_description():
         return Command.get_description()
+
+    @staticmethod
+    def is_hidden():
+        """Whether or not the subcommand should be hidden from the help message"""
+        return False
 
 
 class AdminRoleManage(Subcommand):
@@ -522,6 +530,7 @@ class ClusterInit(Subcommand):
     @staticmethod
     def get_description():
         return "Initialize a Couchbase cluster"
+
 
 class BucketCompact(Subcommand):
     """The bucket compact subcommand"""
@@ -1552,6 +1561,11 @@ class ServerEshell(Subcommand):
     @staticmethod
     def get_description():
         return "Opens a shell to the Couchbase cluster manager"
+
+    @staticmethod
+    def is_hidden():
+        # Internal command not recommended for production use
+        return True
 
 
 class ServerInfo(Subcommand):
