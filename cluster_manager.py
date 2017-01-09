@@ -369,27 +369,62 @@ class ClusterManager(object):
         return self._post_form_encoded(url, params)
 
     def rebalance_status(self):
-        result, errors = self.get_tasks()
+        data, errors = self.get_tasks()
         if errors:
             return (None, None), errors
 
-        for task in result:
+        rv = {
+            "status": "unknown",
+            "msg": "unknown state",
+            "details": {}
+        }
+
+        for task in data:
             if task["type"] != "rebalance":
                 continue
 
             err_msg = None
             if "errorMessage" in task:
-                err_msg = task['errorMessage']
-            if task["status"] == "running":
-                return (task["status"], err_msg), None
-            if task["status"] == "notRunning":
+                rv["status"] = "errored"
+                rv["msg"] = task['errorMessage']
+                break
+            elif task["status"] == "running":
+                rv["status"] = task["status"]
+                rv["msg"] = "Rebalance is running"
+                rv["details"]["progress"] = task["progress"]
+                rv["details"]["refresh"] = task["recommendedRefreshPeriod"]
+                rv["details"]["totalBuckets"] = 0
+                rv["details"]["curBucket"] = 0
+                rv["details"]["curBucketName"] = ""
+
+                if "bucketsCount" in task["detailedProgress"]:
+                    rv["details"]["totalBuckets"] = task["detailedProgress"]["bucketsCount"]
+
+                if "bucketNumber" in task["detailedProgress"]:
+                    rv["details"]["curBucket"] = task["detailedProgress"]["bucketNumber"]
+
+                if "bucket" in task["detailedProgress"]:
+                    rv["details"]["curBucketName"] = task["detailedProgress"]["bucket"]
+
+                acc = 0
+                if "perNode" in task["detailedProgress"]:
+
+                    for _, node in task["detailedProgress"]["perNode"].iteritems():
+                        acc += node["ingoing"]["docsTotal"] - node["ingoing"]["docsTransferred"]
+                        acc += node["outgoing"]["docsTotal"] - node["outgoing"]["docsTransferred"]
+
+                rv["details"]["docsRemaining"] = acc
+            elif task["status"] == "notRunning":
+                rv["status"] = task["status"]
+                rv["msg"] = "Rebalance is not running"
                 if "statusIsStale" in task:
                     if task["statusIsStale"] or task["statusIsStale"] == "true":
-                        return ("unknown", err_msg), None
+                        rv["status"] = "stale"
+                        rv["msg"] = "Current status us stale, please retry"
 
-            return (task["status"], err_msg), None
+            break
 
-        return ("unknown", None), None
+        return rv, None
 
     def _get_otps_names(self, eject_nodes=[], failover_nodes=[], readd_nodes=[]):
         result, errors = self.pools('default')

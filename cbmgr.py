@@ -14,6 +14,7 @@ import time
 
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
 from cluster_manager import ClusterManager
+from pbar import RebalanceProgressBar
 
 COUCHBASE_DEFAULT_PORT = 8091
 
@@ -981,23 +982,10 @@ class Failover(Subcommand):
             _exitIfErrors(errors)
 
             time.sleep(1)
-            status, errors = rest.rebalance_status()
+
+            bar = RebalanceProgressBar(rest)
+            errors = bar.show()
             _exitIfErrors(errors)
-
-            sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-
-            newline = False
-            while status[0] in['running', 'unknown']:
-                print ".",
-                time.sleep(1)
-                status, errors = rest.rebalance_status()
-                _exitIfErrors(errors)
-                newline = True
-
-            if newline:
-                print "\n"
-            if status[1]:
-                _exitIfErrors([status[1]])
 
         _success("Server failed over")
 
@@ -1296,23 +1284,10 @@ class Rebalance(Subcommand):
         _exitIfErrors(errors)
 
         time.sleep(1)
-        status, errors = rest.rebalance_status()
+
+        bar = RebalanceProgressBar(rest)
+        errors = bar.show()
         _exitIfErrors(errors)
-
-        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-
-        newline = False
-        while status[0] in['running', 'unknown']:
-            print ".",
-            time.sleep(1)
-            status, errors = rest.rebalance_status()
-            _exitIfErrors(errors)
-            newline = True
-
-        if newline:
-            print "\n"
-        if status[1]:
-            _exitIfErrors([status[1]])
 
         _success("Rebalance complete")
 
@@ -1338,7 +1313,7 @@ class RebalanceStatus(Subcommand):
         status, errors = rest.rebalance_status()
         _exitIfErrors(errors)
 
-        print status[0], status[1]
+        print json.dumps(status, indent=2)
 
     @staticmethod
     def get_man_page_name():

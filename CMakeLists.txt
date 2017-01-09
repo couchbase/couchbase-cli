@@ -57,6 +57,7 @@ INSTALL(FILES
         cbsnappy.py
         cluster_manager.py
         couchbaseConstants.py
+        pbar.py
         pump.py
         pump_bfd.py
         pump_bson.py
