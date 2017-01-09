@@ -15,9 +15,9 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-DEPRECATED: This command is deprecated and will be removed in future releases.
-Please use the linkcbdoc:couchbase-recovery[1] subcommand which provides similar
-functionality to this command.
+DEPRECATED: This command was in 5.0.0 deprecated and will be removed in future
+releases. Please use the linkcbdoc:couchbase-cli-recovery[1] subcommand which
+provides similar functionality to this command.
 
 The server-readd subcommand is used to add a server back to the cluster. This
 operation is useful after a server is failed over and also when a server is

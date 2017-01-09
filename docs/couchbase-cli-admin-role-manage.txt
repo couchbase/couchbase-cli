@@ -16,6 +16,10 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+DEPRECATED: This command was in 5.0.0 deprecated and will be removed in future
+releases. Please use the linkcbdoc:couchbase-cli-user-manage[1] subcommand which
+provides similar functionality to this command.
+
 This command is used to manage LDAP user roles.
 
 OPTIONS
