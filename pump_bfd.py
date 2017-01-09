@@ -420,6 +420,23 @@ class BFDSource(BFD, pump.Source):
                         "; exception: %s") % (fname, e), None
         return 0, None
 
+    def get_conflict_resolution_type(self):
+        rv, files = BFDSource.list_files(self.opts, self.source_map['spec'],
+                                         self.source_bucket['name'],
+                                         self.source_node['hostname'],
+                                         "meta.json")
+        if rv != 0:
+            return "seqno"
+        try:
+            json_file = open(files[0], "r")
+            json_data = json.load(json_file)
+            json_file.close()
+            if "conflict_resolution_type" in json_data:
+                return json_data["conflict_resolution_type"]
+            return "seqno"
+        except IOError:
+            return "seqno"
+
     def provide_batch(self):
         if self.done:
             return 0, None
@@ -607,6 +624,11 @@ class BFDSink(BFD, pump.Sink):
                                                   self.bucket_name(),
                                                   self.node_name(),
                                                   self.mode)
+
+        confResType = "seqno"
+        if "conflictResolutionType" in self.source_bucket:
+            confResType = self.source_bucket["conflictResolutionType"]
+
         seqno_map = {}
         for i in range(BFD.NUM_VBUCKET):
             seqno_map[i] = 0
@@ -615,6 +637,12 @@ class BFDSink(BFD, pump.Sink):
                 rv, db, db_dir = self.create_db(cbb)
                 if rv != 0:
                     return self.future_done(future, rv)
+
+                meta_file = os.path.join(db_dir, "meta.json")
+                json_file = open(meta_file, "w")
+                toWrite = {'pred': dep, 'conflict_resolution_type': confResType}
+                json.dump(toWrite, json_file, ensure_ascii=False)
+                json_file.close()
 
             batch, future = self.pull_next_batch()
             if not batch:
@@ -628,11 +656,6 @@ class BFDSink(BFD, pump.Sink):
                 cbb += 1
                 cbb_bytes = 0
                 db_dir = None
-
-                meta_file = os.path.join(db_dir, "meta.json")
-                json_file = open(meta_file, "w")
-                json.dump({'pred': dep}, json_file, ensure_ascii=False)
-                json_file.close()
 
             if (self.bucket_name(), self.node_name()) in self.cur['failoverlog']:
                 BFD.write_json_file(db_dir,
@@ -760,29 +783,6 @@ class BFDSink(BFD, pump.Sink):
         if rv != 0:
             return rv, None, None
 
-        try:
-            import copy
-            tmp_map = copy.deepcopy(self.source_map)
-            if 'spec_parts' in tmp_map:
-                del tmp_map['spec_parts']
-            cur = db.cursor()
-            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("source_bucket.json",
-                         json.dumps(cleanse(self.source_bucket))))
-            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("source_node.json",
-                         json.dumps(cleanse(tmp_map))))
-            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("source_map.json",
-                         json.dumps(cleanse(self.source_map))))
-            cur.execute("INSERT INTO cbb_meta (key, val) VALUES (?, ?)",
-                        ("start.datetime", time.strftime("%Y/%m/%d-%H:%M:%S")))
-            db.commit()
-        except sqlite3.Error, e:
-            return "error: create_db error: " + str(e), None, None
-        except Exception, e:
-            return "error: create_db exception: " + str(e), None, None
-
         return 0, db, dir
 
     def mkdirs(self):
@@ -859,9 +859,6 @@ def create_db(db_path, opts):
                       dtype integer,
                       meta_size integer,
                       conf_res integer);
-                  CREATE TABLE cbb_meta
-                     (key text,
-                      val blob);
                   pragma user_version=%s;
                   COMMIT;
                 """ % (CBB_VERSION[2]))

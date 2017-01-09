@@ -51,8 +51,12 @@ class MCSink(pump.Sink):
         if opts.extra.get("try_xwm", 1):
             self.op_map = OP_MAP_WITH_META
         self.conflict_resolve = opts.extra.get("conflict_resolve", 1)
+        self.lww_restore = 0
         self.init_worker(MCSink.run)
         self.uncompress = opts.extra.get("uncompress", 0)
+
+        if self.get_conflict_resolution_type() == "lww":
+            self.lww_restore = 1
 
     def close(self):
         self.push_next_batch(None, None)
@@ -106,6 +110,13 @@ class MCSink(pump.Sink):
             self.future_done(future, 0)
 
         self.close_mconns(mconns)
+
+    def get_conflict_resolution_type(self):
+        bucket = self.sink_map["buckets"][0]
+        confResType = "seqno"
+        if "conflictResolutionType" in bucket:
+            confResType = bucket["conflictResolutionType"]
+        return confResType
 
     def close_mconns(self, mconns):
         for k, conn in mconns.items():
@@ -349,7 +360,9 @@ class MCSink(pump.Sink):
 
             force = 0
             if int(self.conflict_resolve) == 0:
-                force = 1
+                force |= 1
+            if int(self.lww_restore) == 1:
+                force |= 2
             if meta:
                 try:
                     ext = struct.pack(">IIQQI", flg, exp, int(str(meta)), cas, force)

@@ -112,6 +112,7 @@ class CSVSink(pump.Sink):
                  source_map, sink_map, ctl, cur):
         super(CSVSink, self).__init__(opts, spec, source_bucket, source_node,
                                       source_map, sink_map, ctl, cur)
+        self.csvfile = None
         self.writer = None
         self.fields = None
 
@@ -157,7 +158,7 @@ class CSVSink(pump.Sink):
 
     def consume_batch_async(self, batch):
         if not self.writer:
-            csvfile = sys.stdout
+            self.csvfile = sys.stdout
             if self.spec.startswith(CSVSink.CSV_JSON_SCHEME):
                 if len(batch.msgs) <= 0:
                     future = pump.SinkBatchFuture(self, batch)
@@ -172,20 +173,20 @@ class CSVSink(pump.Sink):
                 if self.spec.endswith(".csv"):
                     filename = self.get_csvfile(self.spec[len(CSVSink.CSV_JSON_SCHEME):])
                     try:
-                        csvfile = open(filename, "wb")
+                        self.csvfile = open(filename, "wb")
                     except IOError, e:
                         return ("error: could not write csv to file:%s" % filename), None
-                self.writer = csv.writer(csvfile)
+                self.writer = csv.writer(self.csvfile)
                 self.writer.writerow(self.fields)
             else:
                 if self.spec.endswith(".csv"):
                     filename = self.get_csvfile(self.spec[len(CSVSink.CSV_SCHEME):])
                     try:
-                        csvfile = open(filename, "wb")
+                        self.csvfile = open(filename, "wb")
                     except IOError, e:
                         return ("error: could not write csv to file:%s" % \
                                filename), None
-                self.writer = csv.writer(csvfile)
+                self.writer = csv.writer(self.csvfile)
                 self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev', 'vbid', 'dtype'])
         msg_tuple_format = 0
         for msg in batch.msgs:
@@ -234,6 +235,11 @@ class CSVSink(pump.Sink):
         future = pump.SinkBatchFuture(self, batch)
         self.future_done(future, 0)
         return 0, future
+
+    def close(self):
+        if self.csvfile is not None and self.csvfile != sys.stdout:
+            self.csvfile.close()
+            self.csvfile = None
 
     def get_csvfile(self, base):
         extension = os.path.splitext(base)
