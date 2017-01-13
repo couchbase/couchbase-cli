@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'couchbase-cli failover' [--cluster <url>] [--username <user>]
 	  [--password <password>][--server-failover <server_list>] [--force]
+	  [--no-progress-bar] [--no-wait]
 
 DESCRIPTION
 -----------
@@ -39,6 +40,18 @@ include::part-common-options.txt[]
 	failover will occur only once replication is up to date. This means there
 	will be no data loss, but the failover is not immediate. Note that if a
 	server is already down you must hard fail it over.
+
+--no-progress-bar::
+	Disables showing the progress bar which tracks the progress of the
+	rebalance. Note that a rebalance only occurs for graceful failovers (eg.
+	non-forced failovers). The failover command will still wait for rebalance
+	completion even if this flag is specified, but the progress bar will not
+	be shown.
+
+--no-wait::
+	Specifies that this command should not wait for the completion of rebalance
+	before exiting. Note that a rebalance only occurs for graceful failovers
+	(eg. non-forced failovers).
 
 include::part-host-formats.txt[]
 

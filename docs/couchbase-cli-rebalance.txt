@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'couchbase-cli rebalance' [--cluster <url>] [--username <user>]
-	  [--password <password>] [--server-remove <servers>]
+	  [--password <password>] [--server-remove <servers>] [--no-progress-bar]
+	  [--no-wait]
 
 DESCRIPTION
 -----------
@@ -36,6 +37,15 @@ include::part-common-options.txt[]
 	A comma separated list of servers to remove from the cluster. The each
 	server in the list should correspond to the hostname or IP address of that
 	server.
+
+--no-progress-bar::
+	Disables showing the progress bar which tracks the progress of the
+	rebalance. This command will still wait for rebalance completion even if
+	this flag is specified, but the progress bar will not be shown.
+
+--no-wait::
+	Specifies that this command should not wait for the completion of rebalance
+	before exiting.
 
 include::part-host-formats.txt[]
 

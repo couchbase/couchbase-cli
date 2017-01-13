@@ -969,6 +969,10 @@ class Failover(Subcommand):
                            required=True, help="The server to failover")
         group.add_argument("--force", dest="force", action="store_true",
                            help="Hard failover the server")
+        group.add_argument("--no-progress-bar", dest="no_bar", action="store_true",
+                           default=False, help="Disables the progress bar")
+        group.add_argument("--no-wait", dest="wait", action="store_false",
+                           default=True, help="Don't wait for rebalance completion")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
@@ -983,11 +987,16 @@ class Failover(Subcommand):
 
             time.sleep(1)
 
-            bar = RebalanceProgressBar(rest)
-            errors = bar.show()
-            _exitIfErrors(errors)
+            if opts.wait:
+                bar = RebalanceProgressBar(rest, opts.no_bar)
+                errors = bar.show()
+                _exitIfErrors(errors)
+                _success("Server failed over")
+            else:
+                _success("Server failed over started")
 
-        _success("Server failed over")
+        else:
+            _success("Server failed over")
 
     @staticmethod
     def get_man_page_name():
@@ -1271,6 +1280,10 @@ class Rebalance(Subcommand):
         group = self.parser.add_argument_group("Rebalance options")
         group.add_argument("--server-remove", dest="server_remove", metavar="<server_list>",
                            help="A list of servers to remove from the cluster")
+        group.add_argument("--no-progress-bar", dest="no_bar", action="store_true",
+                           default=False, help="Disables the progress bar")
+        group.add_argument("--no-wait", dest="wait", action="store_false",
+                           default=True, help="Don't wait for rebalance completion")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.debug)
@@ -1285,11 +1298,13 @@ class Rebalance(Subcommand):
 
         time.sleep(1)
 
-        bar = RebalanceProgressBar(rest)
-        errors = bar.show()
-        _exitIfErrors(errors)
-
-        _success("Rebalance complete")
+        if opts.wait:
+            bar = RebalanceProgressBar(rest, opts.no_bar)
+            errors = bar.show()
+            _exitIfErrors(errors)
+            _success("Rebalance complete")
+        else:
+            _success("Rebalance started")
 
     @staticmethod
     def get_man_page_name():
