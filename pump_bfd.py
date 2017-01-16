@@ -656,6 +656,7 @@ class BFDSink(BFD, pump.Sink):
                 cbb += 1
                 cbb_bytes = 0
                 db_dir = None
+                continue
 
             if (self.bucket_name(), self.node_name()) in self.cur['failoverlog']:
                 BFD.write_json_file(db_dir,
