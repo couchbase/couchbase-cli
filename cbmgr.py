@@ -215,15 +215,20 @@ class CBNonEchoedAction(CBEnvAction):
     """Allows an argument to be specified by use of a non-echoed value passed through
     stdin, through an environment variable, or as a value to the argument"""
 
-    def __init__(self, envvar, prompt_text="Enter password:", required=True,
-                 default=None, nargs='?', **kwargs):
+    def __init__(self, envvar, prompt_text="Enter password:", confirm_text=None,
+                 required=True, default=None, nargs='?', **kwargs):
         self.prompt_text = prompt_text
+        self.confirm_text = confirm_text
         super(CBNonEchoedAction, self).__init__(envvar, required=required, default=default,
                                                 nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         if values == None:
-            values = getpass.getpass("\n" + self.prompt_text)
+            values = getpass.getpass(self.prompt_text)
+            if self.confirm_text is not None:
+                confirm = getpass.getpass(self.prompt_text)
+                if values != confirm:
+                    raise ArgumentError(self, "Passwords entered do not match, please retry")
         super(CBNonEchoedAction, self).__call__(parser, namespace, values, option_string=None)
 
 
@@ -1160,6 +1165,7 @@ class MasterPassword(Subcommand):
         group.add_argument("--new-password", dest="new_password", metavar="<password>",
                            required=False, action=CBNonEchoedAction, envvar=None,
                            prompt_text="Enter new master password:",
+                           confirm_text="Confirm new master password:",
                            help="Sets a new master password")
         group.add_argument("--rotate-data-key", dest="rotate_data_key", action="store_true",
                            help="Rotates the master password data key")
@@ -1423,6 +1429,7 @@ class ResetAdminPassword(Subcommand):
         group.add_argument("--new-password", dest="new_password", metavar="<password>",
                            required=False, action=CBNonEchoedAction, envvar=None,
                            prompt_text="Enter new administrator password:",
+                           confirm_text="Confirm new administrator password:",
                            help="The new administrator password")
         group.add_argument("--regenerate", dest="regenerate", action="store_true",
                            help="Generates a random administrator password")
