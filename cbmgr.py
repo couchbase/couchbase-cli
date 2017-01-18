@@ -156,6 +156,14 @@ class CLIHelpFormatter(HelpFormatter):
                 return ','.join(parts) + ' ' +  args_string
 
 
+class CBDeprecatedAction(Action):
+    """Indicates that a specific option is deprecated"""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        _deprecated('Specifying ' + '/'.join(self.option_strings) + ' is deprecated')
+        setattr(namespace, self.dest, values)
+
+
 class CBHostAction(Action):
     """Allows the handling of hostnames on the command line"""
 
@@ -332,21 +340,30 @@ class CouchbaseCLI(Command):
 class Subcommand(Command):
     """A Couchbase CLI Subcommand"""
 
-    def __init__(self, omit_username=False, omit_password=False, cluster_default=None):
+    def __init__(self, deprecate_username=False, deprecate_password=False, cluster_default=None):
         super(Subcommand, self).__init__()
         self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False)
         group = self.parser.add_argument_group("Cluster options")
         group.add_argument("-c", "--cluster", dest="cluster", required=True, metavar="<cluster>",
                            action=CBHostAction, default=cluster_default,
                            help="The hostname of the Couchbase cluster")
-        if not omit_username:
+
+        if deprecate_username:
+            group.add_argument("-u", "--username", dest="username",
+                               action=CBDeprecatedAction, help=SUPPRESS)
+        else:
             group.add_argument("-u", "--username", dest="username", required=True,
                                action=CBEnvAction, envvar='CB_REST_USERNAME',
                                metavar="<username>", help="The username for the Couchbase cluster")
-        if not omit_password:
+
+        if deprecate_password:
+            group.add_argument("-p", "--password", dest="password",
+                               action=CBDeprecatedAction, help=SUPPRESS)
+        else:
             group.add_argument("-p", "--password", dest="password", required=True,
                                action=CBNonEchoedAction, envvar='CB_REST_PASSWORD',
                                metavar="<password>", help="The password for the Couchbase cluster")
+
         group.add_argument("-o", "--output", dest="output", default="standard", metavar="<output>",
                            choices=["json", "standard"], help="The output type (json or standard)")
         group.add_argument("-d", "--debug", dest="debug", action="store_true",
