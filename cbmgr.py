@@ -2774,13 +2774,13 @@ class XdcrSetup(Subcommand):
             raw_cert = _exit_on_file_read_failure(opts.certificate)
 
         if opts.create:
-            _, errors = rest.create_xdcr_reference(opts.name, opts.hostname, opts.username,
-                                                   opts.password, opts.encrypt, raw_cert)
+            _, errors = rest.create_xdcr_reference(opts.name, opts.hostname, opts.r_username,
+                                                   opts.r_password, opts.encrypt, raw_cert)
             _exitIfErrors(errors)
             _success("Cluster reference created")
         else:
-            _, errors = rest.edit_xdcr_reference(opts.name, opts.hostname, opts.username,
-                                                 opts.password, opts.encrypt, raw_cert)
+            _, errors = rest.edit_xdcr_reference(opts.name, opts.hostname, opts.r_username,
+                                                 opts.r_password, opts.encrypt, raw_cert)
             _exitIfErrors(errors)
             _success("Cluster reference edited")
 
