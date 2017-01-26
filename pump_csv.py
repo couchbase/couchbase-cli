@@ -12,6 +12,10 @@ import couchbaseConstants
 import pump
 import cbsnappy as snappy
 
+# Our max document size is 20MB, but let's make this extra large in case the
+# are spaces and such that can be removed before sending to Couchbase.
+csv.field_size_limit(100 * 1024 * 1024)
+
 def number_try_parse(s):
     for func in (int, float):
         try:
