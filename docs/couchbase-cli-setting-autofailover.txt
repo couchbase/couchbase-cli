@@ -41,7 +41,8 @@ include::part-common-options.txt[]
 --auto-failover-timeout <seconds>::
 	Specifies the auto-failover timeout. This is the amount of time a node must
 	be unresponsive before the cluster manager considers the node to be down and
-	fails it over. The minimum auto-failover timeout is 30 seconds.
+	fails it over. The minimum auto-failover timeout is 30 seconds in Couchbase
+	Community Edition and 5 seconds in Couchbase Enterprise Edition.
 
 include::part-host-formats.txt[]
 
