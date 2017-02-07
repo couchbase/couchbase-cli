@@ -616,8 +616,8 @@ class BucketCreate(Subcommand):
         group.add_argument("--bucket", dest="bucket_name", metavar="<name>", required=True,
                            help="The name of bucket to create")
         group.add_argument("--bucket-type", dest="type", metavar="<type>", required=True,
-                           choices=["couchbase", "memcached"],
-                           help="The bucket type (memcached or couchbase)")
+                           choices=["couchbase", "ephemeral", "memcached"],
+                           help="The bucket type (couchbase, ephemeral, or memcached)")
         group.add_argument("--bucket-ramsize", dest="memory_quota", metavar="<quota>", type=(int),
                            required=True, help="The amount of memory to allocate the bucket")
         group.add_argument("--bucket-replica", dest="replica_count", metavar="<num>",
@@ -657,6 +657,11 @@ class BucketCreate(Subcommand):
                 _exitIfErrors(["--bucket-priority cannot be specified for a memcached bucket"])
             if opts.eviction_policy is not None:
                 _exitIfErrors(["--bucket-eviction-policy cannot be specified for a memcached bucket"])
+        elif opts.type == "ephemeral":
+            if opts.priority is not None:
+                _exitIfErrors(["--bucket-priority cannot be specified for a ephemeral bucket"])
+            if opts.eviction_policy is not None:
+                _exitIfErrors(["--bucket-eviction-policy cannot be specified for a ephemeral bucket"])
 
         priority = None
         if opts.priority is not None:
