@@ -12,22 +12,10 @@ import datetime
 import time
 import urllib
 import fnmatch
+import sqlite3
 
 import couchbaseConstants
 import pump
-
-import_stmts = (
-    'from pysqlite2 import dbapi2 as sqlite3',
-    'import sqlite3',
-)
-for status, stmt in enumerate(import_stmts):
-    try:
-        exec stmt
-        break
-    except ImportError:
-        status = None
-if status is None:
-    sys.exit("Error: could not import sqlite3 module")
 
 CBB_VERSION = [2004, 2014, 2015] # sqlite pragma user version.
 

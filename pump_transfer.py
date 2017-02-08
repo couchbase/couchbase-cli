@@ -5,6 +5,7 @@ import logging
 import optparse
 import os
 import random
+import sqlite3
 import string
 import sys
 import threading
@@ -19,19 +20,6 @@ import pump_tap
 import pump_dcp
 
 from pump import PumpingStation
-
-import_stmts = (
-    'from pysqlite2 import dbapi2 as sqlite3',
-    'import sqlite3',
-)
-for status, stmt in enumerate(import_stmts):
-    try:
-        exec stmt
-        break
-    except ImportError:
-        status = None
-if status is None:
-    sys.exit("Error: could not import sqlite3 module")
 
 def exit_handler(err):
     if err:
