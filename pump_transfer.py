@@ -24,9 +24,9 @@ from pump import PumpingStation
 def exit_handler(err):
     if err:
         sys.stderr.write(str(err) + "\n")
-        os._exit(1)
+        sys.exit(1)
     else:
-        os._exit(0)
+        sys.exit(0)
 
 class Transfer:
     """Base class for 2.0 Backup/Restore/Transfer."""
