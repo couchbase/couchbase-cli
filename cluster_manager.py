@@ -83,6 +83,17 @@ class ClusterManager(object):
         self.ssl = self.hostname.startswith("https://")
         self.debug = debug
 
+    def restore_index_metadata(self, bucket, index_defs):
+        hosts, errors = self.get_hostnames_for_service(INDEX_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(INDEX_SERVICE)
+
+        url = hosts[0] + '/restoreIndexMetadata?bucket=%s' % bucket
+        return self._post_json(url, index_defs)
+
     def n1ql_query(self, stmt, args=None):
         """Sends a N1QL query
 
@@ -1139,6 +1150,16 @@ class ClusterManager(object):
                 params = {}
             print "POST %s %s" % (url, urllib.urlencode(params))
         response = requests.post(url, auth=(self.username, self.password), data=params,
+                                 cert=self.cert, verify=self.verifyCert, timeout=self.timeout)
+        return _handle_response(response, self.debug)
+
+    @request
+    def _post_json(self, url, params):
+        if self.debug:
+            if params is None:
+                params = {}
+            print "POST %s %s" % (url, json.dumps(params))
+        response = requests.post(url, auth=(self.username, self.password), json=params,
                                  cert=self.cert, verify=self.verifyCert, timeout=self.timeout)
         return _handle_response(response, self.debug)
 

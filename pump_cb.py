@@ -8,7 +8,8 @@ import urllib
 import couchbaseConstants
 import pump
 import pump_mc
-import cluster_manager
+
+from cluster_manager import ClusterManager, ServiceNotAvailableException
 
 
 class CBSink(pump_mc.MCSink):
@@ -151,10 +152,10 @@ class CBSink(pump_mc.MCSink):
         return rv
 
     @staticmethod
-    def consume_index(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_design):
+    def consume_index(opts, sink_spec, sink_map, source_bucket, source_map, source_design):
         if not source_design:
             return 0
+
         try:
             sd = json.loads(source_design)
             if not sd:
@@ -162,27 +163,14 @@ class CBSink(pump_mc.MCSink):
         except ValueError, e:
             return "error: could not parse source design; exception: %s" % (e)
 
-        err, index_server = pump.filter_server(opts, sink_spec, 'index')
-        if err or not index_server:
-            logging.error("could not find index server")
-            return 0
-
-        spec_parts = pump.parse_spec(opts, sink_spec, 8091)
-        if not spec_parts:
-            return "error: design sink no spec_parts: " + sink_spec
-        host, port, user, pswd, path = spec_parts
-        host,port = pump.hostport(index_server)
-        sink_bucket = sink_map['buckets'][0]
-        url = "/restoreIndexMetadata?bucket=%s" % sink_bucket['name']
-        err, conn, response = \
-            pump.rest_request(host, couchbaseConstants.INDEX_PORT, user, pswd, opts.ssl,
-                              url, method='POST',
-                              #body=urllib.urlencode(sd),
-                              body=json.dumps(sd),
-                              #headers=post_headers,
-                              reason='restore index')
-        logging.debug(response)
-        return 0
+        try:
+            sink_bucket = sink_map['buckets'][0]
+            rest = ClusterManager(sink_spec, opts.username, opts.password, opts.ssl, False,
+                                  None, False)
+            _, errors = rest.restore_index_metadata(sink_bucket['name'], sd)
+            return errors
+        except ServiceNotAvailableException, e:
+            return "No index service in cluster, skipping restore of indexes"
 
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,
@@ -236,7 +224,7 @@ class CBSink(pump_mc.MCSink):
             else:
                 stmts = sd.get('statements', [])
                 hostname = 'http://' + spec_parts[0] + ':' + str(spec_parts[1])
-                cm = cluster_manager.ClusterManager(hostname, user, pswd, opts.ssl)
+                cm = ClusterManager(hostname, user, pswd, opts.ssl)
                 try:
                     for stmt in stmts:
                         result, errors = cm.n1ql_query(stmt['statement'], stmt.get('args', None))
@@ -246,7 +234,7 @@ class CBSink(pump_mc.MCSink):
                         if result and 'errors' in result:
                             for error in result['errors']:
                                 logging.error('N1QL query %s failed due to error `%s`' % (stmt['statement'], error['msg']))
-                except cluster_manager.ServiceNotAvailableException, e:
+                except ServiceNotAvailableException, e:
                     logging.error("Failed to restore indexes, cluster does not contain a" +
                                   " query node")
         elif type(sd) is list:
