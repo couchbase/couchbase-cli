@@ -11,12 +11,13 @@ import platform
 import Queue
 import re
 import json
-import socket
 import subprocess
 import sys
 import threading
 import time
 import urllib2
+
+from cluster_manager import ClusterManager
 
 """Written by Daniel Owen owend@couchbase.com on 27 June 2014
 Version 1.4    Last updated 10 July 2014
@@ -47,6 +48,12 @@ bucketList = []
 vbucketList = []
 process_queue = Queue.Queue()
 lock = threading.Lock()
+
+def _exit_if_errors(errors):
+    if errors:
+        for error in errors:
+            print "ERROR: " + error
+        sys.exit(1)
 
 def opt_extra_help(parser, extra_defaults):
     extra_help = "; ".join(["%s=%s (%s)" %
@@ -139,76 +146,42 @@ def argumentParsing():
 
     return options, rest[0], rest[1]
 
-def findAllVbucketsForBucket(node, bucket, path, port, restport, username, password, single_node):
-    localvbucketlist = []
-    request = urllib2.Request(
-        'http://' + node + ':' + restport + '/pools/default/buckets/' + bucket)
-    base64string = base64.encodestring(
-        '%s:%s' % (username, password)).replace('\n', '')
-    request.add_header('Authorization', 'Basic %s' % base64string)
-    try:
-        response = urllib2.urlopen(request)
-    except:
-        print('Authorization failed.  Please check username and password.')
-        sys.exit(1)
-    data = json.loads(response.read())
-    vbucketserverdata = data['vBucketServerMap']
-    vbucketdata = vbucketserverdata['vBucketMap']
-    serverlist = vbucketserverdata['serverList']
-    # all possibles names / ipaddress for the node
-    aliases = []
-    # check to see if node was given as ip addess
-    matchObj = re.match(r'^\d+.\d+.\d+.\d+$', node, re.I)
-    if matchObj:
-        # node was entered as its IP address
-        nodeip = node
-        aliases.append(nodeip)
-        try:
-            (node, other_names, other_ips) = socket.gethostbyaddr(nodeip)
-            aliases.append(node)
-            aliases + other_names
-        except:
-            pass
+def findAllVbucketsForBucket(node, bucket, restport, username, password, single_node):
+    cluster = "http://" + node + ":" + restport
+    rest = ClusterManager(cluster, username, password, False, False, None, False)
+
+    result, errors = rest.get_bucket(bucket)
+    _exit_if_errors(errors)
+
+    if not single_node:
+        return range(len(result['vBucketServerMap']['vBucketMap']))
     else:
-        aliases.append(node)
-        nodeip = socket.gethostbyname(node)
-        aliases.append(nodeip)
+        thisNode = None
+        for node in result["nodes"]:
+            if "thisNode" in node and node["thisNode"]:
+                thisNode = node["hostname"].split(":")[0]
+                break
 
-    aliases = [alias + ":" + port for alias in aliases]
+        if thisNode == None:
+            _exit_if_errors(["Unable to find vbuckets for %s, could not locate thisNode" % cluster])
 
-    if args.verbose:
-        print("aliases list is ")
-        for x in aliases:
-            print(str(x))
-        print("server list is")
-        for x in serverlist:
-            print(str(x))
+        serverIdx = None
+        serverList = result['vBucketServerMap']['serverList']
+        for index in range(len(serverList)):
+            if serverList[index].split(":")[0] == thisNode:
+                serverIdx = index
+                break
 
-    # find out the index in the serverlist for this node
-    serverindex = -1
-    for i in range(len(serverlist)):
-        for nodewithport in aliases:
-            if nodewithport == serverlist[i]:
-                serverindex = i
-    if serverindex == -1:
-        print serverindex
-        print 'Could not find node:port in server list.'
-        sys.exit(1)
+        if serverIdx == None:
+            _exit_if_errors(["Unable to find vbuckets for %s, thisNode not in serverList" % cluster])
 
-    if single_node:
-        # iterate through all vbuckets and see which are active on this node
-        for i in range(len(vbucketdata)):
-            if vbucketdata[i][0] == serverindex:
-                vbucket = i
-                localvbucketlist.append(vbucket)
-    else:
-        # Just iterate through all vbuckets
-        for i in range(len(vbucketdata)):
-            vbucket = i
-            localvbucketlist.append(vbucket)
+        vbucketList = []
+        vbucketMap = result['vBucketServerMap']['vBucketMap']
+        for vbid in range(len(vbucketMap)):
+            if vbucketMap[vbid][0] == serverIdx:
+                vbucketList.append(vbid)
 
-    return localvbucketlist
-
+        return vbucketList
 
 # Get the buckets that exist on the cluster
 def getBuckets(node, rest_port, username, password):
@@ -320,7 +293,7 @@ if __name__ == '__main__':
     # For each bucket
     for item in bucketList:
         perbucketvbucketlist = findAllVbucketsForBucket(
-            node, item, path, args.port, rest, args.username, args.password, args.single_node)
+            node, item, rest, args.username, args.password, args.single_node)
         for item in perbucketvbucketlist:
             if item not in vbucketList:
                 vbucketList.append(item)
