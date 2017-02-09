@@ -19,6 +19,7 @@ import platform
 import subprocess
 
 import couchbaseConstants
+from cluster_manager import ClusterManager
 from collections import defaultdict
 import cbsnappy as snappy
 
@@ -990,52 +991,21 @@ def rest_request_json(host, port, user, pswd, ssl, path, reason=''):
 
 def rest_couchbase(opts, spec):
     spec = spec.replace('couchbase://', 'http://')
-
     spec_parts = parse_spec(opts, spec, 8091)
-    host, port, user, pswd, path = spec_parts
+    rest = ClusterManager(spec, opts.username, opts.password, opts.ssl, False,
+                          None, False)
 
-    if not path or path == '/':
-        path = '/pools/default/buckets'
-
-    if int(port) in [11209, 11210, 11211]:
-        return "error: invalid port number %s, which is reserved for moxi service" % port, None
- 
-    err, rest_json, rest_data = \
-        rest_request_json(host, int(port), user, pswd, opts.ssl, path)
-    if err:
-        return err, None
-
-    if type(rest_data) == type([]):
-        rest_buckets = rest_data
-    else:
-        rest_buckets = [ rest_data ] # Wrap single bucket in a list.
+    result, errors = rest.list_buckets(True)
+    if errors:
+        return errors[0], None
 
     buckets = []
-
-    for bucket in rest_buckets:
-        if not (bucket and
-                bucket.get('name', None) and
-                bucket.get('bucketType', None) and
-                bucket.get('nodes', None) and
-                bucket.get('nodeLocator', None)):
-            return "error: unexpected JSON value from: " + spec + \
-                " - did you provide the right source URL?", None
-
-        if bucket['nodeLocator'] == 'vbucket' and \
-                (bucket['bucketType'] == 'membase' or
-                 bucket['bucketType'] == 'couchbase'):
+    for bucket in result:
+        if bucket["bucketType"] in ["membase", "couchbase"]:
             buckets.append(bucket)
-        else:
-            logging.warn("skipping bucket that is not a couchbase-bucket: " +
-                         bucket['name'])
 
-    if user is None or pswd is None:
-        # Check if we have buckets other than the default one
-        if len(rest_buckets) > 0:
-            if len(rest_buckets) > 1 or rest_buckets[0].get('name', None) != "default":
-                return "error: REST username (-u) and password (-p) are required " + \
-                       "to access all bucket(s)", None
-    return 0, {'spec': spec, 'buckets': buckets, 'spec_parts': spec_parts}
+
+    return 0, {'spec': spec, 'buckets': buckets, 'spec_parts': parse_spec(opts, spec, 8091)}
 
 def filter_server(opts, spec, filtor):
     spec = spec.replace('couchbase://', 'http://')
