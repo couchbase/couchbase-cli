@@ -20,6 +20,8 @@ import pump_mc
 import pump_cb
 import pump_tap
 
+from cluster_manager import ClusterManager, ServiceNotAvailableException
+
 try:
     import ctypes
 except ImportError:
@@ -88,24 +90,15 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
     @staticmethod
     def provide_index(opts, source_spec, source_bucket, source_map):
-        err, index_server = pump.filter_server(opts, source_spec, 'index')
-        if err or not index_server:
-            logging.warning("could not find index server:%s" % err)
+        try:
+            rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, False,
+                                  None, False)
+            result, errors = rest.get_index_metadata(source_bucket['name'])
+            if errors:
+                return errors, None
+            return 0, json.dumps(result["result"])
+        except ServiceNotAvailableException, e:
             return 0, None
-
-        spec_parts = source_map.get('spec_parts')
-        if not spec_parts:
-            return "error: no design spec_parts", None
-        host, port, user, pswd, path = spec_parts
-        host, port = pump.hostport(index_server)
-        err, ddocs_json, ddocs = \
-            pump.rest_request_json(host, couchbaseConstants.INDEX_PORT, user, pswd, opts.ssl,
-                                   "/getIndexMetadata?bucket=%s" % (source_bucket['name']),
-                                   reason="provide_index")
-        if err:
-            return err, None
-
-        return 0, json.dumps(ddocs["result"])
 
     def get_conflict_resolution_type(self):
         confResType = "seqno"

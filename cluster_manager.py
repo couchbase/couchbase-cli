@@ -94,6 +94,17 @@ class ClusterManager(object):
         url = hosts[0] + '/restoreIndexMetadata?bucket=%s' % bucket
         return self._post_json(url, index_defs)
 
+    def get_index_metadata(self, bucket):
+        hosts, errors = self.get_hostnames_for_service(INDEX_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(INDEX_SERVICE)
+
+        url = hosts[0] + '/getIndexMetadata?bucket=%s' % bucket
+        return self._get(url)
+
     def n1ql_query(self, stmt, args=None):
         """Sends a N1QL query
 
