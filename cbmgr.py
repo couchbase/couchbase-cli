@@ -458,7 +458,7 @@ class AdminRoleManage(Subcommand):
             _exitIfErrors(errors)
             print json.dumps(data, indent=2)
         elif opts.get_roles:
-            data, errors = rest.get_roles()
+            data, errors = rest.list_rbac_users()
             _exitIfErrors(errors)
             print json.dumps(data, indent=2)
         elif opts.set_users:
