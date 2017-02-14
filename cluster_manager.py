@@ -1198,6 +1198,9 @@ def _handle_response(response, debug):
         return None, [response.text]
     elif response.status_code == 401:
         return None, [ERR_AUTH]
+    elif response.status_code == 403:
+        errors = response.json()
+        return None, [errors["message"] + ": " + ", ".join(errors["permissions"])]
     elif response.status_code == 500:
         return None, [ERR_INTERNAL]
     else:
