@@ -256,9 +256,9 @@ class CBHelpAction(Action):
         base_path = os.path.dirname(exe_path)
 
         if os.name == "nt":
-            call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
+            subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
         else:
-            call(["man", os.path.join(CB_MAN_PATH, page)])
+            subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
 
 
 class CliParser(ArgumentParser):
