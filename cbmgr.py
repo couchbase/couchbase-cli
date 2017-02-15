@@ -1423,7 +1423,7 @@ class Recovery(Subcommand):
 
     def __init__(self):
         super(Recovery, self).__init__()
-        self.parser.prog = "couchbase-cli server-add"
+        self.parser.prog = "couchbase-cli recovery"
         group = self.parser.add_argument_group("Recovery options")
         group.add_argument("--server-recovery", dest="servers", metavar="<server_list>",
                            required=True, help="The list of servers to recover")
