@@ -632,18 +632,19 @@ class BFDSink(BFD, pump.Sink):
                 json.dump(toWrite, json_file, ensure_ascii=False)
                 json_file.close()
 
-            batch, future = self.pull_next_batch()
-            if not batch:
-                if db:
-                    db.close()
-                return self.future_done(future, 0)
-
             if db and cbb_bytes >= cbb_max_bytes:
                 db.close()
                 db = None
                 cbb += 1
                 cbb_bytes = 0
                 db_dir = None
+                continue
+
+            batch, future = self.pull_next_batch()
+            if not batch:
+                if db:
+                    db.close()
+                return self.future_done(future, 0)
 
             if (self.bucket_name(), self.node_name()) in self.cur['failoverlog']:
                 BFD.write_json_file(db_dir,
