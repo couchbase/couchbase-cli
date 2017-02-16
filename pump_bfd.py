@@ -621,6 +621,13 @@ class BFDSink(BFD, pump.Sink):
         for i in range(BFD.NUM_VBUCKET):
             seqno_map[i] = 0
         while not self.ctl['stop']:
+            if db and cbb_bytes >= cbb_max_bytes:
+                db.close()
+                db = None
+                cbb += 1
+                cbb_bytes = 0
+                db_dir = None
+
             if not db:
                 rv, db, db_dir = self.create_db(cbb)
                 if rv != 0:
@@ -637,13 +644,6 @@ class BFDSink(BFD, pump.Sink):
                 if db:
                     db.close()
                 return self.future_done(future, 0)
-
-            if db and cbb_bytes >= cbb_max_bytes:
-                db.close()
-                db = None
-                cbb += 1
-                cbb_bytes = 0
-                db_dir = None
 
             if (self.bucket_name(), self.node_name()) in self.cur['failoverlog']:
                 BFD.write_json_file(db_dir,
