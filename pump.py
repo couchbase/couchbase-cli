@@ -136,8 +136,13 @@ class PumpingStation(ProgressReporter):
                 sys.stderr.write("transfer design doc only. bucket msgs will be skipped.\n")
 
             if not self.opts.extra.get("data_only", 0):
-                self.transfer_bucket_design(source_bucket, source_map, sink_map)
-                self.transfer_bucket_index(source_bucket, source_map, sink_map)
+                rv = self.transfer_bucket_design(source_bucket, source_map, sink_map)
+                if rv:
+                    logging.warn(rv)
+                rv = self.transfer_bucket_index(source_bucket, source_map, sink_map)
+                if rv:
+                    logging.warn(rv)
+
             else:
                 sys.stderr.write("transfer data only. bucket design docs and index meta will be skipped.\n")
 
