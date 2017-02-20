@@ -1088,6 +1088,16 @@ class ClusterManager(object):
         url = self.hostname + '/node/controller/reloadCertificate'
         return self._post_form_encoded(url, None)
 
+    def set_client_cert_auth(self, value):
+        """Enable/disable the client cert auth"""
+        url = self.hostname + '/settings/clientCertAuth'
+        params = {"client_cert_auth":value}
+        return self._post_form_encoded(url, params)
+
+    def retrieve_client_cert_auth(self):
+        url = self.hostname + '/settings/clientCertAuth'
+        return self._get(url)
+
     def create_xdcr_reference(self, name, hostname, username, password, encrypted,
                               certificate):
         return self._set_xdcr_reference(False, name, hostname, username,

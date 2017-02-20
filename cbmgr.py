@@ -2453,6 +2453,10 @@ class SslManage(Subcommand):
                            default=False, help="Sets the node certificate")
         group.add_argument("--upload-cluster-ca", dest="upload_cert", metavar="<path>",
                            help="Upload a new cluster certificate")
+        group.add_argument("--set-client-auth", dest="set_client_auth", metavar="<disable|enable|mandatory>",
+                           default=False, help="Enable or disable the ssl client certificate authentication")
+        group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
+                           help="Show ssl client certificate authentication value")
         group.add_argument("--extended", dest="extended", action="store_true",
                            default=False, help="Print extended certificate information")
 
@@ -2470,14 +2474,14 @@ class SslManage(Subcommand):
             _exitIfErrors(errors)
             _exit_on_file_write_failure(opts.regenerate, certificate)
             _success("Certificate regenerate and copied to '%s'" % (opts.regenerate))
-        elif opts.cluster_cert is not None:
+        elif opts.cluster_cert:
             certificate, errors = rest.retrieve_cluster_certificate(opts.extended)
             _exitIfErrors(errors)
             if isinstance(certificate, dict):
                 print json.dumps(certificate, sort_keys=True, indent=2)
             else:
                 print certificate
-        elif opts.node_cert is not None:
+        elif opts.node_cert:
             certificate, errors = rest.retrieve_node_certificate('%s:%d' % (host, port))
             _exitIfErrors(errors)
             print json.dumps(certificate, sort_keys=True, indent=2)
@@ -2485,11 +2489,19 @@ class SslManage(Subcommand):
             certificate = _exit_on_file_read_failure(opts.upload_cert)
             _, errors = rest.upload_cluster_certificate(certificate)
             _exitIfErrors(errors)
-            success("Uploaded cluster certificate to %s:%d" % (host, port))
+            _success("Uploaded cluster certificate to %s" % (opts.cluster))
         elif opts.set_cert:
             _, errors = rest.set_node_certificate()
             _exitIfErrors(errors)
             _success("Node certificate set")
+        elif opts.set_client_auth:
+            _, errors = rest.set_client_cert_auth(opts.set_client_auth)
+            _exitIfErrors(errors)
+            _success("Set the ssl client auth value to %s" % opts.set_client_auth)
+        elif opts.show_client_auth:
+            result, errors = rest.retrieve_client_cert_auth()
+            _exitIfErrors(errors)
+            print result
         else:
             _exitIfErrors(["No options specified"])
 
