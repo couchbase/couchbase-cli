@@ -352,8 +352,8 @@ class Subcommand(Command):
         super(Subcommand, self).__init__()
         self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False)
         group = self.parser.add_argument_group("Cluster options")
-        group.add_argument("-c", "--cluster", dest="cluster", required=True, metavar="<cluster>",
-                           action=CBHostAction, default=cluster_default,
+        group.add_argument("-c", "--cluster", dest="cluster", required=(cluster_default==None),
+                           metavar="<cluster>", action=CBHostAction, default=cluster_default,
                            help="The hostname of the Couchbase cluster")
 
         if deprecate_username:
@@ -483,7 +483,7 @@ class ClusterInit(Subcommand):
     """The cluster initialization subcommand"""
 
     def __init__(self):
-        super(ClusterInit, self).__init__(True, True, "127.0.0.1:8091")
+        super(ClusterInit, self).__init__(True, True, "http://127.0.0.1:8091")
         self.parser.prog = "couchbase-cli cluster-init"
         group = self.parser.add_argument_group("Cluster initialization options")
         group.add_argument("--cluster-username", dest="username", required=True,
