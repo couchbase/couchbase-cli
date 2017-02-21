@@ -2456,13 +2456,13 @@ class UserManage(Subcommand):
         group.add_argument("--rbac-username", dest="rbac_user", metavar="<username>",
                            help="The RBAC username")
         group.add_argument("--rbac-password", dest="rbac_pass", metavar="<password>",
-                           help="The RBAC username")
-        group.add_argument("--rbac-name", dest="rbac_name", metavar="<name>",
                            help="The RBAC password")
+        group.add_argument("--rbac-name", dest="rbac_name", metavar="<name>",
+                           help="The full name of the user")
         group.add_argument("--roles", dest="roles", metavar="<roles_list>",
                            help="The roles for the specified user")
         group.add_argument("--auth-type", dest="auth_type", metavar="<roles_list>",
-                           help="The authentication tpe for the specified user")
+                           help="The authentication type for the specified user")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
