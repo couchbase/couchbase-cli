@@ -2461,7 +2461,7 @@ class UserManage(Subcommand):
                            help="The full name of the user")
         group.add_argument("--roles", dest="roles", metavar="<roles_list>",
                            help="The roles for the specified user")
-        group.add_argument("--auth-type", dest="auth_type", metavar="<roles_list>",
+        group.add_argument("--auth-type", dest="auth_type", metavar="<type>",
                            help="The authentication type for the specified user")
 
     def execute(self, opts):
