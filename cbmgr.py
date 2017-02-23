@@ -2540,8 +2540,6 @@ class UserManage(Subcommand):
         if opts.rbac_pass is not None and opts.auth_type == "saslauthd":
             _warning("--rbac-password is not used with the --set command")
             opts.rbac_pass = None
-        if opts.rbac_name is None:
-            _exitIfErrors(["--rbac-name is requires with the --set option"])
         if opts.roles is None:
             _exitIfErrors(["--roles is required with the --set option"])
         if opts.auth_type is None:
