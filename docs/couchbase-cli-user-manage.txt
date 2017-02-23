@@ -63,8 +63,8 @@ include::part-common-options.txt[]
 --auth-type <type>::
 	Specifies the auth_type to used for an RBAC user profile. This option is used
 	when deleting, creating or updating an RBAC user profile and it if may be
-	set to either 'builtin' or 'saslauthd'. Builtin users are roles that are
-	managed directly by the Couchbase cluster. Saslauthd users are users
+	set to either 'builtin' or 'external'. Builtin users are roles that are
+	managed directly by the Couchbase cluster. External users are users
 	managed by an external source suchas LDAP.
 
 include::part-host-formats.txt[]

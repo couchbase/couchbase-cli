@@ -2462,6 +2462,7 @@ class UserManage(Subcommand):
         group.add_argument("--roles", dest="roles", metavar="<roles_list>",
                            help="The roles for the specified user")
         group.add_argument("--auth-type", dest="auth_type", metavar="<type>",
+                           choices=["external", "builtin"],
                            help="The authentication type for the specified user")
 
     def execute(self, opts):
@@ -2474,6 +2475,9 @@ class UserManage(Subcommand):
             _exitIfErrors(["Must specify --delete, --list, --my_roles or --set"])
         elif num_selectors != 1:
             _exitIfErrors(["Only one of the following can be specified: --delete, --list, --my_roles or --set"])
+
+        if opts.auth_type == "external":
+            opts.auth_type = "saslauthd"
 
         if opts.delete:
             self._delete(rest, opts)
