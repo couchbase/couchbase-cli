@@ -2559,7 +2559,7 @@ class UserManage(Subcommand):
 
     @staticmethod
     def get_description():
-        return "Manage the read-only user"
+        return "Manage RBAC users"
 
 
 class XdcrReplicate(Subcommand):
