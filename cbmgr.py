@@ -115,6 +115,11 @@ def _exit_on_file_read_failure(fname):
     except IOError, error:
         _exitIfErrors([error.strerror + " `" + fname + "`"])
 
+def apply_default_port(nodes):
+    return map(
+      lambda node: node if len(node.split(":"))==2 else node+":8091",
+      nodes.split(","))
+
 class CLIHelpFormatter(HelpFormatter):
     """Format help with indented section bodies"""
 
@@ -1132,7 +1137,7 @@ class GroupManage(Subcommand):
         if opts.to_group is None:
             _exitIfErrors(["--to-group is required with --move-servers"])
 
-        servers = opts.move_servers.split(",")
+        servers = apply_default_port(opts.move_servers)
         _, errors = rest.move_servers_between_groups(servers, opts.from_group, opts.to_group)
         _exitIfErrors(errors)
         _success("Servers moved between groups")
@@ -1340,7 +1345,7 @@ class Rebalance(Subcommand):
 
         eject_nodes = []
         if opts.server_remove:
-            eject_nodes = opts.server_remove.split(",")
+            eject_nodes = apply_default_port(opts.server_remove)
 
         _, errors = rest.rebalance(eject_nodes)
         _exitIfErrors(errors)
@@ -1432,7 +1437,7 @@ class Recovery(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
-        servers = opts.servers.split(",")
+        servers = apply_default_port(opts.servers)
         for server in servers:
             _, errors = rest.recovery(server, opts.recovery_type)
             _exitIfErrors(errors)
@@ -1539,7 +1544,8 @@ class ServerAdd(Subcommand):
             _, errors = rest.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
-        for server in opts.servers.split(","):
+        servers = apply_default_port(opts.servers)
+        for server in servers:
             _, errors = rest.add_server(server, opts.group_name, opts.server_username,
                                         opts.server_password, opts.services)
             _exitIfErrors(errors)
@@ -1697,7 +1703,7 @@ class ServerReadd(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
-        servers = opts.servers.split(",")
+        servers = apply_default_port(opts.servers)
         for server in servers:
             _, errors = rest.readd_server(server)
             _exitIfErrors(errors)
