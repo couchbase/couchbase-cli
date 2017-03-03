@@ -24,7 +24,7 @@ if platform.system() == "Windows":
                 size_y = bottom - top
                 return size_x, size_y, cur_x, cur_y
         except:
-            return None, None
+            return None, None, None, None
 
     def bold(text):
         """Makes a string bold in the terminal"""
@@ -74,7 +74,7 @@ elif platform.system() in ['Linux', 'Darwin'] or platform.system().startswith('C
                 window_size = ioctl_gwinsz(fd)
                 os.close(fd)
             except:
-                return None, None
+                return None, None, None, None
 
         return int(window_size[1]), int(window_size[0]), 0, 0
 
