@@ -1007,23 +1007,6 @@ def rest_couchbase(opts, spec):
 
     return 0, {'spec': spec, 'buckets': buckets, 'spec_parts': parse_spec(opts, spec, 8091)}
 
-def filter_server(opts, spec, filtor):
-    spec = spec.replace('couchbase://', 'http://')
-
-    spec_parts = parse_spec(opts, spec, 8091)
-    host, port, user, pswd, path = spec_parts
-
-    path = '/pools/default'
-    err, rest_json, rest_data = \
-        rest_request_json(host, int(port), user, pswd, opts.ssl, path)
-    if err:
-        return err, None
-
-    for node in rest_data["nodes"]:
-        if filtor in node["services"] and node["status"] == "healthy":
-            return 0, node["hostname"]
-    return 0, None
-
 def filter_bucket_nodes(bucket, spec_parts):
     host, port = spec_parts[:2]
     if host in ['localhost', '127.0.0.1']:
