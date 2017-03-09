@@ -1773,6 +1773,8 @@ class SettingAlert(Subcommand):
                            action="store_true", help="Alert when indexer is using all of its allocated memory")
         group.add_argument("--alert-timestamp-drift-exceeded", dest="alert_cas_drift",
                            action="store_true", help="Alert when clocks on two servers are more than five seconds apart")
+        group.add_argument("--alert-communication-issue", dest="alert_communication_issue",
+                           action="store_true", help="Alert when nodes are experiencing communication issues")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -1816,6 +1818,8 @@ class SettingAlert(Subcommand):
             alerts.append('indexer_ram_max_usage')
         if opts.alert_cas_drift:
             alerts.append('ep_clock_cas_drift_threshold_exceeded')
+        if opts.alert_communication_issue:
+            alerts.append('communication_issue')
 
         enabled = "true"
         if opts.enabled == "0":
