@@ -2480,9 +2480,6 @@ class UserManage(Subcommand):
         elif num_selectors != 1:
             _exitIfErrors(["Only one of the following can be specified: --delete, --list, --my_roles or --set"])
 
-        if opts.auth_type == "external":
-            opts.auth_type = "saslauthd"
-
         if opts.delete:
             self._delete(rest, opts)
         elif opts.list:
