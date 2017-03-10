@@ -143,6 +143,9 @@ class PumpingStation(ProgressReporter):
                 rv = self.transfer_bucket_index(source_bucket, source_map, sink_map)
                 if rv:
                     logging.warn(rv)
+                rv = self.transfer_bucket_fts_index(source_bucket, source_map, sink_map)
+                if rv:
+                    logging.warn(rv)
 
             else:
                 sys.stderr.write("transfer data only. bucket design docs and index meta will be skipped.\n")
@@ -277,6 +280,19 @@ class PumpingStation(ProgressReporter):
                                                 self.sink_spec, sink_map,
                                                 source_bucket, source_map,
                                                 source_design)
+        return rv
+
+    def transfer_bucket_fts_index(self, source_bucket, source_map, sink_map):
+        """Transfer bucket index meta."""
+        rv, source_design = \
+            self.source_class.provide_fts_index(self.opts, self.source_spec,
+                                                source_bucket, source_map)
+        if rv == 0:
+            if source_design:
+                rv = self.sink_class.consume_fts_index(self.opts,
+                                                   self.sink_spec, sink_map,
+                                                   source_bucket, source_map,
+                                                   source_design)
         return rv
 
     @staticmethod
@@ -544,6 +560,10 @@ class Source(EndPoint):
     def provide_index(opts, source_spec, source_bucket, source_map):
         return 0, None
 
+    @staticmethod
+    def provide_fts_index(opts, source_spec, source_bucket, source_map):
+        return 0, None
+
     def provide_batch(self):
         assert False, "unimplemented"
 
@@ -593,6 +613,11 @@ class Sink(EndPoint):
     @staticmethod
     def consume_index(opts, sink_spec, sink_map,
                        source_bucket, source_map, source_design):
+        return 0
+
+    @staticmethod
+    def consume_fts_index(opts, sink_spec, sink_map,
+                          source_bucket, source_map, source_design):
         return 0
 
     def consume_batch_async(self, batch):

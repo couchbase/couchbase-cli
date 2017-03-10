@@ -19,6 +19,10 @@ import pump
 
 CBB_VERSION = [2004, 2014, 2015] # sqlite pragma user version.
 
+DDOC_FILE_NAME = "design.json"
+INDEX_FILE_NAME = "index.json"
+FTS_FILE_NAME = "fts_index.json"
+
 class BFD:
     """Mixin for backup-file/directory EndPoint helper methods."""
     NUM_VBUCKET = 1024
@@ -30,30 +34,18 @@ class BFD:
         return self.source_node['hostname']
 
     @staticmethod
-    def design_path(spec, bucket_name):
-        bucket_path = os.path.normpath(spec) + "/bucket-" + urllib.quote_plus(bucket_name).encode('ascii')
+    def get_file_path(spec, bucket_name, file):
+        bucket_name = urllib.quote_plus(bucket_name).encode('ascii')
+        bucket_path = os.path.join(os.path.normpath(spec), "bucket-" + bucket_name)
         if os.path.isdir(bucket_path):
-            return bucket_path + '/design.json'
+            return os.path.join(bucket_path, file)
         else:
             path, dirs = BFD.find_latest_dir(spec, None)
             if path:
                 path, dirs = BFD.find_latest_dir(path, None)
                 if path:
-                    return path + "/bucket-" + urllib.quote_plus(bucket_name).encode('ascii') + '/design.json'
-        return bucket_path + '/design.json'
-
-    @staticmethod
-    def index_path(spec, bucket_name):
-        bucket_path = os.path.normpath(spec) + "/bucket-" + urllib.quote_plus(bucket_name).encode('ascii')
-        if os.path.isdir(bucket_path):
-            return bucket_path + '/index.json'
-        else:
-            path, dirs = BFD.find_latest_dir(spec, None)
-            if path:
-                path, dirs = BFD.find_latest_dir(path, None)
-                if path:
-                    return path + "/bucket-" + urllib.quote_plus(bucket_name).encode('ascii') + '/index.json'
-        return bucket_path + '/index.json'
+                    return os.path.join(path, "bucket-" + bucket_name, file)
+        return os.path.join(bucket_path, file)
 
     @staticmethod
     def construct_dir(parent, bucket_name, node_name):
@@ -382,30 +374,27 @@ class BFDSource(BFD, pump.Source):
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
-        fname = BFD.design_path(source_spec, source_bucket['name'])
-        if os.path.exists(fname):
-            try:
-                f = open(fname, 'r')
-                d = f.read()
-                f.close()
-                return 0, d
-            except IOError, e:
-                return ("error: could not read design: %s" +
-                        "; exception: %s") % (fname, e), None
-        return 0, None
+        return BFDSource.read_index_file(source_spec, source_bucket, DDOC_FILE_NAME)
 
     @staticmethod
     def provide_index(opts, source_spec, source_bucket, source_map):
-        fname = BFD.index_path(source_spec, source_bucket['name'])
-        if os.path.exists(fname):
+        return BFDSource.read_index_file(source_spec, source_bucket, INDEX_FILE_NAME)
+
+    @staticmethod
+    def provide_fts_index(opts, source_spec, source_bucket, source_map):
+        return BFDSource.read_index_file(source_spec, source_bucket, FTS_FILE_NAME)
+
+    @staticmethod
+    def read_index_file(source_spec, source_bucket, file_name):
+        path = BFD.get_file_path(source_spec, source_bucket['name'], file_name)
+        if os.path.exists(path):
             try:
-                f = open(fname, 'r')
+                f = open(path, 'r')
                 d = f.read()
                 f.close()
                 return 0, d
             except IOError, e:
-                return ("error: could not read design: %s" +
-                        "; exception: %s") % (fname, e), None
+                return ("error: could not read %s; exception: %s") % (path, e), None
         return 0, None
 
     def get_conflict_resolution_type(self):
@@ -723,39 +712,30 @@ class BFDSink(BFD, pump.Sink):
         return 0, None
 
     @staticmethod
-    def consume_design(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_design):
-        if source_design:
-            fname = BFD.design_path(sink_spec,
-                                    source_bucket['name'])
-            try:
-                rv = pump.mkdirs(fname)
-                if rv:
-                    return rv, None
-                f = open(fname, 'w')
-                f.write(source_design)
-                f.close()
-            except IOError, e:
-                return ("error: could not write design: %s" +
-                        "; exception: %s") % (fname, e), None
-        return 0
+    def consume_design(opts, sink_spec, sink_map, source_bucket, source_map, index_defs):
+        return BFDSink.write_index_file(sink_spec, source_bucket, index_defs, DDOC_FILE_NAME)
 
     @staticmethod
-    def consume_index(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_design):
-        if source_design:
-            fname = BFD.index_path(sink_spec,
-                                    source_bucket['name'])
+    def consume_index(opts, sink_spec, sink_map, source_bucket, source_map, index_defs):
+        return BFDSink.write_index_file(sink_spec, source_bucket, index_defs, INDEX_FILE_NAME)
+
+    @staticmethod
+    def consume_fts_index(opts, sink_spec, sink_map, source_bucket, source_map, index_defs):
+        return BFDSink.write_index_file(sink_spec, source_bucket, index_defs, FTS_FILE_NAME)
+
+    @staticmethod
+    def write_index_file(sink_spec, source_bucket, index_defs, file_name):
+        if index_defs:
+            path = BFD.get_file_path(sink_spec, source_bucket['name'], file_name)
             try:
-                rv = pump.mkdirs(fname)
+                rv = pump.mkdirs(path)
                 if rv:
                     return rv, None
-                f = open(fname, 'w')
-                f.write(source_design)
+                f = open(path, 'w')
+                f.write(index_defs)
                 f.close()
             except IOError, e:
-                return ("error: could not write index: %s" +
-                        "; exception: %s") % (fname, e), None
+                return ("error: could not write %s; exception: %s") % (path, e), None
         return 0
 
     def consume_batch_async(self, batch):

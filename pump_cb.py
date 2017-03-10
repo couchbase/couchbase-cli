@@ -152,6 +152,26 @@ class CBSink(pump_mc.MCSink):
         return rv
 
     @staticmethod
+    def consume_fts_index(opts, sink_spec, sink_map, source_bucket, source_map, source_design):
+        if not source_design:
+            return 0
+
+        try:
+            index_defs = json.loads(source_design)
+            if not index_defs:
+               return 0
+        except ValueError, e:
+            return "error: could not parse fts index definitions; exception: %s" % (e)
+
+        try:
+            rest = ClusterManager(sink_spec, opts.username, opts.password, opts.ssl, False,
+                                  None, False)
+            _, errors = rest.restore_fts_index_metadata(index_defs)
+            return errors
+        except ServiceNotAvailableException, e:
+            return "No fts service in cluster, skipping restore of indexes"
+
+    @staticmethod
     def consume_index(opts, sink_spec, sink_map, source_bucket, source_map, source_design):
         if not source_design:
             return 0

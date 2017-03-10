@@ -105,6 +105,43 @@ class ClusterManager(object):
         url = hosts[0] + '/getIndexMetadata?bucket=%s' % bucket
         return self._get(url)
 
+    def restore_fts_index_metadata(self, index_defs):
+        hosts, errors = self.get_hostnames_for_service(FTS_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(FTS_SERVICE)
+
+        for index_def in index_defs:
+            url = hosts[0] + '/api/index/%s?prevIndexUUID=*' % index_def["name"]
+            if "sourceUUID" in index_def:
+                del index_def["sourceUUID"]
+            result, errors = self._put_json(url, index_def)
+            if errors:
+                return None, errors
+
+        return None, None
+
+    def get_fts_index_metadata(self, bucket):
+        hosts, errors = self.get_hostnames_for_service(FTS_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(FTS_SERVICE)
+
+        url = hosts[0] + '/api/index'
+        result, errors = self._get(url)
+        if errors:
+            return None, errors
+
+        bucket_index_defs = []
+        for _, index_def in result["indexDefs"]["indexDefs"].iteritems():
+            if index_def["sourceType"] == "couchbase" and index_def["sourceName"] == bucket:
+                bucket_index_defs.append(index_def)
+        return bucket_index_defs, None
+
     def n1ql_query(self, stmt, args=None):
         """Sends a N1QL query
 
