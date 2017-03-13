@@ -824,6 +824,24 @@ class ClusterManager(object):
             params["roles"] = roles
         return self._put(url, params)
 
+    def get_password_policy(self):
+        url = self.hostname + '/settings/passwordPolicy'
+        return self._get(url)
+
+    def set_password_policy(self, min_length, upper_case, lower_case, digit,
+                            special_char):
+        url = self.hostname + '/settings/passwordPolicy'
+
+        params = {
+            "minLength": min_length,
+            "enforceUppercase": "true" if upper_case else "false",
+            "enforceLowercase": "true" if lower_case else "false",
+            "enforceDigits": "true" if digit else "false",
+            "enforceSpecialChars": "true" if special_char else "false"
+        }
+
+        return self._post_form_encoded(url, params)
+
     def set_audit_settings(self, enabled, log_path, rotate_interval):
         url = self.hostname + '/settings/audit'
 

@@ -118,7 +118,7 @@ def _exit_on_file_read_failure(fname):
 class CLIHelpFormatter(HelpFormatter):
     """Format help with indented section bodies"""
 
-    def __init__(self, prog, indent_increment=2, max_help_position=28, width=None):
+    def __init__(self, prog, indent_increment=2, max_help_position=30, width=None):
         HelpFormatter.__init__(self, prog, indent_increment, max_help_position, width)
 
     def add_argument(self, action):
@@ -2319,6 +2319,66 @@ class SettingNotification(Subcommand):
     @staticmethod
     def get_description():
         return "Modify email notification settings"
+
+
+class SettingPasswordPolicy(Subcommand):
+    """The settings password policy subcommand"""
+
+    def __init__(self):
+        super(SettingPasswordPolicy, self).__init__()
+        self.parser.prog = "couchbase-cli setting-password-policy"
+        group = self.parser.add_argument_group("Password Policy Settings")
+        group.add_argument("--get", dest="get", action="store_true", default=False,
+                           help="Get the current password policy")
+        group.add_argument("--set", dest="set", action="store_true", default=False,
+                           help="Set a new password policy")
+        group.add_argument("--min-length", dest="min_length", type=(int), default=False,
+                           metavar="<num>",
+                           help="Specifies the minimum password length for new passwords")
+        group.add_argument("--uppercase", dest="upper_case", action="store_true", default=False,
+                           help="Specifies new passwords must contain an upper case character")
+        group.add_argument("--lowercase", dest="lower_case", action="store_true", default=False,
+                           help="Specifies new passwords must contain a lower case character")
+        group.add_argument("--digit", dest="digit", action="store_true", default=False,
+                           help="Specifies new passwords must at least one digit")
+        group.add_argument("--special-char", dest="special_char", action="store_true", default=False,
+                           help="Specifies new passwords must at least one special character")
+
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+
+
+        actions = sum([opts.get, opts.set])
+        if actions == 0:
+            _exitIfErrors(["Must specify either --get or --set"])
+        elif actions > 1:
+            _exitIfErrors(["The --get and --set flags may not be specified at " +
+                           "the same time"])
+        elif opts.get:
+            self._get(rest, opts)
+        elif opts.set:
+            self._set(rest, opts)
+
+    def _get(self, rest, opts):
+        policy, errors = rest.get_password_policy()
+        _exitIfErrors(errors)
+        print json.dumps(policy, sort_keys=True, indent=2)
+
+    def _set(self, rest, opts):
+        _, errors = rest.set_password_policy(opts.min_length, opts.upper_case, opts.lower_case,
+                                             opts.digit, opts.special_char)
+        _exitIfErrors(errors)
+        _success("Password policy updated")
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-password-policy" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Modify the password policy"
 
 
 class SettingXdcr(Subcommand):
