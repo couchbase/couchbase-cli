@@ -103,6 +103,37 @@ class CBSink(pump_mc.MCSink):
         return 0, retry_batch, retry_batch and not need_refresh
 
     @staticmethod
+    def map_recovery_buckets(sink_map, bucket_name, vbucket_list):
+        """When we do recovery of vbuckets the vbucket map is not up to date, but
+        ns_server does tell us where the destination vbuckets are. This function
+        looks at the recovery plan and modifies the vbucket map in order to ensure
+        that we send the recovery data to the right server."""
+        vbucket_list = json.loads(vbucket_list)
+        if type(vbucket_list) is not dict:
+            return "Expected recovery map to be a dictionary"
+
+        server_vb_map = None
+        bucket_info = None
+        for bucket in sink_map["buckets"]:
+            if bucket["name"] == bucket_name:
+                bucket_info = bucket
+                server_vb_map = bucket["vBucketServerMap"]
+
+        if bucket_info is not None:
+            for node in bucket_info["nodes"]:
+                if "direct" not in node["ports"]:
+                    continue
+                otpNode = node["otpNode"].encode('ascii')
+                mcdHost = otpNode.split("@")[1] + ":" + str(node["ports"]["direct"])
+                for remap_node, remap_vbs in vbucket_list.iteritems():
+                    if remap_node == otpNode and mcdHost in server_vb_map["serverList"]:
+                        idx = server_vb_map["serverList"].index(mcdHost)
+                        for vb in remap_vbs:
+                            server_vb_map["vBucketMap"][vb][idx] = 0
+
+        return None
+
+    @staticmethod
     def can_handle(opts, spec):
         return (spec.startswith("http://") or
                 spec.startswith("couchbase://") or
@@ -140,6 +171,10 @@ class CBSink(pump_mc.MCSink):
             return "error: multiple buckets with name: " + sink_bucket_name + \
                 " at destination: " + spec, None
         sink_map['buckets'] = sink_buckets
+        if opts.extra.get("allow_recovery_vb_remap", 0) == 1:
+            error = CBSink.map_recovery_buckets(sink_map, sink_bucket_name, opts.vbucket_list)
+            if error:
+                return error, None
 
         return 0, sink_map
 

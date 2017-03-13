@@ -578,9 +578,16 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 vb_list[vb[3:]][counter] = int(val)
         flags = 0
         pair_index = (self.source_bucket['name'], self.source_node['hostname'])
+        vbucketsOrDict = None
         vbuckets = None
         if self.vbucket_list:
-            vbuckets = json.loads(self.vbucket_list)
+            vbucketsOrDict = json.loads(self.vbucket_list)
+            if type(vbucketsOrDict) is dict:
+                vbuckets = []
+                for key, value in vbucketsOrDict.iteritems():
+                    vbuckets += value
+            else:
+                vbuckets = vbucketsOrDict
         for vbid in vb_list.iterkeys():
             if int(vbid) not in self.node_vbucket_map:
                 #skip nonactive vbucket

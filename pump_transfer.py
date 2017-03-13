@@ -117,7 +117,7 @@ class Transfer:
 
     def opt_parser(self):
         p = optparse.OptionParser(usage=self.usage)
-        opt_extra_help(p, self.opt_extra_defaults())
+        opt_extra_help(p, self.opt_extra_defaults(False))
 
         self.opt_parser_options(p)
         return p
@@ -194,8 +194,8 @@ from a source cluster into the caching layer at the destination""")
         p.add_option("--separator", type="string", default="::",
                      help=optparse.SUPPRESS_HELP)
 
-    def opt_extra_defaults(self):
-        return {
+    def opt_extra_defaults(self, add_hidden=True):
+        rv = {
             "batch_max_size":  (1000,   "Transfer this # of documents per batch"),
             "batch_max_bytes": (400000, "Transfer this # of bytes per batch"),
             "cbb_max_mb":      (100000, "Split backup file on destination cluster if it exceeds MB"),
@@ -218,6 +218,11 @@ such as when transferring data from an OSX server to a non-OSX cluster"),
             "flow_control":    (1,      "For value 0, disable flow control to improve throughput"),
             "dcp_consumer_queue_length": (1000,"A DCP client needs a queue for incoming documents/messages. A large length is more efficient, but memory proportional to length*avg. doc size. Below length 150, performance degrades significantly."),
             }
+
+        if add_hidden:
+            rv["allow_recovery_vb_remap"] = (0, "Allows the vbucket list to override the vbucket map from the server.")
+
+        return rv
 
     def find_handlers(self, opts, source, sink):
         return (PumpingStation.find_handler(opts, source, SOURCES),

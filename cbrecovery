@@ -21,6 +21,8 @@ from collections import defaultdict
 import pump_transfer
 import pump
 import pump_tap
+import pump_dcp
+import pump_cb
 
 class Recovery(pump_transfer.Transfer):
     """Entry point for 2.0 cbrecovery."""
@@ -83,13 +85,12 @@ class Recovery(pump_transfer.Transfer):
 
         #only care about data recovery
         argv.append("--extra")
-        argv.append("data_only=1")
+        argv.append("data_only=1,conflict_resolve=0,allow_recovery_vb_remap=1")
 
         for i, node in enumerate(self.recovery_map):
-            nodename = node["node"].split("@")[-1]
             for vbucket in node["vbuckets"]:
                 if opts.id is None or int(opts.id) == int(vbucket):
-                    node_map = { nodename: [vbucket] }
+                    node_map = { node["node"]: [vbucket] }
                     temp_argv = copy.deepcopy(argv)
                     temp_argv.append("--vbucket-list")
                     temp_argv.append(json.dumps(node_map))
@@ -207,7 +208,7 @@ class Recovery(pump_transfer.Transfer):
         p.remove_option("-k")
 
     def find_handlers(self, opts, source, sink):
-        return pump_tap.TAPDumpSource, pump_tap.TapSink
+        return pump_dcp.DCPStreamSource, pump_cb.CBSink
 
     def explain_error(self, err, cmd):
         if cmd not in self.err_map:
