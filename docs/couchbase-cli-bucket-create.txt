@@ -12,9 +12,9 @@ SYNOPSIS
 'couchbase-cli bucket-create' [--cluster <url>] [--username <user>]
 	  [--password <password>] [--bucket <name>] [--bucket-type <type>]
 	  [--bucket-ramsize <size>] [--bucket-replica <num>]
-	  [--bucket-priority <priority>] [--bucket-password <password>]
-	  [--bucket-eviction-policy <policy>] [--enable-flush <num>]
-	  [--enable-index-replica <num>] [--conflict-resolution <type>] [--wait]
+	  [--bucket-priority <priority>] [--bucket-eviction-policy <policy>]
+	  [--enable-flush <num>] [--enable-index-replica <num>]
+	  [--conflict-resolution <type>] [--wait]
 
 DESCRIPTION
 -----------
@@ -58,11 +58,6 @@ include::part-common-options.txt[]
 	high or low. By default the priority is set to low. This option is only
 	valid for couchbase buckets. This setting only has an affect on the disk IO
 	if there are other buckets in the cluster.
-
---bucket-password <password>::
-	The passoword for authenticating with this bucket. If this option is not set
-	or the password is set to the empty string then this bucket will not require
-	authentication.
 
 --bucket-eviction-policy <policy>::
 	The memory cache eviction policy for this bucket. Couchbase buckets support
@@ -112,29 +107,29 @@ include::part-host-formats.txt[]
 EXAMPLES
 --------
 
-To create a Couchbase bucket named "travel-data" with password "password" which
-has a memory cache size of 1GB run the following command.
+To create a Couchbase bucket named "travel-data" which has a memory cache size
+of 1GB run the following command.
 
 	$ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-type couchbase \
-	 --bucket-ramsize 1024 --bucket-password password
+	 --bucket-ramsize 1024
 
-To create a Couchbase bucket named "airline-data" with password "password" has a
-memory cache size of 1GB, two data replicas, high disk I/O priority, uses full
-eviction, and has flush and replica indexes enabled run the following command.
+To create a Couchbase bucket named "airline-data" with a memory cache size of
+1GB, two data replicas, high disk I/O priority, uses full eviction, and has
+flush and replica indexes enabled run the following command.
 
 	$ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-type couchbase \
-	 --bucket-ramsize 1024 --bucket-password password --bucket-replicas 2 \
-	 --bucket-priority high --bucket-eviction-policy fullEviction \
-	 --enable-flush 1 --enable-index-replica 1
+	 --bucket-ramsize 1024 --bucket-replicas 2 --bucket-priority high \
+	 --bucket-eviction-policy fullEviction --enable-flush 1 \
+	 --enable-index-replica 1
 
-To create a Memcached bucket named "travel-data" with password "password" which
-has a memory cache size of 1GB run the following command.
+To create a Memcached bucket named "travel-data" which has a memory cache size
+of 1GB run the following command.
 
 	$ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-type memcached \
-	 --bucket-ramsize 1024 --bucket-password password
+	 --bucket-ramsize 1024
 
 ENVIRONMENT AND CONFIGURATION VARIABLES
 ---------------------------------------

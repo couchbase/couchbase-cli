@@ -626,8 +626,6 @@ class BucketCreate(Subcommand):
         group.add_argument("--bucket-priority", dest="priority", metavar="<priority>",
                            choices=[BUCKET_PRIORITY_LOW_STR, BUCKET_PRIORITY_HIGH_STR],
                            help="The bucket disk io priority (low or high)")
-        group.add_argument("--bucket-password", default="", metavar="<password>",
-                           dest="bucket_password", help="The bucket password")
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
                            choices=["valueOnly", "fullEviction"],
                            help="The bucket eviction policy (valueOnly or fullEviction)")
@@ -677,8 +675,7 @@ class BucketCreate(Subcommand):
             elif opts.conflict_resolution == "timestamp":
                 conflict_resolution_type = "lww"
 
-        _, errors = rest.create_bucket(opts.bucket_name, opts.bucket_password,
-                                       opts.type, opts.memory_quota,
+        _, errors = rest.create_bucket(opts.bucket_name, opts.type, opts.memory_quota,
                                        opts.eviction_policy, opts.replica_count,
                                        opts.replica_indexes, priority,
                                        conflict_resolution_type,
@@ -744,8 +741,6 @@ class BucketEdit(Subcommand):
                            help="The replica count for the bucket")
         group.add_argument("--bucket-priority", dest="priority", metavar="<priority>",
                            choices=["low", "high"], help="The bucket disk io priority (low or high)")
-        group.add_argument("--bucket-password", default="", metavar="<password>",
-                           dest="bucket_password", help="The bucket password")
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
                            choices=["valueOnly", "fullEviction"],
                            help="The bucket eviction policy (valueOnly or fullEviction)")
@@ -777,10 +772,9 @@ class BucketEdit(Subcommand):
             elif opts.priority == BUCKET_PRIORITY_LOW_STR:
                 priority = BUCKET_PRIORITY_LOW_INT
 
-        _, errors = rest.edit_bucket(opts.bucket_name, opts.bucket_password,
-                                     opts.memory_quota, opts.eviction_policy,
-                                     opts.replica_count, priority,
-                                     opts.enable_flush)
+        _, errors = rest.edit_bucket(opts.bucket_name, opts.memory_quota,
+                                     opts.eviction_policy, opts.replica_count,
+                                     priority, opts.enable_flush)
         _exitIfErrors(errors)
 
         _success("Bucket edited")
@@ -857,7 +851,6 @@ class BucketList(Subcommand):
                 print '%s' % bucket['name']
                 print ' bucketType: %s' % bucket['bucketType']
                 print ' authType: %s' % bucket['authType']
-                print ' saslPassword: %s' % bucket['saslPassword']
                 print ' numReplicas: %s' % bucket['replicaNumber']
                 print ' ramQuota: %s' % bucket['quota']['ram']
                 print ' ramUsed: %s' % bucket['basicStats']['memUsed']

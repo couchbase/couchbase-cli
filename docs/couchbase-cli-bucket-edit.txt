@@ -12,8 +12,7 @@ SYNOPSIS
 'couchbase-cli bucket-edit' [--cluster <url>] [--username <user>]
 	  [--password <password>] [--bucket <name>] [--bucket-ramsize <size>]
 	  [--bucket-replica <num>] [--bucket-priority <priority>]
-	  [--bucket-password <password>] [--bucket-eviction-policy <policy>]
-	  [--enable-flush <num>]
+	  [--bucket-eviction-policy <policy>] [--enable-flush <num>]
 
 DESCRIPTION
 -----------
@@ -50,11 +49,6 @@ include::part-common-options.txt[]
 	valid for couchbase buckets. This setting only has an affect on the disk IO
 	if there are other buckets in the cluster.
 
---bucket-password <password>::
-	The passoword for authenticating with this bucket. If this option is not set
-	or the password is set to the empty string then this bucket will not require
-	authentication.
-
 --bucket-eviction-policy <policy>::
 	The memory cache eviction policy for this bucket. Couchbase buckets support
 	either "valueOnly" eviction or "fullEviction". Specifying the
@@ -82,12 +76,11 @@ include::part-host-formats.txt[]
 EXAMPLES
 --------
 
-If we want to edit change the password and memory quota of the travel-data
-bucket we would run the command below.
+If we want to change the memory quota of the travel-data bucket we would run the
+command below.
 
 	$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
-	 --password password --bucket travel-data --bucket-ramsize 1024 \
-	 --bucket-password new_password
+	 --password password --bucket travel-data --bucket-ramsize 1024
 
 If we want to change the amount of replicas from 1 to 2 on the cb-data bucket
 then we would run the following commands below. Note that we need to rebalance
@@ -98,7 +91,7 @@ replicas are created.
 	 --password password --bucket travel-data --bucket-ramsize 1024 \
 	 --bucket-replicas 2
 
-	$ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+	$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
 	 --password password
 
 ENVIRONMENT AND CONFIGURATION VARIABLES

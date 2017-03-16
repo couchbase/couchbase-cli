@@ -542,7 +542,7 @@ class ClusterManager(object):
 
         return all, eject, failover, readd, hostnames, None
 
-    def create_bucket(self, name, password, bucket_type, memory_quota,
+    def create_bucket(self, name, bucket_type, memory_quota,
                       eviction_policy, replicas, replica_indexes,
                       threads_number, conflict_resolution, flush_enabled,
                       timestamps, sync, timeout=60):
@@ -550,8 +550,6 @@ class ClusterManager(object):
 
         if name is None:
             return None ["The bucket name is required when creating a bucket"]
-        if password is None:
-            return None ["The bucket password is required when creating a bucket"]
         if bucket_type is None:
             return None ["The bucket type is required when creating a bucket"]
         if memory_quota is None:
@@ -560,7 +558,6 @@ class ClusterManager(object):
         params = { "name": name,
                    "authType": "sasl",
                    "bucketType": bucket_type,
-                   "saslPassword": password,
                    "ramQuotaMB": memory_quota }
 
         if eviction_policy is not None:
@@ -608,7 +605,7 @@ class ClusterManager(object):
         return result, None
 
 
-    def edit_bucket(self, name, password, memory_quota, eviction_policy,
+    def edit_bucket(self, name, memory_quota, eviction_policy,
                     replicas, threads_number, flush_enabled):
         url = self.hostname + '/pools/default/buckets/' + name
 
@@ -616,8 +613,6 @@ class ClusterManager(object):
             return None ["The bucket name is required when editing a bucket"]
 
         params = {}
-        if password is not None:
-            params["saslPassword"] = password
         if memory_quota is not None:
             params["ramQuotaMB"] = memory_quota
         if eviction_policy is not None:
