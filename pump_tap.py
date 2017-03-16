@@ -284,20 +284,20 @@ class TAPDumpSource(pump.Source):
                 return "error: could not connect to memcached: " + \
                     host + ":" + str(port), None
 
-            sasl_user = str(pump.get_username(self.source_bucket.get("name", self.opts.username)))
-            sasl_pswd = str(pump.get_password(self.source_bucket.get("saslPassword", self.opts.password)))
-            if sasl_user:
+            bucket = str(pump.get_username(self.source_bucket.get("name", self.opts.username)))
+            if bucket:
                 try:
-                    self.tap_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                    self.tap_conn.sasl_auth_plain(self.opts.username, self.opts.password)
+                    self.tap_conn.bucket_select(bucket)
                 except EOFError:
-                    return "error: SASL auth error: %s:%s, user: %s" % \
-                        (host, port, sasl_user), None
+                    return "error: SASL auth error: %s:%s, bucket: %s" % \
+                        (host, port, bucket), None
                 except cb_bin_client.MemcachedError:
-                    return "error: SASL auth failed: %s:%s, user: %s" % \
-                        (host, port, sasl_user), None
+                    return "error: SASL auth failed: %s:%s, bucket: %s" % \
+                        (host, port, bucket), None
                 except socket.error:
-                    return "error: SASL auth socket error: %s:%s, user: %s" % \
-                        (host, port, sasl_user), None
+                    return "error: SASL auth socket error: %s:%s, bucket: %s" % \
+                        (host, port, bucket), None
 
             try:
                 self.tap_conn.hello()
@@ -589,9 +589,8 @@ class TapSink(pump_cb.CBSink):
                         host_port = "%s:%s" % (node, port_number)
                         conn = mconns.get(host_port, None)
                         if not conn:
-                            user = bucket['name']
-                            pswd = bucket['saslPassword']
-                            rv, conn = TapSink.connect_mc(node, port_number, user, pswd)
+                            rv, conn = TapSink.connect_mc(node, port_number, self.opts.username,
+                                                          self.opts.password, bucket['name'])
                             if rv != 0:
                                 logging.error("error: CBSink.connect() for send: " + rv)
                                 return rv, None

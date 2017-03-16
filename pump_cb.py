@@ -329,9 +329,8 @@ class CBSink(pump_mc.MCSink):
             host, port = pump.hostport(host_port, 11210)
             if self.opts.ssl:
                 port = couchbaseConstants.SSL_PORT
-            user = bucket['name']
-            pswd = bucket['saslPassword']
-            rv, conn = CBSink.connect_mc(host, port, user, pswd)
+            bucket = bucket['name']
+            rv, conn = CBSink.connect_mc(host, port, self.opts.username, self.opts.password, bucket)
             if rv != 0:
                 logging.error("error: CBSink.connect() for send: " + rv)
                 return rv, None

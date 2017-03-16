@@ -449,21 +449,22 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
             if not self.mem_conn:
                 return "error: could not connect to memcached: " + \
                     host + ":" + str(port)
-            sasl_user = str(self.source_bucket.get("name"))
-            sasl_pswd = str(self.source_bucket.get("saslPassword"))
-            if sasl_user:
+            bucket = str(self.source_bucket.get("name"))
+            if bucket:
                 try:
-                    self.dcp_conn.sasl_auth_plain(sasl_user, sasl_pswd)
-                    self.mem_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                    self.dcp_conn.sasl_auth_plain(self.opts.username, self.opts.password)
+                    self.dcp_conn.bucket_select(bucket)
+                    self.mem_conn.sasl_auth_plain(self.opts.username, self.opts.password)
+                    self.mem_conn.bucket_select(bucket)
                 except EOFError:
-                    return "error: SASL auth error: %s:%s, user: %s" % \
-                        (host, port, sasl_user)
+                    return "error: SASL auth error: %s:%s, bucket: %s" % \
+                        (host, port, bucket)
                 except cb_bin_client.MemcachedError:
-                    return "error: SASL auth failed: %s:%s, user: %s" % \
-                        (host, port, sasl_user)
+                    return "error: SASL auth failed: %s:%s, bucket: %s" % \
+                        (host, port, bucket)
                 except socket.error:
-                    return "error: SASL auth socket error: %s:%s, user: %s" % \
-                        (host, port, sasl_user)
+                    return "error: SASL auth socket error: %s:%s, bucket: %s" % \
+                        (host, port, bucket)
             extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, \
                                 couchbaseConstants.FLAG_DCP_PRODUCER)
             try:
@@ -849,7 +850,7 @@ class DCPSink(pump_cb.CBSink):
 
         return 0, retry_batch, retry_batch and not need_refresh
 
-    def connect_mc(self, node, sasl_user, sasl_pswd):
+    def connect_mc(self, node, bucket):
         """Return previously connected dcp conn."""
 
         host = node.split(':')[0]
@@ -863,18 +864,19 @@ class DCPSink(pump_cb.CBSink):
         if not dcp_conn:
             return "error: could not connect to memcached: " + \
                 host + ":" + str(port), None
-        if sasl_user:
+        if bucket:
             try:
-                dcp_conn.sasl_auth_plain(sasl_user, sasl_pswd)
+                dcp_conn.sasl_auth_plain(self.opts.username, self.opts.password)
+                dcp_conn.bucket_select(bucket)
             except EOFError:
-                return "error: SASL auth error: %s:%s, user: %s" % \
-                    (host, port, sasl_user), None
+                return "error: SASL auth error: %s:%s, bucket: %s" % \
+                    (host, port, bucket), None
             except cb_bin_client.MemcachedError:
-                return "error: SASL auth failed: %s:%s, user: %s" % \
-                    (host, port, sasl_user), None
+                return "error: SASL auth failed: %s:%s, bucket: %s" % \
+                    (host, port, bucket), None
             except socket.error:
-                return "error: SASL auth socket error: %s:%s, user: %s" % \
-                    (host, port, sasl_user), None
+                return "error: SASL auth socket error: %s:%s, bucket: %s" % \
+                    (host, port, bucket), None
         extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, \
                             couchbaseConstants.FLAG_DCP_CONSUMER)
         try:
@@ -915,9 +917,8 @@ class DCPSink(pump_cb.CBSink):
                         host_port = "%s:%s" % (node, port_number)
                         conn = mconns.get(host_port, None)
                         if not conn:
-                            user = bucket['name']
-                            pswd = bucket['saslPassword']
-                            rv, conn = DCPSink.connect_mc(host_port, user, pswd)
+                            bucket = bucket['name']
+                            rv, conn = self.connect_mc(host_port, bucket)
                             if rv != 0:
                                 logging.error("error: CBSink.connect() for send: " + rv)
                                 return rv, None
