@@ -136,6 +136,9 @@ class ClusterManager(object):
         if errors:
             return None, errors
 
+        if result["indexDefs"] is None:
+            return None, None
+
         bucket_index_defs = []
         for _, index_def in result["indexDefs"]["indexDefs"].iteritems():
             if index_def["sourceType"] == "couchbase" and index_def["sourceName"] == bucket:
@@ -329,7 +332,7 @@ class ClusterManager(object):
     def get_server_group(self, groupName):
         groups, errors = self.get_server_groups()
         if errors:
-            return None, error
+            return None, errors
 
         if not groups or not groups["groups"] or groups["groups"] == 0:
             return None, ["No server groups found"]
