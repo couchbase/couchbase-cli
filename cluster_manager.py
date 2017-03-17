@@ -136,10 +136,14 @@ class ClusterManager(object):
         if errors:
             return None, errors
 
+
         bucket_index_defs = []
-        for _, index_def in result["indexDefs"]["indexDefs"].iteritems():
-            if index_def["sourceType"] == "couchbase" and index_def["sourceName"] == bucket:
-                bucket_index_defs.append(index_def)
+        if "indexDefs" in result and result["indexDefs"] is not None:
+            for _, index_def in result["indexDefs"]["indexDefs"].iteritems():
+                sourceType = index_def["sourceType"]
+                sourceName = index_def["sourceName"]
+                if sourceType == "couchbase" and sourceName == bucket:
+                    bucket_index_defs.append(index_def)
         return bucket_index_defs, None
 
     def n1ql_query(self, stmt, args=None):
