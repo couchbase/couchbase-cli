@@ -465,8 +465,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
                 except socket.error:
                     return "error: SASL auth socket error: %s:%s, bucket: %s" % \
                         (host, port, bucket)
-            extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, \
-                                couchbaseConstants.FLAG_DCP_PRODUCER)
+            flags = couchbaseConstants.FLAG_DCP_PRODUCER | couchbaseConstants.FLAG_DCP_XATTRS
+            extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, flags)
             try:
                 opaque=self.r.randint(0, 2**32)
                 self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONNECT, self.dcp_name, \
