@@ -339,31 +339,10 @@ class MCSink(pump.Sink):
     def connect_mc(host, port, username, password, bucket):
         username = str(username).encode("ascii")
         password = str(password).encode("ascii")
-
-        if bucket is None:
-            bucket = ""
-            skip_bucket_select = True
-            bucketErrString = "(None)"
-        else:
+        if bucket is not None:
             bucket = str(bucket).encode("ascii")
-            skip_bucket_select = False
-            bucketErrString = bucket
-        mc = cb_bin_client.MemcachedClient(host, int(port))
-        if bucket:
-            try:
-                mc.sasl_auth_plain(username, password)
-                if not skip_bucket_select:
-                    mc.bucket_select(bucket)
-            except EOFError:
-                return "error: SASL auth error: %s:%s, bucket: %s" % \
-                    (host, port, bucketErrString), None
-            except cb_bin_client.MemcachedError:
-                return "error: SASL auth failed: %s:%s, bucket: %s" % \
-                    (host, port, bucketErrString), None
-            except socket.error:
-                return "error: SASL auth exception: %s:%s, bucket: %s" % \
-                    (host, port, bucketErrString), None
-        return 0, mc
+
+        return pump.get_mcd_conn(host, port, username, password, bucket)
 
     def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque, dtype, nmeta, conf_res):
         ext_meta = ''

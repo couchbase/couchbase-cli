@@ -19,6 +19,7 @@ import platform
 import subprocess
 
 import couchbaseConstants
+import cb_bin_client
 from cluster_manager import ClusterManager
 from collections import defaultdict
 import cbsnappy as snappy
@@ -1099,3 +1100,40 @@ def hostport(hoststring, default_port=8091):
         host = hoststring
         port = default_port
     return host, port
+
+def get_mcd_conn(host, port, username, password, bucket):
+    conn = cb_bin_client.MemcachedClient(host, port)
+    if not conn:
+        return "error: could not connect to memcached: " + \
+            host + ":" + str(port), None
+
+    try:
+        conn.sasl_auth_plain(username, password)
+    except EOFError, e:
+        return "error: SASL auth error: %s:%s, %s" % (host, port, e), None
+    except cb_bin_client.MemcachedError, e:
+        return "error: SASL auth failed: %s:%s, %s" % (host, port, e), None
+    except socket.error, e:
+        return "error: SASL auth socket error: %s:%s, %s" % (host, port, e), None
+
+    try:
+        conn.helo(couchbaseConstants.HELO_DATATYPE)
+        conn.helo(couchbaseConstants.HELO_XATTR)
+    except EOFError, e:
+        return "error: HELO error: %s:%s, %s" % (host, port, e), None
+    except cb_bin_client.MemcachedError, e:
+        return "error: HELO failed: %s:%s, %s" % (host, port, e), None
+    except socket.error, e:
+        return "error: HELO socket error: %s:%s, %s" % (host, port, e), None
+
+    if bucket:
+        try:
+            conn.bucket_select(bucket)
+        except EOFError, e:
+            return "error: Bucket select error: %s:%s %s, %s" % (host, port, buckete), None
+        except cb_bin_client.MemcachedError, e:
+            return "error: Bucket select failed: %s:%s %s, %s" % (host, port, bucket, e), None
+        except socket.error, e:
+            return "error: Bucket select socket error: %s:%s %s, %s" % (host, port, bucket, e), None
+
+    return 0, conn

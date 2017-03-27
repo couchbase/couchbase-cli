@@ -272,6 +272,9 @@ class TAPDumpSource(pump.Source):
         if not self.tap_conn:
             host = self.source_node['hostname'].split(':')[0]
             port = self.source_node['ports']['direct']
+            username = self.opts.username
+            password = self.opts.password
+            bucket = str(pump.get_username(self.source_bucket.get("name", self.opts.username)))
             if self.opts.ssl:
                 port = couchbaseConstants.SSL_PORT
             version = self.source_node['version'] # Ex: '2.0.0-1944-rel-community' or '1.8.1-937-rel-community'.
@@ -279,31 +282,9 @@ class TAPDumpSource(pump.Source):
             logging.debug("  TAPDumpSource connecting mc: " +
                           host + ":" + str(port))
 
-            self.tap_conn = cb_bin_client.MemcachedClient(host, port)
-            if not self.tap_conn:
-                return "error: could not connect to memcached: " + \
-                    host + ":" + str(port), None
-
-            bucket = str(pump.get_username(self.source_bucket.get("name", self.opts.username)))
-            if bucket:
-                try:
-                    self.tap_conn.sasl_auth_plain(self.opts.username, self.opts.password)
-                    self.tap_conn.bucket_select(bucket)
-                except EOFError:
-                    return "error: SASL auth error: %s:%s, bucket: %s" % \
-                        (host, port, bucket), None
-                except cb_bin_client.MemcachedError:
-                    return "error: SASL auth failed: %s:%s, bucket: %s" % \
-                        (host, port, bucket), None
-                except socket.error:
-                    return "error: SASL auth socket error: %s:%s, bucket: %s" % \
-                        (host, port, bucket), None
-
-            try:
-                self.tap_conn.hello()
-            except Exception, e:
-                logging.warn("fail to call hello command, maybe it is not supported.")
-                pass
+            err, self.tap_conn = self.get_mcd_conn(host, port, username, password, bucket)
+            if err:
+                return err, None
 
             self.add_start_event(self.tap_conn)
             # We explicitly do not use TAP_FLAG_REGISTERED_CLIENT,
@@ -595,15 +576,6 @@ class TapSink(pump_cb.CBSink):
                                 logging.error("error: CBSink.connect() for send: " + rv)
                                 return rv, None
                             mconns[host_port] = conn
-                            for i, msg in enumerate(msgs):
-                                msg_format_length = len(msg)
-                                if msg_format_length > 8:
-                                    try:
-                                        conn.hello()
-                                    except Exception, e:
-                                        logging.warn("fail to call hello command, maybe it is not supported")
-                                        pass
-                                break
                             self.add_start_event(conn)
                         break
         return 0, conn

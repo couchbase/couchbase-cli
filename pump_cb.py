@@ -336,16 +336,5 @@ class CBSink(pump_mc.MCSink):
                 return rv, None
             mconns[host_port] = conn
 
-            #check if we need to calll hello command
-            for i, msg in enumerate(msgs):
-                msg_format_length = len(msg)
-                if msg_format_length > 8:
-                    try:
-                        conn.hello()
-                    except Exception, e:
-                        logging.warn("fail to call hello command, maybe it is not supported")
-                        pass
-                break
-
             self.add_start_event(conn)
         return 0, conn

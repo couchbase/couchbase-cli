@@ -434,37 +434,22 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
         if not self.dcp_conn:
             host = self.source_node['hostname'].split(':')[0]
             port = self.source_node['ports']['direct']
+            username = self.opts.username
+            password = self.opts.password
+            bucket = str(self.source_bucket.get("name"))
             if self.opts.ssl:
                 port = couchbaseConstants.SSL_PORT
-            version = self.source_node['version']
 
-            logging.debug("  DCPStreamSource connecting mc: " +
-                          host + ":" + str(port))
+            logging.debug("  DCPStreamSource connecting mc: " + host + ":" + str(port))
 
-            self.dcp_conn = cb_bin_client.MemcachedClient(host, port)
-            if not self.dcp_conn:
-                return "error: could not connect to memcached: " + \
-                    host + ":" + str(port)
-            self.mem_conn = cb_bin_client.MemcachedClient(host, port)
-            if not self.mem_conn:
-                return "error: could not connect to memcached: " + \
-                    host + ":" + str(port)
-            bucket = str(self.source_bucket.get("name"))
-            if bucket:
-                try:
-                    self.dcp_conn.sasl_auth_plain(self.opts.username, self.opts.password)
-                    self.dcp_conn.bucket_select(bucket)
-                    self.mem_conn.sasl_auth_plain(self.opts.username, self.opts.password)
-                    self.mem_conn.bucket_select(bucket)
-                except EOFError:
-                    return "error: SASL auth error: %s:%s, bucket: %s" % \
-                        (host, port, bucket)
-                except cb_bin_client.MemcachedError:
-                    return "error: SASL auth failed: %s:%s, bucket: %s" % \
-                        (host, port, bucket)
-                except socket.error:
-                    return "error: SASL auth socket error: %s:%s, bucket: %s" % \
-                        (host, port, bucket)
+            err, self.dcp_conn = pump.get_mcd_conn(host, port, username, password, bucket)
+            if err:
+                return err, None
+
+            err, self.mem_conn = pump.get_mcd_conn(host, port, username, password, bucket)
+            if err:
+                return err, None
+
             flags = couchbaseConstants.FLAG_DCP_PRODUCER | couchbaseConstants.FLAG_DCP_XATTRS
             extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, flags)
             try:
@@ -855,28 +840,17 @@ class DCPSink(pump_cb.CBSink):
 
         host = node.split(':')[0]
         port = node.split(':')[1]
+        username = self.opts.username
+        password = self.opts.password
         if self.opts.ssl:
             port = couchbaseConstants.SSL_PORT
         logging.debug("  DCPSink connecting mc: " +
                       host + ":" + str(port))
 
-        dcp_conn = cb_bin_client.MemcachedClient(host, port)
-        if not dcp_conn:
-            return "error: could not connect to memcached: " + \
-                host + ":" + str(port), None
-        if bucket:
-            try:
-                dcp_conn.sasl_auth_plain(self.opts.username, self.opts.password)
-                dcp_conn.bucket_select(bucket)
-            except EOFError:
-                return "error: SASL auth error: %s:%s, bucket: %s" % \
-                    (host, port, bucket), None
-            except cb_bin_client.MemcachedError:
-                return "error: SASL auth failed: %s:%s, bucket: %s" % \
-                    (host, port, bucket), None
-            except socket.error:
-                return "error: SASL auth socket error: %s:%s, bucket: %s" % \
-                    (host, port, bucket), None
+        err, dcp_conn = pump.get_mcd_conn(host, port, username, password, bucket)
+        if err:
+            return err, None
+
         extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, \
                             couchbaseConstants.FLAG_DCP_CONSUMER)
         try:
