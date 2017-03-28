@@ -1449,7 +1449,7 @@ class ResetAdminPassword(Subcommand):
     """The reset admin password command"""
 
     def __init__(self):
-        super(ResetAdminPassword, self).__init__(omit_username=True, omit_password=True)
+        super(ResetAdminPassword, self).__init__(deprecate_username=True, deprecate_password=True)
         self.parser.prog = "couchbase-cli reset-admin-password"
         group = self.parser.add_argument_group("Reset password options")
         group.add_argument("--new-password", dest="new_password", metavar="<password>",
