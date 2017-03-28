@@ -18,7 +18,6 @@ import couchbaseConstants
 import pump
 import pump_mc
 import pump_cb
-import pump_tap
 
 from cluster_manager import ClusterManager, ServiceNotAvailableException
 
@@ -37,7 +36,7 @@ except ImportError:
 
 bool_to_str = lambda value: str(bool(int(value))).lower()
 
-class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
+class DCPStreamSource(pump.Source, threading.Thread):
     """Can read from cluster/server/bucket via DCP streaming."""
     HIGH_SEQNO = "high_seqno"
     VB_UUID = "uuid"
@@ -49,6 +48,8 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
+        if spec.startswith("https://"):
+            setattr(opts, "ssl", True)
         super(DCPStreamSource, self).__init__(opts, spec, source_bucket, source_node,
                                             source_map, sink_map, ctl, cur)
         threading.Thread.__init__(self)
@@ -82,11 +83,57 @@ class DCPStreamSource(pump_tap.TAPDumpSource, threading.Thread):
 
     @staticmethod
     def check(opts, spec):
-        return pump_tap.TAPDumpSource.check(opts, spec)
+        err, map = pump.rest_couchbase(opts, spec)
+        if err:
+            return err, map
+        if not map or not map.get('buckets'):
+            return ("error: no buckets supporting DCP at source: %s;"
+                    " please check your username/password to the cluster" %
+                    (spec)), None
+        return 0, map
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
-        return pump_tap.TAPDumpSource.provide_design(opts, source_spec, source_bucket, source_map)
+        spec_parts = source_map.get('spec_parts')
+        if not spec_parts:
+            return "error: no design spec_parts", None
+        host, port, user, pswd, path = spec_parts
+
+        source_nodes = pump.filter_bucket_nodes(source_bucket, spec_parts)
+        if not source_nodes:
+            source_nodes = source_bucket['nodes']
+            if not source_nodes:
+                return ("error: no design source node; spec_parts: %s" %
+                        (spec_parts,), None)
+
+        couch_api_base = source_nodes[0].get('couchApiBase')
+        if not couch_api_base:
+            return 0, None # No couchApiBase; probably not 2.0.
+
+        err, ddocs_json, ddocs = \
+            pump.rest_request_json(host, int(port), user, pswd, opts.ssl,
+                                   "/pools/default/buckets/%s/ddocs" %
+                                   (source_bucket['name']),
+                                   reason="provide_design")
+        if err and "response: 404" in err: # A 404/not-found likely means 2.0-DP4.
+            ddocs_json = None
+            ddocs_url = couch_api_base + "/_all_docs"
+            ddocs_qry = "?startkey=\"_design/\"&endkey=\"_design0\"&include_docs=true"
+
+            host, port, user, pswd, path = \
+                pump.parse_spec(opts, ddocs_url, 8092)
+            # Not using user/pwd as 2.0-DP4 CAPI did not support auth.
+            err, ddocs_json, ddocs = \
+                pump.rest_request_json(host, int(port), None, None, opts.ssl,
+                                       path + ddocs_qry,
+                                       reason="provide_design-2.0DP4")
+        if err:
+            return err, None
+
+        if not ddocs.get('rows', None):
+            return 0, None
+        else:
+            return 0, json.dumps(ddocs.get('rows', []))
 
     @staticmethod
     def provide_index(opts, source_spec, source_bucket, source_map):

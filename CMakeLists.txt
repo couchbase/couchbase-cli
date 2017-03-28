@@ -67,7 +67,6 @@ INSTALL(FILES
         pump_json.py
         pump_mc.py
         pump_sfd.py
-        pump_tap.py
         pump_transfer.py
         pump_dcp.py
         DESTINATION lib/python)

@@ -16,7 +16,6 @@ import pump_csv
 import pump_cb
 import pump_gen
 import pump_mc
-import pump_tap
 import pump_dcp
 
 from pump import PumpingStation
@@ -407,7 +406,6 @@ SOURCES = [pump_bfd.BFDSource,
            pump_csv.CSVSource,
            pump_gen.GenSource,
            pump_dcp.DCPStreamSource,
-           pump_tap.TAPDumpSource,
            pump.StdInSource]
 
 SINKS = [pump_bfd.BFDSink,
