@@ -43,10 +43,10 @@ def check_cluster_initialized(rest):
     elif errors:
         _exitIfErrors(errors)
 
-def index_storage_mode_to_param(value):
+def index_storage_mode_to_param(value, default="plasma"):
     """Converts the index storage mode to what Couchbase understands"""
     if value == "default":
-        return "forestdb"
+        return default
     elif value == "memopt":
         return "memory_optimized"
     else:
@@ -1526,8 +1526,13 @@ class ServerAdd(Subcommand):
         if opts.storage_mode is None and settings['storageMode'] == "" and "index" in opts.services:
             opts.storage_mode = "default"
 
+        # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
+        default = "plasma"
+        if opts.storage_mode == "default" and settings['storageMode'] == "forestdb":
+            default = "forestdb"
+
         if opts.storage_mode:
-            param = index_storage_mode_to_param(opts.storage_mode)
+            param = index_storage_mode_to_param(opts.storage_mode, default)
             _, errors = rest.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
@@ -2201,7 +2206,15 @@ class SettingIndex(Subcommand):
             and opts.threads is None and opts.log_level is None:
             _exitIfErrors(["No settings specified to be changed"])
 
-        opts.storage_mode = index_storage_mode_to_param(opts.storage_mode)
+        settings, errors = rest.index_settings()
+        _exitIfErrors(errors)
+
+        # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
+        default = "plasma"
+        if opts.storage_mode == "default" and settings['storageMode'] == "forestdb":
+            default = "forestdb"
+
+        opts.storage_mode = index_storage_mode_to_param(opts.storage_mode, default)
         _, errors = rest.set_index_settings(opts.storage_mode, opts.max_rollback,
                                             opts.stable_snap, opts.mem_snap,
                                             opts.threads, opts.log_level)
