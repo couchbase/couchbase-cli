@@ -1117,8 +1117,7 @@ def get_mcd_conn(host, port, username, password, bucket):
         return "error: SASL auth socket error: %s:%s, %s" % (host, port, e), None
 
     try:
-        conn.helo(couchbaseConstants.HELO_DATATYPE)
-        conn.helo(couchbaseConstants.HELO_XATTR)
+        conn.helo([couchbaseConstants.HELO_XATTR])
     except EOFError, e:
         return "error: HELO error: %s:%s, %s" % (host, port, e), None
     except cb_bin_client.MemcachedError, e:
