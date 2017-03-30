@@ -85,6 +85,11 @@ class GenSource(pump.Source):
         ratio_sets = cfg['ratio-sets']
         exit_after_creates = cfg['exit-after-creates']
         low_compression  = cfg['low-compression']
+        itr = None
+        collections = self.opts.collection
+        if collections:
+            itr = iter(collections)
+
         json = cfg['json']
         if not self.body:
 
@@ -131,7 +136,19 @@ class GenSource(pump.Source):
                 value = self.body % (prefix, key, key % 101, key)
             else:
                 value = self.body
-            msg = (cmd, vbucket_id, prefix + str(key), flg, exp, cas, '', value, 0, 0, 0, 0)
+
+            # generate a collection key
+            if itr:
+                try:
+                    c = itr.next()
+                except StopIteration:
+                    itr = iter(collections)
+                    c = itr.next()
+                docKey = c + self.opts.separator + prefix + str(key)
+            else:
+                docKey = prefix + str(key)
+
+            msg = (cmd, vbucket_id, docKey, flg, exp, cas, '', value, 0, 0, 0, 0)
             batch.append(msg, len(value))
 
             if exit_after_creates and self.cur_items >= max_items:

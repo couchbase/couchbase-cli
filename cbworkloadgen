@@ -67,6 +67,11 @@ class WorkloadGen(pump_transfer.Transfer):
                        "username" : ["-u", None],
                        "password" : ["-p", None],
                        "extra" : ["-x", "backoff_cap=0.1"],
+                       "collection" : ["-c", None],
+                       "separator" : ["--separator", None]
+                      }
+
+        list_opts =   {"collection" : ["-c", None]
                       }
 
         count_opts = {"verbose" : ["-v", None]}
@@ -97,6 +102,11 @@ class WorkloadGen(pump_transfer.Transfer):
             val = getattr(opts, key, None)
             if val:
                 common_opts[key][1] = str(val)
+
+        for key in list_opts.iterkeys():
+            val = getattr(opts, key, None)
+            if val:
+                common_opts[key][1] =  list(val)
 
         for key in count_opts.iterkeys():
             val = getattr(opts, key, None)
@@ -159,6 +169,10 @@ class WorkloadGen(pump_transfer.Transfer):
         p.add_option("--low-compression",
                      action="store_true", default=False,
                      help="generate document data that is difficult to compress")
+        p.add_option("-c", "--collection", type="string", action="append",
+                     help=optparse.SUPPRESS_HELP)
+        p.add_option("--separator", type="string", default="::",
+                     help=optparse.SUPPRESS_HELP)
         return p
 
 
