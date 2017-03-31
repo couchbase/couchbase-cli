@@ -1092,10 +1092,20 @@ class ClusterManager(object):
         url = self.hostname + '/node/controller/reloadCertificate'
         return self._post_form_encoded(url, None)
 
-    def set_client_cert_auth(self, value):
+    def set_client_cert_auth(self, auth_state, auth_prefix, auth_path, auth_delimiter):
         """Enable/disable the client cert auth"""
         url = self.hostname + '/settings/clientCertAuth'
-        params = {"client_cert_auth":value}
+
+        params = {}
+        if auth_state:
+            params["state"] = auth_state
+        if auth_prefix:
+            params["prefix"] = auth_prefix
+        if auth_path:
+            params["path"] = auth_path
+        if auth_delimiter:
+            params["delimiter"] = auth_delimiter
+
         return self._post_form_encoded(url, params)
 
     def retrieve_client_cert_auth(self):

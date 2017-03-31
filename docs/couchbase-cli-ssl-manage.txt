@@ -11,8 +11,12 @@ SYNOPSIS
 'couchbase-cli ssl-manage' [--cluster <url>] [--username <user>]
 	  [--password <password>] [--cluster-cert-info] [--node-cert-info]
 	  [--regenerate-cert <file>] [--set-node-certificate]
-	  [--upload-cluster-ca <file>] [--set-client-auth <enable|disable|mandatory>]
-	  [--client-auth][--extended]
+	  [--upload-cluster-ca <file>]
+	  [--set-client-auth-state <enable|disable|mandatory>]
+	  [--set-client-auth-path <subject.cn|san.uri|san.dnsname|san.email>]
+	  [--set-client-auth-prefix <prefix>]
+	  [--set-client-auth-delimiter <delimiter>]
+	  [--client-auth] [--extended]
 
 DESCRIPTION
 -----------
@@ -44,7 +48,7 @@ include::part-common-options.txt[]
 	Uploads the certificate specified to the cluster. The uploaded certificate
 	will replace the cluster certificate in this cluster.
 
---set-client-auth <enable|disable|mandatory>::
+--set-client-auth-state <enable|disable|mandatory>::
 	Sets the client certificate auth to following values:
 	* disabled : no client certification
 	* enabled : if the client presents a valid client certificate then we try
@@ -52,6 +56,17 @@ include::part-common-options.txt[]
 	  fall back to the existing authentication methods
 	* mandatory : the client has to present valid SSL certificate in order to
 	  access successfully authorise the connection.
+
+--set-client-auth-path <path>:
+    The field which will be used to extract the username from the certificate
+    Currently only subject.cn, san.uri, san.email and san.dnsname are allowed
+
+--set-client-auth-prefix <prefix>
+    Optional. Prefix to be ignored from the field value
+
+--set-client-auth-delimiter <delimiter>
+    Optional. The delimiter can either be a string or a character, the parsing
+    of the username ends when the delimter value is found.
 
 --client-auth::
 	This options used to get the client cert auth value
