@@ -1027,7 +1027,7 @@ def rest_couchbase(opts, spec):
 
     buckets = []
     for bucket in result:
-        if bucket["bucketType"] in ["membase", "couchbase"]:
+        if bucket["bucketType"] in ["membase", "couchbase", "ephemeral"]:
             buckets.append(bucket)
 
 
