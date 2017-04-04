@@ -59,6 +59,9 @@ include::part-common-options.txt[]
 	impacted for key-value operations, but the maximum size of the bucket is
 	unbounded.
 
+	Ephemeral buckets do not allow changing the eviction policy after the bucket
+	is created. In order to do this you need to delete and re-create the bucket.
+
 --enable-flush <num>::
 	Specifies whether or not the flush operation is allowed for this bucket. To
 	enable flush set this option to "1". To disable flush set this option to

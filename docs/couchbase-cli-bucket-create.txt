@@ -34,11 +34,13 @@ include::part-common-options.txt[]
 	percent and can be a maximum of 100 characters in length.
 
 --bucket-type <type>::
-	The type of bucket to create. Accepted bucket types are "couchbase" and
-	"memcached". The Couchbase bucket is the standard bucket type used by
-	Couchbase. This bucket supports persistence, replication, caching, and
-	indexing. The Memcached bucket type is a cache only bucket that does not
-	support replication, indexing or persistence. This bucket type provides the
+	The type of bucket to create. Accepted bucket types are "couchbase",
+	"ephemeral", and "memcached". The Couchbase bucket is the standard bucket
+	type. It supports data persistence, replication, caching, indexing, views,
+	and N1QL queries. The ephemeral bucket is an in-memory bucket similar to the
+	Couchbase bucket, but it does not support data persistence or views. The
+	Memcached bucket is a cache only bucket that does not support persistence,
+	replication, indexing, views or N1QL querying. This bucket type provides the
 	same behavior as Memcached Server.
 
 --bucket-ramsize <size>::
@@ -68,6 +70,14 @@ include::part-common-options.txt[]
 	the bucket. Using the "fullEviction" policy means that performance will be
 	impacted for key-value operations, but the maximum size of the bucket is
 	unbounded.
+
+	If you are using an Ephemeral bucket then you can specify either
+	"noEviction" or "nruEviction". Specifying "noEviction" means that the bucket
+	will not evict items from the cache if it is full. This type of eviction
+	policy should be used for in-memory database use cases. Specifying
+	"nruEviction" means that not recently used items will be evicted from memory
+	when all memory in the bucket is used. This eviction type should be used for
+	caching use cases.
 
 --enable-flush <num>::
 	Specifies whether or not the flush operation is allowed for this bucket. To

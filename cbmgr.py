@@ -627,8 +627,8 @@ class BucketCreate(Subcommand):
                            choices=[BUCKET_PRIORITY_LOW_STR, BUCKET_PRIORITY_HIGH_STR],
                            help="The bucket disk io priority (low or high)")
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
-                           choices=["valueOnly", "fullEviction"],
-                           help="The bucket eviction policy (valueOnly or fullEviction)")
+                           choices=["valueOnly", "fullEviction", "noEviction", "nruEviction"],
+                           help="The bucket eviction policy")
         group.add_argument("--conflict-resolution", dest="conflict_resolution", default=None,
                            choices=["sequence", "timestamp"], metavar="<type>",
                            help="The XDCR conflict resolution type (timestamp or sequence)")
@@ -658,8 +658,11 @@ class BucketCreate(Subcommand):
         elif opts.type == "ephemeral":
             if opts.priority is not None:
                 _exitIfErrors(["--bucket-priority cannot be specified for a ephemeral bucket"])
-            if opts.eviction_policy is not None:
-                _exitIfErrors(["--bucket-eviction-policy cannot be specified for a ephemeral bucket"])
+            if opts.eviction_policy in ["valueOnly", "fullEviction"]:
+                _exitIfErrors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
+        elif opts.type == "couchbase":
+            if opts.eviction_policy in ["noEviction", "nruEviction"]:
+                _exitIfErrors(["--bucket-eviction-policy must either be valueOnly or fullEviction"])
 
         priority = None
         if opts.priority is not None:
