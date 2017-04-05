@@ -1136,26 +1136,26 @@ class ClusterManager(object):
 
     def xdcr_replicator_settings(self, chk_interval, worker_batch_size,
                                  doc_batch_size, fail_interval, replication_thresh,
-                                 src_nozzles, dst_nozzles, log_level, stats_interval,
-                                 replicator_id):
+                                 src_nozzles, dst_nozzles, usage_limit, log_level,
+                                 stats_interval, replicator_id):
         url = self.hostname + '/settings/replications/' + urllib.quote_plus(replicator_id)
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                                        fail_interval, replication_thresh, src_nozzles,
-                                       dst_nozzles, log_level, stats_interval)
+                                       dst_nozzles, usage_limit, log_level, stats_interval)
         return self._post_form_encoded(url, params)
 
     def xdcr_global_settings(self, chk_interval, worker_batch_size, doc_batch_size,
                              fail_interval, replication_threshold, src_nozzles,
-                             dst_nozzles, log_level, stats_interval):
+                             dst_nozzles, usage_limit, log_level, stats_interval):
         url = self.hostname + '/settings/replications'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                                        fail_interval, replication_threshold, src_nozzles,
-                                       dst_nozzles, log_level, stats_interval)
+                                       dst_nozzles, usage_limit, log_level, stats_interval)
         return self._post_form_encoded(url, params)
 
     def _get_xdcr_params(self, chk_interval, worker_batch_size, doc_batch_size,
                          fail_interval, replication_threshold, src_nozzles,
-                         dst_nozzles, log_level, stats_interval):
+                         dst_nozzles, usage_limit, log_level, stats_interval):
         params = {}
         if chk_interval is not None:
             params["checkpointInterval"] = chk_interval
@@ -1171,6 +1171,8 @@ class ClusterManager(object):
             params["sourceNozzlePerNode"] = src_nozzles
         if dst_nozzles is not None:
             params["targetNozzlePerNode"] = dst_nozzles
+        if usage_limit is not None:
+            params["bandwidthLimit"] = usage_limit
         if log_level is not None:
             params["logLevel"] = log_level
         if stats_interval is not None:

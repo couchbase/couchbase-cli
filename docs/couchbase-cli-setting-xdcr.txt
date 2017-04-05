@@ -12,7 +12,8 @@ SYNOPSIS
 	  [--password <password>] [--checkpoint-interval <seconds>]
 	  [--worker-batch-size <num>] [--doc-batch-size <kilobytes>]
 	  [--failure-restart-interval <seconds>] [--source-nozzle-per-node <num>]
-	  [--target-nozzle-per-node <num>] [--stats-interval <milliseconds>]
+	  [--target-nozzle-per-node <num>] [--bandwidth-usage-limit <num>]
+	  [--stats-interval <milliseconds>]
 	  [--optimistic-replication-threshold <bytes>] [--log-level <level>]
 
 DESCRIPTION
@@ -53,6 +54,9 @@ include::part-common-options.txt[]
 --target-nozzle-per-node <num>::
 	The number of outgoing nozzles to each node in the target cluster. The
 	value of this option must be between 1 and 10.
+
+--bandwidth-usage-limit <num>::
+	The default bandwidth limit for XDCR replications in Megabytes per second.
 
 --log-level <level>::
 	The XDCR log level.

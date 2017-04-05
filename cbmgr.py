@@ -2416,6 +2416,8 @@ class SettingXdcr(Subcommand):
         group.add_argument("--target-nozzle-per-node", dest="dst_nozzles", metavar="<num>",
                            type=(int),
                            help="The number of outgoing nozzles per target node (1 to 10)")
+        group.add_argument("--bandwidth-usage-limit", dest="usage_limit", type=(int),
+                           metavar="<num>", help="The bandwidth usage limit in MB/Sec")
         group.add_argument("--log-level", dest="log_level", metavar="<level>",
                            choices=["Error", "Info", "Debug", "Trace"],
                            help="The XDCR log level")
@@ -2430,8 +2432,8 @@ class SettingXdcr(Subcommand):
         _, errors = rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size,
                                               opts.doc_batch_size, opts.fail_interval,
                                               opts.rep_thresh, opts.src_nozzles,
-                                              opts.dst_nozzles, opts.log_level,
-                                              opts.stats_interval)
+                                              opts.dst_nozzles, opts.usage_limit,
+                                              opts.log_level, opts.stats_interval)
         _exitIfErrors(errors)
 
         _success("Global XDCR settings updated")
@@ -2695,6 +2697,8 @@ class XdcrReplicate(Subcommand):
         group.add_argument("--target-nozzle-per-node", dest="dst_nozzles", type=(int),
                            metavar="<num>",
                            help="The number of outgoing nozzles per target node (1 to 10)")
+        group.add_argument("--bandwidth-usage-limit", dest="usage_limit", type=(int),
+                           metavar="<num>", help="The bandwidth usage limit in MB/Sec")
         group.add_argument("--log-level", dest="log_level", metavar="<level>",
                            choices=["Error", "Info", "Debug", "Trace"],
                            help="The XDCR log level")
@@ -2781,8 +2785,9 @@ class XdcrReplicate(Subcommand):
         _, errors = rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size,
                                                   opts.doc_batch_size, opts.fail_interval,
                                                   opts.rep_thresh, opts.src_nozzles,
-                                                  opts.dst_nozzles, opts.log_level,
-                                                  opts.stats_interval, opts.replicator_id)
+                                                  opts.dst_nozzles, opts.usage_limit,
+                                                  opts.log_level, opts.stats_interval,
+                                                  opts.replicator_id)
         _exitIfErrors(errors)
 
         _success("XDCR replicator settings updated")
