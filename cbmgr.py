@@ -2826,6 +2826,8 @@ class XdcrSetup(Subcommand):
                            help="The password of the remote cluster reference")
         group.add_argument("--xdcr-demand-encryption", dest="encrypt", choices=["0", "1"],
                            default="0", help="Enable SSL when replicating with this cluster")
+        group.add_argument("--xdcr-encryption-type", dest="encryption_type", choices=["full", "half"],
+                           metavar="<type>", help="The XDCR encryption type")
         group.add_argument("--xdcr-certificate", dest="certificate", metavar="<path>",
                            help="The certificate used for encryption")
 
@@ -2867,14 +2869,19 @@ class XdcrSetup(Subcommand):
                 _exitIfErrors(["certificate required if encryption is demanded"])
             raw_cert = _exit_on_file_read_failure(opts.certificate)
 
+            if opts.encryption_type == None:
+                opts.encryption_type = "full"
+
         if opts.create:
             _, errors = rest.create_xdcr_reference(opts.name, opts.hostname, opts.r_username,
-                                                   opts.r_password, opts.encrypt, raw_cert)
+                                                   opts.r_password, opts.encrypt,
+                                                   opts.encryption_type, raw_cert)
             _exitIfErrors(errors)
             _success("Cluster reference created")
         else:
             _, errors = rest.edit_xdcr_reference(opts.name, opts.hostname, opts.r_username,
-                                                 opts.r_password, opts.encrypt, raw_cert)
+                                                 opts.r_password, opts.encrypt,
+                                                 opts.encryption_type, raw_cert)
             _exitIfErrors(errors)
             _success("Cluster reference edited")
 

@@ -12,7 +12,8 @@ SYNOPSIS
 	  [--password <password>] [--create] [--delete] [--edit] [--list]
 	  [--xdcr-cluster-name <name>] [--xdcr-hostname <hostname>]
 	  [--xdcr-username <username>] [--xdcr-password <password>]
-	  [--xdcr-demand-encryption <num>] [--xdcr-certificate <file>]
+	  [--xdcr-demand-encryption <num>] [--xdcr-encryption-type <type>]
+	  [--xdcr-certificate <file>]
 
 DESCRIPTION
 -----------
@@ -53,6 +54,16 @@ include::part-common-options.txt[]
 	Enable SSL when replicating with this cluster. To enable SSL set the value
 	of this otion to 1. To disable SSL then set this option to 0. BY default the
 	value of this option is set to 0.
+
+--xdcr-encryption-type <type>::
+	Specifes the type of encryption to use if encryption is enabled. This flag
+	may either be set to "half" encryption or "full encryption". Half encryption
+	means that passwords are encrypted, but data is not. This results in faster
+	data transfer, but less security. Full encryption means that all data and
+	passwords are encrypted which increases security, but reduces overall data
+	transfer speed. This flag does not have any affect if encryption is not
+	enabled. If encryption is enabled and this flag is set then the value
+	defaults to full encryption.
 
 --xdcr-certificate <file>::
 	The path to the certificate used for encryption.
