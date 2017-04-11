@@ -391,6 +391,10 @@ class MCSink(pump.Sink):
         else:
             return "error: MCSink - unknown cmd for request: " + str(cmd), None
 
+        # Couchase currently allows only the xattr datatype to be set so we need
+        # to strip out all of the other datatype flags
+        dtype = dtype & couchbaseConstants.DATATYPE_HAS_XATTR
+
         hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque, dtype)
         return 0, (hdr, ext, key, val, ext_meta)
 
