@@ -827,6 +827,15 @@ class ClusterManager(object):
         url = self.hostname + '/settings/passwordPolicy'
         return self._get(url)
 
+    def set_security_settings(self, disable_http_ui):
+        url = self.hostname + '/settings/security'
+
+        params = {
+            "disableUIOverHttp":  "true" if disable_http_ui else "false"
+        }
+
+        return self._post_form_encoded(url, params)
+
     def set_password_policy(self, min_length, upper_case, lower_case, digit,
                             special_char):
         url = self.hostname + '/settings/passwordPolicy'

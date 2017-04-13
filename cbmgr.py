@@ -2390,6 +2390,35 @@ class SettingPasswordPolicy(Subcommand):
         return "Modify the password policy"
 
 
+class SettingSecurity(Subcommand):
+    """The settings security subcommand"""
+
+    def __init__(self):
+        super(SettingSecurity, self).__init__()
+        self.parser.prog = "couchbase-cli setting-security"
+        group = self.parser.add_argument_group("Password Policy Settings")
+        group.add_argument("--disable-http-ui", dest="disable_http_ui", action="store_true",
+                           default=False, help="Disables access to the UI over HTTP")
+
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+
+
+        _, errors = rest.set_security_settings(opts.disable_http_ui)
+        _exitIfErrors(errors)
+        _success("Security policy updated")
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-security-policy" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Modify security policies"
+
+
 class SettingXdcr(Subcommand):
     """The setting xdcr subcommand"""
 

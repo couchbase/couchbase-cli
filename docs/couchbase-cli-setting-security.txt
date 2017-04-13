@@ -1,0 +1,48 @@
+couchbase-cli-setting-security(1)
+=================================
+
+NAME
+----
+couchbase-cli-setting-security - Manage security policies
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli setting-password-policy' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--disable-http-ui]
+
+DESCRIPTION
+-----------
+
+Allows enabling and disabling of the Couchbase Administration Console.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--disable-http-ui::
+	Disables the Couchbase Administration Console over HTTP.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To get disable the Couchbase Administration Console over HTTP run the following
+command.
+
+	$ couchbase-cli setting-security -c 192.168.1.5 -u Administrator \
+	 -p password --disable-http-ui
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli[1].
+
+include::part-footer.txt[]
