@@ -2528,7 +2528,8 @@ class SslManage(Subcommand):
             else:
                 print certificate
         elif opts.node_cert:
-            certificate, errors = rest.retrieve_node_certificate('%s:%d' % (host, port))
+            host = urlparse.urlparse(opts.cluster).netloc
+            certificate, errors = rest.retrieve_node_certificate(host)
             _exitIfErrors(errors)
             print json.dumps(certificate, sort_keys=True, indent=2)
         elif opts.upload_cert:
