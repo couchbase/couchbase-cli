@@ -2680,6 +2680,9 @@ class UserManage(Subcommand):
         if opts.auth_type is None:
             _exitIfErrors(["--auth-type is required with the --set option"])
 
+        if opts.auth_type == "external" and opts.rbac_pass is not None:
+            _exitIfErrors(["--rbac-password cannot be used with external auth type"])
+
         _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.roles, opts.auth_type)
         _exitIfErrors(errors)
         _success("RBAC user set")
