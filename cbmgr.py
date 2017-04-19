@@ -2595,7 +2595,7 @@ class UserManage(Subcommand):
                            help="The full name of the user")
         group.add_argument("--roles", dest="roles", metavar="<roles_list>",
                            help="The roles for the specified user")
-        group.add_argument("--auth-type", dest="auth_type", metavar="<type>",
+        group.add_argument("--auth-domain", dest="auth_domain", metavar="<domain>",
                            choices=["external", "local"],
                            help="The authentication type for the specified user")
 
@@ -2628,10 +2628,10 @@ class UserManage(Subcommand):
             _warning("--rbac-name is not used with the --delete option")
         if opts.roles is not None:
             _warning("--roles is not used with the --delete option")
-        if opts.auth_type is None:
+        if opts.auth_domain is None:
             _exitIfErrors(["--auth-type is required with the --delete option"])
 
-        _, errors = rest.delete_rbac_user(opts.rbac_user, opts.auth_type)
+        _, errors = rest.delete_rbac_user(opts.rbac_user, opts.auth_domain)
         _exitIfErrors(errors)
         _success("RBAC user removed")
 
@@ -2644,7 +2644,7 @@ class UserManage(Subcommand):
             _warning("--rbac-name is not used with the --list option")
         if opts.roles is not None:
             _warning("--roles is not used with the --list option")
-        if opts.auth_type is not None:
+        if opts.auth_domain is not None:
             _warning("--auth-type is not used with the --list option")
 
         result, errors = rest.list_rbac_users()
@@ -2660,7 +2660,7 @@ class UserManage(Subcommand):
             _warning("--rbac-name is not used with the --my-roles option")
         if opts.roles is not None:
             _warning("--roles is not used with the --my-roles option")
-        if opts.auth_type is not None:
+        if opts.auth_domain is not None:
             _warning("--auth-type is not used with the --my-roles option")
 
         result, errors = rest.my_roles()
@@ -2670,20 +2670,17 @@ class UserManage(Subcommand):
     def _set(self, rest, opts):
         if opts.rbac_user is None:
             _exitIfErrors(["--rbac-username is required with the --set option"])
-        if opts.rbac_pass is None and opts.auth_type == "local":
+        if opts.rbac_pass is None and opts.auth_domain == "local":
             _exitIfErrors(["--rbac-password is required with the --set option"])
-        if opts.rbac_pass is not None and opts.auth_type == "saslauthd":
-            _warning("--rbac-password is not used with the --set command")
+        if opts.rbac_pass is not None and opts.auth_domain == "external":
+            _warning("--rbac-password cannot be used with the external auth domain")
             opts.rbac_pass = None
         if opts.roles is None:
             _exitIfErrors(["--roles is required with the --set option"])
-        if opts.auth_type is None:
+        if opts.auth_domain is None:
             _exitIfErrors(["--auth-type is required with the --set option"])
 
-        if opts.auth_type == "external" and opts.rbac_pass is not None:
-            _exitIfErrors(["--rbac-password cannot be used with external auth type"])
-
-        _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.roles, opts.auth_type)
+        _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.roles, opts.auth_domain)
         _exitIfErrors(errors)
         _success("RBAC user set")
 

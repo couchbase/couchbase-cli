@@ -11,14 +11,14 @@ SYNOPSIS
 'couchbase-cli user-manage' [--cluster <url>] [--username <user>]
 	  [--password <password>] [--delete] [--list] [--my-roles] [--set]
 	  [--rbac-username <username>] [--rbac-password <password>]
-	  [--rbac-name <name>] [--roles <roles_list>] [--auth_type <type>]
+	  [--rbac-name <name>] [--roles <roles_list>] [--auth_domain <domain>]
 
 DESCRIPTION
 -----------
 
 This command allows administrators to assign and manage roles to different users
 in their organization. Users can either be managed locally by Couchbase or
-externally through the use of saslauthd.
+externally through the use of an external domain.
 
 OPTIONS
 -------
@@ -46,8 +46,8 @@ include::part-common-options.txt[]
 
 --rbac-password <password>::
 	Specifies the password to be used for an RBAC user profile. This option is
-	used only when creating or updating a 'builtin' RBAC user profile. Couchbase
-	does not store password for 'saslauthd' RBAC roles.
+	used only when creating or updating a 'local' RBAC user profile. Couchbase
+	does not store password for 'external' RBAC roles.
 
 --rbac-name <name>::
 	Specifies the name to be used for an RBAC user profile. This option is used
@@ -60,10 +60,10 @@ include::part-common-options.txt[]
 	comma separated list of roles. See the ROLES section for more details on the
 	available roles in Couchbase.
 
---auth-type <type>::
-	Specifies the auth_type to used for an RBAC user profile. This option is used
-	when deleting, creating or updating an RBAC user profile and it if may be
-	set to either 'builtin' or 'external'. Builtin users are roles that are
+--auth-domain <domain>::
+	Specifies the auth_domain to used for an RBAC user profile. This option is
+	used when deleting, creating or updating an RBAC user profile and it if may
+	be set to either 'local' or 'external'. Loacl users are users that are
 	managed directly by the Couchbase cluster. External users are users
 	managed by an external source suchas LDAP.
 
@@ -242,40 +242,40 @@ ____
 EXAMPLES
 --------
 
-To create an builtin RBAC user profile for a user named "John Doe" with username
+To create an local RBAC user profile for a user named "John Doe" with username
 jdoe and password cbpass with roles to manage the 'default' bucket and all
 XDCR replication run the following command
 
 	$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
 	 -p password --set --rbac-username jdoe --rbac-password cbpass \
 	 --rbac-name "John Doe" --roles bucket_admin[default],replication_admin \
-	 --auth-type builtin
+	 --auth-domain local
 
-If you have saslauthd setup in your cluster and you want to add a user
-"John Doe" with username jdoe who should have the ability to manage only views
-for all bucket run the following command
+If you have external user source setup in your cluster and you want to add a
+user "John Doe" with username jdoe who should have the ability to manage only
+views for all bucket run the following command
 
 	$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
 	 -p password --set --rbac-username jdoe --rbac-name "John Doe" \
-	 --roles view_admin[*] --auth-type saslauthd
+	 --roles view_admin[*] --auth-domain external
 
 To list the current RBAC user profiles run the following command.
 
 	$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
 	 -p password --list
 
-To delete a saslauthd user named jdoe run the following command.
+To delete an external user named jdoe run the following command.
 
 	$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-	 -p password --delete --rbac-username jdoe --auth-type saslauthd
+	 -p password --delete --rbac-username jdoe --auth-domain external
 
 To delete a local user named jdoe run the following command.
 
 	$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-	 -p password --delete --rbac-username jdoe --auth-type builtin
+	 -p password --delete --rbac-username jdoe --auth-domain local
 
 To see the user profile for a user with the username jdoe and password cbpass
-run the following ommand
+run the following command.
 
 	$ couchbase-cli user-manage -c 127.0.0.1:8091 -u jdoe -p cbpass \
 	 --my-roles

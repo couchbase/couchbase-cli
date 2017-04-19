@@ -793,8 +793,8 @@ class ClusterManager(object):
                 return group["uri"], None
         return None, ["Group `%s` not found" % name]
 
-    def delete_rbac_user(self, username, auth_type):
-        url = self.hostname + '/settings/rbac/users/%s/%s' % (auth_type, username)
+    def delete_rbac_user(self, username, auth_domain):
+        url = self.hostname + '/settings/rbac/users/%s/%s' % (auth_domain, username)
         return self._delete(url, None)
 
     def list_rbac_users(self):
@@ -805,14 +805,14 @@ class ClusterManager(object):
         url = self.hostname + '/whoami'
         return self._get(url)
 
-    def set_rbac_user(self, username, password, roles, auth_type):
-        if auth_type is None:
+    def set_rbac_user(self, username, password, roles, auth_domain):
+        if auth_domain is None:
             return None, ["The authentication type is required"]
 
         if username is None:
             return None, ["The username is required"]
 
-        url = self.hostname + '/settings/rbac/users/%s/%s' % (auth_type, username)
+        url = self.hostname + '/settings/rbac/users/%s/%s' % (auth_domain, username)
 
         params = {}
         if username is not None:
