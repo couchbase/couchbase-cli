@@ -2596,7 +2596,7 @@ class UserManage(Subcommand):
         group.add_argument("--roles", dest="roles", metavar="<roles_list>",
                            help="The roles for the specified user")
         group.add_argument("--auth-type", dest="auth_type", metavar="<type>",
-                           choices=["external", "builtin"],
+                           choices=["external", "local"],
                            help="The authentication type for the specified user")
 
     def execute(self, opts):
@@ -2670,7 +2670,7 @@ class UserManage(Subcommand):
     def _set(self, rest, opts):
         if opts.rbac_user is None:
             _exitIfErrors(["--rbac-username is required with the --set option"])
-        if opts.rbac_pass is None and opts.auth_type == "builtin":
+        if opts.rbac_pass is None and opts.auth_type == "local":
             _exitIfErrors(["--rbac-password is required with the --set option"])
         if opts.rbac_pass is not None and opts.auth_type == "saslauthd":
             _warning("--rbac-password is not used with the --set command")
