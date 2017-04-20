@@ -262,6 +262,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
         hi_seqno = 0
         ss_start_seqno = 0
         ss_end_seqno = 0
+        no_response_count = 0
         try:
             while (not self.dcp_done and
                    batch.size() < batch_max_size and
@@ -271,6 +272,12 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     if len(self.stream_list) > 0:
                         logging.debug("no response while there %s active streams" % len(self.stream_list))
                         time.sleep(.25)
+                        no_response_count = no_response_count + 1
+                        #if not had a response after a minimum of 30 seconds then state we are done
+                        if no_response_count == 120:
+                            logging.warn("no response for 30 seconds while there %s active streams"
+                                         % len(self.stream_list))
+                            self.dcp_done = True
                     else:
                         self.dcp_done = True
                     continue
