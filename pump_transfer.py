@@ -109,6 +109,11 @@ class Transfer:
                    (min_thread, max_thread), \
                    None, None, None
 
+        if opts.username is None:
+            return "\nError: option -u/--username is required", None, None, None
+        if opts.password is None:
+            return "\nError: option -p/--password is required", None, None, None
+
         opts.extra = opt_parse_extra(opts.extra, self.opt_extra_defaults())
         opts.safe = opt_parse_helper(opts)
 
