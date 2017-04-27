@@ -68,6 +68,18 @@ class BFD:
             return []
 
     @staticmethod
+    def get_server_version(parent_dir):
+        try:
+            json_file = open(os.path.join(parent_dir, "meta.json"), "r")
+            json_data = json.load(json_file)
+            json_file.close()
+            if "version" in json_data:
+                return json_data["version"]
+            return "0.0.0"
+        except IOError:
+            return "0.0.0"
+
+    @staticmethod
     def get_failover_log(parent_dir):
         try:
             filepath = os.path.join(parent_dir, "failover.json")
@@ -226,6 +238,7 @@ class BFD:
         if not os.path.isdir(path):
             return seqno, dep_list, failover_log, snapshot_markers
 
+        last_backup = BFD.construct_dir(fulldir, bucket_name, node_name)
         file_list.extend(recursive_glob(path, 'data-*.cbb'))
         failoverlog_list.extend(recursive_glob(path, 'failover.json'))
         snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
@@ -233,6 +246,7 @@ class BFD:
 
         accudir, accu_dirs = BFD.find_latest_dir(timedir, "accu")
         if accudir:
+            last_backup = accudir
             path = BFD.construct_dir(accudir, bucket_name, node_name)
             if os.path.isdir(path):
                 file_list.extend(recursive_glob(path, 'data-*.cbb'))
@@ -242,6 +256,7 @@ class BFD:
         if mode.find("diff") >= 0:
             diffdir, diff_dirs = BFD.find_latest_dir(timedir, "diff")
             if diff_dirs:
+                last_backup = BFD.construct_dir(diffdir, bucket_name, node_name)
                 for dir in diff_dirs:
                     path = BFD.construct_dir(dir, bucket_name, node_name)
                     if os.path.isdir(path):
@@ -249,6 +264,9 @@ class BFD:
                         failoverlog_list.extend(recursive_glob(path, 'failover.json'))
                         snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
                         seqno_list.extend(recursive_glob(path, 'seqno.json'))
+
+        if BFD.get_server_version(last_backup) < "5.0.0":
+            return dict(), list(), dict(), dict()
 
         for x in sorted(seqno_list):
             try:
@@ -606,6 +624,13 @@ class BFDSink(BFD, pump.Sink):
         if "conflictResolutionType" in self.source_bucket:
             confResType = self.source_bucket["conflictResolutionType"]
 
+        version = "0.0.0"
+        for bucket in self.source_map["buckets"]:
+            if self.bucket_name() == bucket["name"]:
+                for node in bucket["nodes"]:
+                    if node["hostname"] == self.node_name():
+                        version = node["version"].split("-")[0]
+
         seqno_map = {}
         for i in range(BFD.NUM_VBUCKET):
             seqno_map[i] = 0
@@ -624,7 +649,9 @@ class BFDSink(BFD, pump.Sink):
 
                 meta_file = os.path.join(db_dir, "meta.json")
                 json_file = open(meta_file, "w")
-                toWrite = {'pred': dep, 'conflict_resolution_type': confResType}
+                toWrite = {'pred': dep,
+                           'conflict_resolution_type': confResType,
+                           'version': version}
                 json.dump(toWrite, json_file, ensure_ascii=False)
                 json_file.close()
 
