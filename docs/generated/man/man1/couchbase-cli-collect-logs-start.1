@@ -1,0 +1,184 @@
+'\" t
+.\"     Title: couchbase-cli-collect-logs-start
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-COLL" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-collect-logs-start \- Start log collection
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli collect\-logs\-start\fR [\-\-cluster <url>] [\-\-username <user>]
+          [\-\-password <password>] [\-\-all\-nodes] [\-\-nodes <node_list>] [\-\-upload]
+          [\-\-upload\-host <host>] [\-\-customer <customer>] [\-\-ticket <ticket>]
+.fi
+.SH "DESCRIPTION"
+.sp
+This command collects all Couchbase log files from one or more nodes in the cluster\&. Log collection is useful when there are failures in the cluster and you need to figure out what is going on\&. Since there are many log files on various different server the collect\-logs\-start command helps in aggregating all of the different log file Couchbase Server creates\&.
+.sp
+To get the location of the collected log files you can run the collect\-logs\-status command either while the log collection task is running or after the log collection task has completed\&. If the \-\-upload flag is specified then the logs will also be uploaded to the host specified in the \-\-upload\-host flag\&. The upload flag is intended mainly for Couchbase Enterprise Edition users who need to upload logs to the Couchbase Support Team to aid in diagnosing support tickets that they have filed\&.
+.sp
+Note that only one log collection task may be running at any given time in the cluster\&.
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-all\-nodes
+.RS 4
+Specifies that log collection shoue take place on all nodes in the cluster\&. May not be specified at the same time as \-\-nodes\&.
+.RE
+.PP
+\-\-nodes <node_list>
+.RS 4
+A list of one or more nodes to collect logs from\&. The list should be comma separated\&. This parameter may not be specified at the same time as the \-\-nodes option\&.
+.RE
+.PP
+\-\-upload
+.RS 4
+Specifies that the logs should be uploaded to the the host specified with the \-\-upload\-host option\&. This option should be used by Couchbase Enterprise customers when uploading logs for the Couchbase Support Team\&.
+.RE
+.PP
+\-\-upload\-host <host>
+.RS 4
+Once log collection is completed the logs zip file should be uploaded to this URL\&. This parameter is required if the \-\-upload flag is specified\&.
+.RE
+.PP
+\-\-customer <name>
+.RS 4
+The name of the customer who is uploading these logs\&. This option is required when the \-\-upload flag is specified\&.
+.RE
+.PP
+\-\-ticket <num>
+.RS 4
+The ticket number that the support team has created to track the issue filed\&. This parameter is optional when specifying the \-\-upload flag, but recommended if the customer has a ticket number\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+To collect logs on all nodes without uploading them run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli collect\-logs\-start \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+ \-\-password password \-\-all\-nodes
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If we have a three node cluster with IP addresses 192\&.168\&.1\&.5, 192\&.168\&.1\&.6, and 192\&.168\&.1\&.7 and we only want to collect logs on the first two nodes and we don\(cqt want to upload the logs then we would run the command below\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli collect\-logs\-start \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+ \-\-password password \-\-nodes 192\&.168\&.1\&.5:8091,192\&.168\&.1\&.6:8091
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+I you are a Couchbase Enterprise Edition user and you need to upload logs for all nodes for support ticket then you can run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli collect\-logs\-start \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+ \-\-password password \-\-all\-nodes \-\-upload \-\-upload\-customer customer_name \e
+ \-\-upload\-host s3\&.amazonaws\&.com/cb\-customers \-\-ticket 12345
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "SEE ALSO"
+.sp
+\fBcouchbase-cli-collect-logs-status\fR(1)\&. \fBcouchbase-cli-collect-logs-stop\fR(1)\&.
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR

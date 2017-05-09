@@ -1,0 +1,152 @@
+'\" t
+.\"     Title: couchbase-cli-setting-audit
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-SETT" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-setting-audit \- Modifies audit log settings
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli setting\-audit\fR [\-\-cluster <url>] [\-\-username <user>]
+          [\-\-password <password>] [\-\-audit\-enabled <num>] [\-\-audit\-log\-path <path>]
+          [\-\-audit\-log\-rotate\-interval <seconds>]
+.fi
+.SH "DESCRIPTION"
+.sp
+Auditing is used to observe the action of users in the cluster\&. It is usually turned on for security purposes to ensure that those without permission to access information do not access it\&. By default auditing is disabled in Couchbase\&. The setting\-audit command can be used to enable auditing, set the auditing log path, and change the auditing log rotation interval\&.
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-audit\-enabled <num>
+.RS 4
+Specifies whether or not auditing is enabled\&. To enabled auditing set this option to "1"\&. To disable auditing set this option to "0"\&.
+.RE
+.PP
+\-\-audit\-log\-path <path>
+.RS 4
+Specifies The auditing log path\&. This should be a path should be a path to a folder where the auditing log is kept\&. The folder must exist on all servers in the cluster\&.
+.RE
+.PP
+\-\-audit\-log\-rotate\-interval <seconds>
+.RS 4
+Specifies the audit log rotate interval\&. This is the interval in which the current audit log will be replaced with a new empty audit log file\&. The log file is rotated to ensure that the audit log does not consume too much disk space\&. The minimum audit log rotate interval is 15 minutes (900 seconds)\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+To enable auditing on a cluster and set the audit log to the default logs folder on a linux installation with a log rotate interval of 7 days run the command below\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-audit \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-enabled 1 \-\-audit\-log\-rotate\-interval 604800 \e
+ \-\-audit\-log\-path /opt/couchbase/var/lib/couchbase/logs
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To disable auditing run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-audit \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-enabled 1
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "SEE ALSO"
+.sp
+\fBcouchbase-admin-role-manage\fR(1)\&. \fBcouchbase-ssl-manage\fR(1)\&.
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR

@@ -1,0 +1,295 @@
+'\" t
+.\"     Title: couchbase-cli
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli \- A Couchbase cluster management utility
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli <command> [options]\fR
+.fi
+.SH "DESCRIPTION"
+.sp
+The couchbase\-cli script is the main command line interface for Couchbase cluster management\&.
+.SH "OPTIONS"
+.PP
+\-\-version
+.RS 4
+Prints version information\&.
+.RE
+.PP
+\-h,\-\-help
+.RS 4
+Prints the short and long help messages\&.
+.RE
+.SH "COMMANDS"
+.PP
+\fBcouchbase-cli-admin-role-manage\fR(1)
+.RS 4
+Manage LDAP user roles\&.
+.RE
+.PP
+\fBcouchbase-cli-bucket-compact\fR(1)
+.RS 4
+Compact a Couchbase data bucket\&.
+.RE
+.PP
+\fBcouchbase-cli-bucket-create\fR(1)
+.RS 4
+Create a new Couchbase data bucket\&.
+.RE
+.PP
+\fBcouchbase-cli-bucket-delete\fR(1)
+.RS 4
+Delete a Couchbase data bucket\&.
+.RE
+.PP
+\fBcouchbase-cli-bucket-edit\fR(1)
+.RS 4
+Edit a Couchbase data bucket\&.
+.RE
+.PP
+\fBcouchbase-cli-bucket-flush\fR(1)
+.RS 4
+Flush a Couchbase data bucket\&.
+.RE
+.PP
+\fBcouchbase-cli-bucket-list\fR(1)
+.RS 4
+List all Couchbase data buckets\&.
+.RE
+.PP
+\fBcouchbase-cli-cluster-edit\fR(1)
+.RS 4
+Edits cluster settings\&.
+.RE
+.PP
+\fBcouchbase-cli-cluster-init\fR(1)
+.RS 4
+Initializes a Couchbase cluster\&.
+.RE
+.PP
+\fBcouchbase-cli-collect-logs-start\fR(1)
+.RS 4
+Start log collection\&.
+.RE
+.PP
+\fBcouchbase-cli-collect-logs-status\fR(1)
+.RS 4
+Get log collection status\&.
+.RE
+.PP
+\fBcouchbase-cli-collect-logs-stop\fR(1)
+.RS 4
+Stop the current log collection task\&.
+.RE
+.PP
+\fBcouchbase-cli-failover\fR(1)
+.RS 4
+Failover a server in the cluster\&.
+.RE
+.PP
+\fBcouchbase-cli-group-manage\fR(1)
+.RS 4
+Manage server groups\&.
+.RE
+.PP
+\fBcouchbase-cli-help\fR(1)
+.RS 4
+Show extended couchbase\-cli help\&.
+.RE
+.PP
+\fBcouchbase-cli-host-list\fR(1)
+.RS 4
+Lists all hosts in the cluster\&.
+.RE
+.PP
+\fBcouchbase-cli-node-init\fR(1)
+.RS 4
+Initializes a node\&.
+.RE
+.PP
+\fBcouchbase-cli-rebalance-status\fR(1)
+.RS 4
+Show the current rebalance status\&.
+.RE
+.PP
+\fBcouchbase-cli-rebalance-stop\fR(1)
+.RS 4
+Stops the current rebalance task\&.
+.RE
+.PP
+\fBcouchbase-cli-rebalance\fR(1)
+.RS 4
+Rebalances data across nodes in a cluster\&.
+.RE
+.PP
+\fBcouchbase-cli-recovery\fR(1)
+.RS 4
+Recovers a previously failed over node\&.
+.RE
+.PP
+\fBcouchbase-cli-server-add\fR(1)
+.RS 4
+Adds a server to the cluster\&.
+.RE
+.PP
+\fBcouchbase-cli-server-eshell\fR(1)
+.RS 4
+Opens a shell to talk to the cluster manager process\&.
+.RE
+.PP
+\fBcouchbase-cli-server-info\fR(1)
+.RS 4
+Displays server level information and statistics\&.
+.RE
+.PP
+\fBcouchbase-cli-server-list\fR(1)
+.RS 4
+Lists all servers in the cluster\&.
+.RE
+.PP
+\fBcouchbase-cli-server-readd\fR(1)
+.RS 4
+Adds a server back to the cluster after a failover\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-alert\fR(1)
+.RS 4
+Modifies alert settings\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-audit\fR(1)
+.RS 4
+Modifies audit log settings\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-autofailover\fR(1)
+.RS 4
+Modifies auto\-failover settings\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-cluster\fR(1)
+.RS 4
+Modifies cluster settings\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-compaction\fR(1)
+.RS 4
+Modifies compaction settings\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-index\fR(1)
+.RS 4
+Modifies index settings\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-ldap\fR(1)
+.RS 4
+Modifies LDAP settings\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-notification\fR(1)
+.RS 4
+Modifies notification settings\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-xdcr\fR(1)
+.RS 4
+Modifies cross datacenter replication (XDCR) settings\&.
+.RE
+.PP
+\fBcouchbase-cli-ssl-manage\fR(1)
+.RS 4
+Manage SSL certificates\&.
+.RE
+.PP
+\fBcouchbase-cli-user-manage\fR(1)
+.RS 4
+Manage the read\-only user\&.
+.RE
+.PP
+\fBcouchbase-cli-xdcr-replicate\fR(1)
+.RS 4
+Creates a replication between two datacenters\&.
+.RE
+.PP
+\fBcouchbase-cli-xdcr-setup\fR(1)
+.RS 4
+Manage references to remote clusters\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR

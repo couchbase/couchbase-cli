@@ -1,0 +1,173 @@
+'\" t
+.\"     Title: couchbase-cli-server-add
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-SERV" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-server-add \- Adds a server to the cluster
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli server\-add\fR [\-\-cluster <url>] [\-\-username <username>]
+          [\-\-password <password>] [\-\-server\-add <servers>] [\-\-group\-name <name>]
+          [\-\-server\-add\-username <username>] [\-\-server\-add\-password <password>]
+          [\-\-services <services>] [\-\-index\-storage\-setting <mode>]
+.fi
+.SH "DESCRIPTION"
+.sp
+The server\-add subcommand is used to add one or more servers to a cluster\&. Before adding a server it is important to decide which services the server will be running and whether or not the server should be a part of a specific group\&. Keep in mind that if the index service is being added on one of the servers and the cluster is not currently running the index service that you also need to set the index stoare mode\&. This can be done with the \-\-index\-storage\-setting option\&.
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-server\-add <servers>
+.RS 4
+A comma separated list of servers to add to the cluster\&. The each server in the list should be indentified by a hostname or IP address\&.
+.RE
+.PP
+\-\-server\-add\-username <username>
+.RS 4
+Adding a server to the cluster can only be done by a user with the appropriate credentials\&. This flag specifies the username for a user who has the ability to modify the cluster topology on the server being added\&.
+.RE
+.PP
+\-\-server\-add\-password <password>
+.RS 4
+Adding a server to the cluster can only be done by a user with the appropriate credentials\&. This flag specifies the password for a user who has the ability to modify the cluster topology on the server being added\&.
+.RE
+.PP
+\-\-group\-name <name>
+.RS 4
+The name of the group to add the server to\&. If this option is not specified then the server is added to the default group\&.
+.RE
+.PP
+\-\-services <services>
+.RS 4
+A comma separated list of services that this server should be running\&. The data service is specified with "data", the index service is specified with "index", the query service is specified with "query", and the full\-text service is specified with "fts"\&.
+.RE
+.PP
+\-\-index\-storage\-setting <mode>
+.RS 4
+Specifies the index storage mode\&. This parameter must be set if the servers being added contain the index service and this is the first time the index service is being added in this cluster\&. You may specify "default" for disk based indexes or "memopt" for memory optimized indexes\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+If we want to add a server at 192\&.168\&.1\&.6:8091 with the index, data and query service on it then we would run the command below\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli server\-add \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-server\-add 192\&.168\&.1\&.6:8091 \e
+ \-\-server\-add\-username Administrator \-\-server\-add\-password password
+ \-\-services data,index,query
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Note that in the example above we set the username and password of the server being added to the same value as the username and password of the servers already in the cluster\&. This is done if the server being added has not already been initialized\&. If the server being added has been initialized then you will need to specify an appropriate username and password for the server being added\&.
+.sp
+Now lets add two server to the East group with data, index,and full\-text services\&. In this example we will also assume that the index is being added for the first time so we need to specify the index storage mode\&. If we want to index storage mode to be memory optimized then we would run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli server\-add \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-server\-readd 192\&.168\&.1\&.6:8091,192\&.168\&.1\&.7:8091 \e
+ \-\-server\-username Administrator \-\-server\-password password
+ \-\-services data,fts \-\-group\-name \-\-index\-storage\-setting memopt
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "SEE ALSO"
+.sp
+\fBcouchbase-rebalance\fR(1)\&. \fBcouchbase-server-info\fR(1)\&. \fBcouchbase-server-list\fR(1)\&.
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR

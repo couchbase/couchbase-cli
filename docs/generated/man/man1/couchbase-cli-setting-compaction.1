@@ -1,0 +1,279 @@
+'\" t
+.\"     Title: couchbase-cli-setting-compaction
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-SETT" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-setting-compaction \- Modifies compaction settings
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli setting\-compaction\fR [\-\-cluster <url>] [\-\-username <user>]
+          [\-\-password <password>] [\-\-compaction\-db\-percentage <num>]
+          [\-\-compaction\-db\-size <megabytes>] [\-\-compaction\-view\-percentage <num>]
+          [\-\-compaction\-view\-size <megabytes>] [\-\-compaction\-period\-from <HH:MM>]
+          [\-\-compaction\-period\-to <HH:MM>] [\-\-enable\-compaction\-abort <num>]
+          [\-\-enable\-compaction\-parallel <num>] [\-\-metadata\-purge\-interval <num>]
+          [\-\-gsi\-compaction\-mode <mode>] [\-\-compaction\-gsi\-percentage <percent>]
+          [\-\-compaction\-gsi\-interval <list_of_days>]
+          [\-\-compaction\-gsi\-period\-from <HH:MM>]
+          [\-\-compaction\-gsi\-period\-to <HH:MM>] [\-\-enable\-gsi\-compaction\-abort <1|0>]
+.fi
+.SH "DESCRIPTION"
+.sp
+This command sets cluster\-wide compaction settings for the views and data service\&.
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-compaction\-db\-percentage <num>
+.RS 4
+Compacts database files once the framentation percentage is greater than the value set for this option\&. The value must be between 2 and 100\&.
+.RE
+.PP
+\-\-compaction\-db\-size <megabytes>
+.RS 4
+Compacts the database files once the file fragmentation (in MB) is greater than the value of this option\&. This option must be set to a value greater than 1\&.
+.RE
+.PP
+\-\-compaction\-view\-percentage <num>
+.RS 4
+Compacts view files once the framentation percentage is greater than the value set for this option\&. The value must be between 2 and 100\&.
+.RE
+.sp
+\-\-compaction\-view\-size: <megabytes>: Compacts the view files once the file fragmentation (in MB) is greater than the value of this option\&. This option must be set to a value greater than 1\&.
+.PP
+\-\-compaction\-period\-from <HH:MM>
+.RS 4
+This option is unsed in conjunction with the \-\-compaction\-period\-to option and is used to specify a time period where compaction is allowed to run\&. You could for example specify that compaction should only run between midnight and 5AM each day by setting the compaction from period to "00:00" and the compaction to period to "5:00"\&. When setting the value for this option you must use the format HH:MM when HH corresponds to the hour and MM corresponds to the minute\&. If this option is not specified then the compaction will run at any time of the day\&. This option only affects view and database file compaction\&.
+.RE
+.PP
+\-\-compaction\-period\-to <HH:MM>
+.RS 4
+This option is unsed in conjunction with the \-\-compaction\-period\-from option and is used to specify a time period where compaction is allowed to run\&. You could for example specify that compaction should only run between midnight and 5AM each day by setting the compaction from period to "00:00" and the compaction to period to "5:00"\&. When setting the value for this option you must use the format HH:MM when HH corresponds to the hour and MM corresponds to the minute\&. If this option is not specified then the compaction will run at any time of the day\&. This option only affects view and database file compaction\&.
+.RE
+.PP
+\-\-enable\-compaction\-abort <num>
+.RS 4
+If a compaction from period and compaction to period are specified then this flag tells the server how to respond if a compaction starts during the allowed compaction interval and is still running once after the allowed interval has ended\&. If this option is set to "1" then the compaction will be aborted\&. If it is set to "0" then the compaction will be allowed to complete\&. By default this option is set to "0"\&.
+.RE
+.PP
+\-\-enable\-compaction\-parallel <num>
+.RS 4
+Specifies whether view and database file compaction can run at the same time\&. Compactions can be disk intensive operations so it may be beneficial to only allow one type of compaction to run at a time\&. To allow parallel compactions set the value of this option to "1"\&. To disable parallel compaction set the value fo this option to "0"\&. By default this option is set to "0"\&.
+.RE
+.PP
+\-\-metadata\-purge\-interval <days>
+.RS 4
+Couchbase persists deletes to disk because these deletes may need to be replicated in the future during intra\-cluster replication as well as during cross datacenter replication\&. Couchbase cannot however keep these deletes forever because they will cause the database disk size to increase infinitely over time\&. To combat this issue Couchbase purges old deletes from disk periodically\&. This flag allow the user to set this interval\&. By default the purge interval is set to 7 days\&. This means that we purge deletes from disk that are more than 7 days old\&. The value of this option must be between 0\&.04 (1 hour) and 60 (days)\&.
+.RE
+.PP
+\-\-gsi\-compaction\-mode <mode>
+.RS 4
+Specifies the strategy for compaction in GSI Indexes\&. This option may be set to either append or circular\&. The append compaction strategy works by creating a new index file, moving the active data to the new index file, and then removing the old index file\&. This strategy will cause increased disk usage during compaction, but will cause the new index file to be smaller than the old one and as a result will free up disk space\&. The circular compaction strategy uses the same file, but moves data around in the file to create contigious free space which can be reused\&. This strategy uses no new space during compaction, but the resulting file size will not be decreased since the compacted file will result in a section of active data and free space\&.
+.RE
+.PP
+\-\-compaction\-gsi\-percentage <percent>
+.RS 4
+Specifies that gsi compaction should be started when the fragmentation in an index file has exceeded this percentage\&. This parameter only applies if the append compaction mode is used\&.
+.RE
+.PP
+\-\-compaction\-gsi\-interval <list_of_days>
+.RS 4
+Specifies that gsi compaction should only run on the specified days\&. This option takes a comma separated list of days where the name of the day is capitalized\&. Accepted values are Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, and Sunday\&. If you only want compaction to run on Monday and Tuesday then the value of this option should be set to "Monday,Tuesday"\&. This parameter only applies if circular compaction mode is used\&.
+.RE
+.PP
+\-\-compaction\-gsi\-period\-from <HH:MM>
+.RS 4
+This option is unsed in conjunction with the \-\-compaction\-gsi\-period\-to option and is used to specify a time period where gsi compaction is allowed to run\&. You could for example specify that gsi compaction should only run between midnight and 5AM each day by setting the gsi compaction from period to "00:00" and the gsi compaction to period to "5:00"\&. When setting the value for this option you must use the format HH:MM when HH corresponds to the hour and MM corresponds to the minute\&. If this option is not specified then compaction will run at any time of the day\&. This parameter only applies if circular compaction mode is used\&.
+.RE
+.PP
+\-\-compaction\-gsi\-period\-to <HH:MM>
+.RS 4
+This option is unsed in conjunction with the \-\-compaction\-gsi\-period\-from option and is used to specify a time period where gsi compaction is allowed to run\&. You could for example specify that gsi compaction should only run between midnight and 5AM each day by setting the gsi compaction from period to "00:00" and the gsi compaction to period to "5:00"\&. When setting the value for this option you must use the format HH:MM when HH corresponds to the hour and MM corresponds to the minute\&. If this option is not specified then gsi compaction will run at any time of the day\&. This parameter only applies if circular compaction mode is used\&.
+.RE
+.PP
+\-\-enable\-gsi\-compaction\-abort <1|0>
+.RS 4
+If a gsi compaction from period and gsi compaction to period are specified then this flag tells the server how to respond if a compaction starts during the allowed gsi compaction interval and is still running after the allowed interval has ended\&. If this option is set to "1" then the gsi compaction will be aborted\&. If it is set to "0" then the gsi compaction will be allowed to complete\&. By default this option is set to "0"\&. This parameter only applies if circular compaction mode is used\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+If we want to set our view and database compaction percentage thresholds to 30% each, but also wanted to ensure that our fragementation didn\(cqt grow above 1GB we would run the following command
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-compaction \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+ \-\-password password \-\-compaction\-view\-size 1024 \-\-compaction\-db\-size 1024 \e
+ \-\-compaction\-view\-percentage 30 \-\-compaction\-db\-percentage 30
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If we want to have the same settings as above, but we wanted compaction to only run at night so that we didn\(cqt run the risk of compaction affecting normal application traffic we would run the following command\&. Note that in this example we will assume our night time period is midnight to 6AM\&. We will also enable compaction aborts so that we can ensure compaction is never running outside of this time window\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-compaction \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+ \-\-password password \-\-compaction\-view\-size 1024 \-\-compaction\-db\-size 1024 \e
+ \-\-compaction\-view\-percentage 30 \-\-compaction\-db\-percentage 30 \e
+ \-\-compaction\-period\-from 00:00 \-\-compaction\-period\-to 6:00 \e
+ \-\-enable\-compaction\-abort 1
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If we don\(cqt mind when compaction runs and we have the disk overhead to run both view and database compaction at the same time then we might set up comaction with the settings in the first example, but also enable parallel compactions\&. This can be done by running the command below\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-compaction \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+ \-\-password password \-\-compaction\-view\-size 1024 \-\-compaction\-db\-size 1024 \e
+ \-\-compaction\-view\-percentage 30 \-\-compaction\-db\-percentage 30 \e
+ \-\-enable\-compaction\-parallel
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If your application heavily uses expirations or you create and delete a lot of documents quickly then you might want to shorten your metadata purge interval in order to ensure that you don\(cqt use too much disk space\&. If we want our compactions to run when the fragmentation is 30% or 1GB and we want to change the metadata purge interval to 2 days then we would run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-compaction \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+ \-\-password password \-\-compaction\-view\-size 1024 \-\-compaction\-db\-size 1024 \e
+ \-\-compaction\-view\-percentage 30 \-\-compaction\-db\-percentage 30 \e
+ \-\-meta\-data\-purge\-interval 2
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If you need to change the GSI index compaction settings to use the append compaction mode and want gsi compaction only to happen once your file is 50% fragmented specify the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-compaction \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+ \-\-password password \-\-gsi\-compaction\-mode append \e
+ \-\-compaction\-gsi\-percentage 50
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If you want to change the GSI index compaction settings to use the circular compaction mode and want gsi compaction only to happen on Tuesdays and Thursdays between midnight and 3AM and don\(cqt want gsi compaction running outside of those time windows even if the compaction started at a valid time specify the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-compaction \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+ \-\-password password \-\-gsi\-compaction\-mode circular \e
+ \-\-compaction\-gsi\-interval Tuesday,Thursday \e
+ \-\-compaction\-gsi\-period\-from 00:00 \e
+ \-\-compaction\-gsi\-period\-to 3:00 \-\-enable\-gsi\-compaction\-abort 1
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "SEE ALSO"
+.sp
+\fBcouchbase-cli-bucket-compact\fR(1)\&.
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR
