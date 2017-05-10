@@ -1934,6 +1934,51 @@ class SettingAutofailover(Subcommand):
         return "Modify auto failover settings"
 
 
+class SettingAutoreprovision(Subcommand):
+    """The settings auto-reprovision subcommand"""
+
+    def __init__(self):
+        super(SettingAutoreprovision, self).__init__()
+        self.parser.prog = "couchbase-cli setting-autoreprovision"
+        group = self.parser.add_argument_group("Auto-reprovision settings")
+        group.add_argument("--enabled", dest="enabled", metavar="<1|0>", required=True,
+                           choices=["0", "1"], help="Enable/disable auto-reprovision")
+        group.add_argument("--max-nodes", dest="max_nodes", metavar="<num>", type=(int),
+                           help="The numbers of server that can be auto-reprovisioned before a rebalance")
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_cluster_initialized(rest)
+
+        if opts.enabled == "1":
+            opts.enabled = "true"
+        elif opts.enabled == "0":
+            opts.enabled = "false"
+
+        if opts.enabled and opts.max_nodes is None:
+            _exitIfErrors(["--max-nodes must be specified if auto-reprovision is enabled"])
+
+        if not (opts.enabled or opts.max_nodes):
+            _exitIfErrors(["No settings specified to be changed"])
+
+        if (opts.enabled is None or opts.enabled == "false") and opts.max_nodes:
+            _warning("--max-servers will not take affect because auto-reprovision is being disabled")
+
+        _, errors = rest.set_autoreprovision_settings(opts.enabled, opts.max_nodes)
+        _exitIfErrors(errors)
+
+        _success("Auto-reprovision settings modified")
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-autoreprovision" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Modify auto-reprovision settings"
+
+
 class SettingCluster(Subcommand):
     """The settings cluster subcommand"""
 
