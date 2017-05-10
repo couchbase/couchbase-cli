@@ -2674,7 +2674,7 @@ class UserManage(Subcommand):
         if opts.roles is not None:
             _warning("--roles is not used with the --delete option")
         if opts.auth_domain is None:
-            _exitIfErrors(["--auth-type is required with the --delete option"])
+            _exitIfErrors(["--auth-domain is required with the --delete option"])
 
         _, errors = rest.delete_rbac_user(opts.rbac_user, opts.auth_domain)
         _exitIfErrors(errors)
@@ -2690,7 +2690,7 @@ class UserManage(Subcommand):
         if opts.roles is not None:
             _warning("--roles is not used with the --list option")
         if opts.auth_domain is not None:
-            _warning("--auth-type is not used with the --list option")
+            _warning("--auth-domain is not used with the --list option")
 
         result, errors = rest.list_rbac_users()
         _exitIfErrors(errors)
@@ -2706,7 +2706,7 @@ class UserManage(Subcommand):
         if opts.roles is not None:
             _warning("--roles is not used with the --my-roles option")
         if opts.auth_domain is not None:
-            _warning("--auth-type is not used with the --my-roles option")
+            _warning("--auth-domain is not used with the --my-roles option")
 
         result, errors = rest.my_roles()
         _exitIfErrors(errors)
@@ -2723,7 +2723,7 @@ class UserManage(Subcommand):
         if opts.roles is None:
             _exitIfErrors(["--roles is required with the --set option"])
         if opts.auth_domain is None:
-            _exitIfErrors(["--auth-type is required with the --set option"])
+            _exitIfErrors(["--auth-domain is required with the --set option"])
 
         _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.roles, opts.auth_domain)
         _exitIfErrors(errors)
