@@ -59,7 +59,7 @@ def process_services(services, is_enterprise):
         #backward compatible when using ";" as separator
         sep = ";"
     svc_list = list(set([w.strip() for w in services.split(sep)]))
-    svc_candidate = ["data", "index", "query", "fts"]
+    svc_candidate = ["data", "index", "query", "fts", "analytics"]
     for svc in svc_list:
         if svc not in svc_candidate:
             return None, ["`%s` is not a valid service" % svc]
@@ -68,7 +68,7 @@ def process_services(services, is_enterprise):
             return None, ["Community Edition requires that all nodes provision all services or data service only"]
 
     services = ",".join(svc_list)
-    for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
+    for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"], ["analytics", "cbas"]]:
         services = services.replace(old, new)
     return services, None
 
