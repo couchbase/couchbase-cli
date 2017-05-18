@@ -25,7 +25,6 @@ INSTALL(PROGRAMS
         cbrecovery
         DESTINATION lib/python)
 
-IF (NOT BUILD_ENTERPRISE)
   CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                   ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackup)
   CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
@@ -48,7 +47,6 @@ IF (NOT BUILD_ENTERPRISE)
           cbbackupwrapper
           cbrestorewrapper
           DESTINATION lib/python)
-ENDIF(NOT BUILD_ENTERPRISE)
 
 INSTALL(FILES
         argparse.py
