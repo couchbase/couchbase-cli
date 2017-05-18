@@ -416,14 +416,12 @@ class BFDSource(BFD, pump.Source):
         return 0, None
 
     def get_conflict_resolution_type(self):
-        rv, files = BFDSource.list_files(self.opts, self.source_map['spec'],
-                                         self.source_bucket['name'],
-                                         self.source_node['hostname'],
-                                         "meta.json")
-        if rv != 0:
-            return "seqno"
+        dir = BFD.construct_dir(self.source_map['spec'],
+                                self.source_bucket['name'],
+                                self.source_node['hostname'])
+        metafile = os.path.join(dir, "meta.json")
         try:
-            json_file = open(files[0], "r")
+            json_file = open(metafile, "r")
             json_data = json.load(json_file)
             json_file.close()
             if "conflict_resolution_type" in json_data:
