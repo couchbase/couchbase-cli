@@ -1471,7 +1471,7 @@ class ResetAdminPassword(Subcommand):
                            default=CB_CFG_PATH, help=SUPPRESS)
 
     def execute(self, opts):
-        token = _exit_on_file_read_failure(opts.config_path + "localtoken").rstrip()
+        token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
         rest = ClusterManager(opts.cluster, "@localtoken", token, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
