@@ -1336,4 +1336,4 @@ def _handle_response(response, debug):
     elif response.status_code == 500:
         return None, [ERR_INTERNAL]
     else:
-        return None, ['Recieved unexpected status %d' % response.status_code]
+        return None, ['Received unexpected status %d' % response.status_code]
