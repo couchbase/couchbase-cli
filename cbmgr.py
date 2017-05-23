@@ -2727,6 +2727,12 @@ class UserManage(Subcommand):
 
         _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.roles, opts.auth_domain)
         _exitIfErrors(errors)
+
+        if "query_external_access" in opts.roles:
+            _warning("Granting the query_external_access role permits execution of the N1QL " +
+                "function CURL() and may allow access to other network endpoints in the local " +
+                "network and the Internet.")
+
         _success("RBAC user set")
 
     @staticmethod
