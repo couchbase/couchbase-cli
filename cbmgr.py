@@ -631,6 +631,8 @@ class BucketCreate(Subcommand):
         group.add_argument("--bucket-priority", dest="priority", metavar="<priority>",
                            choices=[BUCKET_PRIORITY_LOW_STR, BUCKET_PRIORITY_HIGH_STR],
                            help="The bucket disk io priority (low or high)")
+        group.add_argument("--bucket-port", dest="port", metavar="<port>", type=(int),
+                           help="The port this bucket should listen on (Deprecated)")
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
                            choices=["valueOnly", "fullEviction", "noEviction", "nruEviction"],
                            help="The bucket eviction policy")
@@ -685,7 +687,7 @@ class BucketCreate(Subcommand):
 
         _, errors = rest.create_bucket(opts.bucket_name, opts.type, opts.memory_quota,
                                        opts.eviction_policy, opts.replica_count,
-                                       opts.replica_indexes, priority,
+                                       opts.replica_indexes, opts.port, priority,
                                        conflict_resolution_type,
                                        opts.enable_flush, conflict_resolution_type,
                                        opts.wait)

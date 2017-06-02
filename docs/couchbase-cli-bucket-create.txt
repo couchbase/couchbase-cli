@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'couchbase-cli bucket-create' [--cluster <url>] [--username <user>]
 	  [--password <password>] [--bucket <name>] [--bucket-type <type>]
-	  [--bucket-ramsize <size>] [--bucket-replica <num>]
+	  [--bucket-ramsize <size>] [--bucket-replica <num>] [--bucket-port <port>]
 	  [--bucket-priority <priority>] [--bucket-eviction-policy <policy>]
 	  [--enable-flush <num>] [--enable-index-replica <num>]
 	  [--conflict-resolution <type>] [--wait]
@@ -54,6 +54,10 @@ include::part-common-options.txt[]
 	servers. By default the number of replicas is one even if there is only a
 	single server in the cluster. The minimum amount of replicas is zero and the
 	maximum number is three. This option is only valid for couchbase buckets.
+
+--bucket-port <num>::
+	Sets the port that the bucket listens on. This parameter is deprecated and
+	not recommended for use.
 
 --bucket-priority <priority>::
 	The disk I/O priority for this bucket. The value of this flag may be set to

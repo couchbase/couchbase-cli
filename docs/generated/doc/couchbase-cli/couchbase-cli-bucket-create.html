@@ -750,7 +750,7 @@ couchbase-cli-bucket-create(1) Manual Page
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli bucket-create</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
           [--password &lt;password&gt;] [--bucket &lt;name&gt;] [--bucket-type &lt;type&gt;]
-          [--bucket-ramsize &lt;size&gt;] [--bucket-replica &lt;num&gt;]
+          [--bucket-ramsize &lt;size&gt;] [--bucket-replica &lt;num&gt;] [--bucket-port &lt;port&gt;]
           [--bucket-priority &lt;priority&gt;] [--bucket-eviction-policy &lt;policy&gt;]
           [--enable-flush &lt;num&gt;] [--enable-index-replica &lt;num&gt;]
           [--conflict-resolution &lt;type&gt;] [--wait]</pre>
@@ -856,6 +856,15 @@ buckets.</p></div>
         servers. By default the number of replicas is one even if there is only a
         single server in the cluster. The minimum amount of replicas is zero and the
         maximum number is three. This option is only valid for couchbase buckets.
+</p>
+</dd>
+<dt class="hdlist1">
+--bucket-port &lt;num&gt;
+</dt>
+<dd>
+<p>
+        Sets the port that the bucket listens on. This parameter is deprecated and
+        not recommended for use.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1037,7 +1046,7 @@ of 1GB run the following command.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-04-04 22:56:46 PDT
+Last updated 2017-06-02 15:34:08 PDT
 </div>
 </div>
 </body>
