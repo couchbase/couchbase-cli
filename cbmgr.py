@@ -178,6 +178,12 @@ class CBHostAction(Action):
     def __call__(self, parser, namespace, values, option_string=None):
         parsed = urlparse.urlparse(values)
 
+        # If the netloc is empty then it means that there was no scheme added
+        # to the URI and we are parsing it as a path. In this case no scheme
+        # means HTTP so we can add that scheme to the hostname provided.
+        if parsed.netloc == "":
+            parsed = urlparse.urlparse("http://" + values)
+
         if parsed.scheme == "":
             parsed = urlparse.urlparse("http://" + values)
 
