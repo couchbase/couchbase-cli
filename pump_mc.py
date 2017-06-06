@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging
+import json
 import socket
 import struct
 import time
@@ -255,6 +256,8 @@ class MCSink(pump.Sink):
                                          " commands; will use META-less commands")
                         self.op_map = OP_MAP
                         retry = True
+                elif r_status == couchbaseConstants.ERR_ACCESS:
+                    return json.loads(r_val)["error"]["context"], None, None
                 else:
                     return "error: MCSink MC error: " + str(r_status), None, None
 
