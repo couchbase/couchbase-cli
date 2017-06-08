@@ -59,6 +59,9 @@ class ClusterManager(object):
 
     def __init__(self, hostname, username, password, sslFlag=False, verifyCert=True,
                  cert=None, debug=False, timeout=DEFAULT_REQUEST_TIMEOUT):
+        hostname = hostname.replace("couchbase://", "http://", 1)
+        hostname = hostname.replace("couchbases://", "https://", 1)
+
         self.hostname = hostname
         self.verifyCert = verifyCert
         self.cert = cert
