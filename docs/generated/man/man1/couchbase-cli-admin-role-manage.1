@@ -1,0 +1,224 @@
+'\" t
+.\"     Title: couchbase-cli-admin-role-manage
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-ADMI" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-admin-role-manage \- Manage user roles
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli admin\-role\-manage\fR [\-\-cluster <url>] [\-\-username <user>]
+          [\-\-password <password>] [\-\-my\-roles] [\-\-get\-roles]
+          [\-\-set\-users <user_list>] [\-\-set\-names <name_list>] [\-\-roles]
+          [\-\-delete\-users <user_list>]
+.fi
+.SH "DESCRIPTION"
+.sp
+DEPRECATED: This command was in 5\&.0\&.0 deprecated and will be removed in future releases\&. Please use the \fBcouchbase-cli-user-manage\fR(1) subcommand which provides similar functionality to this command\&.
+.sp
+This command is used to manage LDAP user roles\&.
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-my\-roles
+.RS 4
+Show the current users roles\&.
+.RE
+.PP
+\-\-get\-roles
+.RS 4
+Show all valid users and roles\&.
+.RE
+.PP
+\-\-set\-users <user_list>
+.RS 4
+A comma\-delimited list of user ids to set acess\-control roles for\&.
+.RE
+.PP
+\-\-set\-names <name_list>
+.RS 4
+A optional quoted, comma\-delimited list names, one for each specified user id\&.
+.RE
+.PP
+\-\-roles
+.RS 4
+A comma\-delimited list of roles to set for users\&.
+.RE
+.PP
+\-\-delete\-users <user_list>
+.RS 4
+A comma\-delimited list of users to remove from access control\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+To show the current users roles run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli admin\-role\-manage \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-my\-roles
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To see a list of all available roles in Couchbase Server run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli admin\-role\-manage \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-get\-roles
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To set roles for a new user "Alice Meyers" with username "alice" and the cluster administrator and replication administrator roles run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli admin\-role\-manage \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-set\-users alice \-\-set\-names "Alice Meyers" \e
+ \-\-roles cluster_admin,replication_admin
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+You can also specify multiple users at the same time when using the set users flag\&. For example if you want to add Alice Meyers and Barry Dillon to the same set of roles you could run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli admin\-role\-manage \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-set\-users alice,barry \e
+ \-\-set\-names "Alice Meyers,Barry Dillon" \e
+ \-\-roles cluster_admin,replication_admin
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To delete the user alice you can run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli admin\-role\-manage \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-delete\-users alice
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+You also delete multiple users at the same time\&. For example if you want to delete both alic and barry then you can do so by running the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli admin\-role\-manage \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-delete\-users alice,barry
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "SEE ALSO"
+.sp
+\fBcouchbase-cli-setting-ldap\fR(1) \fBcouchbase-cli-user-manage\fR(1)
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR

@@ -1471,7 +1471,7 @@ class ResetAdminPassword(Subcommand):
                            default=CB_CFG_PATH, help=SUPPRESS)
 
     def execute(self, opts):
-        token = _exit_on_file_read_failure(opts.config_path + "localtoken").rstrip()
+        token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
         rest = ClusterManager(opts.cluster, "@localtoken", token, opts.ssl, opts.debug)
         check_cluster_initialized(rest)
 
@@ -1932,6 +1932,51 @@ class SettingAutofailover(Subcommand):
     @staticmethod
     def get_description():
         return "Modify auto failover settings"
+
+
+class SettingAutoreprovision(Subcommand):
+    """The settings auto-reprovision subcommand"""
+
+    def __init__(self):
+        super(SettingAutoreprovision, self).__init__()
+        self.parser.prog = "couchbase-cli setting-autoreprovision"
+        group = self.parser.add_argument_group("Auto-reprovision settings")
+        group.add_argument("--enabled", dest="enabled", metavar="<1|0>", required=True,
+                           choices=["0", "1"], help="Enable/disable auto-reprovision")
+        group.add_argument("--max-nodes", dest="max_nodes", metavar="<num>", type=(int),
+                           help="The numbers of server that can be auto-reprovisioned before a rebalance")
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_cluster_initialized(rest)
+
+        if opts.enabled == "1":
+            opts.enabled = "true"
+        elif opts.enabled == "0":
+            opts.enabled = "false"
+
+        if opts.enabled and opts.max_nodes is None:
+            _exitIfErrors(["--max-nodes must be specified if auto-reprovision is enabled"])
+
+        if not (opts.enabled or opts.max_nodes):
+            _exitIfErrors(["No settings specified to be changed"])
+
+        if (opts.enabled is None or opts.enabled == "false") and opts.max_nodes:
+            _warning("--max-servers will not take affect because auto-reprovision is being disabled")
+
+        _, errors = rest.set_autoreprovision_settings(opts.enabled, opts.max_nodes)
+        _exitIfErrors(errors)
+
+        _success("Auto-reprovision settings modified")
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-autoreprovision" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Modify auto-reprovision settings"
 
 
 class SettingCluster(Subcommand):
@@ -2629,7 +2674,7 @@ class UserManage(Subcommand):
         if opts.roles is not None:
             _warning("--roles is not used with the --delete option")
         if opts.auth_domain is None:
-            _exitIfErrors(["--auth-type is required with the --delete option"])
+            _exitIfErrors(["--auth-domain is required with the --delete option"])
 
         _, errors = rest.delete_rbac_user(opts.rbac_user, opts.auth_domain)
         _exitIfErrors(errors)
@@ -2645,7 +2690,7 @@ class UserManage(Subcommand):
         if opts.roles is not None:
             _warning("--roles is not used with the --list option")
         if opts.auth_domain is not None:
-            _warning("--auth-type is not used with the --list option")
+            _warning("--auth-domain is not used with the --list option")
 
         result, errors = rest.list_rbac_users()
         _exitIfErrors(errors)
@@ -2661,7 +2706,7 @@ class UserManage(Subcommand):
         if opts.roles is not None:
             _warning("--roles is not used with the --my-roles option")
         if opts.auth_domain is not None:
-            _warning("--auth-type is not used with the --my-roles option")
+            _warning("--auth-domain is not used with the --my-roles option")
 
         result, errors = rest.my_roles()
         _exitIfErrors(errors)
@@ -2678,10 +2723,16 @@ class UserManage(Subcommand):
         if opts.roles is None:
             _exitIfErrors(["--roles is required with the --set option"])
         if opts.auth_domain is None:
-            _exitIfErrors(["--auth-type is required with the --set option"])
+            _exitIfErrors(["--auth-domain is required with the --set option"])
 
         _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.roles, opts.auth_domain)
         _exitIfErrors(errors)
+
+        if "query_external_access" in opts.roles:
+            _warning("Granting the query_external_access role permits execution of the N1QL " +
+                "function CURL() and may allow access to other network endpoints in the local " +
+                "network and the Internet.")
+
         _success("RBAC user set")
 
     @staticmethod

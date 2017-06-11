@@ -1,0 +1,149 @@
+'\" t
+.\"     Title: couchbase-cli-setting-autoreprovision
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-SETT" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-setting-autoreprovision \- Modifies auto\-reprovision settings
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli setting\-autoreprovision\fR [\-\-cluster <url>] [\-\-username <user>]
+          [\-\-password <password>] [\-\-enabled <1|0>] [\-\-max\-nodes <num>]
+.fi
+.SH "DESCRIPTION"
+.sp
+Auto\-reprovisioning is used in order to prevent dataloss in ephemeral buckets during failure scenarios when a node crashes and restarts quickly\&. Under this scenario auto\-reprovisioning ensures that an ephemeral bucket\(cqs replica vbuckets are prmoted to active state\&. This mechanism is not needed for Couchbase buckets because a Couchbase buckets data is persisted to disk and can be loaded back into memory after a node restarts\&. Ephemeral buckets on the other hand completely lose their data when a node crashes and replicas must be relied upon in order to prevent dataloss\&. If ephemeral buckets are not in use this setting has no effect on the cluster\&.
+.sp
+Auto\-reprovisioning can either be enabled or disabled\&. If you have ephemeral buckets it is always recommended that auto\-reprovisioning is enabled otherwise the cluster will experience dataloss if a node crashes or is restarted\&. Users can also specify the number of nodes that can be auto\-reprovisioned before the cluster is rebalanced\&. An auto\-reprovision event occurs if a cluster has at least one ephemeral bucket and a node crashes and restarts\&. If the number of crashes and restarts exceed the maximum number of nodes that can be auto\-reprovisioned then the next crash and restart will result in dataloss for all ephemeral buckets in the cluster\&.
+.sp
+When setting the max nodes parameter, note that specifying the max nodes to be too high could result in cascading node failures\&. This can happen because when a node fails and restarts the server load for the crashed node is distributed to the rest of the servers in the cluster\&. This extra load could cause the one or more of the remaining servers in the cluster to become overloaded and unresponsive leading to more failures\&. On the other hand specifying max nodes to be too small could lead to dataloss if there are many failures in the cluster at the same time\&. How this variable is set depends on the cluster size, workload, and configuration\&. However, it is always recommended that auto\-reprovisioning is at least enabled and that max nodes is set to at least 1\&.
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-enabled <num>
+.RS 4
+Specifies whether or not auto\-reprovisioning is enabled\&. Set this option to "1" to enable autofailover or "0" to disable autofailover\&.
+.RE
+.PP
+\-\-max\-nodes <num>
+.RS 4
+Specifies the maximum number of servers that can be auto\-reprovisioned before a rebalance must take place (which resets the count)\&. This parameter must always be set to a number greater than or equal to 1\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+To enable auto\-reprovisioning and allow up to three nodes be auto\-reprovisioned before a rebalance takes place run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-autoreprovision \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-enabled 1 \-\-max\-nodes 3
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To disable auto\-reprovisioning run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-autoreprovision \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-enabled 0
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "SEE ALSO"
+.sp
+\fBcouchbase-cli-setting-autofailover\fR(1)\&.
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR

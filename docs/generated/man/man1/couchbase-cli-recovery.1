@@ -1,0 +1,168 @@
+'\" t
+.\"     Title: couchbase-cli-recovery
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-RECO" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-recovery \- Recovers a previously failed over node
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli recovery\fR [\-\-cluster <url>] [\-\-username <username>]
+          [\-\-password <password>] [\-\-server\-recovery <servers>]
+          [\-\-recovery\-type <type>]
+.fi
+.SH "DESCRIPTION"
+.sp
+When a server is failed over and removed from the cluster it may only be able to be added back to the cluster\&. And example of this is when a server loses power\&. This server might get failed over and removed from the cluster, but once power is restored to the server you may want to add it back to the cluster\&.
+.sp
+Another use case is taking a server out of the cluster for maintainance\&. This is done by gracefully failing over a server to ensure there is no data loss\&. The administrator can then perform mainainance on the removed server and add it back with the server\-readd command\&.
+.sp
+The recovery command also allows a server to have it\(cqs data remvoed before being added back to the cluster (full recovery) or having the server resume from where it last left off (delta recovery)\&. Delta recovery will always take the least amount of time and is the recommended recovery mode\&.
+.sp
+Note that after the recovery subcommand is run you must rebalance the cluster\&. See the \fBcouchbase-rebalance\fR(1) command for more information on rebalancing a cluster\&.
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-server\-recovery <servers>
+.RS 4
+A command separated list of servers to recover\&. The each server should correspond to the hostname or IP address of a server to be added back to the cluster\&.
+.RE
+.PP
+\-\-recovery\-type <type>
+.RS 4
+Specifies whether or not we should do full or delta recovery of data on the servers being added back\&. Full recover means that all data on the servers being recovered will be removed and we will recover all data\&. Specifying delta recover means we will keep the data that is on each server and only recover the data that each server doesn\(cqt have\&. To specify full recovery set this option to "full"\&. For delta recovery set this option to "delta"\&. The default value for this option is "full"\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+If we have a server at 192\&.168\&.1\&.6:8091 that we want to recover and we want to recover data using delta recovery then we can run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-server\-recovery 192\&.168\&.1\&.6:8091 \e
+ \-\-recovery\-type delta
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If we need to recover multiple servers then we would run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-server\-recovery 192\&.168\&.1\&.6:8091,192\&.168\&.1\&.7:8091 \e
+ \-\-recovery\-type delta
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If we wanted the servers being recovered to use full recovery then we would run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-server\-recovery 192\&.168\&.1\&.6:8091 \e
+ \-\-recovery\-type full
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "SEE ALSO"
+.sp
+\fBcouchbase-rebalance\fR(1)\&. \fBcouchbase-server-add\fR(1)\&.
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR

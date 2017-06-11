@@ -1,0 +1,195 @@
+'\" t
+.\"     Title: couchbase-cli-bucket-edit
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-BUCK" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-bucket-edit \- Edit a Couchbase data bucket
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli bucket\-edit\fR [\-\-cluster <url>] [\-\-username <user>]
+          [\-\-password <password>] [\-\-bucket <name>] [\-\-bucket\-ramsize <size>]
+          [\-\-bucket\-replica <num>] [\-\-bucket\-priority <priority>]
+          [\-\-bucket\-eviction\-policy <policy>] [\-\-enable\-flush <num>]
+.fi
+.SH "DESCRIPTION"
+.sp
+Modifies the settings of the bucket specified\&. Note that some settings can be applied immediately while other settings may require a rebalance or the bucket to be restarted resulting in potential application downtime\&. See information about the settings that can be changed below to understand more about their impact on your application\&.
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-bucket <name>
+.RS 4
+The name of the bucket to edit\&.
+.RE
+.PP
+\-\-bucket\-ramsize <size>
+.RS 4
+The amount of memory to allocate to the cache for this bucket in Megabytes\&. The memory quota of this bucket must fit into the overall cluster memory quota\&. The minimum cache size is 100MB\&.
+.RE
+.PP
+\-\-bucket\-replica <num>
+.RS 4
+The amount of servers to replicate data to\&. Replicas provide protection against data loss by keeping copies of the data in this bucket on multiple servers\&. By default the number of replicas is one even if there is only a single server in the cluster\&. The minimum amount of replicas is zero and the maximum number is three\&. This option is only valid for couchbase buckets\&.
+.RE
+.PP
+\-\-bucket\-priority <priority>
+.RS 4
+The disk I/O priority for this bucket\&. The value of this flag may be set to high or low\&. By default the priority is set to low\&. This option is only valid for couchbase buckets\&. This setting only has an affect on the disk IO if there are other buckets in the cluster\&.
+.RE
+.PP
+\-\-bucket\-eviction\-policy <policy>
+.RS 4
+The memory cache eviction policy for this bucket\&. Couchbase buckets support either "valueOnly" eviction or "fullEviction"\&. Specifying the "valueEviction" policy means that each key stored in this bucket must be kept in memory\&. This is the default policy and using this policy will improve performance of key\-value operations, but limits the maximum size of the bucket\&. Using the "fullEviction" policy means that performance will be impacted for key\-value operations, but the maximum size of the bucket is unbounded\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Ephemeral buckets do not allow changing the eviction policy after the bucket
+is created\&. In order to do this you need to delete and re\-create the bucket\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-\-enable\-flush <num>
+.RS 4
+Specifies whether or not the flush operation is allowed for this bucket\&. To enable flush set this option to "1"\&. To disable flush set this option to "0"\&. By default flush is disabled\&.
+.RE
+.PP
+\-\-enable\-index\-replica <num>
+.RS 4
+Enables replica view indexes for this bucket\&. There may be at most 1 view replica index\&. To enable replica indexes set the value of this option to "1"\&. To disable replica indexes set the value of this option to "0"\&. By default replica indexes are disabled\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+If we want to change the memory quota of the travel\-data bucket we would run the command below\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli bucket\-edit \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-bucket travel\-data \-\-bucket\-ramsize 1024
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If we want to change the amount of replicas from 1 to 2 on the cb\-data bucket then we would run the following commands below\&. Note that we need to rebalance with the \fBcouchbase-cli-rebalance\fR(1) in order to ensure that the replicas are created\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli bucket\-edit \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-bucket travel\-data \-\-bucket\-ramsize 1024 \e
+ \-\-bucket\-replicas 2
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli bucket\-edit \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "SEE ALSO"
+.sp
+\fBcouchbase-cli-bucket-compact\fR(1)\&. \fBcouchbase-cli-bucket-create\fR(1)\&. \fBcouchbase-cli-bucket-delete\fR(1)\&. \fBcouchbase-cli-bucket-flush\fR(1)\&. \fBcouchbase-cli-bucket-list\fR(1)\&.
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR

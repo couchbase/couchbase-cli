@@ -880,6 +880,17 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def set_autoreprovision_settings(self, enabled, max_nodes):
+        url = self.hostname + '/settings/autoReprovision'
+
+        params = dict()
+        if enabled:
+            params["enabled"] = enabled
+        if max_nodes:
+            params["maxNodes"] = max_nodes
+
+        return self._post_form_encoded(url, params)
+
     def set_compaction_settings(self, dbFragPerc, dbFragSize, viewFragPerc, viewFragSize,
                                 fromHour, fromMin, toHour, toMin, abortOutside,
                                 parallelDBAndViewCompact, purgeInterval, gsiMode, gsiPerc,
@@ -1325,4 +1336,4 @@ def _handle_response(response, debug):
     elif response.status_code == 500:
         return None, [ERR_INTERNAL]
     else:
-        return None, ['Recieved unexpected status %d' % response.status_code]
+        return None, ['Received unexpected status %d' % response.status_code]

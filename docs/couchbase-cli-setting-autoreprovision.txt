@@ -1,0 +1,88 @@
+couchbase-cli-setting-autoreprovision(1)
+========================================
+
+NAME
+----
+couchbase-cli-setting-autoreprovision - Modifies auto-reprovision settings
+
+SYNOPSIS
+--------
+[verse]
+'couchbase-cli setting-autoreprovision' [--cluster <url>] [--username <user>]
+	  [--password <password>] [--enabled <1|0>] [--max-nodes <num>]
+
+DESCRIPTION
+-----------
+
+Auto-reprovisioning is used in order to prevent dataloss in ephemeral buckets
+during failure scenarios when a node crashes and restarts quickly. Under this
+scenario auto-reprovisioning ensures that an ephemeral bucket's replica vbuckets
+are prmoted to active state. This mechanism is not needed for Couchbase buckets
+because a Couchbase buckets data is persisted to disk and can be loaded back
+into memory after a node restarts. Ephemeral buckets on the other hand
+completely lose their data when a node crashes and replicas must be relied upon
+in order to prevent dataloss. If ephemeral buckets are not in use this setting
+has no effect on the cluster.
+
+Auto-reprovisioning can either be enabled or disabled. If you have ephemeral
+buckets it is always recommended that auto-reprovisioning is enabled otherwise
+the cluster will experience dataloss if a node crashes or is restarted. Users
+can also specify the number of nodes that can be auto-reprovisioned before the
+cluster is rebalanced. An auto-reprovision event occurs if a cluster has at
+least one ephemeral bucket and a node crashes and restarts. If the number of
+crashes and restarts exceed the maximum number of nodes that can be
+auto-reprovisioned then the next crash and restart will result in dataloss for
+all ephemeral buckets in the cluster.
+
+When setting the max nodes parameter, note that specifying the max nodes to be
+too high could result in cascading node failures. This can happen because when a
+node fails and restarts the server load for the crashed node is distributed to
+the rest of the servers in the cluster. This extra load could cause the one or
+more of the remaining servers in the cluster to become overloaded and
+unresponsive leading to more failures. On the other hand specifying max nodes to
+be too small could lead to dataloss if there are many failures in the cluster at
+the same time. How this variable is set depends on the cluster size, workload,
+and configuration. However, it is always recommended that auto-reprovisioning is
+at least enabled and that max nodes is set to at least 1.
+
+OPTIONS
+-------
+
+include::part-common-options.txt[]
+
+--enabled <num>::
+	Specifies whether or not auto-reprovisioning is enabled. Set this option to
+	"1" to enable autofailover or "0" to disable autofailover.
+
+--max-nodes <num>::
+	Specifies the maximum number of servers that can be auto-reprovisioned
+	before a rebalance must take place (which resets the count). This parameter
+	must always be set to a number greater than or equal to 1.
+
+include::part-host-formats.txt[]
+
+EXAMPLES
+--------
+
+To enable auto-reprovisioning and allow up to three nodes be auto-reprovisioned
+before a rebalance takes place run the following command.
+
+	$ couchbase-cli setting-autoreprovision -c 192.168.1.5 -u Administrator \
+	 -p password --enabled 1 --max-nodes 3
+
+To disable auto-reprovisioning run the following command.
+
+	$ couchbase-cli setting-autoreprovision -c 192.168.1.5 -u Administrator \
+	 -p password --enabled 0
+
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+
+include::part-common-env.txt[]
+
+SEE ALSO
+--------
+
+linkcbdoc:couchbase-cli-setting-autofailover[1].
+
+include::part-footer.txt[]

@@ -1,0 +1,182 @@
+'\" t
+.\"     Title: couchbase-cli-server-readd
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/10/2017
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-SERV" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-server-readd \- Adds a server back to the cluster after a failover
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli server\-readd\fR [\-\-cluster <url>] [\-\-username <username>]
+          [\-\-password <password>] [\-\-server\-add <servers>] [\-\-group\-name <name>]
+          [\-\-server\-username <username>] [\-\-server\-password <password>]
+.fi
+.SH "DESCRIPTION"
+.sp
+DEPRECATED: This command was in 5\&.0\&.0 deprecated and will be removed in future releases\&. Please use the \fBcouchbase-cli-recovery\fR(1) subcommand which provides similar functionality to this command\&.
+.sp
+The server\-readd subcommand is used to add a server back to the cluster\&. This operation is useful after a server is failed over and also when a server is removed from the cluster for maintainance\&.
+.sp
+When a server is failed over and removed from the cluster it may only be able to be added back to the cluster\&. And example of this is when a server loses power\&. This server might get failed over and removed from the cluster, but once power is restored to the server you may want to add it back to the cluster\&. The server\-readd subcommand will remove the data from the server, but keep the server configuration and add the server back into the cluster\&.
+.sp
+Another use case is taking a server out of the cluster for maintainance\&. This is done by gracefully failing over a server to ensure there is no data loss\&. The administrator can then perform mainainance on the removed server and add it back with the server\-readd command\&.
+.sp
+It is also possible to add a server back to the cluster without removing the data and instead having the server recover data from where it left off\&. This is called delta recovery and is available from the \fBcouchbase-recovery\fR(1) subcommand\&.
+.sp
+Note that after the server\-readd subcommand is run you must rebalance the cluster\&. See the \fBcouchbase-rebalance\fR(1) command for more information on rebalancing a cluster\&.
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-server\-add <servers>
+.RS 4
+A command separated list of servers to readd\&. The each server should correspond to the hostname or IP address of a server to be added back to the cluster\&.
+.RE
+.PP
+\-\-server\-username <username>
+.RS 4
+Adding a server back to the cluster can only be done by a user with the appropriate credentials\&. This flag specifies the username for a user who has the ability to modify the cluster topology on the server being added back\&.
+.RE
+.PP
+\-\-server\-password <password>
+.RS 4
+Adding a server back to the cluster can only be done by a user with the appropriate credentials\&. This flag specifies the password for a user who has the ability to modify the cluster topology on the server being added back\&.
+.RE
+.PP
+\-\-group\-name <name>
+.RS 4
+The name of the group to add the server to\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+If we have a server at 192\&.168\&.1\&.6:8091 that we want to add back and that server has credentials that allow us to change the cluster topology with "Administrator" as the username and "password" as the password we would run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-server\-readd 192\&.168\&.1\&.6:8091 \e
+ \-\-server\-username Administrator \-\-server\-password password
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If we need to add back multiple servers then we would run the following command\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-server\-readd 192\&.168\&.1\&.6:8091,192\&.168\&.1\&.7:8091 \e
+ \-\-server\-username Administrator \-\-server\-password password
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If we wanted the servers being added back to the cluster to be a part of the "East" group we would run the following command
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-server\-readd 192\&.168\&.1\&.6:8091 \-\-group\-name East \e
+ \-\-server\-username Administrator \-\-server\-password password
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "SEE ALSO"
+.sp
+\fBcouchbase-rebalance\fR(1)\&. \fBcouchbase-recovery\fR(1)\&. \fBcouchbase-server-add\fR(1)\&.
+.SH "COUCHBASE-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR
