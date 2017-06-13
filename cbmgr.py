@@ -2552,15 +2552,16 @@ class SslManage(Subcommand):
                            default=False, help="Sets the node certificate")
         group.add_argument("--upload-cluster-ca", dest="upload_cert", metavar="<path>",
                            help="Upload a new cluster certificate")
-        group.add_argument("--set-client-auth-state", dest="set_client_auth_state", metavar="<disable|enable|mandatory>",
-                           default=False, help="Enable or disable the ssl client certificate authentication")
+        group.add_argument("--set-client-auth-state", dest="set_client_auth_state",
+                           metavar="<disable|enable|mandatory>",
+                           help="Enable or disable the ssl client certificate authentication")
         group.add_argument("--set-client-auth-path", dest="set_client_auth_path",
                            metavar="<subject.cn|san.uri|san.dnsname|san.name>",
-                           default=False, help="Set ssl client certificate type value")
+                           help="Set ssl client certificate type value")
         group.add_argument("--set-client-auth-prefix", metavar="<prefix>", dest="set_client_auth_prefix",
-                           default=False, help="Set ssl client certificate prefix value")
+                           help="Set ssl client certificate prefix value")
         group.add_argument("--set-client-auth-delimiter", metavar="<delimiter>",
-                           dest="set_client_auth_delimiter", default=False,
+                           dest="set_client_auth_delimiter",
                            help="Set ssl client certificate delimiter value")
         group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
                            help="Show ssl client certificate authentication value")
