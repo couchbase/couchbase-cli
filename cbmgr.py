@@ -2603,7 +2603,7 @@ class SslManage(Subcommand):
             _exitIfErrors(errors)
             _success("Node certificate set")
         elif opts.set_client_auth_state or opts.set_client_auth_prefix \
-                or opts.set_client_auth_type or opts.set_client_auth_delimiter:
+                or opts.set_client_auth_path or opts.set_client_auth_delimiter:
             _, errors = rest.set_client_cert_auth(opts.set_client_auth_state,
                                                   opts.set_client_auth_prefix,
                                                   opts.set_client_auth_path,
