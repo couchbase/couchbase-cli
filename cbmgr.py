@@ -2557,10 +2557,11 @@ class SslManage(Subcommand):
         group.add_argument("--set-client-auth-path", dest="set_client_auth_path",
                            metavar="<subject.cn|san.uri|san.dnsname|san.name>",
                            default=False, help="Set ssl client certificate type value")
-        group.add_argument("--set-client-auth-prefix", dest="set_client_auth_prefix",
+        group.add_argument("--set-client-auth-prefix", metavar="<prefix>", dest="set_client_auth_prefix",
                            default=False, help="Set ssl client certificate prefix value")
-        group.add_argument("--set-client-auth-delimiter", dest="set_client_auth_delimiter",
-                           default=False, help="Set ssl client certificate delimiter value")
+        group.add_argument("--set-client-auth-delimiter", metavar="<delimiter>",
+                           dest="set_client_auth_delimiter", default=False,
+                           help="Set ssl client certificate delimiter value")
         group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
                            help="Show ssl client certificate authentication value")
         group.add_argument("--extended", dest="extended", action="store_true",
