@@ -1340,7 +1340,7 @@ class Rebalance(Subcommand):
         self.parser.prog = "couchbase-cli rebalance"
         group = self.parser.add_argument_group("Rebalance options")
         group.add_argument("--server-remove", dest="server_remove", metavar="<server_list>",
-                           help="A list of servers to remove from the cluster")
+                           action="append", help="A list of servers to remove from the cluster")
         group.add_argument("--no-progress-bar", dest="no_bar", action="store_true",
                            default=False, help="Disables the progress bar")
         group.add_argument("--no-wait", dest="wait", action="store_false",
@@ -1350,6 +1350,8 @@ class Rebalance(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+
+        opts.server_remove = ','.join(opts.server_remove)
 
         eject_nodes = []
         if opts.server_remove:
