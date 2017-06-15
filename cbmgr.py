@@ -267,9 +267,16 @@ class CBHelpAction(Action):
         base_path = os.path.dirname(exe_path)
 
         if os.name == "nt":
-            subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
+            try:
+                subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
+            except OSError, e:
+                _exitIfErrors(["Unable to open man page using your browser, %s" % e])
         else:
-            subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
+            try:
+                subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
+            except OSError:
+                _exitIfErrors(["Unable to open man page using the 'man' command, ensure it " +
+                               "is on your path or install a manual reader"])
 
 
 class CliParser(ArgumentParser):
