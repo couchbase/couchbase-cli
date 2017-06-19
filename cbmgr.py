@@ -1358,7 +1358,8 @@ class Rebalance(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
-        opts.server_remove = ','.join(opts.server_remove)
+        if opts.server_remove is not None:
+            opts.server_remove = ','.join(opts.server_remove)
 
         eject_nodes = []
         if opts.server_remove:
