@@ -178,6 +178,12 @@ class CBHostAction(Action):
     def __call__(self, parser, namespace, values, option_string=None):
         parsed = urlparse.urlparse(values)
 
+        # If the netloc is empty then it means that there was no scheme added
+        # to the URI and we are parsing it as a path. In this case no scheme
+        # means HTTP so we can add that scheme to the hostname provided.
+        if parsed.netloc == "":
+            parsed = urlparse.urlparse("http://" + values)
+
         if parsed.scheme == "":
             parsed = urlparse.urlparse("http://" + values)
 
@@ -261,9 +267,16 @@ class CBHelpAction(Action):
         base_path = os.path.dirname(exe_path)
 
         if os.name == "nt":
-            subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
+            try:
+                subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
+            except OSError, e:
+                _exitIfErrors(["Unable to open man page using your browser, %s" % e])
         else:
-            subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
+            try:
+                subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
+            except OSError:
+                _exitIfErrors(["Unable to open man page using the 'man' command, ensure it " +
+                               "is on your path or install a manual reader"])
 
 
 class CliParser(ArgumentParser):
@@ -631,6 +644,8 @@ class BucketCreate(Subcommand):
         group.add_argument("--bucket-priority", dest="priority", metavar="<priority>",
                            choices=[BUCKET_PRIORITY_LOW_STR, BUCKET_PRIORITY_HIGH_STR],
                            help="The bucket disk io priority (low or high)")
+        group.add_argument("--bucket-port", dest="port", metavar="<port>", type=(int),
+                           help="The port this bucket should listen on (Deprecated)")
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
                            choices=["valueOnly", "fullEviction", "noEviction", "nruEviction"],
                            help="The bucket eviction policy")
@@ -685,7 +700,7 @@ class BucketCreate(Subcommand):
 
         _, errors = rest.create_bucket(opts.bucket_name, opts.type, opts.memory_quota,
                                        opts.eviction_policy, opts.replica_count,
-                                       opts.replica_indexes, priority,
+                                       opts.replica_indexes, opts.port, priority,
                                        conflict_resolution_type,
                                        opts.enable_flush, conflict_resolution_type,
                                        opts.wait)
@@ -1332,7 +1347,7 @@ class Rebalance(Subcommand):
         self.parser.prog = "couchbase-cli rebalance"
         group = self.parser.add_argument_group("Rebalance options")
         group.add_argument("--server-remove", dest="server_remove", metavar="<server_list>",
-                           help="A list of servers to remove from the cluster")
+                           action="append", help="A list of servers to remove from the cluster")
         group.add_argument("--no-progress-bar", dest="no_bar", action="store_true",
                            default=False, help="Disables the progress bar")
         group.add_argument("--no-wait", dest="wait", action="store_false",
@@ -1342,6 +1357,9 @@ class Rebalance(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+
+        if opts.server_remove is not None:
+            opts.server_remove = ','.join(opts.server_remove)
 
         eject_nodes = []
         if opts.server_remove:
@@ -2544,15 +2562,17 @@ class SslManage(Subcommand):
                            default=False, help="Sets the node certificate")
         group.add_argument("--upload-cluster-ca", dest="upload_cert", metavar="<path>",
                            help="Upload a new cluster certificate")
-        group.add_argument("--set-client-auth-state", dest="set_client_auth_state", metavar="<disable|enable|mandatory>",
-                           default=False, help="Enable or disable the ssl client certificate authentication")
+        group.add_argument("--set-client-auth-state", dest="set_client_auth_state",
+                           metavar="<disable|enable|mandatory>",
+                           help="Enable or disable the ssl client certificate authentication")
         group.add_argument("--set-client-auth-path", dest="set_client_auth_path",
                            metavar="<subject.cn|san.uri|san.dnsname|san.name>",
-                           default=False, help="Set ssl client certificate type value")
-        group.add_argument("--set-client-auth-prefix", dest="set_client_auth_prefix",
-                           default=False, help="Set ssl client certificate prefix value")
-        group.add_argument("--set-client-auth-delimiter", dest="set_client_auth_delimiter",
-                           default=False, help="Set ssl client certificate delimiter value")
+                           help="Set ssl client certificate type value")
+        group.add_argument("--set-client-auth-prefix", metavar="<prefix>", dest="set_client_auth_prefix",
+                           help="Set ssl client certificate prefix value")
+        group.add_argument("--set-client-auth-delimiter", metavar="<delimiter>",
+                           dest="set_client_auth_delimiter",
+                           help="Set ssl client certificate delimiter value")
         group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
                            help="Show ssl client certificate authentication value")
         group.add_argument("--extended", dest="extended", action="store_true",
@@ -2594,7 +2614,7 @@ class SslManage(Subcommand):
             _exitIfErrors(errors)
             _success("Node certificate set")
         elif opts.set_client_auth_state or opts.set_client_auth_prefix \
-                or opts.set_client_auth_type or opts.set_client_auth_delimiter:
+                or opts.set_client_auth_path or opts.set_client_auth_delimiter:
             _, errors = rest.set_client_cert_auth(opts.set_client_auth_state,
                                                   opts.set_client_auth_prefix,
                                                   opts.set_client_auth_path,

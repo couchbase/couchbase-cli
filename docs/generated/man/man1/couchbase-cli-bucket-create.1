@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-bucket-create
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/10/2017
+.\"      Date: 06/02/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCK" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCK" "1" "06/02/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -34,7 +34,7 @@ couchbase-cli-bucket-create \- Create a new Couchbase data bucket
 .nf
 \fIcouchbase\-cli bucket\-create\fR [\-\-cluster <url>] [\-\-username <user>]
           [\-\-password <password>] [\-\-bucket <name>] [\-\-bucket\-type <type>]
-          [\-\-bucket\-ramsize <size>] [\-\-bucket\-replica <num>]
+          [\-\-bucket\-ramsize <size>] [\-\-bucket\-replica <num>] [\-\-bucket\-port <port>]
           [\-\-bucket\-priority <priority>] [\-\-bucket\-eviction\-policy <policy>]
           [\-\-enable\-flush <num>] [\-\-enable\-index\-replica <num>]
           [\-\-conflict\-resolution <type>] [\-\-wait]
@@ -77,6 +77,11 @@ The amount of memory to allocate to the cache for this bucket in Megabytes\&. Th
 \-\-bucket\-replica <num>
 .RS 4
 The amount of servers to replicate data to\&. Replicas provide protection against data loss by keeping copies of the data in this bucket on multiple servers\&. By default the number of replicas is one even if there is only a single server in the cluster\&. The minimum amount of replicas is zero and the maximum number is three\&. This option is only valid for couchbase buckets\&.
+.RE
+.PP
+\-\-bucket\-port <num>
+.RS 4
+Sets the port that the bucket listens on\&. This parameter is deprecated and not recommended for use\&.
 .RE
 .PP
 \-\-bucket\-priority <priority>

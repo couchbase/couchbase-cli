@@ -59,6 +59,9 @@ class ClusterManager(object):
 
     def __init__(self, hostname, username, password, sslFlag=False, verifyCert=True,
                  cert=None, debug=False, timeout=DEFAULT_REQUEST_TIMEOUT):
+        hostname = hostname.replace("couchbase://", "http://", 1)
+        hostname = hostname.replace("couchbases://", "https://", 1)
+
         self.hostname = hostname
         self.verifyCert = verifyCert
         self.cert = cert
@@ -543,7 +546,7 @@ class ClusterManager(object):
         return all, eject, failover, readd, hostnames, None
 
     def create_bucket(self, name, bucket_type, memory_quota,
-                      eviction_policy, replicas, replica_indexes,
+                      eviction_policy, replicas, replica_indexes, port,
                       threads_number, conflict_resolution, flush_enabled,
                       timestamps, sync, timeout=60):
         url = self.hostname + '/pools/default/buckets'
@@ -566,6 +569,8 @@ class ClusterManager(object):
             params["replicaNumber"] = replicas
         if replica_indexes is not None:
             params["replicaIndex"] = replica_indexes
+        if port is not None:
+            params["proxyPort"] = port
         if threads_number is not None:
             params["threadsNumber"] = threads_number
         if conflict_resolution is not None:
