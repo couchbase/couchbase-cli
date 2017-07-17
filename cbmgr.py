@@ -517,6 +517,9 @@ class ClusterInit(Subcommand):
         group.add_argument("--cluster-fts-ramsize", dest="fts_mem_quota", type=(int),
                            metavar="<quota>",
                            help="The full-text service memory quota in Megabytes")
+        group.add_argument("--cluster-analytics-ramsize", dest="cbas_mem_quota", type=(int),
+                           metavar="<quota>",
+                           help="The analytics service memory quota in Megabytes")
         group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
         group.add_argument("--index-storage-setting", dest="index_storage_mode",
                            choices=["default", "memopt"], metavar="<mode>",
@@ -547,9 +550,9 @@ class ClusterInit(Subcommand):
             _exitIfErrors(["Cannot set up first cluster node without the data service"])
 
         if opts.data_mem_quota is not None or opts.index_mem_quota is not None or \
-            opts.fts_mem_quota is not None or opts.name is not None:
+            opts.fts_mem_quota is not None or opts.cbas_mem_quota is not None or opts.name is not None:
             _, errors = rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota,
-                                           opts.fts_mem_quota, opts.name)
+                                           opts.fts_mem_quota, opts.cbas_mem_quota, opts.name)
         _exitIfErrors(errors)
 
         # Set the index storage mode
@@ -2016,6 +2019,8 @@ class SettingCluster(Subcommand):
                            type=(int), help="The index service memory quota in megabytes")
         group.add_argument("--cluster-fts-ramsize", dest="fts_mem_quota", metavar="<quota>",
                            type=(int), help="The full-text service memory quota in megabytes")
+        group.add_argument("--cluster-analytics-ramsize", dest="cbas_mem_quota", metavar="<quota>",
+                           type=(int), help="The analytics service memory quota in megabytes")
         group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
 
     def execute(self, opts):
@@ -2023,10 +2028,10 @@ class SettingCluster(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
-        if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or \
+        if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota or \
             opts.name is not None:
             _, errors = rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota,
-                                               opts.fts_mem_quota, opts.name)
+                                               opts.fts_mem_quota, opts.cbas_mem_quota, opts.name)
             _exitIfErrors(errors)
 
         if opts.new_username or opts.new_password or opts.port:
