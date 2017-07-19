@@ -510,6 +510,18 @@ class DCPStreamSource(pump.Source, threading.Thread):
                                        couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
                                        str(self.batch_max_bytes * 10), opaque)
                 self.dcp_conn._handleSingleResponse(opaque)
+
+                opaque=self.r.randint(0, 2**32)
+                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
+                                       couchbaseConstants.KEY_DCP_NOOP,
+                                       "true", opaque)
+                self.dcp_conn._handleSingleResponse(opaque)
+
+                opaque=self.r.randint(0, 2**32)
+                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
+                                       couchbaseConstants.KEY_DCP_NOOP_INTERVAL,
+                                       str(180), opaque)
+                self.dcp_conn._handleSingleResponse(opaque)
             except EOFError:
                 return "error: Fail to set up DCP connection"
             except cb_bin_client.MemcachedError:
