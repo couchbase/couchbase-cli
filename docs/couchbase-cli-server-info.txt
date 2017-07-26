@@ -3,7 +3,8 @@ couchbase-cli-server-info(1)
 
 NAME
 ----
-couchbase-cli-server-info - Displays server level information and statistics
+couchbase-cli-server-info - Displays information and statistics about
+the Couchbase Server specified.
 
 SYNOPSIS
 --------
@@ -14,7 +15,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Prints information about the server specified.
+This command prints information about the Couchbase Server specified.
 
 OPTIONS
 -------
@@ -26,7 +27,8 @@ include::part-host-formats.txt[]
 EXAMPLES
 --------
 
-To get server information for localhost we can run the following command.
+To get information about the Couchbase Server on localhost (127.0.0.1) run
+the following command:
 
 	$ couchbase-cli server-info -c 127.0.0.1 --username Administrator \
 	 --password password
