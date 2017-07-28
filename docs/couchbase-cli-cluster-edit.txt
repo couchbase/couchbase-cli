@@ -11,8 +11,8 @@ SYNOPSIS
 [verse]
 'couchbase-cli cluster-edit' [--cluster <url>] [--cluster-username <username>]
 	  [--cluster-password <password>] [--cluster-port <port>]
-      [--cluster-ramsize <megabytes>] [--cluster-name <name>]
-      [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
+	  [--cluster-ramsize <megabytes>] [--cluster-name <name>]
+	  [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
 
 DESCRIPTION
 -----------
@@ -38,18 +38,18 @@ include::part-common-options.txt[]
 
 --cluster-ramsize::
 	Sets the data service memory quota (in MB). This quota will be assigned
-        to all future nodes added to the cluster with the data service.
+	to all future nodes added to the cluster with the data service.
 
 --cluster-fts-ramsize::
 	Sets the full-text service memory quota (in MB). This parameter is required
-        if the full-text service is specified in the --services option. This quota
-        will be assigned to all future nodes added to the cluster with the full-text
+	if the full-text service is specified in the --services option. This quota
+	will be assigned to all future nodes added to the cluster with the full-text
 	service.
 
 --cluster-index-ramsize::
 	Sets the index service memory quota (in MB). This parameter is required if
-        the index service is specified in the --services option. This quota will be
-        assigned to all future nodes added to the cluster with the index service.
+	the index service is specified in the --services option. This quota will be
+	assigned to all future nodes added to the cluster with the index service.
 
 --cluster-name::
 	Sets the name for this cluster. Naming clusters is useful when you have
@@ -57,7 +57,7 @@ include::part-common-options.txt[]
 
 --cluster-port::
 	Specifies the port for the Couchbase Server Administration Console. Defaults
-        to port 8091.
+	to port 8091.
 
 include::part-host-formats.txt[]
 
