@@ -17,7 +17,7 @@ DESCRIPTION
 
 This command is used to check the status of the log collection task that is
 either currently running or last completed. This command is especially useful
-since it list the exact location of the collected files on each node. Upon a
+since it lists the exact location of the collected files on each node. Upon a
 successful run of this command the output will either be one of the two messages
 below.
 
@@ -31,7 +31,7 @@ below.
 		Status: <started | collected>
 		path: <path to the location of the collected logs>
 
-If logs for multiple nodes were collected then multple nodes will be listed in
+If logs for multiple nodes were collected, then multiple nodes will be listed in
 the details section.
 
 OPTIONS
