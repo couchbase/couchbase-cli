@@ -14,7 +14,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Stops the currenty running rebalance.
+Stops the currently running rebalance.
 
 OPTIONS
 -------
@@ -26,7 +26,7 @@ include::part-host-formats.txt[]
 EXAMPLES
 --------
 
-To stop the currently running rebalance run the following command.
+To stop the currently running rebalance, run the following command.
 
 	$ couchbase-cli rebalance-stop -c 192.168.1.5 --username Administrator \
 	 --password password
