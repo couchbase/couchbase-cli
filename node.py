@@ -526,6 +526,7 @@ class Node:
         if param is not None:
             _, errors = cm.set_index_settings(param)
             _exitIfErrors(errors)
+            output_result = "SUCCESS: init/edit settings"
 
         opts = {
             "error_msg": "unable to set memory quota",
