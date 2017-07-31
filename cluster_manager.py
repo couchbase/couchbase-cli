@@ -268,6 +268,7 @@ class ClusterManager(object):
         data_ramsize - An integer denoting the size in MB, None skips the parameter
         index_ramsize - An integer denoting the size in MB, None skips the parameter
         fts_ramsize - An integer denoting the size in MB, None skips the parameter
+        cbas_ramsize - An integer denoting the size in MB, None skips the parameter
         cluster_name - Sets a name for the cluster, None skips the parameter
         """
         url = self.hostname + '/pools/default'
@@ -279,7 +280,7 @@ class ClusterManager(object):
         if fts_ramsize is not None:
             params["ftsMemoryQuota"] = fts_ramsize
         if cbas_ramsize is not None:
-            params["cbasMemoryQuota"] = fts_ramsize
+            params["cbasMemoryQuota"] = cbas_ramsize
         if cluster_name is not None:
             params["clusterName"] = cluster_name
 
