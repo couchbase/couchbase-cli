@@ -1269,8 +1269,10 @@ class MasterPassword(Subcommand):
         elif res == "retry":
             print "Incorrect password."
             self.prompt_for_master_pwd(node, cookie, '')
+        elif res == "{error,not_allowed}":
+            _exitIfErrors(["Password was already supplied"])
         elif res == "{badrpc,nodedown}":
-            _exitIfErrors(["Either the node is down or password was already supplied"])
+            _exitIfErrors(["The node is down"])
         else:
             _exitIfErrors(["Incorrect password. Node shuts down."])
 
