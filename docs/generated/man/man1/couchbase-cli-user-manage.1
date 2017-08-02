@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/10/2017
+.\"      Date: 08/01/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -166,16 +166,6 @@ and
 \fIapp\fR, then set the role as bucket[default,app]\&.
 .RE
 .PP
-bucket_full_access[\&...]
-.RS 4
-Gives the user permissions to fully access data including the ability to run view and N1QL queries\&. This role can be assigned globally to all buckets or to a particular bucket\&. To give a user the ability to fully access all buckets set their role to bucket_full_access[*]\&. To give the user full bucket access on a single bucket named
-\fIdefault\fR
-then specify the role as bucket_full_access[default]\&. If the user needs to full bucket access for multiple buckets, for example
-\fIdefault\fR
-and
-\fIapp\fR, then set the role as bucket_full_access[default,app]\&.
-.RE
-.PP
 cluster_admin
 .RS 4
 Gives the user permissions to read, write and manage all cluster\-level settings except security\&.
@@ -213,14 +203,14 @@ and
 \fIapp\fR, then set their role as data_reader[default,app]\&.
 .RE
 .PP
-data_writer[\&...]
+data_reader_writer[\&...]
 .RS 4
-Gives the user permission to write data through Couchbases key\-value APIs\&. The user cannot however modify the settings of a bucket\&. To give a user write access for all buckets set their role to data_writer[*]\&. To give the user write access to data on a single bucket named
+Gives the user permission to read and write data through Couchbases key\-value APIs\&. The user cannot however modify the settings of a bucket\&. To give a user read\-write access for all buckets set their role to data_reader_writer[*]\&. To give the user read\-write access to data on a single bucket named
 \fIdefault\fR
-then specify their role as data_writer[default]\&. If the user needs write access to data for multiple buckets, for example
+then specify their role as data_reader_writer[default]\&. If the user needs read\-write access to data for multiple buckets, for example
 \fIdefault\fR
 and
-\fIapp\fR, then set their role as data_writer[default,app]\&.
+\fIapp\fR, then set their role as data_reader_writer[default,app]\&.
 .RE
 .PP
 data_dcp_reader[\&...]
@@ -275,19 +265,17 @@ and
 \fIapp\fR, then set their role as fts_searcher[default,app]\&.
 .RE
 .sp
-XDCR Replication Roles:
+Query Service Roles:
 .PP
-replication_target[\&...]
+manage_index[\&...]
 .RS 4
-Allows the user to create replications from another cluster to the specified buckets\&. To give a user the ability to create replications to any bucket in the cluster set their role to replication_target[*]\&. To give the ability to create a replication to a single bucket named
+Allows the user to create and delete indexes on the specified buckets\&. To give a user the ability to create and delete indexes on all buckets set their role to manage_index[*]\&. To give the user permission to create and delete indexes on a single bucket named
 \fIdefault\fR
-then specify their role as replication_target[default]\&. If the user needs to be able to create a replication to multiple buckets, for example
+then specify their role as manage_index[default]\&. If the user needs to be create and delete indexes for multiple buckets, for example
 \fIdefault\fR
 and
-\fIapp\fR, then set their role as replication_target[default,app]\&.
+\fIapp\fR, then set their role as manage_index[default,app]\&.
 .RE
-.sp
-Query Service Roles:
 .PP
 query_delete[\&...]
 .RS 4
@@ -299,16 +287,6 @@ and
 \fIapp\fR, then set their role as query_delete[default,app]\&.
 .RE
 .PP
-query_external_access[\&...]
-.RS 4
-Allows the user to run queries using the N1QL CURL query function\&. This function allows users to write query statements that retrive data from an external source and process that data\&. To give a user the ability execute CURL function and retrieve data from all buckets set their role to query_external_access[*]\&. To give the user permission to execute the CURL statement and retrieve data from a single bucket named
-\fIdefault\fR
-then specify their role as query_external_access[default]\&. If the user needs to be able to execute the CURL statement and retrieve data from multiple buckets, for example
-\fIdefault\fR
-and
-\fIapp\fR, then set their role as query_external_access[default,app]\&.
-.RE
-.PP
 query_insert[\&...]
 .RS 4
 Allows the user to execute INSERT query statements on the specified buckets\&. To give a user the ability execute INSERT statements on all buckets set their role to query_insert[*]\&. To give the user permission to execute INSERT statements on a single bucket named
@@ -317,16 +295,6 @@ then specify their role as query_insert[default]\&. If the user needs to be exec
 \fIdefault\fR
 and
 \fIapp\fR, then set their role as query_insert[default,app]\&.
-.RE
-.PP
-query_manage_index[\&...]
-.RS 4
-Allows the user to create and delete indexes on the specified buckets\&. To give a user the ability to create and delete indexes on all buckets set their role to query_manage_index[*]\&. To give the user permission to create and delete indexes on a single bucket named
-\fIdefault\fR
-then specify their role as query_manage_index[default]\&. If the user needs to be create and delete indexes for multiple buckets, for example
-\fIdefault\fR
-and
-\fIapp\fR, then set their role as query_manage_index[default,app]\&.
 .RE
 .PP
 query_select[\&...]
@@ -349,14 +317,14 @@ and
 \fIapp\fR, then set their role as query_update[default,app]\&.
 .RE
 .PP
-query_system_catalog[\&...]
+system_catalog[\&...]
 .RS 4
-Allows the users to run queries against the system catalog on the specified buckets\&. To give a user the ability to run queries against the system catalog on all buckets set their role to query_system_catalog[*]\&. To give the user permission to run queires against the system catalog on a single bucket named
+Allows the users to run queries against the system catalog on the specified buckets\&. To give a user the ability to run queries against the system catalog on all buckets set their role to system_catalog[*]\&. To give the user permission to run queires against the system catalog on a single bucket named
 \fIdefault\fR
-then specify their role as query_system_catalog[default]\&. If the user needs to be run queries against the system catalog for multiple buckets, for example
+then specify their role as system_catalog[default]\&. If the user needs to be run queries against the system catalog for multiple buckets, for example
 \fIdefault\fR
 and
-\fIapp\fR, then set their role as query_system_catalog[default,app]\&.
+\fIapp\fR, then set their role as system_catalog[default,app]\&.
 .RE
 .SH "EXAMPLES"
 .sp

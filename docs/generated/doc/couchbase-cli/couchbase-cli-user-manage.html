@@ -956,21 +956,6 @@ bucket_admin[&#8230;]
 </p>
 </dd>
 <dt class="hdlist1">
-bucket_full_access[&#8230;]
-</dt>
-<dd>
-<p>
-        Gives the user permissions to fully access data including the ability to run
-        view and N1QL queries. This role can be assigned globally to all buckets or
-        to a particular bucket. To give a user the ability to fully access all
-        buckets set their role to bucket_full_access[*]. To give the user full
-        bucket access on a single bucket named <em>default</em> then specify the role as
-        bucket_full_access[default]. If the user needs to full bucket access for
-        multiple buckets, for example <em>default</em> and <em>app</em>, then set the role as
-        bucket_full_access[default,app].
-</p>
-</dd>
-<dt class="hdlist1">
 cluster_admin
 </dt>
 <dd>
@@ -1031,17 +1016,18 @@ data_reader[&#8230;]
 </p>
 </dd>
 <dt class="hdlist1">
-data_writer[&#8230;]
+data_reader_writer[&#8230;]
 </dt>
 <dd>
 <p>
-        Gives the user permission to write data through Couchbases key-value APIs.
-        The user cannot however modify the settings of a bucket. To give a user
-        write access for all buckets set their role to data_writer[*]. To give the
-        user write access to data on a single bucket named <em>default</em> then specify
-        their role as data_writer[default]. If the user needs write access to data
+        Gives the user permission to read and write data through Couchbases
+        key-value APIs. The user cannot however modify the settings of a bucket.
+        To give a user read-write access for all buckets set their role to
+        data_reader_writer[*]. To give the user read-write access to data on a
+        single bucket named <em>default</em> then specify their role as
+        data_reader_writer[default]. If the user needs read-write access to data
         for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
-        as data_writer[default,app].
+        as data_reader_writer[default,app].
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1118,25 +1104,22 @@ fts_searcher[&#8230;]
 </p>
 </dd>
 </dl></div>
-<div class="paragraph"><p>XDCR Replication Roles:</p></div>
+<div class="paragraph"><p>Query Service Roles:</p></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
-replication_target[&#8230;]
+manage_index[&#8230;]
 </dt>
 <dd>
 <p>
-        Allows the user to create replications from another cluster to the specified
-        buckets. To give a user the ability to create replications to any bucket in
-        the cluster set their role to replication_target[*]. To give the ability to
-        create a replication to a single bucket named <em>default</em> then specify their
-        role as replication_target[default]. If the user needs to be able to create
-        a replication to multiple buckets, for example <em>default</em> and <em>app</em>, then set
-        their role as replication_target[default,app].
+        Allows the user to create and delete indexes on the specified buckets. To
+        give a user the ability to create and delete indexes on all buckets set
+        their role to manage_index[*]. To give the user permission to create and
+        delete indexes on a single bucket named <em>default</em> then specify their role
+        as manage_index[default]. If the user needs to be create and delete indexes
+        for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
+        as manage_index[default,app].
 </p>
 </dd>
-</dl></div>
-<div class="paragraph"><p>Query Service Roles:</p></div>
-<div class="dlist"><dl>
 <dt class="hdlist1">
 query_delete[&#8230;]
 </dt>
@@ -1152,23 +1135,6 @@ query_delete[&#8230;]
 </p>
 </dd>
 <dt class="hdlist1">
-query_external_access[&#8230;]
-</dt>
-<dd>
-<p>
-        Allows the user to run queries using the N1QL CURL query function. This
-        function allows users to write query statements that retrive data from an
-        external source and process that data. To give a user the ability execute
-        CURL function and retrieve data from all buckets set their role to
-        query_external_access[*]. To give the user permission to execute the
-        CURL statement and retrieve data from a single bucket named <em>default</em> then
-        specify their role as query_external_access[default]. If the user needs to
-        be able to execute the CURL statement and retrieve data from multiple
-        buckets, for example <em>default</em> and <em>app</em>, then set their role as
-        query_external_access[default,app].
-</p>
-</dd>
-<dt class="hdlist1">
 query_insert[&#8230;]
 </dt>
 <dd>
@@ -1180,20 +1146,6 @@ query_insert[&#8230;]
         as query_insert[default]. If the user needs to be execute INSERT statements
         for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
         as query_insert[default,app].
-</p>
-</dd>
-<dt class="hdlist1">
-query_manage_index[&#8230;]
-</dt>
-<dd>
-<p>
-        Allows the user to create and delete indexes on the specified buckets. To
-        give a user the ability to create and delete indexes on all buckets set
-        their role to query_manage_index[*]. To give the user permission to create
-        and delete indexes on a single bucket named <em>default</em> then specify their
-        role as query_manage_index[default]. If the user needs to be create and
-        delete indexes for multiple buckets, for example <em>default</em> and <em>app</em>, then
-        set their role as query_manage_index[default,app].
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1225,18 +1177,18 @@ query_update[&#8230;]
 </p>
 </dd>
 <dt class="hdlist1">
-query_system_catalog[&#8230;]
+system_catalog[&#8230;]
 </dt>
 <dd>
 <p>
         Allows the users to run queries against the system catalog on the specified
         buckets. To give a user the ability to run queries against the system
-        catalog on all buckets set their role to query_system_catalog[*]. To give
-        the user permission to run queires against the system catalog on a single
-        bucket named <em>default</em> then specify their role as
-        query_system_catalog[default]. If the user needs to be run queries against
-        the system catalog for multiple buckets, for example <em>default</em> and <em>app</em>,
-        then set their role as query_system_catalog[default,app].
+        catalog on all buckets set their role to system_catalog[*]. To give the user
+        permission to run queires against the system catalog on a single bucket
+        named <em>default</em> then specify their role as system_catalog[default]. If the
+        user needs to be run queries against the system catalog for multiple
+        buckets, for example <em>default</em> and <em>app</em>, then set their role as
+        system_catalog[default,app].
 </p>
 </dd>
 </dl></div>
@@ -1324,7 +1276,7 @@ run the following command.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-05-10 14:15:34 PDT
+Last updated 2017-06-06 15:02:54 PDT
 </div>
 </div>
 </body>

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-cluster-edit
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/10/2017
+.\"      Date: 08/01/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-CLUS" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-CLUS" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -34,14 +34,14 @@ couchbase-cli-cluster-edit \- Edits cluster settings
 .nf
 \fIcouchbase\-cli cluster\-edit\fR [\-\-cluster <url>] [\-\-cluster\-username <username>]
           [\-\-cluster\-password <password>] [\-\-cluster\-port <port>]
-      [\-\-cluster\-ramsize <megabytes>] [\-\-cluster\-name <name>]
-      [\-\-cluster\-index\-ramsize <megabytes>] [\-\-cluster\-fts\-ramsize <megabytes>]
+          [\-\-cluster\-ramsize <megabytes>] [\-\-cluster\-name <name>]
+          [\-\-cluster\-index\-ramsize <megabytes>] [\-\-cluster\-fts\-ramsize <megabytes>]
 .fi
 .SH "DESCRIPTION"
 .sp
-DEPRECATED: Please use the setting\-cluster command which provides the same functionality as this command\&.
+DEPRECATED: Please use the \fBcouchbase-cli-setting-cluster\fR(1) command which provides the same functionality as this command\&.
 .sp
-This command is used to modify cluster level settings\&. It allows users to change the Couchbase root username and password, change the port that the cluster manager listens on, and modify the data, index, and full\-text service memory quotas\&.
+This command is used to modify cluster level settings\&. It allows users to change the Couchbase Server built\-in administrator username and password, change the port that the cluster manager listens on, and modify the data, index, and full\-text service memory quotas\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
@@ -61,37 +61,37 @@ Specifies the password of the user executing the command\&. If you do not have a
 .PP
 \-\-cluster\-username
 .RS 4
-Specifies the new username for the Couchbase administrator user\&.
+Specifies the new username for the Couchbase Server administrator user\&.
 .RE
 .PP
 \-\-cluster\-password
 .RS 4
-Specifies the new password for the Couchbase administrator user\&.
+Specifies the new password for the Couchbase Server administrator user\&.
 .RE
 .PP
 \-\-cluster\-ramsize
 .RS 4
-Specifies the data services memory quota\&. This quota will be assigned to all future nodes added to the cluster with the data service\&.
+Sets the data service memory quota (in MB)\&. This quota will be assigned to all future nodes added to the cluster with the data service\&.
 .RE
 .PP
 \-\-cluster\-fts\-ramsize
 .RS 4
-Sets the full\-text service memory quota\&. This parameter is required if the full\-text service is specified in the \-\-services option\&. This quota will be assigned to all future nodes added to the cluster with the full\-text service\&.
+Sets the full\-text service memory quota (in MB)\&. This parameter is required if the full\-text service is specified in the \-\-services option\&. This quota will be assigned to all future nodes added to the cluster with the full\-text service\&.
 .RE
 .PP
 \-\-cluster\-index\-ramsize
 .RS 4
-Sets the index service memory quota\&. This parameter is required if the index service is specified in the \-\-services option\&. This quota will be assigned to all future nodes added to the cluster with the index service\&.
+Sets the index service memory quota (in MB)\&. This parameter is required if the index service is specified in the \-\-services option\&. This quota will be assigned to all future nodes added to the cluster with the index service\&.
 .RE
 .PP
 \-\-cluster\-name
 .RS 4
-Sets the name for this cluster\&. Naming clusters is useful when you have multiple Couchbase clusters in your deployment\&.
+Sets the name for this cluster\&. Naming clusters is useful when you have multiple Couchbase Server clusters in your deployment\&.
 .RE
 .PP
 \-\-cluster\-port
 .RS 4
-Specifies the port for the Couchbase Administration Console\&. Defaults to port 8091\&.
+Specifies the port for the Couchbase Server Administration Console\&. Defaults to port 8091\&.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -133,7 +133,7 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-To change the username and password of the Couchbase administrator user run the following command\&.
+To change the username and password of the Couchbase Server administrator user run the following command\&.
 .sp
 .if n \{\
 .RS 4
@@ -160,7 +160,7 @@ $ couchbase\-cli cluster\-edit \-c 192\&.168\&.1\&.5:8091 \-\-username Administr
 .RE
 .\}
 .sp
-To change the memory quota of the data server to 2048 and the memory quota of the index service to 4096 run the following command\&.
+To change the memory quota of the data service to 2048MB and the memory quota of the index service to 4096MB run the following command\&.
 .sp
 .if n \{\
 .RS 4
@@ -173,7 +173,7 @@ $ couchbase\-cli cluster\-edit \-c 192\&.168\&.1\&.5:8091 \-\-username Administr
 .RE
 .\}
 .sp
-All of the parameters in this command can be specified at the same time\&. To change the username and password of the Couchbase administrator user, change the port number to 5000, change the cluster name to "new_name", change the memory quota of the data service to 2048 and change the memory quota of the index service to 4096 run the following command\&.
+All of the parameters in this command can be specified at the same time\&. To change the username and password of the Couchbase Server administrator user, change the port number to 5000, change the cluster name to "new_name", change the memory quota of the data service to 2048MB and change the memory quota of the index service to 4096MB run the following command\&.
 .sp
 .if n \{\
 .RS 4

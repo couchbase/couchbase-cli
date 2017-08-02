@@ -739,7 +739,7 @@ couchbase-cli-rebalance(1) Manual Page
 <h2>NAME</h2>
 <div class="sectionbody">
 <p>couchbase-cli-rebalance -
-   Rebalances data across nodes in a cluster
+   Rebalances data and indexes across nodes in a cluster
 </p>
 </div>
 </div>
@@ -758,16 +758,17 @@ couchbase-cli-rebalance(1) Manual Page
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Rebalances data across all servers in the cluster. This command should be used
-after servers are added, removed, or failed over from the cluster in order to
-ensure that each node in the cluster has a similar "balanced" amount of data.</p></div>
-<div class="paragraph"><p>To add servers use the <a href="couchbase-server-add.html">couchbase-server-add(1)</a> subcommand. To remove
-servers specify the list of servers to remove using the --server-remove option
-in the rebalance subcommand. To failover servers see the
-<a href="couchbase-failover.html">couchbase-failover(1)</a> subcommand. After running the
-<a href="couchbase-server-add.html">couchbase-server-add(1)</a> or <a href="couchbase-failover.html">couchbase-failover(1)</a> subcommands
-ensure that you run the rebalance command to ensure data is balance dacross the
-cluster.</p></div>
+<div class="paragraph"><p>Rebalances data and indexes across all nodes in the cluster. This command
+should be used after nodes are added, removed, or failed over from the cluster
+in order to ensure that each node in the cluster has a similar "balanced" amount
+of data and indexes.</p></div>
+<div class="paragraph"><p>To add nodes use the <a href="couchbase-cli-server-add.html">couchbase-cli-server-add(1)</a> subcommand. To
+remove nodes specify the list of nodes to remove using the --server-remove
+option in the rebalance subcommand. To failover nodes see the
+<a href="couchbase-cli-failover.html">couchbase-cli-failover(1)</a> subcommand. After running the
+<a href="couchbase-cli-server-add.html">couchbase-cli-server-add(1)</a> or <a href="couchbase-cli-failover.html">couchbase-cli-failover(1)</a>
+subcommands ensure that you run the rebalance command to balance data and indexes
+across the cluster.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -815,18 +816,22 @@ cluster.</p></div>
         environment variable CB_REST_PASSWORD.
 </p>
 </dd>
-</dl></div>
-<div class="paragraph"><p>--server-remove &lt;servers&gt;
-        A comma separated list of servers to remove from the cluster. The each
-        server in the list should correspond to the hostname or IP address of that
-        server.</p></div>
-<div class="dlist"><dl>
+<dt class="hdlist1">
+--server-remove &lt;servers&gt;
+</dt>
+<dd>
+<p>
+        A comma separated list of nodes to remove from the cluster. Each node
+        in the list should correspond to the hostname or IP address of that
+        server.
+</p>
+</dd>
 <dt class="hdlist1">
 --no-progress-bar
 </dt>
 <dd>
 <p>
-        Disables showing the progress bar which tracks the progress of the
+        Hides the progress bar which tracks the progress of the
         rebalance. This command will still wait for rebalance completion even if
         this flag is specified, but the progress bar will not be shown.
 </p>
@@ -873,8 +878,8 @@ a port other that 8091.</p></div>
 <div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>When to rebalance a new node into the cluster we would first add a server using
-the <a href="couchbase-server-add.html">couchbase-server-add(1)</a> command and the we would start the balance
+<div class="paragraph"><p>To rebalance a new node into the cluster you would first add a node using
+the <a href="couchbase-cli-server-add.html">couchbase-cli-server-add(1)</a> command and then start the rebalance
 with the rebalance command.</p></div>
 <div class="literalblock">
 <div class="content">
@@ -887,24 +892,24 @@ with the rebalance command.</p></div>
 <pre><code>$ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
  --password password</code></pre>
 </div></div>
-<div class="paragraph"><p>If we just want to remove a server from the cluster and start a rebalance we
-would just need to run the rebalance command.</p></div>
+<div class="paragraph"><p>If you just want to remove a node from the cluster and start a rebalance,
+just run the rebalance command.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
  --password password --server-remove 192.168.1.6:8091</code></pre>
 </div></div>
-<div class="paragraph"><p>We could also remove multiple servers at once and run the rebalance with the
-command below. Note that rebalance will be faster removing multiple servers as
-once as opposed to removing them one at a time.</p></div>
+<div class="paragraph"><p>You can remove multiple nodes at once and run the rebalance with the
+command below. Note that it will be faster overall removing multiple nodes
+at once as opposed to removing them one at a time.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
  --password password --server-remove 192.168.1.6:8091,192.168.1.7:8091</code></pre>
 </div></div>
-<div class="paragraph"><p>To add a server and remove another server we would again need to invoke the
-<a href="couchbase-server-add.html">couchbase-server-add(1)</a> command before starting the rebalance as
-shown below.</p></div>
+<div class="paragraph"><p>To add a node and remove another node you need to run the
+<a href="couchbase-cli-server-add.html">couchbase-cli-server-add(1)</a> command before starting the rebalance,
+as shown below.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
@@ -916,11 +921,11 @@ shown below.</p></div>
 <pre><code>$ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
  --password password --server-remove 192.168.1.7:8091</code></pre>
 </div></div>
-<div class="paragraph"><p>If you add one server to the cluster and remove a server during the same
-rebalance Couchbase will do a "swap rebalance". This means data from the node
-being removed is moved to the one being added. This means the rebalance will
-only occur between two nodes in the cluster as opposed to shifting data around
-the entire cluster.</p></div>
+<div class="paragraph"><p>If you add one node to the cluster and remove a node during the same
+rebalance, Couchbase Server will do a "swap rebalance". This means data and
+indexes from the node being removed are moved to the one being added. This
+means the rebalance will only occur between these two nodes as
+opposed to involving all nodes in the cluster.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -940,9 +945,9 @@ the entire cluster.</p></div>
 <div class="sect1">
 <h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
-<div class="paragraph"><p><a href="couchbase-failover.html">couchbase-failover(1)</a>.
-<a href="couchbase-recovery.html">couchbase-recovery(1)</a>.
-<a href="couchbase-server-add.html">couchbase-server-add(1)</a>.</p></div>
+<div class="paragraph"><p><a href="couchbase-cli-failover.html">couchbase-cli-failover(1)</a>.
+<a href="couchbase-cli-recovery.html">couchbase-cli-recovery(1)</a>.
+<a href="couchbase-cli-server-add.html">couchbase-cli-server-add(1)</a>.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -955,7 +960,7 @@ the entire cluster.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-01-13 14:44:07 PST
+Last updated 2017-07-30 19:19:00 PDT
 </div>
 </div>
 </body>

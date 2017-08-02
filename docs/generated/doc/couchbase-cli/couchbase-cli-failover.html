@@ -739,7 +739,7 @@ couchbase-cli-failover(1) Manual Page
 <h2>NAME</h2>
 <div class="sectionbody">
 <p>couchbase-cli-failover -
-   Failover a server in the cluster
+   Failover a node in the cluster
 </p>
 </div>
 </div>
@@ -758,14 +758,12 @@ couchbase-cli-failover(1) Manual Page
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>This command fails over one or more servers. Servers can be either hard failed
+<div class="paragraph"><p>This command fails over one or more nodes. Nodes can be either hard failed
 over or gracefully failed over. A hard failover means that the failover happens
-immediately, but risk potential data loss. Graceful failover ensures that
-replication is up to date before the server is failed over so that there is no
-data loss, but the failover is not immediate. Using the --force flag means that
-the failover should be a hard failover. If the --force flag is not specified
-then the failover will be graceful. Note that if a server is already down you
-must hard fail it over.</p></div>
+immediately, but risks potential data loss. Graceful failover ensures that
+replication is up to date before the node is failed over so that there is no
+data loss, but the failover is not immediate. Note that if a node is already down
+you must perform a hard failover.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -818,7 +816,7 @@ must hard fail it over.</p></div>
 </dt>
 <dd>
 <p>
-        A comma separated list of servers to failover.
+        A comma separated list of nodes to failover.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -840,7 +838,7 @@ must hard fail it over.</p></div>
 <dd>
 <p>
         Disables showing the progress bar which tracks the progress of the
-        rebalance. Note that a rebalance only occurs for graceful failovers (eg.
+        rebalance. Note that a rebalance only occurs for graceful failovers (e.g.
         non-forced failovers). The failover command will still wait for rebalance
         completion even if this flag is specified, but the progress bar will not
         be shown.
@@ -889,13 +887,13 @@ a port other that 8091.</p></div>
 <div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>To hard fail over a server run the following command:</p></div>
+<div class="paragraph"><p>To hard fail over a node run the following command:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli failover -c 192.168.1.5:8091 --username Administrator \
  --password password --server-failover 192.168.1.6:8091 --force</code></pre>
 </div></div>
-<div class="paragraph"><p>To gracefully failover a server run the following command:</p></div>
+<div class="paragraph"><p>To gracefully failover a node run the following command:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli failover -c 192.168.1.5:8091 --username Administrator \
@@ -936,7 +934,7 @@ a port other that 8091.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-01-13 14:44:07 PST
+Last updated 2017-07-30 19:19:00 PDT
 </div>
 </div>
 </body>

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-failover
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/10/2017
+.\"      Date: 08/01/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-FAIL" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-FAIL" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,7 +28,7 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-couchbase-cli-failover \- Failover a server in the cluster
+couchbase-cli-failover \- Failover a node in the cluster
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -38,7 +38,7 @@ couchbase-cli-failover \- Failover a server in the cluster
 .fi
 .SH "DESCRIPTION"
 .sp
-This command fails over one or more servers\&. Servers can be either hard failed over or gracefully failed over\&. A hard failover means that the failover happens immediately, but risk potential data loss\&. Graceful failover ensures that replication is up to date before the server is failed over so that there is no data loss, but the failover is not immediate\&. Using the \-\-force flag means that the failover should be a hard failover\&. If the \-\-force flag is not specified then the failover will be graceful\&. Note that if a server is already down you must hard fail it over\&.
+This command fails over one or more nodes\&. Nodes can be either hard failed over or gracefully failed over\&. A hard failover means that the failover happens immediately, but risks potential data loss\&. Graceful failover ensures that replication is up to date before the node is failed over so that there is no data loss, but the failover is not immediate\&. Note that if a node is already down you must perform a hard failover\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
@@ -58,7 +58,7 @@ Specifies the password of the user executing the command\&. If you do not have a
 .PP
 \-\-server\-failover <server_list>
 .RS 4
-A comma separated list of servers to failover\&.
+A comma separated list of nodes to failover\&.
 .RE
 .PP
 \-\-force
@@ -68,7 +68,7 @@ Specifying this flag signifies that the nodes to be failed over should be hard f
 .PP
 \-\-no\-progress\-bar
 .RS 4
-Disables showing the progress bar which tracks the progress of the rebalance\&. Note that a rebalance only occurs for graceful failovers (eg\&. non\-forced failovers)\&. The failover command will still wait for rebalance completion even if this flag is specified, but the progress bar will not be shown\&.
+Disables showing the progress bar which tracks the progress of the rebalance\&. Note that a rebalance only occurs for graceful failovers (e\&.g\&. non\-forced failovers)\&. The failover command will still wait for rebalance completion even if this flag is specified, but the progress bar will not be shown\&.
 .RE
 .PP
 \-\-no\-wait
@@ -115,7 +115,7 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-To hard fail over a server run the following command:
+To hard fail over a node run the following command:
 .sp
 .if n \{\
 .RS 4
@@ -128,7 +128,7 @@ $ couchbase\-cli failover \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator 
 .RE
 .\}
 .sp
-To gracefully failover a server run the following command:
+To gracefully failover a node run the following command:
 .sp
 .if n \{\
 .RS 4

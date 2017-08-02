@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-server-readd
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/10/2017
+.\"      Date: 08/01/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SERV" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SERV" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,7 +28,7 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-couchbase-cli-server-readd \- Adds a server back to the cluster after a failover
+couchbase-cli-server-readd \- Adds a node back to the cluster after a failover
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -38,17 +38,17 @@ couchbase-cli-server-readd \- Adds a server back to the cluster after a failover
 .fi
 .SH "DESCRIPTION"
 .sp
-DEPRECATED: This command was in 5\&.0\&.0 deprecated and will be removed in future releases\&. Please use the \fBcouchbase-cli-recovery\fR(1) subcommand which provides similar functionality to this command\&.
+DEPRECATED: This command was deprecated in 5\&.0\&.0 and will be removed in future releases\&. Please use the \fBcouchbase-cli-recovery\fR(1) subcommand which provides similar functionality to this command\&.
 .sp
-The server\-readd subcommand is used to add a server back to the cluster\&. This operation is useful after a server is failed over and also when a server is removed from the cluster for maintainance\&.
+The server\-readd subcommand is used to add a server back to the cluster\&. This operation is useful after a node is failed over and also when a node is removed from the cluster for maintainance\&.
 .sp
-When a server is failed over and removed from the cluster it may only be able to be added back to the cluster\&. And example of this is when a server loses power\&. This server might get failed over and removed from the cluster, but once power is restored to the server you may want to add it back to the cluster\&. The server\-readd subcommand will remove the data from the server, but keep the server configuration and add the server back into the cluster\&.
+When a node is failed over and removed from the cluster it may be able to be added back to the cluster\&. An example of this is when a node loses power\&. This node might get failed over and removed from the cluster, but once power is restored to the node you may want to add it back to the cluster\&.
 .sp
-Another use case is taking a server out of the cluster for maintainance\&. This is done by gracefully failing over a server to ensure there is no data loss\&. The administrator can then perform mainainance on the removed server and add it back with the server\-readd command\&.
+Another use case is taking a node out of the cluster for maintainance\&. This is done by gracefully failing over a node to ensure there is no data loss\&. The administrator can then perform maintenance on the removed node and add it back with the server\-readd command\&.
 .sp
-It is also possible to add a server back to the cluster without removing the data and instead having the server recover data from where it left off\&. This is called delta recovery and is available from the \fBcouchbase-recovery\fR(1) subcommand\&.
+It is also possible to add a server back to the cluster without removing the data and instead having the server recover data from where it left off\&. This is called delta recovery and is available from the \fBcouchbase-cli-recovery\fR(1) subcommand\&.
 .sp
-Note that after the server\-readd subcommand is run you must rebalance the cluster\&. See the \fBcouchbase-rebalance\fR(1) command for more information on rebalancing a cluster\&.
+Note that after the server\-readd subcommand is run you must rebalance the cluster\&. See the \fBcouchbase-cli-rebalance\fR(1) command for more information on rebalancing a cluster\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
@@ -68,22 +68,22 @@ Specifies the password of the user executing the command\&. If you do not have a
 .PP
 \-\-server\-add <servers>
 .RS 4
-A command separated list of servers to readd\&. The each server should correspond to the hostname or IP address of a server to be added back to the cluster\&.
+A comma separated list of nodes to readd\&. The each server should correspond to the hostname or IP address of a server to be added back to the cluster\&.
 .RE
 .PP
 \-\-server\-username <username>
 .RS 4
-Adding a server back to the cluster can only be done by a user with the appropriate credentials\&. This flag specifies the username for a user who has the ability to modify the cluster topology on the server being added back\&.
+Adding a node back to the cluster can only be done by a user with the appropriate credentials\&. This flag specifies the username for a user who has the ability to modify the cluster topology of the node being added back\&.
 .RE
 .PP
 \-\-server\-password <password>
 .RS 4
-Adding a server back to the cluster can only be done by a user with the appropriate credentials\&. This flag specifies the password for a user who has the ability to modify the cluster topology on the server being added back\&.
+Adding a node back to the cluster can only be done by a user with the appropriate credentials\&. This flag specifies the password for a user who has the ability to modify the cluster topology of the node being added back\&.
 .RE
 .PP
 \-\-group\-name <name>
 .RS 4
-The name of the group to add the server to\&.
+The name of the group to add the node to\&.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -125,7 +125,7 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-If we have a server at 192\&.168\&.1\&.6:8091 that we want to add back and that server has credentials that allow us to change the cluster topology with "Administrator" as the username and "password" as the password we would run the following command\&.
+If there is a node at 192\&.168\&.1\&.6:8091 that you want to add back and that node has credentials that allow us to change the cluster topology with "Administrator" as the username and "password" as the password, run the following command\&.
 .sp
 .if n \{\
 .RS 4
@@ -139,7 +139,7 @@ $ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administr
 .RE
 .\}
 .sp
-If we need to add back multiple servers then we would run the following command\&.
+If you need to add back multiple nodes then you would run the following command\&.
 .sp
 .if n \{\
 .RS 4
@@ -153,7 +153,7 @@ $ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administr
 .RE
 .\}
 .sp
-If we wanted the servers being added back to the cluster to be a part of the "East" group we would run the following command
+If you wanted the nodes being added back to the cluster to be a part of the "East" group we would run the following command
 .sp
 .if n \{\
 .RS 4
@@ -173,7 +173,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
 .SH "SEE ALSO"
 .sp
-\fBcouchbase-rebalance\fR(1)\&. \fBcouchbase-recovery\fR(1)\&. \fBcouchbase-server-add\fR(1)\&.
+\fBcouchbase-cli-rebalance\fR(1)\&. \fBcouchbase-cli-recovery\fR(1)\&. \fBcouchbase-cli-server-add\fR(1)\&.
 .SH "COUCHBASE-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite

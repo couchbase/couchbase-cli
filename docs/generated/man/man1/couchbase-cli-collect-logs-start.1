@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-collect-logs-start
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/10/2017
+.\"      Date: 08/01/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-COLL" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-COLL" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -38,9 +38,9 @@ couchbase-cli-collect-logs-start \- Start log collection
 .fi
 .SH "DESCRIPTION"
 .sp
-This command collects all Couchbase log files from one or more nodes in the cluster\&. Log collection is useful when there are failures in the cluster and you need to figure out what is going on\&. Since there are many log files on various different server the collect\-logs\-start command helps in aggregating all of the different log file Couchbase Server creates\&.
+This command collects all Couchbase Server log files from one or more nodes in the cluster\&. Log collection is useful when there are failures in the cluster and you need to figure out what is going on\&. Since there are many log files on various different server the collect\-logs\-start command helps in aggregating all of the different log file Couchbase Server creates\&.
 .sp
-To get the location of the collected log files you can run the collect\-logs\-status command either while the log collection task is running or after the log collection task has completed\&. If the \-\-upload flag is specified then the logs will also be uploaded to the host specified in the \-\-upload\-host flag\&. The upload flag is intended mainly for Couchbase Enterprise Edition users who need to upload logs to the Couchbase Support Team to aid in diagnosing support tickets that they have filed\&.
+To get the location of the collected log files you can run the \fBcollect-logs-status\fR(1) command either while the log collection task is running or after the log collection task has completed\&. If the \-\-upload flag is specified then the logs will also be uploaded to the host specified in the \-\-upload\-host flag\&. The upload flag is intended for Couchbase Server Enterprise Edition users who need to upload logs to the Couchbase Support Team to aid in diagnosing support tickets that they have filed\&.
 .sp
 Note that only one log collection task may be running at any given time in the cluster\&.
 .SH "OPTIONS"
@@ -62,32 +62,32 @@ Specifies the password of the user executing the command\&. If you do not have a
 .PP
 \-\-all\-nodes
 .RS 4
-Specifies that log collection shoue take place on all nodes in the cluster\&. May not be specified at the same time as \-\-nodes\&.
+Specifies that log collection should take place on all nodes in the cluster\&. May not be specified at the same time as \-\-nodes\&.
 .RE
 .PP
 \-\-nodes <node_list>
 .RS 4
-A list of one or more nodes to collect logs from\&. The list should be comma separated\&. This parameter may not be specified at the same time as the \-\-nodes option\&.
+A list of one or more nodes to collect logs from, the nodes must include the administrator port\&. The list should be comma separated\&. This parameter may not be specified at the same time as the \-\-nodes option\&.
 .RE
 .PP
 \-\-upload
 .RS 4
-Specifies that the logs should be uploaded to the the host specified with the \-\-upload\-host option\&. This option should be used by Couchbase Enterprise customers when uploading logs for the Couchbase Support Team\&.
+Specifies that the logs should be uploaded to the the host specified with the \-\-upload\-host option\&. This option should be used by Couchbase Server Enterprise customers when uploading logs for the Couchbase Support Team\&.
 .RE
 .PP
 \-\-upload\-host <host>
 .RS 4
-Once log collection is completed the logs zip file should be uploaded to this URL\&. This parameter is required if the \-\-upload flag is specified\&.
+Once log collection is completed, the logs zip file should be uploaded to this URL\&. This parameter is required if the \-\-upload flag is specified\&.
 .RE
 .PP
 \-\-customer <name>
 .RS 4
-The name of the customer who is uploading these logs\&. This option is required when the \-\-upload flag is specified\&.
+The name of the customer who is uploading these logs\&. This option is required if the \-\-upload flag is specified\&.
 .RE
 .PP
 \-\-ticket <num>
 .RS 4
-The ticket number that the support team has created to track the issue filed\&. This parameter is optional when specifying the \-\-upload flag, but recommended if the customer has a ticket number\&.
+The ticket number that the support team has created to track the issue filed\&. This parameter is optional when specifying the \-\-upload flag, but recommended if you have a ticket number\&.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -142,7 +142,7 @@ $ couchbase\-cli collect\-logs\-start \-c 192\&.168\&.1\&.5 \-\-username Adminis
 .RE
 .\}
 .sp
-If we have a three node cluster with IP addresses 192\&.168\&.1\&.5, 192\&.168\&.1\&.6, and 192\&.168\&.1\&.7 and we only want to collect logs on the first two nodes and we don\(cqt want to upload the logs then we would run the command below\&.
+If there is a three node cluster with IP addresses 192\&.168\&.1\&.5, 192\&.168\&.1\&.6, and 192\&.168\&.1\&.7 and you only want to collect logs on the first two nodes and don\(cqt want to upload the logs then run the command below\&.
 .sp
 .if n \{\
 .RS 4
@@ -155,7 +155,7 @@ $ couchbase\-cli collect\-logs\-start \-c 192\&.168\&.1\&.5 \-\-username Adminis
 .RE
 .\}
 .sp
-I you are a Couchbase Enterprise Edition user and you need to upload logs for all nodes for support ticket then you can run the following command\&.
+If you are a Couchbase Server Enterprise Edition user and you need to upload logs for all nodes for a support ticket then you can run the following command\&.
 .sp
 .if n \{\
 .RS 4
