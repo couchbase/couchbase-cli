@@ -1238,7 +1238,7 @@ class MasterPassword(Subcommand):
             else:
                 os.environ['PATH'] = ';'.join(path)
 
-            cookiefile = os.path.join(opts.config_path, "couchbase-server.cookie")
+            cookiefile = os.path.join(opts.config_path, "couchbase-server.babysitter.cookie")
             cookie = _exit_on_file_read_failure(cookiefile).rstrip()
 
             nodefile = os.path.join(opts.config_path, "couchbase-server.babysitter.node")
