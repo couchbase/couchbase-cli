@@ -106,14 +106,17 @@ def _exit_on_file_write_failure(fname, to_write):
     except IOError, error:
         _exitIfErrors([error])
 
-def _exit_on_file_read_failure(fname):
+def _exit_on_file_read_failure(fname, toReport = None):
     try:
         rfile = open(fname, 'r')
         read_bytes = rfile.read()
         rfile.close()
         return read_bytes
     except IOError, error:
-        _exitIfErrors([error.strerror + " `" + fname + "`"])
+        if toReport is None:
+            _exitIfErrors([error.strerror + " `" + fname + "`"])
+        else:
+            _exitIfErrors([toReport])
 
 def apply_default_port(nodes):
     return map(
@@ -1239,7 +1242,7 @@ class MasterPassword(Subcommand):
                 os.environ['PATH'] = ';'.join(path)
 
             cookiefile = os.path.join(opts.config_path, "couchbase-server.babysitter.cookie")
-            cookie = _exit_on_file_read_failure(cookiefile).rstrip()
+            cookie = _exit_on_file_read_failure(cookiefile, "The node is down").rstrip()
 
             nodefile = os.path.join(opts.config_path, "couchbase-server.babysitter.node")
             node = _exit_on_file_read_failure(nodefile).rstrip()
