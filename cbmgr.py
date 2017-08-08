@@ -679,8 +679,6 @@ class BucketCreate(Subcommand):
             if opts.eviction_policy is not None:
                 _exitIfErrors(["--bucket-eviction-policy cannot be specified for a memcached bucket"])
         elif opts.type == "ephemeral":
-            if opts.priority is not None:
-                _exitIfErrors(["--bucket-priority cannot be specified for a ephemeral bucket"])
             if opts.eviction_policy in ["valueOnly", "fullEviction"]:
                 _exitIfErrors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
         elif opts.type == "couchbase":
