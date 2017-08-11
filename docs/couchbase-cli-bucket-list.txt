@@ -3,7 +3,7 @@ couchbase-cli-bucket-list(1)
 
 NAME
 ----
-couchbase-cli-bucket-list - List all Couchbase data buckets
+couchbase-cli-bucket-list - List all buckets
 
 
 SYNOPSIS
@@ -15,8 +15,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Lists all buckets in the cluster. Each bucket is printed to stdout on a separate
-line.
+Lists all buckets in the cluster. For each bucket, the following are printed
+to stdout: bucketType, authType, numReplicas, ramQuota, ramUsed.
 
 OPTIONS
 -------
@@ -28,20 +28,35 @@ include::part-host-formats.txt[]
 EXAMPLES
 --------
 
-To get a list of bucket names for each bucket in the cluster you can run the
-command below.
+To list all buckets in the cluster, run the following command.
 
 	$ couchbase-cli bucket-list -c 192.168.1.5:8091 --username Administrator \
 	 --password password
 
 	 travel-data
+	  bucketType: membase
+	  authType: sasl
+	  numReplicas: 1
+	  ramQuota: 104857600
+	  ramUsed: 45302840
 	 airline-data
-	 flisht-data
+	  bucketType: ephemeral
+	  authType: sasl
+	  numReplicas: 1
+	  ramQuota: 268435456
+	  ramUsed: 1134432
+	 flight-data
+	  bucketType: memcached
+	  authType: sasl
+	  numReplicas: 0
+	  ramQuota: 104857600
+	  ramUsed: 0
 
 DISCUSSION
 ----------
 
-TBD
+In the output, RAM figures are in bytes. The "membase" bucketType signifies a Couchbase bucket. The
+authType can be either "sasl" or "none".
 
 ENVIRONMENT AND CONFIGURATION VARIABLES
 ---------------------------------------
