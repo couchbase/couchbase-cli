@@ -3,7 +3,7 @@ couchbase-cli-bucket-edit(1)
 
 NAME
 ----
-couchbase-cli-bucket-edit - Edit a Couchbase data bucket
+couchbase-cli-bucket-edit - Edit a bucket
 
 
 SYNOPSIS
@@ -18,10 +18,10 @@ DESCRIPTION
 -----------
 
 Modifies the settings of the bucket specified. Note that some settings can be
-applied immediately while other settings may require a rebalance or the bucket
-to be restarted resulting in potential application downtime. See information
-about the settings that can be changed below to understand more about their
-impact on your application.
+applied immediately, while other settings may require a rebalance, or require
+the bucket to be restarted, resulting in potential application downtime. See
+below for information about the settings that can be changed, to understand more
+about their impact on your application.
 
 OPTIONS
 -------
@@ -32,22 +32,31 @@ include::part-common-options.txt[]
 	The name of the bucket to edit.
 
 --bucket-ramsize <size>::
-	The amount of memory to allocate to the cache for this bucket in Megabytes.
+	The amount of memory to allocate to the cache for this bucket, in Megabytes.
 	The memory quota of this bucket must fit into the overall cluster memory
 	quota. The minimum cache size is 100MB.
 
 --bucket-replica <num>::
-	The amount of servers to replicate data to. Replicas provide protection
-	against data loss by keeping copies of the data in this bucket on multiple
-	servers. By default the number of replicas is one even if there is only a
-	single server in the cluster. The minimum amount of replicas is zero and the
-	maximum number is three. This option is only valid for couchbase buckets.
+	The number of servers to which data is replicated. Replicas provide protection
+	against data loss by keeping copies of this bucket's data on multiple
+	servers. By default, the number of replicas is one, even if there is only a
+	single server in the cluster. The minimum number of replicas is zero, and the
+	maximum three. This option is valid for Couchbase and Ephemeral buckets only.
+
+--bucket-port <num>::
+	Sets the port that the bucket listens on. This parameter is deprecated and
+	not recommended for use.
 
 --bucket-priority <priority>::
-	The disk I/O priority for this bucket. The value of this flag may be set to
-	high or low. By default the priority is set to low. This option is only
-	valid for couchbase buckets. This setting only has an affect on the disk IO
-	if there are other buckets in the cluster.
+	Specifies the priority of this bucket's background tasks. This option is
+	valid for Couchbase and Ephemeral buckets only. For Couchbase buckets,
+	background tasks may include disk I/O, DCP stream-processing, and
+	item-paging. For Ephemeral buckets, background tasks are the same as
+	for Couchbase buckets, with the exception of disk I/O, which does not
+	apply. The value of this option may be "high" or "low". The default is "low".
+	Specifying "high" may result in faster processing; but only makes a
+	difference when there is more than one bucket defined for the cluster, and
+	when buckets have variant priority settings.
 
 --bucket-eviction-policy <policy>::
 	The memory cache eviction policy for this bucket. Couchbase buckets support
@@ -59,19 +68,27 @@ include::part-common-options.txt[]
 	impacted for key-value operations, but the maximum size of the bucket is
 	unbounded.
 
+	Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
+	"noEviction" means that the bucket will not evict items from the cache if it
+	is full. This type of eviction policy should be used for in-memory database
+	use cases. Specifying "nruEviction" means that not recently used items will
+	be evicted from memory when all memory in the bucket is used. This eviction
+	type should be used for caching use cases.
+
 	Ephemeral buckets do not allow changing the eviction policy after the bucket
-	is created. In order to do this you need to delete and re-create the bucket.
+	is created. In order to do this, you need to delete and re-create the bucket.
 
 --enable-flush <num>::
 	Specifies whether or not the flush operation is allowed for this bucket. To
-	enable flush set this option to "1". To disable flush set this option to
-	"0". By default flush is disabled.
+	enable flush, set this option to "1". To disable flush, set this option to
+	"0". By default, flush is disabled.
 
 --enable-index-replica <num>::
-	Enables replica view indexes for this bucket. There may be at most 1 view
+	Enables replica view indexes for this bucket. There may be at most one view
 	replica index. To enable replica indexes set the value of this option to
 	"1". To disable replica indexes set the value of this option to "0". By
-	default replica indexes are disabled.
+	default replica indexes are disabled. This option is valid for Couchbase
+	buckets only.
 
 
 include::part-host-formats.txt[]
@@ -79,23 +96,19 @@ include::part-host-formats.txt[]
 EXAMPLES
 --------
 
-If we want to change the memory quota of the travel-data bucket we would run the
-command below.
+To change the memory quota of the travel-data bucket, run the following
+command:
 
 	$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-ramsize 1024
 
-If we want to change the amount of replicas from 1 to 2 on the cb-data bucket
-then we would run the following commands below. Note that we need to rebalance
-with the linkcbdoc:couchbase-cli-rebalance[1] in order to ensure that the
-replicas are created.
+To change the number of replicas from 1 to 2 on the cb-data bucket, run the
+following command. Note that you must subsequently rebalance, using
+linkcbdoc:couchbase-cli-rebalance[1], to ensure that the replicas are created.
 
 	$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-ramsize 1024 \
 	 --bucket-replicas 2
-
-	$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
-	 --password password
 
 ENVIRONMENT AND CONFIGURATION VARIABLES
 ---------------------------------------
