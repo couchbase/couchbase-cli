@@ -20,7 +20,7 @@ DESCRIPTION
 -----------
 
 Creates a new bucket. Allows creation of Couchbase, Ephemeral, and
-Memcached buckets and supports the various configuration parameters for these
+Memcached buckets, and supports the various configuration parameters for these
 buckets.
 
 OPTIONS
@@ -53,7 +53,7 @@ include::part-common-options.txt[]
 	against data loss by keeping copies of this bucket's data on multiple
 	servers. By default, the number of replicas is one, even if there is only a
 	single server in the cluster. The minimum number of replicas is zero, and the
-	maximum three. This option is only valid for Couchbase and Ephemeral buckets.
+	maximum three. This option is valid for Couchbase and Ephemeral buckets only.
 
 --bucket-port <num>::
 	Sets the port that the bucket listens on. This parameter is deprecated and
@@ -65,11 +65,10 @@ include::part-common-options.txt[]
 	background tasks may include disk I/O, DCP stream-processing, and
 	item-paging. For Ephemeral buckets, background tasks are the same as
 	for Couchbase buckets, with the exception of disk I/O, which does not
-	apply to Ephemeral buckets. The value of this option may be set to high or
-	low. The default is low. Specifying high may result in faster processing.
-	However, specifying high only makes a difference when there is more
-	than one bucket defined for the cluster, and when defined buckets have
-	differing settings.
+	apply. The value of this option may be "high" or "low". The default is
+	"low". Specifying "high" may result in faster processing; but only makes a
+	difference when there is more than one bucket defined for the cluster, and
+	when buckets have variant priority settings.
 
 --bucket-eviction-policy <policy>::
 	The memory cache eviction policy for this bucket. Couchbase buckets support
@@ -112,10 +111,9 @@ include::part-common-options.txt[]
 	time the updates took place. Timestamp resolution is based on the time at which
 	a document was received. The latest document update always wins conflict
 	resolution, if timestamp conflict resolution is specified. Note that
-	successful timestamp resolution requires that
-	the clocks on all nodes in all clusters be synchronized as
-	precisely as possible: if they are not, the results of
-	timestamp conflict resolution are unpredictable.
+	successful timestamp resolution requires that the clocks on all nodes in all
+	clusters be synchronized as precisely as possible: if they are not, the
+	results of timestamp conflict resolution are unpredictable.
 
 --wait
 	The create bucket command is asynchronous by default. Specifying this flag
