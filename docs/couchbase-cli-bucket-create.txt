@@ -152,13 +152,14 @@ of 1GB run the following command.
 	 --bucket-ramsize 1024
 
 To create an Ephemeral bucket named "hotel-data", which has a memory cache size
-of 256MB, has flush enabled, has an eviction policy of "nruEviction", and has
-timestamp based conflict resolution, run the following command.
+of 256MB, has flush enabled, has an eviction policy of "nruEviction", has
+timestamp based conflict resolution, and is created synchronously, run the
+following command.
 
 	$ couchbase-cli bucket-create -c 127.0.0.1:8091 --username Administrator \
 	--password password --bucket hotel-data --bucket-type ephemeral \
 	--bucket-ramsize 256 --enable-flush 1 --bucket-eviction-policy nruEviction \
-	--conflict-resolution timestamp
+	--conflict-resolution timestamp --wait
 
 ENVIRONMENT AND CONFIGURATION VARIABLES
 ---------------------------------------
