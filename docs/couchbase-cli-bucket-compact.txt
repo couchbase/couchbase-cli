@@ -15,10 +15,11 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Starts compaction for view indexes and data files for a specified Couchbase
-or Ephemeral bucket. If only the views need to be compacted, then the
---views-only flag should be specified. If only the data files should be
-compacted then the --data-only flag should be specified.
+Starts compaction for view indexes and data files for a specified bucket.
+If only the views need to be compacted, then the --views-only flag
+should be specified. If only the data files should be compacted then the
+--data-only flag should be specified. Only Couchbase buckets can be
+compacted: Ephemeral and Memcached buckets cannot be compacted.
 
 OPTIONS
 -------
