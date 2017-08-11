@@ -154,7 +154,7 @@ of 256MB, has flush enabled, has an eviction policy of "nruEviction", has
 timestamp based conflict resolution, and is created synchronously, run the
 following command.
 
-	$ couchbase-cli bucket-create -c 127.0.0.1:8091 --username Administrator \
+	$ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
 	--password password --bucket hotel-data --bucket-type ephemeral \
 	--bucket-ramsize 256 --enable-flush 1 --bucket-eviction-policy nruEviction \
 	--conflict-resolution timestamp --wait
