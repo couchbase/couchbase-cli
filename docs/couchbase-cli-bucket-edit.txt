@@ -18,10 +18,8 @@ DESCRIPTION
 -----------
 
 Modifies the settings of the bucket specified. Note that some settings can be
-applied immediately, while other settings may require a rebalance, or require
-the bucket to be restarted, resulting in potential application downtime. See
-below for information about the settings that can be changed, to understand more
-about their impact on your application.
+applied immediately, while other settings either require a rebalance, or require
+the bucket to be restarted; resulting in potential application downtime.
 
 OPTIONS
 -------
@@ -44,39 +42,39 @@ include::part-common-options.txt[]
 	maximum three. This option is valid for Couchbase and Ephemeral buckets only.
 
 --bucket-port <num>::
-	Sets the port that the bucket listens on. This parameter is deprecated and
-	not recommended for use.
+	Sets the port on which the bucket listens. This parameter is deprecated, and
+	therefore not recommended for use.
 
 --bucket-priority <priority>::
 	Specifies the priority of this bucket's background tasks. This option is
 	valid for Couchbase and Ephemeral buckets only. For Couchbase buckets,
-	background tasks may include disk I/O, DCP stream-processing, and
-	item-paging. For Ephemeral buckets, background tasks are the same as
-	for Couchbase buckets, with the exception of disk I/O, which does not
-	apply. The value of this option may be "high" or "low". The default is "low".
-	Specifying "high" may result in faster processing; but only makes a
-	difference when there is more than one bucket defined for the cluster, and
-	when buckets have variant priority settings.
+	background task-types include disk I/O, DCP stream-processing, and
+	item-paging. For Ephemeral buckets, background task-types are the same as for
+	Couchbase buckets, with the exception of disk I/O, which does not apply to
+	Ephemeral buckets. The value of this option may be "high" or "low". The
+	default is "low". Specifying "high" may result in faster processing; but
+	only when more than one bucket is defined for the cluster, and when different
+	priority settings have been established among the buckets. When Couchbase and
+	Ephemeral buckets have different priority settings, this affects the
+	prioritization only of task-types other than disk I/O.
 
 --bucket-eviction-policy <policy>::
-	The memory cache eviction policy for this bucket. Couchbase buckets support
-	either "valueOnly" eviction or "fullEviction". Specifying the
-	"valueEviction" policy means that each key stored in this bucket must be
-	kept in memory. This is the default policy and using this policy will
-	improve performance of key-value operations, but limits the maximum size of
-	the bucket. Using the "fullEviction" policy means that performance will be
-	impacted for key-value operations, but the maximum size of the bucket is
-	unbounded.
+	The memory-cache eviction policy for this bucket. This option is valid for
+	Couchbase and Ephemeral buckets only.
+
+	Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
+	the "valueOnly" policy means that each key stored in this bucket must be kept
+	in memory. This is the default policy: using this policy improves performance
+	of key-value operations, but limits the maximum size of the bucket. Specifying
+	the "fullEviction" policy means that performance is impacted for key-value
+	operations, but the maximum size of the bucket is unbounded.
 
 	Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
-	"noEviction" means that the bucket will not evict items from the cache if it
-	is full. This type of eviction policy should be used for in-memory database
-	use cases. Specifying "nruEviction" means that not recently used items will
-	be evicted from memory when all memory in the bucket is used. This eviction
-	type should be used for caching use cases.
-
-	Ephemeral buckets do not allow changing the eviction policy after the bucket
-	is created. In order to do this, you need to delete and re-create the bucket.
+	"noEviction" means that the bucket will not evict items from the cache if the
+	cache is full: this type of eviction policy should be used for in-memory
+	database use-cases. Specifying "nruEviction" means that items not recently
+	used will be evicted from memory, when all memory in the bucket is used: this
+	type of eviction policy should be used for caching use-cases.
 
 --enable-flush <num>::
 	Specifies whether or not the flush operation is allowed for this bucket. To
@@ -84,11 +82,10 @@ include::part-common-options.txt[]
 	"0". By default, flush is disabled.
 
 --enable-index-replica <num>::
-	Enables replica view indexes for this bucket. There may be at most one view
-	replica index. To enable replica indexes set the value of this option to
-	"1". To disable replica indexes set the value of this option to "0". By
-	default replica indexes are disabled. This option is valid for Couchbase
-	buckets only.
+	Enables view index replication for the current bucket. This option is valid for
+	Couchbase buckets only. To enable, set the value of this option to "1". To
+	disable, set the value of this option to "0". By default, view index replication
+	is disabled. There may be at most one replica view index.
 
 
 include::part-host-formats.txt[]
@@ -102,9 +99,10 @@ command:
 	$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-ramsize 1024
 
-To change the number of replicas from 1 to 2 on the cb-data bucket, run the
-following command. Note that you must subsequently rebalance, using
-linkcbdoc:couchbase-cli-rebalance[1], to ensure that the replicas are created.
+
+To change the number of replicas for the travel-data bucket to "2", run the
+following command. (Note that this requires a subsequent rebalance, by means of
+linkcbdoc:couchbase-cli-rebalance[1], to ensure that the replicas are created.)
 
 	$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-ramsize 1024 \

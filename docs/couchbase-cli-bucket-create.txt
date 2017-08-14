@@ -87,9 +87,9 @@ include::part-common-options.txt[]
 	Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
 	"noEviction" means that the bucket will not evict items from the cache if the
 	cache is full: this type of eviction policy should be used for in-memory
-	database use cases. Specifying "nruEviction" means that items not recently
+	database use-cases. Specifying "nruEviction" means that items not recently
 	used will be evicted from memory, when all memory in the bucket is used: this
-	type of eviction policy should be used for caching use cases.
+	type of eviction policy should be used for caching use-cases.
 
 --enable-flush <num>::
 	Specifies whether or not the flush operation is allowed for this bucket. To
@@ -97,11 +97,10 @@ include::part-common-options.txt[]
 	"0". By default, flush is disabled.
 
 --enable-index-replica <num>::
-	Enables replica view indexes for this bucket. There may be at most one view
-	replica index. To enable replica indexes, set the value of this option to
-	"1". To disable replica indexes, set the value of this option to "0". By
-	default, replica indexes are disabled. This option is valid for Couchbase
-	buckets only.
+	Enables view index replication for the current bucket. This option is valid for
+	Couchbase buckets only. To enable, set the value of this option to "1". To
+	disable, set the value of this option to "0". By default, view index replication
+	is disabled. There may be at most one replica view index.
 
 --conflict-resolution <type>::
 	Specifies this bucket's conflict resolution mechanism; which is to be used
