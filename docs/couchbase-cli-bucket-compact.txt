@@ -15,11 +15,10 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Starts compaction for view indexes and data files for a specified bucket.
-If only the views need to be compacted, then the --views-only flag
-should be specified. If only the data files should be compacted then the
---data-only flag should be specified. Only Couchbase buckets can be
-compacted: Ephemeral and Memcached buckets cannot be compacted.
+Starts compaction of view index and data files for a specified bucket. To compact
+view index files only, specify the --view-only option. To compact data files only,
+specify the --data-only option. Only Couchbase buckets can be compacted: Ephemeral
+and Memcached buckets cannot be compacted.
 
 OPTIONS
 -------
@@ -27,36 +26,36 @@ OPTIONS
 include::part-common-options.txt[]
 
 --bucket::
-	The name of the bucket to compact.
+	The name of the bucket on which to perform compaction.
 
 --data-only::
-	Indicates that only the data files should be compacted, and that compaction
-	for the view index files should be skipped. This option cannot be
-	specified at the same time as the --view-only flag.
+	Indicates that only data files should be compacted, and that compaction
+	for view index files should therefore be skipped. This option cannot be
+	specified at the same time as the --view-only option.
 
 --view-only::
-	Indicates that only the view index files should be compacted, and that
-	compaction for the data files should be skipped. This option cannot be
-	specified at the same time as the --data-only flag.
+	Indicates that only view index files should be compacted, and that
+	compaction for data files should therefore be skipped. This option cannot be
+	specified at the same time as the --data-only option.
 
 include::part-host-formats.txt[]
 
 EXAMPLES
 --------
 
-To start compaction of both the data and the view index files for a bucket named
+To start compaction of both data and view index files for a bucket named
 "travel-data", run the following command.
 
 	$ couchbase-cli bucket-compact -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data
 
-If only the view index files for a specific bucket should be compacted, and the
+If view index files only should be compacted for a specific bucket, and
 data files thereby skipped, run the following command.
 
 	$ couchbase-cli bucket-compact -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --view-only
 
-If only the data files for a specific bucket should be compacted, and the view
+If data files only should be compacted for a specific bucket, and view
 index files thereby skipped, run the following command.
 
 	$ couchbase-cli bucket-compact -c 192.168.1.5:8091 --username Administrator \
