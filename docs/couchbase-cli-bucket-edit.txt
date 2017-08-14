@@ -36,7 +36,7 @@ include::part-common-options.txt[]
 
 --bucket-replica <num>::
 	The number of servers to which data is replicated. Replicas provide protection
-	against data loss by keeping copies of this bucket's data on multiple
+	against data loss by keeping copies of a bucket's data on multiple
 	servers. By default, the number of replicas is one, even if there is only a
 	single server in the cluster. The minimum number of replicas is zero, and the
 	maximum three. This option is valid for Couchbase and Ephemeral buckets only.
@@ -78,8 +78,8 @@ include::part-common-options.txt[]
 
 --enable-flush <num>::
 	Specifies whether or not the flush operation is allowed for this bucket. To
-	enable flush, set this option to "1". To disable flush, set this option to
-	"0". By default, flush is disabled.
+	enable flushing, set this option to "1". To disable flushing, set this option to
+	"0". By default, flushing is disabled.
 
 --enable-index-replica <num>::
 	Enables view index replication for the current bucket. This option is valid for

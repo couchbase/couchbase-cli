@@ -93,8 +93,8 @@ include::part-common-options.txt[]
 
 --enable-flush <num>::
 	Specifies whether or not the flush operation is allowed for this bucket. To
-	enable flush, set this option to "1". To disable flush, set this option to
-	"0". By default, flush is disabled.
+	enable flushing, set this option to "1". To disable flushing, set this option to
+	"0". By default, flushing is disabled.
 
 --enable-index-replica <num>::
 	Enables view index replication for the current bucket. This option is valid for
@@ -127,16 +127,16 @@ include::part-host-formats.txt[]
 EXAMPLES
 --------
 
-To create a Couchbase bucket named "travel-data", which has a memory cache size
+To create a Couchbase bucket named "travel-data" with a memory cache size
 of 1GB, run the following command.
 
 	$ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-type couchbase \
 	 --bucket-ramsize 1024
 
-To create a Couchbase bucket named "airline-data", with a memory cache size of
-1GB, has two data replicas, has high disk I/O priority, uses full eviction, and has
-flush and replica indexes enabled, run the following command.
+To create a Couchbase bucket named "airline-data" with a memory cache size of
+1GB, two data replicas, high background-task priority, full eviction, flushing
+enabled, and view index replication enabled, run the following command.
 
 	$ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-type couchbase \
@@ -144,17 +144,16 @@ flush and replica indexes enabled, run the following command.
 	 --bucket-eviction-policy fullEviction --enable-flush 1 \
 	 --enable-index-replica 1
 
-To create a Memcached bucket named "travel-data" which has a memory cache size
-of 1GB run the following command.
+To create a Memcached bucket named "travel-data" with a memory cache size
+of 1GB, run the following command.
 
 	$ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-type memcached \
 	 --bucket-ramsize 1024
 
-To create an Ephemeral bucket named "hotel-data", which has a memory cache size
-of 256MB, has flush enabled, has an eviction policy of "nruEviction", has
-timestamp based conflict resolution, and is created synchronously, run the
-following command.
+To create an Ephemeral bucket named "hotel-data" synchronously, with a memory cache size
+of 256MB, flushing enabled, "nruEviction", and timestamp-based conflict resolution, run
+the following command.
 
 	$ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
 	--password password --bucket hotel-data --bucket-type ephemeral \
