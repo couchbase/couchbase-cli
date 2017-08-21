@@ -24,7 +24,9 @@ if platform.system() == "Windows":
                 size_y = bottom - top
                 return size_x, size_y, cur_x, cur_y
         except:
-            return None, None, None, None
+            pass
+
+        return None, None, None, None
 
     def bold(text):
         """Makes a string bold in the terminal"""
