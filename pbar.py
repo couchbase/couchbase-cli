@@ -125,13 +125,14 @@ class RebalanceProgressBar(object):
     def show(self):
         """Shows the rebalance progress bar"""
 
-        if self.term_width is None:
-            self.hidden = True
-            sys.stdout.write("Unable to display progress bar on this os\n")
-        elif self.term_width < 80:
-            self.hidden = True
-            sys.stdout.write("Unable to display progress bar, terminal with must be at " +
-                             "least 80 columns\n")
+        if not self.hidden:
+            if self.term_width is None:
+                self.hidden = True
+                sys.stdout.write("Unable to display progress bar on this os\n")
+            elif self.term_width < 80:
+                self.hidden = True
+                sys.stdout.write("Unable to display progress bar, terminal with must be at " +
+                                 "least 80 columns\n")
 
         status, errors = self.rest_client.rebalance_status()
         if errors:
