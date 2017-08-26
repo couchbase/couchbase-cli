@@ -16,14 +16,14 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-This command initializes a Couchbase server. In particular this command allows
-the user to set the servers data path, index path, and hostname. The data and
-index paths must be set prior to initializing the cluster or adding this target
-server to an existing cluster. The hostname however can be changed after the
-server has become part of a cluster.
+This command initializes a Couchbase Server node. In particular this command
+allows the user to set the node's data path, index path, and hostname. The data
+path, index path and hostname must be set prior to initializing the cluster or
+adding the node to an existing cluster. The hostname however can be
+changed later if the node is the only node in the cluster.
 
-To get the best performance from Couchbase it is reocmmended that the data and
-index paths be set to separate disks.
+To get the best performance from Couchbase Server, it is recommended that the
+data and index paths be set to separate disks.
 
 OPTIONS
 -------
@@ -40,8 +40,7 @@ include::part-common-options.txt[]
 	only be specified against a node that is not yet part of a cluster.
 
 --node-init-hostname::
-	Specifies the hostname for this server. The hostname can be set before or
-	after a node becomes part of a cluster.
+	Specifies the hostname for this server.
 
 include::part-host-formats.txt[]
 
@@ -52,25 +51,25 @@ To initialize a node and set the index path to /mnt1/indexes and the data path
 to /mnt2/data run the following command. Note that this command must be run
 before the node becomes part of a cluster.
 
-	$ couchbase-cli bucket-delete -c 192.168.1.5 \
+	$ couchbase-cli node-init -c 192.168.1.5 \
 	 --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes
 
-In the command above we have not yet set the cluster username and password so
-we can skip adding these to the command line. If we later initialize the cluster
-and want to set the hostname for the cluster then we would run the command
-below. Notice that this thime the cluster is initialized so we must include the
+In the command above, the cluster username and password have not yet been set so
+you can skip adding these to the command line. If you later initialize the cluster
+and want to set the hostname for the cluster, then run the command
+below. Note that this time the cluster is initialized, so you must include the
 username and password.
 
-	$ couchbase-cli bucket-delete -c 192.168.1.5 -u Administrator -p password \
+	$ couchbase-cli node-init -c 192.168.1.5 -u Administrator -p password \
 	 --hostname cb1.mydomain.com
 
-We could have alternatively set all three of these options below before we
-initialized the cluster. This would have been done with the following command.
+You could have alternatively set all three of these options below before
+initializing the cluster. This can be done with the following command.
 
-	$ couchbase-cli bucket-delete -c 192.168.1.5 --hostname cb1.mydomain.com \
+	$ couchbase-cli node-init -c 192.168.1.5 --hostname cb1.mydomain.com \
 	 --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes
 
-Again note that we don't need the username and password because in this example
+Again, note that you don't need the username and password because in this example
 the cluster has not yet been initialized.
 
 ENVIRONMENT AND CONFIGURATION VARIABLES

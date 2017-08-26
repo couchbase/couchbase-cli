@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-node-init
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/10/2017
+.\"      Date: 08/01/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-NODE" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-NODE" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -38,9 +38,9 @@ couchbase-cli-node-init \- Initializes a node
 .fi
 .SH "DESCRIPTION"
 .sp
-This command initializes a Couchbase server\&. In particular this command allows the user to set the servers data path, index path, and hostname\&. The data and index paths must be set prior to initializing the cluster or adding this target server to an existing cluster\&. The hostname however can be changed after the server has become part of a cluster\&.
+This command initializes a Couchbase Server node\&. In particular this command allows the user to set the node\(cqs data path, index path, and hostname\&. The data path, index path and hostname must be set prior to initializing the cluster or adding the node to an existing cluster\&. The hostname however can be changed later if the node is the only node in the cluster\&.
 .sp
-To get the best performance from Couchbase it is reocmmended that the data and index paths be set to separate disks\&.
+To get the best performance from Couchbase Server, it is recommended that the data and index paths be set to separate disks\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
@@ -70,7 +70,7 @@ The path to store files create by the Couchbase index service\&. This flag can o
 .PP
 \-\-node\-init\-hostname
 .RS 4
-Specifies the hostname for this server\&. The hostname can be set before or after a node becomes part of a cluster\&.
+Specifies the hostname for this server\&.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -118,40 +118,40 @@ To initialize a node and set the index path to /mnt1/indexes and the data path t
 .RS 4
 .\}
 .nf
-$ couchbase\-cli bucket\-delete \-c 192\&.168\&.1\&.5 \e
+$ couchbase\-cli node\-init \-c 192\&.168\&.1\&.5 \e
  \-\-node\-init\-data\-path /mnt2/data \-\-node\-init\-index\-path /mnt1/indexes
 .fi
 .if n \{\
 .RE
 .\}
 .sp
-In the command above we have not yet set the cluster username and password so we can skip adding these to the command line\&. If we later initialize the cluster and want to set the hostname for the cluster then we would run the command below\&. Notice that this thime the cluster is initialized so we must include the username and password\&.
+In the command above, the cluster username and password have not yet been set so you can skip adding these to the command line\&. If you later initialize the cluster and want to set the hostname for the cluster, then run the command below\&. Note that this time the cluster is initialized, so you must include the username and password\&.
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
-$ couchbase\-cli bucket\-delete \-c 192\&.168\&.1\&.5 \-u Administrator \-p password \e
+$ couchbase\-cli node\-init \-c 192\&.168\&.1\&.5 \-u Administrator \-p password \e
  \-\-hostname cb1\&.mydomain\&.com
 .fi
 .if n \{\
 .RE
 .\}
 .sp
-We could have alternatively set all three of these options below before we initialized the cluster\&. This would have been done with the following command\&.
+You could have alternatively set all three of these options below before initializing the cluster\&. This can be done with the following command\&.
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
-$ couchbase\-cli bucket\-delete \-c 192\&.168\&.1\&.5 \-\-hostname cb1\&.mydomain\&.com \e
+$ couchbase\-cli node\-init \-c 192\&.168\&.1\&.5 \-\-hostname cb1\&.mydomain\&.com \e
  \-\-node\-init\-data\-path /mnt2/data \-\-node\-init\-index\-path /mnt1/indexes
 .fi
 .if n \{\
 .RE
 .\}
 .sp
-Again note that we don\(cqt need the username and password because in this example the cluster has not yet been initialized\&.
+Again, note that you don\(cqt need the username and password because in this example the cluster has not yet been initialized\&.
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.

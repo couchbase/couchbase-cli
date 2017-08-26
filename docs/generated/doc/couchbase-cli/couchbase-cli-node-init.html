@@ -758,13 +758,13 @@ couchbase-cli-node-init(1) Manual Page
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>This command initializes a Couchbase server. In particular this command allows
-the user to set the servers data path, index path, and hostname. The data and
-index paths must be set prior to initializing the cluster or adding this target
-server to an existing cluster. The hostname however can be changed after the
-server has become part of a cluster.</p></div>
-<div class="paragraph"><p>To get the best performance from Couchbase it is reocmmended that the data and
-index paths be set to separate disks.</p></div>
+<div class="paragraph"><p>This command initializes a Couchbase Server node. In particular this command
+allows the user to set the node&#8217;s data path, index path, and hostname. The data
+path, index path and hostname must be set prior to initializing the cluster or
+adding the node to an existing cluster. The hostname however can be
+changed later if the node is the only node in the cluster.</p></div>
+<div class="paragraph"><p>To get the best performance from Couchbase Server, it is recommended that the
+data and index paths be set to separate disks.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -836,8 +836,7 @@ index paths be set to separate disks.</p></div>
 </dt>
 <dd>
 <p>
-        Specifies the hostname for this server. The hostname can be set before or
-        after a node becomes part of a cluster.
+        Specifies the hostname for this server.
 </p>
 </dd>
 </dl></div>
@@ -878,27 +877,27 @@ to /mnt2/data run the following command. Note that this command must be run
 before the node becomes part of a cluster.</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>$ couchbase-cli bucket-delete -c 192.168.1.5 \
+<pre><code>$ couchbase-cli node-init -c 192.168.1.5 \
  --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes</code></pre>
 </div></div>
-<div class="paragraph"><p>In the command above we have not yet set the cluster username and password so
-we can skip adding these to the command line. If we later initialize the cluster
-and want to set the hostname for the cluster then we would run the command
-below. Notice that this thime the cluster is initialized so we must include the
+<div class="paragraph"><p>In the command above, the cluster username and password have not yet been set so
+you can skip adding these to the command line. If you later initialize the cluster
+and want to set the hostname for the cluster, then run the command
+below. Note that this time the cluster is initialized, so you must include the
 username and password.</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>$ couchbase-cli bucket-delete -c 192.168.1.5 -u Administrator -p password \
+<pre><code>$ couchbase-cli node-init -c 192.168.1.5 -u Administrator -p password \
  --hostname cb1.mydomain.com</code></pre>
 </div></div>
-<div class="paragraph"><p>We could have alternatively set all three of these options below before we
-initialized the cluster. This would have been done with the following command.</p></div>
+<div class="paragraph"><p>You could have alternatively set all three of these options below before
+initializing the cluster. This can be done with the following command.</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>$ couchbase-cli bucket-delete -c 192.168.1.5 --hostname cb1.mydomain.com \
+<pre><code>$ couchbase-cli node-init -c 192.168.1.5 --hostname cb1.mydomain.com \
  --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes</code></pre>
 </div></div>
-<div class="paragraph"><p>Again note that we don&#8217;t need the username and password because in this example
+<div class="paragraph"><p>Again, note that you don&#8217;t need the username and password because in this example
 the cluster has not yet been initialized.</p></div>
 </div>
 </div>
@@ -933,7 +932,7 @@ the cluster has not yet been initialized.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-01-03 11:42:24 PST
+Last updated 2017-07-30 19:19:00 PDT
 </div>
 </div>
 </body>

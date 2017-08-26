@@ -84,6 +84,8 @@ def argumentParsing():
     parser = optparse.OptionParser(usage)
     opt_extra_help(parser, opt_extra_defaults())
 
+    parser.add_option("-a", "--add", action="store_true", default=False,
+                      help="""use add instead of set to not overwrite existing items in the destination""")
     parser.add_option('-b', '--bucket-source', default='',
                         help='Specify the bucket to restore. Defaults to all buckets')
     parser.add_option('-B', '--bucket-destination', default='',
@@ -230,6 +232,10 @@ if __name__ == '__main__':
     if args.ssl:
         ssl_option = ' -s '
 
+    add_option = ''
+    if args.add:
+        add_option = ' -a '
+
     from_date_option = ''
     if args.from_date:
         from_date_option = ' --from-date=' + args.from_date
@@ -257,13 +263,13 @@ if __name__ == '__main__':
                     + args.bucket_source.strip() + ' -B ' + args.bucket_destination \
                     + ' ' + '"' + os.path.join(backupDir, vbuckets) + '"' \
                     + ' http://' + node + ':' + rest \
-                    + ' -u ' + args.username + ' -p ' + args.password + extra_options + ssl_option + from_date_option + to_date_option \
+                    + ' -u ' + args.username + ' -p ' + args.password + extra_options + ssl_option + add_option + from_date_option + to_date_option \
                     + ' 2> ' + '"' + os.path.join(backupDir, 'logs', vbuckets) \
                     + '-restore-' + bucket + '.err' + '"'
             else:
                 command_line = '"' + os.path.join(path, restore_exe) + '"' + ' -v -t 1 -b ' + bucket \
                     + ' ' + '"' + os.path.join(backupDir, vbuckets) + '"' + ' http://' + node + ':' + rest \
-                    + ' -u ' + args.username + ' -p ' + args.password + from_date_option + to_date_option + extra_options \
+                    + ' -u ' + args.username + ' -p ' + args.password + from_date_option + to_date_option +  add_option + extra_options \
                     + ' 2> ' + '"' + os.path.join(backupDir, 'logs', vbuckets) \
                     + '-restore-' + bucket + '.err' + '"'
             if args.verbose:

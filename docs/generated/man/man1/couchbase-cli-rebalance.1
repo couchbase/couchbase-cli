@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-rebalance
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/10/2017
+.\"      Date: 08/01/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-REBA" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-REBA" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,7 +28,7 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-couchbase-cli-rebalance \- Rebalances data across nodes in a cluster
+couchbase-cli-rebalance \- Rebalances data and indexes across nodes in a cluster
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -38,9 +38,9 @@ couchbase-cli-rebalance \- Rebalances data across nodes in a cluster
 .fi
 .SH "DESCRIPTION"
 .sp
-Rebalances data across all servers in the cluster\&. This command should be used after servers are added, removed, or failed over from the cluster in order to ensure that each node in the cluster has a similar "balanced" amount of data\&.
+Rebalances data and indexes across all nodes in the cluster\&. This command should be used after nodes are added, removed, or failed over from the cluster in order to ensure that each node in the cluster has a similar "balanced" amount of data and indexes\&.
 .sp
-To add servers use the \fBcouchbase-server-add\fR(1) subcommand\&. To remove servers specify the list of servers to remove using the \-\-server\-remove option in the rebalance subcommand\&. To failover servers see the \fBcouchbase-failover\fR(1) subcommand\&. After running the \fBcouchbase-server-add\fR(1) or \fBcouchbase-failover\fR(1) subcommands ensure that you run the rebalance command to ensure data is balance dacross the cluster\&.
+To add nodes use the \fBcouchbase-cli-server-add\fR(1) subcommand\&. To remove nodes specify the list of nodes to remove using the \-\-server\-remove option in the rebalance subcommand\&. To failover nodes see the \fBcouchbase-cli-failover\fR(1) subcommand\&. After running the \fBcouchbase-cli-server-add\fR(1) or \fBcouchbase-cli-failover\fR(1) subcommands ensure that you run the rebalance command to balance data and indexes across the cluster\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
@@ -57,12 +57,15 @@ Specifies the username of the user executing the command\&. If you do not have a
 .RS 4
 Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
-.sp
-\-\-server\-remove <servers> A comma separated list of servers to remove from the cluster\&. The each server in the list should correspond to the hostname or IP address of that server\&.
+.PP
+\-\-server\-remove <servers>
+.RS 4
+A comma separated list of nodes to remove from the cluster\&. Each node in the list should correspond to the hostname or IP address of that server\&.
+.RE
 .PP
 \-\-no\-progress\-bar
 .RS 4
-Disables showing the progress bar which tracks the progress of the rebalance\&. This command will still wait for rebalance completion even if this flag is specified, but the progress bar will not be shown\&.
+Hides the progress bar which tracks the progress of the rebalance\&. This command will still wait for rebalance completion even if this flag is specified, but the progress bar will not be shown\&.
 .RE
 .PP
 \-\-no\-wait
@@ -109,7 +112,7 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-When to rebalance a new node into the cluster we would first add a server using the \fBcouchbase-server-add\fR(1) command and the we would start the balance with the rebalance command\&.
+To rebalance a new node into the cluster you would first add a node using the \fBcouchbase-cli-server-add\fR(1) command and then start the rebalance with the rebalance command\&.
 .sp
 .if n \{\
 .RS 4
@@ -134,7 +137,7 @@ $ couchbase\-cli rebalance \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator
 .RE
 .\}
 .sp
-If we just want to remove a server from the cluster and start a rebalance we would just need to run the rebalance command\&.
+If you just want to remove a node from the cluster and start a rebalance, just run the rebalance command\&.
 .sp
 .if n \{\
 .RS 4
@@ -147,7 +150,7 @@ $ couchbase\-cli rebalance \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator
 .RE
 .\}
 .sp
-We could also remove multiple servers at once and run the rebalance with the command below\&. Note that rebalance will be faster removing multiple servers as once as opposed to removing them one at a time\&.
+You can remove multiple nodes at once and run the rebalance with the command below\&. Note that it will be faster overall removing multiple nodes at once as opposed to removing them one at a time\&.
 .sp
 .if n \{\
 .RS 4
@@ -160,7 +163,7 @@ $ couchbase\-cli rebalance \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator
 .RE
 .\}
 .sp
-To add a server and remove another server we would again need to invoke the \fBcouchbase-server-add\fR(1) command before starting the rebalance as shown below\&.
+To add a node and remove another node you need to run the \fBcouchbase-cli-server-add\fR(1) command before starting the rebalance, as shown below\&.
 .sp
 .if n \{\
 .RS 4
@@ -185,7 +188,7 @@ $ couchbase\-cli rebalance \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator
 .RE
 .\}
 .sp
-If you add one server to the cluster and remove a server during the same rebalance Couchbase will do a "swap rebalance"\&. This means data from the node being removed is moved to the one being added\&. This means the rebalance will only occur between two nodes in the cluster as opposed to shifting data around the entire cluster\&.
+If you add one node to the cluster and remove a node during the same rebalance, Couchbase Server will do a "swap rebalance"\&. This means data and indexes from the node being removed are moved to the one being added\&. This means the rebalance will only occur between these two nodes as opposed to involving all nodes in the cluster\&.
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
@@ -193,7 +196,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
 .SH "SEE ALSO"
 .sp
-\fBcouchbase-failover\fR(1)\&. \fBcouchbase-recovery\fR(1)\&. \fBcouchbase-server-add\fR(1)\&.
+\fBcouchbase-cli-failover\fR(1)\&. \fBcouchbase-cli-recovery\fR(1)\&. \fBcouchbase-cli-server-add\fR(1)\&.
 .SH "COUCHBASE-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-server-info
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/10/2017
+.\"      Date: 08/01/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SERV" "1" "05/10/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SERV" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,7 +28,7 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-couchbase-cli-server-info \- Displays server level information and statistics
+couchbase-cli-server-info \- Displays information and statistics about the Couchbase Server specified\&.
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -37,7 +37,7 @@ couchbase-cli-server-info \- Displays server level information and statistics
 .fi
 .SH "DESCRIPTION"
 .sp
-Prints information about the server specified\&.
+This command prints information about the Couchbase Server specified\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
@@ -94,7 +94,7 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-To get server information for localhost we can run the following command\&.
+To get information about the Couchbase Server on localhost (127\&.0\&.0\&.1) run the following command:
 .sp
 .if n \{\
 .RS 4

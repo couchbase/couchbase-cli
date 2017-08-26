@@ -750,8 +750,8 @@ couchbase-cli-cluster-edit(1) Manual Page
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli cluster-edit</em> [--cluster &lt;url&gt;] [--cluster-username &lt;username&gt;]
           [--cluster-password &lt;password&gt;] [--cluster-port &lt;port&gt;]
-      [--cluster-ramsize &lt;megabytes&gt;] [--cluster-name &lt;name&gt;]
-      [--cluster-index-ramsize &lt;megabytes&gt;] [--cluster-fts-ramsize &lt;megabytes&gt;]</pre>
+          [--cluster-ramsize &lt;megabytes&gt;] [--cluster-name &lt;name&gt;]
+          [--cluster-index-ramsize &lt;megabytes&gt;] [--cluster-fts-ramsize &lt;megabytes&gt;]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -759,12 +759,12 @@ couchbase-cli-cluster-edit(1) Manual Page
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>DEPRECATED: Please use the setting-cluster command which provides the same
-functionality as this command.</p></div>
+<div class="paragraph"><p>DEPRECATED: Please use the <a href="couchbase-cli-setting-cluster.html">couchbase-cli-setting-cluster(1)</a> command
+which provides the same functionality as this command.</p></div>
 <div class="paragraph"><p>This command is used to modify cluster level settings. It allows users to change
-the Couchbase root username and password, change the port that the cluster
-manager listens on, and modify the data, index, and full-text service memory
-quotas.</p></div>
+the Couchbase Server built-in administrator username and password, change the port
+that the cluster manager listens on, and modify the data, index, and full-text
+service memory quotas.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -817,7 +817,7 @@ quotas.</p></div>
 </dt>
 <dd>
 <p>
-        Specifies the new username for the Couchbase administrator user.
+        Specifies the new username for the Couchbase Server administrator user.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -825,7 +825,7 @@ quotas.</p></div>
 </dt>
 <dd>
 <p>
-        Specifies the new password for the Couchbase administrator user.
+        Specifies the new password for the Couchbase Server administrator user.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -833,8 +833,8 @@ quotas.</p></div>
 </dt>
 <dd>
 <p>
-        Specifies the data services memory quota. This quota will be assigned to all
-        future nodes added to the cluster with the data service.
+        Sets the data service memory quota (in MB). This quota will be assigned
+        to all future nodes added to the cluster with the data service.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -842,9 +842,9 @@ quotas.</p></div>
 </dt>
 <dd>
 <p>
-        Sets the full-text service memory quota. This parameter is required if the
-        full-text service is specified in the --services option. This quota will be
-        assigned to all future nodes added to the cluster with the full-text
+        Sets the full-text service memory quota (in MB). This parameter is required
+        if the full-text service is specified in the --services option. This quota
+        will be assigned to all future nodes added to the cluster with the full-text
         service.
 </p>
 </dd>
@@ -853,9 +853,9 @@ quotas.</p></div>
 </dt>
 <dd>
 <p>
-        Sets the index service memory quota. This parameter is required if the index
-        service is specified in the --services option. This quota will be assigned
-        to all future nodes added to the cluster with the index service.
+        Sets the index service memory quota (in MB). This parameter is required if
+        the index service is specified in the --services option. This quota will be
+        assigned to all future nodes added to the cluster with the index service.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -864,7 +864,7 @@ quotas.</p></div>
 <dd>
 <p>
         Sets the name for this cluster. Naming clusters is useful when you have
-        multiple Couchbase clusters in your deployment.
+        multiple Couchbase Server clusters in your deployment.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -872,8 +872,8 @@ quotas.</p></div>
 </dt>
 <dd>
 <p>
-        Specifies the port for the Couchbase Administration Console. Defaults to
-        port 8091.
+        Specifies the port for the Couchbase Server Administration Console. Defaults
+        to port 8091.
 </p>
 </dd>
 </dl></div>
@@ -909,8 +909,8 @@ a port other that 8091.</p></div>
 <div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>To change the username and password of the Couchbase administrator user run the
-following command.</p></div>
+<div class="paragraph"><p>To change the username and password of the Couchbase Server administrator user run
+the following command.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username current_user \
@@ -924,18 +924,18 @@ name to "new_name" run the following command.</p></div>
 <pre><code>$ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username Administrator \
  --password password --cluster-port 5000 --cluster-name new_name</code></pre>
 </div></div>
-<div class="paragraph"><p>To change the memory quota of the data server to 2048 and the memory quota of
-the index service to 4096 run the following command.</p></div>
+<div class="paragraph"><p>To change the memory quota of the data service to 2048MB and the memory quota of
+the index service to 4096MB run the following command.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username Administrator \
  --password password --cluster-ramsize 2048 --cluster-index-ramsize 4096</code></pre>
 </div></div>
 <div class="paragraph"><p>All of the parameters in this command can be specified at the same time. To
-change the username and password of the Couchbase administrator user, change the
-port number to 5000, change the cluster name to "new_name", change the memory
-quota of the data service to 2048 and change the memory quota of the index
-service to 4096 run the following command.</p></div>
+change the username and password of the Couchbase Server administrator user, change
+the port number to 5000, change the cluster name to "new_name", change the memory
+quota of the data service to 2048MB and change the memory quota of the index
+service to 4096MB run the following command.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username current_user \
@@ -976,7 +976,7 @@ service to 4096 run the following command.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-01-03 11:42:24 PST
+Last updated 2017-07-30 19:19:00 PDT
 </div>
 </div>
 </body>

@@ -15,8 +15,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Gets rebalance status information for the user. Currently the status either
-reports running or not running.
+Gets rebalance status information for the cluster. Currently the status either
+reports "running" or "not running".
 
 OPTIONS
 -------

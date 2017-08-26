@@ -921,7 +921,7 @@ class ClusterManager(object):
             params["allowedTimePeriod[fromMinute]"] = fromMin
         if toHour is not None:
             params["allowedTimePeriod[toHour]"] = toHour
-        if fromMin is not None:
+        if toMin is not None:
             params["allowedTimePeriod[toMinute]"] = toMin
         if abortOutside is not None:
             params["allowedTimePeriod[abortOutside]"] = abortOutside

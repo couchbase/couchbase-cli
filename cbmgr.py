@@ -106,14 +106,17 @@ def _exit_on_file_write_failure(fname, to_write):
     except IOError, error:
         _exitIfErrors([error])
 
-def _exit_on_file_read_failure(fname):
+def _exit_on_file_read_failure(fname, toReport = None):
     try:
         rfile = open(fname, 'r')
         read_bytes = rfile.read()
         rfile.close()
         return read_bytes
     except IOError, error:
-        _exitIfErrors([error.strerror + " `" + fname + "`"])
+        if toReport is None:
+            _exitIfErrors([error.strerror + " `" + fname + "`"])
+        else:
+            _exitIfErrors([toReport])
 
 def apply_default_port(nodes):
     return map(
@@ -679,8 +682,6 @@ class BucketCreate(Subcommand):
             if opts.eviction_policy is not None:
                 _exitIfErrors(["--bucket-eviction-policy cannot be specified for a memcached bucket"])
         elif opts.type == "ephemeral":
-            if opts.priority is not None:
-                _exitIfErrors(["--bucket-priority cannot be specified for a ephemeral bucket"])
             if opts.eviction_policy in ["valueOnly", "fullEviction"]:
                 _exitIfErrors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
         elif opts.type == "couchbase":
@@ -1241,8 +1242,8 @@ class MasterPassword(Subcommand):
             else:
                 os.environ['PATH'] = ';'.join(path)
 
-            cookiefile = os.path.join(opts.config_path, "couchbase-server.cookie")
-            cookie = _exit_on_file_read_failure(cookiefile).rstrip()
+            cookiefile = os.path.join(opts.config_path, "couchbase-server.babysitter.cookie")
+            cookie = _exit_on_file_read_failure(cookiefile, "The node is down").rstrip()
 
             nodefile = os.path.join(opts.config_path, "couchbase-server.babysitter.node")
             node = _exit_on_file_read_failure(nodefile).rstrip()
@@ -1272,8 +1273,10 @@ class MasterPassword(Subcommand):
         elif res == "retry":
             print "Incorrect password."
             self.prompt_for_master_pwd(node, cookie, '')
+        elif res == "{error,not_allowed}":
+            _exitIfErrors(["Password was already supplied"])
         elif res == "{badrpc,nodedown}":
-            _exitIfErrors(["Either the node is down or password was already supplied"])
+            _exitIfErrors(["The node is down"])
         else:
             _exitIfErrors(["Incorrect password. Node shuts down."])
 
