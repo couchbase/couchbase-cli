@@ -3,7 +3,7 @@ couchbase-cli(1)
 
 NAME
 ----
-couchbase-cli - A Couchbase cluster management utility
+couchbase-cli - The Couchbase cluster management utility.
 
 SYNOPSIS
 --------
@@ -68,14 +68,14 @@ linkcbdoc:couchbase-cli-failover[1]::
 linkcbdoc:couchbase-cli-group-manage[1]::
 	Manage server groups.
 
-linkcbdoc:couchbase-cli-help[1]::
-	Show extended couchbase-cli help.
-
 linkcbdoc:couchbase-cli-host-list[1]::
 	Lists all hosts in the cluster.
 
 linkcbdoc:couchbase-cli-node-init[1]::
 	Initializes a node.
+
+linkcbdoc:couchbase-cli-rebalance[1]::
+	Rebalances data across nodes in a cluster.
 
 linkcbdoc:couchbase-cli-rebalance-status[1]::
 	Show the current rebalance status.
@@ -83,17 +83,14 @@ linkcbdoc:couchbase-cli-rebalance-status[1]::
 linkcbdoc:couchbase-cli-rebalance-stop[1]::
 	Stops the current rebalance task.
 
-linkcbdoc:couchbase-cli-rebalance[1]::
-	Rebalances data across nodes in a cluster.
-
 linkcbdoc:couchbase-cli-recovery[1]::
 	Recovers a previously failed over node.
 
+linkcbdoc:couchbase-cli-reset-admin-password[1]::
+	Resets the administrator password.
+
 linkcbdoc:couchbase-cli-server-add[1]::
 	Adds a server to the cluster.
-
-linkcbdoc:couchbase-cli-server-eshell[1]::
-	Opens a shell to talk to the cluster manager process.
 
 linkcbdoc:couchbase-cli-server-info[1]::
 	Displays server level information and statistics.
@@ -113,6 +110,9 @@ linkcbdoc:couchbase-cli-setting-audit[1]::
 linkcbdoc:couchbase-cli-setting-autofailover[1]::
 	Modifies auto-failover settings.
 
+linkcbdoc:couchbase-cli-setting-autoreprovision[1]::
+	Modifies auto-reprovision settings.
+
 linkcbdoc:couchbase-cli-setting-cluster[1]::
 	Modifies cluster settings.
 
@@ -128,6 +128,12 @@ linkcbdoc:couchbase-cli-setting-ldap[1]::
 linkcbdoc:couchbase-cli-setting-notification[1]::
 	Modifies notification settings.
 
+linkcbdoc:couchbase-cli-setting-password-policy[1]::
+	Modifies the password policy.
+
+linkcbdoc:couchbase-cli-setting-security[1]::
+	Modifies security policies.
+
 linkcbdoc:couchbase-cli-setting-xdcr[1]::
 	Modifies cross datacenter replication (XDCR) settings.
 
@@ -135,13 +141,13 @@ linkcbdoc:couchbase-cli-ssl-manage[1]::
 	Manage SSL certificates.
 
 linkcbdoc:couchbase-cli-user-manage[1]::
-	Manage the read-only user.
+	Manage RBAC users.
 
 linkcbdoc:couchbase-cli-xdcr-replicate[1]::
-	Creates a replication between two datacenters.
+	Manages XDCR cluster references.
 
 linkcbdoc:couchbase-cli-xdcr-setup[1]::
-	Manage references to remote clusters.
+	Manages XDCR replications.
 
 
 include::part-host-formats.txt[]
