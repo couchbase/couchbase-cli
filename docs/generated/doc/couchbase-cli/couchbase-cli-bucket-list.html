@@ -739,7 +739,7 @@ couchbase-cli-bucket-list(1) Manual Page
 <h2>NAME</h2>
 <div class="sectionbody">
 <p>couchbase-cli-bucket-list -
-   List all Couchbase data buckets
+   List all buckets
 </p>
 </div>
 </div>
@@ -757,8 +757,8 @@ couchbase-cli-bucket-list(1) Manual Page
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Lists all buckets in the cluster. Each bucket is printed to stdout on a separate
-line.</p></div>
+<div class="paragraph"><p>Lists all buckets in the cluster. For each bucket, the following are printed
+to stdout: bucketType, authType, numReplicas, ramQuota, ramUsed.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -839,8 +839,7 @@ a port other that 8091.</p></div>
 <div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>To get a list of bucket names for each bucket in the cluster you can run the
-command below.</p></div>
+<div class="paragraph"><p>To list all buckets in the cluster, run the following command.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli bucket-list -c 192.168.1.5:8091 --username Administrator \
@@ -849,15 +848,31 @@ command below.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>travel-data
+ bucketType: membase
+ authType: sasl
+ numReplicas: 1
+ ramQuota: 104857600
+ ramUsed: 45302840
 airline-data
-flisht-data</code></pre>
+ bucketType: ephemeral
+ authType: sasl
+ numReplicas: 1
+ ramQuota: 268435456
+ ramUsed: 1134432
+flight-data
+ bucketType: memcached
+ authType: sasl
+ numReplicas: 0
+ ramQuota: 104857600
+ ramUsed: 0</code></pre>
 </div></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_discussion">DISCUSSION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>TBD</p></div>
+<div class="paragraph"><p>In the output, RAM figures are in bytes. The "membase" bucketType signifies a
+Couchbase bucket. The authType can be either "sasl" or "none".</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -894,7 +909,7 @@ flisht-data</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-01-03 11:42:24 PST
+Last updated 2017-09-07 13:51:34 PDT
 </div>
 </div>
 </body>

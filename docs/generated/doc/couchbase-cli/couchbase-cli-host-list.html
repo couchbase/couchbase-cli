@@ -759,8 +759,8 @@ couchbase-cli-host-list(1) Manual Page
 <div class="sectionbody">
 <div class="paragraph"><p>Displays a list of hostnames corresponding to each node in the cluster. Each
 hostname is printed to stdout on its own line. The hostname may or may not
-contain a port number. If no port number is part of the hostname then the port
-number is assumed to be 8091.</p></div>
+contain a port number. If the port number is not a part of the hostname, then
+the port number is assumed to be 8091.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -841,8 +841,8 @@ a port other that 8091.</p></div>
 <div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>To get a list of hostnames for each node in the cluster you can run the command
-below.</p></div>
+<div class="paragraph"><p>To get a list of hostnames for each node in the cluster run the following
+command:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli host-list -c 192.168.1.5:8091 --username Administrator \
@@ -887,7 +887,7 @@ cb3.mydomain.com:8091</code></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-01-03 11:42:24 PST
+Last updated 2017-09-07 13:47:01 PDT
 </div>
 </div>
 </body>
