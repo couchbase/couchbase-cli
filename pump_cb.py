@@ -129,7 +129,7 @@ class CBSink(pump_mc.MCSink):
                     if remap_node == otpNode and mcdHost in server_vb_map["serverList"]:
                         idx = server_vb_map["serverList"].index(mcdHost)
                         for vb in remap_vbs:
-                            server_vb_map["vBucketMap"][vb][idx] = 0
+                            server_vb_map["vBucketMap"][vb][0] = idx
 
         return None
 
