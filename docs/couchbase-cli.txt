@@ -13,7 +13,8 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-The couchbase-cli script is the main command line interface for Couchbase cluster management.
+The couchbase-cli script is the main command line interface for Couchbase
+cluster management.
 
 OPTIONS
 -------

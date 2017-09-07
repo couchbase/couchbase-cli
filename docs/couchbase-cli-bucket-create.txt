@@ -41,8 +41,8 @@ include::part-common-options.txt[]
 	and N1QL queries. The Ephemeral bucket is an in-memory bucket similar to the
 	Couchbase bucket; but it does not support data persistence or views. The
 	Memcached bucket is a cache-only bucket that does not support persistence,
-	replication, indexing, views, or N1QL querying: this bucket type provides the
-	same behavior as Memcached Server.
+	replication, indexing, views, or N1QL querying: this bucket type provides
+	the same behavior as Memcached Server.
 
 --bucket-ramsize <size>::
 	The amount of memory to allocate to the cache for this bucket, in Megabytes.
@@ -50,11 +50,12 @@ include::part-common-options.txt[]
 	quota. The minimum cache size is 100MB.
 
 --bucket-replica <num>::
-	The number of servers to which data is replicated. Replicas provide protection
-	against data loss by keeping copies of this bucket's data on multiple
-	servers. By default, the number of replicas is one, even if there is only a
-	single server in the cluster. The minimum number of replicas is zero, and the
-	maximum three. This option is valid for Couchbase and Ephemeral buckets only.
+	The number of servers to which data is replicated. Replicas provide
+	protection against data loss by keeping copies of this bucket's data on
+	multiple servers. By default, the number of replicas is one, even if there
+	is only a single server in the cluster. The minimum number of replicas is
+	zero, and the maximum three. This option is valid for Couchbase and
+	Ephemeral buckets only.
 
 --bucket-port <num>::
 	Sets the port on which the bucket listens. This parameter is deprecated, and
@@ -64,58 +65,60 @@ include::part-common-options.txt[]
 	Specifies the priority of this bucket's background tasks. This option is
 	valid for Couchbase and Ephemeral buckets only. For Couchbase buckets,
 	background task-types include disk I/O, DCP stream-processing, and
-	item-paging. For Ephemeral buckets, background task-types are the same as for
-	Couchbase buckets, with the exception of disk I/O, which does not apply to
-	Ephemeral buckets. The value of this option may be "high" or "low". The
+	item-paging. For Ephemeral buckets, background task-types are the same as
+	for Couchbase buckets, with the exception of disk I/O, which does not apply
+	to Ephemeral buckets. The value of this option may be "high" or "low". The
 	default is "low". Specifying "high" may result in faster processing; but
-	only when more than one bucket is defined for the cluster, and when different
-	priority settings have been established among the buckets. When Couchbase and
-	Ephemeral buckets have different priority settings, this affects the
-	prioritization only of task-types other than disk I/O.
+	only when more than one bucket is defined for the cluster, and when
+	different priority settings have been established among the buckets. When
+	Couchbase and Ephemeral buckets have different priority settings, this
+	affects the prioritization only of task-types other than disk I/O.
 
 --bucket-eviction-policy <policy>::
 	The memory-cache eviction policy for this bucket. This option is valid for
 	Couchbase and Ephemeral buckets only.
 
 	Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
-	the "valueOnly" policy means that each key stored in this bucket must be kept
-	in memory. This is the default policy: using this policy improves performance
-	of key-value operations, but limits the maximum size of the bucket. Specifying
-	the "fullEviction" policy means that performance is impacted for key-value
-	operations, but the maximum size of the bucket is unbounded.
+	the "valueOnly" policy means that each key stored in this bucket must be
+	kept in memory. This is the default policy: using this policy improves
+	performance of key-value operations, but limits the maximum size of the
+	bucket. Specifying the "fullEviction" policy means that performance is
+	impacted for key-value operations, but the maximum size of the bucket is
+	unbounded.
 
 	Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
-	"noEviction" means that the bucket will not evict items from the cache if the
-	cache is full: this type of eviction policy should be used for in-memory
+	"noEviction" means that the bucket will not evict items from the cache if
+	the cache is full: this type of eviction policy should be used for in-memory
 	database use-cases. Specifying "nruEviction" means that items not recently
-	used will be evicted from memory, when all memory in the bucket is used: this
-	type of eviction policy should be used for caching use-cases.
+	used will be evicted from memory, when all memory in the bucket is used:
+	this type of eviction policy should be used for caching use-cases.
 
 --enable-flush <num>::
 	Specifies whether or not the flush operation is allowed for this bucket. To
-	enable flushing, set this option to "1". To disable flushing, set this option to
-	"0". By default, flushing is disabled.
+	enable flushing, set this option to "1". To disable flushing, set this
+	option to "0". By default, flushing is disabled.
 
 --enable-index-replica <num>::
-	Enables view index replication for the current bucket. This option is valid for
-	Couchbase buckets only. To enable, set the value of this option to "1". To
-	disable, set the value of this option to "0". By default, view index replication
-	is disabled. There may be at most one replica view index.
+	Enables view index replication for the current bucket. This option is valid
+	for Couchbase buckets only. To enable, set the value of this option to "1".
+	To disable, set the value of this option to "0". By default, view index
+	replication is disabled. There may be at most one replica view index.
 
 --conflict-resolution <type>::
 	Specifies this bucket's conflict resolution mechanism; which is to be used
-	if a conflict occurs during Cross Data-Center Replication (XDCR). Sequence-based
-	and timestamp-based mechanisms are supported.
+	if a conflict occurs during Cross Data-Center Replication (XDCR).
+	Sequence-based and timestamp-based mechanisms are supported.
 
-	Sequence-based conflict resolution selects the document that has been updated
-	the greatest number of times since the last sync: for example, if one cluster
-	has updated a document twice since the last sync, and the other cluster has
-	updated the document three times, the document updated three times is selected;
-	regardless of the specific times at which updates took place.
+	Sequence-based conflict resolution selects the document that has been
+	updated the greatest number of times since the last sync: for example, if
+	one cluster has updated a document twice since the last sync, and the other
+	cluster has updated the document three times, the document updated three
+	times is selected; regardless of the specific times at which updates took
+    place.
 
-	Timestamp-based conflict resolution selects the document with the most recent
-	timestamp: this is only supported when all clocks on all cluster-nodes have
-	been fully synchronized.
+	Timestamp-based conflict resolution selects the document with the most
+	recent timestamp: this is only supported when all clocks on all
+	cluster-nodes have been fully synchronized.
 
 --wait
 	The create bucket command is asynchronous by default. Specifying this option
@@ -151,9 +154,9 @@ of 1GB, run the following command.
 	 --password password --bucket travel-data --bucket-type memcached \
 	 --bucket-ramsize 1024
 
-To create an Ephemeral bucket named "hotel-data" synchronously, with a memory cache size
-of 256MB, flushing enabled, "nruEviction", and timestamp-based conflict resolution, run
-the following command.
+To create an Ephemeral bucket named "hotel-data" synchronously, with a memory
+cache size of 256MB, flushing enabled, "nruEviction", and timestamp-based
+conflict resolution, run the following command.
 
 	$ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
 	--password password --bucket hotel-data --bucket-type ephemeral \

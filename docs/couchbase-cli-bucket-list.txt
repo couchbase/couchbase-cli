@@ -55,8 +55,8 @@ To list all buckets in the cluster, run the following command.
 DISCUSSION
 ----------
 
-In the output, RAM figures are in bytes. The "membase" bucketType signifies a Couchbase bucket. The
-authType can be either "sasl" or "none".
+In the output, RAM figures are in bytes. The "membase" bucketType signifies a
+Couchbase bucket. The authType can be either "sasl" or "none".
 
 ENVIRONMENT AND CONFIGURATION VARIABLES
 ---------------------------------------

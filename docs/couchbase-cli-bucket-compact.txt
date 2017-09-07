@@ -15,10 +15,10 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Starts compaction of view index and data files for a specified bucket. To compact
-view index files only, specify the --view-only option. To compact data files only,
-specify the --data-only option. Only Couchbase buckets can be compacted: Ephemeral
-and Memcached buckets cannot be compacted.
+Starts compaction of view index and data files for a specified bucket. To
+compact view index files only, specify the --view-only option. To compact data
+files only, specify the --data-only option. Only Couchbase buckets can be
+compacted: Ephemeral and Memcached buckets cannot be compacted.
 
 OPTIONS
 -------
