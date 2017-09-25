@@ -874,7 +874,6 @@ class BucketList(Subcommand):
             for bucket in result:
                 print '%s' % bucket['name']
                 print ' bucketType: %s' % bucket['bucketType']
-                print ' authType: %s' % bucket['authType']
                 print ' numReplicas: %s' % bucket['replicaNumber']
                 print ' ramQuota: %s' % bucket['quota']['ram']
                 print ' ramUsed: %s' % bucket['basicStats']['memUsed']

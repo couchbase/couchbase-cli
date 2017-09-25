@@ -559,7 +559,6 @@ class ClusterManager(object):
             return None ["The bucket memory quota is required when creating a bucket"]
 
         params = { "name": name,
-                   "authType": "sasl",
                    "bucketType": bucket_type,
                    "ramQuotaMB": memory_quota }
 
