@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 08/01/2017
+.\"      Date: 09/07/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,7 +28,7 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-couchbase-cli \- A Couchbase cluster management utility
+couchbase-cli \- The Couchbase cluster management utility\&.
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -120,11 +120,6 @@ Failover a server in the cluster\&.
 Manage server groups\&.
 .RE
 .PP
-\fBcouchbase-cli-help\fR(1)
-.RS 4
-Show extended couchbase\-cli help\&.
-.RE
-.PP
 \fBcouchbase-cli-host-list\fR(1)
 .RS 4
 Lists all hosts in the cluster\&.
@@ -133,6 +128,11 @@ Lists all hosts in the cluster\&.
 \fBcouchbase-cli-node-init\fR(1)
 .RS 4
 Initializes a node\&.
+.RE
+.PP
+\fBcouchbase-cli-rebalance\fR(1)
+.RS 4
+Rebalances data across nodes in a cluster\&.
 .RE
 .PP
 \fBcouchbase-cli-rebalance-status\fR(1)
@@ -145,24 +145,19 @@ Show the current rebalance status\&.
 Stops the current rebalance task\&.
 .RE
 .PP
-\fBcouchbase-cli-rebalance\fR(1)
-.RS 4
-Rebalances data across nodes in a cluster\&.
-.RE
-.PP
 \fBcouchbase-cli-recovery\fR(1)
 .RS 4
 Recovers a previously failed over node\&.
 .RE
 .PP
+\fBcouchbase-cli-reset-admin-password\fR(1)
+.RS 4
+Resets the administrator password\&.
+.RE
+.PP
 \fBcouchbase-cli-server-add\fR(1)
 .RS 4
 Adds a server to the cluster\&.
-.RE
-.PP
-\fBcouchbase-cli-server-eshell\fR(1)
-.RS 4
-Opens a shell to talk to the cluster manager process\&.
 .RE
 .PP
 \fBcouchbase-cli-server-info\fR(1)
@@ -195,6 +190,11 @@ Modifies audit log settings\&.
 Modifies auto\-failover settings\&.
 .RE
 .PP
+\fBcouchbase-cli-setting-autoreprovision\fR(1)
+.RS 4
+Modifies auto\-reprovision settings\&.
+.RE
+.PP
 \fBcouchbase-cli-setting-cluster\fR(1)
 .RS 4
 Modifies cluster settings\&.
@@ -220,6 +220,16 @@ Modifies LDAP settings\&.
 Modifies notification settings\&.
 .RE
 .PP
+\fBcouchbase-cli-setting-password-policy\fR(1)
+.RS 4
+Modifies the password policy\&.
+.RE
+.PP
+\fBcouchbase-cli-setting-security\fR(1)
+.RS 4
+Modifies security policies\&.
+.RE
+.PP
 \fBcouchbase-cli-setting-xdcr\fR(1)
 .RS 4
 Modifies cross datacenter replication (XDCR) settings\&.
@@ -232,17 +242,17 @@ Manage SSL certificates\&.
 .PP
 \fBcouchbase-cli-user-manage\fR(1)
 .RS 4
-Manage the read\-only user\&.
+Manage RBAC users\&.
 .RE
 .PP
 \fBcouchbase-cli-xdcr-replicate\fR(1)
 .RS 4
-Creates a replication between two datacenters\&.
+Manages XDCR cluster references\&.
 .RE
 .PP
 \fBcouchbase-cli-xdcr-setup\fR(1)
 .RS 4
-Manage references to remote clusters\&.
+Manages XDCR replications\&.
 .RE
 .SH "HOST FORMATS"
 .sp

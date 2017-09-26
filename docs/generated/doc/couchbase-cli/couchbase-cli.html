@@ -739,7 +739,7 @@ couchbase-cli(1) Manual Page
 <h2>NAME</h2>
 <div class="sectionbody">
 <p>couchbase-cli -
-   A Couchbase cluster management utility
+   The Couchbase cluster management utility.
 </p>
 </div>
 </div>
@@ -756,7 +756,8 @@ couchbase-cli(1) Manual Page
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>The couchbase-cli script is the main command line interface for Couchbase cluster management.</p></div>
+<div class="paragraph"><p>The couchbase-cli script is the main command line interface for Couchbase
+cluster management.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -899,14 +900,6 @@ couchbase-cli(1) Manual Page
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-help.html">couchbase-cli-help(1)</a>
-</dt>
-<dd>
-<p>
-        Show extended couchbase-cli help.
-</p>
-</dd>
-<dt class="hdlist1">
 <a href="couchbase-cli-host-list.html">couchbase-cli-host-list(1)</a>
 </dt>
 <dd>
@@ -920,6 +913,14 @@ couchbase-cli(1) Manual Page
 <dd>
 <p>
         Initializes a node.
+</p>
+</dd>
+<dt class="hdlist1">
+<a href="couchbase-cli-rebalance.html">couchbase-cli-rebalance(1)</a>
+</dt>
+<dd>
+<p>
+        Rebalances data across nodes in a cluster.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -939,14 +940,6 @@ couchbase-cli(1) Manual Page
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-rebalance.html">couchbase-cli-rebalance(1)</a>
-</dt>
-<dd>
-<p>
-        Rebalances data across nodes in a cluster.
-</p>
-</dd>
-<dt class="hdlist1">
 <a href="couchbase-cli-recovery.html">couchbase-cli-recovery(1)</a>
 </dt>
 <dd>
@@ -955,19 +948,19 @@ couchbase-cli(1) Manual Page
 </p>
 </dd>
 <dt class="hdlist1">
+<a href="couchbase-cli-reset-admin-password.html">couchbase-cli-reset-admin-password(1)</a>
+</dt>
+<dd>
+<p>
+        Resets the administrator password.
+</p>
+</dd>
+<dt class="hdlist1">
 <a href="couchbase-cli-server-add.html">couchbase-cli-server-add(1)</a>
 </dt>
 <dd>
 <p>
         Adds a server to the cluster.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-server-eshell.html">couchbase-cli-server-eshell(1)</a>
-</dt>
-<dd>
-<p>
-        Opens a shell to talk to the cluster manager process.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1019,6 +1012,14 @@ couchbase-cli(1) Manual Page
 </p>
 </dd>
 <dt class="hdlist1">
+<a href="couchbase-cli-setting-autoreprovision.html">couchbase-cli-setting-autoreprovision(1)</a>
+</dt>
+<dd>
+<p>
+        Modifies auto-reprovision settings.
+</p>
+</dd>
+<dt class="hdlist1">
 <a href="couchbase-cli-setting-cluster.html">couchbase-cli-setting-cluster(1)</a>
 </dt>
 <dd>
@@ -1059,6 +1060,22 @@ couchbase-cli(1) Manual Page
 </p>
 </dd>
 <dt class="hdlist1">
+<a href="couchbase-cli-setting-password-policy.html">couchbase-cli-setting-password-policy(1)</a>
+</dt>
+<dd>
+<p>
+        Modifies the password policy.
+</p>
+</dd>
+<dt class="hdlist1">
+<a href="couchbase-cli-setting-security.html">couchbase-cli-setting-security(1)</a>
+</dt>
+<dd>
+<p>
+        Modifies security policies.
+</p>
+</dd>
+<dt class="hdlist1">
 <a href="couchbase-cli-setting-xdcr.html">couchbase-cli-setting-xdcr(1)</a>
 </dt>
 <dd>
@@ -1079,7 +1096,7 @@ couchbase-cli(1) Manual Page
 </dt>
 <dd>
 <p>
-        Manage the read-only user.
+        Manage RBAC users.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1087,7 +1104,7 @@ couchbase-cli(1) Manual Page
 </dt>
 <dd>
 <p>
-        Creates a replication between two datacenters.
+        Manages XDCR cluster references.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1095,7 +1112,7 @@ couchbase-cli(1) Manual Page
 </dt>
 <dd>
 <p>
-        Manage references to remote clusters.
+        Manages XDCR replications.
 </p>
 </dd>
 </dl></div>
@@ -1152,7 +1169,7 @@ a port other that 8091.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-04-13 18:12:51 PDT
+Last updated 2017-09-07 13:50:22 PDT
 </div>
 </div>
 </body>

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-bucket-delete
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 08/01/2017
+.\"      Date: 09/07/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCK" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCK" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,7 +28,7 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-couchbase-cli-bucket-delete \- Delete a Couchbase data bucket
+couchbase-cli-bucket-delete \- Delete a bucket
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -37,7 +37,7 @@ couchbase-cli-bucket-delete \- Delete a Couchbase data bucket
 .fi
 .SH "DESCRIPTION"
 .sp
-Deletes a bucket in the cluster\&. When the bucket is deleted all indexes on that bucket will also be deleted\&.
+Deletes a bucket in the cluster\&. When the bucket is deleted, all indexes on the bucket are also deleted\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
@@ -99,7 +99,7 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-To delete a bucket named "travel\-data" run the command below\&.
+To delete a bucket named "travel\-data", run the command below\&.
 .sp
 .if n \{\
 .RS 4

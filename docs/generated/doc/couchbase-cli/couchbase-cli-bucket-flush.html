@@ -739,7 +739,7 @@ couchbase-cli-bucket-flush(1) Manual Page
 <h2>NAME</h2>
 <div class="sectionbody">
 <p>couchbase-cli-bucket-flush -
-   Flush a Couchbase data bucket
+   Flush a bucket
 </p>
 </div>
 </div>
@@ -757,9 +757,9 @@ couchbase-cli-bucket-flush(1) Manual Page
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Deletes all data in a bucket. All indexes and bucket configuration will remain
-unchanged. This operation will not delete the actual bucket, it will only delete
-the data it contains.</p></div>
+<div class="paragraph"><p>Deletes all data from a bucket. The bucket itself is not deleted; and all
+its indexes and configuration-details remain unchanged. Applies to
+Couchbase, Ephemeral, and Memcached buckets.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -848,7 +848,7 @@ a port other that 8091.</p></div>
 <div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>To flush a bucket named "travel-data" run the command below.</p></div>
+<div class="paragraph"><p>To flush a bucket named "travel-data", run the following command.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli bucket-flush -c 192.168.1.5:8091 --username Administrator \
@@ -890,7 +890,7 @@ a port other that 8091.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-01-03 11:42:24 PST
+Last updated 2017-09-07 13:23:04 PDT
 </div>
 </div>
 </body>

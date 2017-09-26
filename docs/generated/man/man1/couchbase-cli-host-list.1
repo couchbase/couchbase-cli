@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-host-list
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 08/01/2017
+.\"      Date: 09/07/2017
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-HOST" "1" "08/01/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-HOST" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -37,7 +37,7 @@ couchbase-cli-host-list \- Lists all hosts in the cluster
 .fi
 .SH "DESCRIPTION"
 .sp
-Displays a list of hostnames corresponding to each node in the cluster\&. Each hostname is printed to stdout on its own line\&. The hostname may or may not contain a port number\&. If no port number is part of the hostname then the port number is assumed to be 8091\&.
+Displays a list of hostnames corresponding to each node in the cluster\&. Each hostname is printed to stdout on its own line\&. The hostname may or may not contain a port number\&. If the port number is not a part of the hostname, then the port number is assumed to be 8091\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
@@ -94,7 +94,7 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-To get a list of hostnames for each node in the cluster you can run the command below\&.
+To get a list of hostnames for each node in the cluster run the following command:
 .sp
 .if n \{\
 .RS 4
