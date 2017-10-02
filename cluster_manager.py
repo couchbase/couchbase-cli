@@ -696,7 +696,7 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
-    def set_data_paths(self, data_path, index_path):
+    def set_data_paths(self, data_path, index_path, cbas_path):
         url = self.hostname + '/nodes/self/controller/settings'
         params = dict()
 
@@ -705,6 +705,9 @@ class ClusterManager(object):
 
         if index_path is not None:
             params["index_path"] = index_path
+
+        if cbas_path is not None:
+            params["cbas_path"] = cbas_path
 
         return self._post_form_encoded(url, params)
 
