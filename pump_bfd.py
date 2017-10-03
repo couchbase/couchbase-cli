@@ -131,7 +131,7 @@ class BFD:
                             json_data[str_index] = output_data[i]
                     elif isinstance(json_data[str_index], list):
                         #For each vbucket, we want to get the superset of its references
-                        if len(json_data[str_index]) < len(output_data[i]):
+                        if len(json_data[str_index]) <= len(output_data[i]):
                             json_data[str_index] = output_data[i]
                 else:
                     #Bookkeeping the incoming one.
