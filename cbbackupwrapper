@@ -46,6 +46,7 @@ See the cbrestorewrapper.py script for restoring backups made with this script."
 
 bucketList = []
 vbucketList = []
+backup_complete = False
 process_queue = Queue.Queue()
 lock = threading.Lock()
 
@@ -208,7 +209,10 @@ def getBuckets(node, rest_port, username, password):
 def consumer(id, verbose):
     while True:
         try:
-            commandline = process_queue.get(block=True, timeout=10)
+            if backup_complete:
+                return
+
+            commandline = process_queue.get(block=True, timeout=2)
             if verbose:
                 with lock:
                     print "T(%s): %s" %(id, commandline)
@@ -315,10 +319,12 @@ if __name__ == '__main__':
     if args.ssl:
         ssl_option = ' -s '
 
+    worker_threads = []
     for i in range(int(args.parallelism)):
         t = threading.Thread(target=consumer, args=(i, args.verbose,))
         t.daemon = True
         t.start()
+        worker_threads.append(t)
 
     # Group the number of vbuckets per process
     print 'Waiting for the backup to complete...'
@@ -334,6 +340,10 @@ if __name__ == '__main__':
         process_queue.put(command_line)
 
     process_queue.join()
+    backup_complete = True
+
+    for worker in worker_threads:
+        worker.join()
 
     with lock:
         print 'SUCCESSFULLY COMPLETED!'
