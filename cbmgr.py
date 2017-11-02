@@ -556,11 +556,12 @@ class ClusterInit(Subcommand):
         _exitIfErrors(errors)
 
         # Set the index storage mode
+        index_default = "plasma" if enterprise else "forestdb"
         if not opts.index_storage_mode and 'index' in services.split(','):
             opts.index_storage_mode = "default"
 
         if opts.index_storage_mode:
-            param = index_storage_mode_to_param(opts.index_storage_mode)
+            param = index_storage_mode_to_param(opts.index_storage_mode, index_default)
             _, errors = rest.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
