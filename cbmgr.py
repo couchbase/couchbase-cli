@@ -59,7 +59,7 @@ def process_services(services, is_enterprise):
         #backward compatible when using ";" as separator
         sep = ";"
     svc_list = list(set([w.strip() for w in services.split(sep)]))
-    svc_candidate = ["data", "index", "query", "fts", "analytics"]
+    svc_candidate = ["data", "index", "query", "fts", "eventing", "analytics"]
     for svc in svc_list:
         if svc not in svc_candidate:
             return None, ["`%s` is not a valid service" % svc]
@@ -562,8 +562,12 @@ class ClusterInit(Subcommand):
         if not opts.index_storage_mode and 'index' in services.split(','):
             opts.index_storage_mode = "default"
 
+        default = "plasma"
+        if not enterprise:
+            default = "forestdb"
+
         if opts.index_storage_mode:
-            param = index_storage_mode_to_param(opts.index_storage_mode)
+            param = index_storage_mode_to_param(opts.index_storage_mode, default)
             _, errors = rest.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
@@ -1561,7 +1565,7 @@ class ServerAdd(Subcommand):
 
         # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
         default = "plasma"
-        if opts.storage_mode == "default" and settings['storageMode'] == "forestdb":
+        if opts.storage_mode == "default" and settings['storageMode'] == "forestdb" or not enterprise:
             default = "forestdb"
 
         if opts.storage_mode:
@@ -2282,6 +2286,9 @@ class SettingIndex(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
+        enterprise, errors = rest.is_enterprise()
+        _exitIfErrors(errors)
+
         if opts.max_rollback is None and opts.stable_snap is None \
             and opts.mem_snap is None and opts.storage_mode is None \
             and opts.threads is None and opts.log_level is None:
@@ -2292,7 +2299,7 @@ class SettingIndex(Subcommand):
 
         # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
         default = "plasma"
-        if opts.storage_mode == "default" and settings['storageMode'] == "forestdb":
+        if opts.storage_mode == "default" and settings['storageMode'] == "forestdb" or not enterprise:
             default = "forestdb"
 
         opts.storage_mode = index_storage_mode_to_param(opts.storage_mode, default)

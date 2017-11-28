@@ -22,7 +22,8 @@ OPTIONS
 include::part-common-options.txt[]
 
 --disable-http-ui::
-	Disables the Couchbase Administration Console over HTTP.
+	Disables the Couchbase Administration Console over HTTP. This will not
+	disable the HTTPS UI.
 
 include::part-host-formats.txt[]
 
