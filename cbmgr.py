@@ -6,6 +6,7 @@ import json
 import os
 import random
 import re
+import socket
 import string
 import subprocess
 import sys
@@ -71,6 +72,13 @@ def process_services(services, is_enterprise):
     for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"]]:
         services = services.replace(old, new)
     return services, None
+
+def is_ipv6_raw_addr(addr):
+    try:
+        socket.inet_pton(socket.AF_INET6, addr)
+        return True
+    except socket.error:
+        return False
 
 def find_subcommands():
     """Finds all subcommand classes"""
@@ -195,7 +203,7 @@ class CBHostAction(Action):
 
         scheme = parsed.scheme
         port = parsed.port
-        hostname = parsed.hostname
+        noport = parsed.port == None
         if scheme in ["http", "couchbase"]:
             if port == None:
                 port = 8091
@@ -209,7 +217,14 @@ class CBHostAction(Action):
         else:
             raise ArgumentError(self, "%s is not an accepted scheme" % scheme)
 
-        setattr(namespace, self.dest, (scheme + "://" + hostname + ":" + str(port)))
+        hostname = parsed.netloc
+        if is_ipv6_raw_addr(parsed.netloc):
+            hostname = "[" + hostname + "]"
+
+        if noport:
+            setattr(namespace, self.dest, (scheme + "://" + hostname + ":" + str(port)))
+        else:
+            setattr(namespace, self.dest, (scheme + "://" + hostname))
 
 
 class CBEnvAction(Action):
