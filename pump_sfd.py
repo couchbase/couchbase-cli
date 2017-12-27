@@ -17,6 +17,7 @@ from collections import defaultdict
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024
 SFD_REV_META = ">QIIBB" # cas, exp, flg, flex_meta, dtype
+SFD_REV_META_PRE_4_6 = ">QIIBBB" # cas, exp, flg, flex_meta, dtype, conf_res
 SFD_REV_SEQ = ">Q"
 SFD_DB_SEQ = ">Q"
 SFD_RE = "^([0-9]+)\\.couch\\.([0-9]+)$"
@@ -214,11 +215,17 @@ class SFDSource(pump.Source):
                     cmd = couchbaseConstants.CMD_TAP_MUTATION
                     val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
                 try:
-                    cas, exp, flg, flex_meta, dtype = struct.unpack(SFD_REV_META, doc_info.revMeta)
+                    if len(doc_info.revMeta) == 18:
+                        conf_res = 0
+                        cas, exp, flg, flex_meta, dtype = struct.unpack(SFD_REV_META, doc_info.revMeta)
+                    elif len(doc_info.revMeta) == 19:
+                        cas, exp, flg, flex_meta, dtype, conf_res = struct.unpack(SFD_REV_META_PRE_4_6, doc_info.revMeta)
+                    else:
+                        raise ValueError('Does not match pre- or post-4.6 format')
                     meta = doc_info.revSequence
                     seqno = doc_info.sequence
                     nmeta = 0
-                    msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, 0)
+                    msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res)
                     abatch[0].append(msg, len(val))
                 except Exception, e:
                     self.queue.put(("error: could not read couchstore file due to unsupported file format version;"
