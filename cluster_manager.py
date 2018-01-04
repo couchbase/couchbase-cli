@@ -261,13 +261,14 @@ class ClusterManager(object):
         params = { "newPassword": password }
         return self._post_form_encoded(url, params)
 
-    def set_pools_default(self, data_ramsize, index_ramsize, fts_ramsize, cluster_name):
+    def set_pools_default(self, data_ramsize, index_ramsize, fts_ramsize, cbas_ramsize, cluster_name):
         """ Sets Couchbase RAM Quotas for various services
 
         Options:
         data_ramsize - An integer denoting the size in MB, None skips the parameter
         index_ramsize - An integer denoting the size in MB, None skips the parameter
         fts_ramsize - An integer denoting the size in MB, None skips the parameter
+        cbas_ramsize - An integer denoting the size in MB, None skips the parameter
         cluster_name - Sets a name for the cluster, None skips the parameter
         """
         url = self.hostname + '/pools/default'
@@ -278,6 +279,8 @@ class ClusterManager(object):
             params["indexMemoryQuota"] = index_ramsize
         if fts_ramsize is not None:
             params["ftsMemoryQuota"] = fts_ramsize
+        if cbas_ramsize is not None:
+            params["cbasMemoryQuota"] = cbas_ramsize
         if cluster_name is not None:
             params["clusterName"] = cluster_name
 
@@ -692,7 +695,7 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
-    def set_data_paths(self, data_path, index_path):
+    def set_data_paths(self, data_path, index_path, cbas_path):
         url = self.hostname + '/nodes/self/controller/settings'
         params = dict()
 
@@ -701,6 +704,9 @@ class ClusterManager(object):
 
         if index_path is not None:
             params["index_path"] = index_path
+
+        if cbas_path is not None:
+            params["cbas_path"] = cbas_path
 
         return self._post_form_encoded(url, params)
 
