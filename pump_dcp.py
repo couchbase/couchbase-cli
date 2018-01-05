@@ -473,7 +473,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
         """Return previously connected dcp conn."""
 
         if not self.dcp_conn:
-            host = self.source_node['hostname'].split(':')[0]
+            host, _  = pump.hostport(self.source_node['hostname'])
             port = self.source_node['ports']['direct']
             username = self.opts.username
             password = self.opts.password

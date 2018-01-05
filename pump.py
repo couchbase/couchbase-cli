@@ -942,8 +942,8 @@ def parse_spec(opts, spec, port):
         netloc = spec.split('://')[-1].split('/')[0]
 
     pair = netloc.split('@') # [ "user:pwsd", "host:port" ].
-    host = (pair[-1] + ":" + str(port)).split(':')[0]
-    port = (pair[-1] + ":" + str(port)).split(':')[1]
+    host = p.hostname
+    port = p.port
     try:
        val = int(port)
     except ValueError:
@@ -1093,13 +1093,17 @@ def mkdirs(targetpath):
             return "Cannot create upper directories for file:%s" % targetpath
     return 0
 
-def hostport(hoststring, default_port=8091):
-    try:
-        host, port = hoststring.split(":")
-        port = int(port)
-    except ValueError:
-        host = hoststring
-        port = default_port
+def hostport(hoststring, port=11210):
+    if hoststring.startswith('['):
+        matches = re.match(r'^\[([^\]]+)\](:(\d+))?$', hoststring)
+    else:
+        matches = re.match(r'^([^:]+)(:(\d+))?$', hoststring)
+    if matches:
+        # The host is the first group
+        host = matches.group(1)
+        # Optional port is the 3rd group
+        if matches.group(3):
+            port = int(matches.group(3))
     return host, port
 
 def get_mcd_conn(host, port, username, password, bucket):
