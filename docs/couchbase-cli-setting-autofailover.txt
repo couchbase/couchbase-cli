@@ -11,6 +11,8 @@ SYNOPSIS
 'couchbase-cli setting-autofailover' [--cluster <url>] [--username <user>]
 	  [--password <password>] [--enable-auto-failover <num>]
 	  [--auto-failover-timeout <seconds>]
+	  [--enable-failover-on-data-disk-issues <num>]
+	  [--failover-data-disk-period <seconds>]
 
 DESCRIPTION
 -----------
@@ -29,6 +31,9 @@ auto-failover feature. This feature allows the cluster manager to automatically
 fail over down nodes over and bring the cluster back to a healthy state as
 quickly as possible.
 
+In Couchbase Server Enterprise Edition nodes can also be automatically failed
+over when the Data Service reports sustained disk I/O failures.
+
 OPTIONS
 -------
 
@@ -43,6 +48,22 @@ include::part-common-options.txt[]
 	be unresponsive before the cluster manager considers the node to be down and
 	fails it over. The minimum auto-failover timeout is 30 seconds in Couchbase
 	Community Edition and 5 seconds in Couchbase Enterprise Edition.
+
+--enable-failover-on-data-disk-issues <num>::
+	Specifies whether or not autofailover on Data Service disk issues is enabled.
+	Set this option to "1" to enable failover on Data Service disk issue or
+	"0" to disable it. "--failover-data-disk-period" needs to be set at the
+	same time when enabling this option. This feature is only avliable in
+	Couchbase Enterprise Edition.
+
+--failover-data-disk-period <seconds>::
+	Specifies the failover data disk period. This is the period of time over
+	which the Data Service is checked for potential sustained Disk I/O
+	failures. The Data Service is checked every second for disk failures. If
+	60% of the checks during that time period report disk failures, then the
+	node may be automatically failed over.
+	"--enable-failover-on-data-disk-issues" must be set when this option is
+	used. The failover data disk period ranges from 5 to 3600 seconds.
 
 include::part-host-formats.txt[]
 
@@ -60,6 +81,14 @@ command.
 
 	$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
 	 --password password --enable-auto-failover 1 --auto-failover-timeout 120
+
+To enable autofailover with a 120 second auto-failover timeout and to enable
+failover on Data Service Disk issue with a 10 second data disk period run the
+following command.
+
+	$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
+	 --password password --enable-auto-failover 1 --auto-failover-timeout 120 \
+	 --enable-failover-on-data-disk-issues 1 --auto-failover-timeout 10
 
 To disable autofailover run the following
 command.
