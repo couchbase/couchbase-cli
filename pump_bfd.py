@@ -485,9 +485,9 @@ class BFDSource(BFD, pump.Source):
                     cursor = db.cursor()
                     cursor.execute(s[ver])
 
-                    self.cursor_db = (cursor, db)
+                    self.cursor_db = (cursor, db, ver)
 
-                cursor, db = self.cursor_db
+                cursor, db, ver = self.cursor_db
 
                 row = cursor.fetchone()
                 if row:
