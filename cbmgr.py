@@ -677,6 +677,8 @@ class BucketCreate(Subcommand):
         group.add_argument("--conflict-resolution", dest="conflict_resolution", default=None,
                            choices=["sequence", "timestamp"], metavar="<type>",
                            help="The XDCR conflict resolution type (timestamp or sequence)")
+        group.add_argument("--max-ttl", dest="max_ttl", default=None, type=(int), metavar="<seconds>",
+                           help="Set the maximum TTL the bucket will accept")
         group.add_argument("--enable-flush", dest="enable_flush", metavar="<0|1>",
                            choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
         group.add_argument("--enable-index-replica", dest="replica_indexes", metavar="<0|1>",
@@ -689,6 +691,12 @@ class BucketCreate(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
+        enterprise, errors = rest.is_enterprise()
+        _exitIfErrors(errors)
+
+        if opts.max_ttl and not enterprise:
+            _exitIfErrors(["Maximum TTL can only be configured on enterprise edition"])
+
         if opts.type == "memcached":
             if opts.replica_count is not None:
                 _exitIfErrors(["--bucket-replica cannot be specified for a memcached bucket"])
@@ -700,6 +708,8 @@ class BucketCreate(Subcommand):
                 _exitIfErrors(["--bucket-priority cannot be specified for a memcached bucket"])
             if opts.eviction_policy is not None:
                 _exitIfErrors(["--bucket-eviction-policy cannot be specified for a memcached bucket"])
+            if opts.max_ttl is not None:
+                _exitIfErrors(["--max-ttl cannot be specified for a memcached bucket"])
         elif opts.type == "ephemeral":
             if opts.eviction_policy in ["valueOnly", "fullEviction"]:
                 _exitIfErrors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
@@ -726,7 +736,7 @@ class BucketCreate(Subcommand):
                                        opts.replica_indexes, opts.port, priority,
                                        conflict_resolution_type,
                                        opts.enable_flush, conflict_resolution_type,
-                                       opts.wait)
+                                       opts.max_ttl, opts.wait)
         _exitIfErrors(errors)
         _success("Bucket created")
 
@@ -790,6 +800,8 @@ class BucketEdit(Subcommand):
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
                            choices=["valueOnly", "fullEviction"],
                            help="The bucket eviction policy (valueOnly or fullEviction)")
+        group.add_argument("--max-ttl", dest="max_ttl", default=None, type=(int), metavar="<seconds>",
+                           help="Set the maximum TTL the bucket will accept")
         group.add_argument("--enable-flush", dest="enable_flush", metavar="<0|1>",
                            choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
 
@@ -798,8 +810,15 @@ class BucketEdit(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
+        enterprise, errors = rest.is_enterprise()
+        _exitIfErrors(errors)
+
+        if opts.max_ttl and not enterprise:
+            _exitIfErrors(["Maximum TTL can only be configured on enterprise edition"])
+
         bucket, errors = rest.get_bucket(opts.bucket_name)
         _exitIfErrors(errors)
+
 
         if "bucketType" in bucket and bucket["bucketType"] == "memcached":
             if opts.memory_quota is not None:
@@ -810,6 +829,8 @@ class BucketEdit(Subcommand):
                 _exitIfErrors(["--bucket-priority cannot be specified for a memcached bucket"])
             if opts.eviction_policy is not None:
                 _exitIfErrors(["--bucket-eviction-policy cannot be specified for a memcached bucket"])
+            if opts.max_ttl is not None:
+                _exitIfErrors(["--max-ttl cannot be specified for a memcached bucket"])
 
         priority = None
         if opts.priority is not None:
@@ -820,7 +841,7 @@ class BucketEdit(Subcommand):
 
         _, errors = rest.edit_bucket(opts.bucket_name, opts.memory_quota,
                                      opts.eviction_policy, opts.replica_count,
-                                     priority, opts.enable_flush)
+                                     priority, opts.enable_flush, opts.max_ttl)
         _exitIfErrors(errors)
 
         _success("Bucket edited")

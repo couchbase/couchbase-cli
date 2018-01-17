@@ -120,6 +120,15 @@ include::part-common-options.txt[]
 	recent timestamp: this is only supported when all clocks on all
 	cluster-nodes have been fully synchronized.
 
+--max-ttl <seconds>::
+	Specifies the maximum TTL (time-to-live) for all documents in
+	bucket in seconds. If enabled and a document is mutated with no TTL
+	or a TTL greater than than the maximum, its TTL will be set to the
+	maximum TTL. Setting this option to 0 disables the use of max-TTL
+	and the largest TTL that is allowed is 2147483647. This option is
+	only available for Couchbase and Ephemeral buckets in Couchbase
+	Enterprise Edition.
+
 --wait
 	The create bucket command is asynchronous by default. Specifying this option
 	makes the operation synchronous: so that the command returns only after the

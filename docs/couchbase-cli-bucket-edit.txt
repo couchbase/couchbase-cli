@@ -89,6 +89,14 @@ include::part-common-options.txt[]
 	To disable, set the value of this option to "0". By default, view index
 	replication is disabled. There may be at most one replica view index.
 
+--max-ttl <seconds>::
+	Specifies the maximum TTL (time-to-live) for all documents in
+	bucket in seconds. If enabled and a document is mutated with no TTL
+	or a TTL greater than than the maximum, its TTL will be set to the
+	maximum TTL. Setting this option to 0 disables the use of max-TTL
+	and the largest TTL that is allowed is 2147483647. This option is
+	only available for Couchbase and Ephemeral buckets in Couchbase
+	Enterprise Edition.
 
 include::part-host-formats.txt[]
 

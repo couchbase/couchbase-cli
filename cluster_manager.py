@@ -551,7 +551,7 @@ class ClusterManager(object):
     def create_bucket(self, name, bucket_type, memory_quota,
                       eviction_policy, replicas, replica_indexes, port,
                       threads_number, conflict_resolution, flush_enabled,
-                      timestamps, sync, timeout=60):
+                      timestamps, max_ttl, sync, timeout=60):
         url = self.hostname + '/pools/default/buckets'
 
         if name is None:
@@ -579,6 +579,8 @@ class ClusterManager(object):
             params["conflictResolutionType"] = conflict_resolution
         if flush_enabled is not None:
             params["flushEnabled"] = flush_enabled
+        if max_ttl is not None:
+            params["maxTTL"] = max_ttl
 
         result, errors = self._post_form_encoded(url, params)
         if errors:
@@ -613,7 +615,7 @@ class ClusterManager(object):
 
 
     def edit_bucket(self, name, memory_quota, eviction_policy,
-                    replicas, threads_number, flush_enabled):
+                    replicas, threads_number, flush_enabled, max_ttl):
         url = self.hostname + '/pools/default/buckets/' + name
 
         if name is None:
@@ -630,6 +632,8 @@ class ClusterManager(object):
             params["threadsNumber"] = threads_number
         if flush_enabled is not None:
             params["flushEnabled"] = flush_enabled
+        if max_ttl is not None:
+            params["maxTTL"] = max_ttl
 
         return self._post_form_encoded(url, params)
 
