@@ -1970,6 +1970,10 @@ class SettingAutofailover(Subcommand):
                            choices=["0", "1"], help="Enable/disable auto-failover")
         group.add_argument("--auto-failover-timeout", dest="timeout", metavar="<seconds>",
                            type=(int), help="The auto-failover timeout")
+        group.add_argument("--enable-failover-of-server-groups", dest="enableFailoverOfServerGroups", metavar="<1|0>",
+                           choices=["0", "1"], help="Enable/disable auto-failover of server Groups")
+        group.add_argument("--max-failovers ", dest="maxFailovers", metavar="<1|2|3>", choices=["1", "2", "3"],
+                           help="Maximum number of times an auto-failover event can happen")
         group.add_argument("--enable-failover-on-data-disk-issues", dest="enableFailoverOnDataDiskIssues",
                            metavar="<1|0>", choices=["0", "1"],
                            help="Enable/disable auto-failover when the Data Service reports disk issues")
@@ -1993,34 +1997,46 @@ class SettingAutofailover(Subcommand):
         elif opts.enableFailoverOnDataDiskIssues == "0":
             opts.enableFailoverOnDataDiskIssues = "false"
 
+        if opts.enableFailoverOfServerGroups == "1":
+            opts.enableFailoverOfServerGroups = "true"
+        elif opts.enableFailoverOfServerGroups == "0":
+            opts.enableFailoverOfServerGroups = "false"
+
         enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
 
-        if not (opts.enabled or opts.timeout or opts.enableFailoverOnDataDiskIssues
-                or opts.failoverOnDataDiskPeriod):
+        if not enterprise:
+            if opts.enableFailoverOfServerGroups:
+                _exitIfErrors(["--enable-failover-of-server-groups can only be configured on enterprise edition"])
+            if opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod:
+                _exitIfErrors(["Auto failover on Data Service disk issues can only be configured on enterprise edition"])
+            if opts.maxFailovers:
+                _exitIfErrors(["--max-count can only be configured on enterprise edition"])
+
+        if not any([opts.enabled, opts.timeout, opts.enableFailoverOnDataDiskIssues, opts.failoverOnDataDiskPeriod,
+                    opts.enableFailoverOfServerGroups, opts.maxFailovers]):
             _exitIfErrors(["No settings specified to be changed"])
-
-        if (opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod) and not enterprise:
-            _exitIfErrors(["Auto failover on Data Service disk issues can only be configured on enterprise edition"])
-
-        if ((opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod)
-                and (opts.enabled  == "false" or opts.enabled is None )):
-            _exitIfErrors(["--enable-auto-failover must be set to 1 when auto-failover on Data Service disk issues"
-                           " settings are being configured"])
 
         if ((opts.enableFailoverOnDataDiskIssues is None or opts.enableFailoverOnDataDiskIssues == "false")
             and opts.failoverOnDataDiskPeriod):
             _exitIfErrors(["--enable-failover-on-data-disk-issues must be set to 1 when auto-failover Data"
                            " Service disk period has been set"])
 
-        if  opts.enableFailoverOnDataDiskIssues and opts.failoverOnDataDiskPeriod is None:
+        if opts.enableFailoverOnDataDiskIssues and opts.failoverOnDataDiskPeriod is None:
             _exitIfErrors(["--failover-data-disk-period must be set when auto-failover on Data Service disk"
                            " is enabled"])
 
-        if (opts.enabled is None or opts.enabled == "false") and opts.timeout:
-            _warning("Timeout specified will not take affect because auto-failover is being disabled")
+        if opts.enabled == "false" or opts.enabled is None:
+            if opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod:
+                _exitIfErrors(["--enable-auto-failover must be set to 1 when auto-failover on Data Service disk issues"
+                               " settings are being configured"])
+            if opts.enableFailoverOfServerGroups:
+                _exitIfErrors(["--enable-auto-failover must be set to 1 when enabling auto-failover of Server Groups"])
+            if opts.timeout:
+                _warning("Timeout specified will not take affect because auto-failover is being disabled")
 
-        _, errors = rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.enableFailoverOnDataDiskIssues,
+        _, errors = rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.enableFailoverOfServerGroups,
+                                                   opts.maxFailovers, opts.enableFailoverOnDataDiskIssues,
                                                    opts.failoverOnDataDiskPeriod)
         _exitIfErrors(errors)
 

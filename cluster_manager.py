@@ -888,8 +888,8 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def set_autofailover_settings(self, enabled, timeout, failoverOnDataDiskIssuesEnabled,
-                                  failoverOnDataDiskIssuesTimePeriod):
+    def set_autofailover_settings(self, enabled, timeout, failoverOfServerGroups, maxCount,
+                                  failoverOnDataDiskIssuesEnabled, failoverOnDataDiskIssuesTimePeriod):
         url = self.hostname + '/settings/autoFailover'
 
         params = dict()
@@ -897,8 +897,12 @@ class ClusterManager(object):
             params["enabled"] = enabled
         if timeout:
             params["timeout"] = timeout
+        if failoverOfServerGroups:
+            params["failoverServerGroup"] = failoverOfServerGroups
         if failoverOnDataDiskIssuesEnabled:
             params["failoverOnDataDiskIssues[enabled]"] = failoverOnDataDiskIssuesEnabled
+        if maxCount:
+            params["maxCount"] = maxCount
         if failoverOnDataDiskIssuesTimePeriod:
             params["failoverOnDataDiskIssues[timePeriod]"] = failoverOnDataDiskIssuesTimePeriod
 
