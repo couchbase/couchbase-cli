@@ -551,7 +551,7 @@ class ClusterManager(object):
     def create_bucket(self, name, bucket_type, memory_quota,
                       eviction_policy, replicas, replica_indexes, port,
                       threads_number, conflict_resolution, flush_enabled,
-                      max_ttl, sync, timeout=60):
+                      max_ttl, compression_mode, sync, timeout=60):
         url = self.hostname + '/pools/default/buckets'
 
         if name is None:
@@ -581,6 +581,8 @@ class ClusterManager(object):
             params["flushEnabled"] = flush_enabled
         if max_ttl is not None:
             params["maxTTL"] = max_ttl
+        if compression_mode is not None:
+            params["compressionMode"] = compression_mode
 
         result, errors = self._post_form_encoded(url, params)
         if errors:
@@ -615,7 +617,8 @@ class ClusterManager(object):
 
 
     def edit_bucket(self, name, memory_quota, eviction_policy,
-                    replicas, threads_number, flush_enabled, max_ttl):
+                    replicas, threads_number, flush_enabled, max_ttl,
+                    compression_mode):
         url = self.hostname + '/pools/default/buckets/' + name
 
         if name is None:
@@ -634,6 +637,8 @@ class ClusterManager(object):
             params["flushEnabled"] = flush_enabled
         if max_ttl is not None:
             params["maxTTL"] = max_ttl
+        if compression_mode is not None:
+            params["compressionMode"] = compression_mode
 
         return self._post_form_encoded(url, params)
 

@@ -129,6 +129,28 @@ include::part-common-options.txt[]
 	only available for Couchbase and Ephemeral buckets in Couchbase
 	Enterprise Edition.
 
+--compression-mode <mode>::
+	Specifies the compression-mode of the bucket. There are three options;
+	off, passive and active. All three modes are backwards compatible with
+	older SDKs, where Couchbase Server will automatically uncompress documents
+	for clients that do not understand the compression being used. This option
+	is only available for Couchbase and Ephemeral buckets in Couchbase
+	Enterprise Edition.
+
+	Off: Couchbase Server will only compress document values when persisting to
+	disk. This is suitable for use cases where compression could have a
+	negative impact on performance. Please note it is expected that compression
+	in most use cases will improve performance.
+
+	Passive: Documents which were compressed by a client, or read compressed
+	from disk will be stored compress in-memory. Couchbase Server will make
+	no additional attempt to compress documents that are not already compressed.
+
+	Active: Couchbase Server will actively and aggressively attempt to compress
+	documents, even if they have not been received in a compressed format. This
+	provides the benefits of compression even when the SDK clients are not
+	complicit.
+
 --wait
 	The create bucket command is asynchronous by default. Specifying this option
 	makes the operation synchronous: so that the command returns only after the
