@@ -551,7 +551,7 @@ class ClusterManager(object):
     def create_bucket(self, name, bucket_type, memory_quota,
                       eviction_policy, replicas, replica_indexes, port,
                       threads_number, conflict_resolution, flush_enabled,
-                      timestamps, max_ttl, sync, timeout=60):
+                      max_ttl, sync, timeout=60):
         url = self.hostname + '/pools/default/buckets'
 
         if name is None:

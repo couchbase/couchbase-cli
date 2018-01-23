@@ -734,8 +734,7 @@ class BucketCreate(Subcommand):
         _, errors = rest.create_bucket(opts.bucket_name, opts.type, opts.memory_quota,
                                        opts.eviction_policy, opts.replica_count,
                                        opts.replica_indexes, opts.port, priority,
-                                       conflict_resolution_type,
-                                       opts.enable_flush, conflict_resolution_type,
+                                       conflict_resolution_type, opts.enable_flush,
                                        opts.max_ttl, opts.wait)
         _exitIfErrors(errors)
         _success("Bucket created")
