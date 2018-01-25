@@ -6,7 +6,6 @@ import json
 import os
 import random
 import re
-import socket
 import string
 import subprocess
 import sys
@@ -72,13 +71,6 @@ def process_services(services, is_enterprise):
     for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"], ["analytics", "cbas"]]:
         services = services.replace(old, new)
     return services, None
-
-def is_ipv6_raw_addr(addr):
-    try:
-        socket.inet_pton(socket.AF_INET6, addr)
-        return True
-    except socket.error:
-        return False
 
 def find_subcommands():
     """Finds all subcommand classes"""
@@ -202,29 +194,24 @@ class CBHostAction(Action):
             raise ArgumentError(self, "%s is not an accepted hostname" % values)
 
         scheme = parsed.scheme
-        port = parsed.port
-        noport = parsed.port == None
+        port = None
         if scheme in ["http", "couchbase"]:
-            if port == None:
+            if not parsed.port:
                 port = 8091
             if scheme == "couchbase":
                 scheme = "http"
         elif scheme in ["https", "couchbases"]:
-            if port == None:
+            if not parsed.port:
                 port = 18091
             if scheme == "couchbases":
                 scheme = "https"
         else:
             raise ArgumentError(self, "%s is not an accepted scheme" % scheme)
 
-        hostname = parsed.netloc
-        if is_ipv6_raw_addr(parsed.netloc):
-            hostname = "[" + hostname + "]"
-
-        if noport:
-            setattr(namespace, self.dest, (scheme + "://" + hostname + ":" + str(port)))
+        if parsed.port:
+            setattr(namespace, self.dest, (scheme + "://" + parsed.netloc))
         else:
-            setattr(namespace, self.dest, (scheme + "://" + hostname))
+            setattr(namespace, self.dest, (scheme + "://" + parsed.netloc + ":" + str(port)))
 
 
 class CBEnvAction(Action):
