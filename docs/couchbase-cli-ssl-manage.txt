@@ -85,7 +85,7 @@ To get cluster certificate information run the following command.
 	$ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
 	 -p password --cluster-cert-info
 
-Note that you can also get extended cluster certificat information by adding the
+Note that you can also get extended cluster certificate information by adding the
 --extended flag as shown below.
 
 	$ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \

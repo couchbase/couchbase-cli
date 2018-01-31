@@ -32,7 +32,7 @@ include::part-common-options.txt[]
 
 --server-add <servers>::
 	A comma separated list of servers to add to the cluster. The each server in
-	the list should be indentified by a hostname or IP address.
+	the list should be identified by a hostname or IP address.
 
 --server-add-username <username>::
 	Adding a server to the cluster can only be done by a user with the

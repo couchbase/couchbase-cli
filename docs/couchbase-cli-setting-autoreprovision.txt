@@ -14,24 +14,24 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Auto-reprovisioning is used in order to prevent dataloss in ephemeral buckets
+Auto-reprovisioning is used in order to prevent data loss in ephemeral buckets
 during failure scenarios when a node crashes and restarts quickly. Under this
-scenario auto-reprovisioning ensures that an ephemeral bucket's replica vbuckets
-are prmoted to active state. This mechanism is not needed for Couchbase buckets
+scenario auto-reprovisioning ensures that an ephemeral bucket's replica vBuckets
+are promoted to active state. This mechanism is not needed for Couchbase buckets
 because a Couchbase buckets data is persisted to disk and can be loaded back
 into memory after a node restarts. Ephemeral buckets on the other hand
 completely lose their data when a node crashes and replicas must be relied upon
-in order to prevent dataloss. If ephemeral buckets are not in use this setting
+in order to prevent data loss. If ephemeral buckets are not in use this setting
 has no effect on the cluster.
 
 Auto-reprovisioning can either be enabled or disabled. If you have ephemeral
 buckets it is always recommended that auto-reprovisioning is enabled otherwise
-the cluster will experience dataloss if a node crashes or is restarted. Users
+the cluster will experience data loss if a node crashes or is restarted. Users
 can also specify the number of nodes that can be auto-reprovisioned before the
 cluster is rebalanced. An auto-reprovision event occurs if a cluster has at
 least one ephemeral bucket and a node crashes and restarts. If the number of
 crashes and restarts exceed the maximum number of nodes that can be
-auto-reprovisioned then the next crash and restart will result in dataloss for
+auto-reprovisioned then the next crash and restart will result in data loss for
 all ephemeral buckets in the cluster.
 
 When setting the max nodes parameter, note that specifying the max nodes to be
@@ -40,7 +40,7 @@ node fails and restarts the server load for the crashed node is distributed to
 the rest of the servers in the cluster. This extra load could cause the one or
 more of the remaining servers in the cluster to become overloaded and
 unresponsive leading to more failures. On the other hand specifying max nodes to
-be too small could lead to dataloss if there are many failures in the cluster at
+be too small could lead to data loss if there are many failures in the cluster at
 the same time. How this variable is set depends on the cluster size, workload,
 and configuration. However, it is always recommended that auto-reprovisioning is
 at least enabled and that max nodes is set to at least 1.

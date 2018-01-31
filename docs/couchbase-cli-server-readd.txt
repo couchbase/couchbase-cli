@@ -21,14 +21,14 @@ provides similar functionality to this command.
 
 The server-readd subcommand is used to add a server back to the cluster. This
 operation is useful after a node is failed over and also when a node is
-removed from the cluster for maintainance.
+removed from the cluster for maintenance.
 
 When a node is failed over and removed from the cluster it may be able to
 be added back to the cluster. An example of this is when a node loses power.
 This node might get failed over and removed from the cluster, but once power
 is restored to the node you may want to add it back to the cluster.
 
-Another use case is taking a node out of the cluster for maintainance. This
+Another use case is taking a node out of the cluster for maintenance. This
 is done by gracefully failing over a node to ensure there is no data loss.
 The administrator can then perform maintenance on the removed node and add it
 back with the server-readd command.

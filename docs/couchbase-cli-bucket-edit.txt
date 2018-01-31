@@ -37,7 +37,7 @@ include::part-common-options.txt[]
 --bucket-replica <num>::
 	The number of servers to which data is replicated. Replicas provide
 	protection against data loss by keeping copies of a bucket's data on
-	multipleservers. By default, the number of replicas is one, even if there is
+	multiple servers. By default, the number of replicas is one, even if there is
 	only a single server in the cluster. The minimum number of replicas is zero,
 	and the maximum three. This option is valid for Couchbase and Ephemeral
 	buckets only.

@@ -34,7 +34,7 @@ include::part-common-options.txt[]
 	Show all valid users and roles.
 
 --set-users <user_list>::
-	A comma-delimited list of user ids to set acess-control roles for.
+	A comma-delimited list of user ids to set access-control roles for.
 
 --set-names <name_list>::
 	A optional quoted, comma-delimited list names, one for each specified user

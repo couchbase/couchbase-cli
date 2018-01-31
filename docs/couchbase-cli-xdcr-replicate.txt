@@ -3,7 +3,7 @@ couchbase-cli-xdcr-replicate(1)
 
 NAME
 ----
-couchbase-cli-xdcr-replicate - Creates a replication between two datacenters
+couchbase-cli-xdcr-replicate - Creates a replication between two data centers
 
 SYNOPSIS
 --------

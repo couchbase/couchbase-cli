@@ -21,9 +21,9 @@ be added back to the cluster. And example of this is when a server loses power.
 This server might get failed over and removed from the cluster, but once power
 is restored to the server you may want to add it back to the cluster.
 
-Another use case is taking a server out of the cluster for maintainance. This
+Another use case is taking a server out of the cluster for maintenance. This
 is done by gracefully failing over a server to ensure there is no data loss.
-The administrator can then perform mainainance on the removed server and add it
+The administrator can then perform maintenance on the removed server and add it
 back with the server-readd command.
 
 The recovery command also allows a server to have it's data remvoed before being

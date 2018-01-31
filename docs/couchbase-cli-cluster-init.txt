@@ -33,7 +33,7 @@ OPTIONS
 
 -c::
 --cluster::
-	Specfies the hostname of the cluster to initialize. By default, this
+	Specifies the hostname of the cluster to initialize. By default, this
 	parameter is set to localhost:8091 for this command. See the HOST FORMATS
 	section for more information on specifying a hostname.
 

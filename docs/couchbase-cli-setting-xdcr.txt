@@ -3,7 +3,7 @@ couchbase-cli-setting-xdcr(1)
 
 NAME
 ----
-couchbase-cli-setting-xdcr - Modifies cross datacenter replication (XDCR) settings
+couchbase-cli-setting-xdcr - Modifies cross data center replication (XDCR) settings
 
 SYNOPSIS
 --------
@@ -18,7 +18,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This command sets gloabl default settings for all XDCR replications. If you only
+This command sets global default settings for all XDCR replications. If you only
 want to change the settings for a single XDCR replication see the
 linkcbdoc:couchbase-cli-xdcr-replicate[1] command.
 
@@ -78,7 +78,7 @@ EXAMPLES
 If we want to change the checkpoint interval to 500 seconds, the worker batch to
 1000 documents, the document batch size to 10240KB, the failure restart interval
 to 60 seconds. the optimistic replication threshold to 102400 bytes, the source
-nozzels to 8, the target nozzles to 8, the log level to info, and the stats
+nozzles to 8, the target nozzles to 8, the log level to info, and the stats
 interval to 100 milliseconds run the following command.
 
 	$ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \

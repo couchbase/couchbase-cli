@@ -49,7 +49,7 @@ include::part-common-options.txt[]
 	--nodes option.
 
 --upload::
-	Specifies that the logs should be uploaded to the the host specified with
+	Specifies that the logs should be uploaded to the host specified with
 	the --upload-host option. This option should be used by Couchbase Server
 	Enterprise customers when uploading logs for the Couchbase Support Team.
 

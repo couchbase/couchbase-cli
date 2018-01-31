@@ -232,7 +232,7 @@ system_catalog[...]::
 	Allows the users to run queries against the system catalog on the specified
 	buckets. To give a user the ability to run queries against the system
 	catalog on all buckets set their role to system_catalog[*]. To give the user
-	permission to run queires against the system catalog on a single bucket
+	permission to run queries against the system catalog on a single bucket
 	named 'default' then specify their role as system_catalog[default]. If the
 	user needs to be run queries against the system catalog for multiple
 	buckets, for example 'default' and 'app', then set their role as

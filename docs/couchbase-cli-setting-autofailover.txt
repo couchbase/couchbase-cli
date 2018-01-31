@@ -18,7 +18,7 @@ DESCRIPTION
 -----------
 
 Auto-failover allows unresponsive servers to be failed over automatically by the
-cluster manager. Data paritions in Couchbase are always served from a single
+cluster manager. Data partitions in Couchbase are always served from a single
 master node. As a result if a server is down in the cluster data from that
 server will be not be available while that server is down. The server will
 either need to be manually or automatically failed over in order to promote

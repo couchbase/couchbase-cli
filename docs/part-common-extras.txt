@@ -10,7 +10,7 @@
 	order to customize how your SSL connection is set up.
 
 --no-ssl-verify::
-	Specfies that SSL verification should be used but that verifying that the
+	Specifies that SSL verification should be used but that verifying that the
 	cluster certificate is valid should be skipped. Use of this flag is not
 	recommended for production environments because it does not protect the user
 	from a man-in-the-middle attack.
