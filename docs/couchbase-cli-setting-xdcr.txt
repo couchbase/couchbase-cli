@@ -13,7 +13,7 @@ SYNOPSIS
 	  [--worker-batch-size <num>] [--doc-batch-size <kilobytes>]
 	  [--failure-restart-interval <seconds>] [--source-nozzle-per-node <num>]
 	  [--target-nozzle-per-node <num>] [--bandwidth-usage-limit <num>]
-	  [--stats-interval <milliseconds>]
+	  [--enable-compression <num>] [--stats-interval <milliseconds>]
 	  [--optimistic-replication-threshold <bytes>] [--log-level <level>]
 
 DESCRIPTION
@@ -57,6 +57,12 @@ include::part-common-options.txt[]
 
 --bandwidth-usage-limit <num>::
 	The default bandwidth limit for XDCR replications in Megabytes per second.
+
+--enable-compression <num>::
+	Specifies whether or not XDCR compression is enabled. Set this option to
+	"1" to enable compression or "0" to disable compression. This feature is
+	only available in Couchbase Enterprise Edition and can only be used where
+	the target cluster supports compression.
 
 --log-level <level>::
 	The XDCR log level.

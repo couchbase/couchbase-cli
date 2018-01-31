@@ -2620,6 +2620,8 @@ class SettingXdcr(Subcommand):
                            help="The number of outgoing nozzles per target node (1 to 10)")
         group.add_argument("--bandwidth-usage-limit", dest="usage_limit", type=(int),
                            metavar="<num>", help="The bandwidth usage limit in MB/Sec")
+        group.add_argument("--enable-compression", dest="compression", metavar="<1|0>", choices=["1", "0"],
+                           help="Enable/disable compression")
         group.add_argument("--log-level", dest="log_level", metavar="<level>",
                            choices=["Error", "Info", "Debug", "Trace"],
                            help="The XDCR log level")
@@ -2629,13 +2631,25 @@ class SettingXdcr(Subcommand):
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
+
         check_cluster_initialized(rest)
+        enterprise, errors = rest.is_enterprise()
+
+        _exitIfErrors(errors)
+        if not enterprise and opts.compression:
+            _exitIfErrors(["--enable-compression can only be configured on enterprise edition"])
+
+        if opts.compression == "0":
+            opts.compression = "None"
+        elif opts.compression =="1":
+            opts.compression = "Snappy"
 
         _, errors = rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size,
                                               opts.doc_batch_size, opts.fail_interval,
                                               opts.rep_thresh, opts.src_nozzles,
                                               opts.dst_nozzles, opts.usage_limit,
-                                              opts.log_level, opts.stats_interval)
+                                              opts.compression, opts.log_level,
+                                              opts.stats_interval)
         _exitIfErrors(errors)
 
         _success("Global XDCR settings updated")
@@ -2921,6 +2935,8 @@ class XdcrReplicate(Subcommand):
                            help="The number of outgoing nozzles per target node (1 to 10)")
         group.add_argument("--bandwidth-usage-limit", dest="usage_limit", type=(int),
                            metavar="<num>", help="The bandwidth usage limit in MB/Sec")
+        group.add_argument("--enable-compression", dest="compression", metavar="<1|0>", choices=["1", "0"],
+                           help="Enable/disable compression")
         group.add_argument("--log-level", dest="log_level", metavar="<level>",
                            choices=["Error", "Info", "Debug", "Trace"],
                            help="The XDCR log level")
@@ -2931,6 +2947,17 @@ class XdcrReplicate(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+
+        enterprise, errors = rest.is_enterprise()
+        _exitIfErrors(errors)
+
+        if not enterprise and opts.compression:
+            _exitIfErrors(["--enable-compression can only be configured on enterprise edition"])
+
+        if opts.compression == "0":
+            opts.compression = "None"
+        elif opts.compression =="1":
+            opts.compression = "Snappy"
 
         actions = sum([opts.create, opts.delete, opts.pause, opts.list, opts.resume,
                        opts.settings])
@@ -2954,7 +2981,7 @@ class XdcrReplicate(Subcommand):
     def _create(self, rest, opts):
         _, errors = rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket,
                                                  opts.from_bucket, opts.filter,
-                                                 opts.rep_mode)
+                                                 opts.rep_mode, opts.compression)
         _exitIfErrors(errors)
 
         _success("XDCR replication created")
@@ -3008,8 +3035,8 @@ class XdcrReplicate(Subcommand):
                                                   opts.doc_batch_size, opts.fail_interval,
                                                   opts.rep_thresh, opts.src_nozzles,
                                                   opts.dst_nozzles, opts.usage_limit,
-                                                  opts.log_level, opts.stats_interval,
-                                                  opts.replicator_id)
+                                                  opts.compression, opts.log_level,
+                                                  opts.stats_interval, opts.replicator_id)
         _exitIfErrors(errors)
 
         _success("XDCR replicator settings updated")
