@@ -2571,17 +2571,8 @@ class SslManage(Subcommand):
                            default=False, help="Sets the node certificate")
         group.add_argument("--upload-cluster-ca", dest="upload_cert", metavar="<path>",
                            help="Upload a new cluster certificate")
-        group.add_argument("--set-client-auth-state", dest="set_client_auth_state",
-                           metavar="<disable|enable|mandatory>",
-                           help="Enable or disable the ssl client certificate authentication")
-        group.add_argument("--set-client-auth-path", dest="set_client_auth_path",
-                           metavar="<subject.cn|san.uri|san.dnsname|san.name>",
-                           help="Set ssl client certificate type value")
-        group.add_argument("--set-client-auth-prefix", metavar="<prefix>", dest="set_client_auth_prefix",
-                           help="Set ssl client certificate prefix value")
-        group.add_argument("--set-client-auth-delimiter", metavar="<delimiter>",
-                           dest="set_client_auth_delimiter",
-                           help="Set ssl client certificate delimiter value")
+        group.add_argument("--set-client-auth", dest="client_auth_path", metavar="<path>",
+                           help="A path a file containing the client auth configuration")
         group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
                            help="Show ssl client certificate authentication value")
         group.add_argument("--extended", dest="extended", action="store_true",
@@ -2622,18 +2613,19 @@ class SslManage(Subcommand):
             _, errors = rest.set_node_certificate()
             _exitIfErrors(errors)
             _success("Node certificate set")
-        elif opts.set_client_auth_state or opts.set_client_auth_prefix \
-                or opts.set_client_auth_path or opts.set_client_auth_delimiter:
-            _, errors = rest.set_client_cert_auth(opts.set_client_auth_state,
-                                                  opts.set_client_auth_prefix,
-                                                  opts.set_client_auth_path,
-                                                  opts.set_client_auth_delimiter)
+        elif opts.client_auth_path:
+            data = _exit_on_file_read_failure(opts.client_auth_path)
+            try:
+                config = json.loads(data)
+            except ValueError as e:
+                _exitIfErrors(["Client auth config does not contain valid json: %s" % e])
+            _, errors = rest.set_client_cert_auth(config)
             _exitIfErrors(errors)
             _success("SSL client auth updated")
         elif opts.show_client_auth:
             result, errors = rest.retrieve_client_cert_auth()
             _exitIfErrors(errors)
-            print result
+            print json.dumps(result, sort_keys=True, indent=2)
         else:
             _exitIfErrors(["No options specified"])
 
