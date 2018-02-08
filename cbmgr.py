@@ -120,7 +120,7 @@ def _exit_on_file_read_failure(fname, toReport = None):
 
 def apply_default_port(nodes):
     return map(
-      lambda node: node if len(node.split(":"))==2 else node+":8091",
+      lambda node: node if re.match('.*:\d+$', node) else node + ":8091",
       nodes.split(","))
 
 class CLIHelpFormatter(HelpFormatter):
