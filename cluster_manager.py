@@ -872,10 +872,7 @@ class ClusterManager(object):
     def set_audit_settings(self, enabled, log_path, rotate_interval):
         url = self.hostname + '/settings/audit'
 
-        params, errors = self._get(url)
-        if errors:
-            return None, errors
-
+        params = dict()
         if enabled:
             params["auditdEnabled"] = enabled
         if log_path:
