@@ -869,7 +869,7 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def set_audit_settings(self, enabled, log_path, rotate_interval):
+    def set_audit_settings(self, enabled, log_path, rotate_interval, rotate_size):
         url = self.hostname + '/settings/audit'
 
         params = dict()
@@ -879,6 +879,8 @@ class ClusterManager(object):
             params["logPath"] = log_path
         if rotate_interval:
             params["rotateInterval"] = rotate_interval
+        if rotate_size:
+            params["rotateSize"] = rotate_size
 
         if "logPath" not in params and params["auditdEnabled"] == "true":
             return None, ["The audit log path must be specified when auditing is first set up"]

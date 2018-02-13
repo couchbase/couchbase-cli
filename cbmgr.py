@@ -1930,13 +1930,15 @@ class SettingAudit(Subcommand):
                            help="The audit log path")
         group.add_argument("--audit-log-rotate-interval", dest="rotate_interval", type=(int),
                            metavar="<seconds>", help="The audit log rotate interval")
+        group.add_argument("--audit-log-rotate-size", dest="rotate_size", type=(int),
+                           metavar="<bytes>", help="The audit log rotate size")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
-        if not (opts.enabled or opts.log_path or opts.rotate_interval):
+        if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size):
             _exitIfErrors(["No settings specified to be changed"])
 
         if opts.enabled == "1":
@@ -1945,7 +1947,7 @@ class SettingAudit(Subcommand):
             opts.enabled = "false"
 
         _, errors = rest.set_audit_settings(opts.enabled, opts.log_path,
-                                            opts.rotate_interval)
+                                            opts.rotate_interval, opts.rotate_size)
         _exitIfErrors(errors)
 
         _success("Audit settings modified")

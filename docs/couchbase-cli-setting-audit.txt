@@ -41,6 +41,14 @@ include::part-common-options.txt[]
 	file is rotated to ensure that the audit log does not consume too much disk
 	space. The minimum audit log rotate interval is 15 minutes (900 seconds).
 
+--audit-log-rotate-size <bytes>::
+	Specifies the audit log rotate size. This is the size at which the current
+	audit log will be replaced with a new empty audit log file. The log
+	file is rotated to ensure that the audit log does not consume too much disk
+	space. The minimum audit log rotate size is 0 bytes and maximum is
+	524,288,000 (500MB). When it is set to 0 the log will not be rotated based
+	on size.
+
 include::part-host-formats.txt[]
 
 EXAMPLES
@@ -52,6 +60,13 @@ below.
 
 	$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
 	 --password password --enabled 1 --audit-log-rotate-interval 604800 \
+	 --audit-log-path /opt/couchbase/var/lib/couchbase/logs
+
+To enable auditing on a cluster and set the audit log to the default logs folder
+on a linux installation with a log rotate size of 20MB run the command below.
+
+	$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
+	 --password password --enabled 1 --audit-log-rotate-size 20971520 \
 	 --audit-log-path /opt/couchbase/var/lib/couchbase/logs
 
 To disable auditing run the following command.
