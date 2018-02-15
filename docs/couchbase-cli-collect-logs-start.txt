@@ -10,8 +10,10 @@ SYNOPSIS
 --------
 [verse]
 'couchbase-cli collect-logs-start' [--cluster <url>] [--username <user>]
-	  [--password <password>] [--all-nodes] [--nodes <node_list>] [--upload]
-	  [--upload-host <host>] [--customer <customer>] [--ticket <ticket>]
+	  [--password <password>] [--all-nodes] [--nodes <node_list>]
+	  [--redaction-level] [--output-directory] [--temporary-directory]
+	  [--upload] [--upload-host <host>] [--upload-proxy <host>]
+	  [--customer <customer>] [--ticket <ticket>]
 
 DESCRIPTION
 -----------
@@ -48,10 +50,36 @@ include::part-common-options.txt[]
 	separated. This parameter may not be specified at the same time as the
 	--nodes option.
 
+--redaction-level <level>::
+	Specifies what level the logs should be redacted too. This option has two
+	levels "none" and "partial". If partial is set then data such as
+	usernames, keys and values will be redacted from the logs. If none is set
+	then no data  will be redacted. Please note that increasing the level
+	of redaction can have an impact on debugging problems.
+
+--output-directory <directory>::
+	Specifies the directory on the node to place the logs. This is the location
+	where the logs will be placed after collection has finished. Log collection
+	will fail for the nodes that do not have this directory. It will also fail
+	if the directory does not have enough space.
+
+--temporary-directory <path>::
+	Specifies the temporary directory on the node to use while generating the
+	logs. During log collection a number of temporary files are created before
+	being compressed. If this temporary location does not have enough space
+	log collection will fail. All nodes in the cluster must have this
+	directory. When it is not specified then the operating system temporary
+	directory will be used.
+
 --upload::
 	Specifies that the logs should be uploaded to the host specified with
 	the --upload-host option. This option should be used by Couchbase Server
 	Enterprise customers when uploading logs for the Couchbase Support Team.
+
+--upload-proxy <host>::
+	Specifies the proxy to use when uploading logs. This is useful when a
+	cluster is deployed in secure environments and do not have a direct
+	outbound connection to the internet to upload logs.
 
 --upload-host <host>::
 	Once log collection is completed, the logs zip file should be uploaded to

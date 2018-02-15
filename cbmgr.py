@@ -943,10 +943,18 @@ class CollectLogsStart(Subcommand):
                            default=False, help="Collect logs for all nodes")
         group.add_argument("--nodes", dest="nodes", metavar="<node_list>",
                            help="A comma separated list of nodes to collect logs from")
+        group.add_argument("--redaction-level", dest="redaction_level", metavar="<none|partial>",
+                           choices=["none", "partial"], help="Level of log redaction to apply")
+        group.add_argument("--output-directory", dest="output_dir", metavar="<directory>",
+                           help="Output directory to place the generated logs file")
+        group.add_argument("--temporary-directory", dest="tmp_dir", metavar="<directory>",
+                           help="Temporary directory to use when generating the logs")
         group.add_argument("--upload", dest="upload", action="store_true",
                            default=False, help="Logs should be uploaded for Couchbase support")
         group.add_argument("--upload-host", dest="upload_host", metavar="<host>",
                            help="The host to upload logs to")
+        group.add_argument("--upload-proxy", dest="upload_proxy", metavar="<proxy>",
+                           help="The proxy to used to upload the logs via")
         group.add_argument("--customer", dest="upload_customer", metavar="<name>",
                            help="The name of the customer uploading logs")
         group.add_argument("--ticket", dest="upload_ticket", metavar="<num>",
@@ -957,32 +965,34 @@ class CollectLogsStart(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
-        if opts.nodes is None and opts.all_nodes is False:
+        if not opts.nodes and not opts.all_nodes:
             _exitIfErrors(["Must specify either --all-nodes or --nodes"])
 
-        if opts.nodes is not None and opts.all_nodes is True:
+        if opts.nodes and opts.all_nodes:
             _exitIfErrors(["Cannot specify both --all-nodes and --nodes"])
-
-        if opts.upload:
-            if opts.upload_host is None:
-                _exitIfErrors(["--upload-host is required when --upload is specified"])
-            if opts.upload_customer is None:
-                _exitIfErrors(["--upload-customer is required when --upload is specified"])
-        else:
-            if opts.upload_host is not None:
-                _warning("--upload-host has has no effect with specifying --upload")
-
-            if opts.upload_customer is not None:
-                _warning("--upload-customer has has no effect with specifying --upload")
 
         servers = opts.nodes
         if opts.all_nodes:
             servers = "*"
 
-        _, errors = rest.collect_logs_start(servers, opts.upload, opts.upload_host,
-                                            opts.upload_customer, opts.upload_ticket)
-        _exitIfErrors(errors)
+        if opts.upload:
+            if not opts.upload_host:
+                _exitIfErrors(["--upload-host is required when --upload is specified"])
+            if not opts.upload_customer:
+                _exitIfErrors(["--upload-customer is required when --upload is specified"])
+        else:
+            if opts.upload_host:
+                _warning("--upload-host has no effect with specifying --upload")
+            if opts.upload_customer:
+                _warning("--upload-customer has no effect with specifying --upload")
+            if opts.upload_ticket:
+                _warning("--upload_ticket has no effect with specifying --upload")
+            if opts.upload_proxy:
+                _warning("--upload_proxy has no effect with specifying --upload")
 
+        _, errors = rest.collect_logs_start(servers, opts.redaction_level, opts.output_dir, opts.tmp_dir, opts.upload,
+                                            opts.upload_host, opts.upload_proxy, opts.upload_customer, opts.upload_ticket)
+        _exitIfErrors(errors)
         _success("Log collection started")
 
     @staticmethod

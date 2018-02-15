@@ -382,7 +382,8 @@ class ClusterManager(object):
         url = self.hostname + '/pools/default/tasks'
         return self._get(url)
 
-    def collect_logs_start(self, servers, upload, upload_host, upload_customer, upload_ticket):
+    def collect_logs_start(self, servers, redaction_level, log_dir, tmp_dir, upload, upload_host, upload_proxy,
+                           upload_customer, upload_ticket):
         url = self.hostname + '/controller/startLogsCollection'
         params = dict()
 
@@ -399,12 +400,21 @@ class ClusterManager(object):
 
             params["nodes"] = ",".join(readd)
 
+        if redaction_level:
+            params["logRedactionLevel"] = redaction_level
+        if log_dir:
+            params["logDir"] = log_dir
+        if tmp_dir:
+            params["tmpDir"] = tmp_dir
+
         if upload:
-            if upload_host is not None:
+            if upload_host:
                 params["uploadHost"] = upload_host
-            if upload_customer is not None:
+            if upload_proxy:
+                params["uploadProxy"] = upload_proxy
+            if upload_customer:
                 params["customer"] = upload_customer
-            if upload_ticket is not None:
+            if upload_ticket:
                 params["ticket"] = upload_ticket
 
         return self._post_form_encoded(url, params)
