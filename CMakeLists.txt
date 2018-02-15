@@ -10,12 +10,15 @@ CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen)
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery)
+CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
+                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cblogredaction)
 
 INSTALL(PROGRAMS
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/couchbase-cli
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbtransfer
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery
+        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cblogredaction
         DESTINATION bin)
 
 INSTALL(PROGRAMS
@@ -23,6 +26,7 @@ INSTALL(PROGRAMS
         cbtransfer
         cbworkloadgen
         cbrecovery
+        cblogredaction
         DESTINATION lib/python)
 
   CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
