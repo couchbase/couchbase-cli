@@ -21,6 +21,7 @@ import socket
 
 import couchbaseConstants
 import cb_bin_client
+from cb_util import tag_user_data
 from cluster_manager import ClusterManager
 from collections import defaultdict
 import cbsnappy as snappy
@@ -509,7 +510,7 @@ class EndPoint(object):
 
     def skip(self, key, vbucket_id):
         if (self.only_key_re and not re.search(self.only_key_re, key)):
-            logging.warn("skipping msg with key: " + str(key))
+            logging.warn("skipping msg with key: " + tag_user_data(key))
             return True
 
         if (self.only_vbucket_id is not None and
@@ -961,7 +962,7 @@ def parse_spec(opts, spec, port):
 def rest_request(host, port, user, pswd, ssl, path, method='GET', body='', reason='', headers=None):
     if reason:
         reason = "; reason: %s" % (reason)
-    logging.debug("rest_request: %s@%s:%s%s%s" % (user, host, port, path, reason))
+    logging.debug("rest_request: %s@%s:%s%s%s" % (tag_user_data(user), host, port, path, reason))
     if ssl:
         if port not in [couchbaseConstants.SSL_REST_PORT, couchbaseConstants.SSL_QUERY_PORT]:
             return ("error: invalid port %s used when ssl option is specified") % port, None, None

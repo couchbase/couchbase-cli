@@ -55,6 +55,7 @@ INSTALL(PROGRAMS
 INSTALL(FILES
         argparse.py
         cb_bin_client.py
+        cb_util.py
         cbmgr.py
         cbsnappy.py
         cluster_manager.py

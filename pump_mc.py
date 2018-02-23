@@ -11,6 +11,7 @@ import cb_bin_client
 import couchbaseConstants
 import pump
 import cbsnappy as snappy
+from cb_util import tag_user_data
 
 try:
     import ctypes
@@ -219,13 +220,13 @@ class MCSink(pump.Sink):
                     continue
                 elif r_status == couchbaseConstants.ERR_KEY_EEXISTS:
                     #logging.warn("item exists: %s, key: %s" %
-                    #             (self.spec, key))
+                    #             (self.spec, tag_user_data(key)))
                     continue
                 elif r_status == couchbaseConstants.ERR_KEY_ENOENT:
                     if (cmd != couchbaseConstants.CMD_TAP_DELETE and
                         cmd != couchbaseConstants.CMD_GET):
                         logging.warn("item not found: %s, key: %s" %
-                                     (self.spec, key))
+                                     (self.spec, tag_user_data(key)))
                     continue
                 elif (r_status == couchbaseConstants.ERR_ETMPFAIL or
                       r_status == couchbaseConstants.ERR_EBUSY or
@@ -236,7 +237,7 @@ class MCSink(pump.Sink):
                     msg = ("received NOT_MY_VBUCKET;"
                            " perhaps the cluster is/was rebalancing;"
                            " vbucket_id: %s, key: %s, spec: %s, host:port: %s:%s"
-                           % (vbucket_id_msg, key, self.spec,
+                           % (vbucket_id_msg, tag_user_data(key), self.spec,
                               conn.host, conn.port))
                     if self.opts.extra.get("nmv_retry", 1):
                         logging.warn("warning: " + msg)
