@@ -1161,19 +1161,19 @@ class ClusterManager(object):
         return self._get(url)
 
     def create_xdcr_reference(self, name, hostname, username, password, encrypted,
-                              encryptionType, certificate):
+                              encryptionType, certificate, clientCertificate, clientKey):
         return self._set_xdcr_reference(False, name, hostname, username,
                                         password, encrypted, encryptionType,
-                                        certificate)
+                                        certificate, clientCertificate, clientKey)
 
     def edit_xdcr_reference(self, name, hostname, username, password, encrypted,
-                            encryptionType, certificate):
+                            encryptionType, certificate, clientCertificate, clientKey):
         return self._set_xdcr_reference(True, name, hostname, username,
                                         password, encrypted, encryptionType,
-                                        certificate)
+                                        certificate, clientCertificate, clientKey)
 
     def _set_xdcr_reference(self, edit, name, hostname, username, password,
-                            encrypted, encryptionType, certificate):
+                            encrypted, encryptionType, certificate, clientCertificate, clientKey):
         url = self.hostname + '/pools/default/remoteClusters'
         params = {}
 
@@ -1194,6 +1194,10 @@ class ClusterManager(object):
             params["encryptionType"] = encryptionType
         if certificate is not None:
             params["certificate"] = certificate
+        if clientCertificate:
+            params['clientCertificate'] = clientCertificate
+        if clientKey:
+            params['clientKey'] = clientKey
 
         return self._post_form_encoded(url, params)
 

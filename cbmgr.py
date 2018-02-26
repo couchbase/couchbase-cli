@@ -3085,6 +3085,10 @@ class XdcrSetup(Subcommand):
                            help="The username of the remote cluster reference")
         group.add_argument("--xdcr-password", dest="r_password", metavar="<password>",
                            help="The password of the remote cluster reference")
+        group.add_argument("--xdcr-user-certificate", dest="r_certificate", metavar="<path>",
+                           help="The user certificate for authentication")
+        group.add_argument("--xdcr-user-key", dest="r_key", metavar="<path>",
+                           help="The user key for authentication")
         group.add_argument("--xdcr-demand-encryption", dest="encrypt", choices=["0", "1"],
                            default="0", help="Enable SSL when replicating with this cluster")
         group.add_argument("--xdcr-encryption-type", dest="encryption_type", choices=["full", "half"],
@@ -3133,16 +3137,23 @@ class XdcrSetup(Subcommand):
             if opts.encryption_type == None:
                 opts.encryption_type = "full"
 
+        raw_user_key = None
+        if opts.r_key:
+            raw_user_key = _exit_on_file_read_failure(opts.r_key)
+        raw_user_cert = None
+        if opts.r_certificate:
+            raw_user_cert = _exit_on_file_read_failure(opts.r_certificate)
+
         if opts.create:
             _, errors = rest.create_xdcr_reference(opts.name, opts.hostname, opts.r_username,
-                                                   opts.r_password, opts.encrypt,
-                                                   opts.encryption_type, raw_cert)
+                                                   opts.r_password, opts.encrypt, opts.encryption_type,
+                                                   raw_cert, raw_user_cert, raw_user_key)
             _exitIfErrors(errors)
             _success("Cluster reference created")
         else:
             _, errors = rest.edit_xdcr_reference(opts.name, opts.hostname, opts.r_username,
-                                                 opts.r_password, opts.encrypt,
-                                                 opts.encryption_type, raw_cert)
+                                                 opts.r_password, opts.encrypt, opts.encryption_type,
+                                                 raw_cert, raw_user_cert, raw_user_key)
             _exitIfErrors(errors)
             _success("Cluster reference edited")
 
