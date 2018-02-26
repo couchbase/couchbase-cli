@@ -3185,3 +3185,90 @@ class XdcrSetup(Subcommand):
     @staticmethod
     def get_description():
         return "Manage XDCR replications"
+
+class EventSetup(Subcommand):
+    """The event setup subcommand"""
+
+    def __init__(self):
+        super(EventSetup, self).__init__()
+        self.parser.prog = "couchbase-cli event-setup"
+        group = self.parser.add_argument_group("Event setup options")
+        group.add_argument("--import", dest="_import", action="store_true",
+                           default=False, help="Import an event")
+        group.add_argument("--export", dest="export", action="store_true",
+                           default=False, help="Export an event")
+        group.add_argument("--delete", dest="delete", action="store_true",
+                           default=False, help="Delete an event")
+        group.add_argument("--list", dest="list", action="store_true",
+                           default=False, help="List all events remote references")
+        group.add_argument("--name", dest="name", metavar="<name>",
+                           default=False, help="Name of the event")
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_cluster_initialized(rest)
+
+        actions = sum([opts._import, opts.export, opts.delete, opts.list])
+        if actions == 0:
+            _exitIfErrors(["Must specify one of --import, --export, --delete, --list"])
+        elif actions > 1:
+            _exitIfErrors(["The --import, --export, --delete, --list flags may not " +
+                           "be specified at the same time"])
+        elif opts.list:
+            self._list(rest)
+        elif opts.delete:
+            self._delete(rest, opts)
+        elif opts.export:
+            self._export(rest, opts)
+        # import is a protected word
+        elif opts._import:
+            self._import(rest, opts)
+
+    def _import(self, rest, opts):
+        if not opts.name:
+            _exitIfErrors(["--name is needed to import an event"])
+        event_settings = _exit_on_file_read_failure(opts.name + '.json')
+        event_settings = json.loads(event_settings)
+        rest.create_event(opts.name, event_settings)
+        _success("Event imported")
+
+    def _export(self, rest, opts):
+        if not opts.name:
+            _exitIfErrors(["--name is needed to export an event"])
+        event, errors = rest.get_event(opts.name)
+        _exitIfErrors(errors)
+        _exit_on_file_write_failure(opts.name + '.json', json.dumps(event, separators=(',',':')))
+        _success("Event exported")
+
+    def _delete(self, rest, opts):
+        if not opts.name:
+            _exitIfErrors(["--name is needed to delete an event"])
+        _, errors = rest.delete_event(opts.name)
+        _exitIfErrors(errors)
+        _success("Event deleted")
+
+    def _list(self, rest):
+        events, errors = rest.list_events()
+        _exitIfErrors(errors)
+
+        for event in events:
+            print event['appname']
+            status = ''
+            if event['settings']['deployment_status']:
+                status = 'Deployed'
+            else:
+                status = 'Undeployed'
+            print ' Status: ' + status
+            print ' Source Bucket: ' + event['depcfg']['source_bucket']
+            print ' Metadata Bucket: ' + event['depcfg']['metadata_bucket']
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-event-setup" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Manage Events"
+
+

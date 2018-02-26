@@ -15,6 +15,7 @@ N1QL_SERVICE = 'n1ql'
 INDEX_SERVICE = 'index'
 MGMT_SERVICE = 'mgmt'
 FTS_SERVICE = 'fts'
+EVENT_SERVICE = 'eventing'
 
 ERR_AUTH = 'unable to access the REST API - please check your username (-u) and password (-p)'
 ERR_INTERNAL = 'Internal server error, please retry your request'
@@ -211,11 +212,14 @@ class ClusterManager(object):
             n1ql_port_name = 'n1ql'
             mgmt_port_name = 'mgmt'
             index_port_name = 'indexHttp'
+            event_port_name = 'eventingAdminPort'
 
             if self.ssl:
                 http_prefix = 'https://'
                 n1ql_port_name = 'n1qlSSL'
                 mgmt_port_name = 'mgmtSSL'
+                event_port_name = 'eventingSSL'
+
                 # The is no ssl port for the index or fts services
 
             if service_name == MGMT_SERVICE and mgmt_port_name in node['services']:
@@ -229,6 +233,9 @@ class ClusterManager(object):
 
             if service_name == FTS_SERVICE and fts_port_name in node['services']:
                 hosts.append(http_prefix + node_host + ':' + str(node['services'][fts_port_name]))
+
+            if service_name == EVENT_SERVICE and event_port_name in node['services']:
+                hosts.append(http_prefix + node_host + ':' + str(node['services'][event_port_name]))
 
         return hosts, None
 
@@ -1290,6 +1297,44 @@ class ClusterManager(object):
         params = { "pauseRequested": "false" }
         return self._post_form_encoded(url, params)
 
+    def list_events(self):
+        hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(EVENT_SERVICE)
+        url = hosts[0] + '/api/v1/functions'
+        return self._get(url)
+
+    def get_event(self, event):
+        hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(EVENT_SERVICE)
+        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(event)
+        return self._get(url)
+
+    def create_event(self, event, parms):
+        hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
+        if errors:
+            return None, errors
+        if not hosts:
+            raise ServiceNotAvailableException(EVENT_SERVICE)
+        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(event)
+        return self._post_json(url, parms)
+
+    def delete_event(self, event):
+        hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(EVENT_SERVICE)
+        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(event)
+        return self._delete(url, None)
     # Low level methods for basic HTML operations
 
     @request
@@ -1356,6 +1401,8 @@ def _handle_response(response, debug):
         print response.status_code, response.text
     if response.status_code in [200, 202]:
         if 'Content-Type' not in response.headers:
+            return "", None
+        if not response.text:
             return "", None
         if 'application/json' in response.headers['Content-Type']:
             return response.json(), None
