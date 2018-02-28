@@ -53,13 +53,13 @@ class Redact_file(object):
                     _, tail = os.path.split(self.log)
                     redacted_log = 'redacted-' + tail
                     if os.path.exists(redacted_log):
-                        logging.error('{} - {} already exits, not redacting'.format(self.log, redacted_log))
+                        logging.error('{} - {} already exists, not redacting'.format(self.log, redacted_log))
                         return
                     logging.debug('{} - Starting redaction file size is {}'
                                   ' bytes'.format(self.log, os.fstat(log_file.fileno()).st_size))
                     with open(redacted_log, 'w+') as redacted_file:
                         hashed_salt = hashlib.sha1(self.salt + self.salt).hexdigest()
-                        redacted_file.write('Log redacted using salt: {}\n'.format(hashed_salt))
+                        redacted_file.write('Hash of the salt used to redact the file: {}\n'.format(hashed_salt))
                         logging.debug('{} - Log redacted using salt: <ud>{}</ud>'.format(self.log, self.salt))
                         for line_number, line in enumerate(log_file, 1):
                             ud_start_tags = line.count('<ud>')
@@ -67,8 +67,8 @@ class Redact_file(object):
                             if ud_start_tags == ud_end_tags:
                                 total_redacted_tags += ud_start_tags
                             else:
-                                logging.warn('{} - Unmatched tags detected on line {}, redacting matched tags '
-                                             'only'.format(self.log, line_number))
+                                logging.warn('{} - Unmatched tags detected on line {}, potential data leak. Please'
+                                             ' review redacted file'.format(self.log, line_number))
                                 if 0 not in [ud_start_tags, ud_end_tags]:
                                     total_redacted_tags += min(ud_start_tags, ud_end_tags)
                                     warning_lines += 1
@@ -121,7 +121,7 @@ def _main():
     args.log_files = set(args.log_files)
 
     if args.generate_salt:
-        logging.warn('Automatically generating salt. This will make it hard to cross reference logs')
+        logging.warn('Automatically generating salt. This will make it difficult to cross reference logs')
         ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
         args.salt = ''.join(random.choice(ALPHABET) for _ in range(16))
 
