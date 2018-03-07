@@ -116,13 +116,14 @@ else:
         """Moves the terminal cursor absolute column position"""
         pass
 
-class RebalanceProgressBar(object):
-    """Generates a progress bar for rebalance progress"""
+class TopologyProgressBar(object):
+    """Generates a progress bar for topology change progress such as failover and rebalances"""
 
-    def __init__(self, rest_client, hidden=False):
+    def __init__(self, rest_client, type, hidden=False):
         self.rest_client = rest_client
         self.term_width, _, _, _ = get_terminal_width()
         self.hidden = hidden
+        self.type = type
 
     def show(self):
         """Shows the rebalance progress bar"""
@@ -199,7 +200,7 @@ class RebalanceProgressBar(object):
         else:
             d_name_str = "(" + bucket_name + ")" + (' ' * (d_name_size - len(bucket_name) - 2))
 
-        sys.stdout.write("Rebalancing{0}\n".format(" " * (self.term_width - 11)))
+        sys.stdout.write('{0}{1}\n'.format(self.type, " " * (self.term_width - len(self.type))))
         sys.stdout.write("{0}{1}{2}\n".format(d_count_str, d_name_str, d_remain_str))
         sys.stdout.write("[{0}{1}] {2}%\n".format(('='* bars), (' '* spaces),
                                                   bold(str(round(perc_complete, 2)))))

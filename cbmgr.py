@@ -14,7 +14,7 @@ import time
 
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
 from cluster_manager import ClusterManager
-from pbar import RebalanceProgressBar
+from pbar import TopologyProgressBar
 
 COUCHBASE_DEFAULT_PORT = 8091
 
@@ -1106,7 +1106,7 @@ class Failover(Subcommand):
             time.sleep(1)
 
             if opts.wait:
-                bar = RebalanceProgressBar(rest, opts.no_bar)
+                bar = TopologyProgressBar(rest,'Gracefully failing over', opts.no_bar)
                 errors = bar.show()
                 _exitIfErrors(errors)
                 _success("Server failed over")
@@ -1430,7 +1430,7 @@ class Rebalance(Subcommand):
         time.sleep(1)
 
         if opts.wait:
-            bar = RebalanceProgressBar(rest, opts.no_bar)
+            bar = TopologyProgressBar(rest, 'Rebalancing', opts.no_bar)
             errors = bar.show()
             _exitIfErrors(errors)
             _success("Rebalance complete")
