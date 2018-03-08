@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'couchbase-cli setting-password-policy' [--cluster <url>] [--username <user>]
-	  [--password <password>] [--disable-http-ui]
+	  [--password <password>] [--disable-http-ui <0|1>]
 
 DESCRIPTION
 -----------
@@ -21,20 +21,22 @@ OPTIONS
 
 include::part-common-options.txt[]
 
---disable-http-ui::
-	Disables the Couchbase Administration Console over HTTP. This will not
-	disable the HTTPS UI.
+--disable-http-ui <0|1>::
+	Specifies whether the Couchbase Administration UI can be accessible
+	over http. To disable access set this option to "1". To enable access
+	set this option to "0". By default, access to the UI over http is
+	enabled.
 
 include::part-host-formats.txt[]
 
 EXAMPLES
 --------
 
-To get disable the Couchbase Administration Console over HTTP run the following
+To disable the Couchbase Administration Console over HTTP run the following
 command.
 
 	$ couchbase-cli setting-security -c 192.168.1.5 -u Administrator \
-	 -p password --disable-http-ui
+	 -p password --disable-http-ui 1
 
 ENVIRONMENT AND CONFIGURATION VARIABLES
 ---------------------------------------

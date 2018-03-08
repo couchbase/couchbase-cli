@@ -2581,17 +2581,20 @@ class SettingSecurity(Subcommand):
     def __init__(self):
         super(SettingSecurity, self).__init__()
         self.parser.prog = "couchbase-cli setting-security"
-        group = self.parser.add_argument_group("Password Policy Settings")
-        group.add_argument("--disable-http-ui", dest="disable_http_ui", action="store_true",
-                           default=False, help="Disables access to the UI over HTTP")
+        group = self.parser.add_argument_group("Cluster Security Settings")
+        group.add_argument("--disable-http-ui", dest="disable_http_ui", metavar="<0|1>", choices=['0', '1'],
+                           default=False, help="Disables access to the UI over HTTP (0 or 1)")
 
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
 
-
-        _, errors = rest.set_security_settings(opts.disable_http_ui)
+        errors = None
+        if opts.disable_http_ui == '1':
+            _, errors = rest.set_security_settings(True)
+        else:
+            _, errors = rest.set_security_settings(False)
         _exitIfErrors(errors)
         _success("Security policy updated")
 
