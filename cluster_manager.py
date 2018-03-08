@@ -430,23 +430,26 @@ class ClusterManager(object):
         url = self.hostname + '/controller/cancelLogsCollection'
         return self._post_form_encoded(url, dict())
 
-    def failover(self, server, force):
-        _, _, failover, _, _, errors = self._get_otps_names(failover_nodes=[server])
+    def failover(self, servers_to_failover, force):
+        _, _, failover, _, _, errors = self._get_otps_names(failover_nodes=servers_to_failover)
         if errors:
             return None, errors
 
-        if len(failover) == 0:
-            return None, ["Server can't be failed over because it's not part of the cluster"]
 
-        failover_node, node_status = failover[0]
-        params = { "otpNode": failover_node }
+        if len(failover) != len(servers_to_failover):
+            if len(servers_to_failover) == 1:
+                return None, ["Server can't be failed over because it's not part of the cluster"]
+            return None, ["Some nodes specified to be failed over are not part of the cluster"]
+
+        params = {"otpNode": [server for server, _ in failover]}
 
         if force:
             url = self.hostname + '/controller/failOver'
             return self._post_form_encoded(url, params)
         else:
-            if node_status != 'healthy':
-                return None, ["% can't be gracefully failed over because the node is not healthy", server]
+            for server, server_status in failover:
+                if server_status != 'healthy':
+                    return None, ["% can't be gracefully failed over because it is not healthy", server]
             url = self.hostname + '/controller/startGracefulFailover'
             return self._post_form_encoded(url, params)
 

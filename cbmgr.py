@@ -119,9 +119,20 @@ def _exit_on_file_read_failure(fname, toReport = None):
             _exitIfErrors([toReport])
 
 def apply_default_port(nodes):
-    return map(
-      lambda node: node if re.match('.*:\d+$', node) else node + ":8091",
-      nodes.split(","))
+    """
+    Adds the default port if the port is missing.
+
+    @type  nodes: string
+    @param nodes: A comma seprated list of nodes
+    @rtype:       array of strings
+    @return:      The nodes with the port postfixed on each one
+    """
+    nodes = nodes.split(',')
+    def append_port(node):
+        if re.match('.*:\d+$', node):
+            return node
+        return node + ':8091'
+    return [append_port(x) for x in nodes]
 
 class CLIHelpFormatter(HelpFormatter):
     """Format help with indented section bodies"""
@@ -1082,8 +1093,8 @@ class Failover(Subcommand):
         super(Failover, self).__init__()
         self.parser.prog = "couchbase-cli failover"
         group = self.parser.add_argument_group("Failover options")
-        group.add_argument("--server-failover", dest="server_failover", metavar="<server_list>",
-                           required=True, help="The server to failover")
+        group.add_argument("--server-failover", dest="servers_to_failover", metavar="<server_list>",
+                           required=True, help="A list of servers to fail over")
         group.add_argument("--force", dest="force", action="store_true",
                            help="Hard failover the server")
         group.add_argument("--no-progress-bar", dest="no_bar", action="store_true",
@@ -1096,7 +1107,11 @@ class Failover(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
-        _, errors = rest.failover(opts.server_failover, opts.force)
+        opts.servers_to_failover = apply_default_port(opts.servers_to_failover)
+        if not opts.force and len(opts.servers_to_failover) != 1:
+            _exitIfErrors(["Only one node at a time can be gracefully failed over"])
+
+        _, errors = rest.failover(opts.servers_to_failover, opts.force)
         _exitIfErrors(errors)
 
         if not opts.force:
@@ -1106,7 +1121,7 @@ class Failover(Subcommand):
             time.sleep(1)
 
             if opts.wait:
-                bar = TopologyProgressBar(rest,'Gracefully failing over', opts.no_bar)
+                bar = TopologyProgressBar(rest, 'Gracefully failing over', opts.no_bar)
                 errors = bar.show()
                 _exitIfErrors(errors)
                 _success("Server failed over")

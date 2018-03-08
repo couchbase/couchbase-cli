@@ -56,10 +56,11 @@ include::part-host-formats.txt[]
 EXAMPLES
 --------
 
-To hard fail over a node run the following command:
+To hard fail over two nodes run the following command:
 
 	$ couchbase-cli failover -c 192.168.1.5:8091 --username Administrator \
-	 --password password --server-failover 192.168.1.6:8091 --force
+	 --password password \
+	 --server-failover 192.168.1.6:8091,192.168.1.7:8091 --force
 
 To gracefully failover a node run the following command:
 
