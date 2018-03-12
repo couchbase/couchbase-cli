@@ -12,7 +12,7 @@ function gen_docs {
 
   # Generate man
   asciidoc -b docbook -d manpage --conf-file=../asciidoc.conf -o tmp.xml ../${infile}
-  xmlto -o man/man${man_folder} man tmp.xml
+  XML_CATALOG_FILES=/usr/local/etc/xml/catalog xmlto -o man/man${man_folder} man tmp.xml
   rm tmp.xml
 }
 

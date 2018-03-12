@@ -1,10 +1,10 @@
-Couchbase Command Line Tools
+# Couchbase Command Line Tools
 
 This package contains the command line tool set that performs
 the same actions to provide the user the same capabilities as
 the Couchbase Server web interface.
 
-Prerequisites
+## Prerequisites
 
 If you have installed the full Couchbase Server, these
 tools will have all prerequisites required to run these tools.
@@ -13,6 +13,25 @@ If you run these tools standalone, you will need:
 * Python 2.6 or greater
 * Command shell such as bash
 
-***
-Copyright (c) 2010, 2011, 2012, Couchbase, Inc.
+## Building the Documentation
 
+The documents are located in [docs](docs). Man and HTLM versions are
+generated using [generate.sh](docs/generated/generate.sh) script.
+**asciidoc** and **xmlto** are used to generate the documentation so
+both of those need to be installed.
+
+### Mac requirements
+
+```
+brew install asciidoc xmlto
+```
+
+Need to set the path to the catalog files to generate the man pages:
+
+```
+XML_CATALOG_FILES=/usr/local/etc/xml/catalog
+```
+
+
+***
+Copyright (c) 2018 Couchbase, Inc.
