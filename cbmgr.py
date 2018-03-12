@@ -75,7 +75,7 @@ def process_services(services, is_enterprise):
 def find_subcommands():
     """Finds all subcommand classes"""
     clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-    subclasses = [cls for cls in clsmembers if issubclass(cls[1], Subcommand) and cls[1] != Subcommand]
+    subclasses = [cls for cls in clsmembers if issubclass(cls[1], (Subcommand, LocalSubcommand)) and cls[1] not in [Subcommand, LocalSubcommand]]
 
     subcommands = []
     for subclass in subclasses:
@@ -380,7 +380,9 @@ class CouchbaseCLI(Command):
 
 
 class Subcommand(Command):
-    """A Couchbase CLI Subcommand"""
+    """
+    A Couchbase CLI Subcommand: This is for subcommand that interact with a remote Couchbase Server over the REST API.
+    """
 
     def __init__(self, deprecate_username=False, deprecate_password=False, cluster_default=None):
         super(Subcommand, self).__init__()
@@ -420,6 +422,7 @@ class Subcommand(Command):
         group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
                            help="Prints the short or long help message")
 
+
     def execute(self, opts):
         super(Subcommand, self).execute(opts)
 
@@ -436,6 +439,38 @@ class Subcommand(Command):
         """Whether or not the subcommand should be hidden from the help message"""
         return False
 
+class LocalSubcommand(Command):
+    """
+    A Couchbase CLI Localcommand: This is for subcommands that interact with the local Couchbase Server via the
+    filesystem or a local socket.
+    """
+
+    def __init__(self):
+        super(LocalSubcommand, self).__init__()
+        self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False)
+        group = self.parser.add_argument_group(title="Local command options",
+                                               description="This command has to be execute on the locally running" +
+                                                           " Couchbase Server.")
+        group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
+                           help="Prints the short or long help message")
+        group.add_argument("--config-path", dest="config_path", metavar="<path>",
+                           default=CB_CFG_PATH, help=SUPPRESS)
+
+    def execute(self, opts):
+        super(LocalSubcommand, self).execute(opts)
+
+    @staticmethod
+    def get_man_page_name():
+        return Command.get_man_page_name()
+
+    @staticmethod
+    def get_description():
+        return Command.get_description()
+
+    @staticmethod
+    def is_hidden():
+        """Whether or not the subcommand should be hidden from the help message"""
+        return False
 
 class AdminRoleManage(Subcommand):
     """The administrator role manage subcommand (Deprecated)"""
@@ -1268,40 +1303,20 @@ class HostList(Subcommand):
         return "List all hosts in a cluster"
 
 
-class MasterPassword(Subcommand):
+class MasterPassword(LocalSubcommand):
     """The master password subcommand"""
 
     def __init__(self):
         super(MasterPassword, self).__init__()
         self.parser.prog = "couchbase-cli master-password"
         group = self.parser.add_argument_group("Master password options")
-        group.add_argument("--new-password", dest="new_password", metavar="<password>",
-                           required=False, action=CBNonEchoedAction, envvar=None,
-                           prompt_text="Enter new master password:",
-                           confirm_text="Confirm new master password:",
-                           help="Sets a new master password")
-        group.add_argument("--rotate-data-key", dest="rotate_data_key", action="store_true",
-                           help="Rotates the master password data key")
         group.add_argument("--send-password", dest="send_password", metavar="<password>",
                            required=False, action=CBNonEchoedAction, envvar=None,
                            prompt_text="Enter master password:",
                            help="Sends the master password to start the server")
-        group.add_argument("--config-path", dest="config_path", metavar="<path>",
-                           default=CB_CFG_PATH, help=SUPPRESS)
 
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-
-        if opts.new_password is not None:
-            _, errors = rest.set_master_pwd(opts.new_password)
-            _exitIfErrors(errors)
-            _success("New master password set")
-        elif opts.rotate_data_key == True:
-            _, errors = rest.rotate_master_pwd()
-            _exitIfErrors(errors)
-            _success("Data key rotated")
-        elif opts.send_password is not None:
+        if opts.send_password is not None:
             path = [CB_BIN_PATH, os.environ['PATH']]
             if os.name == 'posix':
                 os.environ['PATH'] = ':'.join(path)
@@ -1363,11 +1378,11 @@ class MasterPassword(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-reset-admin-password" + ".1" if os.name != "nt" else ".html"
+        return "couchbase-cli-master-password" + ".1" if os.name != "nt" else ".html"
 
     @staticmethod
     def get_description():
-        return "Resets the administrator password"
+        return "Unlocking the master password"
 
 
 class NodeInit(Subcommand):
@@ -2688,6 +2703,44 @@ class SettingXdcr(Subcommand):
     @staticmethod
     def get_description():
         return "Modify XDCR related settings"
+
+class SettingMasterPassword(Subcommand):
+    """The setting master password subcommand"""
+
+    def __init__(self):
+        super(SettingMasterPassword, self).__init__()
+        self.parser.prog = "couchbase-cli setting-master-password"
+        group = self.parser.add_argument_group("Master password options")
+        group.add_argument("--new-password", dest="new_password", metavar="<password>",
+                           required=False, action=CBNonEchoedAction, envvar=None,
+                           prompt_text="Enter new master password:",
+                           confirm_text="Confirm new master password:",
+                           help="Sets a new master password")
+        group.add_argument("--rotate-data-key", dest="rotate_data_key", action="store_true",
+                           help="Rotates the master password data key")
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+
+        if opts.new_password is not None:
+            _, errors = rest.set_master_pwd(opts.new_password)
+            _exitIfErrors(errors)
+            _success("New master password set")
+        elif opts.rotate_data_key == True:
+            _, errors = rest.rotate_master_pwd()
+            _exitIfErrors(errors)
+            _success("Data key rotated")
+        else:
+            _exitIfErrors(["No parameters set"])
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-master-password" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Changing the settings of the master password"
 
 
 class SslManage(Subcommand):

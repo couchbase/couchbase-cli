@@ -54,6 +54,7 @@ gen_docs couchbase-cli-setting-cluster.txt 1
 gen_docs couchbase-cli-setting-compaction.txt 1
 gen_docs couchbase-cli-setting-index.txt 1
 gen_docs couchbase-cli-setting-ldap.txt 1
+gen_docs couchbase-cli-setting-master-password.txt 1
 gen_docs couchbase-cli-setting-notification.txt 1
 gen_docs couchbase-cli-setting-password-policy.txt 1
 gen_docs couchbase-cli-setting-security.txt 1
