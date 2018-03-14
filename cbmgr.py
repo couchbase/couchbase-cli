@@ -1557,11 +1557,11 @@ class Recovery(Subcommand):
         return "Recover one or more servers"
 
 
-class ResetAdminPassword(Subcommand):
+class ResetAdminPassword(LocalSubcommand):
     """The reset admin password command"""
 
     def __init__(self):
-        super(ResetAdminPassword, self).__init__(deprecate_username=True, deprecate_password=True)
+        super(ResetAdminPassword, self).__init__()
         self.parser.prog = "couchbase-cli reset-admin-password"
         group = self.parser.add_argument_group("Reset password options")
         group.add_argument("--new-password", dest="new_password", metavar="<password>",
@@ -1571,12 +1571,12 @@ class ResetAdminPassword(Subcommand):
                            help="The new administrator password")
         group.add_argument("--regenerate", dest="regenerate", action="store_true",
                            help="Generates a random administrator password")
-        group.add_argument("--config-path", dest="config_path", metavar="<path>",
-                           default=CB_CFG_PATH, help=SUPPRESS)
+        group.add_argument("-P", "--port", metavar="<port>", default="8091",
+                           help="The REST API port, defaults to 8091")
 
     def execute(self, opts):
         token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
-        rest = ClusterManager(opts.cluster, "@localtoken", token, opts.ssl, opts.debug)
+        rest = ClusterManager("http://127.0.0.1:" + opts.port, "@localtoken", token)
         check_cluster_initialized(rest)
 
         if opts.new_password is not None and opts.regenerate == True:
