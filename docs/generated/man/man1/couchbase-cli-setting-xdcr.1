@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-xdcr
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/07/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/16/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETT" "1" "03/16/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,7 +28,7 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-couchbase-cli-setting-xdcr \- Modifies cross datacenter replication (XDCR) settings
+couchbase-cli-setting-xdcr \- Modifies cross data center replication (XDCR) settings
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -37,27 +37,27 @@ couchbase-cli-setting-xdcr \- Modifies cross datacenter replication (XDCR) setti
           [\-\-worker\-batch\-size <num>] [\-\-doc\-batch\-size <kilobytes>]
           [\-\-failure\-restart\-interval <seconds>] [\-\-source\-nozzle\-per\-node <num>]
           [\-\-target\-nozzle\-per\-node <num>] [\-\-bandwidth\-usage\-limit <num>]
-          [\-\-stats\-interval <milliseconds>]
+          [\-\-enable\-compression <num>] [\-\-stats\-interval <milliseconds>]
           [\-\-optimistic\-replication\-threshold <bytes>] [\-\-log\-level <level>]
 .fi
 .SH "DESCRIPTION"
 .sp
-This command sets gloabl default settings for all XDCR replications\&. If you only want to change the settings for a single XDCR replication see the \fBcouchbase-cli-xdcr-replicate\fR(1) command\&.
+This command sets global default settings for all XDCR replications\&. If you only want to change the settings for a single XDCR replication see the \fBcouchbase-cli-xdcr-replicate\fR(1) command\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
 .RS 4
-Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
 .RE
 .PP
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
 .RE
 .PP
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
 .PP
 \-\-checkpoint\-interval <seconds>
@@ -98,6 +98,11 @@ The number of outgoing nozzles to each node in the target cluster\&. The value o
 \-\-bandwidth\-usage\-limit <num>
 .RS 4
 The default bandwidth limit for XDCR replications in Megabytes per second\&.
+.RE
+.PP
+\-\-enable\-compression <num>
+.RS 4
+Specifies whether or not XDCR compression is enabled\&. Set this option to "1" to enable compression or "0" to disable compression\&. This feature is only available in Couchbase Enterprise Edition and can only be used where the target cluster supports compression\&.
 .RE
 .PP
 \-\-log\-level <level>
@@ -149,7 +154,7 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-If we want to change the checkpoint interval to 500 seconds, the worker batch to 1000 documents, the document batch size to 10240KB, the failure restart interval to 60 seconds\&. the optimistic replication threshold to 102400 bytes, the source nozzels to 8, the target nozzles to 8, the log level to info, and the stats interval to 100 milliseconds run the following command\&.
+If we want to change the checkpoint interval to 500 seconds, the worker batch to 1000 documents, the document batch size to 10240KB, the failure restart interval to 60 seconds\&. the optimistic replication threshold to 102400 bytes, the source nozzles to 8, the target nozzles to 8, the log level to info, and the stats interval to 100 milliseconds run the following command\&.
 .sp
 .if n \{\
 .RS 4
@@ -172,7 +177,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-cli-xdcr-replicate\fR(1) \fBcouchbase-cli-xdcr-setup\fR(1)
-.SH "COUCHBASE-CLI"
+.SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"

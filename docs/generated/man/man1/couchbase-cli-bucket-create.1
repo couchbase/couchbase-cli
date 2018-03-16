@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-bucket-create
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/07/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/16/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCK" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCK" "1" "03/16/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -46,17 +46,17 @@ Creates a new bucket\&. Allows creation of Couchbase, Ephemeral, and Memcached b
 .PP
 \-c, \-\-cluster
 .RS 4
-Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
 .RE
 .PP
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
 .RE
 .PP
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
 .PP
 \-\-bucket <name>
@@ -161,6 +161,54 @@ place\&.
 Timestamp\-based conflict resolution selects the document with the most
 recent timestamp: this is only supported when all clocks on all
 cluster\-nodes have been fully synchronized\&.
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+\-\-max\-ttl <seconds>
+.RS 4
+Specifies the maximum TTL (time\-to\-live) for all documents in bucket in seconds\&. If enabled and a document is mutated with no TTL or a TTL greater than than the maximum, its TTL will be set to the maximum TTL\&. Setting this option to 0 disables the use of max\-TTL and the largest TTL that is allowed is 2147483647\&. This option is only available for Couchbase and Ephemeral buckets in Couchbase Enterprise Edition\&.
+.RE
+.PP
+\-\-compression\-mode <mode>
+.RS 4
+Specifies the compression\-mode of the bucket\&. There are three options; off, passive and active\&. All three modes are backwards compatible with older SDKs, where Couchbase Server will automatically uncompress documents for clients that do not understand the compression being used\&. This option is only available for Couchbase and Ephemeral buckets in Couchbase Enterprise Edition\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Off: Couchbase Server will only compress document values when persisting to
+disk\&. This is suitable for use cases where compression could have a
+negative impact on performance\&. Please note it is expected that compression
+in most use cases will improve performance\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Passive: Documents which were compressed by a client, or read compressed
+from disk will be stored compress in\-memory\&. Couchbase Server will make
+no additional attempt to compress documents that are not already compressed\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Active: Couchbase Server will actively and aggressively attempt to compress
+documents, even if they have not been received in a compressed format\&. This
+provides the benefits of compression even when the SDK clients are not
+complicit\&.
 .fi
 .if n \{\
 .RE
@@ -274,7 +322,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-cli-bucket-compact\fR(1)\&. \fBcouchbase-cli-bucket-delete\fR(1)\&. \fBcouchbase-cli-bucket-edit\fR(1)\&. \fBcouchbase-cli-bucket-flush\fR(1)\&. \fBcouchbase-cli-bucket-list\fR(1)\&.
-.SH "COUCHBASE-CLI"
+.SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"

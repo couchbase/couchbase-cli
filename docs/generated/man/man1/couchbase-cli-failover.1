@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-failover
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/07/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/16/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-FAIL" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-FAIL" "1" "03/16/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -43,17 +43,17 @@ This command fails over one or more nodes\&. Nodes can be either hard failed ove
 .PP
 \-c, \-\-cluster
 .RS 4
-Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
 .RE
 .PP
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
 .RE
 .PP
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
 .PP
 \-\-server\-failover <server_list>
@@ -115,14 +115,15 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-To hard fail over a node run the following command:
+To hard fail over two nodes run the following command:
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
 $ couchbase\-cli failover \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
- \-\-password password \-\-server\-failover 192\&.168\&.1\&.6:8091 \-\-force
+ \-\-password password \e
+ \-\-server\-failover 192\&.168\&.1\&.6:8091,192\&.168\&.1\&.7:8091 \-\-force
 .fi
 .if n \{\
 .RE
@@ -148,7 +149,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-cli-rebalance\fR(1)\&. \fBcouchbase-cli-recovery\fR(1)\&. \fBcouchbase-cli-server-add\fR(1)\&. \fBcouchbase-cli-setting-autofailover\fR(1)\&.
-.SH "COUCHBASE-CLI"
+.SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"

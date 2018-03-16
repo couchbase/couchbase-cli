@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-security
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 11/27/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/16/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "11/27/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETT" "1" "03/16/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -33,7 +33,7 @@ couchbase-cli-setting-security \- Manage security policies
 .sp
 .nf
 \fIcouchbase\-cli setting\-password\-policy\fR [\-\-cluster <url>] [\-\-username <user>]
-          [\-\-password <password>] [\-\-disable\-http\-ui]
+          [\-\-password <password>] [\-\-disable\-http\-ui <0|1>]
 .fi
 .SH "DESCRIPTION"
 .sp
@@ -42,22 +42,22 @@ Allows enabling and disabling of the Couchbase Administration Console\&.
 .PP
 \-c, \-\-cluster
 .RS 4
-Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
 .RE
 .PP
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
 .RE
 .PP
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
 .PP
-\-\-disable\-http\-ui
+\-\-disable\-http\-ui <0|1>
 .RS 4
-Disables the Couchbase Administration Console over HTTP\&. This will not disable the HTTPS UI\&.
+Specifies whether the Couchbase Administration UI can be accessible over http\&. To disable access set this option to "1"\&. To enable access set this option to "0"\&. By default, access to the UI over http is enabled\&.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -99,14 +99,14 @@ http://<addr>:<port>
 It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
 .SH "EXAMPLES"
 .sp
-To get disable the Couchbase Administration Console over HTTP run the following command\&.
+To disable the Couchbase Administration Console over HTTP run the following command\&.
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
 $ couchbase\-cli setting\-security \-c 192\&.168\&.1\&.5 \-u Administrator \e
- \-p password \-\-disable\-http\-ui
+ \-p password \-\-disable\-http\-ui 1
 .fi
 .if n \{\
 .RE
@@ -119,7 +119,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-cli\fR(1)\&.
-.SH "COUCHBASE-CLI"
+.SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"

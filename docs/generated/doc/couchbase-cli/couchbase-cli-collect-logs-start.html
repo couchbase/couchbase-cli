@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.10" />
 <title>couchbase-cli-collect-logs-start(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -749,8 +750,10 @@ couchbase-cli-collect-logs-start(1) Manual Page
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli collect-logs-start</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-          [--password &lt;password&gt;] [--all-nodes] [--nodes &lt;node_list&gt;] [--upload]
-          [--upload-host &lt;host&gt;] [--customer &lt;customer&gt;] [--ticket &lt;ticket&gt;]</pre>
+          [--password &lt;password&gt;] [--all-nodes] [--nodes &lt;node_list&gt;]
+          [--redaction-level] [--output-directory] [--temporary-directory]
+          [--upload] [--upload-host &lt;host&gt;] [--upload-proxy &lt;host&gt;]
+          [--customer &lt;customer&gt;] [--ticket &lt;ticket&gt;]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -786,7 +789,7 @@ cluster.</p></div>
 </dt>
 <dd>
 <p>
-        Specfies the hostname of a node in the cluster. See the HOST FORMATS
+        Specifies the hostname of a node in the cluster. See the HOST FORMATS
         section for more information on specifying a hostname.
 </p>
 </dd>
@@ -799,7 +802,7 @@ cluster.</p></div>
 <dd>
 <p>
         Specifies the username of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error.
 </p>
 </dd>
@@ -812,7 +815,7 @@ cluster.</p></div>
 <dd>
 <p>
         Specifies the password of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error. If this argument is specified, but no password is
         given then the command will prompt the user for a password through
         non-echoed stdin. You may also specify your password by using the
@@ -840,13 +843,59 @@ cluster.</p></div>
 </p>
 </dd>
 <dt class="hdlist1">
+--redaction-level &lt;level&gt;
+</dt>
+<dd>
+<p>
+        Specifies what level the logs should be redacted too. This option has two
+        levels "none" and "partial". If partial is set then data such as
+        usernames, keys and values will be redacted from the logs. If none is set
+        then no data  will be redacted. Please note that increasing the level
+        of redaction can have an impact on debugging problems.
+</p>
+</dd>
+<dt class="hdlist1">
+--output-directory &lt;directory&gt;
+</dt>
+<dd>
+<p>
+        Specifies the directory on the node to place the logs. This is the location
+        where the logs will be placed after collection has finished. Log collection
+        will fail for the nodes that do not have this directory. It will also fail
+        if the directory does not have enough space.
+</p>
+</dd>
+<dt class="hdlist1">
+--temporary-directory &lt;path&gt;
+</dt>
+<dd>
+<p>
+        Specifies the temporary directory on the node to use while generating the
+        logs. During log collection a number of temporary files are created before
+        being compressed. If this temporary location does not have enough space
+        log collection will fail. All nodes in the cluster must have this
+        directory. When it is not specified then the operating system temporary
+        directory will be used.
+</p>
+</dd>
+<dt class="hdlist1">
 --upload
 </dt>
 <dd>
 <p>
-        Specifies that the logs should be uploaded to the the host specified with
+        Specifies that the logs should be uploaded to the host specified with
         the --upload-host option. This option should be used by Couchbase Server
         Enterprise customers when uploading logs for the Couchbase Support Team.
+</p>
+</dd>
+<dt class="hdlist1">
+--upload-proxy &lt;host&gt;
+</dt>
+<dd>
+<p>
+        Specifies the proxy to use when uploading logs. This is useful when a
+        cluster is deployed in secure environments and do not have a direct
+        outbound connection to the internet to upload logs.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -965,7 +1014,8 @@ for all nodes for a support ticket then you can run the following command.</p></
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-07-30 19:07:00 PDT
+Last updated
+ 2018-02-22 15:30:39 GMT
 </div>
 </div>
 </body>

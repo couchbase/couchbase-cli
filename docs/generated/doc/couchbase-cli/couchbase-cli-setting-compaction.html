@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.10" />
 <title>couchbase-cli-setting-compaction(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -781,7 +782,7 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        Specfies the hostname of a node in the cluster. See the HOST FORMATS
+        Specifies the hostname of a node in the cluster. See the HOST FORMATS
         section for more information on specifying a hostname.
 </p>
 </dd>
@@ -794,7 +795,7 @@ service.</p></div>
 <dd>
 <p>
         Specifies the username of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error.
 </p>
 </dd>
@@ -807,7 +808,7 @@ service.</p></div>
 <dd>
 <p>
         Specifies the password of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error. If this argument is specified, but no password is
         given then the command will prompt the user for a password through
         non-echoed stdin. You may also specify your password by using the
@@ -819,7 +820,7 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        Compacts database files once the framentation percentage is greater than
+        Compacts database files once the fragmentation percentage is greater than
         the value set for this option. The value must be between 2 and 100.
 </p>
 </dd>
@@ -838,7 +839,7 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        Compacts view files once the framentation percentage is greater than the
+        Compacts view files once the fragmentation percentage is greater than the
         value set for this option. The value must be between 2 and 100.
 </p>
 </dd>
@@ -852,7 +853,7 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        This option is unsed in conjunction with the --compaction-period-to option
+        This option is unison in conjunction with the --compaction-period-to option
         and is used to specify a time period where compaction is allowed to run. You
         could for example specify that compaction should only run between midnight
         and 5AM each day by setting the compaction from period to "00:00" and the
@@ -868,7 +869,7 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        This option is unsed in conjunction with the --compaction-period-from option
+        This option is unison in conjunction with the --compaction-period-from option
         and is used to specify a time period where compaction is allowed to run. You
         could for example specify that compaction should only run between midnight
         and 5AM each day by setting the compaction from period to "00:00" and the
@@ -898,10 +899,10 @@ service.</p></div>
 <dd>
 <p>
         Specifies whether view and database file compaction can run at the same
-        time. Compactions can be disk intensive operations so it may be beneficial
+        time. Compaction can be disk intensive operations so it may be beneficial
         to only allow one type of compaction to run at a time. To allow parallel
-        compactions set the value of this option to "1". To disable parallel
-        compaction set the value fo this option to "0". By default this option is
+        compaction set the value of this option to "1". To disable parallel
+        compaction set the value of this option to "0". By default this option is
         set to "0".
 </p>
 </dd>
@@ -912,7 +913,7 @@ service.</p></div>
 <p>
         Couchbase persists deletes to disk because these deletes may need to be
         replicated in the future during intra-cluster replication as well as during
-        cross datacenter replication. Couchbase cannot however keep these deletes
+        Cross Data Center Replication. Couchbase cannot however keep these deletes
         forever because they will cause the database disk size to increase
         infinitely over time. To combat this issue Couchbase purges old deletes from
         disk periodically. This flag allow the user to set this interval. By default
@@ -932,11 +933,10 @@ service.</p></div>
         then removing the old index file. This strategy will cause increased disk
         usage during compaction, but will cause the new index file to be smaller
         than the old one and as a result will free up disk space. The circular
-        compaction strategy uses the same file, but moves data around in the file to
-        create contigious free space which can be reused. This strategy uses no new
-        space during compaction, but the resulting file size will not be decreased
-        since the compacted file will result in a section of active data and free
-        space.
+        compaction strategy will append data at first until the index is 65%
+        fragmented. At which point it will start to write data over old blocks in the
+        file that are no longer being used. A full compaction will be triggered once a
+        day on the day set via --compaction-gsi-interval.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -944,7 +944,7 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        Specifies that gsi compaction should be started when the fragmentation in an
+        Specifies that GSI compaction should be started when the fragmentation in an
         index file has exceeded this percentage. This parameter only applies if the
         append compaction mode is used.
 </p>
@@ -954,7 +954,7 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        Specifies that gsi compaction should only run on the specified days. This
+        Specifies that GSI compaction should only run on the specified days. This
         option takes a comma separated list of days where the name of the day is
         capitalized. Accepted values are Monday, Tuesday, Wednesday, Thursday,
         Friday, Saturday, and Sunday. If you only want compaction to run on Monday
@@ -967,11 +967,11 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        This option is unsed in conjunction with the --compaction-gsi-period-to
-        option and is used to specify a time period where gsi compaction is allowed
-        to run. You could for example specify that gsi compaction should only run
-        between midnight and 5AM each day by setting the gsi compaction from period
-        to "00:00" and the gsi compaction to period to "5:00". When setting the
+        This option is unison in conjunction with the --compaction-gsi-period-to
+        option and is used to specify a time period where GSI compaction is allowed
+        to run. You could for example specify that GSI compaction should only run
+        between midnight and 5AM each day by setting the GSI compaction from period
+        to "00:00" and the GSI compaction to period to "5:00". When setting the
         value for this option you must use the format HH:MM when HH corresponds to
         the hour and MM corresponds to the minute. If this option is not specified
         then compaction will run at any time of the day. This parameter only
@@ -983,14 +983,14 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        This option is unsed in conjunction with the --compaction-gsi-period-from
-        option and is used to specify a time period where gsi compaction is allowed
-        to run. You could for example specify that gsi compaction should only run
-        between midnight and 5AM each day by setting the gsi compaction from period
-        to "00:00" and the gsi compaction to period to "5:00". When setting the
+        This option is unison in conjunction with the --compaction-gsi-period-from
+        option and is used to specify a time period where GSI compaction is allowed
+        to run. You could for example specify that GSI compaction should only run
+        between midnight and 5AM each day by setting the GSI compaction from period
+        to "00:00" and the GSI compaction to period to "5:00". When setting the
         value for this option you must use the format HH:MM when HH corresponds to
         the hour and MM corresponds to the minute. If this option is not specified
-        then gsi compaction will run at any time of the day. This parameter only
+        then GSI compaction will run at any time of the day. This parameter only
         applies if circular compaction mode is used.
 </p>
 </dd>
@@ -999,11 +999,11 @@ service.</p></div>
 </dt>
 <dd>
 <p>
-        If a gsi compaction from period and gsi compaction to period are specified
+        If a GSI compaction from period and GSI compaction to period are specified
         then this flag tells the server how to respond if a compaction starts during
-        the allowed gsi compaction interval and is still running after the allowed
-        interval has ended. If this option is set to "1" then the gsi compaction
-        will be aborted. If it is set to "0" then the gsi compaction will be allowed
+        the allowed GSI compaction interval and is still running after the allowed
+        interval has ended. If this option is set to "1" then the GSI compaction
+        will be aborted. If it is set to "0" then the GSI compaction will be allowed
         to complete. By default this option is set to "0". This parameter only
         applies if circular compaction mode is used.
 </p>
@@ -1042,7 +1042,7 @@ a port other that 8091.</p></div>
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>If we want to set our view and database compaction percentage thresholds to 30%
-each, but also wanted to ensure that our fragementation didn&#8217;t grow above 1GB
+each, but also wanted to ensure that our fragmentation didn&#8217;t grow above 1GB
 we would run the following command</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1065,8 +1065,8 @@ outside of this time window.</p></div>
  --enable-compaction-abort 1</code></pre>
 </div></div>
 <div class="paragraph"><p>If we don&#8217;t mind when compaction runs and we have the disk overhead to run both
-view and database compaction at the same time then we might set up comaction
-with the settings in the first example, but also enable parallel compactions.
+view and database compaction at the same time then we might set up compaction
+with the settings in the first example, but also enable parallel compaction.
 This can be done by running the command below.</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1078,7 +1078,7 @@ This can be done by running the command below.</p></div>
 <div class="paragraph"><p>If your application heavily uses expirations or you create and delete a lot of
 documents quickly then you might want to shorten your metadata purge interval
 in order to ensure that you don&#8217;t use too much disk space. If we want our
-compactions to run when the fragmentation is 30% or 1GB and we want to change
+compaction to run when the fragmentation is 30% or 1GB and we want to change
 the metadata purge interval to 2 days then we would run the following command.</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1088,7 +1088,7 @@ the metadata purge interval to 2 days then we would run the following command.</
  --meta-data-purge-interval 2</code></pre>
 </div></div>
 <div class="paragraph"><p>If you need to change the GSI index compaction settings to use the append
-compaction mode and want gsi compaction only to happen once your file is 50%
+compaction mode and want GSI compaction only to happen once your file is 50%
 fragmented specify the following command.</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1097,8 +1097,8 @@ fragmented specify the following command.</p></div>
  --compaction-gsi-percentage 50</code></pre>
 </div></div>
 <div class="paragraph"><p>If you want to change the GSI index compaction settings to use the circular
-compaction mode and want gsi compaction only to happen on Tuesdays and Thursdays
-between midnight and 3AM and don&#8217;t want gsi compaction running outside of those
+compaction mode and want GSI compaction only to happen on Tuesdays and Thursdays
+between midnight and 3AM and don&#8217;t want GSI compaction running outside of those
 time windows even if the compaction started at a valid time specify the
 following command.</p></div>
 <div class="literalblock">
@@ -1141,7 +1141,8 @@ following command.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-01-09 11:35:48 PST
+Last updated
+ 2018-02-22 15:30:39 GMT
 </div>
 </div>
 </body>

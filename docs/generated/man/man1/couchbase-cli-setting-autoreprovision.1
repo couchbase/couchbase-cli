@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-autoreprovision
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/07/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/16/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETT" "1" "03/16/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -37,26 +37,26 @@ couchbase-cli-setting-autoreprovision \- Modifies auto\-reprovision settings
 .fi
 .SH "DESCRIPTION"
 .sp
-Auto\-reprovisioning is used in order to prevent dataloss in ephemeral buckets during failure scenarios when a node crashes and restarts quickly\&. Under this scenario auto\-reprovisioning ensures that an ephemeral bucket\(cqs replica vbuckets are prmoted to active state\&. This mechanism is not needed for Couchbase buckets because a Couchbase buckets data is persisted to disk and can be loaded back into memory after a node restarts\&. Ephemeral buckets on the other hand completely lose their data when a node crashes and replicas must be relied upon in order to prevent dataloss\&. If ephemeral buckets are not in use this setting has no effect on the cluster\&.
+Auto\-reprovisioning is used in order to prevent data loss in ephemeral buckets during failure scenarios when a node crashes and restarts quickly\&. Under this scenario auto\-reprovisioning ensures that an ephemeral bucket\(cqs replica vBuckets are promoted to active state\&. This mechanism is not needed for Couchbase buckets because a Couchbase buckets data is persisted to disk and can be loaded back into memory after a node restarts\&. Ephemeral buckets on the other hand completely lose their data when a node crashes and replicas must be relied upon in order to prevent data loss\&. If ephemeral buckets are not in use this setting has no effect on the cluster\&.
 .sp
-Auto\-reprovisioning can either be enabled or disabled\&. If you have ephemeral buckets it is always recommended that auto\-reprovisioning is enabled otherwise the cluster will experience dataloss if a node crashes or is restarted\&. Users can also specify the number of nodes that can be auto\-reprovisioned before the cluster is rebalanced\&. An auto\-reprovision event occurs if a cluster has at least one ephemeral bucket and a node crashes and restarts\&. If the number of crashes and restarts exceed the maximum number of nodes that can be auto\-reprovisioned then the next crash and restart will result in dataloss for all ephemeral buckets in the cluster\&.
+Auto\-reprovisioning can either be enabled or disabled\&. If you have ephemeral buckets it is always recommended that auto\-reprovisioning is enabled otherwise the cluster will experience data loss if a node crashes or is restarted\&. Users can also specify the number of nodes that can be auto\-reprovisioned before the cluster is rebalanced\&. An auto\-reprovision event occurs if a cluster has at least one ephemeral bucket and a node crashes and restarts\&. If the number of crashes and restarts exceed the maximum number of nodes that can be auto\-reprovisioned then the next crash and restart will result in data loss for all ephemeral buckets in the cluster\&.
 .sp
-When setting the max nodes parameter, note that specifying the max nodes to be too high could result in cascading node failures\&. This can happen because when a node fails and restarts the server load for the crashed node is distributed to the rest of the servers in the cluster\&. This extra load could cause the one or more of the remaining servers in the cluster to become overloaded and unresponsive leading to more failures\&. On the other hand specifying max nodes to be too small could lead to dataloss if there are many failures in the cluster at the same time\&. How this variable is set depends on the cluster size, workload, and configuration\&. However, it is always recommended that auto\-reprovisioning is at least enabled and that max nodes is set to at least 1\&.
+When setting the max nodes parameter, note that specifying the max nodes to be too high could result in cascading node failures\&. This can happen because when a node fails and restarts the server load for the crashed node is distributed to the rest of the servers in the cluster\&. This extra load could cause the one or more of the remaining servers in the cluster to become overloaded and unresponsive leading to more failures\&. On the other hand specifying max nodes to be too small could lead to data loss if there are many failures in the cluster at the same time\&. How this variable is set depends on the cluster size, workload, and configuration\&. However, it is always recommended that auto\-reprovisioning is at least enabled and that max nodes is set to at least 1\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
 .RS 4
-Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
 .RE
 .PP
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
 .RE
 .PP
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
 .PP
 \-\-enabled <num>
@@ -141,7 +141,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-cli-setting-autofailover\fR(1)\&.
-.SH "COUCHBASE-CLI"
+.SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"

@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.10" />
 <title>couchbase-cli-setting-autofailover(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -750,7 +751,9 @@ couchbase-cli-setting-autofailover(1) Manual Page
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli setting-autofailover</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
           [--password &lt;password&gt;] [--enable-auto-failover &lt;num&gt;]
-          [--auto-failover-timeout &lt;seconds&gt;]</pre>
+          [--auto-failover-timeout &lt;seconds&gt;]
+          [--enable-failover-on-data-disk-issues &lt;num&gt;]
+          [--failover-data-disk-period &lt;seconds&gt;]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -759,7 +762,7 @@ couchbase-cli-setting-autofailover(1) Manual Page
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Auto-failover allows unresponsive servers to be failed over automatically by the
-cluster manager. Data paritions in Couchbase are always served from a single
+cluster manager. Data partitions in Couchbase are always served from a single
 master node. As a result if a server is down in the cluster data from that
 server will be not be available while that server is down. The server will
 either need to be manually or automatically failed over in order to promote
@@ -770,6 +773,8 @@ quickly enough to avoid application down time Couchbase provides an
 auto-failover feature. This feature allows the cluster manager to automatically
 fail over down nodes over and bring the cluster back to a healthy state as
 quickly as possible.</p></div>
+<div class="paragraph"><p>In Couchbase Server Enterprise Edition nodes can also be automatically failed
+over when the Data Service reports sustained disk I/O failures.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -784,7 +789,7 @@ quickly as possible.</p></div>
 </dt>
 <dd>
 <p>
-        Specfies the hostname of a node in the cluster. See the HOST FORMATS
+        Specifies the hostname of a node in the cluster. See the HOST FORMATS
         section for more information on specifying a hostname.
 </p>
 </dd>
@@ -797,7 +802,7 @@ quickly as possible.</p></div>
 <dd>
 <p>
         Specifies the username of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error.
 </p>
 </dd>
@@ -810,7 +815,7 @@ quickly as possible.</p></div>
 <dd>
 <p>
         Specifies the password of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error. If this argument is specified, but no password is
         given then the command will prompt the user for a password through
         non-echoed stdin. You may also specify your password by using the
@@ -835,6 +840,52 @@ quickly as possible.</p></div>
         be unresponsive before the cluster manager considers the node to be down and
         fails it over. The minimum auto-failover timeout is 30 seconds in Couchbase
         Community Edition and 5 seconds in Couchbase Enterprise Edition.
+</p>
+</dd>
+<dt class="hdlist1">
+--max-failovers &lt;num&gt;
+</dt>
+<dd>
+<p>
+        Specifies the number of auto-failover events that will be handled before
+        requiring user intervention. A single event could be one node failing over or
+        an entire Server Group. The maximum allowed value is three. This feature is
+        only available in Couchbase Enterprise Edition.
+</p>
+</dd>
+<dt class="hdlist1">
+--enable-failover-of-server-groups &lt;num&gt;
+</dt>
+<dd>
+<p>
+        Specifies whether or not auto-failover can failover entire Server Groups.
+        This feature is only available in Couchbase Enterprise Edition.
+</p>
+</dd>
+<dt class="hdlist1">
+--enable-failover-on-data-disk-issues &lt;num&gt;
+</dt>
+<dd>
+<p>
+        Specifies whether or not autofailover on Data Service disk issues is enabled.
+        Set this option to "1" to enable failover on Data Service disk issue or
+        "0" to disable it. "--failover-data-disk-period" needs to be set at the
+        same time when enabling this option. This feature is only available in
+        Couchbase Enterprise Edition.
+</p>
+</dd>
+<dt class="hdlist1">
+--failover-data-disk-period &lt;seconds&gt;
+</dt>
+<dd>
+<p>
+        Specifies the failover data disk period. This is the period of time over
+        which the Data Service is checked for potential sustained Disk I/O
+        failures. The Data Service is checked every second for disk failures. If
+        60% of the checks during that time period report disk failures, then the
+        node may be automatically failed over.
+        "--enable-failover-on-data-disk-issues" must be set when this option is
+        used. The failover data disk period ranges from 5 to 3600 seconds.
 </p>
 </dd>
 </dl></div>
@@ -884,8 +935,24 @@ command.</p></div>
 <pre><code>$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
  --password password --enable-auto-failover 1 --auto-failover-timeout 120</code></pre>
 </div></div>
-<div class="paragraph"><p>To disable autofailover run the following
-command.</p></div>
+<div class="paragraph"><p>To enable autofailover with a 120 second auto-failover timeout and to enable
+failover on Data Service Disk issue with a 10 second data disk period run the
+following command.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
+ --password password --enable-auto-failover 1 --auto-failover-timeout 120 \
+ --enable-failover-on-data-disk-issues 1 --auto-failover-timeout 10</code></pre>
+</div></div>
+<div class="paragraph"><p>To enable autofail with a 120 second auto-failover timeout and to enable failover
+of a Server group and allow up to two auto failover event</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
+ --password password --enable-auto-failover 1 --auto-failover-timeout 120 \
+ --enable-failover-of-server-groups 1 --max-failovers 2</code></pre>
+</div></div>
+<div class="paragraph"><p>To disable autofailover run the following command.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
@@ -925,7 +992,8 @@ command.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-06-06 15:02:54 PDT
+Last updated
+ 2018-02-22 15:30:39 GMT
 </div>
 </div>
 </body>

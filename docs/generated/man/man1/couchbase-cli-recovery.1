@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-recovery
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/07/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/16/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-RECO" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-RECO" "1" "03/16/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -40,7 +40,7 @@ couchbase-cli-recovery \- Recovers a previously failed over node
 .sp
 When a server is failed over and removed from the cluster it may only be able to be added back to the cluster\&. And example of this is when a server loses power\&. This server might get failed over and removed from the cluster, but once power is restored to the server you may want to add it back to the cluster\&.
 .sp
-Another use case is taking a server out of the cluster for maintainance\&. This is done by gracefully failing over a server to ensure there is no data loss\&. The administrator can then perform mainainance on the removed server and add it back with the server\-readd command\&.
+Another use case is taking a server out of the cluster for maintenance\&. This is done by gracefully failing over a server to ensure there is no data loss\&. The administrator can then perform maintenance on the removed server and add it back with the server\-readd command\&.
 .sp
 The recovery command also allows a server to have it\(cqs data remvoed before being added back to the cluster (full recovery) or having the server resume from where it last left off (delta recovery)\&. Delta recovery will always take the least amount of time and is the recommended recovery mode\&.
 .sp
@@ -49,17 +49,17 @@ Note that after the recovery subcommand is run you must rebalance the cluster\&.
 .PP
 \-c, \-\-cluster
 .RS 4
-Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
 .RE
 .PP
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
 .RE
 .PP
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
 .PP
 \-\-server\-recovery <servers>
@@ -160,7 +160,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-rebalance\fR(1)\&. \fBcouchbase-server-add\fR(1)\&.
-.SH "COUCHBASE-CLI"
+.SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"

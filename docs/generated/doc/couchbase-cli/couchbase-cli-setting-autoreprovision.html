@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.10" />
 <title>couchbase-cli-setting-autoreprovision(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -757,23 +758,23 @@ couchbase-cli-setting-autoreprovision(1) Manual Page
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Auto-reprovisioning is used in order to prevent dataloss in ephemeral buckets
+<div class="paragraph"><p>Auto-reprovisioning is used in order to prevent data loss in ephemeral buckets
 during failure scenarios when a node crashes and restarts quickly. Under this
-scenario auto-reprovisioning ensures that an ephemeral bucket&#8217;s replica vbuckets
-are prmoted to active state. This mechanism is not needed for Couchbase buckets
+scenario auto-reprovisioning ensures that an ephemeral bucket&#8217;s replica vBuckets
+are promoted to active state. This mechanism is not needed for Couchbase buckets
 because a Couchbase buckets data is persisted to disk and can be loaded back
 into memory after a node restarts. Ephemeral buckets on the other hand
 completely lose their data when a node crashes and replicas must be relied upon
-in order to prevent dataloss. If ephemeral buckets are not in use this setting
+in order to prevent data loss. If ephemeral buckets are not in use this setting
 has no effect on the cluster.</p></div>
 <div class="paragraph"><p>Auto-reprovisioning can either be enabled or disabled. If you have ephemeral
 buckets it is always recommended that auto-reprovisioning is enabled otherwise
-the cluster will experience dataloss if a node crashes or is restarted. Users
+the cluster will experience data loss if a node crashes or is restarted. Users
 can also specify the number of nodes that can be auto-reprovisioned before the
 cluster is rebalanced. An auto-reprovision event occurs if a cluster has at
 least one ephemeral bucket and a node crashes and restarts. If the number of
 crashes and restarts exceed the maximum number of nodes that can be
-auto-reprovisioned then the next crash and restart will result in dataloss for
+auto-reprovisioned then the next crash and restart will result in data loss for
 all ephemeral buckets in the cluster.</p></div>
 <div class="paragraph"><p>When setting the max nodes parameter, note that specifying the max nodes to be
 too high could result in cascading node failures. This can happen because when a
@@ -781,7 +782,7 @@ node fails and restarts the server load for the crashed node is distributed to
 the rest of the servers in the cluster. This extra load could cause the one or
 more of the remaining servers in the cluster to become overloaded and
 unresponsive leading to more failures. On the other hand specifying max nodes to
-be too small could lead to dataloss if there are many failures in the cluster at
+be too small could lead to data loss if there are many failures in the cluster at
 the same time. How this variable is set depends on the cluster size, workload,
 and configuration. However, it is always recommended that auto-reprovisioning is
 at least enabled and that max nodes is set to at least 1.</p></div>
@@ -799,7 +800,7 @@ at least enabled and that max nodes is set to at least 1.</p></div>
 </dt>
 <dd>
 <p>
-        Specfies the hostname of a node in the cluster. See the HOST FORMATS
+        Specifies the hostname of a node in the cluster. See the HOST FORMATS
         section for more information on specifying a hostname.
 </p>
 </dd>
@@ -812,7 +813,7 @@ at least enabled and that max nodes is set to at least 1.</p></div>
 <dd>
 <p>
         Specifies the username of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error.
 </p>
 </dd>
@@ -825,7 +826,7 @@ at least enabled and that max nodes is set to at least 1.</p></div>
 <dd>
 <p>
         Specifies the password of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error. If this argument is specified, but no password is
         given then the command will prompt the user for a password through
         non-echoed stdin. You may also specify your password by using the
@@ -929,7 +930,8 @@ before a rebalance takes place run the following command.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-06-06 15:02:54 PDT
+Last updated
+ 2018-02-22 15:30:39 GMT
 </div>
 </div>
 </body>

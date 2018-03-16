@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-collect-logs-start
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/07/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/16/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-COLL" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-COLL" "1" "03/16/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -33,8 +33,10 @@ couchbase-cli-collect-logs-start \- Start log collection
 .sp
 .nf
 \fIcouchbase\-cli collect\-logs\-start\fR [\-\-cluster <url>] [\-\-username <user>]
-          [\-\-password <password>] [\-\-all\-nodes] [\-\-nodes <node_list>] [\-\-upload]
-          [\-\-upload\-host <host>] [\-\-customer <customer>] [\-\-ticket <ticket>]
+          [\-\-password <password>] [\-\-all\-nodes] [\-\-nodes <node_list>]
+          [\-\-redaction\-level] [\-\-output\-directory] [\-\-temporary\-directory]
+          [\-\-upload] [\-\-upload\-host <host>] [\-\-upload\-proxy <host>]
+          [\-\-customer <customer>] [\-\-ticket <ticket>]
 .fi
 .SH "DESCRIPTION"
 .sp
@@ -47,17 +49,17 @@ Note that only one log collection task may be running at any given time in the c
 .PP
 \-c, \-\-cluster
 .RS 4
-Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
 .RE
 .PP
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
 .RE
 .PP
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
 .PP
 \-\-all\-nodes
@@ -70,9 +72,29 @@ Specifies that log collection should take place on all nodes in the cluster\&. M
 A list of one or more nodes to collect logs from, the nodes must include the administrator port\&. The list should be comma separated\&. This parameter may not be specified at the same time as the \-\-nodes option\&.
 .RE
 .PP
+\-\-redaction\-level <level>
+.RS 4
+Specifies what level the logs should be redacted too\&. This option has two levels "none" and "partial"\&. If partial is set then data such as usernames, keys and values will be redacted from the logs\&. If none is set then no data will be redacted\&. Please note that increasing the level of redaction can have an impact on debugging problems\&.
+.RE
+.PP
+\-\-output\-directory <directory>
+.RS 4
+Specifies the directory on the node to place the logs\&. This is the location where the logs will be placed after collection has finished\&. Log collection will fail for the nodes that do not have this directory\&. It will also fail if the directory does not have enough space\&.
+.RE
+.PP
+\-\-temporary\-directory <path>
+.RS 4
+Specifies the temporary directory on the node to use while generating the logs\&. During log collection a number of temporary files are created before being compressed\&. If this temporary location does not have enough space log collection will fail\&. All nodes in the cluster must have this directory\&. When it is not specified then the operating system temporary directory will be used\&.
+.RE
+.PP
 \-\-upload
 .RS 4
-Specifies that the logs should be uploaded to the the host specified with the \-\-upload\-host option\&. This option should be used by Couchbase Server Enterprise customers when uploading logs for the Couchbase Support Team\&.
+Specifies that the logs should be uploaded to the host specified with the \-\-upload\-host option\&. This option should be used by Couchbase Server Enterprise customers when uploading logs for the Couchbase Support Team\&.
+.RE
+.PP
+\-\-upload\-proxy <host>
+.RS 4
+Specifies the proxy to use when uploading logs\&. This is useful when a cluster is deployed in secure environments and do not have a direct outbound connection to the internet to upload logs\&.
 .RE
 .PP
 \-\-upload\-host <host>
@@ -176,7 +198,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-cli-collect-logs-status\fR(1)\&. \fBcouchbase-cli-collect-logs-stop\fR(1)\&.
-.SH "COUCHBASE-CLI"
+.SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"

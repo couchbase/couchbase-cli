@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.10" />
 <title>couchbase-cli-bucket-create(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -778,7 +779,7 @@ buckets.</p></div>
 </dt>
 <dd>
 <p>
-        Specfies the hostname of a node in the cluster. See the HOST FORMATS
+        Specifies the hostname of a node in the cluster. See the HOST FORMATS
         section for more information on specifying a hostname.
 </p>
 </dd>
@@ -791,7 +792,7 @@ buckets.</p></div>
 <dd>
 <p>
         Specifies the username of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error.
 </p>
 </dd>
@@ -804,7 +805,7 @@ buckets.</p></div>
 <dd>
 <p>
         Specifies the password of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error. If this argument is specified, but no password is
         given then the command will prompt the user for a password through
         non-echoed stdin. You may also specify your password by using the
@@ -961,6 +962,53 @@ recent timestamp: this is only supported when all clocks on all
 cluster-nodes have been fully synchronized.</code></pre>
 </div></div>
 </dd>
+<dt class="hdlist1">
+--max-ttl &lt;seconds&gt;
+</dt>
+<dd>
+<p>
+        Specifies the maximum TTL (time-to-live) for all documents in
+        bucket in seconds. If enabled and a document is mutated with no TTL
+        or a TTL greater than than the maximum, its TTL will be set to the
+        maximum TTL. Setting this option to 0 disables the use of max-TTL
+        and the largest TTL that is allowed is 2147483647. This option is
+        only available for Couchbase and Ephemeral buckets in Couchbase
+        Enterprise Edition.
+</p>
+</dd>
+<dt class="hdlist1">
+--compression-mode &lt;mode&gt;
+</dt>
+<dd>
+<p>
+        Specifies the compression-mode of the bucket. There are three options;
+        off, passive and active. All three modes are backwards compatible with
+        older SDKs, where Couchbase Server will automatically uncompress documents
+        for clients that do not understand the compression being used. This option
+        is only available for Couchbase and Ephemeral buckets in Couchbase
+        Enterprise Edition.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>Off: Couchbase Server will only compress document values when persisting to
+disk. This is suitable for use cases where compression could have a
+negative impact on performance. Please note it is expected that compression
+in most use cases will improve performance.</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>Passive: Documents which were compressed by a client, or read compressed
+from disk will be stored compress in-memory. Couchbase Server will make
+no additional attempt to compress documents that are not already compressed.</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>Active: Couchbase Server will actively and aggressively attempt to compress
+documents, even if they have not been received in a compressed format. This
+provides the benefits of compression even when the SDK clients are not
+complicit.</code></pre>
+</div></div>
+</dd>
 </dl></div>
 <div class="paragraph"><p>--wait
         The create bucket command is asynchronous by default. Specifying this option
@@ -1071,7 +1119,8 @@ conflict resolution, run the following command.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-09-07 13:56:37 PDT
+Last updated
+ 2018-01-29 18:25:43 GMT
 </div>
 </div>
 </body>

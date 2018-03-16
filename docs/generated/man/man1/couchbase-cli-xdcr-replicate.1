@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/07/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/16/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR" "1" "03/16/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,7 +28,7 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-couchbase-cli-xdcr-replicate \- Creates a replication between two datacenters
+couchbase-cli-xdcr-replicate \- Creates a replication between two data centers
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -41,7 +41,7 @@ couchbase-cli-xdcr-replicate \- Creates a replication between two datacenters
           [\-\-worker\-batch\-size <num>] [\-\-doc\-batch\-size <kilobytes>]
           [\-\-failure\-restart\-interval <seconds>] [\-\-source\-nozzle\-per\-node <num>]
           [\-\-target\-nozzle\-per\-node <num>] [\-\-bandwidth\-usage\-limit <num>]
-          [\-\-stats\-interval <milliseconds>]
+          [\-\-enable\-compression <num>] [\-\-stats\-interval <milliseconds>]
           [\-\-optimistic\-replication\-threshold <bytes>] [\-\-log\-level <level>]
 .fi
 .SH "DESCRIPTION"
@@ -51,17 +51,17 @@ This command is used to manage XDCR replications\&.
 .PP
 \-c, \-\-cluster
 .RS 4
-Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
 .RE
 .PP
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
 .RE
 .PP
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
 .PP
 \-\-create
@@ -162,6 +162,11 @@ The number of outgoing nozzles to each node in the target cluster\&. The value o
 \-\-bandwidth\-usage\-limit <num>
 .RS 4
 The bandwidth limit for XDCR replications in Megabytes per second for this replication\&.
+.RE
+.PP
+\-\-enable\-compression <num>
+.RS 4
+Specifies whether or not XDCR compression is enabled\&. Set this option to "1" to enable compression or "0" to disable compression\&. This feature is only available in Couchbase Enterprise Edition and can only be used where the target cluster supports compression\&.
 .RE
 .PP
 \-\-log\-level <level>
@@ -304,7 +309,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-cli-setting-xdcr\fR(1) \fBcouchbase-cli-xdcr-setup\fR(1)
-.SH "COUCHBASE-CLI"
+.SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"

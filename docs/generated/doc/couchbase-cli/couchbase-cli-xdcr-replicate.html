@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.10" />
 <title>couchbase-cli-xdcr-replicate(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -739,7 +740,7 @@ couchbase-cli-xdcr-replicate(1) Manual Page
 <h2>NAME</h2>
 <div class="sectionbody">
 <p>couchbase-cli-xdcr-replicate -
-   Creates a replication between two datacenters
+   Creates a replication between two data centers
 </p>
 </div>
 </div>
@@ -757,7 +758,7 @@ couchbase-cli-xdcr-replicate(1) Manual Page
           [--worker-batch-size &lt;num&gt;] [--doc-batch-size &lt;kilobytes&gt;]
           [--failure-restart-interval &lt;seconds&gt;] [--source-nozzle-per-node &lt;num&gt;]
           [--target-nozzle-per-node &lt;num&gt;] [--bandwidth-usage-limit &lt;num&gt;]
-          [--stats-interval &lt;milliseconds&gt;]
+          [--enable-compression &lt;num&gt;] [--stats-interval &lt;milliseconds&gt;]
           [--optimistic-replication-threshold &lt;bytes&gt;] [--log-level &lt;level&gt;]</pre>
 <div class="attribution">
 </div></div>
@@ -781,7 +782,7 @@ couchbase-cli-xdcr-replicate(1) Manual Page
 </dt>
 <dd>
 <p>
-        Specfies the hostname of a node in the cluster. See the HOST FORMATS
+        Specifies the hostname of a node in the cluster. See the HOST FORMATS
         section for more information on specifying a hostname.
 </p>
 </dd>
@@ -794,7 +795,7 @@ couchbase-cli-xdcr-replicate(1) Manual Page
 <dd>
 <p>
         Specifies the username of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error.
 </p>
 </dd>
@@ -807,7 +808,7 @@ couchbase-cli-xdcr-replicate(1) Manual Page
 <dd>
 <p>
         Specifies the password of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error. If this argument is specified, but no password is
         given then the command will prompt the user for a password through
         non-echoed stdin. You may also specify your password by using the
@@ -985,6 +986,17 @@ couchbase-cli-xdcr-replicate(1) Manual Page
 </p>
 </dd>
 <dt class="hdlist1">
+--enable-compression &lt;num&gt;
+</dt>
+<dd>
+<p>
+        Specifies whether or not XDCR compression is enabled. Set this option to
+        "1" to enable compression or "0" to disable compression. This feature is
+        only available in Couchbase Enterprise Edition and can only be used where
+        the target cluster supports compression.
+</p>
+</dd>
+<dt class="hdlist1">
 --log-level &lt;level&gt;
 </dt>
 <dd>
@@ -1125,7 +1137,8 @@ and failure restart interval to 60 seconds.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-06-06 15:02:54 PDT
+Last updated
+ 2018-02-22 15:30:39 GMT
 </div>
 </div>
 </body>

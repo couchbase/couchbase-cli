@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.10" />
 <title>couchbase-cli-setting-security(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -749,7 +750,7 @@ couchbase-cli-setting-security(1) Manual Page
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli setting-password-policy</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-          [--password &lt;password&gt;] [--disable-http-ui]</pre>
+          [--password &lt;password&gt;] [--disable-http-ui &lt;0|1&gt;]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -772,7 +773,7 @@ couchbase-cli-setting-security(1) Manual Page
 </dt>
 <dd>
 <p>
-        Specfies the hostname of a node in the cluster. See the HOST FORMATS
+        Specifies the hostname of a node in the cluster. See the HOST FORMATS
         section for more information on specifying a hostname.
 </p>
 </dd>
@@ -785,7 +786,7 @@ couchbase-cli-setting-security(1) Manual Page
 <dd>
 <p>
         Specifies the username of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error.
 </p>
 </dd>
@@ -798,7 +799,7 @@ couchbase-cli-setting-security(1) Manual Page
 <dd>
 <p>
         Specifies the password of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error. If this argument is specified, but no password is
         given then the command will prompt the user for a password through
         non-echoed stdin. You may also specify your password by using the
@@ -806,12 +807,14 @@ couchbase-cli-setting-security(1) Manual Page
 </p>
 </dd>
 <dt class="hdlist1">
---disable-http-ui
+--disable-http-ui &lt;0|1&gt;
 </dt>
 <dd>
 <p>
-        Disables the Couchbase Administration Console over HTTP. This will not
-        disable the HTTPS UI.
+        Specifies whether the Couchbase Administration UI can be accessible
+        over http. To disable access set this option to "1". To enable access
+        set this option to "0". By default, access to the UI over http is
+        enabled.
 </p>
 </dd>
 </dl></div>
@@ -847,12 +850,12 @@ a port other that 8091.</p></div>
 <div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>To get disable the Couchbase Administration Console over HTTP run the following
+<div class="paragraph"><p>To disable the Couchbase Administration Console over HTTP run the following
 command.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli setting-security -c 192.168.1.5 -u Administrator \
- -p password --disable-http-ui</code></pre>
+ -p password --disable-http-ui 1</code></pre>
 </div></div>
 </div>
 </div>
@@ -886,7 +889,8 @@ command.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-11-27 17:20:51 PST
+Last updated
+ 2018-03-12 12:27:01 GMT
 </div>
 </div>
 </body>

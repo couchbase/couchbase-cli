@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-audit
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/07/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 03/16/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "09/07/2017" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETT" "1" "03/16/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -43,17 +43,17 @@ Auditing is used to observe the action of users in the cluster\&. It is usually 
 .PP
 \-c, \-\-cluster
 .RS 4
-Specfies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
 .RE
 .PP
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
 .RE
 .PP
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permision to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
 .RE
 .PP
 \-\-audit\-enabled <num>
@@ -69,6 +69,11 @@ Specifies The auditing log path\&. This should be a path should be a path to a f
 \-\-audit\-log\-rotate\-interval <seconds>
 .RS 4
 Specifies the audit log rotate interval\&. This is the interval in which the current audit log will be replaced with a new empty audit log file\&. The log file is rotated to ensure that the audit log does not consume too much disk space\&. The minimum audit log rotate interval is 15 minutes (900 seconds)\&.
+.RE
+.PP
+\-\-audit\-log\-rotate\-size <bytes>
+.RS 4
+Specifies the audit log rotate size\&. This is the size at which the current audit log will be replaced with a new empty audit log file\&. The log file is rotated to ensure that the audit log does not consume too much disk space\&. The minimum audit log rotate size is 0 bytes and maximum is 524,288,000 (500MB)\&. When it is set to 0 the log will not be rotated based on size\&.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -124,6 +129,20 @@ $ couchbase\-cli setting\-audit \-c 192\&.168\&.1\&.5:8091 \-\-username Administ
 .RE
 .\}
 .sp
+To enable auditing on a cluster and set the audit log to the default logs folder on a linux installation with a log rotate size of 20MB run the command below\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli setting\-audit \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+ \-\-password password \-\-enabled 1 \-\-audit\-log\-rotate\-size 20971520 \e
+ \-\-audit\-log\-path /opt/couchbase/var/lib/couchbase/logs
+.fi
+.if n \{\
+.RE
+.\}
+.sp
 To disable auditing run the following command\&.
 .sp
 .if n \{\
@@ -144,7 +163,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-admin-role-manage\fR(1)\&. \fBcouchbase-ssl-manage\fR(1)\&.
-.SH "COUCHBASE-CLI"
+.SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"

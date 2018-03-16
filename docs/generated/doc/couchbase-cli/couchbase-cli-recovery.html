@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.9" />
+<meta name="generator" content="AsciiDoc 8.6.10" />
 <title>couchbase-cli-recovery(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -762,9 +763,9 @@ couchbase-cli-recovery(1) Manual Page
 be added back to the cluster. And example of this is when a server loses power.
 This server might get failed over and removed from the cluster, but once power
 is restored to the server you may want to add it back to the cluster.</p></div>
-<div class="paragraph"><p>Another use case is taking a server out of the cluster for maintainance. This
+<div class="paragraph"><p>Another use case is taking a server out of the cluster for maintenance. This
 is done by gracefully failing over a server to ensure there is no data loss.
-The administrator can then perform mainainance on the removed server and add it
+The administrator can then perform maintenance on the removed server and add it
 back with the server-readd command.</p></div>
 <div class="paragraph"><p>The recovery command also allows a server to have it&#8217;s data remvoed before being
 added back to the cluster (full recovery) or having the server resume from where
@@ -787,7 +788,7 @@ on rebalancing a cluster.</p></div>
 </dt>
 <dd>
 <p>
-        Specfies the hostname of a node in the cluster. See the HOST FORMATS
+        Specifies the hostname of a node in the cluster. See the HOST FORMATS
         section for more information on specifying a hostname.
 </p>
 </dd>
@@ -800,7 +801,7 @@ on rebalancing a cluster.</p></div>
 <dd>
 <p>
         Specifies the username of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error.
 </p>
 </dd>
@@ -813,7 +814,7 @@ on rebalancing a cluster.</p></div>
 <dd>
 <p>
         Specifies the password of the user executing the command. If you do not have
-        a user account with permision to execute the command then it will fail with
+        a user account with permission to execute the command then it will fail with
         an unauthorized error. If this argument is specified, but no password is
         given then the command will prompt the user for a password through
         non-echoed stdin. You may also specify your password by using the
@@ -933,7 +934,8 @@ the following command.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-01-03 11:42:24 PST
+Last updated
+ 2018-02-22 15:30:39 GMT
 </div>
 </div>
 </body>
