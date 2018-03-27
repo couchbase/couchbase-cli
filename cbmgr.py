@@ -2684,7 +2684,7 @@ class SettingXdcr(Subcommand):
         if opts.compression == "0":
             opts.compression = "None"
         elif opts.compression =="1":
-            opts.compression = "Snappy"
+            opts.compression = "Auto"
 
         _, errors = rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size,
                                               opts.doc_batch_size, opts.fail_interval,
@@ -3037,7 +3037,7 @@ class XdcrReplicate(Subcommand):
         if opts.compression == "0":
             opts.compression = "None"
         elif opts.compression =="1":
-            opts.compression = "Snappy"
+            opts.compression = "Auto"
 
         actions = sum([opts.create, opts.delete, opts.pause, opts.list, opts.resume,
                        opts.settings])
