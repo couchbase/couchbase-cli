@@ -1135,7 +1135,7 @@ def get_mcd_conn(host, port, username, password, bucket):
         try:
             conn.bucket_select(bucket)
         except EOFError, e:
-            return "error: Bucket select error: %s:%s %s, %s" % (host, port, buckete), None
+            return "error: Bucket select error: %s:%s %s, %s" % (host, port, bucket, e), None
         except cb_bin_client.MemcachedError, e:
             return "error: Bucket select failed: %s:%s %s, %s" % (host, port, bucket, e), None
         except socket.error, e:
