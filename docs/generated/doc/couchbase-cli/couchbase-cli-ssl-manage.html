@@ -859,43 +859,78 @@ couchbase-cli-ssl-manage(1) Manual Page
 </p>
 </dd>
 <dt class="hdlist1">
---set-client-auth-state &lt;enable|disable|mandatory&gt;
+--set-client-auth &lt;path&gt;
 </dt>
 <dd>
 <p>
-        Sets the client certificate auth to following values:
+        Specifies a path to the client auth configuration file. This file should
+        contain the state of client auth and one or more prefixes. The state defines
+        whether or not client auth should used. The possible values for this field
+        are below:
 </p>
 <div class="ulist"><ul>
 <li>
 <p>
-disabled : no client certification
+disabled: no client certification
 </p>
 </li>
 <li>
 <p>
-enabled : if the client presents a valid client certificate then we try
+enable: if the client presents a valid client certificate then we try
           and validate it. If the validation fails or no certificate is presented we
           fall back to the existing authentication methods
 </p>
 </li>
 <li>
 <p>
-mandatory : the client has to present valid SSL certificate in order to
+mandatory: the client has to present valid SSL certificate in order to
           access successfully authorise the connection.
 </p>
+<div class="literalblock">
+<div class="content">
+<pre><code>The prefixes section should contain one or more prefixes and each prefix
+should contain a path, prefix, and delimiter. More information about these
+sub-fields is below:</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+path: The field which will be used to extract the username from the
+          certificate. Currently only subject.cn, san.uri, san.email and san.dnsname
+          are allowed
+</p>
+</li>
+<li>
+<p>
+prefix: Optional. Prefix to be ignored from the field value
+</p>
+</li>
+<li>
+<p>
+delimiter: Optional. The delimiter can either be a string or a character,
+          the parsing of the username ends when the delimter value is found.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>Below is an example of what a client auth configuraiton file might look
+like:</code></pre>
+</div></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>{
+  "state": "enable",
+  "prefixes": [
+    {
+      "path": "subject.cn",
+      "prefix": "www.cb-",
+      "delimiter": "."
+    }
+  ]
+}</code></pre>
+</div></div>
 </li>
 </ul></div>
 </dd>
-</dl></div>
-<div class="paragraph"><p>--set-client-auth-path &lt;path&gt;:
-    The field which will be used to extract the username from the certificate
-    Currently only subject.cn, san.uri, san.email and san.dnsname are allowed</p></div>
-<div class="paragraph"><p>--set-client-auth-prefix &lt;prefix&gt;
-    Optional. Prefix to be ignored from the field value</p></div>
-<div class="paragraph"><p>--set-client-auth-delimiter &lt;delimiter&gt;
-    Optional. The delimiter can either be a string or a character, the parsing
-    of the username ends when the delimter value is found.</p></div>
-<div class="dlist"><dl>
 <dt class="hdlist1">
 --client-auth
 </dt>

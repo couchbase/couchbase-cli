@@ -87,9 +87,9 @@ Sets the node certificate\&. Before running this command you must copy the node 
 Uploads the certificate specified to the cluster\&. The uploaded certificate will replace the cluster certificate in this cluster\&.
 .RE
 .PP
-\-\-set\-client\-auth\-state <enable|disable|mandatory>
+\-\-set\-client\-auth <path>
 .RS 4
-Sets the client certificate auth to following values:
+Specifies a path to the client auth configuration file\&. This file should contain the state of client auth and one or more prefixes\&. The state defines whether or not client auth should used\&. The possible values for this field are below:
 .sp
 .RS 4
 .ie n \{\
@@ -99,18 +99,7 @@ Sets the client certificate auth to following values:
 .sp -1
 .IP \(bu 2.3
 .\}
-disabled : no client certification
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-enabled : if the client presents a valid client certificate then we try and validate it\&. If the validation fails or no certificate is presented we fall back to the existing authentication methods
+disabled: no client certification
 .RE
 .sp
 .RS 4
@@ -121,15 +110,95 @@ enabled : if the client presents a valid client certificate then we try and vali
 .sp -1
 .IP \(bu 2.3
 .\}
-mandatory : the client has to present valid SSL certificate in order to access successfully authorise the connection\&.
+enable: if the client presents a valid client certificate then we try and validate it\&. If the validation fails or no certificate is presented we fall back to the existing authentication methods
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+mandatory: the client has to present valid SSL certificate in order to access successfully authorise the connection\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+The prefixes section should contain one or more prefixes and each prefix
+should contain a path, prefix, and delimiter\&. More information about these
+sub\-fields is below:
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+path: The field which will be used to extract the username from the certificate\&. Currently only subject\&.cn, san\&.uri, san\&.email and san\&.dnsname are allowed
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+prefix: Optional\&. Prefix to be ignored from the field value
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+delimiter: Optional\&. The delimiter can either be a string or a character, the parsing of the username ends when the delimter value is found\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Below is an example of what a client auth configuraiton file might look
+like:
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+{
+  "state": "enable",
+  "prefixes": [
+    {
+      "path": "subject\&.cn",
+      "prefix": "www\&.cb\-",
+      "delimiter": "\&."
+    }
+  ]
+}
+.fi
+.if n \{\
+.RE
+.\}
 .RE
 .RE
-.sp
-\-\-set\-client\-auth\-path <path>: The field which will be used to extract the username from the certificate Currently only subject\&.cn, san\&.uri, san\&.email and san\&.dnsname are allowed
-.sp
-\-\-set\-client\-auth\-prefix <prefix> Optional\&. Prefix to be ignored from the field value
-.sp
-\-\-set\-client\-auth\-delimiter <delimiter> Optional\&. The delimiter can either be a string or a character, the parsing of the username ends when the delimter value is found\&.
 .PP
 \-\-client\-auth
 .RS 4

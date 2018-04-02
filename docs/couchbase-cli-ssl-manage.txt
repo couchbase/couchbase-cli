@@ -48,25 +48,43 @@ include::part-common-options.txt[]
 	Uploads the certificate specified to the cluster. The uploaded certificate
 	will replace the cluster certificate in this cluster.
 
---set-client-auth-state <enable|disable|mandatory>::
-	Sets the client certificate auth to following values:
-	* disabled : no client certification
-	* enabled : if the client presents a valid client certificate then we try
+--set-client-auth <path>::
+	Specifies a path to the client auth configuration file. This file should
+	contain the state of client auth and one or more prefixes. The state defines
+	whether or not client auth should used. The possible values for this field
+	are below:
+
+	* disabled: no client certification
+	* enable: if the client presents a valid client certificate then we try
 	  and validate it. If the validation fails or no certificate is presented we
 	  fall back to the existing authentication methods
-	* mandatory : the client has to present valid SSL certificate in order to
+	* mandatory: the client has to present valid SSL certificate in order to
 	  access successfully authorise the connection.
 
---set-client-auth-path <path>:
-    The field which will be used to extract the username from the certificate
-    Currently only subject.cn, san.uri, san.email and san.dnsname are allowed
+	The prefixes section should contain one or more prefixes and each prefix
+	should contain a path, prefix, and delimiter. More information about these
+	sub-fields is below:
 
---set-client-auth-prefix <prefix>
-    Optional. Prefix to be ignored from the field value
+	* path: The field which will be used to extract the username from the
+	  certificate. Currently only subject.cn, san.uri, san.email and san.dnsname
+	  are allowed
+	* prefix: Optional. Prefix to be ignored from the field value
+	* delimiter: Optional. The delimiter can either be a string or a character,
+	  the parsing of the username ends when the delimter value is found.
 
---set-client-auth-delimiter <delimiter>
-    Optional. The delimiter can either be a string or a character, the parsing
-    of the username ends when the delimter value is found.
+	Below is an example of what a client auth configuraiton file might look
+	like:
+
+	{
+	  "state": "enable",
+	  "prefixes": [
+	    {
+	      "path": "subject.cn",
+	      "prefix": "www.cb-",
+	      "delimiter": "."
+	    }
+	  ]
+	}
 
 --client-auth::
 	This options used to get the client cert auth value
