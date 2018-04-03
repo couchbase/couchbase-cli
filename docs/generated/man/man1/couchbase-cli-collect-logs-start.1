@@ -34,9 +34,10 @@ couchbase-cli-collect-logs-start \- Start log collection
 .nf
 \fIcouchbase\-cli collect\-logs\-start\fR [\-\-cluster <url>] [\-\-username <user>]
           [\-\-password <password>] [\-\-all\-nodes] [\-\-nodes <node_list>]
-          [\-\-redaction\-level] [\-\-salt <string>] [\-\-output\-directory]
-          [\-\-temporary\-directory] [\-\-upload] [\-\-upload\-host <host>]
-          [\-\-upload\-proxy <host>] [\-\-customer <customer>] [\-\-ticket <ticket>]
+          [\-\-redaction\-level <level>] [\-\-salt <string>]
+          [\-\-output\-directory <directory>] [\-\-temporary\-directory <directory>]
+          [\-\-upload] [\-\-upload\-host <host>] [\-\-upload\-proxy <host>]
+          [\-\-customer <customer>] [\-\-ticket <ticket>]
 .fi
 .SH "DESCRIPTION"
 .sp
@@ -69,7 +70,7 @@ Specifies that log collection should take place on all nodes in the cluster\&. M
 .PP
 \-\-nodes <node_list>
 .RS 4
-A list of one or more nodes to collect logs from, the nodes must include the administrator port\&. The list should be comma separated\&. This parameter may not be specified at the same time as the \-\-nodes option\&.
+A list of one or more nodes to collect logs from, the nodes must include the administrator port\&. The nodes should be comma separated\&. This option may not be specified at the same time as the \-\-all\-nodes option\&.
 .RE
 .PP
 \-\-redaction\-level <level>
@@ -87,7 +88,7 @@ Specifies the string to used as the salt\&. This option can only be used when \-
 Specifies the directory on the node to place the logs\&. This is the location where the logs will be placed after collection has finished\&. Log collection will fail for the nodes that do not have this directory\&. It will also fail if the directory does not have enough space\&.
 .RE
 .PP
-\-\-temporary\-directory <path>
+\-\-temporary\-directory <directory>
 .RS 4
 Specifies the temporary directory on the node to use while generating the logs\&. During log collection a number of temporary files are created before being compressed\&. If this temporary location does not have enough space log collection will fail\&. All nodes in the cluster must have this directory\&. When it is not specified then the operating system temporary directory will be used\&.
 .RE

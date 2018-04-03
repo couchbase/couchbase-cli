@@ -11,9 +11,10 @@ SYNOPSIS
 [verse]
 'couchbase-cli collect-logs-start' [--cluster <url>] [--username <user>]
 	  [--password <password>] [--all-nodes] [--nodes <node_list>]
-	  [--redaction-level] [--salt <string>] [--output-directory]
-	  [--temporary-directory] [--upload] [--upload-host <host>]
-	  [--upload-proxy <host>] [--customer <customer>] [--ticket <ticket>]
+	  [--redaction-level <level>] [--salt <string>]
+	  [--output-directory <directory>] [--temporary-directory <directory>]
+	  [--upload] [--upload-host <host>] [--upload-proxy <host>]
+	  [--customer <customer>] [--ticket <ticket>]
 
 DESCRIPTION
 -----------
@@ -46,9 +47,8 @@ include::part-common-options.txt[]
 
 --nodes <node_list>::
 	A list of one or more nodes to collect logs from, the nodes must include the
-	administrator port. The list should be comma
-	separated. This parameter may not be specified at the same time as the
-	--nodes option.
+	administrator port. The nodes should be  comma separated. This option may
+	not be specified at the same time as the --all-nodes option.
 
 --redaction-level <level>::
 	Specifies what level the logs should be redacted too. This option has two
@@ -71,7 +71,7 @@ include::part-common-options.txt[]
 	will fail for the nodes that do not have this directory. It will also fail
 	if the directory does not have enough space.
 
---temporary-directory <path>::
+--temporary-directory <directory>::
 	Specifies the temporary directory on the node to use while generating the
 	logs. During log collection a number of temporary files are created before
 	being compressed. If this temporary location does not have enough space

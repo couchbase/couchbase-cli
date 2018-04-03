@@ -751,9 +751,10 @@ couchbase-cli-collect-logs-start(1) Manual Page
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli collect-logs-start</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
           [--password &lt;password&gt;] [--all-nodes] [--nodes &lt;node_list&gt;]
-          [--redaction-level] [--salt &lt;string&gt;] [--output-directory]
-          [--temporary-directory] [--upload] [--upload-host &lt;host&gt;]
-          [--upload-proxy &lt;host&gt;] [--customer &lt;customer&gt;] [--ticket &lt;ticket&gt;]</pre>
+          [--redaction-level &lt;level&gt;] [--salt &lt;string&gt;]
+          [--output-directory &lt;directory&gt;] [--temporary-directory &lt;directory&gt;]
+          [--upload] [--upload-host &lt;host&gt;] [--upload-proxy &lt;host&gt;]
+          [--customer &lt;customer&gt;] [--ticket &lt;ticket&gt;]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -837,9 +838,8 @@ cluster.</p></div>
 <dd>
 <p>
         A list of one or more nodes to collect logs from, the nodes must include the
-        administrator port. The list should be comma
-        separated. This parameter may not be specified at the same time as the
-        --nodes option.
+        administrator port. The nodes should be  comma separated. This option may
+        not be specified at the same time as the --all-nodes option.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -879,7 +879,7 @@ cluster.</p></div>
 </p>
 </dd>
 <dt class="hdlist1">
---temporary-directory &lt;path&gt;
+--temporary-directory &lt;directory&gt;
 </dt>
 <dd>
 <p>
@@ -1028,7 +1028,7 @@ for all nodes for a support ticket then you can run the following command.</p></
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-04-03 16:21:47 BST
+ 2018-04-03 16:31:12 BST
 </div>
 </div>
 </body>
