@@ -991,6 +991,8 @@ class CollectLogsStart(Subcommand):
                            help="A comma separated list of nodes to collect logs from")
         group.add_argument("--redaction-level", dest="redaction_level", metavar="<none|partial>",
                            choices=["none", "partial"], help="Level of log redaction to apply")
+        group.add_argument("--salt", dest="salt", metavar="<string>",
+                           help="The salt to use to redact the log")
         group.add_argument("--output-directory", dest="output_dir", metavar="<directory>",
                            help="Output directory to place the generated logs file")
         group.add_argument("--temporary-directory", dest="tmp_dir", metavar="<directory>",
@@ -1017,6 +1019,9 @@ class CollectLogsStart(Subcommand):
         if opts.nodes and opts.all_nodes:
             _exitIfErrors(["Cannot specify both --all-nodes and --nodes"])
 
+        if opts.salt and opts.redaction_level != "partial":
+            _exitIfErrors(["--redaction-level has to be set to 'partial' when --salt is specified"])
+
         servers = opts.nodes
         if opts.all_nodes:
             servers = "*"
@@ -1036,8 +1041,9 @@ class CollectLogsStart(Subcommand):
             if opts.upload_proxy:
                 _warning("--upload_proxy has no effect with specifying --upload")
 
-        _, errors = rest.collect_logs_start(servers, opts.redaction_level, opts.output_dir, opts.tmp_dir, opts.upload,
-                                            opts.upload_host, opts.upload_proxy, opts.upload_customer, opts.upload_ticket)
+        _, errors = rest.collect_logs_start(servers, opts.redaction_level, opts.salt, opts.output_dir, opts.tmp_dir,
+                                            opts.upload, opts.upload_host, opts.upload_proxy, opts.upload_customer,
+                                            opts.upload_ticket)
         _exitIfErrors(errors)
         _success("Log collection started")
 

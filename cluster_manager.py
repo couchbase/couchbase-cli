@@ -389,7 +389,7 @@ class ClusterManager(object):
         url = self.hostname + '/pools/default/tasks'
         return self._get(url)
 
-    def collect_logs_start(self, servers, redaction_level, log_dir, tmp_dir, upload, upload_host, upload_proxy,
+    def collect_logs_start(self, servers, redaction_level, salt, log_dir, tmp_dir, upload, upload_host, upload_proxy,
                            upload_customer, upload_ticket):
         url = self.hostname + '/controller/startLogsCollection'
         params = dict()
@@ -413,6 +413,8 @@ class ClusterManager(object):
             params["logDir"] = log_dir
         if tmp_dir:
             params["tmpDir"] = tmp_dir
+        if salt:
+            params["logRedactionSalt"] = salt
 
         if upload:
             if upload_host:

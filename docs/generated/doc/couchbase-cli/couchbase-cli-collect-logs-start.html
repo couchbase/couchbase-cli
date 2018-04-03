@@ -751,9 +751,9 @@ couchbase-cli-collect-logs-start(1) Manual Page
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli collect-logs-start</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
           [--password &lt;password&gt;] [--all-nodes] [--nodes &lt;node_list&gt;]
-          [--redaction-level] [--output-directory] [--temporary-directory]
-          [--upload] [--upload-host &lt;host&gt;] [--upload-proxy &lt;host&gt;]
-          [--customer &lt;customer&gt;] [--ticket &lt;ticket&gt;]</pre>
+          [--redaction-level] [--salt &lt;string&gt;] [--output-directory]
+          [--temporary-directory] [--upload] [--upload-host &lt;host&gt;]
+          [--upload-proxy &lt;host&gt;] [--customer &lt;customer&gt;] [--ticket &lt;ticket&gt;]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -852,6 +852,19 @@ cluster.</p></div>
         usernames, keys and values will be redacted from the logs. If none is set
         then no data  will be redacted. Please note that increasing the level
         of redaction can have an impact on debugging problems.
+</p>
+</dd>
+<dt class="hdlist1">
+--salt &lt;string&gt;
+</dt>
+<dd>
+<p>
+        Specifies the string to used as the salt. This option can only be used
+        when --redaction-level is set to "partial". The salt is used to increase
+        the security of the redacted log files. If the option is not specified
+        then a salt is generated each time the logs are collected. It is important
+        to specify the salt if logs are from multiple collections or logs from client
+        SDKs have to be cross referenced against each other.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1015,7 +1028,7 @@ for all nodes for a support ticket then you can run the following command.</p></
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-02-22 15:30:39 GMT
+ 2018-04-03 16:21:47 BST
 </div>
 </div>
 </body>
