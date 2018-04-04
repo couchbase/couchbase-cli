@@ -361,6 +361,12 @@ class CouchbaseCLI(Command):
             self.parser.print_help()
             self.parser.exit(1)
 
+        if not args[1] in ["-h", "--help"] and  args[1].startswith("-"):
+            _exitIfErrors(["Unknow subcommand: '{}'. The frist agrument has to be a subcommand like 'bucket-list' or"
+                           "'rebalance', please see couchbase-cli -h for the full list of commands and"
+                           " options".format(args[1])])
+
+
         l1_args = self.parser.parse_args(args[1:2])
         l2_args = l1_args.klass().parse(args[2:])
         setattr(l2_args, 'klass', l1_args.klass)
