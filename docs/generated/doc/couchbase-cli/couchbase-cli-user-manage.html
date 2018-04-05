@@ -1017,18 +1017,18 @@ data_reader[&#8230;]
 </p>
 </dd>
 <dt class="hdlist1">
-data_reader_writer[&#8230;]
+data_writer[&#8230;]
 </dt>
 <dd>
 <p>
         Gives the user permission to read and write data through Couchbases
         key-value APIs. The user cannot however modify the settings of a bucket.
         To give a user read-write access for all buckets set their role to
-        data_reader_writer[*]. To give the user read-write access to data on a
-        single bucket named <em>default</em> then specify their role as
-        data_reader_writer[default]. If the user needs read-write access to data
-        for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
-        as data_reader_writer[default,app].
+        data_writer[*]. To give the user read-write access to data on a single
+        bucket named <em>default</em> then specify their role as data_writer[default].
+        If the user needs read-write access to data for multiple buckets, for
+        example <em>default</em> and <em>app</em>, then set their role as
+        data_writer[default,app].
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1278,7 +1278,7 @@ run the following command.</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-02-22 15:30:39 GMT
+ 2018-04-05 18:17:40 BST
 </div>
 </div>
 </body>

@@ -124,15 +124,15 @@ data_reader[...]::
 	If the user needs read-only access to data for multiple buckets, for example
 	'default' and 'app', then set their role as data_reader[default,app].
 
-data_reader_writer[...]::
+data_writer[...]::
 	Gives the user permission to read and write data through Couchbases
 	key-value APIs. The user cannot however modify the settings of a bucket.
 	To give a user read-write access for all buckets set their role to
-	data_reader_writer[*]. To give the user read-write access to data on a
-	single bucket named 'default' then specify their role as
-	data_reader_writer[default]. If the user needs read-write access to data
-	for multiple buckets, for example 'default' and 'app', then set their role
-	as data_reader_writer[default,app].
+	data_writer[*]. To give the user read-write access to data on a single
+	bucket named 'default' then specify their role as data_writer[default].
+	If the user needs read-write access to data for multiple buckets, for
+	example 'default' and 'app', then set their role as
+	data_writer[default,app].
 
 data_dcp_reader[...]::
 	Gives the user permission to create Couchbase DCP connections. To give a
