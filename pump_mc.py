@@ -192,7 +192,7 @@ class MCSink(pump.Sink):
 
         if m:
             try:
-                conn.s.send(''.join(m))
+                conn.s.sendall(''.join(m))
             except socket.error, e:
                 return "error: conn.send() exception: %s" % (e)
 
