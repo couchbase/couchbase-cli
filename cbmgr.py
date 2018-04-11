@@ -1947,11 +1947,15 @@ class SettingAlert(Subcommand):
         enabled = "true"
         if opts.enabled == "0":
             enabled = "false"
+        
+        email_encrypt = "false"
+        if opts.email_encrypt == "1":
+            email_encrypt = "true"
 
         _, errors = rest.set_alert_settings(enabled, opts.email_recipients,
                                             opts.email_sender, opts.email_username,
                                             opts.email_password, opts.email_host,
-                                            opts.email_port, opts.email_encrypt,
+                                            opts.email_port, email_encrypt,
                                             ",".join(alerts))
         _exitIfErrors(errors)
 
