@@ -54,35 +54,35 @@ class Redact_file(object):
                     _, tail = os.path.split(self.log)
                     redacted_log = os.path.join(self.path, 'redacted-' + tail)
                     if os.path.exists(redacted_log):
-                        logging.error('{} - {} already exists, not redacting'.format(self.log, redacted_log))
+                        logging.error('{0} - {1} already exists, not redacting'.format(self.log, redacted_log))
                         return
-                    logging.debug('{} - Starting redaction file size is {}'
+                    logging.debug('{0} - Starting redaction file size is {1}'
                                   ' bytes'.format(self.log, os.fstat(log_file.fileno()).st_size))
                     with open(redacted_log, 'w+') as redacted_file:
                         hashed_salt = hashlib.sha1(self.salt + self.salt).hexdigest()
-                        redacted_file.write('Hash of the salt used to redact the file: {}\n'.format(hashed_salt))
-                        logging.debug('{} - Log redacted using salt: <ud>{}</ud>'.format(self.log, self.salt))
+                        redacted_file.write('Hash of the salt used to redact the file: {0}\n'.format(hashed_salt))
+                        logging.debug('{0} - Log redacted using salt: <ud>{1}</ud>'.format(self.log, self.salt))
                         for line_number, line in enumerate(log_file, 1):
                             ud_start_tags = line.count('<ud>')
                             ud_end_tags = line.count('</ud>')
                             if ud_start_tags == ud_end_tags:
                                 total_redacted_tags += ud_start_tags
                             else:
-                                logging.warn('{} - Unmatched tags detected on line {}, potential data leak. Please'
+                                logging.warn('{0} - Unmatched tags detected on line {1}, potential data leak. Please'
                                              ' review redacted file'.format(self.log, line_number))
                                 if 0 not in [ud_start_tags, ud_end_tags]:
                                     total_redacted_tags += min(ud_start_tags, ud_end_tags)
                                     warning_lines += 1
                             redacted_file.write(self._redact_line(line))
-                    logging.info('{} - Finished redacting, {} lines processed, {} tags redacted, {} lines with'
+                    logging.info('{0} - Finished redacting, {1} lines processed, {2} tags redacted, {3} lines with'
                                  ' unmatched tags'.format(self.log, line_number, total_redacted_tags, warning_lines))
                 except IOError as e:
-                    logging.error('{} - {}'.format(redacted_log, e.strerror))
+                    logging.error('{0} - {1}'.format(redacted_log, e.strerror))
                 except Exception, e:
                     # Should not get here in a production environment, but this is useful for development
-                    logging.error('{} - Unexpected error: {}'.format(self.log, e.message))
+                    logging.error('{0} - Unexpected error: {1}'.format(self.log, e))
         except IOError as e:
-            logging.error('{} - {}'.format(self.log, e.strerror))
+            logging.error('{0} - {1}'.format(self.log, e.strerror))
 
 
 def redact_file_unpack(args):
