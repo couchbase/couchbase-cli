@@ -74,7 +74,7 @@ class MemcachedClient(object):
         msg=struct.pack(fmt, magic,
             cmd, len(key), len(extraHeader), dtype, vbucketId,
                 len(key) + len(extraHeader) + len(val) + len(extraMeta), opaque, cas)
-        self.s.send(msg + extraHeader + key + val + extraMeta)
+        self.s.sendall(msg + extraHeader + key + val + extraMeta)
 
     def _recvMsg(self):
         response = ""

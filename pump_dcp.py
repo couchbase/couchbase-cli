@@ -438,13 +438,13 @@ class DCPStreamSource(pump.Source, threading.Thread):
                                           fmt=couchbaseConstants.RES_PKT_FMT,
                                           magic=couchbaseConstants.RES_MAGIC_BYTE)
                     except socket.error:
-                        return ("error: socket.error on send();"
+                        return ("error: socket.error on sendall();"
                                 " perhaps the source server: %s was rebalancing"
                                 " or had connectivity/server problems" %
                                 (self.source_node['hostname'])), batch
                     except EOFError:
                         self.dcp_done = True
-                        return ("error: EOFError on socket send();"
+                        return ("error: EOFError on socket sendall();"
                                 " perhaps the source server: %s was rebalancing"
                                 " or had connectivity/server problems" %
                                 (self.source_node['hostname'])), batch
