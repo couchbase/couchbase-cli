@@ -2947,7 +2947,7 @@ class UserManage(Subcommand):
         if opts.auth_domain is None:
             _exitIfErrors(["--auth-domain is required with the --set option"])
 
-        _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.roles, opts.auth_domain)
+        _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.rbac_name, opts.roles, opts.auth_domain)
         _exitIfErrors(errors)
 
         if "query_external_access" in opts.roles:

@@ -846,7 +846,7 @@ class ClusterManager(object):
         url = self.hostname + '/whoami'
         return self._get(url)
 
-    def set_rbac_user(self, username, password, roles, auth_domain):
+    def set_rbac_user(self, username, password, name, roles, auth_domain):
         if auth_domain is None:
             return None, ["The authentication type is required"]
 
@@ -856,8 +856,8 @@ class ClusterManager(object):
         url = self.hostname + '/settings/rbac/users/%s/%s' % (auth_domain, username)
 
         params = {}
-        if username is not None:
-            params["name"] = username
+        if name is not None:
+            params["name"] = name
         if password is not None:
             params["password"] = password
         if roles is not None:
