@@ -13,6 +13,7 @@ SYNOPSIS
 	  [--cluster-password <password>] [--cluster-port <port>]
 	  [--cluster-ramsize <megabytes>] [--cluster-name <name>]
 	  [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
+	  [--cluster-eventing-ramsize <megabytes>]
 	  [--index-storage-setting <setting>] [--services <services>]
 
 DESCRIPTION
@@ -66,6 +67,12 @@ OPTIONS
 	the index service is specified in the --services option. This quota will be
 	assigned to all future nodes added to the cluster with the index service.
 
+--cluster-eventing-ramsize::
+	Sets the Eventing service memory quota (in MB). This parameter is required
+	if the Eventing service is specified in the --services option. This quota
+	will be assigned to all future nodes added to the cluster with the eventing
+	service.
+
 --cluster-name::
 	Sets the name for this cluster. Naming clusters is useful when you have
 	multiple Couchbase Server clusters in your deployment.
@@ -118,16 +125,17 @@ command.
 	 --cluster-index-ramsize 1024 --index-storage-setting memopt
 
 To create a Couchbase Server cluster with all services then you need to set
-the memory quotas for the data, index, and full-text service. The quotas are set
-to 2048MB, 1024MB, and 1024MB respectively. A quota is not set
-for the query service since it does not have a memory quota. You also need to set
-the index storage mode for the index service, which will be set to "default"
-since the service is started on the first node.
+the memory quotas for the Data, Index, Full-Text and Eventing service. The
+quotas are set to 2048MB, 1024MB, 1024MB and 1024MB respectively. A quota is
+not set for the query service since it does not have a memory quota. You also
+need to set the index storage mode for the index service, which will be set to
+"default" since the service is started on the first node.
 
 	$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
 	 --cluster-password password --services data,index,query,fts \
 	 --cluster-ramsize 2048 --cluster-index-ramsize 1024 \
-	 --cluster-fts-ramsize 1024 --index-storage-setting default \
+	 --cluster-eventing-ramsize 1024\ --cluster-fts-ramsize 1024 \
+	--index-storage-setting default
 
 If you want to set the port number you can do so with the --cluster-port
 option. In the example below, a cluster is setup on port 5000 and starts
