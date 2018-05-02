@@ -1,0 +1,244 @@
+'\" t
+.\"     Title: couchbase-cli-eventing-function-setup
+.\"    Author: Couchbase
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 05/04/2018
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-EVEN" "1" "05/04/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+couchbase-cli-eventing-function-setup \- Manage Events
+.SH "SYNOPSIS"
+.sp
+.nf
+\fIcouchbase\-cli eventing\-function\-setup\fR [\-\-cluster <url>] [\-\-username <user>]
+          [\-\-password <password>]  [\-\-import] [\-\-export] [\-\-export\-all]
+          [\-\-delete] [\-\-list] [\-\-deploy] [\-\-undeploy] [\-\-name <name>]
+          [\-\-file <file>]
+.fi
+.SH "DESCRIPTION"
+.sp
+This command is used to manage functions in the Event service
+.SH "OPTIONS"
+.PP
+\-c, \-\-cluster
+.RS 4
+Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+.RE
+.PP
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
+.RE
+.PP
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+.RE
+.PP
+\-\-import
+.RS 4
+Import function(s) from a file\&. This option requires \-\-file to be specified\&. The file provided should be from the \-\-export option\&.
+.RE
+.PP
+\-\-export
+.RS 4
+Export a named function to a file\&. This option requires \-\-file and \-\-name to be specified\&.
+.RE
+.PP
+\-\-export\-all
+.RS 4
+Export all functions to a file\&. This option requires \-\-file to be specified\&.
+.RE
+.PP
+\-\-delete
+.RS 4
+Deletes a named function\&. Functions can only be deleted when in the un\-deployed state\&. This option requires \-\-name to be specified\&.
+.RE
+.PP
+\-\-list
+.RS 4
+List all functions\&.
+.RE
+.PP
+\-\-deploy
+.RS 4
+Deploys the named function\&. This option requires \-\-name to be specified\&.
+.RE
+.PP
+\-\-undeploy
+.RS 4
+Undeploys the named function\&. This option requires \-\-name to be specified\&.
+.RE
+.PP
+\-\-name <name>
+.RS 4
+The name of the function to take a action against\&. This is used by \-\-export, \-\-delete, \-\-deploy and \-\-undeply options only\&.
+.RE
+.PP
+\-\-file <file>
+.RS 4
+The file to import and export functions to\&. This is used by \-\-export and \-\-import options only\&.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+couchbase://<addr>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+<addr>:<port>
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+http://<addr>:<port>
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+.SH "EXAMPLES"
+.sp
+To import functions from a file called \fIfunctions\&.json\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli eventing\-functions\-setup \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-import \-\-file functions\&.json
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To export a function called \fIalert_function\fR to a file called \fIfunctions\&.json\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli eventing\-functions\-setup \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-export \-\-name alert_function \-\-file functions\&.json
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To export all functions to a file called \fIfunctions\&.json\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli eventing\-functions\-setup \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-export\-all \-\-file functions\&.json
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To list all functions:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli eventing\-functions\-setup \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-list
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To delete a function called \fIalert_function\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli eventing\-functions\-setup \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-delete \-\-name alert_function
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To deploy a function called \fIalert_function\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli eventing\-functions\-setup \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-deploy \-\-name alert_function
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+To undeploy a function called \fIalert_function\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ couchbase\-cli eventing\-functions\-setup \-c 192\&.168\&.1\&.5 \-u Administrator \e
+ \-p password \-\-undeploy \-\-name alert_function
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+.sp
+CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&.
+.SH "COUCHBASE\-CLI"
+.sp
+Part of the \fBcouchbase-cli\fR(1) suite
+.SH "AUTHORS"
+.PP
+\fBCouchbase\fR

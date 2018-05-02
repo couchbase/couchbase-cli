@@ -30,6 +30,7 @@ gen_docs couchbase-cli-cluster-init.txt 1
 gen_docs couchbase-cli-collect-logs-start.txt 1
 gen_docs couchbase-cli-collect-logs-status.txt 1
 gen_docs couchbase-cli-collect-logs-stop.txt 1
+gen_docs couchbase-cli-eventing-function-setup.txt 1
 gen_docs couchbase-cli-failover.txt 1
 gen_docs couchbase-cli-group-manage.txt 1
 gen_docs couchbase-cli-help.txt 1

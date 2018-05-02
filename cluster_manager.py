@@ -1294,7 +1294,7 @@ class ClusterManager(object):
         params = { "pauseRequested": "false" }
         return self._post_form_encoded(url, params)
 
-    def list_events(self):
+    def list_functions(self):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
@@ -1304,34 +1304,54 @@ class ClusterManager(object):
         url = hosts[0] + '/api/v1/functions'
         return self._get(url)
 
-    def get_event(self, event):
+    def export_functions(self):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
 
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
-        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(event)
+        url = hosts[0] + '/api/v1/export'
         return self._get(url)
 
-    def create_event(self, event, parms):
+    def import_functions(self, parms):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
-        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(event)
+        url = hosts[0] + '/api/v1/import'
         return self._post_json(url, parms)
 
-    def delete_event(self, event):
+    def delete_function(self, function):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
 
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
-        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(event)
+        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(function)
         return self._delete(url, None)
+
+    def deploy_function(self, function, deploy):
+        hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(EVENT_SERVICE)
+
+        parms = {}
+        if deploy:
+            parms["deployment_status"] = True
+            parms["processing_status"] = True
+        else:
+            parms["deployment_status"] = False
+            parms["processing_status"] = False
+
+        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(function) + '/settings'
+        return self._post_json(url, parms)
+
     # Low level methods for basic HTML operations
 
     @request
@@ -1415,7 +1435,7 @@ def _handle_response(response, debug):
                     errors = errors["errors"]
                 rv = list()
                 for key, value in errors.iteritems():
-                    rv.append(key + " - " + value)
+                    rv.append(key + " - " + str(value))
                 return None, rv
         return None, [response.text]
     elif response.status_code == 401:
@@ -1423,6 +1443,12 @@ def _handle_response(response, debug):
     elif response.status_code == 403:
         errors = response.json()
         return None, [errors["message"] + ": " + ", ".join(errors["permissions"])]
+    # Error codes from Eventing service
+    elif response.status_code  in [406, 422, 423]:
+        errors = response.json()
+        if "description" in errors:
+            return None, [errors["description"]]
+        return None, ['Received unexpected status %d' % response.status_code]
     elif response.status_code == 500:
         return None, [ERR_INTERNAL]
     else:

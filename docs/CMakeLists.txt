@@ -12,6 +12,7 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-collect-logs-start.html
   generated/doc/couchbase-cli/couchbase-cli-collect-logs-status.html
   generated/doc/couchbase-cli/couchbase-cli-collect-logs-stop.html
+  generated/doc/couchbase-cli/couchbase-cli-eventing-function-setup.html
   generated/doc/couchbase-cli/couchbase-cli-failover.html
   generated/doc/couchbase-cli/couchbase-cli-group-manage.html
   generated/doc/couchbase-cli/couchbase-cli-help.html
@@ -62,6 +63,7 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-collect-logs-start.1
     generated/man/man1/couchbase-cli-collect-logs-status.1
     generated/man/man1/couchbase-cli-collect-logs-stop.1
+    generated/man/man1/couchbase-cli-eventing-function-setup.1
     generated/man/man1/couchbase-cli-failover.1
     generated/man/man1/couchbase-cli-group-manage.1
     generated/man/man1/couchbase-cli-help.1

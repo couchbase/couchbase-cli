@@ -3277,89 +3277,133 @@ class XdcrSetup(Subcommand):
     def get_description():
         return "Manage XDCR replications"
 
-class EventSetup(Subcommand):
-    """The event setup subcommand"""
+class EventingFunctionSetup(Subcommand):
+    """The Eventing Service Function setup subcommand"""
 
     def __init__(self):
-        super(EventSetup, self).__init__()
-        self.parser.prog = "couchbase-cli event-setup"
-        group = self.parser.add_argument_group("Event setup options")
+        super(EventingFunctionSetup, self).__init__()
+        self.parser.prog = "couchbase-cli eventing-function-setup"
+        group = self.parser.add_argument_group("Eventing Service Function setup options")
         group.add_argument("--import", dest="_import", action="store_true",
-                           default=False, help="Import an event")
+                           default=False, help="Import functions")
         group.add_argument("--export", dest="export", action="store_true",
-                           default=False, help="Export an event")
+                           default=False, help="Export a function")
+        group.add_argument("--export-all", dest="export_all", action="store_true",
+                           default=False, help="Export all functions")
         group.add_argument("--delete", dest="delete", action="store_true",
-                           default=False, help="Delete an event")
+                           default=False, help="Delete a function")
         group.add_argument("--list", dest="list", action="store_true",
-                           default=False, help="List all events remote references")
+                           default=False, help="List all functions")
+        group.add_argument("--deploy", dest="deploy", action="store_true",
+                           default=False, help="Deploy a function")
+        group.add_argument("--undeploy", dest="undeploy", action="store_true",
+                           default=False, help="Undeploy a function")
         group.add_argument("--name", dest="name", metavar="<name>",
-                           default=False, help="Name of the event")
+                           default=False, help="The name of the function to take an action on")
+        group.add_argument("--file", dest="filename", metavar="<file>",
+                           default=False, help="The file to export and import function(s) to and from")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
-        actions = sum([opts._import, opts.export, opts.delete, opts.list])
+        actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy])
         if actions == 0:
-            _exitIfErrors(["Must specify one of --import, --export, --delete, --list"])
+            _exitIfErrors(["Must specify one of --import, --export, --export-all, --delete, --list, --deploy,"
+                           " --undeploy"])
         elif actions > 1:
-            _exitIfErrors(["The --import, --export, --delete, --list flags may not " +
-                           "be specified at the same time"])
-        elif opts.list:
-            self._list(rest)
-        elif opts.delete:
-            self._delete(rest, opts)
-        elif opts.export:
-            self._export(rest, opts)
-        # import is a protected word
+            _exitIfErrors(["The --import, --export, --export-all, --delete, --list, --deploy, --undeploy flags may"
+                           " not be specified at the same time"])
         elif opts._import:
             self._import(rest, opts)
+        elif opts.export:
+            self._export(rest, opts)
+        elif opts.export_all:
+            self._export_all(rest)
+        elif opts.delete:
+            self._delete(rest, opts)
+        elif opts.list:
+            self._list(rest)
+        elif opts.deploy:
+            self._deploy(rest, opts)
+        elif opts.undeploy:
+            self._undeploy(rest, opts)
 
     def _import(self, rest, opts):
-        if not opts.name:
-            _exitIfErrors(["--name is needed to import an event"])
-        event_settings = _exit_on_file_read_failure(opts.name + '.json')
-        event_settings = json.loads(event_settings)
-        rest.create_event(opts.name, event_settings)
-        _success("Event imported")
+        if not opts.filename:
+            _exitIfErrors(["--file is needed to import functions"])
+        import_functions = _exit_on_file_read_failure(opts.filename)
+        import_functions = json.loads(import_functions)
+        rest.import_functions(import_functions)
+        _success("Events imported")
 
     def _export(self, rest, opts):
+        if not opts.filename:
+            _exitIfErrors(["--file is needed to export a function"])
         if not opts.name:
-            _exitIfErrors(["--name is needed to export an event"])
-        event, errors = rest.get_event(opts.name)
+            _exitIfErrors(["--name is needed to export a function"])
+        functions, errors = rest.export_functions()
         _exitIfErrors(errors)
-        _exit_on_file_write_failure(opts.name + '.json', json.dumps(event, separators=(',',':')))
-        _success("Event exported")
+        exported_function = None
+        for function in functions:
+            if function["appname"] == opts.name:
+                exported_function = [function]
+        if not exported_function:
+            _exitIfErrors(["Function '{}' does not exist".format(opts.name)])
+        _exit_on_file_write_failure(opts.filename, json.dumps(exported_function, separators=(',',':')))
+        _success("Function exported to: " + opts.filename)
+
+    def _export_all(self, rest):
+        if not opts.filename:
+            _exitIfErrors(["--file is needed to export all functions"])
+        exported_functions, errors = rest.export_functions()
+        _exitIfErrors(errors)
+        _exit_on_file_write_failure(opts.filename, json.dumps(exported_functions, separators=(',',':')))
+        _success("All functions exported to: " + opts.filename)
 
     def _delete(self, rest, opts):
         if not opts.name:
-            _exitIfErrors(["--name is needed to delete an event"])
-        _, errors = rest.delete_event(opts.name)
+            _exitIfErrors(["--name is needed to delete a function"])
+        _, errors = rest.delete_function(opts.name)
         _exitIfErrors(errors)
-        _success("Event deleted")
+        _success("Function deleted")
+
+    def _deploy(self, rest, opts):
+        if not opts.name:
+            _exitIfErrors(["--name is needed to deploy a function"])
+        _, errors = rest.deploy_function(opts.name, True)
+        _exitIfErrors(errors)
+        _success("Function deployed")
+
+    def _undeploy(self, rest, opts):
+        if not opts.name:
+            _exitIfErrors(["--name is needed to undeploy a function"])
+        _, errors = rest.deploy_function(opts.name, False)
+        _exitIfErrors(errors)
+        _success("Function undeployed")
 
     def _list(self, rest):
-        events, errors = rest.list_events()
+        functions, errors = rest.list_functions()
         _exitIfErrors(errors)
 
-        for event in events:
-            print event['appname']
+        for function in functions:
+            print function['appname']
             status = ''
-            if event['settings']['deployment_status']:
+            if function['settings']['deployment_status']:
                 status = 'Deployed'
             else:
                 status = 'Undeployed'
             print ' Status: ' + status
-            print ' Source Bucket: ' + event['depcfg']['source_bucket']
-            print ' Metadata Bucket: ' + event['depcfg']['metadata_bucket']
+            print ' Source Bucket: ' + function['depcfg']['source_bucket']
+            print ' Metadata Bucket: ' + function['depcfg']['metadata_bucket']
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-event-setup" + ".1" if os.name != "nt" else ".html"
+        return "couchbase-cli-eventing-function-setup" + ".1" if os.name != "nt" else ".html"
 
     @staticmethod
     def get_description():
-        return "Manage Events"
+        return "Manage Eventing Service Functions"
 
 

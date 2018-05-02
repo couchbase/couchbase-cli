@@ -63,6 +63,9 @@ linkcbdoc:couchbase-cli-collect-logs-status[1]::
 linkcbdoc:couchbase-cli-collect-logs-stop[1]::
 	Stop the current log collection task.
 
+linkcbdoc:couchbase-cli-eventing-function-setup[1]::
+	Manage the Eventing Service functions.
+
 linkcbdoc:couchbase-cli-failover[1]::
 	Failover a server in the cluster.
 

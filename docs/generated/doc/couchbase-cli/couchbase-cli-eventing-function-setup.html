@@ -5,7 +5,7 @@
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
 <meta name="generator" content="AsciiDoc 8.6.10" />
-<title>couchbase-cli(1)</title>
+<title>couchbase-cli-eventing-function-setup(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
 
@@ -735,12 +735,12 @@ asciidoc.install();
 <body class="manpage">
 <div id="header">
 <h1>
-couchbase-cli(1) Manual Page
+couchbase-cli-eventing-function-setup(1) Manual Page
 </h1>
 <h2>NAME</h2>
 <div class="sectionbody">
-<p>couchbase-cli -
-   The Couchbase cluster management utility.
+<p>couchbase-cli-eventing-function-setup -
+   Manage Events
 </p>
 </div>
 </div>
@@ -749,7 +749,10 @@ couchbase-cli(1) Manual Page
 <h2 id="_synopsis">SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<pre class="content"><em>couchbase-cli &lt;command&gt; [options]</em></pre>
+<pre class="content"><em>couchbase-cli eventing-function-setup</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
+          [--password &lt;password&gt;]  [--import] [--export] [--export-all]
+          [--delete] [--list] [--deploy] [--undeploy] [--name &lt;name&gt;]
+          [--file &lt;file&gt;]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -757,8 +760,7 @@ couchbase-cli(1) Manual Page
 <div class="sect1">
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>The couchbase-cli script is the main command line interface for Couchbase
-cluster management.</p></div>
+<div class="paragraph"><p>This command is used to manage functions in the Event service</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -766,362 +768,122 @@ cluster management.</p></div>
 <div class="sectionbody">
 <div class="dlist"><dl>
 <dt class="hdlist1">
---version
+-c
+</dt>
+<dt class="hdlist1">
+--cluster
 </dt>
 <dd>
 <p>
-        Prints version information.
+        Specifies the hostname of a node in the cluster. See the HOST FORMATS
+        section for more information on specifying a hostname.
 </p>
 </dd>
 <dt class="hdlist1">
--h,--help
+-u
 </dt>
-<dd>
-<p>
-        Prints the short and long help messages.
-</p>
-</dd>
-</dl></div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_commands">COMMANDS</h2>
-<div class="sectionbody">
-<div class="dlist"><dl>
 <dt class="hdlist1">
-<a href="couchbase-cli-admin-role-manage.html">couchbase-cli-admin-role-manage(1)</a>
+--user &lt;username&gt;
 </dt>
 <dd>
 <p>
-        Manage LDAP user roles.
+        Specifies the username of the user executing the command. If you do not have
+        a user account with permission to execute the command then it will fail with
+        an unauthorized error.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-bucket-compact.html">couchbase-cli-bucket-compact(1)</a>
+-p
+</dt>
+<dt class="hdlist1">
+--password &lt;password&gt;
 </dt>
 <dd>
 <p>
-        Compact a Couchbase data bucket.
+        Specifies the password of the user executing the command. If you do not have
+        a user account with permission to execute the command then it will fail with
+        an unauthorized error. If this argument is specified, but no password is
+        given then the command will prompt the user for a password through
+        non-echoed stdin. You may also specify your password by using the
+        environment variable CB_REST_PASSWORD.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-bucket-create.html">couchbase-cli-bucket-create(1)</a>
+--import
 </dt>
 <dd>
 <p>
-        Create a new Couchbase data bucket.
+        Import function(s) from a file. This option requires --file to be
+        specified. The file provided should be from the --export option.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-bucket-delete.html">couchbase-cli-bucket-delete(1)</a>
+--export
 </dt>
 <dd>
 <p>
-        Delete a Couchbase data bucket.
+        Export a named function to a file. This option requires --file and
+        --name to be specified.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-bucket-edit.html">couchbase-cli-bucket-edit(1)</a>
+--export-all
 </dt>
 <dd>
 <p>
-        Edit a Couchbase data bucket.
+        Export all functions to a file. This option requires --file to be
+        specified.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-bucket-flush.html">couchbase-cli-bucket-flush(1)</a>
+--delete
 </dt>
 <dd>
 <p>
-        Flush a Couchbase data bucket.
+        Deletes a named function. Functions can only be deleted when in the
+        un-deployed state. This option requires --name to be specified.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-bucket-list.html">couchbase-cli-bucket-list(1)</a>
+--list
 </dt>
 <dd>
 <p>
-        List all Couchbase data buckets.
+        List all functions.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-cluster-edit.html">couchbase-cli-cluster-edit(1)</a>
+--deploy
 </dt>
 <dd>
 <p>
-        Edits cluster settings.
+        Deploys the named function. This option requires --name to be specified.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-cluster-init.html">couchbase-cli-cluster-init(1)</a>
+--undeploy
 </dt>
 <dd>
 <p>
-        Initializes a Couchbase cluster.
+        Undeploys the named function. This option requires --name to be specified.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-collect-logs-start.html">couchbase-cli-collect-logs-start(1)</a>
+--name &lt;name&gt;
 </dt>
 <dd>
 <p>
-        Start log collection.
+        The name of the function to take a action against. This is used by
+        --export, --delete, --deploy and --undeply options only.
 </p>
 </dd>
 <dt class="hdlist1">
-<a href="couchbase-cli-collect-logs-status.html">couchbase-cli-collect-logs-status(1)</a>
+--file &lt;file&gt;
 </dt>
 <dd>
 <p>
-        Get log collection status.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-collect-logs-stop.html">couchbase-cli-collect-logs-stop(1)</a>
-</dt>
-<dd>
-<p>
-        Stop the current log collection task.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-eventing-function-setup.html">couchbase-cli-eventing-function-setup(1)</a>
-</dt>
-<dd>
-<p>
-        Manage the Eventing Service functions.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-failover.html">couchbase-cli-failover(1)</a>
-</dt>
-<dd>
-<p>
-        Failover a server in the cluster.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-group-manage.html">couchbase-cli-group-manage(1)</a>
-</dt>
-<dd>
-<p>
-        Manage server groups.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-host-list.html">couchbase-cli-host-list(1)</a>
-</dt>
-<dd>
-<p>
-        Lists all hosts in the cluster.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-node-init.html">couchbase-cli-node-init(1)</a>
-</dt>
-<dd>
-<p>
-        Initializes a node.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-rebalance.html">couchbase-cli-rebalance(1)</a>
-</dt>
-<dd>
-<p>
-        Rebalances data across nodes in a cluster.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-rebalance-status.html">couchbase-cli-rebalance-status(1)</a>
-</dt>
-<dd>
-<p>
-        Show the current rebalance status.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-rebalance-stop.html">couchbase-cli-rebalance-stop(1)</a>
-</dt>
-<dd>
-<p>
-        Stops the current rebalance task.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-recovery.html">couchbase-cli-recovery(1)</a>
-</dt>
-<dd>
-<p>
-        Recovers a previously failed over node.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-reset-admin-password.html">couchbase-cli-reset-admin-password(1)</a>
-</dt>
-<dd>
-<p>
-        Resets the administrator password.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-server-add.html">couchbase-cli-server-add(1)</a>
-</dt>
-<dd>
-<p>
-        Adds a server to the cluster.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-server-info.html">couchbase-cli-server-info(1)</a>
-</dt>
-<dd>
-<p>
-        Displays server level information and statistics.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-server-list.html">couchbase-cli-server-list(1)</a>
-</dt>
-<dd>
-<p>
-        Lists all servers in the cluster.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-server-readd.html">couchbase-cli-server-readd(1)</a>
-</dt>
-<dd>
-<p>
-        Adds a server back to the cluster after a failover.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-alert.html">couchbase-cli-setting-alert(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies alert settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-audit.html">couchbase-cli-setting-audit(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies audit log settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-autofailover.html">couchbase-cli-setting-autofailover(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies auto-failover settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-autoreprovision.html">couchbase-cli-setting-autoreprovision(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies auto-reprovision settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-cluster.html">couchbase-cli-setting-cluster(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies cluster settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-compaction.html">couchbase-cli-setting-compaction(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies compaction settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-index.html">couchbase-cli-setting-index(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies index settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-ldap.html">couchbase-cli-setting-ldap(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies LDAP settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-notification.html">couchbase-cli-setting-notification(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies notification settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-password-policy.html">couchbase-cli-setting-password-policy(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies the password policy.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-security.html">couchbase-cli-setting-security(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies security policies.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-setting-xdcr.html">couchbase-cli-setting-xdcr(1)</a>
-</dt>
-<dd>
-<p>
-        Modifies cross datacenter replication (XDCR) settings.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-ssl-manage.html">couchbase-cli-ssl-manage(1)</a>
-</dt>
-<dd>
-<p>
-        Manage SSL certificates.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-user-manage.html">couchbase-cli-user-manage(1)</a>
-</dt>
-<dd>
-<p>
-        Manage RBAC users.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-xdcr-replicate.html">couchbase-cli-xdcr-replicate(1)</a>
-</dt>
-<dd>
-<p>
-        Manages XDCR cluster references.
-</p>
-</dd>
-<dt class="hdlist1">
-<a href="couchbase-cli-xdcr-setup.html">couchbase-cli-xdcr-setup(1)</a>
-</dt>
-<dd>
-<p>
-        Manages XDCR replications.
+        The file to import and export functions to. This is used by --export and
+        --import options only.
 </p>
 </dd>
 </dl></div>
@@ -1155,6 +917,54 @@ a port other that 8091.</p></div>
 </div>
 </div>
 <div class="sect1">
+<h2 id="_examples">EXAMPLES</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>To import functions from a file called <em>functions.json</em>:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+ -p password --import --file functions.json</code></pre>
+</div></div>
+<div class="paragraph"><p>To export a function called <em>alert_function</em> to a file called
+<em>functions.json</em>:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+ -p password --export --name alert_function --file functions.json</code></pre>
+</div></div>
+<div class="paragraph"><p>To export all functions to a file called <em>functions.json</em>:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+ -p password --export-all --file functions.json</code></pre>
+</div></div>
+<div class="paragraph"><p>To list all functions:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+ -p password --list</code></pre>
+</div></div>
+<div class="paragraph"><p>To delete a function called <em>alert_function</em>:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+ -p password --delete --name alert_function</code></pre>
+</div></div>
+<div class="paragraph"><p>To deploy a function called <em>alert_function</em>:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+ -p password --deploy --name alert_function</code></pre>
+</div></div>
+<div class="paragraph"><p>To undeploy a function called <em>alert_function</em>:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+ -p password --undeploy --name alert_function</code></pre>
+</div></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_environment_and_configuration_variables">ENVIRONMENT AND CONFIGURATION VARIABLES</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>CB_REST_PASSWORD
@@ -1179,7 +989,7 @@ a port other that 8091.</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-05-04 16:14:18 BST
+ 2018-05-04 16:21:40 BST
 </div>
 </div>
 </body>
