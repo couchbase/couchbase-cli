@@ -52,22 +52,32 @@ def index_storage_mode_to_param(value, default="plasma"):
     else:
         return value
 
-def process_services(services, is_enterprise):
+def process_services(services, enterprise):
     """Converts services to a format Couchbase understands"""
     sep = ","
     if services.find(sep) < 0:
         #backward compatible when using ";" as separator
         sep = ";"
-    svc_list = list(set([w.strip() for w in services.split(sep)]))
+    svc_set = set([w.strip() for w in services.split(sep)])
     svc_candidate = ["data", "index", "query", "fts", "eventing", "analytics"]
-    for svc in svc_list:
+    for svc in svc_set:
         if svc not in svc_candidate:
             return None, ["`%s` is not a valid service" % svc]
-    if not is_enterprise:
-        if len(svc_list) != len(svc_candidate) and (len(svc_list) != 1 or "data" not in svc_list):
-            return None, ["Community Edition requires that all nodes provision all services or data service only"]
+        if not enterprise and svc in ["eventing", "analytivs"]:
+            return None, ["{0} service is only available on Enterprise Edition".format(svc)]
 
-    services = ",".join(svc_list)
+    if not enterprise:
+        # Valid CE node service configuration
+        ce_svc_30 = {"data"}
+        ce_svc_40 = {"data", "index", "query"}
+        ce_svc_45 = {"data", "index", "query", "fts"}
+        if svc_set not in [ce_svc_30, ce_svc_40, ce_svc_45]:
+            return None, ["Invalid service configuration. Community Edition only supports nodes with the following"
+                          " combinations of services: '{0}', '{1}' or '{2}'".format(''.join(ce_svc_30),
+                                                                                    ','.join(ce_svc_40),
+                                                                                    ','.join(ce_svc_45))]
+
+    services = ",".join(svc_set)
     for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"], ["analytics", "cbas"]]:
         services = services.replace(old, new)
     return services, None
