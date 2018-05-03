@@ -3184,11 +3184,13 @@ class XdcrSetup(Subcommand):
         group.add_argument("--xdcr-user-key", dest="r_key", metavar="<path>",
                            help="The user key for authentication")
         group.add_argument("--xdcr-demand-encryption", dest="encrypt", choices=["0", "1"],
-                           default="0", help="Enable SSL when replicating with this cluster")
+                           action=CBDeprecatedAction, help=SUPPRESS)
         group.add_argument("--xdcr-encryption-type", dest="encryption_type", choices=["full", "half"],
-                           metavar="<type>", help="The XDCR encryption type")
+                           metavar="<type>", action=CBDeprecatedAction, help=SUPPRESS)
         group.add_argument("--xdcr-certificate", dest="certificate", metavar="<path>",
                            help="The certificate used for encryption")
+        group.add_argument("--xdcr-secure-connection", dest="secure_connection", choices=["none", "full", "half"],
+                           metavar="<type>", help="The XDCR secure connection type")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -3221,15 +3223,31 @@ class XdcrSetup(Subcommand):
             _exitIfErrors(["--xdcr-username is required to %s a cluster connections" % cmd])
         if opts.password is None:
             _exitIfErrors(["--xdcr-password is required to %s a cluster connections" % cmd])
+        if (opts.encrypt is not None or opts.encryption_type is not None) and opts.secure_connection is not None:
+            _exitIfErrors(["Cannot use deprecated flags --xdcr-demand-encryption or --xdcr-encryption-type with --xdcr-secure-connection"])
+
+        if opts.secure_connection == "none":
+            opts.encrypt = "0"
+            opts.encryption_type = None
+        elif opts.secure_connection == "half":
+            opts.encrypt = "1"
+            opts.encryption_type = "half"
+        elif opts.secure_connection == "full":
+            opts.encrypt = "1"
+            opts.encryption_type = "full"
+        elif opts.encrypt is None and opts.encryption_type is None:
+            opts.encrypt = "0"
+            opts.encryption_type = None
 
         raw_cert = None
         if opts.encrypt == "1":
-            if opts.certificate is None:
-                _exitIfErrors(["certificate required if encryption is demanded"])
-            raw_cert = _exit_on_file_read_failure(opts.certificate)
-
             if opts.encryption_type == None:
                 opts.encryption_type = "full"
+
+            if opts.encryption_type == "full":
+                if opts.certificate is None:
+                    _exitIfErrors(["certificate required if encryption is demanded"])
+                raw_cert = _exit_on_file_read_failure(opts.certificate)
 
         raw_user_key = None
         if opts.r_key:

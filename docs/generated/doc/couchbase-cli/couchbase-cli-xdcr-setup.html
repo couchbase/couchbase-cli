@@ -1,10 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 8.6.10" />
+<meta name="generator" content="AsciiDoc 8.6.9" />
 <title>couchbase-cli-xdcr-setup(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -753,8 +752,7 @@ couchbase-cli-xdcr-setup(1) Manual Page
           [--password &lt;password&gt;] [--create] [--delete] [--edit] [--list]
           [--xdcr-cluster-name &lt;name&gt;] [--xdcr-hostname &lt;hostname&gt;]
           [--xdcr-username &lt;username&gt;] [--xdcr-password &lt;password&gt;]
-          [--xdcr-demand-encryption &lt;num&gt;] [--xdcr-encryption-type &lt;type&gt;]
-          [--xdcr-certificate &lt;file&gt;]</pre>
+          [--xdcr-secure-connection &lt;type&gt;] [--xdcr-certificate &lt;file&gt;]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -876,28 +874,17 @@ replicated to.</p></div>
 </p>
 </dd>
 <dt class="hdlist1">
---xdcr-demand-encryption &lt;num&gt;
+--xdcr-secure-connection &lt;type&gt;
 </dt>
 <dd>
 <p>
-        Enable SSL when replicating with this cluster. To enable SSL set the value
-        of this otion to 1. To disable SSL then set this option to 0. BY default the
-        value of this option is set to 0.
-</p>
-</dd>
-<dt class="hdlist1">
---xdcr-encryption-type &lt;type&gt;
-</dt>
-<dd>
-<p>
-        Specifies the type of encryption to use if encryption is enabled. This flag
-        may either be set to "half" encryption or "full encryption". Half encryption
-        means that passwords are encrypted, but data is not. This results in faster
-        data transfer, but less security. Full encryption means that all data and
-        passwords are encrypted which increases security, but reduces overall data
-        transfer speed. This flag does not have any affect if encryption is not
-        enabled. If encryption is enabled and this flag is set then the value
-        defaults to full encryption.
+        Specifies the type of encryption to use. This flag may either be set to
+    either "half", "full", or "none". Half encryption means that passwords are
+    encrypted, but data is not. This results in faster data transfer, but less
+    security. Full encryption means that all data and passwords are encrypted
+    which increases security, but reduces overall data transfer speed. If no
+    encryption is needed then "none" can be specified. This flag defaults to
+    "none" if it is not specified.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1014,8 +1001,7 @@ this below using the "east" remote reference as an exmaple.</p></div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated
- 2018-02-22 15:30:39 GMT
+Last updated 2018-05-17 16:50:42 PDT
 </div>
 </div>
 </body>

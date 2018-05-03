@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-xdcr-setup
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/09/2018
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/17/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR" "1" "05/09/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR" "1" "05/17/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -36,8 +36,7 @@ couchbase-cli-xdcr-setup \- Manage references to remote clusters
           [\-\-password <password>] [\-\-create] [\-\-delete] [\-\-edit] [\-\-list]
           [\-\-xdcr\-cluster\-name <name>] [\-\-xdcr\-hostname <hostname>]
           [\-\-xdcr\-username <username>] [\-\-xdcr\-password <password>]
-          [\-\-xdcr\-demand\-encryption <num>] [\-\-xdcr\-encryption\-type <type>]
-          [\-\-xdcr\-certificate <file>]
+          [\-\-xdcr\-secure\-connection <type>] [\-\-xdcr\-certificate <file>]
 .fi
 .SH "DESCRIPTION"
 .sp
@@ -99,14 +98,9 @@ The username of the remote cluster reference\&.
 The password of the remote cluster reference\&.
 .RE
 .PP
-\-\-xdcr\-demand\-encryption <num>
+\-\-xdcr\-secure\-connection <type>
 .RS 4
-Enable SSL when replicating with this cluster\&. To enable SSL set the value of this otion to 1\&. To disable SSL then set this option to 0\&. BY default the value of this option is set to 0\&.
-.RE
-.PP
-\-\-xdcr\-encryption\-type <type>
-.RS 4
-Specifies the type of encryption to use if encryption is enabled\&. This flag may either be set to "half" encryption or "full encryption"\&. Half encryption means that passwords are encrypted, but data is not\&. This results in faster data transfer, but less security\&. Full encryption means that all data and passwords are encrypted which increases security, but reduces overall data transfer speed\&. This flag does not have any affect if encryption is not enabled\&. If encryption is enabled and this flag is set then the value defaults to full encryption\&.
+Specifies the type of encryption to use\&. This flag may either be set to either "half", "full", or "none"\&. Half encryption means that passwords are encrypted, but data is not\&. This results in faster data transfer, but less security\&. Full encryption means that all data and passwords are encrypted which increases security, but reduces overall data transfer speed\&. If no encryption is needed then "none" can be specified\&. This flag defaults to "none" if it is not specified\&.
 .RE
 .PP
 \-\-xdcr\-certificate <file>
@@ -231,7 +225,7 @@ CB_REST_PASSWORD Specifies the password of the user executing the command\&. Thi
 .SH "SEE ALSO"
 .sp
 \fBcouchbase-cli-setting-xdcr\fR(1) \fBcouchbase-cli-xdcr-replicate\fR(1)
-.SH "COUCHBASE\-CLI"
+.SH "COUCHBASE-CLI"
 .sp
 Part of the \fBcouchbase-cli\fR(1) suite
 .SH "AUTHORS"
