@@ -68,9 +68,9 @@ def process_services(services, enterprise):
 
     if not enterprise:
         # Valid CE node service configuration
-        ce_svc_30 = {"data"}
-        ce_svc_40 = {"data", "index", "query"}
-        ce_svc_45 = {"data", "index", "query", "fts"}
+        ce_svc_30 = set(["data"])
+        ce_svc_40 = set(["data", "index", "query"])
+        ce_svc_45 = set(["data", "index", "query", "fts"])
         if svc_set not in [ce_svc_30, ce_svc_40, ce_svc_45]:
             return None, ["Invalid service configuration. Community Edition only supports nodes with the following"
                           " combinations of services: '{0}', '{1}' or '{2}'".format(''.join(ce_svc_30),
