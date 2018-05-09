@@ -574,7 +574,7 @@ class ClusterManager(object):
         return all, eject, failover, readd, hostnames, None
 
     def create_bucket(self, name, bucket_type, memory_quota,
-                      eviction_policy, replicas, replica_indexes, port,
+                      eviction_policy, replicas, replica_indexes,
                       threads_number, conflict_resolution, flush_enabled,
                       max_ttl, compression_mode, sync, timeout=60):
         url = self.hostname + '/pools/default/buckets'
@@ -596,8 +596,6 @@ class ClusterManager(object):
             params["replicaNumber"] = replicas
         if replica_indexes is not None:
             params["replicaIndex"] = replica_indexes
-        if port is not None:
-            params["proxyPort"] = port
         if threads_number is not None:
             params["threadsNumber"] = threads_number
         if conflict_resolution is not None:

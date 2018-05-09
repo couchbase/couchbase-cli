@@ -751,7 +751,7 @@ couchbase-cli-bucket-create(1) Manual Page
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli bucket-create</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
           [--password &lt;password&gt;] [--bucket &lt;name&gt;] [--bucket-type &lt;type&gt;]
-          [--bucket-ramsize &lt;size&gt;] [--bucket-replica &lt;num&gt;] [--bucket-port &lt;port&gt;]
+          [--bucket-ramsize &lt;size&gt;] [--bucket-replica &lt;num&gt;]
           [--bucket-priority &lt;priority&gt;] [--bucket-eviction-policy &lt;policy&gt;]
           [--enable-flush &lt;num&gt;] [--enable-index-replica &lt;num&gt;]
           [--conflict-resolution &lt;type&gt;] [--wait]</pre>
@@ -859,15 +859,6 @@ buckets.</p></div>
         is only a single server in the cluster. The minimum number of replicas is
         zero, and the maximum three. This option is valid for Couchbase and
         Ephemeral buckets only.
-</p>
-</dd>
-<dt class="hdlist1">
---bucket-port &lt;num&gt;
-</dt>
-<dd>
-<p>
-        Sets the port on which the bucket listens. This parameter is deprecated, and
-        therefore not recommended for use.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1120,7 +1111,7 @@ conflict resolution, run the following command.</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-01-29 18:25:43 GMT
+ 2018-05-15 16:45:54 BST
 </div>
 </div>
 </body>

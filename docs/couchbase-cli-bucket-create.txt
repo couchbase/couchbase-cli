@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'couchbase-cli bucket-create' [--cluster <url>] [--username <user>]
 	  [--password <password>] [--bucket <name>] [--bucket-type <type>]
-	  [--bucket-ramsize <size>] [--bucket-replica <num>] [--bucket-port <port>]
+	  [--bucket-ramsize <size>] [--bucket-replica <num>]
 	  [--bucket-priority <priority>] [--bucket-eviction-policy <policy>]
 	  [--enable-flush <num>] [--enable-index-replica <num>]
 	  [--conflict-resolution <type>] [--wait]
@@ -56,10 +56,6 @@ include::part-common-options.txt[]
 	is only a single server in the cluster. The minimum number of replicas is
 	zero, and the maximum three. This option is valid for Couchbase and
 	Ephemeral buckets only.
-
---bucket-port <num>::
-	Sets the port on which the bucket listens. This parameter is deprecated, and
-	therefore not recommended for use.
 
 --bucket-priority <priority>::
 	Specifies the priority of this bucket's background tasks. This option is
