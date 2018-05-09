@@ -1430,6 +1430,8 @@ def _handle_response(response, debug):
             errors = response.json()
             if isinstance(errors, list):
                 return None, errors
+            if "errors" in errors and isinstance(errors["errors"], list):
+                return None, errors["errors"]
             if isinstance(errors, dict):
                 if "errors" in errors and isinstance(errors["errors"], dict):
                     errors = errors["errors"]
