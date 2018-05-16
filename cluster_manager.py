@@ -641,7 +641,7 @@ class ClusterManager(object):
 
     def edit_bucket(self, name, memory_quota, eviction_policy,
                     replicas, threads_number, flush_enabled, max_ttl,
-                    compression_mode):
+                    compression_mode, remove_port):
         url = self.hostname + '/pools/default/buckets/' + name
 
         if name is None:
@@ -662,6 +662,8 @@ class ClusterManager(object):
             params["maxTTL"] = max_ttl
         if compression_mode is not None:
             params["compressionMode"] = compression_mode
+        if remove_port:
+            params["proxyPort"] = "none"
 
         return self._post_form_encoded(url, params)
 

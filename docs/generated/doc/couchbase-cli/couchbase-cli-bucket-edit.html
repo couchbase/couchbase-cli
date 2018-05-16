@@ -752,7 +752,8 @@ couchbase-cli-bucket-edit(1) Manual Page
 <pre class="content"><em>couchbase-cli bucket-edit</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
           [--password &lt;password&gt;] [--bucket &lt;name&gt;] [--bucket-ramsize &lt;size&gt;]
           [--bucket-replica &lt;num&gt;] [--bucket-priority &lt;priority&gt;]
-          [--bucket-eviction-policy &lt;policy&gt;] [--enable-flush &lt;num&gt;]</pre>
+          [--bucket-eviction-policy &lt;policy&gt;] [--enable-flush &lt;num&gt;]
+          [--remove-bucket-port &lt;num&gt;]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -964,6 +965,19 @@ provides the benefits of compression even when the SDK clients are not
 complicit.</code></pre>
 </div></div>
 </dd>
+<dt class="hdlist1">
+--remove-bucket-port &lt;num&gt;
+</dt>
+<dd>
+<p>
+        Removes the bucket-port setting that might have been set in previous
+        versions of Couchbase Server. The bucket-port also knows as the dedicated
+        port and server side moxi has been deprecated. In later versions of
+        Couchbase Server a cluster will not be able to upgrade if a bucket has the
+        dedicated port set. This option allows removal of that setting by setting
+         it to 1.
+</p>
+</dd>
 </dl></div>
 </div>
 </div>
@@ -1013,6 +1027,12 @@ following command. (Note that this requires a subsequent rebalance, by means of
  --password password --bucket travel-data --bucket-ramsize 1024 \
  --bucket-replicas 2</code></pre>
 </div></div>
+<div class="paragraph"><p>To remove the bucket-port from the test bucket</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
+ --password password --bucket test --remove-bucket-port 1</code></pre>
+</div></div>
 </div>
 </div>
 <div class="sect1">
@@ -1050,7 +1070,7 @@ following command. (Note that this requires a subsequent rebalance, by means of
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-02-22 15:30:39 GMT
+ 2018-05-16 17:09:44 BST
 </div>
 </div>
 </body>

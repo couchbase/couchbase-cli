@@ -861,6 +861,8 @@ class BucketEdit(Subcommand):
                            help="Set the compression mode of the bucket")
         group.add_argument("--enable-flush", dest="enable_flush", metavar="<0|1>",
                            choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
+        group.add_argument("--remove-bucket-port", dest="remove_port", metavar="<0|1>",
+                           choices=["0", "1"], help="Removes the bucket-port setting")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -901,10 +903,15 @@ class BucketEdit(Subcommand):
             elif opts.priority == BUCKET_PRIORITY_LOW_STR:
                 priority = BUCKET_PRIORITY_LOW_INT
 
-        _, errors = rest.edit_bucket(opts.bucket_name, opts.memory_quota,
-                                     opts.eviction_policy, opts.replica_count,
-                                     priority, opts.enable_flush, opts.max_ttl,
-                                     opts.compression_mode)
+
+        if opts.remove_port:
+            if opts.remove_port == '1':
+                opts.remove_port = True
+            else:
+                opts.remove_port = False
+
+        _, errors = rest.edit_bucket(opts.bucket_name, opts.memory_quota, opts.eviction_policy, opts.replica_count,
+                                     priority, opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.remove_port)
         _exitIfErrors(errors)
 
         _success("Bucket edited")
