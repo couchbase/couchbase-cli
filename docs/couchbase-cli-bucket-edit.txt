@@ -13,6 +13,7 @@ SYNOPSIS
 	  [--password <password>] [--bucket <name>] [--bucket-ramsize <size>]
 	  [--bucket-replica <num>] [--bucket-priority <priority>]
 	  [--bucket-eviction-policy <policy>] [--enable-flush <num>]
+	  [--max-ttl <seconds>] [--compression-mode <mode>]
 	  [--remove-bucket-port <num>]
 
 DESCRIPTION

@@ -13,8 +13,8 @@ SYNOPSIS
 	  [--password <password>] [--bucket <name>] [--bucket-type <type>]
 	  [--bucket-ramsize <size>] [--bucket-replica <num>]
 	  [--bucket-priority <priority>] [--bucket-eviction-policy <policy>]
-	  [--enable-flush <num>] [--enable-index-replica <num>]
-	  [--conflict-resolution <type>] [--wait]
+	  [--max-ttl <seconds>] [--compression-mode <mode>] [--enable-flush <num>]
+	  [--enable-index-replica <num>] [--conflict-resolution <type>] [--wait]
 
 DESCRIPTION
 -----------
