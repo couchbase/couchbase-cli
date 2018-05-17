@@ -68,10 +68,9 @@ class Recovery(pump_transfer.Transfer):
         self.source_bucket = getattr(opts, "bucket_source", "default")
 
         #communicate with destination before data transferring
-        err = self.pre_transfer(opts, source, sink)
+        err, cmd = self.pre_transfer(opts, source, sink)
         if err:
-            return err
-
+            return self.explain_error(err, cmd)
         if self.recovery_map:
             sys.stderr.write("Missing vbuckets to be recovered:%s\n" % json.dumps(self.recovery_map))
         else:
@@ -79,8 +78,8 @@ class Recovery(pump_transfer.Transfer):
             return 0
 
         if opts.dry_run:
-            self.post_transfer(opts, source, sink, None)
-            return 0
+            err, cmd = self.post_transfer(opts, source, sink, None)
+            return self.explain_error(err, cmd)
 
         #only care about data recovery
         argv.append("--extra")
@@ -142,17 +141,16 @@ class Recovery(pump_transfer.Transfer):
             pump.rest_request(host, int(port), user, pwd, opts.ssl,
                               url, method='POST', reason='start_recovery')
         if err:
-            self.explain_error(err, cmd)
-            return err
+            return err, cmd
         response = json.loads(response)
         recoveryMap = response.get('recoveryMap', None)
         if not recoveryMap:
-            return "Missing recovery map from response"
+            return "Missing recovery map from response", None
         else:
             self.recovery_map = recoveryMap
         self.recovery_uuid = response.get('uuid', None)
 
-        return 0
+        return None, None
 
     def post_transfer(self, opts, source, sink, vbucket):
         if not self.sink_bucket:
@@ -179,12 +177,11 @@ class Recovery(pump_transfer.Transfer):
                               reason=reason_msg,
                               headers=post_headers)
         if err:
-            self.explain_error(err, cmd)
-        else:
-            if vbucket:
-                logging.debug("Recover and activate vbucket: %s" % vbucket)
+            return err, cmd
+        elif vbucket:
+            logging.debug("Recover and activate vbucket: %s" % vbucket)
+        return None, None
 
-        return err
 
     def opt_parser_options(self, p):
 
@@ -213,13 +210,12 @@ class Recovery(pump_transfer.Transfer):
         if cmd not in self.err_map:
             logging.error(err)
             return
-
         pattern = ';\sresponse:\s(.+);\sreason'
         m = re.search(pattern, err)
         if m:
             errcode = m.groups()[0]
             if errcode in self.err_map[cmd]:
-                logging.error("Error:%s" % self.err_map[cmd][errcode])
+                logging.error("Error: %s" % self.err_map[cmd][errcode])
             else:
                 logging.error("Error: unknown error code:%s" % errcode)
         else:
