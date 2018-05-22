@@ -110,9 +110,17 @@ class Transfer:
                    None, None, None
 
         if opts.username is None:
-            return "\nError: option -u/--username is required", None, None, None
+            username = os.environ.get('CB_REST_USERNAME', None)
+            if username:
+                opts.username = username
+            else:
+                return "\nError: option -u/--username is required", None, None, None
         if opts.password is None:
-            return "\nError: option -p/--password is required", None, None, None
+            password = os.environ.get('CB_REST_PASSWORD', None)
+            if password:
+                opts.password = password
+            else:
+                return "\nError: option -p/--password is required", None, None, None
 
         opts.extra = opt_parse_extra(opts.extra, self.opt_extra_defaults())
         opts.safe = opt_parse_helper(opts)
