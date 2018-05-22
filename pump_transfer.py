@@ -173,10 +173,10 @@ from a source cluster into the caching layer at the destination""")
                      help="""No actual transfer; just validate parameters, files,
                              connectivity and configurations""")
         p.add_option("-u", "--username",
-                     action="store", type="string", default=None,
+                     action="store", type="string", default=os.environ.get("CB_USERNAME"),
                      help="REST username for source cluster or server node")
         p.add_option("-p", "--password",
-                     action="store", type="string", default=None,
+                     action="store", type="string", default=os.environ.get("CB_PASSWORD"),
                      help="REST password for source cluster or server node")
         p.add_option("-s", "--ssl",
                      action="store_true", default=False,
