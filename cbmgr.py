@@ -3341,7 +3341,7 @@ class EventingFunctionSetup(Subcommand):
         elif opts.export:
             self._export(rest, opts)
         elif opts.export_all:
-            self._export_all(rest)
+            self._export_all(rest, opts)
         elif opts.delete:
             self._delete(rest, opts)
         elif opts.list:
@@ -3375,7 +3375,7 @@ class EventingFunctionSetup(Subcommand):
         _exit_on_file_write_failure(opts.filename, json.dumps(exported_function, separators=(',',':')))
         _success("Function exported to: " + opts.filename)
 
-    def _export_all(self, rest):
+    def _export_all(self, rest, opts):
         if not opts.filename:
             _exitIfErrors(["--file is needed to export all functions"])
         exported_functions, errors = rest.export_functions()
