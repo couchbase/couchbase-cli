@@ -207,6 +207,10 @@ class ClusterManager(object):
             if 'hostname' in node:
                 node_host = node['hostname']
 
+            # Check for Raw IPv6 address
+            if ':' in node_host:
+                node_host = '[' + node_host + ']'
+
             http_prefix = 'http://'
             fts_port_name = 'fts'
             n1ql_port_name = 'n1ql'
