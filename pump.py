@@ -1039,7 +1039,11 @@ def filter_bucket_nodes(bucket, spec_parts):
     host, port = spec_parts[:2]
     if host in ['localhost', '127.0.0.1']:
         host = get_ip()
-    host_port = host + ':' + str(port)
+    # Convert from raw IPv6
+    if ':' in host:
+        host_port = '[' + host + ']:' + str(port)
+    else:
+        host_port = host + ':' + str(port)
     return filter(lambda n: n.get('hostname') == host_port,
                   bucket['nodes'])
 
