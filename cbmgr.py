@@ -1963,6 +1963,10 @@ class SettingAlert(Subcommand):
         enabled = "true"
         if opts.enabled == "0":
             enabled = "false"
+        
+        email_encrypt = "false"
+        if opts.email_encrypt == "1":
+            email_encrypt = "true"
 
         email_encrypt = "false"
         if opts.email_encrypt == "1":
