@@ -3356,7 +3356,8 @@ class EventingFunctionSetup(Subcommand):
             _exitIfErrors(["--file is needed to import functions"])
         import_functions = _exit_on_file_read_failure(opts.filename)
         import_functions = json.loads(import_functions)
-        rest.import_functions(import_functions)
+        _, errors = rest.import_functions(import_functions)
+        _exitIfErrors(errors)
         _success("Events imported")
 
     def _export(self, rest, opts):

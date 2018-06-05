@@ -1453,6 +1453,17 @@ def _handle_response(response, debug):
         if "description" in errors:
             return None, [errors["description"]]
         return None, ['Received unexpected status %d' % response.status_code]
+    # Error code from Eventing Service
+    elif response.status_code == 207:
+        errors = response.json()
+        if isinstance(errors, list):
+            rv = list()
+            for error in errors:
+                if error['code'] == 20:
+                    rv.append(error['info'])
+            return None, rv
+        else:
+            return None, ['Received unexpected status %d' % response.status_code]
     elif response.status_code == 500:
         return None, [ERR_INTERNAL]
     else:
