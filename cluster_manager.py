@@ -144,9 +144,7 @@ class ClusterManager(object):
         bucket_index_defs = []
         if "indexDefs" in result and result["indexDefs"] is not None:
             for _, index_def in result["indexDefs"]["indexDefs"].iteritems():
-                sourceType = index_def["sourceType"]
-                sourceName = index_def["sourceName"]
-                if sourceType == "couchbase" and sourceName == bucket:
+                if index_def["type"] == "fulltext-index" and index_def["sourceName"] == bucket:
                     bucket_index_defs.append(index_def)
         return bucket_index_defs, None
 
