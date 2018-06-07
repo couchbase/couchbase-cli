@@ -451,6 +451,7 @@ class ClusterManager(object):
         params = {"otpNode": [server for server, _ in failover]}
 
         if force:
+            params["allowUnsafe"] = "true"
             url = self.hostname + '/controller/failOver'
             return self._post_form_encoded(url, params)
         else:
@@ -760,8 +761,9 @@ class ClusterManager(object):
         return self._post_form_encoded(url, params)
 
     def stop_rebalance(self):
+        params = {"allowUnsafe": "true"}
         url = self.hostname + '/controller/stopRebalance'
-        return self._post_form_encoded(url, dict())
+        return self._post_form_encoded(url, params)
 
     def create_server_group(self, name):
         url = self.hostname + '/pools/default/serverGroups'
