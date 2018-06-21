@@ -613,6 +613,9 @@ class ClusterInit(Subcommand):
         enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
 
+        if not enterprise and opts.index_storage_mode == 'memopt':
+            _exitIfErrors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
+
         services, errors = process_services(opts.services, enterprise)
         _exitIfErrors(errors)
 
@@ -1656,6 +1659,9 @@ class ServerAdd(Subcommand):
 
         enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
+
+        if not enterprise and opts.index_storage_mode == 'memopt':
+            _exitIfErrors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
 
         opts.services, errors = process_services(opts.services, enterprise)
         _exitIfErrors(errors)
