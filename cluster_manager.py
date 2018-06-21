@@ -911,7 +911,7 @@ class ClusterManager(object):
         if rotate_size:
             params["rotateSize"] = rotate_size
 
-        if "logPath" not in params and params["auditdEnabled"] == "true":
+        if "logPath" not in params and "auditdEnabled" in params and params["auditdEnabled"] == "true":
             return None, ["The audit log path must be specified when auditing is first set up"]
 
         return self._post_form_encoded(url, params)
