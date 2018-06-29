@@ -4,6 +4,7 @@ import getpass
 import inspect
 import json
 import os
+import platform
 import random
 import re
 import string
@@ -27,7 +28,13 @@ BUCKET_TYPE_COUCHBASE = "membase"
 BUCKET_TYPE_MEMCACHED = "memcached"
 
 CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
-CB_CFG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "var", "lib", "couchbase"))
+
+# On MacOS the config is store in the users home directory
+if platform.system() == "Darwin":
+    CB_CFG_PATH = os.path.expanduser("~/Library/Application Support/Couchbase/var/lib/couchbase")
+else:
+    CB_CFG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "var", "lib", "couchbase"))
+
 CB_MAN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "share"))
 
 if os.name == "nt":
