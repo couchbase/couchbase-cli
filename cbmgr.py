@@ -1656,7 +1656,7 @@ class ServerAdd(Subcommand):
                            help="The server group to add this server into")
         group.add_argument("--services", dest="services", default="data", metavar="<services>",
                            help="The services this server will run")
-        group.add_argument("--index-storage-setting", dest="storage_mode", metavar="<mode>",
+        group.add_argument("--index-storage-setting", dest="index_storage_mode", metavar="<mode>",
                            choices=["default", "memopt"], help="The index storage mode")
 
     def execute(self, opts):
@@ -1676,16 +1676,16 @@ class ServerAdd(Subcommand):
         settings, errors = rest.index_settings()
         _exitIfErrors(errors)
 
-        if opts.storage_mode is None and settings['storageMode'] == "" and "index" in opts.services:
-            opts.storage_mode = "default"
+        if opts.index_storage_mode is None and settings['storageMode'] == "" and "index" in opts.services:
+            opts.index_storage_mode = "default"
 
         # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
         default = "plasma"
-        if opts.storage_mode == "default" and settings['storageMode'] == "forestdb" or not enterprise:
+        if opts.index_storage_mode == "default" and settings['storageMode'] == "forestdb" or not enterprise:
             default = "forestdb"
 
-        if opts.storage_mode:
-            param = index_storage_mode_to_param(opts.storage_mode, default)
+        if opts.index_storage_mode:
+            param = index_storage_mode_to_param(opts.index_storage_mode, default)
             _, errors = rest.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
