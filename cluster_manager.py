@@ -732,7 +732,7 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
-    def set_data_paths(self, data_path, index_path, cbas_path):
+    def set_data_paths(self, data_path, index_path, cbas_path, java_home):
         url = self.hostname + '/nodes/self/controller/settings'
         params = dict()
 
@@ -744,6 +744,9 @@ class ClusterManager(object):
 
         if cbas_path is not None:
             params["cbas_path"] = cbas_path
+
+        if java_home is not None:
+            params["java_home"] = java_home
 
         return self._post_form_encoded(url, params)
 
