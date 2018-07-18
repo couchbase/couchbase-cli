@@ -1436,6 +1436,8 @@ class NodeInit(Subcommand):
                            help="The path to store index files")
         group.add_argument("--node-init-analytics-path", dest="analytics_path", metavar="<path>", action="append",
                            help="The path to store analytics files (supply one parameter for each path desired)")
+        group.add_argument("--node-init-java-home", dest="java_home", metavar="<path>",
+                           help="The path of the Java Runtime Environment (JRE) to use on this server")
         group.add_argument("--node-init-hostname", dest="hostname", metavar="<hostname>",
                            help="Sets the hostname for this server")
 
@@ -1444,11 +1446,12 @@ class NodeInit(Subcommand):
                               opts.cacert, opts.debug)
         # Cluster does not need to be initialized for this command
 
-        if opts.data_path is None and opts.index_path is None and opts.analytics_path is None and opts.hostname is None:
+        if opts.data_path is None and opts.index_path is None and opts.analytics_path is None \
+            and opts.java_home is None and opts.hostname is None:
             _exitIfErrors(["No node initialization parameters specified"])
 
-        if opts.data_path or opts.index_path or opts.analytics_path:
-            _, errors = rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path)
+        if opts.data_path or opts.index_path or opts.analytics_path or opts.java_home:
+            _, errors = rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path, opts.java_home)
             _exitIfErrors(errors)
 
         if opts.hostname:
