@@ -4,6 +4,7 @@ import couchbaseConstants
 import pump
 import random
 import string
+import struct
 
 class GenSource(pump.Source):
     """Generates simple SET/GET workload, useful for basic testing.
@@ -140,11 +141,11 @@ class GenSource(pump.Source):
             # generate a collection key
             if itr:
                 try:
-                    c = itr.next()
+                    cid = int(itr.next(), 16)
                 except StopIteration:
                     itr = iter(collections)
-                    c = itr.next()
-                docKey = c + self.opts.separator + prefix + str(key)
+                    cid = int(itr.next(), 16)
+                docKey = struct.pack("!Iss", cid, prefix, str(key));
             else:
                 docKey = prefix + str(key)
 
