@@ -756,7 +756,9 @@ class ClusterManager(object):
 
     def get_babysitter_cookie(self):
         url = self.hostname + '/diag/eval'
-        return self._post_form_encoded(url, 'ns_server:get_babysitter_cookie().')
+        payload = \
+            '{json, atom_to_binary(ns_server:get_babysitter_cookie(), latin1)}.'
+        return self._post_form_encoded(url, payload)
 
     def set_hostname(self, hostname):
         url = self.hostname + '/node/controller/rename'
