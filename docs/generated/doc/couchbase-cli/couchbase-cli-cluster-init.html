@@ -754,6 +754,7 @@ couchbase-cli-cluster-init(1) Manual Page
           [--cluster-ramsize &lt;megabytes&gt;] [--cluster-name &lt;name&gt;]
           [--cluster-index-ramsize &lt;megabytes&gt;] [--cluster-fts-ramsize &lt;megabytes&gt;]
           [--cluster-eventing-ramsize &lt;megabytes&gt;]
+          [--cluster-analytics-ramsize &lt;megabytes&gt;]
           [--index-storage-setting &lt;setting&gt;] [--services &lt;services&gt;]</pre>
 <div class="attribution">
 </div></div>
@@ -857,6 +858,17 @@ which will determine how the global secondary indexes (GSI) are stored.</p></div
 </p>
 </dd>
 <dt class="hdlist1">
+--cluster-analytics-ramsize
+</dt>
+<dd>
+<p>
+        Sets the Analytics service memory quota (in MB). This parameter is required
+        if the Analytics service is specified in the --services option. This quota
+        will be assigned to all future nodes added to the cluster with the
+        analytics service.
+</p>
+</dd>
+<dt class="hdlist1">
 --cluster-name
 </dt>
 <dd>
@@ -900,8 +912,8 @@ which will determine how the global secondary indexes (GSI) are stored.</p></div
         Specifies the services to start on this cluster. You may not change the
         services running on this node once the cluster has been initialized. This
         options takes a comma separated list of services. Accepted services are
-        "data", "index", "query", and "fts", specified as a comma-separated list.
-        This parameter defaults to "data".
+        "data", "index", "query", "fts" and "analytics" specified as a
+        comma-separated list. This parameter defaults to "data".
 </p>
 </dd>
 </dl></div>
@@ -957,18 +969,20 @@ command.</p></div>
  --cluster-index-ramsize 1024 --index-storage-setting memopt</code></pre>
 </div></div>
 <div class="paragraph"><p>To create a Couchbase Server cluster with all services then you need to set
-the memory quotas for the Data, Index, Full-Text and Eventing service. The
-quotas are set to 2048MB, 1024MB, 1024MB and 1024MB respectively. A quota is
-not set for the query service since it does not have a memory quota. You also
-need to set the index storage mode for the index service, which will be set to
-"default" since the service is started on the first node.</p></div>
+the memory quotas for the Data, Index, Full-Text, Eventing and Analytics
+service. The quotas are set to 2048MB, 1024MB, 1024MB, 1024MB and 1024MB
+respectively. A quota is not set for the query service since it does not have
+a memory quota. You also need to set the index storage mode for the index
+service, which will be set to "default" since the service is started on the
+first node.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><code>$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
- --cluster-password password --services data,index,query,fts \
+ --cluster-password password --services data,index,query,fts,analytics \
  --cluster-ramsize 2048 --cluster-index-ramsize 1024 \
  --cluster-eventing-ramsize 1024\ --cluster-fts-ramsize 1024 \
---index-storage-setting default</code></pre>
+ --cluster-analytics-ramsize 1024\ --cluster-fts-ramsize 1024 \
+ --index-storage-setting default</code></pre>
 </div></div>
 <div class="paragraph"><p>If you want to set the port number you can do so with the --cluster-port
 option. In the example below, a cluster is setup on port 5000 and starts
@@ -1026,7 +1040,7 @@ changed after a cluster is initialized. Use the
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-04-25 14:24:14 BST
+ 2018-07-27 14:47:38 BST
 </div>
 </div>
 </body>

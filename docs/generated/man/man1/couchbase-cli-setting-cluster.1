@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-cluster
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/09/2018
+.\"      Date: 07/30/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "05/09/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETT" "1" "07/30/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -40,7 +40,7 @@ couchbase-cli-setting-cluster \- Modifies cluster settings
 .fi
 .SH "DESCRIPTION"
 .sp
-This command is used to modify cluster level settings\&. It allows users to change the Couchbase root username and password, change the port that the cluster manager listens on, and modify the data, index, and full\-text service memory quotas\&.
+This command is used to modify cluster level settings\&. It allows users to change the Couchbase root username and password, change the port that the cluster manager listens on, and modify the data, index, full\-text or analytics service memory quotas\&.
 .SH "OPTIONS"
 .PP
 \-c, \-\-cluster
@@ -86,6 +86,11 @@ Sets the index service memory quota\&. This parameter is required if the index s
 \-\-cluster\-eventing\-ramsize
 .RS 4
 Sets the Eventing service memory quota (in MB)\&. This parameter is required if the Eventing service is specified in the \-\-services option\&. This quota will be assigned to all future nodes added to the cluster with the eventing service\&.
+.RE
+.PP
+\-\-cluster\-analytics\-ramsize
+.RS 4
+Sets the Analytics service memory quota (in MB)\&. This parameter is required if the Analytics service is specified in the \-\-services option\&. This quota will be assigned to all future nodes added to the cluster with the Analytics service\&.
 .RE
 .PP
 \-\-cluster\-name
