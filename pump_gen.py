@@ -123,14 +123,14 @@ class GenSource(pump.Source):
                 self.cur_sets = self.cur_sets + 1
                 cmd = couchbaseConstants.CMD_TAP_MUTATION
                 if self.cur_items < max_items:
-                    key = self.cur_items
+                    key = str(self.cur_items)
                     self.cur_items = self.cur_items + 1
                 else:
-                    key = self.cur_sets % self.cur_items
+                    key = str(self.cur_sets % self.cur_items)
             else:
                 self.cur_gets = self.cur_gets + 1
                 cmd = couchbaseConstants.CMD_GET
-                key = self.cur_gets % self.cur_items
+                key = str(self.cur_gets % self.cur_items)
             self.cur_ops = self.cur_ops + 1
 
             if json:
@@ -145,9 +145,14 @@ class GenSource(pump.Source):
                 except StopIteration:
                     itr = iter(collections)
                     cid = int(itr.next(), 16)
-                docKey = struct.pack("!Iss", cid, prefix, str(key));
+                # Generate the pack format and pack the key
+                docKey = struct.pack(
+                    "!I" + str(len(prefix)) + "s" + str(len(key)) + "s",
+                    cid,
+                    prefix,
+                    key);
             else:
-                docKey = prefix + str(key)
+                docKey = prefix + key
 
             msg = (cmd, vbucket_id, docKey, flg, exp, cas, '', value, 0, 0, 0, 0)
             batch.append(msg, len(value))
