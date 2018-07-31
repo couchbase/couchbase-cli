@@ -50,6 +50,7 @@ include::part-common-options.txt[]
 
 --set-client-auth-state <enable|disable|mandatory>::
 	Sets the client certificate auth to following values:
+
 	* disabled : no client certification
 	* enabled : if the client presents a valid client certificate then we try
 	  and validate it. If the validation fails or no certificate is presented we

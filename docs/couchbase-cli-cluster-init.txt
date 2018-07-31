@@ -159,6 +159,4 @@ linkcbdoc:couchbase-cli-cluster-edit[1].
 linkcbdoc:couchbase-cli-node-init[1].
 linkcbdoc:couchbase-cli-server-add[1].
 
-COUCHBASE-CLI
--------------
-Part of the linkgit:couchbase-cli[1] suite
+include::part-footer.txt[]

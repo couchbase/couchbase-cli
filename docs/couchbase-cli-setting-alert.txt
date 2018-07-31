@@ -95,7 +95,6 @@ include::part-common-options.txt[]
 	Specifies that an email alert should be sent when the disk usage on a node
 	in the cluster reaches 90% of the available disk space.
 
-
 --alert-meta-overhead::
 	Specifies that an email alert should be sent when the metadata overhead on
 	the data service is more than 50%.
