@@ -22,7 +22,8 @@ OPTIONS
 --version::
 	Prints version information.
 
--h,--help::
+-h::
+--help::
 	Prints the short and long help messages.
 
 COMMANDS
