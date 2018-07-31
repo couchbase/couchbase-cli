@@ -62,7 +62,8 @@ include::part-common-options.txt[]
 --bucket-eviction-policy <policy>::
 	The memory-cache eviction policy for this bucket. This option is valid for
 	Couchbase and Ephemeral buckets only.
-
++
+[normal]
 	Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
 	the "valueOnly" policy means that each key stored in this bucket must be
 	kept in memory. This is the default policy: using this policy improves
@@ -70,7 +71,8 @@ include::part-common-options.txt[]
 	bucket. Specifying the "fullEviction" policy means that performance is
 	impacted for key-value operations, but the maximum size of the bucket is
 	unbounded.
-
++
+[normal]
 	Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
 	"noEviction" means that the bucket will not evict items from the cache if
 	the cache is full: this type of eviction policy should be used for in-memory
@@ -89,7 +91,6 @@ include::part-common-options.txt[]
 	To disable, set the value of this option to "0". By default, view index
 	replication is disabled. There may be at most one replica view index.
 
-
 include::part-host-formats.txt[]
 
 EXAMPLES
@@ -100,7 +101,6 @@ command:
 
 	$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-ramsize 1024
-
 
 To change the number of replicas for the travel-data bucket to "2", run the
 following command. (Note that this requires a subsequent rebalance, by means of

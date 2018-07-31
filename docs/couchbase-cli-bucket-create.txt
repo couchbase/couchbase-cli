@@ -77,7 +77,8 @@ include::part-common-options.txt[]
 --bucket-eviction-policy <policy>::
 	The memory-cache eviction policy for this bucket. This option is valid for
 	Couchbase and Ephemeral buckets only.
-
++
+[normal]
 	Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
 	the "valueOnly" policy means that each key stored in this bucket must be
 	kept in memory. This is the default policy: using this policy improves
@@ -85,7 +86,8 @@ include::part-common-options.txt[]
 	bucket. Specifying the "fullEviction" policy means that performance is
 	impacted for key-value operations, but the maximum size of the bucket is
 	unbounded.
-
++
+[normal]
 	Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
 	"noEviction" means that the bucket will not evict items from the cache if
 	the cache is full: this type of eviction policy should be used for in-memory
@@ -108,19 +110,21 @@ include::part-common-options.txt[]
 	Specifies this bucket's conflict resolution mechanism; which is to be used
 	if a conflict occurs during Cross Data-Center Replication (XDCR).
 	Sequence-based and timestamp-based mechanisms are supported.
-
++
+[normal]
 	Sequence-based conflict resolution selects the document that has been
 	updated the greatest number of times since the last sync: for example, if
 	one cluster has updated a document twice since the last sync, and the other
 	cluster has updated the document three times, the document updated three
 	times is selected; regardless of the specific times at which updates took
     place.
-
++
+[normal]
 	Timestamp-based conflict resolution selects the document with the most
 	recent timestamp: this is only supported when all clocks on all
 	cluster-nodes have been fully synchronized.
 
---wait
+--wait::
 	The create bucket command is asynchronous by default. Specifying this option
 	makes the operation synchronous: so that the command returns only after the
 	bucket has been fully created.

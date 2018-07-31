@@ -53,7 +53,8 @@ include::part-common-options.txt[]
 	contain the state of client auth and one or more prefixes. The state defines
 	whether or not client auth should used. The possible values for this field
 	are below:
-
++
+--
 	* disabled: no client certification
 	* enable: if the client presents a valid client certificate then we try
 	  and validate it. If the validation fails or no certificate is presented we
@@ -61,6 +62,7 @@ include::part-common-options.txt[]
 	* mandatory: the client has to present valid SSL certificate in order to
 	  access successfully authorise the connection.
 
+[normal]
 	The prefixes section should contain one or more prefixes and each prefix
 	should contain a path, prefix, and delimiter. More information about these
 	sub-fields is below:
@@ -72,6 +74,7 @@ include::part-common-options.txt[]
 	* delimiter: Optional. The delimiter can either be a string or a character,
 	  the parsing of the username ends when the delimter value is found.
 
+[normal]
 	Below is an example of what a client auth configuraiton file might look
 	like:
 
@@ -85,6 +88,7 @@ include::part-common-options.txt[]
 	    }
 	  ]
 	}
+--
 
 --client-auth::
 	This options used to get the client cert auth value

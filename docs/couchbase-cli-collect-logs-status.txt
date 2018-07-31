@@ -23,7 +23,7 @@ below.
 
 	No log collection tasks were found
 
-	or
+or
 
 	Status: <running | cancelled | completed>
 	Details:
