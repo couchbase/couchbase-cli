@@ -1,0 +1,49 @@
+= couchbase-cli-server-list(1)
+ifndef::doctype-manpage[:doctitle: server-list]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-server-list -
+endif::[]
+Lists all servers in the cluster
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli server-list_ [--cluster <url>] [--username <user>]
+    [--password <password>]
+
+== DESCRIPTION
+
+Returns a new line separated list of all servers in the cluster. Each server
+name will be either a hostname or IP address. If no port number is specified for
+the server then the port number is 8091.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To get a list of servers in the cluster you can run the command below.
+
+  $ couchbase-cli server-list -c 192.168.1.5:8091 --username Administrator \
+   --password password
+
+   192.168.1.5:8091
+   192.168.1.6:8091
+   192.168.1.7:8091
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-host-list[1],
+man:couchbase-cli-server-info[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

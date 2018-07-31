@@ -1,80 +1,102 @@
 '\" t
 .\"     Title: couchbase-cli-setting-ldap
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/09/2018
+.\" Generator: Asciidoctor 1.5.7.1
+.\"      Date: 2018-07-31
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "05/09/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2018-07-31" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
-.\" -----------------------------------------------------------------
-.\" * set default formatting
-.\" -----------------------------------------------------------------
-.\" disable hyphenation
+.ss \n[.ss] 0
 .nh
-.\" disable justification (adjust text to left margin only)
 .ad l
-.\" -----------------------------------------------------------------
-.\" * MAIN CONTENT STARTS HERE *
-.\" -----------------------------------------------------------------
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
 .SH "NAME"
-couchbase-cli-setting-ldap \- Modifies LDAP settings
+couchbase\-cli\-setting\-ldap \- Modifies LDAP settings
 .SH "SYNOPSIS"
 .sp
 .nf
-\fIcouchbase\-cli setting\-ldap\fR [\-\-cluster <url>] [\-\-username <user>]
-          [\-\-password <password>] [\-\-ldap\-admins <admins_list>]
-          [\-\-ldap\-roadmins <ro_admin_list>] [\-\-ldap\-default <default>]
-          [\-\-ldap\-enable <num>]
+\fIcouchbase\-cli setting\-ldap\fP [\-\-cluster <url>] [\-\-username <user>]
+    [\-\-password <password>] [\-\-ldap\-admins <admins_list>]
+    [\-\-ldap\-roadmins <ro_admin_list>] [\-\-ldap\-default <default>]
+    [\-\-ldap\-enable <num>]
 .fi
+.br
 .SH "DESCRIPTION"
 .sp
-This command allows users to enable LDAP on their cluster as well as add administrator and read\-only administrator LDAP users to their cluster\&.
+This command allows users to enable LDAP on their cluster as well as add
+administrator and read\-only administrator LDAP users to their cluster.
 .SH "OPTIONS"
-.PP
+.sp
 \-c, \-\-cluster
 .RS 4
-Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
 .RE
-.PP
+.sp
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
 .RE
-.PP
+.sp
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
 .RE
-.PP
+.sp
 \-\-ldap\-admins <admins_list>
 .RS 4
-A list of LDAP users who should have administrator privileges on this cluster\&. This list should be comma separated if multiple users are being added\&.
+A list of LDAP users who should have administrator privileges on this
+cluster. This list should be comma separated if multiple users are being
+added.
 .RE
-.PP
+.sp
 \-\-ldap\-roadmins <ro_admin_list>
 .RS 4
-A list of LDAP users who should have read\-only administrator privileges on this cluster\&. This list should be comma separated if multiple users are being added\&.
+A list of LDAP users who should have read\-only administrator privileges on
+this cluster. This list should be comma separated if multiple users are
+being added.
 .RE
-.PP
+.sp
 \-\-ldap\-enabled <num>
 .RS 4
-Enables or disables LDAP on this cluster\&. To enable LDAP set this option to "1"\&. To disable LDAP set this parameter to "0"\&.
+Enables or disables LDAP on this cluster. To enable LDAP set this option to
+"1". To disable LDAP set this parameter to "0".
 .RE
-.PP
+.sp
 \-\-ldap\-default <default>
 .RS 4
-Specifies the default role for LDAP users who have not been explicitly been added to the cluster\&. This option may be set to "admins", "ro_admins", or "none"\&. If this option is set to "admins" then all LDAP users not explicitly add to this cluster have administrator privileges\&. If this option is set to "roadmins" then all LDAP users not explicitly add to this cluster have read\-only administrator privileges\&. If this option is set to "none" then all LDAP users not explicitly add to this cluster will have no access\&. This option default to "none"\&.
+Specifies the default role for LDAP users who have not been explicitly been
+added to the cluster. This option may be set to "admins", "ro_admins", or
+"none". If this option is set to "admins" then all LDAP users not explicitly
+add to this cluster have administrator privileges. If this option is set to
+"roadmins" then all LDAP users not explicitly add to this cluster have
+read\-only administrator privileges. If this option is set to "none" then all
+LDAP users not explicitly add to this cluster will have no access. This
+option default to "none".
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -85,10 +107,10 @@ When specifying a host for the couchbase\-cli command the following formats are 
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-couchbase://<addr>
+\f(CRcouchbase://<addr>\fP
 .RE
 .sp
 .RS 4
@@ -96,10 +118,10 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-<addr>:<port>
+\f(CR<addr>:<port>\fP
 .RE
 .sp
 .RS 4
@@ -107,65 +129,70 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-http://<addr>:<port>
+\f(CRhttp://<addr>:<port>\fP
 .RE
 .sp
-It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
 .SH "EXAMPLES"
 .sp
-To enable LDAP on a cluster run the following command\&.
+To enable LDAP on a cluster run the following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-ldap \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+$ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-password password \-\-enable\-ldap 1
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To add users alice and barry as Administrators and users clair and daniel as Read\-Only Administrators run the following command\&.
+To add users alice and barry as Administrators and users clair and daniel as
+Read\-Only Administrators run the following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-ldap \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
- \-\-password password \-\-enable\-ldap 1 \-\-ldap\-admins alice,barry \e
+$ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-\-username Administrator \(rs
+ \-\-password password \-\-enable\-ldap 1 \-\-ldap\-admins alice,barry \(rs
  \-\-ldap\-ro\-admins clair,daniel
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To enable LDAP and allow all LDAP users to have Amdinistrator access run the following command\&.
+To enable LDAP and allow all LDAP users to have Amdinistrator access run the
+following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-ldap \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+$ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-password password \-\-enable\-ldap 1 \-\-ldap\-default admins
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
-CB_REST_USERNAME Specifies the username to use when executing the command\&. This environment variable allows you to specify a default argument for the \-u/\-\-username argument on the command line\&.
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
 .sp
-CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
 .SH "SEE ALSO"
 .sp
-\fBcouchbase-cli-admin-role-manage\fR(1)\&. \fBcouchbase-cli-user-manage\fR(1)\&.
+\fBcouchbase\-cli\-admin\-role\-manage\fP(1),
+\fBcouchbase\-cli\-user\-manage\fP(1)
 .SH "COUCHBASE\-CLI"
 .sp
-Part of the \fBcouchbase-cli\fR(1) suite
-.SH "AUTHORS"
-.PP
-\fBCouchbase\fR
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase

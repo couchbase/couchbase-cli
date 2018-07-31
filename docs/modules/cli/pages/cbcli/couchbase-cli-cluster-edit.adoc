@@ -1,0 +1,105 @@
+= couchbase-cli-cluster-edit(1)
+ifndef::doctype-manpage[:doctitle: cluster-edit]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-cluster-edit -
+endif::[]
+Edits cluster settings
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli cluster-edit_ [--cluster <url>] [--cluster-username <username>]
+    [--cluster-password <password>] [--cluster-port <port>]
+    [--cluster-ramsize <megabytes>] [--cluster-name <name>]
+    [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
+
+== DESCRIPTION
+
+DEPRECATED: Please use the man:couchbase-cli-setting-cluster[1] command
+which provides the same functionality as this command.
+
+This command is used to modify cluster level settings. It allows users to change
+the Couchbase Server built-in administrator username and password, change the port
+that the cluster manager listens on, and modify the data, index, and full-text
+service memory quotas.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--cluster-username::
+  Specifies the new username for the Couchbase Server administrator user.
+
+--cluster-password::
+  Specifies the new password for the Couchbase Server administrator user.
+
+--cluster-ramsize::
+  Sets the data service memory quota (in MB). This quota will be assigned
+  to all future nodes added to the cluster with the data service.
+
+--cluster-fts-ramsize::
+  Sets the full-text service memory quota (in MB). This parameter is required
+  if the full-text service is specified in the --services option. This quota
+  will be assigned to all future nodes added to the cluster with the full-text
+  service.
+
+--cluster-index-ramsize::
+  Sets the index service memory quota (in MB). This parameter is required if
+  the index service is specified in the --services option. This quota will be
+  assigned to all future nodes added to the cluster with the index service.
+
+--cluster-name::
+  Sets the name for this cluster. Naming clusters is useful when you have
+  multiple Couchbase Server clusters in your deployment.
+
+--cluster-port::
+  Specifies the port for the Couchbase Server Administration Console. Defaults
+  to port 8091.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To change the username and password of the Couchbase Server administrator user run
+the following command.
+
+  $ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username current_user \
+   --password current_password --cluster-username new_username \
+   --cluster-password new_password
+
+To change the port number that the cluster manager listens on and the cluster
+name to "new_name" run the following command.
+
+  $ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username Administrator \
+   --password password --cluster-port 5000 --cluster-name new_name
+
+To change the memory quota of the data service to 2048MB and the memory quota of
+the index service to 4096MB run the following command.
+
+  $ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username Administrator \
+   --password password --cluster-ramsize 2048 --cluster-index-ramsize 4096
+
+All of the parameters in this command can be specified at the same time. To
+change the username and password of the Couchbase Server administrator user, change
+the port number to 5000, change the cluster name to "new_name", change the memory
+quota of the data service to 2048MB and change the memory quota of the index
+service to 4096MB run the following command.
+
+  $ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username current_user \
+   --password current_password --cluster-username new_username \
+   --cluster-password new_password --cluster-port 5000 \
+   --cluster-name new_name --cluster-ramsize 2048 --cluster-index-ramsize 4096
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-cluster-init[1],
+man:couchbase-cli-setting-cluster[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

@@ -1,0 +1,164 @@
+= couchbase-cli-ssl-manage(1)
+ifndef::doctype-manpage[:doctitle: ssl-manage]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-ssl-manage -
+endif::[]
+Manage SSL certificates
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli ssl-manage_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--cluster-cert-info] [--node-cert-info]
+    [--regenerate-cert <file>] [--set-node-certificate]
+    [--upload-cluster-ca <file>]
+    [--set-client-auth-state <enable|disable|mandatory>]
+    [--set-client-auth-path <subject.cn|san.uri|san.dnsname|san.email>]
+    [--set-client-auth-prefix <prefix>]
+    [--set-client-auth-delimiter <delimiter>]
+    [--client-auth] [--extended]
+
+== DESCRIPTION
+
+This command allows users to manage their SSL and X.509 certificates.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--cluster-cert-info::
+  Retrieves the cluster certificate and prints it to stdout.
+
+--node-cert-info::
+  Retrieves the node certificate and prints it to stdout.
+
+--regenerate-cert <file>::
+  Regenerates the cluster certificate and saves it to the file specified in
+  the value fo this option.
+
+--set-node-certificate::
+  Sets the node certificate. Before running this command you must copy the
+  node certificate into your installation. When this command is invoked the
+  cluster will read the node certificate from the node specified and set it
+  as the node certificate for that node.
+
+--upload-cluster-ca <file>::
+  Uploads the certificate specified to the cluster. The uploaded certificate
+  will replace the cluster certificate in this cluster.
+
+--set-client-auth <path>::
+  Specifies a path to the client auth configuration file. This file should
+  contain the state of client auth and one or more prefixes. The state defines
+  whether or not client auth should used. The possible values for this field
+  are below:
++
+--
+  * disabled: no client certification
+  * enable: if the client presents a valid client certificate then we try
+    and validate it. If the validation fails or no certificate is presented we
+    fall back to the existing authentication methods
+  * mandatory: the client has to present valid SSL certificate in order to
+    access successfully authorise the connection.
+
+[normal]
+  The prefixes section should contain one or more prefixes and each prefix
+  should contain a path, prefix, and delimiter. More information about these
+  sub-fields is below:
+
+  * path: The field which will be used to extract the username from the
+    certificate. Currently only subject.cn, san.uri, san.email and san.dnsname
+    are allowed
+  * prefix: Optional. Prefix to be ignored from the field value
+  * delimiter: Optional. The delimiter can either be a string or a character,
+    the parsing of the username ends when the delimter value is found.
+
+[normal]
+  Below is an example of what a client auth configuraiton file might look
+  like:
+
+  {
+    "state": "enable",
+    "prefixes": [
+      {
+        "path": "subject.cn",
+        "prefix": "www.cb-",
+        "delimiter": "."
+      }
+    ]
+  }
+--
+
+--client-auth::
+  This options used to get the client cert auth value
+
+--extended::
+  This option is used with the --cluster-cert-info and specifies that extended
+  cluster certificate information should be printed to stdout.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To get cluster certificate information run the following command.
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --cluster-cert-info
+
+Note that you can also get extended cluster certificate information by adding the
+--extended flag as shown below.
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --cluster-cert-info --extended
+
+To get node certificate information run the following command. Note that the
+node certificate will be from the node specified by the -c option.
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --node-cert-info --extended
+
+To automatically regenerate the cluster certificate and save the new certificate
+to a file at /root/new_cluster.cert run the following command.
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --regenerate-cert /root/new_cluster.cert
+
+Note that the command above should never be run if you are using X.509
+certificates because using the --regenerate-cert command will generate an
+unsigned certificate for the cluster to use.
+
+To update a node certificate you will first need to copy the new certificate to
+the certificate inbox folder on the node you wish to change the certificate.
+Once you have done this you can run the command below to tell the server to
+begin using the new certificate.
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --set-node-certificate
+
+To update the cluster certificate you can run the command below. Note that our
+certificate is located at /root/new_cluster.cert in this example.
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --upload-cluster-ca /root/new_cluster.cert
+
+To set the client cert auth to mandatory, following command can be run.
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --set-client-auth mandatory
+
+To get the client cert auth value, following command should be run.
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --client-auth
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-cluster-edit[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

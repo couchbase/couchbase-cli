@@ -1,95 +1,133 @@
 '\" t
 .\"     Title: couchbase-cli-setting-autofailover
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/09/2018
+.\" Generator: Asciidoctor 1.5.7.1
+.\"      Date: 2018-07-31
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "05/09/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.TH "COUCHBASE\-CLI\-SETTING\-AUTOFAILOVER" "1" "2018-07-31" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
-.\" -----------------------------------------------------------------
-.\" * set default formatting
-.\" -----------------------------------------------------------------
-.\" disable hyphenation
+.ss \n[.ss] 0
 .nh
-.\" disable justification (adjust text to left margin only)
 .ad l
-.\" -----------------------------------------------------------------
-.\" * MAIN CONTENT STARTS HERE *
-.\" -----------------------------------------------------------------
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
 .SH "NAME"
-couchbase-cli-setting-autofailover \- Modifies auto\-failover settings
+couchbase\-cli\-setting\-autofailover \- Modifies auto\-failover settings
 .SH "SYNOPSIS"
 .sp
 .nf
-\fIcouchbase\-cli setting\-autofailover\fR [\-\-cluster <url>] [\-\-username <user>]
-          [\-\-password <password>] [\-\-enable\-auto\-failover <num>]
-          [\-\-auto\-failover\-timeout <seconds>]
-          [\-\-enable\-failover\-on\-data\-disk\-issues <num>]
-          [\-\-failover\-data\-disk\-period <seconds>]
+\fIcouchbase\-cli setting\-autofailover\fP [\-\-cluster <url>] [\-\-username <user>]
+    [\-\-password <password>] [\-\-enable\-auto\-failover <num>]
+    [\-\-auto\-failover\-timeout <seconds>]
+    [\-\-enable\-failover\-on\-data\-disk\-issues <num>]
+    [\-\-failover\-data\-disk\-period <seconds>]
 .fi
+.br
 .SH "DESCRIPTION"
 .sp
-Auto\-failover allows unresponsive servers to be failed over automatically by the cluster manager\&. Data partitions in Couchbase are always served from a single master node\&. As a result if a server is down in the cluster data from that server will be not be available while that server is down\&. The server will either need to be manually or automatically failed over in order to promote replica data partitions on replica servers to active data partitions so that they can be accessed by the application\&.
+Auto\-failover allows unresponsive servers to be failed over automatically by the
+cluster manager. Data partitions in Couchbase are always served from a single
+master node. As a result if a server is down in the cluster data from that
+server will be not be available while that server is down. The server will
+either need to be manually or automatically failed over in order to promote
+replica data partitions on replica servers to active data partitions so that
+they can be accessed by the application.
 .sp
-Since the administrator will not always be able to manually fail servers over quickly enough to avoid application down time Couchbase provides an auto\-failover feature\&. This feature allows the cluster manager to automatically fail over down nodes over and bring the cluster back to a healthy state as quickly as possible\&.
+Since the administrator will not always be able to manually fail servers over
+quickly enough to avoid application down time Couchbase provides an
+auto\-failover feature. This feature allows the cluster manager to automatically
+fail over down nodes over and bring the cluster back to a healthy state as
+quickly as possible.
 .sp
-In Couchbase Server Enterprise Edition nodes can also be automatically failed over when the Data Service reports sustained disk I/O failures\&.
+In Couchbase Server Enterprise Edition nodes can also be automatically failed
+over when the Data Service reports sustained disk I/O failures.
 .SH "OPTIONS"
-.PP
+.sp
 \-c, \-\-cluster
 .RS 4
-Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
 .RE
-.PP
+.sp
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
 .RE
-.PP
+.sp
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
 .RE
-.PP
+.sp
 \-\-enable\-auto\-failover <num>
 .RS 4
-Specifies whether or not autofailover is enabled\&. Set this option to "1" to enable autofailover or "0" to disable autofailover\&.
+Specifies whether or not autofailover is enabled. Set this option to "1" to
+enable autofailover or "0" to disable autofailover.
 .RE
-.PP
+.sp
 \-\-auto\-failover\-timeout <seconds>
 .RS 4
-Specifies the auto\-failover timeout\&. This is the amount of time a node must be unresponsive before the cluster manager considers the node to be down and fails it over\&. The minimum auto\-failover timeout is 30 seconds in Couchbase Community Edition and 5 seconds in Couchbase Enterprise Edition\&.
+Specifies the auto\-failover timeout. This is the amount of time a node must
+be unresponsive before the cluster manager considers the node to be down and
+fails it over. The minimum auto\-failover timeout is 30 seconds in Couchbase
+Community Edition and 5 seconds in Couchbase Enterprise Edition.
 .RE
-.PP
+.sp
 \-\-max\-failovers <num>
 .RS 4
-Specifies the number of auto\-failover events that will be handled before requiring user intervention\&. A single event could be one node failing over or an entire Server Group\&. The maximum allowed value is three\&. This feature is only available in Couchbase Enterprise Edition\&.
+Specifies the number of auto\-failover events that will be handled before
+requiring user intervention. A single event could be one node failing over or
+an entire Server Group. The maximum allowed value is three. This feature is
+only available in Couchbase Enterprise Edition.
 .RE
-.PP
+.sp
 \-\-enable\-failover\-of\-server\-groups <num>
 .RS 4
-Specifies whether or not auto\-failover can failover entire Server Groups\&. This feature is only available in Couchbase Enterprise Edition\&.
+Specifies whether or not auto\-failover can failover entire Server Groups.
+This feature is only available in Couchbase Enterprise Edition.
 .RE
-.PP
+.sp
 \-\-enable\-failover\-on\-data\-disk\-issues <num>
 .RS 4
-Specifies whether or not autofailover on Data Service disk issues is enabled\&. Set this option to "1" to enable failover on Data Service disk issue or "0" to disable it\&. "\-\-failover\-data\-disk\-period" needs to be set at the same time when enabling this option\&. This feature is only available in Couchbase Enterprise Edition\&.
+Specifies whether or not autofailover on Data Service disk issues is enabled.
+Set this option to "1" to enable failover on Data Service disk issue or
+"0" to disable it. "\-\-failover\-data\-disk\-period" needs to be set at the
+same time when enabling this option. This feature is only available in
+Couchbase Enterprise Edition.
 .RE
-.PP
+.sp
 \-\-failover\-data\-disk\-period <seconds>
 .RS 4
-Specifies the failover data disk period\&. This is the period of time over which the Data Service is checked for potential sustained Disk I/O failures\&. The Data Service is checked every second for disk failures\&. If 60% of the checks during that time period report disk failures, then the node may be automatically failed over\&. "\-\-enable\-failover\-on\-data\-disk\-issues" must be set when this option is used\&. The failover data disk period ranges from 5 to 3600 seconds\&.
+Specifies the failover data disk period. This is the period of time over
+which the Data Service is checked for potential sustained Disk I/O
+failures. The Data Service is checked every second for disk failures. If
+60% of the checks during that time period report disk failures, then the
+node may be automatically failed over.
+"\-\-enable\-failover\-on\-data\-disk\-issues" must be set when this option is
+used. The failover data disk period ranges from 5 to 3600 seconds.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -100,10 +138,10 @@ When specifying a host for the couchbase\-cli command the following formats are 
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-couchbase://<addr>
+\f(CRcouchbase://<addr>\fP
 .RE
 .sp
 .RS 4
@@ -111,10 +149,10 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-<addr>:<port>
+\f(CR<addr>:<port>\fP
 .RE
 .sp
 .RS 4
@@ -122,92 +160,93 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-http://<addr>:<port>
+\f(CRhttp://<addr>:<port>\fP
 .RE
 .sp
-It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
 .SH "EXAMPLES"
 .sp
-To enable autofailover with a 30 second auto\-failover timeout run the following command\&.
+To enable autofailover with a 30 second auto\-failover timeout run the following
+command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-autofailover \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+$ couchbase\-cli setting\-autofailover \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-password password \-\-enable\-auto\-failover 1 \-\-auto\-failover\-timeout 30
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To enable autofailover with a 120 second auto\-failover timeout run the following command\&.
+To enable autofailover with a 120 second auto\-failover timeout run the following
+command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-autofailover \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+$ couchbase\-cli setting\-autofailover \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-password password \-\-enable\-auto\-failover 1 \-\-auto\-failover\-timeout 120
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To enable autofailover with a 120 second auto\-failover timeout and to enable failover on Data Service Disk issue with a 10 second data disk period run the following command\&.
+To enable autofailover with a 120 second auto\-failover timeout and to enable
+failover on Data Service Disk issue with a 10 second data disk period run the
+following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-autofailover \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
- \-\-password password \-\-enable\-auto\-failover 1 \-\-auto\-failover\-timeout 120 \e
+$ couchbase\-cli setting\-autofailover \-c 192.168.1.5 \-\-username Administrator \(rs
+ \-\-password password \-\-enable\-auto\-failover 1 \-\-auto\-failover\-timeout 120 \(rs
  \-\-enable\-failover\-on\-data\-disk\-issues 1 \-\-auto\-failover\-timeout 10
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To enable autofail with a 120 second auto\-failover timeout and to enable failover of a Server group and allow up to two auto failover event
+To enable autofail with a 120 second auto\-failover timeout and to enable failover
+of a Server group and allow up to two auto failover event
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-autofailover \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
- \-\-password password \-\-enable\-auto\-failover 1 \-\-auto\-failover\-timeout 120 \e
+$ couchbase\-cli setting\-autofailover \-c 192.168.1.5 \-\-username Administrator \(rs
+ \-\-password password \-\-enable\-auto\-failover 1 \-\-auto\-failover\-timeout 120 \(rs
  \-\-enable\-failover\-of\-server\-groups 1 \-\-max\-failovers 2
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To disable autofailover run the following command\&.
+To disable autofailover run the following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-autofailover \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+$ couchbase\-cli setting\-autofailover \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-password password \-\-enable\-auto\-failover 0
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
-CB_REST_USERNAME Specifies the username to use when executing the command\&. This environment variable allows you to specify a default argument for the \-u/\-\-username argument on the command line\&.
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
 .sp
-CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
 .SH "SEE ALSO"
 .sp
-\fBcouchbase-cli-failover\fR(1)\&. \fBcouchbase-cli-recovery\fR(1)\&. \fBcouchbase-cli-setting-alert\fR(1)\&.
+\fBcouchbase\-cli\-failover\fP(1),
+\fBcouchbase\-cli\-recovery\fP(1),
+\fBcouchbase\-cli\-setting\-alert\fP(1)
 .SH "COUCHBASE\-CLI"
 .sp
-Part of the \fBcouchbase-cli\fR(1) suite
-.SH "AUTHORS"
-.PP
-\fBCouchbase\fR
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase
