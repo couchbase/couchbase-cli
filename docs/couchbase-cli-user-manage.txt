@@ -70,9 +70,9 @@ include::part-common-options.txt[]
 include::part-host-formats.txt[]
 
 ROLES
-_____
+~~~~~
 
-Cluster-Wide Roles:
+.Cluster-Wide Roles:
 
 admin::
 	Give the user permissions to manage all Couchbase configuration settings,
@@ -114,7 +114,7 @@ view_admin[...]::
 	buckets, for example 'default' and 'app', then set the role as
 	views_admin[default,app].
 
-Data Service Roles:
+.Data Service Roles:
 
 data_reader[...]::
 	Gives the user permission to read data through Couchbases key-value APIs.
@@ -161,7 +161,7 @@ data_monitoring[...]::
 	for multiple buckets, for example 'default' and 'app', then set their role
 	as data_monitoring[default,app].
 
-Full Text Service Roles:
+.Full Text Service Roles:
 
 fts_admin[...]::
 	Gives the user full administrator access for the Full Text Indexing service
@@ -181,7 +181,7 @@ fts_searcher[...]::
 	multiple buckets, for example 'default' and 'app', then set their role as
 	fts_searcher[default,app].
 
-Query Service Roles:
+.Query Service Roles:
 
 manage_index[...]::
 	Allows the user to create and delete indexes on the specified buckets. To
@@ -237,7 +237,6 @@ system_catalog[...]::
 	user needs to be run queries against the system catalog for multiple
 	buckets, for example 'default' and 'app', then set their role as
 	system_catalog[default,app].
-____
 
 EXAMPLES
 --------
