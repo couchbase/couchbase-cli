@@ -64,7 +64,8 @@ include::part-common-options.txt[]
 --bucket-eviction-policy <policy>::
 	The memory-cache eviction policy for this bucket. This option is valid for
 	Couchbase and Ephemeral buckets only.
-
++
+[normal]
 	Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
 	the "valueOnly" policy means that each key stored in this bucket must be
 	kept in memory. This is the default policy: using this policy improves
@@ -72,7 +73,8 @@ include::part-common-options.txt[]
 	bucket. Specifying the "fullEviction" policy means that performance is
 	impacted for key-value operations, but the maximum size of the bucket is
 	unbounded.
-
++
+[normal]
 	Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
 	"noEviction" means that the bucket will not evict items from the cache if
 	the cache is full: this type of eviction policy should be used for in-memory
@@ -107,16 +109,19 @@ include::part-common-options.txt[]
 	for clients that do not understand the compression being used. This option
 	is only available for Couchbase and Ephemeral buckets in Couchbase
 	Enterprise Edition.
-
++
+[normal]
 	Off: Couchbase Server will only compress document values when persisting to
 	disk. This is suitable for use cases where compression could have a
 	negative impact on performance. Please note it is expected that compression
 	in most use cases will improve performance.
-
++
+[normal]
 	Passive: Documents which were compressed by a client, or read compressed
 	from disk will be stored compress in-memory. Couchbase Server will make
 	no additional attempt to compress documents that are not already compressed.
-
++
+[normal]
 	Active: Couchbase Server will actively and aggressively attempt to compress
 	documents, even if they have not been received in a compressed format. This
 	provides the benefits of compression even when the SDK clients are not
@@ -128,7 +133,7 @@ include::part-common-options.txt[]
 	port and server side moxi has been deprecated. In later versions of
 	Couchbase Server a cluster will not be able to upgrade if a bucket has the
 	dedicated port set. This option allows removal of that setting by setting
-	 it to 1.
+	it to 1.
 
 include::part-host-formats.txt[]
 
@@ -140,7 +145,6 @@ command:
 
 	$ couchbase-cli bucket-edit -c 192.168.1.5:8091 --username Administrator \
 	 --password password --bucket travel-data --bucket-ramsize 1024
-
 
 To change the number of replicas for the travel-data bucket to "2", run the
 following command. (Note that this requires a subsequent rebalance, by means of

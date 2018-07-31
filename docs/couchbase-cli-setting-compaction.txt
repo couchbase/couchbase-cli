@@ -43,7 +43,7 @@ include::part-common-options.txt[]
 	Compacts view files once the fragmentation percentage is greater than the
 	value set for this option. The value must be between 2 and 100.
 
---compaction-view-size: <megabytes>:
+--compaction-view-size: <megabytes>::
 	Compacts the view files once the file fragmentation (in MB) is greater than
 	the value of this option. This option must be set to a value greater than 1.
 

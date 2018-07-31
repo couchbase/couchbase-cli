@@ -73,7 +73,8 @@ include::part-common-options.txt[]
 --bucket-eviction-policy <policy>::
 	The memory-cache eviction policy for this bucket. This option is valid for
 	Couchbase and Ephemeral buckets only.
-
++
+[normal]
 	Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
 	the "valueOnly" policy means that each key stored in this bucket must be
 	kept in memory. This is the default policy: using this policy improves
@@ -81,7 +82,8 @@ include::part-common-options.txt[]
 	bucket. Specifying the "fullEviction" policy means that performance is
 	impacted for key-value operations, but the maximum size of the bucket is
 	unbounded.
-
++
+[normal]
 	Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
 	"noEviction" means that the bucket will not evict items from the cache if
 	the cache is full: this type of eviction policy should be used for in-memory
@@ -104,14 +106,16 @@ include::part-common-options.txt[]
 	Specifies this bucket's conflict resolution mechanism; which is to be used
 	if a conflict occurs during Cross Data-Center Replication (XDCR).
 	Sequence-based and timestamp-based mechanisms are supported.
-
++
+[normal]
 	Sequence-based conflict resolution selects the document that has been
 	updated the greatest number of times since the last sync: for example, if
 	one cluster has updated a document twice since the last sync, and the other
 	cluster has updated the document three times, the document updated three
 	times is selected; regardless of the specific times at which updates took
     place.
-
++
+[normal]
 	Timestamp-based conflict resolution selects the document with the most
 	recent timestamp: this is only supported when all clocks on all
 	cluster-nodes have been fully synchronized.
@@ -132,22 +136,25 @@ include::part-common-options.txt[]
 	for clients that do not understand the compression being used. This option
 	is only available for Couchbase and Ephemeral buckets in Couchbase
 	Enterprise Edition.
-
++
+[normal]
 	Off: Couchbase Server will only compress document values when persisting to
 	disk. This is suitable for use cases where compression could have a
 	negative impact on performance. Please note it is expected that compression
 	in most use cases will improve performance.
-
++
+[normal]
 	Passive: Documents which were compressed by a client, or read compressed
 	from disk will be stored compress in-memory. Couchbase Server will make
 	no additional attempt to compress documents that are not already compressed.
-
++
+[normal]
 	Active: Couchbase Server will actively and aggressively attempt to compress
 	documents, even if they have not been received in a compressed format. This
 	provides the benefits of compression even when the SDK clients are not
 	complicit.
 
---wait
+--wait::
 	The create bucket command is asynchronous by default. Specifying this option
 	makes the operation synchronous: so that the command returns only after the
 	bucket has been fully created.
