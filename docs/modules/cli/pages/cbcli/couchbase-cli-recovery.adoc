@@ -1,0 +1,90 @@
+= couchbase-cli-recovery(1)
+ifndef::doctype-manpage[:doctitle: recovery]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-recovery -
+endif::[]
+Recovers a previously failed over node
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli recovery_ [--cluster <url>] [--username <username>]
+    [--password <password>] [--server-recovery <servers>]
+    [--recovery-type <type>]
+
+== DESCRIPTION
+
+When a server is failed over and removed from the cluster it may only be able to
+be added back to the cluster. And example of this is when a server loses power.
+This server might get failed over and removed from the cluster, but once power
+is restored to the server you may want to add it back to the cluster.
+
+Another use case is taking a server out of the cluster for maintenance. This
+is done by gracefully failing over a server to ensure there is no data loss.
+The administrator can then perform maintenance on the removed server and add it
+back with the server-readd command.
+
+The recovery command also allows a server to have it's data remvoed before being
+added back to the cluster (full recovery) or having the server resume from where
+it last left off (delta recovery). Delta recovery will always take the least
+amount of time and is the recommended recovery mode.
+
+Note that after the recovery subcommand is run you must rebalance the
+cluster. See the man:couchbase-cli-rebalance[1] command for more information
+on rebalancing a cluster.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--server-recovery <servers>::
+  A command separated list of servers to recover. The each server should
+  correspond to the hostname or IP address of a server to be added back to
+  the cluster.
+
+--recovery-type <type>::
+  Specifies whether or not we should do full or delta recovery of data on the
+  servers being added back. Full recover means that all data on the servers
+  being recovered will be removed and we will recover all data. Specifying
+  delta recover means we will keep the data that is on each server and only
+  recover the data that each server doesn't have. To specify full recovery set
+  this option to "full". For delta recovery set this option to "delta". The
+  default value for this option is "full".
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+If we have a server at 192.168.1.6:8091 that we want to recover and we want to
+recover data using delta recovery then we can run the following command.
+
+  $ couchbase-cli server-readd -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-recovery 192.168.1.6:8091 \
+   --recovery-type delta
+
+If we need to recover multiple servers then we would run the following command.
+
+  $ couchbase-cli server-readd -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-recovery 192.168.1.6:8091,192.168.1.7:8091 \
+   --recovery-type delta
+
+If we wanted the servers being recovered to use full recovery then we would run
+the following command.
+
+  $ couchbase-cli server-readd -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-recovery 192.168.1.6:8091 \
+   --recovery-type full
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-rebalance[1],
+man:couchbase-cli-server-add[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

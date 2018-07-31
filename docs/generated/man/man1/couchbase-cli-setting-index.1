@@ -1,103 +1,117 @@
 '\" t
 .\"     Title: couchbase-cli-setting-index
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/09/2018
+.\" Generator: Asciidoctor 1.5.7.1
+.\"      Date: 2018-07-31
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "05/09/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.TH "COUCHBASE\-CLI\-SETTING\-INDEX" "1" "2018-07-31" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
-.\" -----------------------------------------------------------------
-.\" * set default formatting
-.\" -----------------------------------------------------------------
-.\" disable hyphenation
+.ss \n[.ss] 0
 .nh
-.\" disable justification (adjust text to left margin only)
 .ad l
-.\" -----------------------------------------------------------------
-.\" * MAIN CONTENT STARTS HERE *
-.\" -----------------------------------------------------------------
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
 .SH "NAME"
-couchbase-cli-setting-index \- Modifies index settings
+couchbase\-cli\-setting\-index \- Modifies index settings
 .SH "SYNOPSIS"
 .sp
 .nf
-\fIcouchbase\-cli setting\-index\fR [\-\-cluster <url>] [\-\-username <user>]
-          [\-\-password <password>] [\-\-index\-max\-rollback\-points <num>]
-          [\-\-index\-stable\-snapshot\-interval <seconds>]
-          [\-\-index\-memory\-snapshot\-interval <milliseconds>]
-          [\-\-index\-storage\-setting <type>] [\-\-index\-threads <num>]
-          [\-\-index\-log\-level <level>]
+\fIcouchbase\-cli setting\-index\fP [\-\-cluster <url>] [\-\-username <user>]
+    [\-\-password <password>] [\-\-index\-max\-rollback\-points <num>]
+    [\-\-index\-stable\-snapshot\-interval <seconds>]
+    [\-\-index\-memory\-snapshot\-interval <milliseconds>]
+    [\-\-index\-storage\-setting <type>] [\-\-index\-threads <num>]
+    [\-\-index\-log\-level <level>]
 .fi
+.br
 .SH "DESCRIPTION"
 .sp
-This command sets various advanced settings for the index service\&.
+This command sets various advanced settings for the index service.
 .SH "OPTIONS"
-.PP
+.sp
 \-c, \-\-cluster
 .RS 4
-Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
 .RE
-.PP
+.sp
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
 .RE
-.PP
+.sp
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
 .RE
-.PP
+.sp
 \-\-index\-max\-rollback\-points <num>
 .RS 4
-The maximum number of rollback points\&. The value of this option must be greater than or equal to 1\&.
+The maximum number of rollback points. The value of this option must be
+greater than or equal to 1.
 .RE
-.PP
+.sp
 \-\-index\-stable\-snapshot\-interval <seconds>
 .RS 4
-Specifies the frequency of persisted snapshots for recovery in seconds\&. This means that in the event of a failover this is the farthest back we may have to rebuild the index from\&. This value of this parameter must be greater than
+Specifies the frequency of persisted snapshots for recovery in seconds. This
+means that in the event of a failover this is the farthest back we may have
+to rebuild the index from. This value of this parameter must be greater than 1.
+If this options is not specified it defaults to 30000 seconds (8 hours
+20 minutes).
+.RE
 .sp
-.RS 4
-.ie n \{\
-\h'-04' 1.\h'+01'\c
-.\}
-.el \{\
-.sp -1
-.IP "  1." 4.2
-.\}
-If this options is not specified it defaults to 30000 seconds (8 hours 20 minutes)\&.
-.RE
-.RE
-.PP
 \-\-index\-memory\-snapshot\-interval <milliseconds>
 .RS 4
-Specifies the frequency of in\-memory snapshots in milliseconds\&. This determines the earliest possibility of a scan seeing a given KV mutation\&. This value of this parameter must be greater than 1\&. This parameter defaults to 200 if it is not specified\&.
+Specifies the frequency of in\-memory snapshots in milliseconds. This
+determines the earliest possibility of a scan seeing a given KV mutation.
+This value of this parameter must be greater than 1. This parameter defaults
+to 200 if it is not specified.
 .RE
-.PP
+.sp
 \-\-index\-storage\-setting <type>
 .RS 4
-Sets the index storage mode for all indexes in this cluster\&. This parameter may only be changed if there are no nodes running the index service\&. To specify the disk based forestdb index backend set this parameter to "default"\&. To set the storage mode to use memory optimized indexes set this parameter to "memopt"\&.
+Sets the index storage mode for all indexes in this cluster. This parameter
+may only be changed if there are no nodes running the index service. To
+specify the disk based forestdb index backend set this parameter to
+"default". To set the storage mode to use memory optimized indexes set this
+parameter to "memopt".
 .RE
-.PP
+.sp
 \-\-index\-threads <num>
 .RS 4
-Sets the number of CPUs that can be used by the indexer\&. The value of this option must be between 0 and 1024\&. If this option is not set then it default to 4\&.
+Sets the number of CPUs that can be used by the indexer. The value of this
+option must be between 0 and 1024. If this option is not set then it
+default to 4.
 .RE
-.PP
+.sp
 \-\-index\-log\-level <level>
 .RS 4
-Sets the log level for the index service\&. Valid log levels include "debug", "silent", "fatal", "error", "warn", "info", "verbose", "timing", and "trace"\&.
+Sets the log level for the index service. Valid log levels include "debug",
+"silent", "fatal", "error", "warn", "info", "verbose", "timing", and
+"trace".
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -108,10 +122,10 @@ When specifying a host for the couchbase\-cli command the following formats are 
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-couchbase://<addr>
+\f(CRcouchbase://<addr>\fP
 .RE
 .sp
 .RS 4
@@ -119,10 +133,10 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-<addr>:<port>
+\f(CR<addr>:<port>\fP
 .RE
 .sp
 .RS 4
@@ -130,40 +144,52 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-http://<addr>:<port>
+\f(CRhttp://<addr>:<port>\fP
 .RE
 .sp
-It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
 .SH "EXAMPLES"
 .sp
-To set the max index rollback points to 8, the index stable snapshot interval to 40000 seconds, the index memory snapshot interval to 150 milliseconds, the index thread count to 8 and in the index log level to info run the following command\&.
+To set the max index rollback points to 8, the index stable snapshot interval to
+40000 seconds, the index memory snapshot interval to 150 milliseconds, the index
+thread count to 8 and in the index log level to info run the following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-   $ couchbase\-cli setting\-index \-c 127\&.0\&.0\&.1:8091 \-u Administrator \e
-    \-p password \-\-index\-max\-rollback\-points 8 \-\-index\-threads 8 \e
-\-\-index\-log\-level info \-\-index\-stable\-snapshot\-interval 40000 \e
-\-\-index\-memory\-snapshot\-interval 150 \e
+$ couchbase\-cli setting\-index \-c 127.0.0.1:8091 \-u Administrator \(rs
+ \-p password \-\-index\-max\-rollback\-points 8 \-\-index\-threads 8 \(rs
+   \-\-index\-log\-level info \-\-index\-stable\-snapshot\-interval 40000 \(rs
+   \-\-index\-memory\-snapshot\-interval 150 \(rs
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
-CB_REST_USERNAME Specifies the username to use when executing the command\&. This environment variable allows you to specify a default argument for the \-u/\-\-username argument on the command line\&.
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
 .sp
-CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
 .SH "SEE ALSO"
 .sp
-\fBcouchbase-cli-setting-cluster\fR(1)
+\fBcouchbase\-cli\-setting\-cluster\fP(1)
 .SH "COUCHBASE\-CLI"
 .sp
-Part of the \fBcouchbase-cli\fR(1) suite
-.SH "AUTHORS"
-.PP
-\fBCouchbase\fR
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase

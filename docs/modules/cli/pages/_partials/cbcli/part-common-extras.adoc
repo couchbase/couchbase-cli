@@ -1,0 +1,21 @@
+-s::
+--ssl::
+  (Deprecated) Specifies that the connection should use SSL verification. If
+  this flag is used then SSL will be used but the cluster certificate will not
+  be verified by the Certificate Authority. This flag is deprecated and not
+  recommended. If you wish to use SSL encryption it is recommended that you
+  specify the cluster host name using either _couchbases://_ or _https://_.
+  Each of these connection schemes will ensure that the connection is
+  encrypted with SSL. You may then use either --no-ssl-verify or --cacert in
+  order to customize how your SSL connection is set up.
+
+--no-ssl-verify::
+  Specifies that SSL verification should be used but that verifying that the
+  cluster certificate is valid should be skipped. Use of this flag is not
+  recommended for production environments because it does not protect the user
+  from a man-in-the-middle attack.
+
+--cacert::
+  Specifies that the SSL connection should use the cacert provided when
+  connecting to the cluster. This argument takes the path the certificate
+  file as its value. This is the most secure way to connect to your cluster.

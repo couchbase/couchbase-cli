@@ -1,0 +1,165 @@
+= couchbase-cli(1)
+ifndef::doctype-manpage[:doctitle: couchbase-cli]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli -
+endif::[]
+The Couchbase cluster management utility.
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli <command> [options]_
+
+== DESCRIPTION
+
+The couchbase-cli script is the main command line interface for Couchbase
+cluster management.
+
+== OPTIONS
+
+--version::
+  Prints version information.
+
+-h::
+--help::
+  Prints the short and long help messages.
+
+== COMMANDS
+
+man:couchbase-cli-admin-role-manage[1]::
+  Manage LDAP user roles.
+
+man:couchbase-cli-bucket-compact[1]::
+  Compact a Couchbase data bucket.
+
+man:couchbase-cli-bucket-create[1]::
+  Create a new Couchbase data bucket.
+
+man:couchbase-cli-bucket-delete[1]::
+  Delete a Couchbase data bucket.
+
+man:couchbase-cli-bucket-edit[1]::
+  Edit a Couchbase data bucket.
+
+man:couchbase-cli-bucket-flush[1]::
+  Flush a Couchbase data bucket.
+
+man:couchbase-cli-bucket-list[1]::
+  List all Couchbase data buckets.
+
+man:couchbase-cli-cluster-edit[1]::
+  Edits cluster settings.
+
+man:couchbase-cli-cluster-init[1]::
+  Initializes a Couchbase cluster.
+
+man:couchbase-cli-collect-logs-start[1]::
+  Start log collection.
+
+man:couchbase-cli-collect-logs-status[1]::
+  Get log collection status.
+
+man:couchbase-cli-collect-logs-stop[1]::
+  Stop the current log collection task.
+
+man:couchbase-cli-eventing-function-setup[1]::
+  Manage the Eventing Service functions.
+
+man:couchbase-cli-failover[1]::
+  Failover a server in the cluster.
+
+man:couchbase-cli-group-manage[1]::
+  Manage server groups.
+
+man:couchbase-cli-host-list[1]::
+  Lists all hosts in the cluster.
+
+man:couchbase-cli-node-init[1]::
+  Initializes a node.
+
+man:couchbase-cli-rebalance[1]::
+  Rebalances data across nodes in a cluster.
+
+man:couchbase-cli-rebalance-status[1]::
+  Show the current rebalance status.
+
+man:couchbase-cli-rebalance-stop[1]::
+  Stops the current rebalance task.
+
+man:couchbase-cli-recovery[1]::
+  Recovers a previously failed over node.
+
+man:couchbase-cli-reset-admin-password[1]::
+  Resets the administrator password.
+
+man:couchbase-cli-server-add[1]::
+  Adds a server to the cluster.
+
+man:couchbase-cli-server-info[1]::
+  Displays server level information and statistics.
+
+man:couchbase-cli-server-list[1]::
+  Lists all servers in the cluster.
+
+man:couchbase-cli-server-readd[1]::
+  Adds a server back to the cluster after a failover.
+
+man:couchbase-cli-setting-alert[1]::
+  Modifies alert settings.
+
+man:couchbase-cli-setting-audit[1]::
+  Modifies audit log settings.
+
+man:couchbase-cli-setting-autofailover[1]::
+  Modifies auto-failover settings.
+
+man:couchbase-cli-setting-autoreprovision[1]::
+  Modifies auto-reprovision settings.
+
+man:couchbase-cli-setting-cluster[1]::
+  Modifies cluster settings.
+
+man:couchbase-cli-setting-compaction[1]::
+  Modifies compaction settings.
+
+man:couchbase-cli-setting-index[1]::
+  Modifies index settings.
+
+man:couchbase-cli-setting-ldap[1]::
+  Modifies LDAP settings.
+
+man:couchbase-cli-setting-notification[1]::
+  Modifies notification settings.
+
+man:couchbase-cli-setting-password-policy[1]::
+  Modifies the password policy.
+
+man:couchbase-cli-setting-security[1]::
+  Modifies security policies.
+
+man:couchbase-cli-setting-xdcr[1]::
+  Modifies cross datacenter replication (XDCR) settings.
+
+man:couchbase-cli-ssl-manage[1]::
+  Manage SSL certificates.
+
+man:couchbase-cli-user-manage[1]::
+  Manage RBAC users.
+
+man:couchbase-cli-xdcr-replicate[1]::
+  Manages XDCR cluster references.
+
+man:couchbase-cli-xdcr-setup[1]::
+  Manages XDCR replications.
+
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

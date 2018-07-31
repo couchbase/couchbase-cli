@@ -1,170 +1,209 @@
 '\" t
 .\"     Title: couchbase-cli-setting-alert
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/09/2018
+.\" Generator: Asciidoctor 1.5.7.1
+.\"      Date: 2018-07-31
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "05/09/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.TH "COUCHBASE\-CLI\-SETTING\-ALERT" "1" "2018-07-31" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
-.\" -----------------------------------------------------------------
-.\" * set default formatting
-.\" -----------------------------------------------------------------
-.\" disable hyphenation
+.ss \n[.ss] 0
 .nh
-.\" disable justification (adjust text to left margin only)
 .ad l
-.\" -----------------------------------------------------------------
-.\" * MAIN CONTENT STARTS HERE *
-.\" -----------------------------------------------------------------
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
 .SH "NAME"
-couchbase-cli-setting-alert \- Modifies alert settings
+couchbase\-cli\-setting\-alert \- Modifies alert settings
 .SH "SYNOPSIS"
 .sp
 .nf
-\fIcouchbase\-cli setting\-alert\fR [\-\-cluster <url>] [\-\-username <user>]
-          [\-\-password <password>] [\-\-enable\-email\-alert <num>]
-          [\-\-email\-recipients <email_list>] [\-\-email\-sender <email>]
-          [\-\-email\-user <user>] [\-\-email\-password <password>] [\-\-email\-host <host>]
-          [\-\-email\-port <port>] [\-\-enable\-email\-encrypt <num>]
-          [\-\-alert\-auto\-failover\-node] [\-\-alert\-auto\-failover\-max\-reached]
-          [\-\-alert\-auto\-failover\-node\-down] [\-\-alert\-auto\-failover\-cluster\-small]
-          [\-\-alert\-auto\-failover\-disable] [\-\-alert\-ip\-changed] [\-\-alert\-disk\-space]
-          [\-\-alert\-meta\-overhead] [\-\-alert\-meta\-oom] [\-\-alert\-write\-failed]
-          [\-\-alert\-audit\-msg\-dropped] [\-\-alert\-indexer\-max\-ram]
-          [\-\-alert\-timestamp\-drift\-exceeded]
+\fIcouchbase\-cli setting\-alert\fP [\-\-cluster <url>] [\-\-username <user>]
+    [\-\-password <password>] [\-\-enable\-email\-alert <num>]
+    [\-\-email\-recipients <email_list>] [\-\-email\-sender <email>]
+    [\-\-email\-user <user>] [\-\-email\-password <password>] [\-\-email\-host <host>]
+    [\-\-email\-port <port>] [\-\-enable\-email\-encrypt <num>]
+    [\-\-alert\-auto\-failover\-node] [\-\-alert\-auto\-failover\-max\-reached]
+    [\-\-alert\-auto\-failover\-node\-down] [\-\-alert\-auto\-failover\-cluster\-small]
+    [\-\-alert\-auto\-failover\-disable] [\-\-alert\-ip\-changed] [\-\-alert\-disk\-space]
+    [\-\-alert\-meta\-overhead] [\-\-alert\-meta\-oom] [\-\-alert\-write\-failed]
+    [\-\-alert\-audit\-msg\-dropped] [\-\-alert\-indexer\-max\-ram]
+    [\-\-alert\-timestamp\-drift\-exceeded]
 .fi
+.br
 .SH "DESCRIPTION"
 .sp
-This command is used to set up email alerts on a cluster\&. Couchbase provides alerts for various issues that may arise in the cluster where it is recommended that the cluster administrator take action to ensure that applications continue to function properly\&. When setting up email alerts administrator can decide who gets alert emails and which alerts are sent\&.
+This command is used to set up email alerts on a cluster. Couchbase provides
+alerts for various issues that may arise in the cluster where it is recommended
+that the cluster administrator take action to ensure that applications continue
+to function properly. When setting up email alerts administrator can decide who
+gets alert emails and which alerts are sent.
 .SH "OPTIONS"
-.PP
+.sp
 \-c, \-\-cluster
 .RS 4
-Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
-.RE
-.PP
-\-u, \-\-user <username>
-.RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
-.RE
-.PP
-\-p, \-\-password <password>
-.RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
-.RE
-.PP
-\-\-enable\-email\-alert <num>
-.RS 4
-Enables email alerts on this cluster\&. Set this option to "1" to enable alerts or "0" to disable alerts\&. This parameter is required\&.
-.RE
-.PP
-\-\-email\-recipients <email_list>
-.RS 4
-A comma separated list of users to email when an alert is raised in the server\&.
-.RE
-.PP
-\-\-email\-sender <email>
-.RS 4
-If email alerts an enabled then this option will set the sender email address\&.
-.RE
-.PP
-\-\-email\-user <user>
-.RS 4
-The email server username for the sender email address\&. This field is required if the email address provided requires authentication\&.
-.RE
-.PP
-\-\-email\-password <password>
-.RS 4
-The email server password for the sender email address\&. This field is required if the email address provided requires authentication\&.
-.RE
-.PP
-\-\-email\-host <host>
-.RS 4
-The email server hostname that hosts the email address specified by the \-\-sender\-email option\&.
-.RE
-.PP
-\-\-email\-port <port>
-.RS 4
-The email server port number of the server that hosts the email address specified by the \-\-sender\-email option\&.
-.RE
-.PP
-\-\-enable\-email\-encrypt <num>
-.RS 4
-Enables SSL encryption when connecting to the email server\&. Set this option to "1" to enable encryption or "0" to disable encryption\&. If this option is not set then encryption will be disabled\&.
-.RE
-.PP
-\-\-alert\-auto\-failover\-node
-.RS 4
-Specifies that an email alert should be sent when a node is automatically failed over\&.
-.RE
-.PP
-\-\-alert\-auto\-failover\-max\-reached
-.RS 4
-Specifies that an email alert should be sent when the maximum amount of auto\-failovers is reached\&.
-.RE
-.PP
-\-\-alert\-auto\-failover\-node\-down
-.RS 4
-Specifies that an email alert should be sent when auto\-failover could not be completed because another node in the cluster was already down\&.
-.RE
-.PP
-\-\-alert\-auto\-failover\-cluster\-small
-.RS 4
-Specifies that an email alert should be sent when auto\-failover could not be completed because the cluster is too small\&.
-.RE
-.PP
-\-\-alert\-auto\-failover\-disable
-.RS 4
-Specifies that an email alert should be sent when auto\-failover could not be completed because auto\-failover is disabled on this cluster\&.
-.RE
-.PP
-\-\-alert\-ip\-changed
-.RS 4
-Specifies that an email alert should be sent when the IP address on a node in the cluster changes\&.
-.RE
-.PP
-\-\-alert\-disk\-space
-.RS 4
-Specifies that an email alert should be sent when the disk usage on a node in the cluster reaches 90% of the available disk space\&.
-.RE
-.PP
-\-\-alert\-meta\-overhead
-.RS 4
-Specifies that an email alert should be sent when the metadata overhead on the data service is more than 50%\&.
-.RE
-.PP
-\-\-alert\-meta\-oom
-.RS 4
-Specifies that an email alert should be sent when all of the memory in the cache for a bucket is used by metadata\&. If this condition is hit the bucket will be unusable until more memory is added to the bucket cache\&.
-.RE
-.PP
-\-\-alert\-write\-failed
-.RS 4
-Specifies that an email alert should be sent when writing data to disk on the data service has failed\&.
-.RE
-.PP
-\-\-alert\-audit\-msg\-dropped
-.RS 4
-Specifies that an email alert should be sent when writing event to audit log fails\&.
-.RE
-.PP
-\-\-alert\-indexer\-max\-ram
-.RS 4
-Specifies that an email alert should be sent when the memory usage for the indexer service on a specific node exceeds the per node memory usage limit\&. This warning is only shown for if the index storage type is Memory Optimized Indexes (MOI)\&.
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
 .RE
 .sp
-\-\-alert\-timestamp\-drift\-exceeded Specifies that an email alert should be sent if the clocks on two different machines in the cluster are more that five seconds apart\&.
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
+.RE
+.sp
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
+.RE
+.sp
+\-\-enable\-email\-alert <num>
+.RS 4
+Enables email alerts on this cluster. Set this option to "1" to enable
+alerts or "0" to disable alerts. This parameter is required.
+.RE
+.sp
+\-\-email\-recipients <email_list>
+.RS 4
+A comma separated list of users to email when an alert is raised in the
+server.
+.RE
+.sp
+\-\-email\-sender <email>
+.RS 4
+If email alerts an enabled then this option will set the sender email
+address.
+.RE
+.sp
+\-\-email\-user <user>
+.RS 4
+The email server username for the sender email address. This field is
+required if the email address provided requires authentication.
+.RE
+.sp
+\-\-email\-password <password>
+.RS 4
+The email server password for the sender email address. This field is
+required if the email address provided requires authentication.
+.RE
+.sp
+\-\-email\-host <host>
+.RS 4
+The email server hostname that hosts the email address specified by the
+\-\-sender\-email option.
+.RE
+.sp
+\-\-email\-port <port>
+.RS 4
+The email server port number of the server that hosts the email address
+specified by the \-\-sender\-email option.
+.RE
+.sp
+\-\-enable\-email\-encrypt <num>
+.RS 4
+Enables SSL encryption when connecting to the email server. Set this option
+to "1" to enable encryption or "0" to disable encryption. If this option is
+not set then encryption will be disabled.
+.RE
+.sp
+\-\-alert\-auto\-failover\-node
+.RS 4
+Specifies that an email alert should be sent when a node is automatically
+failed over.
+.RE
+.sp
+\-\-alert\-auto\-failover\-max\-reached
+.RS 4
+Specifies that an email alert should be sent when the maximum amount of
+auto\-failovers is reached.
+.RE
+.sp
+\-\-alert\-auto\-failover\-node\-down
+.RS 4
+Specifies that an email alert should be sent when auto\-failover could not be
+completed because another node in the cluster was already down.
+.RE
+.sp
+\-\-alert\-auto\-failover\-cluster\-small
+.RS 4
+Specifies that an email alert should be sent when auto\-failover could not be
+completed because the cluster is too small.
+.RE
+.sp
+\-\-alert\-auto\-failover\-disable
+.RS 4
+Specifies that an email alert should be sent when auto\-failover could not be
+completed because auto\-failover is disabled on this cluster.
+.RE
+.sp
+\-\-alert\-ip\-changed
+.RS 4
+Specifies that an email alert should be sent when the IP address on a node
+in the cluster changes.
+.RE
+.sp
+\-\-alert\-disk\-space
+.RS 4
+Specifies that an email alert should be sent when the disk usage on a node
+in the cluster reaches 90% of the available disk space.
+.RE
+.sp
+\-\-alert\-meta\-overhead
+.RS 4
+Specifies that an email alert should be sent when the metadata overhead on
+the data service is more than 50%.
+.RE
+.sp
+\-\-alert\-meta\-oom
+.RS 4
+Specifies that an email alert should be sent when all of the memory in the
+cache for a bucket is used by metadata. If this condition is hit the bucket
+will be unusable until more memory is added to the bucket cache.
+.RE
+.sp
+\-\-alert\-write\-failed
+.RS 4
+Specifies that an email alert should be sent when writing data to disk on
+the data service has failed.
+.RE
+.sp
+\-\-alert\-audit\-msg\-dropped
+.RS 4
+Specifies that an email alert should be sent when writing event to audit log
+fails.
+.RE
+.sp
+\-\-alert\-indexer\-max\-ram
+.RS 4
+Specifies that an email alert should be sent when the memory usage for the
+indexer service on a specific node exceeds the per node memory usage limit.
+This warning is only shown for if the index storage type is Memory Optimized
+Indexes (MOI).
+.RE
+.sp
+\-\-alert\-timestamp\-drift\-exceeded
+  Specifies that an email alert should be sent if the clocks on two different
+  machines in the cluster are more that five seconds apart.
 .SH "HOST FORMATS"
 .sp
 When specifying a host for the couchbase\-cli command the following formats are expected:
@@ -174,10 +213,10 @@ When specifying a host for the couchbase\-cli command the following formats are 
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-couchbase://<addr>
+\f(CRcouchbase://<addr>\fP
 .RE
 .sp
 .RS 4
@@ -185,10 +224,10 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-<addr>:<port>
+\f(CR<addr>:<port>\fP
 .RE
 .sp
 .RS 4
@@ -196,77 +235,81 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-http://<addr>:<port>
+\f(CRhttp://<addr>:<port>\fP
 .RE
 .sp
-It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
 .SH "EXAMPLES"
 .sp
-To enable failover related email alerts for two users without email encryption run the following command below:
+To enable failover related email alerts for two users without email encryption
+run the following command below:
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-alert \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
- \-\-password password \-\-enable\-email\-alert 1 \-\-email\-user admin \e
- \-\-email\-password password \-\-email\-host mail\&.couchbase\&.com \-\-email\-port 25 \e
- \-\-email\-recipients user1@couchbase\&.com,user2@couchbase\&.com \e
- \-\-email\-sender noreply@couchbase\&.com \-\-enable\-email\-encrypt 0 \e
- \-\-alert\-auto\-failover\-node \-\-alert\-auto\-failover\-max\-reached \e
- \-\-alert\-auto\-failover\-node\-down \-\-alert\-auto\-failover\-cluster\-small \e
+$ couchbase\-cli setting\-alert \-c 192.168.1.5 \-\-username Administrator \(rs
+ \-\-password password \-\-enable\-email\-alert 1 \-\-email\-user admin \(rs
+ \-\-email\-password password \-\-email\-host mail.couchbase.com \-\-email\-port 25 \(rs
+ \-\-email\-recipients user1@couchbase.com,user2@couchbase.com \(rs
+ \-\-email\-sender noreply@couchbase.com \-\-enable\-email\-encrypt 0 \(rs
+ \-\-alert\-auto\-failover\-node \-\-alert\-auto\-failover\-max\-reached \(rs
+ \-\-alert\-auto\-failover\-node\-down \-\-alert\-auto\-failover\-cluster\-small \(rs
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To enable all email alerts for a single users with email encryption run the following command below:
+To enable all email alerts for a single users with email encryption run the
+following command below:
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-alert \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
- \-\-password password \-\-enable\-email\-alert 1 \-\-email\-user admin \e
- \-\-email\-password password \-\-email\-host mail\&.couchbase\&.com \-\-email\-port 25 \e
- \-\-email\-recipients user@couchbase\&.com \-\-email\-sender noreply@couchbase\&.com \e
- \-\-enable\-email\-encrypt 1 \-\-alert\-auto\-failover\-node \e
- \-\-alert\-auto\-failover\-max\-reached \-\-alert\-auto\-failover\-node\-down \e
- \-\-alert\-auto\-failover\-cluster\-small \-\-alert\-auto\-failover\-disable \e
- \-\-alert\-ip\-changed \-\-alert\-disk\-space \-\-alert\-meta\-overhead \e
- \-\-alert\-meta\-oom \-\-alert\-write\-failed \-\-alert\-audit\-msg\-dropped \e
- \-\-alert\-indexer\-max\-ram \-\-alert\-timestamp\-drift\-exceeded \e
+$ couchbase\-cli setting\-alert \-c 192.168.1.5 \-\-username Administrator \(rs
+ \-\-password password \-\-enable\-email\-alert 1 \-\-email\-user admin \(rs
+ \-\-email\-password password \-\-email\-host mail.couchbase.com \-\-email\-port 25 \(rs
+ \-\-email\-recipients user@couchbase.com \-\-email\-sender noreply@couchbase.com \(rs
+ \-\-enable\-email\-encrypt 1 \-\-alert\-auto\-failover\-node \(rs
+ \-\-alert\-auto\-failover\-max\-reached \-\-alert\-auto\-failover\-node\-down \(rs
+ \-\-alert\-auto\-failover\-cluster\-small \-\-alert\-auto\-failover\-disable \(rs
+ \-\-alert\-ip\-changed \-\-alert\-disk\-space \-\-alert\-meta\-overhead \(rs
+ \-\-alert\-meta\-oom \-\-alert\-write\-failed \-\-alert\-audit\-msg\-dropped \(rs
+ \-\-alert\-indexer\-max\-ram \-\-alert\-timestamp\-drift\-exceeded \(rs
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
 To disable email alerts run the following command:
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli setting\-alert \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
+$ couchbase\-cli setting\-alert \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-password password \-\-enable\-email\-alert 0
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
-CB_REST_USERNAME Specifies the username to use when executing the command\&. This environment variable allows you to specify a default argument for the \-u/\-\-username argument on the command line\&.
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
 .sp
-CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
 .SH "SEE ALSO"
 .sp
-\fBcouchbase-cli-setting-notification\fR(1)\&.
+\fBcouchbase\-cli\-setting\-notification\fP(1)
 .SH "COUCHBASE\-CLI"
 .sp
-Part of the \fBcouchbase-cli\fR(1) suite
-.SH "AUTHORS"
-.PP
-\fBCouchbase\fR
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase

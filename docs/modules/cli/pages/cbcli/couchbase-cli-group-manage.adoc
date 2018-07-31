@@ -1,0 +1,94 @@
+= couchbase-cli-group-manage(1)
+ifndef::doctype-manpage[:doctitle: group-manage]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-group-manage -
+endif::[]
+Manage server groups
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli group-manage_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--create] [--delete] [--list] [--rename <group>]
+    [--move-servers] [--group-name <name>] [--from-group <name>]
+    [--to-group <name>]
+
+== DESCRIPTION
+
+This command is used to manage server groups in a Couchbase cluster. When moving
+servers between groups it is possible that you may need to rebalance the cluster
+since the cluster topology may be changing. You should always run
+man:couchbase-cli-rebalance[1] after running this command.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--create::
+  Creates a new server group.
+
+--delete::
+  Deletes a server group.
+
+--list::
+  Lists all server groups.
+
+--rename <group>::
+  Renames a server group.
+
+--move-servers <server_list>::
+  A list of servers to move between groups.
+
+--group-name <name>::
+  The name of the server group.
+
+--from-group <name>::
+  The group to move servers from.
+
+--to-group <name>::
+  The group to move servers to. This group must already exists.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To create a new server group called "rack1" run the following command.
+
+  $ couchbase-cli group-manage -c 192.168.1.5 -u Administrator \
+   -p password --create --group-name rack1
+
+To rename the server group "rack1" to "rack2" run the following command.
+
+  $ couchbase-cli group-manage -c 192.168.1.5 -u Administrator \
+   -p password --rename rack1 --group-name rack2
+
+To list all of the server groups in a cluster run the following command.
+
+  $ couchbase-cli group-manage -c 192.168.1.5 -u Administrator \
+   -p password --list
+
+To delete the server group "rack2" run the following command.
+
+  $ couchbase-cli group-manage -c 192.168.1.5 -u Administrator \
+   -p password --delete --group-name rack2
+
+To move the servers 192.168.1.5 and 192.168.1.6 from server group "rack3" to
+server group "rack4" run the following command.
+
+  $ couchbase-cli group-manage -c 192.168.1.5 -u Administrator \
+   -p password --move-servers 192.168.1.5,192.168.1.6 --from-group rack3 \
+   --to-group rack4
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-rebalance[1],
+man:couchbase-cli-server-add[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

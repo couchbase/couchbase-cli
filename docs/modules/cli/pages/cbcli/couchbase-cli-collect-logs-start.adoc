@@ -1,0 +1,137 @@
+= couchbase-cli-collect-logs-start(1)
+ifndef::doctype-manpage[:doctitle: collect-logs-start]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-collect-logs-start -
+endif::[]
+Start log collection
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli collect-logs-start_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--all-nodes] [--nodes <node_list>]
+    [--redaction-level <level>] [--salt <string>]
+    [--output-directory <directory>] [--temporary-directory <directory>]
+    [--upload] [--upload-host <host>] [--upload-proxy <host>]
+    [--customer <customer>] [--ticket <ticket>]
+
+== DESCRIPTION
+
+This command collects all Couchbase Server log files from one or more nodes in
+the cluster. Log collection is useful when there are failures in the cluster and
+you need to figure out what is going on. Since there are many log files on
+various different server the collect-logs-start command helps in aggregating all
+of the different log file Couchbase Server creates.
+
+To get the location of the collected log files you can run the
+man:couchbase-cli-collect-logs-status[1] command either while the log collection task
+is running or after the log collection task has completed. If the --upload flag
+is specified then the logs will also be uploaded to the host specified in the
+--upload-host flag. The upload flag is intended for Couchbase Server
+Enterprise Edition users who need to upload logs to the Couchbase Support Team
+to aid in diagnosing support tickets that they have filed.
+
+Note that only one log collection task may be running at any given time in the
+cluster.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--all-nodes::
+  Specifies that log collection should take place on all nodes in the cluster.
+  May not be specified at the same time as --nodes.
+
+--nodes <node_list>::
+  A list of one or more nodes to collect logs from, the nodes must include the
+  administrator port. The nodes should be  comma separated. This option may
+  not be specified at the same time as the --all-nodes option.
+
+--redaction-level <level>::
+  Specifies what level the logs should be redacted too. This option has two
+  levels "none" and "partial". If partial is set then data such as
+  usernames, keys and values will be redacted from the logs. If none is set
+  then no data  will be redacted. Please note that increasing the level
+  of redaction can have an impact on debugging problems.
+
+--salt <string>::
+  Specifies the string to used as the salt. This option can only be used
+  when --redaction-level is set to "partial". The salt is used to increase
+  the security of the redacted log files. If the option is not specified
+  then a salt is generated each time the logs are collected. It is important
+  to specify the salt if logs are from multiple collections or logs from client
+  SDKs have to be cross referenced against each other.
+
+--output-directory <directory>::
+  Specifies the directory on the node to place the logs. This is the location
+  where the logs will be placed after collection has finished. Log collection
+  will fail for the nodes that do not have this directory. It will also fail
+  if the directory does not have enough space.
+
+--temporary-directory <directory>::
+  Specifies the temporary directory on the node to use while generating the
+  logs. During log collection a number of temporary files are created before
+  being compressed. If this temporary location does not have enough space
+  log collection will fail. All nodes in the cluster must have this
+  directory. When it is not specified then the operating system temporary
+  directory will be used.
+
+--upload::
+  Specifies that the logs should be uploaded to the host specified with
+  the --upload-host option. This option should be used by Couchbase Server
+  Enterprise customers when uploading logs for the Couchbase Support Team.
+
+--upload-proxy <host>::
+  Specifies the proxy to use when uploading logs. This is useful when a
+  cluster is deployed in secure environments and do not have a direct
+  outbound connection to the internet to upload logs.
+
+--upload-host <host>::
+  Once log collection is completed, the logs zip file should be uploaded to
+  this URL. This parameter is required if the --upload flag is specified.
+
+--customer <name>::
+  The name of the customer who is uploading these logs. This option is
+  required if the --upload flag is specified.
+
+--ticket <num>::
+  The ticket number that the support team has created to track the issue
+  filed. This parameter is optional when specifying the --upload flag, but
+  recommended if you have a ticket number.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To collect logs on all nodes without uploading them run the following command.
+
+  $ couchbase-cli collect-logs-start -c 192.168.1.5 --username Administrator \
+   --password password --all-nodes
+
+If there is a three node cluster with IP addresses 192.168.1.5, 192.168.1.6, and
+192.168.1.7 and you only want to collect logs on the first two nodes and don't
+want to upload the logs then run the command below.
+
+  $ couchbase-cli collect-logs-start -c 192.168.1.5 --username Administrator \
+   --password password --nodes 192.168.1.5:8091,192.168.1.6:8091
+
+If you are a Couchbase Server Enterprise Edition user and you need to upload logs
+for all nodes for a support ticket then you can run the following command.
+
+  $ couchbase-cli collect-logs-start -c 192.168.1.5 --username Administrator \
+   --password password --all-nodes --upload --upload-customer customer_name \
+   --upload-host s3.amazonaws.com/cb-customers --ticket 12345
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-collect-logs-status[1],
+man:couchbase-cli-collect-logs-stop[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
