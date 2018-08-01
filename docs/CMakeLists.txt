@@ -49,6 +49,10 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli.html
   DESTINATION share/doc/couchbase-cli)
 
+INSTALL(FILES
+  generated/doc/cblogredaction/cblogredaction.html
+  DESTINATION share/doc/cblogredaction)
+
 IF (NOT WIN32)
   INSTALL(FILES
     generated/man/man1/couchbase-cli-admin-role-manage.1
@@ -98,5 +102,6 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-xdcr-replicate.1
     generated/man/man1/couchbase-cli-xdcr-setup.1
     generated/man/man1/couchbase-cli.1
+    generated/man/man1/cblogredaction.1
     DESTINATION share/man/man1)
 ENDIF ()

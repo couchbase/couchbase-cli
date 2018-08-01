@@ -65,3 +65,4 @@ gen_docs couchbase-cli-user-manage.txt 1
 gen_docs couchbase-cli-xdcr-replicate.txt 1
 gen_docs couchbase-cli-xdcr-setup.txt 1
 gen_docs couchbase-cli.txt 1
+gen_docs cblogredaction.txt 1
