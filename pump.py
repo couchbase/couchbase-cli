@@ -707,6 +707,11 @@ class Batch(object):
         for msg in self.msgs:
             cmd, vbucket_id, key = msg[:3]
             if vbucket_id == 0x0000ffff or rehash == 1:
+                if self.source.opts.collection:
+                    # Collections embeds the ID into the key field, but does not
+                    # hash the ID as part of VB hashing (so we could do move
+                    # collection)
+                    key = key[4:]
                 # Special case when the source did not supply a vbucket_id
                 # (such as stdin source), so we calculate it.
                 vbucket_id = ((zlib.crc32(key) >> 16) & 0x7FFF) % vbuckets_num

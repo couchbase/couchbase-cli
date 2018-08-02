@@ -203,8 +203,6 @@ from a source cluster into the caching layer at the destination""")
                              comma-separated key=val(,key=val)* pairs""")
         p.add_option("-c", "--collection",
                      help=optparse.SUPPRESS_HELP)
-        p.add_option("--separator", type="string", default="::",
-                     help=optparse.SUPPRESS_HELP)
 
     def opt_extra_defaults(self, add_hidden=True):
         rv = {
