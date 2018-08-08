@@ -134,7 +134,7 @@ class GenSource(pump.Source):
             self.cur_ops = self.cur_ops + 1
 
             if json:
-                value = self.body % (prefix, key, key % 101, key)
+                value = self.body % (prefix, key, int(key) % 101, key)
             else:
                 value = self.body
 
