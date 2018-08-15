@@ -1,0 +1,176 @@
+= couchbase-cli-xdcr-replicate(1)
+ifndef::doctype-manpage[:doctitle: xdcr-replicate]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-xdcr-replicate -
+endif::[]
+Creates a replication between two datacenters
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--create] [--delete] [--pause] [--list]
+    [--resume] [--settings] [--xdcr-from-bucket <bucket>]
+    [--xdcr-to-bucket <bucket>] [--xdcr-cluster-name <name>]
+    [--xdcr-replication-mode <mode>] [--filter-expression <regex>]
+    [--xdcr-replicator <id>] [--checkpoint-interval <seconds>]
+    [--worker-batch-size <num>] [--doc-batch-size <kilobytes>]
+    [--failure-restart-interval <seconds>] [--source-nozzle-per-node <num>]
+    [--target-nozzle-per-node <num>] [--bandwidth-usage-limit <num>]
+    [--stats-interval <milliseconds>]
+    [--optimistic-replication-threshold <bytes>] [--log-level <level>]
+
+== DESCRIPTION
+
+This command is used to manage XDCR replications.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--create::
+  Creates a new XDCR replication.
+
+--delete::
+  Deletes an XDCR replication.
+
+--pause::
+  Pauses an XDCR replication.
+
+--list::
+  Lists all XDCR replications.
+
+--resume::
+  Resumes an XDCR replication.
+
+--settings::
+  Sets advanced settings for an XDCR replication.
+
+--xdcr-from-bucket <bucket>::
+  The name bucket to replicate data from.
+
+--xdcr-to-bucket <bucket>::
+  The name bucket to replicate data to.
+
+--xdcr-cluster-name <name>::
+  The name of the cluster reference to replicate to.
+
+--xdcr-replication-mode <mode>::
+  The XDCR replication protocol to use. This can be set to either "capi" or
+  "xmem".
+
+--filter-expression <regex>::
+  A regular expression used to filter the replication stream.
+
+--xdcr-replicator <id>::
+  The XDCR Replication ID. To get a list of replicator ID's use the --list
+  flag.
+
+--checkpoint-interval <seconds>::
+  The interval between checkpoints in seconds. The value of this option must
+  be between 60 and 14,400.
+
+--worker-batch-size <num>::
+  The worker batch size. The value of this option must be between 500 and
+  10,000.
+
+--doc-batch-size <kilobytes>::
+  The document batch size in Kilobytes. The value of this option must be
+  between 10 and 100,000.
+
+--failure-restart-interval <seconds>::
+  Interval for restarting failed XDCR connections in seconds. The value of
+  this option must be between 1 and 300.
+
+--optimistic-replication-threshold <bytes>::
+  Document body size threshold in bytes used to trigger optimistic
+  replication.
+
+--source-nozzle-per-node <num>::
+  The number of source nozzles to each node in the target cluster. The
+  value of this option must be between 1 and 10.
+
+--target-nozzle-per-node <num>::
+  The number of outgoing nozzles to each node in the target cluster. The
+  value of this option must be between 1 and 10.
+
+--bandwidth-usage-limit <num>::
+  The bandwidth limit for XDCR replications in Megabytes per second for this
+  replication.
+
+--log-level <level>::
+  The XDCR log level.
+
+--stats-interval <milliseconds>::
+  The interval for statistics updates in milliseconds.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To create a new XDCR replication from the "default" bucket to the "apps" bucket
+on a remote cluster called "east" using the xmem replication protocol. You can
+run the following command below. Note that if you have not setup a remote
+cluster reference then you need to do this first by running the
+man:couchbase-cli-xdcr-setup[1].
+
+  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+   -p password --create --xdcr-cluster-name east --xdcr-from-bucket apps \
+   --xdcr-to-bucket apps --xdcr-replication-mode xmem
+
+To list all of the current XDCR replication you can run the following command.
+
+  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+   -p password --list
+
+To delete an XDCR replication you first need to use the --list flag to get the
+replicator id. Once you get the replicator id (in this case we will assume it is
+f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below
+to delete the replication.
+
+  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+   -p password --delete \
+   --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
+
+To pause an XDCR replication you first need to use the --list flag to get the
+replicator id. Once you get the replicator id (in this case we will assume it is
+f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below
+to pause the replication.
+
+  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+   -p password --pause \
+   --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
+
+To resume an XDCR replication you first need to use the --list flag to get the
+replicator id. Once you get the replicator id (in this case we will assume it is
+f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below
+to resume the replication.
+
+  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+   -p password --resume \
+   --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
+
+To modify the settings of an XDCR replication you first need to use the --list
+flag to get the replicator id. Once you get the replicator id (in this case we
+will assume it is f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run
+the command if for example you wanted to change the document batch size to 2048
+and failure restart interval to 60 seconds.
+
+  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+   -p password --settings --failure-restart-interval=60 \
+   --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
+     --doc-batch-size=2048
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-setting-xdcr[1],
+man:couchbase-cli-xdcr-setup[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

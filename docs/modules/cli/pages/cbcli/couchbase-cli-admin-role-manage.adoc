@@ -1,0 +1,102 @@
+= couchbase-cli-admin-role-manage(1)
+ifndef::doctype-manpage[:doctitle: admin-role-manage]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-admin-role-manage -
+endif::[]
+Manage user roles
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli admin-role-manage_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--my-roles] [--get-roles]
+    [--set-users <user_list>] [--set-names <name_list>] [--roles]
+    [--delete-users <user_list>]
+
+== DESCRIPTION
+
+DEPRECATED: This command was in 5.0.0 deprecated and will be removed in future
+releases. Please use the man:couchbase-cli-user-manage[1] subcommand which
+provides similar functionality to this command.
+
+This command is used to manage LDAP user roles.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--my-roles::
+  Show the current users roles.
+
+--get-roles::
+  Show all valid users and roles.
+
+--set-users <user_list>::
+  A comma-delimited list of user ids to set acess-control roles for.
+
+--set-names <name_list>::
+  A optional quoted, comma-delimited list names, one for each specified user
+  id.
+
+--roles::
+  A comma-delimited list of roles to set for users.
+
+--delete-users <user_list>::
+  A comma-delimited list of users to remove from access control.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To show the current users roles run the following command.
+
+  $ couchbase-cli admin-role-manage -c 192.168.1.5 -u Administrator \
+   -p password --my-roles
+
+To see a list of all available roles in Couchbase Server run the following
+command.
+
+  $ couchbase-cli admin-role-manage -c 192.168.1.5 -u Administrator \
+   -p password --get-roles
+
+To set roles for a new user "Alice Meyers" with username "alice" and the
+cluster administrator and replication administrator roles run the following
+command.
+
+  $ couchbase-cli admin-role-manage -c 192.168.1.5 -u Administrator \
+   -p password --set-users alice --set-names "Alice Meyers" \
+   --roles cluster_admin,replication_admin
+
+You can also specify multiple users at the same time when using the set users
+flag. For example if you want to add Alice Meyers and Barry Dillon to the same
+set of roles you could run the following command.
+
+  $ couchbase-cli admin-role-manage -c 192.168.1.5 -u Administrator \
+   -p password --set-users alice,barry \
+   --set-names "Alice Meyers,Barry Dillon" \
+   --roles cluster_admin,replication_admin
+
+To delete the user alice you can run the following command.
+
+  $ couchbase-cli admin-role-manage -c 192.168.1.5 -u Administrator \
+   -p password --delete-users alice
+
+You also delete multiple users at the same time. For example if you want to
+delete both alic and barry then you can do so by running the following command.
+
+  $ couchbase-cli admin-role-manage -c 192.168.1.5 -u Administrator \
+   -p password --delete-users alice,barry
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-setting-ldap[1],
+man:couchbase-cli-user-manage[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
