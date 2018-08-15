@@ -1,0 +1,79 @@
+= couchbase-cli-failover(1)
+ifndef::doctype-manpage[:doctitle: failover]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-failover -
+endif::[]
+Failover a node in the cluster
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli failover_ [--cluster <url>] [--username <user>]
+    [--password <password>][--server-failover <server_list>] [--force]
+    [--no-progress-bar] [--no-wait]
+
+== DESCRIPTION
+
+This command fails over one or more nodes. Nodes can be either hard failed
+over or gracefully failed over. A hard failover means that the failover happens
+immediately, but risks potential data loss. Graceful failover ensures that
+replication is up to date before the node is failed over so that there is no
+data loss, but the failover is not immediate. Note that if a node is already down
+you must perform a hard failover.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--server-failover <server_list>::
+  A comma separated list of nodes to failover.
+
+--force::
+  Specifying this flag signifies that the nodes to be failed over should be
+  hard failed over. A hard failover means that the failover is immediate, but
+  you risk potential data loss. If this flag is not specified then the
+  failover will occur only once replication is up to date. This means there
+  will be no data loss, but the failover is not immediate. Note that if a
+  server is already down you must hard fail it over.
+
+--no-progress-bar::
+  Disables showing the progress bar which tracks the progress of the
+  rebalance. Note that a rebalance only occurs for graceful failovers (e.g.
+  non-forced failovers). The failover command will still wait for rebalance
+  completion even if this flag is specified, but the progress bar will not
+  be shown.
+
+--no-wait::
+  Specifies that this command should not wait for the completion of rebalance
+  before exiting. Note that a rebalance only occurs for graceful failovers
+  (eg. non-forced failovers).
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To hard fail over a node run the following command:
+
+  $ couchbase-cli failover -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-failover 192.168.1.6:8091 --force
+
+To gracefully failover a node run the following command:
+
+  $ couchbase-cli failover -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-failover 192.168.1.6:8091
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-rebalance[1],
+man:couchbase-cli-recovery[1],
+man:couchbase-cli-server-add[1],
+man:couchbase-cli-setting-autofailover[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
