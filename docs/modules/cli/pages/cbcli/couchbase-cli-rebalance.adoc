@@ -1,0 +1,106 @@
+= couchbase-cli-rebalance(1)
+ifndef::doctype-manpage[:doctitle: rebalance]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-rebalance -
+endif::[]
+Rebalances data and indexes across nodes in a cluster
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli rebalance_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--server-remove <servers>] [--no-progress-bar]
+    [--no-wait]
+
+== DESCRIPTION
+
+Rebalances data and indexes across all nodes in the cluster. This command
+should be used after nodes are added, removed, or failed over from the cluster
+in order to ensure that each node in the cluster has a similar "balanced" amount
+of data and indexes.
+
+To add nodes use the man:couchbase-cli-server-add[1] subcommand. To
+remove nodes specify the list of nodes to remove using the --server-remove
+option in the rebalance subcommand. To failover nodes see the
+man:couchbase-cli-failover[1] subcommand. After running the
+man:couchbase-cli-server-add[1] or man:couchbase-cli-failover[1]
+subcommands ensure that you run the rebalance command to balance data and indexes
+across the cluster.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--server-remove <servers>::
+  A comma separated list of nodes to remove from the cluster. Each node
+  in the list should correspond to the hostname or IP address of that
+  server.
+
+--no-progress-bar::
+  Hides the progress bar which tracks the progress of the
+  rebalance. This command will still wait for rebalance completion even if
+  this flag is specified, but the progress bar will not be shown.
+
+--no-wait::
+  Specifies that this command should not wait for the completion of rebalance
+  before exiting.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To rebalance a new node into the cluster you would first add a node using
+the man:couchbase-cli-server-add[1] command and then start the rebalance
+with the rebalance command.
+
+  $ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-add 192.168.1.6:8091 \
+   --server-add-username Administrator --server-add-password password
+
+  $ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+   --password password
+
+If you just want to remove a node from the cluster and start a rebalance,
+just run the rebalance command.
+
+  $ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-remove 192.168.1.6:8091
+
+You can remove multiple nodes at once and run the rebalance with the
+command below. Note that it will be faster overall removing multiple nodes
+at once as opposed to removing them one at a time.
+
+  $ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-remove 192.168.1.6:8091,192.168.1.7:8091
+
+To add a node and remove another node you need to run the
+man:couchbase-cli-server-add[1] command before starting the rebalance,
+as shown below.
+
+  $ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-add 192.168.1.6:8091 \
+   --server-add-username Administrator --server-add-password password
+
+  $ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-remove 192.168.1.7:8091
+
+If you add one node to the cluster and remove a node during the same
+rebalance, Couchbase Server will do a "swap rebalance". This means data and
+indexes from the node being removed are moved to the one being added. This
+means the rebalance will only occur between these two nodes as
+opposed to involving all nodes in the cluster.
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-failover[1],
+man:couchbase-cli-recovery[1],
+man:couchbase-cli-server-add[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

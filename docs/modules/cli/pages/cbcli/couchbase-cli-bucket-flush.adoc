@@ -1,0 +1,51 @@
+= couchbase-cli-bucket-flush(1)
+ifndef::doctype-manpage[:doctitle: bucket-flush]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-bucket-flush -
+endif::[]
+Flush a bucket
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli bucket-flush_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--bucket <name>]
+
+== DESCRIPTION
+
+Deletes all data from a bucket. The bucket itself is not deleted; and all
+its indexes and configuration-details remain unchanged. Applies to
+Couchbase, Ephemeral, and Memcached buckets.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--bucket <name>::
+  The name of the bucket to flush.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To flush a bucket named "travel-data", run the following command.
+
+  $ couchbase-cli bucket-flush -c 192.168.1.5:8091 --username Administrator \
+   --password password --bucket travel-data
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-bucket-compact[1],
+man:couchbase-cli-bucket-create[1],
+man:couchbase-cli-bucket-delete[1],
+man:couchbase-cli-bucket-edit[1],
+man:couchbase-cli-bucket-list[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

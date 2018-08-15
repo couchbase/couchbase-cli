@@ -1,0 +1,101 @@
+= couchbase-cli-server-add(1)
+ifndef::doctype-manpage[:doctitle: server-add]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-server-add -
+endif::[]
+Adds a server to the cluster
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli server-add_ [--cluster <url>] [--username <username>]
+    [--password <password>] [--server-add <servers>] [--group-name <name>]
+    [--server-add-username <username>] [--server-add-password <password>]
+    [--services <services>] [--index-storage-setting <mode>]
+
+== DESCRIPTION
+
+The server-add subcommand is used to add one or more servers to a cluster.
+Before adding a server it is important to decide which services the server will
+be running and whether or not the server should be a part of a specific group.
+Keep in mind that if the index service is being added on one of the servers and
+the cluster is not currently running the index service that you also need to
+set the index stoare mode. This can be done with the --index-storage-setting
+option.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--server-add <servers>::
+  A comma separated list of servers to add to the cluster. The each server in
+  the list should be indentified by a hostname or IP address.
+
+--server-add-username <username>::
+  Adding a server to the cluster can only be done by a user with the
+  appropriate credentials. This flag specifies the username for a user who
+  has the ability to modify the cluster topology on the server being added.
+
+--server-add-password <password>::
+  Adding a server to the cluster can only be done by a user with the
+  appropriate credentials. This flag specifies the password for a user who
+  has the ability to modify the cluster topology on the server being added.
+
+--group-name <name>::
+  The name of the group to add the server to. If this option is not specified
+  then the server is added to the default group.
+
+--services <services>::
+  A comma separated list of services that this server should be running. The
+  data service is specified with "data", the index service is specified with
+  "index", the query service is specified with "query", and the full-text
+  service is specified with "fts".
+
+--index-storage-setting <mode>::
+  Specifies the index storage mode. This parameter must be set if the servers
+  being added contain the index service and this is the first time the index
+  service is being added in this cluster. You may specify "default" for disk
+  based indexes or "memopt" for memory optimized indexes.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+If we want to add a server at 192.168.1.6:8091 with the index, data and query
+service on it then we would run the command below.
+
+  $ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-add 192.168.1.6:8091 \
+   --server-add-username Administrator --server-add-password password
+   --services data,index,query
+
+Note that in the example above we set the username and password of the server
+being added to the same value as the username and password of the servers
+already in the cluster. This is done if the server being added has not already
+been initialized. If the server being added has been initialized then you will
+need to specify an appropriate username and password for the server being added.
+
+Now lets add two server to the East group with data, index,and full-text
+services. In this example we will also assume that the index is being added for
+the first time so we need to specify the index storage mode. If we want to index
+storage mode to be memory optimized then we would run the following command.
+
+  $ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
+   --password password --server-readd 192.168.1.6:8091,192.168.1.7:8091 \
+   --server-username Administrator --server-password password
+   --services data,fts --group-name --index-storage-setting memopt
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-rebalance[1],
+man:couchbase-cli-server-info[1],
+man:couchbase-cli-server-list[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

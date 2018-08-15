@@ -1,0 +1,42 @@
+= couchbase-cli-help(1)
+ifndef::doctype-manpage[:doctitle: help]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-help -
+endif::[]
+Show extended couchbase-cli help
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli help_
+
+== DESCRIPTION
+
+This page is not yet completed.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+TBD
+
+== DISCUSSION
+
+TBD
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+TBD
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
