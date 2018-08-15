@@ -1,0 +1,289 @@
+= couchbase-cli-user-manage(1)
+ifndef::doctype-manpage[:doctitle: user-manage]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-user-manage -
+endif::[]
+Manage RBAC users
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli user-manage_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--delete] [--list] [--my-roles] [--set]
+    [--rbac-username <username>] [--rbac-password <password>]
+    [--rbac-name <name>] [--roles <roles_list>] [--auth_domain <domain>]
+
+== DESCRIPTION
+
+This command allows administrators to assign and manage roles to different users
+in their organization. Users can either be managed locally by Couchbase or
+externally through the use of an external domain.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--delete::
+  Deletes an RBAC user profile from the cluster. You must have full
+  administrator privileges in order to delete a user profile.
+
+--list::
+  Lists all RBAC user profiles in the cluster and show their roles. You must
+  have full administrator privileges in order to list all user profiles.
+
+--my-roles::
+  Shows the current users RBAC user profile.
+
+--set::
+  Creates or updates an RBAC user profile. You must have full administrator
+  privileges in order to create or update a user profile.
+
+--rbac-username <username>::
+  Specifies the username of the RBAC user to modify. This option is used when
+  deleting, creating, or updating an RBAC user profile.
+
+--rbac-password <password>::
+  Specifies the password to be used for an RBAC user profile. This option is
+  used only when creating or updating a _local_ RBAC user profile. Couchbase
+  does not store password for _external_ RBAC roles.
+
+--rbac-name <name>::
+  Specifies the name to be used for an RBAC user profile. This option is used
+  when creating or updating an RBAC user profile and it is recommanded that
+  this option be set to the users full name.
+
+--roles <roles_list>::
+  Specifies the roles to be given to an RBAC user profile. This option is used
+  when creating or updating an RBAC user profile and it is specified as a
+  comma separated list of roles. See the ROLES section for more details on the
+  available roles in Couchbase.
+
+--auth-domain <domain>::
+  Specifies the auth_domain to used for an RBAC user profile. This option is
+  used when deleting, creating or updating an RBAC user profile and it if may
+  be set to either _local_ or _external_. Loacl users are users that are
+  managed directly by the Couchbase cluster. External users are users
+  managed by an external source suchas LDAP.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+=== ROLES
+
+.Cluster-Wide Roles:
+
+admin::
+  Give the user permissions to manage all Couchbase configuration settings,
+  and read and write all data in the cluster. This user can make changes to
+  anything in the cluster.
+
+bucket_admin[...]::
+  Gives the user permissions to manage bucket settings. This role can be
+  assigned globally to all buckets or to a particular bucket. For XDCR
+  operations, the user can start/stop replication for the buckets they
+  administer, but they cannot set up the XDCR cluster references. To give
+  a user the ability to manage all bucket settings set their role to
+  bucket_admin[*]. To give the user permission to manage bucket settings on a
+  single bucket named _default_ then specify the role as
+  bucket_admin[default]. If the user needs to be manage multiple buckets, for
+  example _default_ and _app_, then set the role as bucket[default,app].
+
+cluster_admin::
+  Gives the user permissions to read, write and manage all cluster-level
+  settings except security.
+
+replication_admin::
+  Allows the user to configure XDCR topology and manage XDCR replications.
+
+ro_admin::
+  Gives the user read-only access and cannot make any changes to the system.
+  This user has read-only access to cluster overview, design documents
+  (without the ability to create or query views), bucket summaries (without
+  the ability to create or view documents), XDCR cluster references, XDCR
+  replications, and cluster settings.
+
+view_admin[...]::
+  Gives the user privileges to define views and then run these views on data
+  to ensure that views are defined properly. This applies both to the
+  map-reduce and spatial views. To give a user the ability to manage views on
+  all buckets set their role to views_admin[*]. To give the user permission to
+  manage views on a single bucket named _default_ then specify the role as
+  views_admin[default]. If the user needs to be manage views for multiple
+  buckets, for example _default_ and _app_, then set the role as
+  views_admin[default,app].
+
+.Data Service Roles:
+
+data_reader[...]::
+  Gives the user permission to read data through Couchbases key-value APIs.
+  To give a user read-only access for all buckets set their role to
+  data_reader[*]. To give the user read-only access to data on a single
+  bucket named _default_ then specify their role as data_reader[default].
+  If the user needs read-only access to data for multiple buckets, for example
+  _default_ and _app_, then set their role as data_reader[default,app].
+
+data_reader_writer[...]::
+  Gives the user permission to read and write data through Couchbases
+  key-value APIs. The user cannot however modify the settings of a bucket.
+  To give a user read-write access for all buckets set their role to
+  data_reader_writer[*]. To give the user read-write access to data on a
+  single bucket named _default_ then specify their role as
+  data_reader_writer[default]. If the user needs read-write access to data
+  for multiple buckets, for example _default_ and _app_, then set their role
+  as data_reader_writer[default,app].
+
+data_dcp_reader[...]::
+  Gives the user permission to create Couchbase DCP connections. To give a
+  user the ability to create DCP connections for all buckets set their role to
+  data_dcp_reader[*]. To give the user the ability to create DCP connections
+  on a single bucket named _default_ then specify their role as
+  data_dcp_reader[default]. If the user needs to be able to create DCP
+  connections for multiple buckets, for example _default_ and _app_, then set
+  their role as data_dcp_reader[default,app].
+
+data_backup[...]::
+  Gives the user permission to backup and restore data in Couchbase. To give a
+  user the ability to backup and restore data for all buckets set their role
+  to data_backup[*]. To give the user the ability to backup and restore data
+  on a single bucket named _default_ then specify their role as
+  data_backup[default]. If the user needs to be able to backup and restore
+  data for multiple buckets, for example _default_ and _app_, then set their
+  role as data_backup[default,app].
+
+data_monitoring[...]::
+  Gives the user permission to read monitoring data related to the data
+  service in Couchbase. To give a user the ability to monitor data for all
+  buckets set their role to data_monitoring[*]. To give the user the ability
+  to monitor data on a single bucket named _default_ then specify their role
+  as data_monitoring[default]. If the user needs to be able to monitor data
+  for multiple buckets, for example _default_ and _app_, then set their role
+  as data_monitoring[default,app].
+
+.Full Text Service Roles:
+
+fts_admin[...]::
+  Gives the user full administrator access for the Full Text Indexing service
+  for the specified buckets. To give a user full administrator access for FTS
+  on all buckets set their role to fts_admin[*]. To give the user full
+  administrator access for FTS on a single bucket named _default_ then specify
+  their role as fts_admin[default]. If the user needs full administrator
+  access for FTS for multiple buckets, for example _default_ and _app_, then
+  set their role as fts_admin[default,app].
+
+fts_searcher[...]::
+  Allows the user to query full text indexes for the specified buckets. To
+  give a user the ability to query full text indexes on all buckets set their
+  role to fts_searcher[*]. To give the ability to query FTS indexes on a
+  single bucket named _default_ then specify their role as
+  fts_searcher[default]. If the user needs to query FTS indexes on multiple
+  multiple buckets, for example _default_ and _app_, then set their role as
+  fts_searcher[default,app].
+
+.Query Service Roles:
+
+manage_index[...]::
+  Allows the user to create and delete indexes on the specified buckets. To
+  give a user the ability to create and delete indexes on all buckets set
+  their role to manage_index[*]. To give the user permission to create and
+  delete indexes on a single bucket named _default_ then specify their role
+  as manage_index[default]. If the user needs to be create and delete indexes
+  for multiple buckets, for example _default_ and _app_, then set their role
+  as manage_index[default,app].
+
+query_delete[...]::
+  Allows the user to execute DELETE query statements on the specified buckets.
+  To give a user the ability execute DELETE statements on all buckets set
+  their role to query_delete[*]. To give the user permission to execute
+  DELETE statements on a single bucket named _default_ then specify their role
+  as query_delete[default]. If the user needs to be execute DELETE statements
+  for multiple buckets, for example _default_ and _app_, then set their role
+  as query_delete[default,app].
+
+query_insert[...]::
+  Allows the user to execute INSERT query statements on the specified buckets.
+  To give a user the ability execute INSERT statements on all buckets set
+  their role to query_insert[*]. To give the user permission to execute
+  INSERT statements on a single bucket named _default_ then specify their role
+  as query_insert[default]. If the user needs to be execute INSERT statements
+  for multiple buckets, for example _default_ and _app_, then set their role
+  as query_insert[default,app].
+
+query_select[...]::
+  Allows the user to execute SELECT query statements on the specified buckets.
+  To give a user the ability execute SELECT statements on all buckets set
+  their role to query_select[*]. To give the user permission to execute
+  SELECT statements on a single bucket named _default_ then specify their role
+  as query_select[default]. If the user needs to be execute SELECT statements
+  for multiple buckets, for example _default_ and _app_, then set their role
+  as query_select[default,app].
+
+query_update[...]::
+  Allows the user to execute UPDATE query statements on the specified buckets.
+  To give a user the ability execute UPDATE statements on all buckets set
+  their role to query_update[*]. To give the user permission to execute
+  UPDATE statements on a single bucket named _default_ then specify their role
+  as query_update[default]. If the user needs to be execute UPDATE statements
+  for multiple buckets, for example _default_ and _app_, then set their role
+  as query_update[default,app].
+
+system_catalog[...]::
+  Allows the users to run queries against the system catalog on the specified
+  buckets. To give a user the ability to run queries against the system
+  catalog on all buckets set their role to system_catalog[*]. To give the user
+  permission to run queires against the system catalog on a single bucket
+  named _default_ then specify their role as system_catalog[default]. If the
+  user needs to be run queries against the system catalog for multiple
+  buckets, for example _default_ and _app_, then set their role as
+  system_catalog[default,app].
+
+== EXAMPLES
+
+To create an local RBAC user profile for a user named "John Doe" with username
+jdoe and password cbpass with roles to manage the _default_ bucket and all
+XDCR replication run the following command
+
+  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+   -p password --set --rbac-username jdoe --rbac-password cbpass \
+   --rbac-name "John Doe" --roles bucket_admin[default],replication_admin \
+   --auth-domain local
+
+If you have external user source setup in your cluster and you want to add a
+user "John Doe" with username jdoe who should have the ability to manage only
+views for all bucket run the following command
+
+  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+   -p password --set --rbac-username jdoe --rbac-name "John Doe" \
+   --roles view_admin[*] --auth-domain external
+
+To list the current RBAC user profiles run the following command.
+
+  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+   -p password --list
+
+To delete an external user named jdoe run the following command.
+
+  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+   -p password --delete --rbac-username jdoe --auth-domain external
+
+To delete a local user named jdoe run the following command.
+
+  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+   -p password --delete --rbac-username jdoe --auth-domain local
+
+To see the user profile for a user with the username jdoe and password cbpass
+run the following command.
+
+  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u jdoe -p cbpass \
+   --my-roles
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-setting-ldap[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

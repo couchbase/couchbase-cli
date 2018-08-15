@@ -1,0 +1,43 @@
+= couchbase-cli-rebalance-stop(1)
+ifndef::doctype-manpage[:doctitle: rebalance-stop]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-rebalance-stop -
+endif::[]
+Stops the current rebalance task
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli rebalance-stop_ [--cluster <url>] [--username <user>]
+    [--password <password>]
+
+== DESCRIPTION
+
+Stops the currently running rebalance.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To stop the currently running rebalance, run the following command.
+
+  $ couchbase-cli rebalance-stop -c 192.168.1.5 --username Administrator \
+   --password password
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-rebalance[1],
+man:couchbase-cli-rebalance-status[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
