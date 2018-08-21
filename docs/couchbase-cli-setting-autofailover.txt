@@ -98,7 +98,7 @@ following command.
 
 	$ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
 	 --password password --enable-auto-failover 1 --auto-failover-timeout 120 \
-	 --enable-failover-on-data-disk-issues 1 --auto-failover-timeout 10
+	 --enable-failover-on-data-disk-issues 1 --failover-data-disk-period 10
 
 To enable autofail with a 120 second auto-failover timeout and to enable failover
 of a Server group and allow up to two auto failover event
