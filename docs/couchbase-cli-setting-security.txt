@@ -8,7 +8,7 @@ couchbase-cli-setting-security - Manage security policies
 SYNOPSIS
 --------
 [verse]
-'couchbase-cli setting-password-policy' [--cluster <url>] [--username <user>]
+'couchbase-cli setting-security' [--cluster <url>] [--username <user>]
 	  [--password <password>] [--disable-http-ui <0|1>]
 
 DESCRIPTION
