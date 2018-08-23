@@ -49,10 +49,9 @@ include::part-common-options.txt[]
 	then the server is added to the default group.
 
 --services <services>::
-	A comma separated list of services that this server should be running. The
-	data service is specified with "data", the index service is specified with
-	"index", the query service is specified with "query", and the full-text
-	service is specified with "fts".
+	A comma separated list of services that this server should be running.
+	Accepted services are "data", "index", "query", "fts", "eventing" and
+	"analytics".
 
 --index-storage-setting <mode>::
 	Specifies the index storage mode. This parameter must be set if the servers
