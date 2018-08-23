@@ -22,7 +22,7 @@ Before adding a server it is important to decide which services the server will
 be running and whether or not the server should be a part of a specific group.
 Keep in mind that if the index service is being added on one of the servers and
 the cluster is not currently running the index service that you also need to
-set the index stoare mode. This can be done with the --index-storage-setting
+set the index storage mode. This can be done with the --index-storage-setting
 option.
 
 OPTIONS
