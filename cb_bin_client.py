@@ -5,6 +5,7 @@ Binary memcached test client.
 Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 """
 
+import array
 import socket
 import random
 import struct
@@ -15,6 +16,47 @@ from couchbaseConstants import REQ_PKT_FMT, RES_PKT_FMT, MIN_RECV_PACKET
 from couchbaseConstants import SET_PKT_FMT, INCRDECR_RES_FMT
 from couchbaseConstants import AUDIT_PKT_FMT
 import couchbaseConstants
+
+# Collections on the wire uses a varint encoding for the collection-ID
+# A simple unsigned_leb128 encoded is used https://en.wikipedia.org/wiki/LEB128
+# return a string with the binary encoding
+def encodeCollectionId(cid):
+    output = array.array('B', [0])
+    while cid > 0:
+        byte = cid & 0xFF
+        cid >>= 7
+        # CID has more bits
+        if cid > 0:
+            # Set the 'continue' bit of this byte
+            byte |= 0x80
+            output[-1] = byte
+            output.append(0)
+        else:
+            output[-1] = byte
+    return output.tostring()
+
+def decodeCollectionID(key):
+    # A leb128 varint encodes the CID
+    data = array.array('B', key)
+    cid = data[0] & 0x7f
+    end = 1
+    if (data[0] & 0x80) == 0x80:
+        shift =7
+        for end in range(1, len(data)):
+            cid |= ((data[end] & 0x7f) << shift)
+            if (data[end] & 0x80) == 0:
+                break
+            shift = shift + 7
+
+        end = end + 1
+        if end == len(data):
+            #  We should of stopped for a stop byte, not the end of the buffer
+            raise exceptions.ValueError("encoded key did not contain a stop byte")
+    return cid, key[end:]
+
+def skipCollectionID(key):
+    _, k = decodeCollectionID(key)
+    return k
 
 class MemcachedError(exceptions.Exception):
     """Error raised when a command fails."""

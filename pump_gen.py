@@ -5,6 +5,7 @@ import pump
 import random
 import string
 import struct
+from cb_bin_client import encodeCollectionId
 
 class GenSource(pump.Source):
     """Generates simple SET/GET workload, useful for basic testing.
@@ -145,10 +146,14 @@ class GenSource(pump.Source):
                 except StopIteration:
                     itr = iter(collections)
                     cid = int(itr.next(), 16)
+
+                encodedCid = encodeCollectionId(cid)
                 # Generate the pack format and pack the key
                 docKey = struct.pack(
-                    "!I" + str(len(prefix)) + "s" + str(len(key)) + "s",
-                    cid,
+                    "!" + str(len(encodedCid)) + "s"
+                        + str(len(prefix)) + "s"
+                        + str(len(key)) + "s",
+                    encodedCid,
                     prefix,
                     key);
             else:
