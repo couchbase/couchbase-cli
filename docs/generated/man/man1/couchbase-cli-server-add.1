@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-server-add
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-07-31
+.\"      Date: 2018-10-30
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SERVER\-ADD" "1" "2018-07-31" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SERVER\-ADD" "1" "2018-10-30" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -100,10 +100,8 @@ then the server is added to the default group.
 .sp
 \-\-services <services>
 .RS 4
-A comma separated list of services that this server should be running. The
-data service is specified with "data", the index service is specified with
-"index", the query service is specified with "query", and the full\-text
-service is specified with "fts".
+A comma separated list of services that this server should be running.
+Accepted services are "data", "index", "query", "fts", and "eventing".
 .RE
 .sp
 \-\-index\-storage\-setting <mode>

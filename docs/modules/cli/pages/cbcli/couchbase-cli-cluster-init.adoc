@@ -98,8 +98,8 @@ which will determine how the global secondary indexes (GSI) are stored.
 --services::
   Specifies the services to start on this cluster. You may not change the
   services running on this node once the cluster has been initialized. This
-  options takes a comma separated list of services. Accepted services are
-  "data", "index", "query", and "fts", specified as a comma-separated list.
+  options takes a comma separated list of services. Accepted services are "data",
+  "index", "query", "fts" and "eventing", specified as a comma-separated list.
   This parameter defaults to "data".
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
