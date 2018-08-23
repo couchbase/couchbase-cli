@@ -12,6 +12,9 @@ CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery)
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
                 ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cblogredaction)
+# Generate the Version module
+CONFIGURE_FILE (cb_version.cmake.py
+                cb_version.py)
 
 INSTALL(PROGRAMS
         ${CMAKE_CURRENT_BINARY_DIR}/wrapper/couchbase-cli
@@ -72,6 +75,7 @@ INSTALL(FILES
         pump_sfd.py
         pump_transfer.py
         pump_dcp.py
+        ${CMAKE_CURRENT_BINARY_DIR}/cb_version.py
         DESTINATION lib/python)
 IF (BUILD_ENTERPRISE)
     INSTALL(FILES

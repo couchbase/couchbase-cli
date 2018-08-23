@@ -4,7 +4,9 @@
 import csv
 import json
 import requests
+import os
 import StringIO
+import sys
 import time
 import urllib
 import urlparse
@@ -21,6 +23,11 @@ ERR_AUTH = 'unable to access the REST API - please check your username (-u) and 
 ERR_INTERNAL = 'Internal server error, please retry your request'
 
 DEFAULT_REQUEST_TIMEOUT = 60
+
+try:
+    from cb_version import VERSION
+except ImportError:
+    VERSION = '0.0.0-0000'
 
 # Remove this once we can verify SSL certificates
 requests.packages.urllib3.disable_warnings()
@@ -86,6 +93,12 @@ class ClusterManager(object):
         self.timeout = timeout
         self.ssl = self.hostname.startswith("https://")
         self.debug = debug
+        self.headers = requests.utils.default_headers()
+        self.headers.update(
+            {
+                'User-Agent': os.path.basename(sys.argv[0]) + ' ' + VERSION,
+            }
+        )
 
     def restore_index_metadata(self, bucket, index_defs):
         hosts, errors = self.get_hostnames_for_service(INDEX_SERVICE)
@@ -1368,7 +1381,8 @@ class ClusterManager(object):
         if self.debug:
             print "GET %s" % url
         response = requests.get(url, auth=(self.username, self.password), verify=self.verifyCert,
-                                cert=self.cert, timeout=self.timeout)
+                                cert=self.cert, timeout=self.timeout,
+                                headers=self.headers)
         return _handle_response(response, self.debug)
 
     @request
@@ -1378,7 +1392,8 @@ class ClusterManager(object):
                 params = {}
             print "POST %s %s" % (url, urllib.urlencode(params))
         response = requests.post(url, auth=(self.username, self.password), data=params,
-                                 cert=self.cert, verify=self.verifyCert, timeout=self.timeout)
+                                 cert=self.cert, verify=self.verifyCert, timeout=self.timeout,
+                                 headers=self.headers)
         return _handle_response(response, self.debug)
 
     @request
@@ -1388,7 +1403,8 @@ class ClusterManager(object):
                 params = {}
             print "POST %s %s" % (url, json.dumps(params))
         response = requests.post(url, auth=(self.username, self.password), json=params,
-                                 cert=self.cert, verify=self.verifyCert, timeout=self.timeout)
+                                 cert=self.cert, verify=self.verifyCert, timeout=self.timeout,
+                                 headers=self.headers)
         return _handle_response(response, self.debug)
 
     @request
@@ -1398,7 +1414,8 @@ class ClusterManager(object):
                 params = {}
             print "PUT %s %s" % (url, urllib.urlencode(params))
         response = requests.put(url, params, auth=(self.username, self.password),
-                                cert=None, verify=self.verifyCert, timeout=self.timeout)
+                                cert=None, verify=self.verifyCert, timeout=self.timeout,
+                                headers=self.headers)
         return _handle_response(response, self.debug)
 
     @request
@@ -1408,7 +1425,8 @@ class ClusterManager(object):
                 params = {}
             print "PUT %s %s" % (url, json.dumps(params))
         response = requests.put(url, auth=(self.username, self.password), json=params,
-                                cert=None, verify=self.verifyCert, timeout=self.timeout)
+                                cert=None, verify=self.verifyCert, timeout=self.timeout,
+                                headers = self.headers)
         return _handle_response(response, self.debug)
 
     @request
@@ -1418,7 +1436,8 @@ class ClusterManager(object):
                 params = {}
             print "DELETE %s %s" % (url, urllib.urlencode(params))
         response = requests.delete(url, auth=(self.username, self.password), data=params,
-                                   cert=None, verify=self.verifyCert, timeout=self.timeout)
+                                   cert=None, verify=self.verifyCert, timeout=self.timeout,
+                                   headers=self.headers)
         return _handle_response(response, self.debug)
 
 
