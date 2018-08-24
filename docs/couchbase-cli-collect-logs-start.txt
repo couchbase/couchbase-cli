@@ -123,7 +123,7 @@ If you are a Couchbase Server Enterprise Edition user and you need to upload log
 for all nodes for a support ticket then you can run the following command.
 
 	$ couchbase-cli collect-logs-start -c 192.168.1.5 --username Administrator \
-	 --password password --all-nodes --upload --upload-customer customer_name \
+	 --password password --all-nodes --upload --customer customer_name \
 	 --upload-host s3.amazonaws.com/cb-customers --ticket 12345
 
 ENVIRONMENT AND CONFIGURATION VARIABLES

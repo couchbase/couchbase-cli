@@ -766,8 +766,8 @@ is restored to the server you may want to add it back to the cluster.</p></div>
 <div class="paragraph"><p>Another use case is taking a server out of the cluster for maintenance. This
 is done by gracefully failing over a server to ensure there is no data loss.
 The administrator can then perform maintenance on the removed server and add it
-back with the server-readd command.</p></div>
-<div class="paragraph"><p>The recovery command also allows a server to have it&#8217;s data remvoed before being
+back with the recovery command.</p></div>
+<div class="paragraph"><p>The recovery command also allows a server to have it&#8217;s data removed before being
 added back to the cluster (full recovery) or having the server resume from where
 it last left off (delta recovery). Delta recovery will always take the least
 amount of time and is the recommended recovery mode.</p></div>
@@ -882,14 +882,14 @@ a port other that 8091.</p></div>
 recover data using delta recovery then we can run the following command.</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>$ couchbase-cli server-readd -c 192.168.1.5:8091 --username Administrator \
+<pre><code>$ couchbase-cli recovery -c 192.168.1.5:8091 --username Administrator \
  --password password --server-recovery 192.168.1.6:8091 \
  --recovery-type delta</code></pre>
 </div></div>
 <div class="paragraph"><p>If we need to recover multiple servers then we would run the following command.</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>$ couchbase-cli server-readd -c 192.168.1.5:8091 --username Administrator \
+<pre><code>$ couchbase-cli recovery -c 192.168.1.5:8091 --username Administrator \
  --password password --server-recovery 192.168.1.6:8091,192.168.1.7:8091 \
  --recovery-type delta</code></pre>
 </div></div>
@@ -897,7 +897,7 @@ recover data using delta recovery then we can run the following command.</p></di
 the following command.</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><code>$ couchbase-cli server-readd -c 192.168.1.5:8091 --username Administrator \
+<pre><code>$ couchbase-cli recovery -c 192.168.1.5:8091 --username Administrator \
  --password password --server-recovery 192.168.1.6:8091 \
  --recovery-type full</code></pre>
 </div></div>
@@ -935,7 +935,7 @@ the following command.</p></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-02-22 15:30:39 GMT
+ 2018-08-21 16:05:07 BST
 </div>
 </div>
 </body>

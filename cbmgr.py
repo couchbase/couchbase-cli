@@ -1450,7 +1450,7 @@ class NodeInit(Subcommand):
             and opts.java_home is None and opts.hostname is None:
             _exitIfErrors(["No node initialization parameters specified"])
 
-        if opts.data_path or opts.index_path or opts.analytics_path or opts.java_home:
+        if opts.data_path or opts.index_path or opts.analytics_path or opts.java_home is not None:
             _, errors = rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path, opts.java_home)
             _exitIfErrors(errors)
 

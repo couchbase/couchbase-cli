@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-recovery
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/09/2018
+.\"      Date: 08/21/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-RECO" "1" "05/09/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-RECO" "1" "08/21/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -40,9 +40,9 @@ couchbase-cli-recovery \- Recovers a previously failed over node
 .sp
 When a server is failed over and removed from the cluster it may only be able to be added back to the cluster\&. And example of this is when a server loses power\&. This server might get failed over and removed from the cluster, but once power is restored to the server you may want to add it back to the cluster\&.
 .sp
-Another use case is taking a server out of the cluster for maintenance\&. This is done by gracefully failing over a server to ensure there is no data loss\&. The administrator can then perform maintenance on the removed server and add it back with the server\-readd command\&.
+Another use case is taking a server out of the cluster for maintenance\&. This is done by gracefully failing over a server to ensure there is no data loss\&. The administrator can then perform maintenance on the removed server and add it back with the recovery command\&.
 .sp
-The recovery command also allows a server to have it\(cqs data remvoed before being added back to the cluster (full recovery) or having the server resume from where it last left off (delta recovery)\&. Delta recovery will always take the least amount of time and is the recommended recovery mode\&.
+The recovery command also allows a server to have it\(cqs data removed before being added back to the cluster (full recovery) or having the server resume from where it last left off (delta recovery)\&. Delta recovery will always take the least amount of time and is the recommended recovery mode\&.
 .sp
 Note that after the recovery subcommand is run you must rebalance the cluster\&. See the \fBcouchbase-rebalance\fR(1) command for more information on rebalancing a cluster\&.
 .SH "OPTIONS"
@@ -117,7 +117,7 @@ If we have a server at 192\&.168\&.1\&.6:8091 that we want to recover and we wan
 .RS 4
 .\}
 .nf
-$ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+$ couchbase\-cli recovery \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
  \-\-password password \-\-server\-recovery 192\&.168\&.1\&.6:8091 \e
  \-\-recovery\-type delta
 .fi
@@ -131,7 +131,7 @@ If we need to recover multiple servers then we would run the following command\&
 .RS 4
 .\}
 .nf
-$ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+$ couchbase\-cli recovery \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
  \-\-password password \-\-server\-recovery 192\&.168\&.1\&.6:8091,192\&.168\&.1\&.7:8091 \e
  \-\-recovery\-type delta
 .fi
@@ -145,7 +145,7 @@ If we wanted the servers being recovered to use full recovery then we would run 
 .RS 4
 .\}
 .nf
-$ couchbase\-cli server\-readd \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
+$ couchbase\-cli recovery \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
  \-\-password password \-\-server\-recovery 192\&.168\&.1\&.6:8091 \e
  \-\-recovery\-type full
 .fi

@@ -24,9 +24,9 @@ is restored to the server you may want to add it back to the cluster.
 Another use case is taking a server out of the cluster for maintenance. This
 is done by gracefully failing over a server to ensure there is no data loss.
 The administrator can then perform maintenance on the removed server and add it
-back with the server-readd command.
+back with the recovery command.
 
-The recovery command also allows a server to have it's data remvoed before being
+The recovery command also allows a server to have it's data removed before being
 added back to the cluster (full recovery) or having the server resume from where
 it last left off (delta recovery). Delta recovery will always take the least
 amount of time and is the recommended recovery mode.
@@ -62,20 +62,20 @@ EXAMPLES
 If we have a server at 192.168.1.6:8091 that we want to recover and we want to
 recover data using delta recovery then we can run the following command.
 
-	$ couchbase-cli server-readd -c 192.168.1.5:8091 --username Administrator \
+	$ couchbase-cli recovery -c 192.168.1.5:8091 --username Administrator \
 	 --password password --server-recovery 192.168.1.6:8091 \
 	 --recovery-type delta
 
 If we need to recover multiple servers then we would run the following command.
 
-	$ couchbase-cli server-readd -c 192.168.1.5:8091 --username Administrator \
+	$ couchbase-cli recovery -c 192.168.1.5:8091 --username Administrator \
 	 --password password --server-recovery 192.168.1.6:8091,192.168.1.7:8091 \
 	 --recovery-type delta
 
 If we wanted the servers being recovered to use full recovery then we would run
 the following command.
 
-	$ couchbase-cli server-readd -c 192.168.1.5:8091 --username Administrator \
+	$ couchbase-cli recovery -c 192.168.1.5:8091 --username Administrator \
 	 --password password --server-recovery 192.168.1.6:8091 \
 	 --recovery-type full
 
