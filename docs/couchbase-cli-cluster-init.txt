@@ -105,7 +105,7 @@ OPTIONS
 	Specifies the services to start on this cluster. You may not change the
 	services running on this node once the cluster has been initialized. This
 	options takes a comma separated list of services. Accepted services are
-	"data", "index", "query", "fts" and "analytics" specified as a
+	"data", "index", "query", "fts", "eventing" and "analytics" specified as a
 	comma-separated list. This parameter defaults to "data".
 
 include::part-host-formats.txt[]

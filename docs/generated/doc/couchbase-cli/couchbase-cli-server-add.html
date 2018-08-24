@@ -765,7 +765,7 @@ Before adding a server it is important to decide which services the server will
 be running and whether or not the server should be a part of a specific group.
 Keep in mind that if the index service is being added on one of the servers and
 the cluster is not currently running the index service that you also need to
-set the index stoare mode. This can be done with the --index-storage-setting
+set the index storage mode. This can be done with the --index-storage-setting
 option.</p></div>
 </div>
 </div>
@@ -857,10 +857,9 @@ option.</p></div>
 </dt>
 <dd>
 <p>
-        A comma separated list of services that this server should be running. The
-        data service is specified with "data", the index service is specified with
-        "index", the query service is specified with "query", and the full-text
-        service is specified with "fts".
+        A comma separated list of services that this server should be running.
+        Accepted services are "data", "index", "query", "fts", "eventing" and
+        "analytics".
 </p>
 </dd>
 <dt class="hdlist1">
@@ -967,7 +966,7 @@ storage mode to be memory optimized then we would run the following command.</p>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2018-02-22 15:30:39 GMT
+ 2018-08-23 14:38:20 BST
 </div>
 </div>
 </body>

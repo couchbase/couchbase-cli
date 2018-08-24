@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-autofailover
 .\"    Author: Couchbase
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/09/2018
+.\"      Date: 08/21/2018
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETT" "1" "05/09/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETT" "1" "08/21/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -165,7 +165,7 @@ To enable autofailover with a 120 second auto\-failover timeout and to enable fa
 .nf
 $ couchbase\-cli setting\-autofailover \-c 192\&.168\&.1\&.5 \-\-username Administrator \e
  \-\-password password \-\-enable\-auto\-failover 1 \-\-auto\-failover\-timeout 120 \e
- \-\-enable\-failover\-on\-data\-disk\-issues 1 \-\-auto\-failover\-timeout 10
+ \-\-enable\-failover\-on\-data\-disk\-issues 1 \-\-failover\-data\-disk\-period 10
 .fi
 .if n \{\
 .RE
