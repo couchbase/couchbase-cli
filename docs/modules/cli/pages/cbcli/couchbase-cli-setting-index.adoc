@@ -1,0 +1,84 @@
+= couchbase-cli-setting-index(1)
+ifndef::doctype-manpage[:doctitle: setting-index]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-setting-index -
+endif::[]
+Modifies index settings
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli setting-index_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--index-max-rollback-points <num>]
+    [--index-stable-snapshot-interval <seconds>]
+    [--index-memory-snapshot-interval <milliseconds>]
+    [--index-storage-setting <type>] [--index-threads <num>]
+    [--index-log-level <level>]
+
+== DESCRIPTION
+
+This command sets various advanced settings for the index service.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--index-max-rollback-points <num>::
+  The maximum number of rollback points. The value of this option must be
+  greater than or equal to 1.
+
+--index-stable-snapshot-interval <seconds>::
+  Specifies the frequency of persisted snapshots for recovery in seconds. This
+  means that in the event of a failover this is the farthest back we may have
+  to rebuild the index from. This value of this parameter must be greater than 1.
+  If this options is not specified it defaults to 30000 seconds (8 hours
+  20 minutes).
+
+--index-memory-snapshot-interval <milliseconds>::
+  Specifies the frequency of in-memory snapshots in milliseconds. This
+  determines the earliest possibility of a scan seeing a given KV mutation.
+  This value of this parameter must be greater than 1. This parameter defaults
+  to 200 if it is not specified.
+
+--index-storage-setting <type>::
+  Sets the index storage mode for all indexes in this cluster. This parameter
+  may only be changed if there are no nodes running the index service. To
+  specify the disk based forestdb index backend set this parameter to
+  "default". To set the storage mode to use memory optimized indexes set this
+  parameter to "memopt".
+
+--index-threads <num>::
+  Sets the number of CPUs that can be used by the indexer. The value of this
+  option must be between 0 and 1024. If this option is not set then it
+  default to 4.
+
+--index-log-level <level>::
+  Sets the log level for the index service. Valid log levels include "debug",
+  "silent", "fatal", "error", "warn", "info", "verbose", "timing", and
+  "trace".
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To set the max index rollback points to 8, the index stable snapshot interval to
+40000 seconds, the index memory snapshot interval to 150 milliseconds, the index
+thread count to 8 and in the index log level to info run the following command.
+
+  $ couchbase-cli setting-index -c 127.0.0.1:8091 -u Administrator \
+   -p password --index-max-rollback-points 8 --index-threads 8 \
+     --index-log-level info --index-stable-snapshot-interval 40000 \
+     --index-memory-snapshot-interval 150 \
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-setting-cluster[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

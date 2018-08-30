@@ -1,0 +1,105 @@
+= couchbase-cli-eventing-function-setup(1)
+ifndef::doctype-manpage[:doctitle: eventing-function-setup]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-eventing-function-setup -
+endif::[]
+Manage Events
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli eventing-function-setup_ [--cluster <url>] [--username <user>]
+    [--password <password>]  [--import] [--export] [--export-all]
+    [--delete] [--list] [--deploy] [--undeploy] [--name <name>]
+    [--file <file>]
+
+== DESCRIPTION
+
+This command is used to manage functions in the Event service
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--import::
+  Import function(s) from a file. This option requires --file to be
+  specified. The file provided should be from the --export option.
+
+--export::
+  Export a named function to a file. This option requires --file and
+  --name to be specified.
+
+--export-all::
+  Export all functions to a file. This option requires --file to be
+  specified.
+
+--delete::
+  Deletes a named function. Functions can only be deleted when in the
+  un-deployed state. This option requires --name to be specified.
+
+--list::
+  List all functions.
+
+--deploy::
+  Deploys the named function. This option requires --name to be specified.
+
+--undeploy::
+  Undeploys the named function. This option requires --name to be specified.
+
+--name <name>::
+  The name of the function to take a action against. This is used by
+  --export, --delete, --deploy and --undeply options only.
+
+--file <file>::
+  The file to import and export functions to. This is used by --export and
+  --import options only.
+
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To import functions from a file called _functions.json_:
+
+  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+   -p password --import --file functions.json
+
+To export a function called _alert_function_ to a file called
+_functions.json_:
+
+  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+   -p password --export --name alert_function --file functions.json
+
+To export all functions to a file called _functions.json_:
+
+  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+   -p password --export-all --file functions.json
+
+To list all functions:
+
+  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+   -p password --list
+
+To delete a function called _alert_function_:
+
+  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+   -p password --delete --name alert_function
+
+To deploy a function called _alert_function_:
+
+  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+   -p password --deploy --name alert_function
+
+To undeploy a function called _alert_function_:
+
+  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+   -p password --undeploy --name alert_function
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

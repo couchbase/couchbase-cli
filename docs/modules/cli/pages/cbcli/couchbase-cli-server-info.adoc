@@ -1,0 +1,45 @@
+= couchbase-cli-server-info(1)
+ifndef::doctype-manpage[:doctitle: server-info]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-server-info -
+endif::[]
+Displays information and statistics about the Couchbase Server specified.
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli server-info_ [--cluster <url>] [--username <username>]
+    [--password <password>]
+
+== DESCRIPTION
+
+This command prints information about the Couchbase Server specified.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To get information about the Couchbase Server on localhost (127.0.0.1) run
+the following command:
+
+  $ couchbase-cli server-info -c 127.0.0.1 --username Administrator \
+   --password password
+
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-host-list[1],
+man:couchbase-cli-server-list[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
