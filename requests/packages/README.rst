@@ -5,7 +5,5 @@ them and submitted as separate pull requests to those libraries.
 
 urllib3 pull requests go here: https://github.com/shazow/urllib3
 
-chardet pull requests go here: https://github.com/chardet/chardet
-
 See https://github.com/kennethreitz/requests/pull/1812#issuecomment-30854316
 for the reasoning behind this.

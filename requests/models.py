@@ -30,7 +30,7 @@ from .utils import (
     iter_slices, guess_json_utf, super_len, to_native_string)
 from .compat import (
     cookielib, urlunparse, urlsplit, urlencode, str, bytes, StringIO,
-    is_py2, chardet, builtin_str, basestring)
+    is_py2, builtin_str, basestring)
 from .compat import json as complexjson
 from .status_codes import codes
 
@@ -639,8 +639,11 @@ class Response(object):
 
     @property
     def apparent_encoding(self):
-        """The apparent encoding, provided by the chardet library"""
-        return chardet.detect(self.content)['encoding']
+        """As Chardet is LGPL it cannot be shipped with Couchbase Server.
+        Couchbase Server only returns UTF-8 encoded content, so there is
+        no need to engage in any extra encoding detection.
+        """
+        return 'utf-8'
 
     def iter_content(self, chunk_size=1, decode_unicode=False):
         """Iterates over the response data.  When stream=True is set on the
@@ -749,7 +752,7 @@ class Response(object):
         """Content of the response, in unicode.
 
         If Response.encoding is None, encoding will be guessed using
-        ``chardet``.
+        apparent_encoding().
 
         The encoding of the response content is determined based solely on HTTP
         headers, following RFC 2616 to the letter. If you can take advantage of
