@@ -186,13 +186,17 @@ class PumpingStation(ProgressReporter):
         logging.debug("source_buckets: " +
                       ",".join([n['name'] for n in source_buckets]))
 
-        bucket_source = getattr(self.opts, "bucket_source", None)
-        if bucket_source:
-            logging.debug("bucket_source: " + bucket_source)
-            source_buckets = [b for b in source_buckets
-                              if b['name'] == bucket_source]
+        buckets_source = set(getattr(self.opts, "bucket_source", []))
+        if buckets_source:
+            buckets_source_list = []
+            for bucket_source in buckets_source:
+                logging.debug("bucket_source: " + bucket_source)
+                buckets_source_list.extend([b for b in source_buckets
+                                            if b['name'] == bucket_source])
+            source_buckets = buckets_source_list
             logging.debug("source_buckets filtered: " +
-                          ",".join([n['name'] for n in source_buckets]))
+                            ",".join([n['name'] for n in source_buckets]))
+
         return source_buckets
 
     def filter_source_nodes(self, source_bucket, source_map):
@@ -1083,7 +1087,8 @@ def find_source_bucket_name(opts, source_map):
         source_bucket = source_map['buckets'][0]['name']
     if not source_bucket:
         return "error: please specify a bucket_source", None
-    logging.debug("source_bucket: " + source_bucket)
+    for bucket in source_bucket:
+        logging.debug("source_bucket: " + bucket)
     return 0, source_bucket
 
 def find_sink_bucket_name(opts, source_bucket):
