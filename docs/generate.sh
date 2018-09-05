@@ -52,14 +52,17 @@ gen_docs couchbase-cli-collect-logs-stop.adoc 1
 gen_docs couchbase-cli-eventing-function-setup.adoc 1
 gen_docs couchbase-cli-failover.adoc 1
 gen_docs couchbase-cli-group-manage.adoc 1
+gen_docs couchbase-cli-help.adoc 1
 gen_docs couchbase-cli-host-list.adoc 1
 gen_docs couchbase-cli-node-init.adoc 1
+gen_docs couchbase-cli-master-password.adoc 1
 gen_docs couchbase-cli-rebalance.adoc 1
 gen_docs couchbase-cli-rebalance-status.adoc 1
 gen_docs couchbase-cli-rebalance-stop.adoc 1
 gen_docs couchbase-cli-recovery.adoc 1
 gen_docs couchbase-cli-reset-admin-password.adoc 1
 gen_docs couchbase-cli-server-add.adoc 1
+gen_docs couchbase-cli-server-eshell.adoc 1
 gen_docs couchbase-cli-server-info.adoc 1
 gen_docs couchbase-cli-server-list.adoc 1
 gen_docs couchbase-cli-server-readd.adoc 1
