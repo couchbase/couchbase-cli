@@ -136,7 +136,7 @@ class Transfer:
 
     def opt_parser_options(self, p):
         p.add_option("-b", "--bucket-source",
-                     action="store", type="string", default=None,
+                     action="append", type="string", default=[],
                      help="""Single named bucket from source cluster to transfer""")
         p.add_option("-B", "--bucket-destination",
                      action="store", type="string", default=None,
