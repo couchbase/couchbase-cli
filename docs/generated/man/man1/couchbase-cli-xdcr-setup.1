@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-xdcr-setup
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\"      Date: 2018-09-11
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR\-SETUP" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR\-SETUP" "1" "2018-09-11" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -36,7 +36,8 @@ couchbase\-cli\-xdcr\-setup \- Manage references to remote clusters
     [\-\-password <password>] [\-\-create] [\-\-delete] [\-\-edit] [\-\-list]
     [\-\-xdcr\-cluster\-name <name>] [\-\-xdcr\-hostname <hostname>]
     [\-\-xdcr\-username <username>] [\-\-xdcr\-password <password>]
-    [\-\-xdcr\-secure\-connection <type>] [\-\-xdcr\-certificate <file>]
+    [\-\-xdcr\-user\-certificate <path>] [\-\-xdcr\-user\-key <path>]
+    [\-\-xdcr\-certificate <file>] [\-\-xdcr\-secure\-connection <type>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -108,6 +109,21 @@ The username of the remote cluster reference.
 The password of the remote cluster reference.
 .RE
 .sp
+\-\-xdcr\-user\-certificate <path>
+.RS 4
+The user certificate for authentication
+.RE
+.sp
+\-\-xdcr\-user\-key <path>
+.RS 4
+The user key for authentication
+.RE
+.sp
+\-\-xdcr\-certificate <path>
+.RS 4
+The certificate used for encryption
+.RE
+.sp
 \-\-xdcr\-secure\-connection <type>
 .RS 4
 Specifies the type of encryption to use. This flag may either be set to
@@ -117,11 +133,6 @@ Specifies the type of encryption to use. This flag may either be set to
   which increases security, but reduces overall data transfer speed. If no
   encryption is needed then "none" can be specified. This flag defaults to
   "none" if it is not specified.
-.RE
-.sp
-\-\-xdcr\-certificate <file>
-.RS 4
-The path to the certificate used for encryption.
 .RE
 .SH "HOST FORMATS"
 .sp

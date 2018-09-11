@@ -448,7 +448,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--password &lt;password&gt;] [--create] [--delete] [--edit] [--list]
     [--xdcr-cluster-name &lt;name&gt;] [--xdcr-hostname &lt;hostname&gt;]
     [--xdcr-username &lt;username&gt;] [--xdcr-password &lt;password&gt;]
-    [--xdcr-secure-connection &lt;type&gt;] [--xdcr-certificate &lt;file&gt;]</pre>
+    [--xdcr-user-certificate &lt;path&gt;] [--xdcr-user-key &lt;path&gt;]
+    [--xdcr-certificate &lt;file&gt;] [--xdcr-secure-connection &lt;type&gt;]</pre>
 </div>
 </div>
 </div>
@@ -521,6 +522,18 @@ environment variable CB_REST_PASSWORD.</p>
 <dd>
 <p>The password of the remote cluster reference.</p>
 </dd>
+<dt class="hdlist1">--xdcr-user-certificate &lt;path&gt;</dt>
+<dd>
+<p>The user certificate for authentication</p>
+</dd>
+<dt class="hdlist1">--xdcr-user-key &lt;path&gt;</dt>
+<dd>
+<p>The user key for authentication</p>
+</dd>
+<dt class="hdlist1">--xdcr-certificate &lt;path&gt;</dt>
+<dd>
+<p>The certificate used for encryption</p>
+</dd>
 <dt class="hdlist1">--xdcr-secure-connection &lt;type&gt;</dt>
 <dd>
 <p>Specifies the type of encryption to use. This flag may either be set to
@@ -530,10 +543,6 @@ environment variable CB_REST_PASSWORD.</p>
   which increases security, but reduces overall data transfer speed. If no
   encryption is needed then "none" can be specified. This flag defaults to
   "none" if it is not specified.</p>
-</dd>
-<dt class="hdlist1">--xdcr-certificate &lt;file&gt;</dt>
-<dd>
-<p>The path to the certificate used for encryption.</p>
 </dd>
 </dl>
 </div>

@@ -15,7 +15,8 @@ _couchbase-cli xdcr-setup_ [--cluster <url>] [--username <user>]
     [--password <password>] [--create] [--delete] [--edit] [--list]
     [--xdcr-cluster-name <name>] [--xdcr-hostname <hostname>]
     [--xdcr-username <username>] [--xdcr-password <password>]
-    [--xdcr-secure-connection <type>] [--xdcr-certificate <file>]
+    [--xdcr-user-certificate <path>] [--xdcr-user-key <path>]
+    [--xdcr-certificate <file>] [--xdcr-secure-connection <type>]
 
 == DESCRIPTION
 
@@ -50,6 +51,15 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --xdcr-password <password>::
   The password of the remote cluster reference.
 
+--xdcr-user-certificate <path>::
+  The user certificate for authentication
+
+--xdcr-user-key <path>::
+  The user key for authentication
+
+--xdcr-certificate <path>::
+  The certificate used for encryption
+
 --xdcr-secure-connection <type>::
   Specifies the type of encryption to use. This flag may either be set to
     either "half", "full", or "none". Half encryption means that passwords are
@@ -58,9 +68,6 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
     which increases security, but reduces overall data transfer speed. If no
     encryption is needed then "none" can be specified. This flag defaults to
     "none" if it is not specified.
-
---xdcr-certificate <file>::
-  The path to the certificate used for encryption.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
