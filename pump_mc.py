@@ -179,7 +179,10 @@ class MCSink(pump.Sink):
                 val, flg, exp, cas = '', 0, 0, 0
             if cmd == couchbaseConstants.CMD_NOOP:
                 key, val, flg, exp, cas = '', '', 0, 0, 0
-            if cmd in (couchbaseConstants.CMD_DELETE, couchbaseConstants.CMD_DELETE_WITH_META):
+            if cmd == couchbaseConstants.CMD_DELETE:
+                val = ''
+            # A tombstone can contain Xattrs
+            if cmd == couchbaseConstants.CMD_DELETE_WITH_META and not dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
                 val = ''
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
