@@ -1,216 +1,222 @@
 '\" t
 .\"     Title: couchbase-cli-bucket-create
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/17/2018
+.\" Generator: Asciidoctor 1.5.7.1
+.\"      Date: 2018-08-29
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCK" "1" "05/17/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
-.\" -----------------------------------------------------------------
-.\" * set default formatting
-.\" -----------------------------------------------------------------
-.\" disable hyphenation
+.ss \n[.ss] 0
 .nh
-.\" disable justification (adjust text to left margin only)
 .ad l
-.\" -----------------------------------------------------------------
-.\" * MAIN CONTENT STARTS HERE *
-.\" -----------------------------------------------------------------
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
 .SH "NAME"
-couchbase-cli-bucket-create \- Create a new bucket
+couchbase\-cli\-bucket\-create \- Create a new bucket
 .SH "SYNOPSIS"
 .sp
 .nf
-\fIcouchbase\-cli bucket\-create\fR [\-\-cluster <url>] [\-\-username <user>]
-          [\-\-password <password>] [\-\-bucket <name>] [\-\-bucket\-type <type>]
-          [\-\-bucket\-ramsize <size>] [\-\-bucket\-replica <num>]
-          [\-\-bucket\-priority <priority>] [\-\-bucket\-eviction\-policy <policy>]
-          [\-\-max\-ttl <seconds>] [\-\-compression\-mode <mode>] [\-\-enable\-flush <num>]
-          [\-\-enable\-index\-replica <num>] [\-\-conflict\-resolution <type>] [\-\-wait]
+\fIcouchbase\-cli bucket\-create\fP [\-\-cluster <url>] [\-\-username <user>]
+    [\-\-password <password>] [\-\-bucket <name>] [\-\-bucket\-type <type>]
+    [\-\-bucket\-ramsize <size>] [\-\-bucket\-replica <num>]
+    [\-\-bucket\-priority <priority>] [\-\-bucket\-eviction\-policy <policy>]
+    [\-\-max\-ttl <seconds>] [\-\-compression\-mode <mode>] [\-\-enable\-flush <num>]
+    [\-\-enable\-index\-replica <num>] [\-\-conflict\-resolution <type>] [\-\-wait]
 .fi
+.br
 .SH "DESCRIPTION"
 .sp
-Creates a new bucket\&. Allows creation of Couchbase, Ephemeral, and Memcached buckets, and supports the various configuration parameters for these buckets\&.
+Creates a new bucket. Allows creation of Couchbase, Ephemeral, and Memcached
+buckets, and supports the various configuration parameters for these
+buckets.
 .SH "OPTIONS"
-.PP
+.sp
 \-c, \-\-cluster
 .RS 4
-Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
 .RE
-.PP
+.sp
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
 .RE
-.PP
+.sp
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
 .RE
-.PP
+.sp
 \-\-bucket <name>
 .RS 4
-The name of the bucket to create\&. The only characters that can be used for the bucket\-name are those in the ranges of A\-Z, a\-z, and 0\-9; plus the underscore, period, dash, and percent characters\&. The name can be a maximum of 100 characters in length\&.
+The name of the bucket to create. The only characters that can be used
+for the bucket\-name are those in the ranges of A\-Z, a\-z, and 0\-9; plus the
+underscore, period, dash, and percent characters. The name can be a
+maximum of 100 characters in length.
 .RE
-.PP
+.sp
 \-\-bucket\-type <type>
 .RS 4
-The type of bucket to create\&. Accepted bucket types are "couchbase", "ephemeral", and "memcached"\&. The Couchbase bucket is the standard bucket type\&. It supports data persistence, replication, caching, indexing, views, and N1QL queries\&. The Ephemeral bucket is an in\-memory bucket similar to the Couchbase bucket; but it does not support data persistence or views\&. The Memcached bucket is a cache\-only bucket that does not support persistence, replication, indexing, views, or N1QL querying: this bucket type provides the same behavior as Memcached Server\&.
+The type of bucket to create. Accepted bucket types are "couchbase",
+"ephemeral", and "memcached". The Couchbase bucket is the standard bucket
+type. It supports data persistence, replication, caching, indexing, views,
+and N1QL queries. The Ephemeral bucket is an in\-memory bucket similar to the
+Couchbase bucket; but it does not support data persistence or views. The
+Memcached bucket is a cache\-only bucket that does not support persistence,
+replication, indexing, views, or N1QL querying: this bucket type provides
+the same behavior as Memcached Server.
 .RE
-.PP
+.sp
 \-\-bucket\-ramsize <size>
 .RS 4
-The amount of memory to allocate to the cache for this bucket, in Megabytes\&. The memory quota of this bucket must fit into the overall cluster memory quota\&. The minimum cache size is 100MB\&.
+The amount of memory to allocate to the cache for this bucket, in Megabytes.
+The memory quota of this bucket must fit into the overall cluster memory
+quota. The minimum cache size is 100MB.
 .RE
-.PP
+.sp
 \-\-bucket\-replica <num>
 .RS 4
-The number of servers to which data is replicated\&. Replicas provide protection against data loss by keeping copies of this bucket\(cqs data on multiple servers\&. By default, the number of replicas is one, even if there is only a single server in the cluster\&. The minimum number of replicas is zero, and the maximum three\&. This option is valid for Couchbase and Ephemeral buckets only\&.
+The number of servers to which data is replicated. Replicas provide
+protection against data loss by keeping copies of this bucket\(cqs data on
+multiple servers. By default, the number of replicas is one, even if there
+is only a single server in the cluster. The minimum number of replicas is
+zero, and the maximum three. This option is valid for Couchbase and
+Ephemeral buckets only.
 .RE
-.PP
+.sp
 \-\-bucket\-priority <priority>
 .RS 4
-Specifies the priority of this bucket\(cqs background tasks\&. This option is valid for Couchbase and Ephemeral buckets only\&. For Couchbase buckets, background task\-types include disk I/O, DCP stream\-processing, and item\-paging\&. For Ephemeral buckets, background task\-types are the same as for Couchbase buckets, with the exception of disk I/O, which does not apply to Ephemeral buckets\&. The value of this option may be "high" or "low"\&. The default is "low"\&. Specifying "high" may result in faster processing; but only when more than one bucket is defined for the cluster, and when different priority settings have been established among the buckets\&. When Couchbase and Ephemeral buckets have different priority settings, this affects the prioritization only of task\-types other than disk I/O\&.
+Specifies the priority of this bucket\(cqs background tasks. This option is
+valid for Couchbase and Ephemeral buckets only. For Couchbase buckets,
+background task\-types include disk I/O, DCP stream\-processing, and
+item\-paging. For Ephemeral buckets, background task\-types are the same as
+for Couchbase buckets, with the exception of disk I/O, which does not apply
+to Ephemeral buckets. The value of this option may be "high" or "low". The
+default is "low". Specifying "high" may result in faster processing; but
+only when more than one bucket is defined for the cluster, and when
+different priority settings have been established among the buckets. When
+Couchbase and Ephemeral buckets have different priority settings, this
+affects the prioritization only of task\-types other than disk I/O.
 .RE
-.PP
+.sp
 \-\-bucket\-eviction\-policy <policy>
 .RS 4
-The memory\-cache eviction policy for this bucket\&. This option is valid for Couchbase and Ephemeral buckets only\&.
+The memory\-cache eviction policy for this bucket. This option is valid for
+Couchbase and Ephemeral buckets only.
 .sp
-.if n \{\
-.RS 4
-.\}
-.nf
-Couchbase buckets support either "valueOnly" or "fullEviction"\&. Specifying
+Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
 the "valueOnly" policy means that each key stored in this bucket must be
-kept in memory\&. This is the default policy: using this policy improves
+kept in memory. This is the default policy: using this policy improves
 performance of key\-value operations, but limits the maximum size of the
-bucket\&. Specifying the "fullEviction" policy means that performance is
+bucket. Specifying the "fullEviction" policy means that performance is
 impacted for key\-value operations, but the maximum size of the bucket is
-unbounded\&.
-.fi
-.if n \{\
-.RE
-.\}
+unbounded.
 .sp
-.if n \{\
-.RS 4
-.\}
-.nf
-Ephemeral buckets support either "noEviction" or "nruEviction"\&. Specifying
+Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
 "noEviction" means that the bucket will not evict items from the cache if
 the cache is full: this type of eviction policy should be used for in\-memory
-database use\-cases\&. Specifying "nruEviction" means that items not recently
+database use\-cases. Specifying "nruEviction" means that items not recently
 used will be evicted from memory, when all memory in the bucket is used:
-this type of eviction policy should be used for caching use\-cases\&.
-.fi
-.if n \{\
+this type of eviction policy should be used for caching use\-cases.
 .RE
-.\}
-.RE
-.PP
+.sp
 \-\-enable\-flush <num>
 .RS 4
-Specifies whether or not the flush operation is allowed for this bucket\&. To enable flushing, set this option to "1"\&. To disable flushing, set this option to "0"\&. By default, flushing is disabled\&.
+Specifies whether or not the flush operation is allowed for this bucket. To
+enable flushing, set this option to "1". To disable flushing, set this
+option to "0". By default, flushing is disabled.
 .RE
-.PP
+.sp
 \-\-enable\-index\-replica <num>
 .RS 4
-Enables view index replication for the current bucket\&. This option is valid for Couchbase buckets only\&. To enable, set the value of this option to "1"\&. To disable, set the value of this option to "0"\&. By default, view index replication is disabled\&. There may be at most one replica view index\&.
+Enables view index replication for the current bucket. This option is valid
+for Couchbase buckets only. To enable, set the value of this option to "1".
+To disable, set the value of this option to "0". By default, view index
+replication is disabled. There may be at most one replica view index.
 .RE
-.PP
+.sp
 \-\-conflict\-resolution <type>
 .RS 4
-Specifies this bucket\(cqs conflict resolution mechanism; which is to be used if a conflict occurs during Cross Data\-Center Replication (XDCR)\&. Sequence\-based and timestamp\-based mechanisms are supported\&.
+Specifies this bucket\(cqs conflict resolution mechanism; which is to be used
+if a conflict occurs during Cross Data\-Center Replication (XDCR).
+Sequence\-based and timestamp\-based mechanisms are supported.
 .sp
-.if n \{\
-.RS 4
-.\}
-.nf
-    Sequence\-based conflict resolution selects the document that has been
-    updated the greatest number of times since the last sync: for example, if
-    one cluster has updated a document twice since the last sync, and the other
-    cluster has updated the document three times, the document updated three
-    times is selected; regardless of the specific times at which updates took
-place\&.
-.fi
-.if n \{\
-.RE
-.\}
+Sequence\-based conflict resolution selects the document that has been
+updated the greatest number of times since the last sync: for example, if
+one cluster has updated a document twice since the last sync, and the other
+cluster has updated the document three times, the document updated three
+times is selected; regardless of the specific times at which updates took
+  place.
 .sp
-.if n \{\
-.RS 4
-.\}
-.nf
 Timestamp\-based conflict resolution selects the document with the most
 recent timestamp: this is only supported when all clocks on all
-cluster\-nodes have been fully synchronized\&.
-.fi
-.if n \{\
+cluster\-nodes have been fully synchronized.
 .RE
-.\}
-.RE
-.PP
+.sp
 \-\-max\-ttl <seconds>
 .RS 4
-Specifies the maximum TTL (time\-to\-live) for all documents in bucket in seconds\&. If enabled and a document is mutated with no TTL or a TTL greater than than the maximum, its TTL will be set to the maximum TTL\&. Setting this option to 0 disables the use of max\-TTL and the largest TTL that is allowed is 2147483647\&. This option is only available for Couchbase and Ephemeral buckets in Couchbase Enterprise Edition\&.
+Specifies the maximum TTL (time\-to\-live) for all documents in
+bucket in seconds. If enabled and a document is mutated with no TTL
+or a TTL greater than than the maximum, its TTL will be set to the
+maximum TTL. Setting this option to 0 disables the use of max\-TTL
+and the largest TTL that is allowed is 2147483647. This option is
+only available for Couchbase and Ephemeral buckets in Couchbase
+Enterprise Edition.
 .RE
-.PP
+.sp
 \-\-compression\-mode <mode>
 .RS 4
-Specifies the compression\-mode of the bucket\&. There are three options; off, passive and active\&. All three modes are backwards compatible with older SDKs, where Couchbase Server will automatically uncompress documents for clients that do not understand the compression being used\&. This option is only available for Couchbase and Ephemeral buckets in Couchbase Enterprise Edition\&.
+Specifies the compression\-mode of the bucket. There are three options;
+off, passive and active. All three modes are backwards compatible with
+older SDKs, where Couchbase Server will automatically uncompress documents
+for clients that do not understand the compression being used. This option
+is only available for Couchbase and Ephemeral buckets in Couchbase
+Enterprise Edition.
 .sp
-.if n \{\
-.RS 4
-.\}
-.nf
 Off: Couchbase Server will only compress document values when persisting to
-disk\&. This is suitable for use cases where compression could have a
-negative impact on performance\&. Please note it is expected that compression
-in most use cases will improve performance\&.
-.fi
-.if n \{\
-.RE
-.\}
+disk. This is suitable for use cases where compression could have a
+negative impact on performance. Please note it is expected that compression
+in most use cases will improve performance.
 .sp
-.if n \{\
-.RS 4
-.\}
-.nf
 Passive: Documents which were compressed by a client, or read compressed
-from disk will be stored compress in\-memory\&. Couchbase Server will make
-no additional attempt to compress documents that are not already compressed\&.
-.fi
-.if n \{\
-.RE
-.\}
+from disk will be stored compress in\-memory. Couchbase Server will make
+no additional attempt to compress documents that are not already compressed.
 .sp
-.if n \{\
-.RS 4
-.\}
-.nf
 Active: Couchbase Server will actively and aggressively attempt to compress
-documents, even if they have not been received in a compressed format\&. This
+documents, even if they have not been received in a compressed format. This
 provides the benefits of compression even when the SDK clients are not
-complicit\&.
-.fi
-.if n \{\
-.RE
-.\}
+complicit.
 .RE
 .sp
-\-\-wait The create bucket command is asynchronous by default\&. Specifying this option makes the operation synchronous: so that the command returns only after the bucket has been fully created\&.
+\-\-wait
+.RS 4
+The create bucket command is asynchronous by default. Specifying this option
+makes the operation synchronous: so that the command returns only after the
+bucket has been fully created.
+.RE
 .SH "HOST FORMATS"
 .sp
 When specifying a host for the couchbase\-cli command the following formats are expected:
@@ -220,10 +226,10 @@ When specifying a host for the couchbase\-cli command the following formats are 
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-couchbase://<addr>
+\f(CRcouchbase://<addr>\fP
 .RE
 .sp
 .RS 4
@@ -231,10 +237,10 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-<addr>:<port>
+\f(CR<addr>:<port>\fP
 .RE
 .sp
 .RS 4
@@ -242,84 +248,92 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-http://<addr>:<port>
+\f(CRhttp://<addr>:<port>\fP
 .RE
 .sp
-It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
 .SH "EXAMPLES"
 .sp
-To create a Couchbase bucket named "travel\-data" with a memory cache size of 1GB, run the following command\&.
+To create a Couchbase bucket named "travel\-data" with a memory cache size
+of 1GB, run the following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli bucket\-create \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
- \-\-password password \-\-bucket travel\-data \-\-bucket\-type couchbase \e
+$ couchbase\-cli bucket\-create \-c 192.168.1.5:8091 \-\-username Administrator \(rs
+ \-\-password password \-\-bucket travel\-data \-\-bucket\-type couchbase \(rs
  \-\-bucket\-ramsize 1024
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To create a Couchbase bucket named "airline\-data" with a memory cache size of 1GB, two data replicas, high background\-task priority, full eviction, flushing enabled, and view index replication enabled, run the following command\&.
+To create a Couchbase bucket named "airline\-data" with a memory cache size of
+1GB, two data replicas, high background\-task priority, full eviction, flushing
+enabled, and view index replication enabled, run the following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli bucket\-create \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
- \-\-password password \-\-bucket travel\-data \-\-bucket\-type couchbase \e
- \-\-bucket\-ramsize 1024 \-\-bucket\-replica 2 \-\-bucket\-priority high \e
- \-\-bucket\-eviction\-policy fullEviction \-\-enable\-flush 1 \e
+$ couchbase\-cli bucket\-create \-c 192.168.1.5:8091 \-\-username Administrator \(rs
+ \-\-password password \-\-bucket travel\-data \-\-bucket\-type couchbase \(rs
+ \-\-bucket\-ramsize 1024 \-\-bucket\-replica 2 \-\-bucket\-priority high \(rs
+ \-\-bucket\-eviction\-policy fullEviction \-\-enable\-flush 1 \(rs
  \-\-enable\-index\-replica 1
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To create a Memcached bucket named "travel\-data" with a memory cache size of 1GB, run the following command\&.
+To create a Memcached bucket named "travel\-data" with a memory cache size
+of 1GB, run the following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli bucket\-create \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
- \-\-password password \-\-bucket travel\-data \-\-bucket\-type memcached \e
+$ couchbase\-cli bucket\-create \-c 192.168.1.5:8091 \-\-username Administrator \(rs
+ \-\-password password \-\-bucket travel\-data \-\-bucket\-type memcached \(rs
  \-\-bucket\-ramsize 1024
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To create an Ephemeral bucket named "hotel\-data" synchronously, with a memory cache size of 256MB, flushing enabled, "nruEviction", and timestamp\-based conflict resolution, run the following command\&.
+To create an Ephemeral bucket named "hotel\-data" synchronously, with a memory
+cache size of 256MB, flushing enabled, "nruEviction", and timestamp\-based
+conflict resolution, run the following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli bucket\-create \-c 192\&.168\&.1\&.5:8091 \-\-username Administrator \e
-\-\-password password \-\-bucket hotel\-data \-\-bucket\-type ephemeral \e
-\-\-bucket\-ramsize 256 \-\-enable\-flush 1 \-\-bucket\-eviction\-policy nruEviction \e
+$ couchbase\-cli bucket\-create \-c 192.168.1.5:8091 \-\-username Administrator \(rs
+\-\-password password \-\-bucket hotel\-data \-\-bucket\-type ephemeral \(rs
+\-\-bucket\-ramsize 256 \-\-enable\-flush 1 \-\-bucket\-eviction\-policy nruEviction \(rs
 \-\-conflict\-resolution timestamp \-\-wait
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
-CB_REST_USERNAME Specifies the username to use when executing the command\&. This environment variable allows you to specify a default argument for the \-u/\-\-username argument on the command line\&.
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
 .sp
-CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
 .SH "SEE ALSO"
 .sp
-\fBcouchbase-cli-bucket-compact\fR(1)\&. \fBcouchbase-cli-bucket-delete\fR(1)\&. \fBcouchbase-cli-bucket-edit\fR(1)\&. \fBcouchbase-cli-bucket-flush\fR(1)\&. \fBcouchbase-cli-bucket-list\fR(1)\&.
+\fBcouchbase\-cli\-bucket\-compact\fP(1),
+\fBcouchbase\-cli\-bucket\-delete\fP(1),
+\fBcouchbase\-cli\-bucket\-edit\fP(1),
+\fBcouchbase\-cli\-bucket\-flush\fP(1),
+\fBcouchbase\-cli\-bucket\-list\fP(1)
 .SH "COUCHBASE\-CLI"
 .sp
-Part of the \fBcouchbase-cli\fR(1) suite
-.SH "AUTHORS"
-.PP
-\fBCouchbase\fR
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase

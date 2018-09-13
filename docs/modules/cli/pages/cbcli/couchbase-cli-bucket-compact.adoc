@@ -1,0 +1,75 @@
+= couchbase-cli-bucket-compact(1)
+ifndef::doctype-manpage[:doctitle: bucket-compact]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-bucket-compact -
+endif::[]
+Compact a bucket
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli bucket-compact_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--bucket <name>]
+
+== DESCRIPTION
+
+Starts compaction of view index and data files for a specified bucket. To
+compact view index files only, specify the --view-only option. To compact data
+files only, specify the --data-only option. Only Couchbase buckets can be
+compacted: Ephemeral and Memcached buckets cannot be compacted.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--bucket::
+  The name of the bucket on which to perform compaction.
+
+--data-only::
+  Indicates that only data files should be compacted, and that compaction
+  for view index files should therefore be skipped. This option cannot be
+  specified at the same time as the --view-only option.
+
+--view-only::
+  Indicates that only view index files should be compacted, and that
+  compaction for data files should therefore be skipped. This option cannot be
+  specified at the same time as the --data-only option.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To start compaction of both data and view index files for a bucket named
+"travel-data", run the following command.
+
+  $ couchbase-cli bucket-compact -c 192.168.1.5:8091 --username Administrator \
+   --password password --bucket travel-data
+
+If view index files only should be compacted for a specific bucket, and
+data files thereby skipped, run the following command.
+
+  $ couchbase-cli bucket-compact -c 192.168.1.5:8091 --username Administrator \
+   --password password --bucket travel-data --view-only
+
+If data files only should be compacted for a specific bucket, and view
+index files thereby skipped, run the following command.
+
+  $ couchbase-cli bucket-compact -c 192.168.1.5:8091 --username Administrator \
+   --password password --bucket travel-data --data-only
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-bucket-compact[1],
+man:couchbase-cli-bucket-create[1],
+man:couchbase-cli-bucket-delete[1],
+man:couchbase-cli-bucket-edit[1],
+man:couchbase-cli-bucket-flush[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

@@ -1,8 +1,8 @@
 '''
 Debian and other distributions "unbundle" requests' vendored dependencies, and
-rewrite all imports to use the global versions of ``urllib3`` and ``chardet``.
-The problem with this is that not only requests itself imports those
-dependencies, but third-party code outside of the distros' control too.
+rewrite all imports to use the global versions of ``urllib3``.The problem with
+this is that not only requests itself imports those dependencies, but
+third-party code outside of the distros' control too.
 
 In reaction to these problems, the distro maintainers replaced
 ``requests.packages`` with a magical "stub module" that imports the correct
@@ -28,9 +28,3 @@ try:
 except ImportError:
     import urllib3
     sys.modules['%s.urllib3' % __name__] = urllib3
-
-try:
-    from . import chardet
-except ImportError:
-    import chardet
-    sys.modules['%s.chardet' % __name__] = chardet

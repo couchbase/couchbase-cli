@@ -3405,21 +3405,21 @@ class EventingFunctionSetup(Subcommand):
             _exitIfErrors(["--name is needed to delete a function"])
         _, errors = rest.delete_function(opts.name)
         _exitIfErrors(errors)
-        _success("Function deleted")
+        _success("Request to delete the function was accepted")
 
     def _deploy(self, rest, opts):
         if not opts.name:
             _exitIfErrors(["--name is needed to deploy a function"])
         _, errors = rest.deploy_function(opts.name, True)
         _exitIfErrors(errors)
-        _success("Function deployed")
+        _success("Request to deploy the function was accepted")
 
     def _undeploy(self, rest, opts):
         if not opts.name:
             _exitIfErrors(["--name is needed to undeploy a function"])
         _, errors = rest.deploy_function(opts.name, False)
         _exitIfErrors(errors)
-        _success("Function undeployed")
+        _success("Request to undeploy the function was accepted")
 
     def _list(self, rest):
         functions, errors = rest.list_functions()

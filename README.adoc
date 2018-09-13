@@ -1,0 +1,43 @@
+= Couchbase Command Line Tools
+
+This package contains the command line tool set that performs the same
+actions to provide the user the same capabilities as the Couchbase
+Server web interface.
+
+== Prerequisites
+
+If you have installed the full Couchbase Server, these tools will have
+all prerequisites required to run these tools. If you run these tools
+standalone, you will need:
+
+* Python 2.6 or greater
+* Command shell such as bash
+
+== Building the Documentation
+
+The documentation for this tool set is stored in link:docs[]. The source
+documents, which can be found in link:docs/modules/cli/pages/cbcli[], are
+written in AsciiDoc and used to produce HTML and man page files.
+
+NOTE: The docs folder structure is deeply nested in order for these documents to be
+incorporated directly into the main documentation for Couchbase Server hosted
+at https://docs.couchbase.com.
+
+You can use the link:docs/generate.sh[generate.sh] script to generate
+standalone HTML and man page versions of these source documents. The list of
+files to convert is maintained in the script itself. When run, the script
+writes the generated documents to the link:docs/generated[generated] folder.
+Under the current workflow, this folder needs to be committed back to the
+repository for other tools to consume.
+
+The generate.sh script requires the *asciidoctor* command to be available on
+your machine (which in turn requires Ruby). Installation of this software is
+covered in the next section.
+
+=== macOS Requirements
+
+ $ brew install asciidoctor
+
+---
+
+Copyright (C) 2018 Couchbase, Inc.

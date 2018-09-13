@@ -1,182 +1,204 @@
 '\" t
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 05/09/2018
+.\" Generator: Asciidoctor 1.5.7.1
+.\"      Date: 2018-08-29
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR" "1" "05/09/2018" "Couchbase CLI 1\&.0\&.0" "Couchbase CLI Manual"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
-.\" -----------------------------------------------------------------
-.\" * set default formatting
-.\" -----------------------------------------------------------------
-.\" disable hyphenation
+.ss \n[.ss] 0
 .nh
-.\" disable justification (adjust text to left margin only)
 .ad l
-.\" -----------------------------------------------------------------
-.\" * MAIN CONTENT STARTS HERE *
-.\" -----------------------------------------------------------------
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
 .SH "NAME"
-couchbase-cli-xdcr-replicate \- Creates a replication between two data centers
+couchbase\-cli\-xdcr\-replicate \- Creates a replication between two data centers
 .SH "SYNOPSIS"
 .sp
 .nf
-\fIcouchbase\-cli xdcr\-replicate\fR [\-\-cluster <url>] [\-\-username <user>]
-          [\-\-password <password>] [\-\-create] [\-\-delete] [\-\-pause] [\-\-list]
-          [\-\-resume] [\-\-settings] [\-\-xdcr\-from\-bucket <bucket>]
-          [\-\-xdcr\-to\-bucket <bucket>] [\-\-xdcr\-cluster\-name <name>]
-          [\-\-xdcr\-replication\-mode <mode>] [\-\-filter\-expression <regex>]
-          [\-\-xdcr\-replicator <id>] [\-\-checkpoint\-interval <seconds>]
-          [\-\-worker\-batch\-size <num>] [\-\-doc\-batch\-size <kilobytes>]
-          [\-\-failure\-restart\-interval <seconds>] [\-\-source\-nozzle\-per\-node <num>]
-          [\-\-target\-nozzle\-per\-node <num>] [\-\-bandwidth\-usage\-limit <num>]
-          [\-\-enable\-compression <num>] [\-\-stats\-interval <milliseconds>]
-          [\-\-optimistic\-replication\-threshold <bytes>] [\-\-log\-level <level>]
+\fIcouchbase\-cli xdcr\-replicate\fP [\-\-cluster <url>] [\-\-username <user>]
+    [\-\-password <password>] [\-\-create] [\-\-delete] [\-\-pause] [\-\-list]
+    [\-\-resume] [\-\-settings] [\-\-xdcr\-from\-bucket <bucket>]
+    [\-\-xdcr\-to\-bucket <bucket>] [\-\-xdcr\-cluster\-name <name>]
+    [\-\-xdcr\-replication\-mode <mode>] [\-\-filter\-expression <regex>]
+    [\-\-xdcr\-replicator <id>] [\-\-checkpoint\-interval <seconds>]
+    [\-\-worker\-batch\-size <num>] [\-\-doc\-batch\-size <kilobytes>]
+    [\-\-failure\-restart\-interval <seconds>] [\-\-source\-nozzle\-per\-node <num>]
+    [\-\-target\-nozzle\-per\-node <num>] [\-\-bandwidth\-usage\-limit <num>]
+    [\-\-enable\-compression <num>] [\-\-stats\-interval <milliseconds>]
+    [\-\-optimistic\-replication\-threshold <bytes>] [\-\-log\-level <level>]
 .fi
+.br
 .SH "DESCRIPTION"
 .sp
-This command is used to manage XDCR replications\&.
+This command is used to manage XDCR replications.
 .SH "OPTIONS"
-.PP
+.sp
 \-c, \-\-cluster
 .RS 4
-Specifies the hostname of a node in the cluster\&. See the HOST FORMATS section for more information on specifying a hostname\&.
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
 .RE
-.PP
+.sp
 \-u, \-\-user <username>
 .RS 4
-Specifies the username of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&.
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
 .RE
-.PP
+.sp
 \-p, \-\-password <password>
 .RS 4
-Specifies the password of the user executing the command\&. If you do not have a user account with permission to execute the command then it will fail with an unauthorized error\&. If this argument is specified, but no password is given then the command will prompt the user for a password through non\-echoed stdin\&. You may also specify your password by using the environment variable CB_REST_PASSWORD\&.
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
 .RE
-.PP
+.sp
 \-\-create
 .RS 4
-Creates a new XDCR replication\&.
+Creates a new XDCR replication.
 .RE
-.PP
+.sp
 \-\-delete
 .RS 4
-Deletes an XDCR replication\&.
+Deletes an XDCR replication.
 .RE
-.PP
+.sp
 \-\-pause
 .RS 4
-Pauses an XDCR replication\&.
+Pauses an XDCR replication.
 .RE
-.PP
+.sp
 \-\-list
 .RS 4
-Lists all XDCR replications\&.
+Lists all XDCR replications.
 .RE
-.PP
+.sp
 \-\-resume
 .RS 4
-Resumes an XDCR replication\&.
+Resumes an XDCR replication.
 .RE
-.PP
+.sp
 \-\-settings
 .RS 4
-Sets advanced settings for an XDCR replication\&.
+Sets advanced settings for an XDCR replication.
 .RE
-.PP
+.sp
 \-\-xdcr\-from\-bucket <bucket>
 .RS 4
-The name bucket to replicate data from\&.
+The name bucket to replicate data from.
 .RE
-.PP
+.sp
 \-\-xdcr\-to\-bucket <bucket>
 .RS 4
-The name bucket to replicate data to\&.
+The name bucket to replicate data to.
 .RE
-.PP
+.sp
 \-\-xdcr\-cluster\-name <name>
 .RS 4
-The name of the cluster reference to replicate to\&.
+The name of the cluster reference to replicate to.
 .RE
-.PP
+.sp
 \-\-xdcr\-replication\-mode <mode>
 .RS 4
-The XDCR replication protocol to use\&. This can be set to either "capi" or "xmem"\&.
+The XDCR replication protocol to use. This can be set to either "capi" or
+"xmem".
 .RE
-.PP
+.sp
 \-\-filter\-expression <regex>
 .RS 4
-A regular expression used to filter the replication stream\&.
+A regular expression used to filter the replication stream.
 .RE
-.PP
+.sp
 \-\-xdcr\-replicator <id>
 .RS 4
-The XDCR Replication ID\&. To get a list of replicator ID\(cqs use the \-\-list flag\&.
+The XDCR Replication ID. To get a list of replicator ID\(cqs use the \-\-list
+flag.
 .RE
-.PP
+.sp
 \-\-checkpoint\-interval <seconds>
 .RS 4
-The interval between checkpoints in seconds\&. The value of this option must be between 60 and 14,400\&.
+The interval between checkpoints in seconds. The value of this option must
+be between 60 and 14,400.
 .RE
-.PP
+.sp
 \-\-worker\-batch\-size <num>
 .RS 4
-The worker batch size\&. The value of this option must be between 500 and 10,000\&.
+The worker batch size. The value of this option must be between 500 and
+10,000.
 .RE
-.PP
+.sp
 \-\-doc\-batch\-size <kilobytes>
 .RS 4
-The document batch size in Kilobytes\&. The value of this option must be between 10 and 100,000\&.
+The document batch size in Kilobytes. The value of this option must be
+between 10 and 100,000.
 .RE
-.PP
+.sp
 \-\-failure\-restart\-interval <seconds>
 .RS 4
-Interval for restarting failed XDCR connections in seconds\&. The value of this option must be between 1 and 300\&.
+Interval for restarting failed XDCR connections in seconds. The value of
+this option must be between 1 and 300.
 .RE
-.PP
+.sp
 \-\-optimistic\-replication\-threshold <bytes>
 .RS 4
-Document body size threshold in bytes used to trigger optimistic replication\&.
+Document body size threshold in bytes used to trigger optimistic
+replication.
 .RE
-.PP
+.sp
 \-\-source\-nozzle\-per\-node <num>
 .RS 4
-The number of source nozzles to each node in the target cluster\&. The value of this option must be between 1 and 10\&.
+The number of source nozzles to each node in the target cluster. The
+value of this option must be between 1 and 10.
 .RE
-.PP
+.sp
 \-\-target\-nozzle\-per\-node <num>
 .RS 4
-The number of outgoing nozzles to each node in the target cluster\&. The value of this option must be between 1 and 10\&.
+The number of outgoing nozzles to each node in the target cluster. The
+value of this option must be between 1 and 10.
 .RE
-.PP
+.sp
 \-\-bandwidth\-usage\-limit <num>
 .RS 4
-The bandwidth limit for XDCR replications in Megabytes per second for this replication\&.
+The bandwidth limit for XDCR replications in Megabytes per second for this
+replication.
 .RE
-.PP
+.sp
 \-\-enable\-compression <num>
 .RS 4
-Specifies whether or not XDCR compression is enabled\&. Set this option to "1" to enable compression or "0" to disable compression\&. This feature is only available in Couchbase Enterprise Edition and can only be used where the target cluster supports compression\&.
+Specifies whether or not XDCR compression is enabled. Set this option to
+"1" to enable compression or "0" to disable compression. This feature is
+only available in Couchbase Enterprise Edition and can only be used where
+the target cluster supports compression.
 .RE
-.PP
+.sp
 \-\-log\-level <level>
 .RS 4
-The XDCR log level\&.
+The XDCR log level.
 .RE
-.PP
+.sp
 \-\-stats\-interval <milliseconds>
 .RS 4
-The interval for statistics updates in milliseconds\&.
+The interval for statistics updates in milliseconds.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -187,10 +209,10 @@ When specifying a host for the couchbase\-cli command the following formats are 
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-couchbase://<addr>
+\f(CRcouchbase://<addr>\fP
 .RE
 .sp
 .RS 4
@@ -198,10 +220,10 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-<addr>:<port>
+\f(CR<addr>:<port>\fP
 .RE
 .sp
 .RS 4
@@ -209,109 +231,117 @@ couchbase://<addr>
 \h'-04'\(bu\h'+03'\c
 .\}
 .el \{\
-.sp -1
-.IP \(bu 2.3
+.  sp -1
+.  IP \(bu 2.3
 .\}
-http://<addr>:<port>
+\f(CRhttp://<addr>:<port>\fP
 .RE
 .sp
-It is recommended to use the couchbase://<addr> format for standard installations\&. The other two formats allow an option to take a port number which is needed for non\-default installations where the admin port has been set up on a port other that 8091\&.
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
 .SH "EXAMPLES"
 .sp
-To create a new XDCR replication from the "default" bucket to the "apps" bucket on a remote cluster called "east" using the xmem replication protocol\&. You can run the following command below\&. Note that if you have not setup a remote cluster reference then you need to do this first by running the \fBcouchbase-cli-xdcr-setup\fR(1)\&.
+To create a new XDCR replication from the "default" bucket to the "apps" bucket
+on a remote cluster called "east" using the xmem replication protocol. You can
+run the following command below. Note that if you have not setup a remote
+cluster reference then you need to do this first by running the
+\fBcouchbase\-cli\-xdcr\-setup\fP(1).
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli xdcr\-replicate \-c 192\&.168\&.1\&.5 \-u Administrator \e
- \-p password \-\-create \-\-xdcr\-cluster\-name east \-\-xdcr\-from\-bucket apps \e
+$ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-xdcr\-cluster\-name east \-\-xdcr\-from\-bucket apps \(rs
  \-\-xdcr\-to\-bucket apps \-\-xdcr\-replication\-mode xmem
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To list all of the current XDCR replication you can run the following command\&.
+To list all of the current XDCR replication you can run the following command.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli xdcr\-replicate \-c 192\&.168\&.1\&.5 \-u Administrator \e
+$ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-list
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To delete an XDCR replication you first need to use the \-\-list flag to get the replicator id\&. Once you get the replicator id (in this case we will assume it is f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below to delete the replication\&.
+To delete an XDCR replication you first need to use the \-\-list flag to get the
+replicator id. Once you get the replicator id (in this case we will assume it is
+f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below
+to delete the replication.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli xdcr\-replicate \-c 192\&.168\&.1\&.5 \-u Administrator \e
- \-p password \-\-delete \e
+$ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-delete \(rs
  \-\-xdcr\-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To pause an XDCR replication you first need to use the \-\-list flag to get the replicator id\&. Once you get the replicator id (in this case we will assume it is f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below to pause the replication\&.
+To pause an XDCR replication you first need to use the \-\-list flag to get the
+replicator id. Once you get the replicator id (in this case we will assume it is
+f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below
+to pause the replication.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli xdcr\-replicate \-c 192\&.168\&.1\&.5 \-u Administrator \e
- \-p password \-\-pause \e
+$ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-pause \(rs
  \-\-xdcr\-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To resume an XDCR replication you first need to use the \-\-list flag to get the replicator id\&. Once you get the replicator id (in this case we will assume it is f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below to resume the replication\&.
+To resume an XDCR replication you first need to use the \-\-list flag to get the
+replicator id. Once you get the replicator id (in this case we will assume it is
+f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below
+to resume the replication.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-$ couchbase\-cli xdcr\-replicate \-c 192\&.168\&.1\&.5 \-u Administrator \e
- \-p password \-\-resume \e
+$ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-resume \(rs
  \-\-xdcr\-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .sp
-To modify the settings of an XDCR replication you first need to use the \-\-list flag to get the replicator id\&. Once you get the replicator id (in this case we will assume it is f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command if for example you wanted to change the document batch size to 2048 and failure restart interval to 60 seconds\&.
+To modify the settings of an XDCR replication you first need to use the \-\-list
+flag to get the replicator id. Once you get the replicator id (in this case we
+will assume it is f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run
+the command if for example you wanted to change the document batch size to 2048
+and failure restart interval to 60 seconds.
 .sp
-.if n \{\
-.RS 4
-.\}
+.if n .RS 4
 .nf
-   $ couchbase\-cli xdcr\-replicate \-c 192\&.168\&.1\&.5 \-u Administrator \e
-    \-p password \-\-settings \-\-failure\-restart\-interval=60 \e
-    \-\-xdcr\-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \e
-\-\-doc\-batch\-size=2048
+$ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-settings \-\-failure\-restart\-interval=60 \(rs
+ \-\-xdcr\-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \(rs
+   \-\-doc\-batch\-size=2048
 .fi
-.if n \{\
-.RE
-.\}
+.if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
-CB_REST_USERNAME Specifies the username to use when executing the command\&. This environment variable allows you to specify a default argument for the \-u/\-\-username argument on the command line\&.
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
 .sp
-CB_REST_PASSWORD Specifies the password of the user executing the command\&. This environment variable allows you to specify a default argument for the \-p/\-\-password argument on the command line\&. It also allows the user to ensure that their password are not cached in their command line history\&.
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
 .SH "SEE ALSO"
 .sp
-\fBcouchbase-cli-setting-xdcr\fR(1) \fBcouchbase-cli-xdcr-setup\fR(1)
+\fBcouchbase\-cli\-setting\-xdcr\fP(1),
+\fBcouchbase\-cli\-xdcr\-setup\fP(1)
 .SH "COUCHBASE\-CLI"
 .sp
-Part of the \fBcouchbase-cli\fR(1) suite
-.SH "AUTHORS"
-.PP
-\fBCouchbase\fR
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase

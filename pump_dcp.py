@@ -397,6 +397,9 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     key_start = extlen
                     val_start = key_start + keylen
                     key = data[extlen:val_start]
+                    # If the delete has the Xattr data type get the Xattrs from the body
+                    if dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
+                        val = data[val_start:]
                     if not self.skip(key, vbucket_id):
                         msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno, val, seqno, dtype, \
                                metalen, 0)
@@ -726,7 +729,6 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 rv = "error: uninterpreted DCP commands:%s" % cmd
         elif datalen:
             rv = "error: could not read full TAP message body"
-
         return rv, cmd, errcode, key, flg, exp, cas, meta, val, opaque, need_ack, seqno
 
     def _recv_dcp_msg_error(self, sock, buf):

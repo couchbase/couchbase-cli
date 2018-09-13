@@ -1,0 +1,121 @@
+= couchbase-cli-xdcr-setup(1)
+ifndef::doctype-manpage[:doctitle: xdcr-setup]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-xdcr-setup -
+endif::[]
+Manage references to remote clusters
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli xdcr-setup_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--create] [--delete] [--edit] [--list]
+    [--xdcr-cluster-name <name>] [--xdcr-hostname <hostname>]
+    [--xdcr-username <username>] [--xdcr-password <password>]
+    [--xdcr-user-certificate <path>] [--xdcr-user-key <path>]
+    [--xdcr-certificate <file>] [--xdcr-secure-connection <type>]
+
+== DESCRIPTION
+
+This command is used to manage the remote clusters that are available to be
+replicated to.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--create::
+  Creates an new XDCR remote reference.
+
+--delete::
+  Deletes an XDCR remote reference.
+
+--edit::
+  Edits an XDCR remote reference.
+
+--list::
+  List all XDCR remote references.
+
+--xdcr-cluster-name <name>::
+  The name for the remote cluster reference.
+
+--xdcr-hostname <hostname>::
+  The hostname of the remote cluster reference.
+
+--xdcr-username <username>::
+  The username of the remote cluster reference.
+
+--xdcr-password <password>::
+  The password of the remote cluster reference.
+
+--xdcr-user-certificate <path>::
+  The user certificate for authentication
+
+--xdcr-user-key <path>::
+  The user key for authentication
+
+--xdcr-certificate <path>::
+  The certificate used for encryption
+
+--xdcr-secure-connection <type>::
+  Specifies the type of encryption to use. This flag may either be set to
+    either "half", "full", or "none". Half encryption means that passwords are
+    encrypted, but data is not. This results in faster data transfer, but less
+    security. Full encryption means that all data and passwords are encrypted
+    which increases security, but reduces overall data transfer speed. If no
+    encryption is needed then "none" can be specified. This flag defaults to
+    "none" if it is not specified.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To create a new remote reference to a Couchbase cluster named "east" run the
+following command.
+
+  $ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \
+   -p password --create --xdcr-cluster-name east --xdcr-hostname 192.168.1.6
+   --xdcr-username Administrator --xdcr-password password
+
+If the new remote reference should always be encrypted then make sure to enable
+encryption.
+
+  $ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \
+   -p password --create --xdcr-cluster-name east --xdcr-hostname 192.168.1.6 \
+   --xdcr-username Administrator --xdcr-password password \
+   --xdcr-demand-encryption 1 --xdcr-certificate /root/cluster.cert
+
+To list all current XDCR cluster references run the following command.
+
+  $ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \
+   -p password --list
+
+If you need to edit a cluster references named "east" and change the password
+run the following command.
+
+  $ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \
+   -p password --edit --xdcr-cluster-name east --xdcr-hostname 192.168.1.6
+   --xdcr-username Administrator --xdcr-password new_password
+
+Note in the above example that you need to specify all of the current unchanging
+configuration parameters also to avoid them being reset to defaults.
+
+If you no longer need an XDCR remote reference then you can delete it. We should
+this below using the "east" remote reference as an exmaple.
+
+  $ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \
+   -p password --delete --xdcr-cluster-name east
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-setting-xdcr[1],
+man:couchbase-cli-xdcr-replicate[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

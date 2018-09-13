@@ -1443,15 +1443,22 @@ class ClusterManager(object):
 
 def _handle_response(response, debug):
     if debug:
-        print response.status_code, response.text
+        output = str(response.status_code)
+        if response.headers:
+            output += ', {0}'.format(response.headers)
+        if response.content:
+            response.encoding = 'utf-8'
+            output += ', {0}'.format(response.content)
+        print output
     if response.status_code in [200, 202]:
         if 'Content-Type' not in response.headers:
             return "", None
-        if not response.text:
+        if not response.content:
             return "", None
         if 'application/json' in response.headers['Content-Type']:
             return response.json(), None
         else:
+            response.encoding = 'utf-8'
             return response.text, None
     elif response.status_code in [400, 404]:
         if 'application/json' in response.headers['Content-Type']:
