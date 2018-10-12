@@ -212,9 +212,10 @@ class ClusterManager(object):
         if errors:
             return None, errors
 
+        parsed = urlparse.urlparse(self.hostname)
         hosts = []
         for node in data['nodesExt']:
-            node_host = '127.0.0.1'
+            node_host = parsed.hostname
             if 'hostname' in node:
                 node_host = node['hostname']
 
