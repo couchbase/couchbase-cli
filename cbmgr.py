@@ -70,7 +70,7 @@ def process_services(services, enterprise):
     for svc in svc_set:
         if svc not in svc_candidate:
             return None, ["`%s` is not a valid service" % svc]
-        if not enterprise and svc in ["eventing", "analytivs"]:
+        if not enterprise and svc in ["eventing", "analytics"]:
             return None, ["{0} service is only available on Enterprise Edition".format(svc)]
 
     if not enterprise:
