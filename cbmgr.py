@@ -992,7 +992,7 @@ class BucketList(Subcommand):
         _exitIfErrors(errors)
 
         if opts.output == 'json':
-            print result
+            print json.dumps(result)
         else:
             for bucket in result:
                 print '%s' % bucket['name']
