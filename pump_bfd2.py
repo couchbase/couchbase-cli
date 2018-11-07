@@ -1,12 +1,14 @@
 import pump
 import pump_bfd
 
+
 class BFDSinkEx(pump_bfd.BFDSink):
 
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
-        super(pump_bfd.BFDSink, self).__init__(opts, spec, source_bucket, source_node,
-                                      source_map, sink_map, ctl, cur)
+        # pylint: disable=bad-super-call
+        super(pump_bfd.BFDSink, self).__init__(opts, spec, source_bucket, source_node, source_map,
+                                               sink_map, ctl, cur)
         self.mode = getattr(opts, "mode", "diff")
         self.init_worker(pump_bfd.BFDSink.run)
 

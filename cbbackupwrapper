@@ -223,7 +223,7 @@ def consumer(id, verbose):
                     print 'Error with backup for running %s' % commandline
             process_queue.task_done()
             time.sleep(1)
-        except Exception:
+        except Exception as e:
             if process_queue.empty():
                 return
             print 'Exception ' + str(e)

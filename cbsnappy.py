@@ -10,17 +10,17 @@ for status, stmt in enumerate(import_stmts):
         break
     except ImportError:
         status = None
-#if status is None:
-#    logging.warn("could not import snappy module. Compress/uncompress function will be skipped.")
+
 
 def uncompress(data, decoding=None):
     try:
-        return snappy.uncompress(data, decoding)
+        return snappy.uncompress(data, decoding)  # pylint: disable=undefined-variable
     except Exception, err:
         return data
 
+
 def compress(data, encoding='utf-8'):
     try:
-        return snappy.compress(data, encoding)
+        return snappy.compress(data, encoding)  # pylint: disable=undefined-variable
     except Exception, err:
         return data

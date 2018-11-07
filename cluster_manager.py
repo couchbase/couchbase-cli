@@ -369,7 +369,7 @@ class ClusterManager(object):
     def get_server_group(self, groupName):
         groups, errors = self.get_server_groups()
         if errors:
-            return None, error
+            return None, errors
 
         if not groups or not groups["groups"] or groups["groups"] == 0:
             return None, ["No server groups found"]
@@ -911,9 +911,6 @@ class ClusterManager(object):
         url = self.hostname + groups["uri"]
         return self._put_json(url, groups)
 
-    def get_server_groups(self):
-        url = self.hostname + '/pools/default/serverGroups'
-        return self._get(url)
 
     def _get_server_group_uri(self, name):
         groups, errors = self.get_server_groups()

@@ -14,6 +14,7 @@ import pump
 
 JSON_SCHEME = "json://"
 
+
 class JSONSource(pump.Source):
     """Reads json file or directory or zip file that contains json files."""
 
@@ -53,12 +54,10 @@ class JSONSource(pump.Source):
             else:
                 id = doc['_id'].encode('UTF-8')
                 del doc['_id']
-                docdata = {"doc":{
+                docdata = {"doc": {
                     "json": doc,
-                    "meta":{"id":id}
+                    "meta": {"id": id}
                 }}
-                if not is_data:
-                    batch.append(json.dumps(docdata), len(docdata))
         except ValueError, error:
             logging.error("Fail to read json file with error:" + str(error))
 

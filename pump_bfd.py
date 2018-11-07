@@ -23,15 +23,16 @@ DDOC_FILE_NAME = "design.json"
 INDEX_FILE_NAME = "index.json"
 FTS_FILE_NAME = "fts_index.json"
 
+
 class BFD:
     """Mixin for backup-file/directory EndPoint helper methods."""
     NUM_VBUCKET = 1024
 
     def bucket_name(self):
-        return self.source_bucket['name']
+        return self.source_bucket['name']  # pylint: disable=no-member
 
     def node_name(self):
-        return self.source_node['hostname']
+        return self.source_node['hostname']  # pylint: disable=no-member
 
     @staticmethod
     def get_file_path(spec, bucket_name, file):
@@ -103,7 +104,7 @@ class BFD:
         filepath = os.path.join(parent_dir, filename)
         json_data = {}
         if os.path.isfile(filepath):
-            #load into existed meta data generated from previous batch run
+            # load into existed meta data generated from previous batch run
             try:
                 json_file = open(filepath, "r")
                 json_data = json.load(json_file)
@@ -116,18 +117,18 @@ class BFD:
                 str_index = str(i)
                 historic_data_exist = json_data.get(str_index)
                 if historic_data_exist:
-                    #Historic data will share same data type as incoming ones.
-                    #It will be sufficient to only check type for historic data
+                    # Historic data will share same data type as incoming ones.
+                    # It will be sufficient to only check type for historic data
                     if isinstance(json_data[str_index], int):
-                        #For seqno, we want to keep the highest seqno
+                        # For seqno, we want to keep the highest seqno
                         if json_data[str_index] < output_data[i]:
                             json_data[str_index] = output_data[i]
                     elif isinstance(json_data[str_index], list):
-                        #For each vbucket, we want to get the superset of its references
+                        # For each vbucket, we want to get the superset of its references
                         if len(json_data[str_index]) <= len(output_data[i]):
                             json_data[str_index] = output_data[i]
                 else:
-                    #Bookkeeping the incoming one.
+                    # Bookkeeping the incoming one.
                     json_data[str_index] = output_data[i]
 
         json_file = open(filepath, "w")
@@ -142,7 +143,7 @@ class BFD:
         if os.path.isdir(parent_dir):
             return parent_dir
 
-        #check 3.0 directory structure
+        # check 3.0 directory structure
         if not tmstamp:
             tmstamp = time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime())
         parent_dir = os.path.normpath(spec)
@@ -152,13 +153,13 @@ class BFD:
             path = os.path.join(parent_dir, tmstamp, tmstamp+"-full")
             return BFD.construct_dir(path, bucket_name, node_name)
 
-        #check if any full backup exists
+        # check if any full backup exists
         path, dirs = BFD.find_latest_dir(rootpath, "full")
         if not path:
             path = os.path.join(rootpath, tmstamp+"-full")
             return BFD.construct_dir(path, bucket_name, node_name)
         else:
-            #further check full backup for this bucket and node
+            # further check full backup for this bucket and node
             path = BFD.construct_dir(path, bucket_name, node_name)
             if not os.path.isdir(path):
                 return path
@@ -319,6 +320,7 @@ class BFD:
         return seqno, dep_list, failover_log, snapshot_markers
 
 # --------------------------------------------------
+
 
 class BFDSource(BFD, pump.Source):
     """Can read from backup-file/directory layout."""
@@ -591,6 +593,7 @@ class BFDSource(BFD, pump.Source):
 
 # --------------------------------------------------
 
+
 class BFDSink(BFD, pump.Sink):
     """Can write to backup-file/directory layout."""
 
@@ -640,6 +643,7 @@ class BFDSink(BFD, pump.Sink):
                 cbb_bytes = 0
                 db_dir = None
 
+            batch, future = self.pull_next_batch()
             if not db:
                 rv, db, db_dir = self.create_db(cbb)
                 if rv != 0:
@@ -653,7 +657,6 @@ class BFDSink(BFD, pump.Sink):
                 json.dump(toWrite, json_file, ensure_ascii=False)
                 json_file.close()
 
-            batch, future = self.pull_next_batch()
             if not batch:
                 if db:
                     db.close()
@@ -861,6 +864,7 @@ def create_db(db_path, opts):
     except Exception, e:
         return "error: create_db exception: " + str(e), None
 
+
 def connect_db(db_path, opts, version):
     try:
         # TODO: (1) BFD - connect_db - use pragma page_size.
@@ -885,9 +889,11 @@ def connect_db(db_path, opts, version):
     except Exception, e:
         return "error: connect_db exception: " + str(e), None
 
+
 def cleanse(d):
     """Elide passwords from hierarchy of dict/list's."""
     return cleanse_helper(copy.deepcopy(d))
+
 
 def cleanse_helper(d):
     """Recursively, destructively elide passwords from hierarchy of dict/list's."""
@@ -902,11 +908,13 @@ def cleanse_helper(d):
                 d[k] = cleanse_helper(v)
     return d
 
+
 def recursive_glob(rootdir='.', pattern='*'):
     return [os.path.join(rootdir, filename)
             for rootdir, dirnames, filenames in os.walk(rootdir)
             for filename in filenames
             if fnmatch.fnmatch(filename, pattern)]
+
 
 def local_to_utc(t):
     secs = time.mktime(t.timetuple())

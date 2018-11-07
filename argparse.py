@@ -2112,7 +2112,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
         # if exactly one action matched, this segmentation is good,
         # so return the parsed action
         elif len(option_tuples) == 1:
-            option_tuple, = option_tuples
+            option_tuple = option_tuples[0]
             return option_tuple
 
         # if it was not found as an option, but it looks like a negative

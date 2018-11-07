@@ -193,7 +193,7 @@ class MemcachedClient(object):
         meta_data = struct.pack('>I', seqno) + revid
         meta_type = couchbaseConstants.META_REVID
         meta = (meta_type, meta_data)
-        return self._doMetaCmd(cmd, key, exp, flags, value, meta, cas)
+        return self._doMetaCmd(cmd, key, exp, flags, value, meta, cas)  # pylint: disable=no-value-for-parameter
 
     def set(self, key, exp, flags, val):
         """Set a value in the memcached server."""

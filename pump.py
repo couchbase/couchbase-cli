@@ -32,6 +32,7 @@ LOGGING_FORMAT = '%(asctime)s: %(threadName)s %(message)s'
 
 NA = 'N/A'
 
+
 class ProgressReporter(object):
     """Mixin to report progress"""
 
@@ -45,13 +46,13 @@ class ProgressReporter(object):
             emit = logging.info
 
         if getattr(self, "source", None):
-            emit(prefix + "source : %s" % (self.source))
+            emit(prefix + "source : %s" % (self.source))  # pylint: disable=no-member
         if getattr(self, "sink", None):
-            emit(prefix + "sink   : %s" % (self.sink))
+            emit(prefix + "sink   : %s" % (self.sink))  # pylint: disable=no-member
 
         cur_time = time.time()
         delta = cur_time - self.prev_time
-        c, p = self.cur, self.prev
+        c, p = self.cur, self.prev  # pylint: disable=no-member
         x = sorted([k for k in c.iterkeys() if "_sink_" in k])
 
         width_k = max([5] + [len(k.replace("tot_sink_", "")) for k in x])
@@ -65,7 +66,7 @@ class ProgressReporter(object):
                 string.rjust("per sec", width_s)))
         verbose_set = ["tot_sink_batch", "tot_sink_msg"]
         for k in x:
-            if k not in verbose_set or self.opts.verbose > 0:
+            if k not in verbose_set or self.opts.verbose > 0:  # pylint: disable=no-member
                 emit(prefix + " %s : %s | %s | %s"
                  % (string.ljust(k.replace("tot_sink_", ""), width_k),
                     string.rjust(str(c[k]), width_v),
@@ -87,6 +88,7 @@ class ProgressReporter(object):
         return ("  [%s%s] %0.1f%% (%s/estimated %s msgs)%s" %
                 ('#' * num_hash, ' ' * (max_hash - num_hash),
                  100.0 * pct, current, total, cr))
+
 
 class PumpingStation(ProgressReporter):
     """Queues and watchdogs multiple pumps across concurrent workers."""
@@ -387,7 +389,7 @@ class Pump(ProgressReporter):
         self.source_map = source_map
         self.sink_map = sink_map
         self.ctl = ctl
-        self.cur = cur # Should be a defaultdict(int); 0 as default value.
+        self.cur = cur  # Should be a defaultdict(int); 0 as default value.
 
     def run(self):
         future = None
@@ -522,7 +524,7 @@ class EndPoint(object):
         return False
 
     def get_timestamp(self):
-        #milliseconds with three digits
+        # milliseconds with three digits
         return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
     def add_counter(self, key, val=1):
@@ -531,8 +533,9 @@ class EndPoint(object):
     def add_start_event(self, conn):
         return 0
 
-    def add_start_event(self, conn):
+    def add_stop_event(self, conn):
         return 0
+
 
 class Source(EndPoint):
     """Base class for all data sources."""

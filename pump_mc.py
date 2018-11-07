@@ -40,6 +40,7 @@ OP_MAP_WITH_META = {
     'delete': couchbaseConstants.CMD_DELETE_WITH_META
     }
 
+
 class MCSink(pump.Sink):
     """Dumb client sink using binary memcached protocol.
        Used when moxi or memcached is destination."""
