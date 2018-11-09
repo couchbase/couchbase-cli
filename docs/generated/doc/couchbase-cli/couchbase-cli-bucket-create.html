@@ -449,7 +449,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--bucket-ramsize &lt;size&gt;] [--bucket-replica &lt;num&gt;]
     [--bucket-priority &lt;priority&gt;] [--bucket-eviction-policy &lt;policy&gt;]
     [--max-ttl &lt;seconds&gt;] [--compression-mode &lt;mode&gt;] [--enable-flush &lt;num&gt;]
-    [--enable-index-replica &lt;num&gt;] [--conflict-resolution &lt;type&gt;] [--wait]</pre>
+    [--enable-index-replica &lt;num&gt;] [--conflict-resolution &lt;type&gt;] [--wait]
+    [--database-fragmentation-threshold-percentage &lt;perc&gt;]
+    [--database-fragmentation-threshold-size &lt;megabytes&gt;]
+    [--view-fragmentation-threshold-percentage &lt;perc&gt;]
+    [--view-fragmentation-threshold-size &lt;megabytes&gt;] [--from-hour &lt;hour&gt;]
+    [--from-minute &lt;min&gt;] [--to-hour &lt;hour&gt;] [--to-minute &lt;min&gt;]
+    [--abort-outside &lt;0|1&gt;] [--parallel-db-view-compaction &lt;0|1&gt;]
+    [--purge-interval &lt;int&gt;]</pre>
 </div>
 </div>
 </div>
@@ -633,6 +640,64 @@ complicit.</p>
 <p>The create bucket command is asynchronous by default. Specifying this option
 makes the operation synchronous: so that the command returns only after the
 bucket has been fully created.</p>
+</dd>
+<dt class="hdlist1">--database-fragmentation-threshold-percentage &lt;perc&gt;</dt>
+<dd>
+<p>Sets the database fragmentation trigger threshold as a percentage. Can be set
+to values between 2 and 100.</p>
+</dd>
+<dt class="hdlist1">--database-fragmentation-threshold-size &lt;megabytes&gt;</dt>
+<dd>
+<p>Sets the database fragmentation trigger threshold as a number of megabytes.
+It accepts integers greater than 1.</p>
+</dd>
+<dt class="hdlist1">--view-fragmentation-threshold-percentage &lt;perc&gt;</dt>
+<dd>
+<p>Sets the view fragmentation trigger threshold as a percentage. Can be set
+to values between 2 and 100.</p>
+</dd>
+<dt class="hdlist1">--view-fragmentation-threshold-size &lt;megabytes&gt;</dt>
+<dd>
+<p>Sets the view fragmentation trigger threshold as a number of megabytes.
+It accepts integers greater than 1.</p>
+</dd>
+<dt class="hdlist1">--from-hour &lt;hour&gt;</dt>
+<dd>
+<p>Sets the hour of the start time. Used together with \-\-from\-minutes to set the
+start time of the interval in which compaction is allowed to run. To set the
+interval ensure both start and end time are set.</p>
+</dd>
+<dt class="hdlist1">--from-minute &lt;min&gt;</dt>
+<dd>
+<p>Sets the minute of the start time. Used together with \-\-from\-hour to set the
+start time of the interval in which compaction is allowed to run. To set the
+interval ensure both start and end time are set.</p>
+</dd>
+<dt class="hdlist1">--to-hour &lt;hour&gt;</dt>
+<dd>
+<p>Sets the hour of the end time. Used together with \-\-to\-minute to set the
+end time of the interval in which compaction is allowed to run. To set the
+interval ensure both start and end time are set.</p>
+</dd>
+<dt class="hdlist1">--to-minute &lt;min&gt;</dt>
+<dd>
+<p>Sets the minute of the end time. Used together with \-\-to\-hour to set the
+end time of the interval in which compaction is allowed to run. To set the
+interval ensure both start and end time are set.</p>
+</dd>
+<dt class="hdlist1">--abort-outside &lt;0|1&gt;</dt>
+<dd>
+<p>Will set the option that terminate compaction if the process takes longer than
+the allowed time. Options are [1, 0].</p>
+</dd>
+<dt class="hdlist1">--parallel-db-view-compaction &lt;0|1&gt;</dt>
+<dd>
+<p>Run index and data compaction in parallel. Global setting only.</p>
+</dd>
+<dt class="hdlist1">--purge-interval &lt;int&gt;</dt>
+<dd>
+<p>Sets the frequency of the tombstone (metadata) purge interval. The default
+value is three days.</p>
 </dd>
 </dl>
 </div>

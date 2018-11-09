@@ -592,19 +592,21 @@ class ClusterManager(object):
     def create_bucket(self, name, bucket_type, memory_quota,
                       eviction_policy, replicas, replica_indexes,
                       threads_number, conflict_resolution, flush_enabled,
-                      max_ttl, compression_mode, sync, timeout=60):
+                      max_ttl, compression_mode, sync, db_frag_perc, db_frag_size, view_frag_perc,
+                      view_frag_size, from_hour, from_min, to_hour, to_min,
+                      abort_outside, paralleldb_and_view_compact, purge_interval, timeout=60):
         url = self.hostname + '/pools/default/buckets'
 
         if name is None:
-            return None ["The bucket name is required when creating a bucket"]
+            return None, ["The bucket name is required when creating a bucket"]
         if bucket_type is None:
-            return None ["The bucket type is required when creating a bucket"]
+            return None, ["The bucket type is required when creating a bucket"]
         if memory_quota is None:
-            return None ["The bucket memory quota is required when creating a bucket"]
+            return None, ["The bucket memory quota is required when creating a bucket"]
 
-        params = { "name": name,
-                   "bucketType": bucket_type,
-                   "ramQuotaMB": memory_quota }
+        params = {"name": name,
+                  "bucketType": bucket_type,
+                  "ramQuotaMB": memory_quota}
 
         if eviction_policy is not None:
             params["evictionPolicy"] = eviction_policy
@@ -622,6 +624,36 @@ class ClusterManager(object):
             params["maxTTL"] = max_ttl
         if compression_mode is not None:
             params["compressionMode"] = compression_mode
+
+        if bucket_type == "couchbase":
+            if (db_frag_perc is not None or db_frag_size is not None or view_frag_perc is not None or
+                    view_frag_size is not None or from_hour is not None or from_min is not None or
+                    to_hour is not None or to_min is not None or abort_outside is not None or
+                    paralleldb_and_view_compact is not None or purge_interval is not None):
+                params["autoCompactionDefined"] = "true"
+                params["parallelDBAndViewCompaction"] = "false"
+            if db_frag_perc is not None:
+                params["databaseFragmentationThreshold[percentage]"] = db_frag_perc
+            if db_frag_size is not None:
+                params["databaseFragmentationThreshold[size]"] = db_frag_size * 1024 ** 2
+            if view_frag_perc is not None:
+                params["viewFragmentationThreshold[percentage]"] = view_frag_perc
+            if view_frag_size is not None:
+                params["viewFragmentationThreshold[size]"] = view_frag_size * 1024 ** 2
+            if to_min is not None:
+                params["allowedTimePeriod[toMinute]"] = to_min
+            if to_hour is not None:
+                params["allowedTimePeriod[toHour]"] = to_hour
+            if from_min is not None:
+                params["allowedTimePeriod[fromMinute]"] = from_min
+            if from_hour is not None:
+                params["allowedTimePeriod[fromHour]"] = from_hour
+            if abort_outside is not None:
+                params["allowedTimePeriod[abortOutside]"] = abort_outside
+            if paralleldb_and_view_compact is not None:
+                params["parallelDBAndViewCompaction"] = paralleldb_and_view_compact
+            if purge_interval is not None:
+                params["purgeInterval"] = purge_interval
 
         result, errors = self._post_form_encoded(url, params)
         if errors:
@@ -654,14 +686,15 @@ class ClusterManager(object):
 
         return result, None
 
-
     def edit_bucket(self, name, memory_quota, eviction_policy,
                     replicas, threads_number, flush_enabled, max_ttl,
-                    compression_mode, remove_port):
+                    compression_mode, remove_port, db_frag_perc, db_frag_size, view_frag_perc,
+                    view_frag_size, from_hour, from_min, to_hour, to_min,
+                    abort_outside, paralleldb_and_view_compact, purge_interval):
         url = self.hostname + '/pools/default/buckets/' + name
 
         if name is None:
-            return None ["The bucket name is required when editing a bucket"]
+            return None, ["The bucket name is required when editing a bucket"]
 
         params = {}
         if memory_quota is not None:
@@ -680,6 +713,34 @@ class ClusterManager(object):
             params["compressionMode"] = compression_mode
         if remove_port:
             params["proxyPort"] = "none"
+        if (db_frag_perc is not None or db_frag_size is not None or view_frag_perc is not None or
+                view_frag_size is not None or from_hour is not None or from_min is not None or
+                to_hour is not None or to_min is not None or abort_outside is not None or
+                paralleldb_and_view_compact is not None or purge_interval is not None):
+            params["autoCompactionDefined"] = "true"
+            params["parallelDBAndViewCompaction"] = "false"
+        if db_frag_perc is not None:
+            params["databaseFragmentationThreshold[percentage]"] = db_frag_perc
+        if db_frag_size is not None:
+            params["databaseFragmentationThreshold[size]"] = db_frag_size * 1024 ** 2
+        if view_frag_perc is not None:
+            params["viewFragmentationThreshold[percentage]"] = view_frag_perc
+        if view_frag_size is not None:
+            params["viewFragmentationThreshold[size]"] = view_frag_size * 1024 ** 2
+        if to_min is not None:
+            params["allowedTimePeriod[toMinute]"] = to_min
+        if to_hour is not None:
+            params["allowedTimePeriod[toHour]"] = to_hour
+        if from_min is not None:
+            params["allowedTimePeriod[fromMinute]"] = from_min
+        if from_hour is not None:
+            params["allowedTimePeriod[fromHour]"] = from_hour
+        if abort_outside is not None:
+            params["allowedTimePeriod[abortOutside]"] = abort_outside
+        if paralleldb_and_view_compact is not None:
+            params["parallelDBAndViewCompaction"] = paralleldb_and_view_compact
+        if purge_interval is not None:
+            params["purgeInterval"] = purge_interval
 
         return self._post_form_encoded(url, params)
 
@@ -689,7 +750,7 @@ class ClusterManager(object):
 
     def flush_bucket(self, name):
         if name is None:
-            return None ["The bucket name is required when flushing a bucket"]
+            return None, ["The bucket name is required when flushing a bucket"]
 
         url = self.hostname + '/pools/default/buckets/' + name + '/controller/doFlush'
         return self._post_form_encoded(url, None)

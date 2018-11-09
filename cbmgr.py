@@ -748,6 +748,34 @@ class BucketCreate(Subcommand):
                            choices=["0", "1"], help="Enable replica indexes (0 or 1)")
         group.add_argument("--wait", dest="wait", action="store_true",
                            help="Wait for bucket creation to complete")
+        group.add_argument("--database-fragmentation-threshold-percentage", dest="db_frag_perc",
+                           metavar="<perc>", type=(int), help="Set Database Fragmentation level percent")
+
+        group.add_argument("--database-fragmentation-threshold-size", dest="db_frag_size",
+                           metavar="<megabytes>", type=(int), help="Set Database Fragmentation level")
+
+        group.add_argument("--view-fragmentation-threshold-percentage", dest="view_frag_perc",
+                           metavar="<perc>", type=(int), help="Set View Fragmentation level percent")
+
+        group.add_argument("--view-fragmentation-threshold-size", dest="view_frag_size",
+                           metavar="<megabytes>", type=(int), help="Set View Fragmentation level size")
+
+        group.add_argument("--from-hour", dest="from_hour",
+                           metavar="<quota>", type=(int), help="Set start time hour")
+        group.add_argument("--from-minute", dest="from_min",
+                           metavar="<quota>", type=(int), help="Set start time minutes")
+        group.add_argument("--to-hour", dest="to_hour",
+                           metavar="<quota>", type=(int), help="Set end time hour")
+        group.add_argument("--to-minute", dest="to_min",
+                           metavar="<quota>", type=(int), help="Set end time minutes")
+
+        group.add_argument("--abort-outside", dest="abort_outside",
+                           metavar="<0|1>", choices=["0", "1"], help="Allow Time period")
+        group.add_argument("--parallel-db-view-compaction", dest="paralleldb_and_view_compact",
+                           metavar="<0|1>", choices=["0", "1"], help="Set parallel DB and View Compaction")
+
+        group.add_argument("--purge-interval", dest="purge_interval", type=(int),
+                           metavar="<int>", help="Set parallel DB and View Compaction")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -784,6 +812,14 @@ class BucketCreate(Subcommand):
             if opts.eviction_policy in ["noEviction", "nruEviction"]:
                 _exitIfErrors(["--bucket-eviction-policy must either be valueOnly or fullEviction"])
 
+        if ((opts.type == "memcached" or opts.type == "ephemeral") and (opts.db_frag_perc is not None or
+                opts.db_frag_size is not None or opts.view_frag_perc is not None or
+                opts.view_frag_size is not None or opts.from_hour is not None or opts.from_min is not None or
+                opts.to_hour is not None or opts.to_min is not None or opts.abort_outside is not None or
+                opts.paralleldb_and_view_compact is not None or opts.purge_interval is not None)):
+            _warning("ignoring compaction settings as bucket type %s does not accept it" % opts.type)
+
+
         priority = None
         if opts.priority is not None:
             if opts.priority == BUCKET_PRIORITY_HIGH_STR:
@@ -800,7 +836,10 @@ class BucketCreate(Subcommand):
 
         _, errors = rest.create_bucket(opts.bucket_name, opts.type, opts.memory_quota, opts.eviction_policy,
                                        opts.replica_count, opts.replica_indexes, priority, conflict_resolution_type,
-                                       opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.wait)
+                                       opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.wait,
+                                       opts.db_frag_perc, opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
+                                       opts.from_hour, opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
+                                       opts.paralleldb_and_view_compact, opts.purge_interval)
         _exitIfErrors(errors)
         _success("Bucket created")
 
@@ -873,6 +912,34 @@ class BucketEdit(Subcommand):
                            choices=["0", "1"], help="Enable bucket flush on this bucket (0 or 1)")
         group.add_argument("--remove-bucket-port", dest="remove_port", metavar="<0|1>",
                            choices=["0", "1"], help="Removes the bucket-port setting")
+        group.add_argument("--database-fragmentation-threshold-percentage", dest="db_frag_perc",
+                           metavar="<perc>", type=(int), help="Set Database Fragmentation level percent")
+
+        group.add_argument("--database-fragmentation-threshold-size", dest="db_frag_size",
+                           metavar="<megabytes>", type=(int), help="Set Database Fragmentation level")
+
+        group.add_argument("--view-fragmentation-threshold-percentage", dest="view_frag_perc",
+                           metavar="<perc>", type=(int), help="Set View Fragmentation level percent")
+
+        group.add_argument("--view-fragmentation-threshold-size", dest="view_frag_size",
+                           metavar="<megabytes>", type=(int), help="Set View Fragmentation level size")
+
+        group.add_argument("--from-hour", dest="from_hour",
+                           metavar="<hour>", type=(int), help="Set start time hour")
+        group.add_argument("--from-minute", dest="from_min",
+                           metavar="<min>", type=(int), help="Set start time minutes")
+        group.add_argument("--to-hour", dest="to_hour",
+                           metavar="<hour>", type=(int), help="Set end time hour")
+        group.add_argument("--to-minute", dest="to_min",
+                           metavar="<min>", type=(int), help="Set end time minutes")
+
+        group.add_argument("--abort-outside", dest="abort_outside",
+                           metavar="<0|1>", choices=["0", "1"], help="Allow Time period")
+        group.add_argument("--parallel-db-view-compaction", dest="paralleldb_and_view_compact",
+                           metavar="<0|1>", choices=["0", "1"], help="Set parallel DB and View Compaction")
+
+        group.add_argument("--purge-interval", dest="purge_interval", type=(int),
+                           metavar="<int>", help="Set parallel DB and View Compaction")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -891,7 +958,6 @@ class BucketEdit(Subcommand):
         bucket, errors = rest.get_bucket(opts.bucket_name)
         _exitIfErrors(errors)
 
-
         if "bucketType" in bucket and bucket["bucketType"] == "memcached":
             if opts.memory_quota is not None:
                 _exitIfErrors(["--bucket-ramsize cannot be specified for a memcached bucket"])
@@ -906,13 +972,20 @@ class BucketEdit(Subcommand):
             if opts.compression_mode is not None:
                 _exitIfErrors(["--compression-mode cannot be specified for a memcached bucket"])
 
+        if (("bucketType" in bucket and (bucket["bucketType"] == "memcached" or bucket["bucketType"] == "ephemeral"))
+                and (opts.db_frag_perc is not None or opts.db_frag_size is not None or
+                     opts.view_frag_perc is not None or opts.view_frag_size is not None or opts.from_hour is not None or
+                     opts.from_min is not None or opts.to_hour is not None or opts.to_min is not None or
+                     opts.abort_outside is not None or opts.paralleldb_and_view_compact is not None or
+                     opts.purge_interval is not None)):
+            _exitIfErrors(["compaction settings can not be specified for a %s bucket" % bucket["bucketType"]])
+
         priority = None
         if opts.priority is not None:
             if opts.priority == BUCKET_PRIORITY_HIGH_STR:
                 priority = BUCKET_PRIORITY_HIGH_INT
             elif opts.priority == BUCKET_PRIORITY_LOW_STR:
                 priority = BUCKET_PRIORITY_LOW_INT
-
 
         if opts.remove_port:
             if opts.remove_port == '1':
@@ -921,7 +994,10 @@ class BucketEdit(Subcommand):
                 opts.remove_port = False
 
         _, errors = rest.edit_bucket(opts.bucket_name, opts.memory_quota, opts.eviction_policy, opts.replica_count,
-                                     priority, opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.remove_port)
+                                     priority, opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.remove_port,
+                                     opts.db_frag_perc, opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
+                                     opts.from_hour, opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
+                                     opts.paralleldb_and_view_compact, opts.purge_interval)
         _exitIfErrors(errors)
 
         _success("Bucket edited")

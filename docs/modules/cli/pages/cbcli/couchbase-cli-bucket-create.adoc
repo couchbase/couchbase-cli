@@ -17,6 +17,13 @@ _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
     [--bucket-priority <priority>] [--bucket-eviction-policy <policy>]
     [--max-ttl <seconds>] [--compression-mode <mode>] [--enable-flush <num>]
     [--enable-index-replica <num>] [--conflict-resolution <type>] [--wait]
+    [--database-fragmentation-threshold-percentage <perc>]
+    [--database-fragmentation-threshold-size <megabytes>]
+    [--view-fragmentation-threshold-percentage <perc>]
+    [--view-fragmentation-threshold-size <megabytes>] [--from-hour <hour>]
+    [--from-minute <min>] [--to-hour <hour>] [--to-minute <min>]
+    [--abort-outside <0|1>] [--parallel-db-view-compaction <0|1>]
+    [--purge-interval <int>]
 
 == DESCRIPTION
 
@@ -158,6 +165,53 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The create bucket command is asynchronous by default. Specifying this option
   makes the operation synchronous: so that the command returns only after the
   bucket has been fully created.
+
+--database-fragmentation-threshold-percentage <perc>::
+  Sets the database fragmentation trigger threshold as a percentage. Can be set
+  to values between 2 and 100.
+
+--database-fragmentation-threshold-size <megabytes>::
+  Sets the database fragmentation trigger threshold as a number of megabytes.
+  It accepts integers greater than 1.
+
+--view-fragmentation-threshold-percentage <perc>::
+  Sets the view fragmentation trigger threshold as a percentage. Can be set
+  to values between 2 and 100.
+
+--view-fragmentation-threshold-size <megabytes>::
+  Sets the view fragmentation trigger threshold as a number of megabytes.
+  It accepts integers greater than 1.
+
+--from-hour <hour>::
+  Sets the hour of the start time. Used together with \-\-from\-minutes to set the
+  start time of the interval in which compaction is allowed to run. To set the
+  interval ensure both start and end time are set.
+
+--from-minute <min>::
+  Sets the minute of the start time. Used together with \-\-from\-hour to set the
+  start time of the interval in which compaction is allowed to run. To set the
+  interval ensure both start and end time are set.
+
+--to-hour <hour>::
+  Sets the hour of the end time. Used together with \-\-to\-minute to set the
+  end time of the interval in which compaction is allowed to run. To set the
+  interval ensure both start and end time are set.
+
+--to-minute <min>::
+  Sets the minute of the end time. Used together with \-\-to\-hour to set the
+  end time of the interval in which compaction is allowed to run. To set the
+  interval ensure both start and end time are set.
+
+--abort-outside <0|1>::
+  Will set the option that terminate compaction if the process takes longer than
+  the allowed time. Options are [1, 0].
+
+--parallel-db-view-compaction <0|1>::
+Run index and data compaction in parallel. Global setting only.
+
+--purge-interval <int>::
+  Sets the frequency of the tombstone (metadata) purge interval. The default
+  value is three days.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

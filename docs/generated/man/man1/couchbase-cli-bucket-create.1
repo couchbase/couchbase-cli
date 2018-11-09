@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-bucket-create
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\"      Date: 2018-11-09
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2018-11-09" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -38,6 +38,13 @@ couchbase\-cli\-bucket\-create \- Create a new bucket
     [\-\-bucket\-priority <priority>] [\-\-bucket\-eviction\-policy <policy>]
     [\-\-max\-ttl <seconds>] [\-\-compression\-mode <mode>] [\-\-enable\-flush <num>]
     [\-\-enable\-index\-replica <num>] [\-\-conflict\-resolution <type>] [\-\-wait]
+    [\-\-database\-fragmentation\-threshold\-percentage <perc>]
+    [\-\-database\-fragmentation\-threshold\-size <megabytes>]
+    [\-\-view\-fragmentation\-threshold\-percentage <perc>]
+    [\-\-view\-fragmentation\-threshold\-size <megabytes>] [\-\-from\-hour <hour>]
+    [\-\-from\-minute <min>] [\-\-to\-hour <hour>] [\-\-to\-minute <min>]
+    [\-\-abort\-outside <0|1>] [\-\-parallel\-db\-view\-compaction <0|1>]
+    [\-\-purge\-interval <int>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -216,6 +223,75 @@ complicit.
 The create bucket command is asynchronous by default. Specifying this option
 makes the operation synchronous: so that the command returns only after the
 bucket has been fully created.
+.RE
+.sp
+\-\-database\-fragmentation\-threshold\-percentage <perc>
+.RS 4
+Sets the database fragmentation trigger threshold as a percentage. Can be set
+to values between 2 and 100.
+.RE
+.sp
+\-\-database\-fragmentation\-threshold\-size <megabytes>
+.RS 4
+Sets the database fragmentation trigger threshold as a number of megabytes.
+It accepts integers greater than 1.
+.RE
+.sp
+\-\-view\-fragmentation\-threshold\-percentage <perc>
+.RS 4
+Sets the view fragmentation trigger threshold as a percentage. Can be set
+to values between 2 and 100.
+.RE
+.sp
+\-\-view\-fragmentation\-threshold\-size <megabytes>
+.RS 4
+Sets the view fragmentation trigger threshold as a number of megabytes.
+It accepts integers greater than 1.
+.RE
+.sp
+\-\-from\-hour <hour>
+.RS 4
+Sets the hour of the start time. Used together with \(rs\-\(rs\-from\(rs\-minutes to set the
+start time of the interval in which compaction is allowed to run. To set the
+interval ensure both start and end time are set.
+.RE
+.sp
+\-\-from\-minute <min>
+.RS 4
+Sets the minute of the start time. Used together with \(rs\-\(rs\-from\(rs\-hour to set the
+start time of the interval in which compaction is allowed to run. To set the
+interval ensure both start and end time are set.
+.RE
+.sp
+\-\-to\-hour <hour>
+.RS 4
+Sets the hour of the end time. Used together with \(rs\-\(rs\-to\(rs\-minute to set the
+end time of the interval in which compaction is allowed to run. To set the
+interval ensure both start and end time are set.
+.RE
+.sp
+\-\-to\-minute <min>
+.RS 4
+Sets the minute of the end time. Used together with \(rs\-\(rs\-to\(rs\-hour to set the
+end time of the interval in which compaction is allowed to run. To set the
+interval ensure both start and end time are set.
+.RE
+.sp
+\-\-abort\-outside <0|1>
+.RS 4
+Will set the option that terminate compaction if the process takes longer than
+the allowed time. Options are [1, 0].
+.RE
+.sp
+\-\-parallel\-db\-view\-compaction <0|1>
+.RS 4
+Run index and data compaction in parallel. Global setting only.
+.RE
+.sp
+\-\-purge\-interval <int>
+.RS 4
+Sets the frequency of the tombstone (metadata) purge interval. The default
+value is three days.
 .RE
 .SH "HOST FORMATS"
 .sp
