@@ -1335,7 +1335,7 @@ class ClusterManager(object):
         if dst_nozzles is not None:
             params["targetNozzlePerNode"] = dst_nozzles
         if usage_limit is not None:
-            params["bandwidthLimit"] = usage_limit
+            params["networkUsageLimit"] = usage_limit
         if compression is not None:
             params["compressionType"] = compression
         if log_level is not None:
