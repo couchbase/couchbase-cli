@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\"      Date: 2018-11-15
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2018-11-15" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -34,7 +34,7 @@ couchbase\-cli\-user\-manage \- Manage RBAC users
 .nf
 \fIcouchbase\-cli user\-manage\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-delete] [\-\-list] [\-\-my\-roles] [\-\-set]
-    [\-\-rbac\-username <username>] [\-\-rbac\-password <password>]
+    [\-\- get] [\-\-rbac\-username <username>] [\-\-rbac\-password <password>]
     [\-\-rbac\-name <name>] [\-\-roles <roles_list>] [\-\-auth_domain <domain>]
 .fi
 .br
@@ -89,6 +89,11 @@ Shows the current users RBAC user profile.
 .RS 4
 Creates or updates an RBAC user profile. You must have full administrator
 privileges in order to create or update a user profile.
+.RE
+.sp
+\-\-get
+.RS 4
+Retrieves the RBAC user specified by \-\-rbac\-username and show their roles.
 .RE
 .sp
 \-\-rbac\-username <username>

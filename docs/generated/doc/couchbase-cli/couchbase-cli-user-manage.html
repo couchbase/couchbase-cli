@@ -446,7 +446,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli user-manage</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--delete] [--list] [--my-roles] [--set]
-    [--rbac-username &lt;username&gt;] [--rbac-password &lt;password&gt;]
+    [-- get] [--rbac-username &lt;username&gt;] [--rbac-password &lt;password&gt;]
     [--rbac-name &lt;name&gt;] [--roles &lt;roles_list&gt;] [--auth_domain &lt;domain&gt;]</pre>
 </div>
 </div>
@@ -507,6 +507,10 @@ have full administrator privileges in order to list all user profiles.</p>
 <dd>
 <p>Creates or updates an RBAC user profile. You must have full administrator
 privileges in order to create or update a user profile.</p>
+</dd>
+<dt class="hdlist1">--get</dt>
+<dd>
+<p>Retrieves the RBAC user specified by --rbac-username and show their roles.</p>
 </dd>
 <dt class="hdlist1">--rbac-username &lt;username&gt;</dt>
 <dd>

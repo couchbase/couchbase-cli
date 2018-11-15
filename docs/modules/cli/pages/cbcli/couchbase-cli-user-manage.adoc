@@ -13,7 +13,7 @@ Manage RBAC users
 [verse]
 _couchbase-cli user-manage_ [--cluster <url>] [--username <user>]
     [--password <password>] [--delete] [--list] [--my-roles] [--set]
-    [--rbac-username <username>] [--rbac-password <password>]
+    [-- get] [--rbac-username <username>] [--rbac-password <password>]
     [--rbac-name <name>] [--roles <roles_list>] [--auth_domain <domain>]
 
 == DESCRIPTION
@@ -40,6 +40,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --set::
   Creates or updates an RBAC user profile. You must have full administrator
   privileges in order to create or update a user profile.
+
+--get::
+  Retrieves the RBAC user specified by --rbac-username and show their roles.
 
 --rbac-username <username>::
   Specifies the username of the RBAC user to modify. This option is used when

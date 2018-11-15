@@ -2964,6 +2964,8 @@ class UserManage(Subcommand):
         group = self.parser.add_argument_group("User manage options")
         group.add_argument("--delete", dest="delete", action="store_true", default=False,
                            help="Delete an existing RBAC user")
+        group.add_argument("--get", dest="get", action="store_true", default=False,
+                           help="Display RBAC user details")
         group.add_argument("--list", dest="list", action="store_true", default=False,
                            help="List all RBAC users and their roles")
         group.add_argument("--my-roles", dest="my_roles", action="store_true", default=False,
@@ -2987,11 +2989,11 @@ class UserManage(Subcommand):
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
 
-        num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set])
+        num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get])
         if num_selectors == 0:
-            _exitIfErrors(["Must specify --delete, --list, --my_roles or --set"])
+            _exitIfErrors(["Must specify --delete, --list, --my_roles, --set or --get"])
         elif num_selectors != 1:
-            _exitIfErrors(["Only one of the following can be specified: --delete, --list, --my_roles or --set"])
+            _exitIfErrors(["Only one of the following can be specified: --delete, --list, --my_roles, --set or --get"])
 
         if opts.delete:
             self._delete(rest, opts)
@@ -3001,6 +3003,8 @@ class UserManage(Subcommand):
             self._my_roles(rest, opts)
         elif opts.set:
             self._set(rest, opts)
+        elif opts.get:
+            self._get(rest, opts)
 
     def _delete(self, rest, opts):
         if opts.rbac_user is None:
@@ -3033,6 +3037,27 @@ class UserManage(Subcommand):
         result, errors = rest.list_rbac_users()
         _exitIfErrors(errors)
         print json.dumps(result, indent=2)
+
+    def _get(self, rest, opts):
+        if opts.rbac_user is None:
+            _warning("--rbac-username is required with the --get option")
+        if opts.rbac_pass is not None:
+            _warning("--rbac-password is not used with the --get option")
+        if opts.rbac_name is not None:
+            _warning("--rbac-name is not used with the --get option")
+        if opts.roles is not None:
+            _warning("--roles is not used with the --get option")
+        if opts.auth_domain is not None:
+            _warning("--auth-domain is not used with the --get option")
+
+        result, errors = rest.list_rbac_users()
+        _exitIfErrors(errors)
+        user = [u for u in result if u['id'] == opts.rbac_user]
+
+        if len(user) != 0:
+            print json.dumps(user, indent=2)
+        else:
+            _exitIfErrors(["no user %s" % opts.rbac_user])
 
     def _my_roles(self, rest, opts):
         if opts.rbac_user is not None:
