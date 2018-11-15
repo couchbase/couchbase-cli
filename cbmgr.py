@@ -3522,4 +3522,30 @@ class EventingFunctionSetup(Subcommand):
     def get_description():
         return "Manage Eventing Service Functions"
 
+class UserChangePassword(Subcommand):
+    """The change password subcommand"""
 
+    def __init__(self):
+        super(UserChangePassword, self).__init__()
+        self.parser.prog = "couchbase-cli user-change-password"
+        group = self.parser.add_argument_group("User password change option")
+        group.add_argument("--new-password", dest="new_pass", metavar="<password>", required=True,
+                           help="The new password")
+
+    def execute(self, opts):
+        if opts.new_pass is None:
+            _exitIfErrors(["--new-password is required"])
+
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_cluster_initialized(rest)
+
+        rest.user_change_passsword(opts.new_pass)
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-user-change-password" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Change user password"

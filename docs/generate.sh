@@ -79,6 +79,7 @@ gen_docs couchbase-cli-setting-password-policy.adoc 1
 gen_docs couchbase-cli-setting-security.adoc 1
 gen_docs couchbase-cli-setting-xdcr.adoc 1
 gen_docs couchbase-cli-ssl-manage.adoc 1
+gen_docs couchbase-cli-user-change-password.adoc 1
 gen_docs couchbase-cli-user-manage.adoc 1
 gen_docs couchbase-cli-xdcr-replicate.adoc 1
 gen_docs couchbase-cli-xdcr-setup.adoc 1

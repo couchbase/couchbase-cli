@@ -283,6 +283,11 @@ class ClusterManager(object):
         params = { "newPassword": password }
         return self._post_form_encoded(url, params)
 
+    def user_change_passsword(self, new_password):
+        url = self.hostname + '/controller/changePassword'
+        params = {'password': new_password}
+        return self._post_form_encoded(url, params)
+
     def set_pools_default(self, data_ramsize, index_ramsize, fts_ramsize, cbas_ramsize, eventing_ramsize, cluster_name):
         """ Sets Couchbase RAM Quotas for various services
 

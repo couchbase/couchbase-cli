@@ -42,6 +42,7 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-setting-security.html
   generated/doc/couchbase-cli/couchbase-cli-setting-xdcr.html
   generated/doc/couchbase-cli/couchbase-cli-ssl-manage.html
+  generated/doc/couchbase-cli/couchbase-cli-user-change-password.html
   generated/doc/couchbase-cli/couchbase-cli-user-manage.html
   generated/doc/couchbase-cli/couchbase-cli-xdcr-replicate.html
   generated/doc/couchbase-cli/couchbase-cli-xdcr-setup.html
@@ -96,6 +97,7 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-setting-security.1
     generated/man/man1/couchbase-cli-setting-xdcr.1
     generated/man/man1/couchbase-cli-ssl-manage.1
+    generated/man/man1/couchbase-cli-user-change-password.1
     generated/man/man1/couchbase-cli-user-manage.1
     generated/man/man1/couchbase-cli-xdcr-replicate.1
     generated/man/man1/couchbase-cli-xdcr-setup.1
