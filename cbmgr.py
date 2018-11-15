@@ -2139,7 +2139,8 @@ class SettingAutofailover(Subcommand):
                            help="Maximum number of times an auto-failover event can happen")
         group.add_argument("--enable-failover-on-data-disk-issues", dest="enableFailoverOnDataDiskIssues",
                            metavar="<1|0>", choices=["0", "1"],
-                           help="Enable/disable auto-failover when the Data Service reports disk issues")
+                           help="Enable/disable auto-failover when the Data Service reports disk issues. " +
+                                "Couchbase Server Enterprise Edition only.")
         group.add_argument("--failover-data-disk-period", dest="failoverOnDataDiskPeriod",
                            metavar="<seconds>", type=(int),
                            help="The amount of time the Data Serivce disk failures has to be happening for to trigger"
