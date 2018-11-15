@@ -738,7 +738,7 @@ class BucketCreate(Subcommand):
                            choices=["sequence", "timestamp"], metavar="<type>",
                            help="The XDCR conflict resolution type (timestamp or sequence)")
         group.add_argument("--max-ttl", dest="max_ttl", default=None, type=(int), metavar="<seconds>",
-                           help="Set the maximum TTL the bucket will accept")
+                           help="Set the maximum TTL the bucket will accept. Couchbase server Enterprise Edition only.")
         group.add_argument("--compression-mode", dest="compression_mode",
                            choices=["off", "passive", "active"], metavar="<mode>",
                            help="Set the compression mode of the bucket")
