@@ -2084,6 +2084,7 @@ class SettingAudit(Subcommand):
     def __init__(self):
         super(SettingAudit, self).__init__()
         self.parser.prog = "couchbase-cli setting-audit"
+        self.parser.description = "Available only in Couchbase Server Enterprise Edition"
         group = self.parser.add_argument_group("Audit settings")
         group.add_argument("--audit-enabled", dest="enabled", metavar="<1|0>", choices=["0", "1"],
                            help="Enable/disable auditing")

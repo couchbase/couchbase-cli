@@ -6,7 +6,7 @@ ifdef::doctype-manpage[]
 
 couchbase-cli-setting-audit -
 endif::[]
-Modifies audit log settings
+Modifies audit log settings (EE only)
 
 == SYNOPSIS
 
