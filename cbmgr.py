@@ -16,6 +16,7 @@ import time
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
+from cb_version import VERSION  # pylint: disable=import-error
 
 COUCHBASE_DEFAULT_PORT = 8091
 
@@ -150,6 +151,25 @@ def apply_default_port(nodes):
             return node
         return node + ':8091'
     return [append_port(x) for x in nodes]
+
+
+def check_versions(rest):
+    result, errors = rest.pools()
+    if errors:
+        return
+
+    server_version = result['implementationVersion']
+    if server_version is None or VERSION is None:
+        return
+
+    major_couch = server_version[: server_version.index('.')]
+    minor_couch = server_version[server_version.index('.') + 1: server_version.index('.', len(major_couch) + 1)]
+    major_cli = VERSION[: VERSION.index('.')]
+    minor_cli = VERSION[VERSION.index('.') + 1: VERSION.index('.', len(major_cli) + 1)]
+
+    if major_cli != major_couch or minor_cli != minor_couch:
+        _warning("couchbase-cli version {0} does not match couchbase server version {1}".format(VERSION,
+                                                                                                server_version))
 
 class CLIHelpFormatter(HelpFormatter):
     """Format help with indented section bodies"""
@@ -372,13 +392,18 @@ class CouchbaseCLI(Command):
         group = self.parser.add_argument_group("Options")
         group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
                            help="Prints the short or long help message")
+        group.add_argument("--version",  help="Get couchbase-cli version")
 
     def parse(self, args):
         if len(sys.argv) == 1:
             self.parser.print_help()
             self.parser.exit(1)
 
-        if not args[1] in ["-h", "--help"] and  args[1].startswith("-"):
+        if args[1] == "--version":
+            print VERSION
+            sys.exit(0)
+
+        if not args[1] in ["-h", "--help", "--version"] and  args[1].startswith("-"):
             _exitIfErrors(["Unknown subcommand: '{0}'. The first argument has to be a subcommand like 'bucket-list' or"
                            " 'rebalance', please see couchbase-cli -h for the full list of commands and"
                            " options".format(args[1])])
@@ -690,6 +715,7 @@ class BucketCompact(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         bucket, errors = rest.get_bucket(opts.bucket_name)
         _exitIfErrors(errors)
@@ -781,6 +807,7 @@ class BucketCreate(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
@@ -866,6 +893,7 @@ class BucketDelete(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         _, errors = rest.get_bucket(opts.bucket_name)
         _exitIfErrors(errors)
@@ -945,6 +973,7 @@ class BucketEdit(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
@@ -1027,6 +1056,7 @@ class BucketFlush(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         _, errors = rest.get_bucket(opts.bucket_name)
         _exitIfErrors(errors)
@@ -1120,6 +1150,7 @@ class CollectLogsStart(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         if not opts.nodes and not opts.all_nodes:
             _exitIfErrors(["Must specify either --all-nodes or --nodes"])
@@ -1175,6 +1206,7 @@ class CollectLogsStatus(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         tasks, errors = rest.get_tasks()
         _exitIfErrors(errors)
@@ -1255,6 +1287,7 @@ class Failover(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         opts.servers_to_failover = apply_default_port(opts.servers_to_failover)
         if not opts.force and len(opts.servers_to_failover) != 1:
@@ -1316,6 +1349,7 @@ class GroupManage(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
         print cmds
@@ -1402,6 +1436,7 @@ class HostList(Subcommand):
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
+        check_versions(rest)
         result, errors = rest.pools('default')
         _exitIfErrors(errors)
 
@@ -1563,6 +1598,7 @@ class Rebalance(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         eject_nodes = []
         if opts.server_remove:
@@ -1601,6 +1637,8 @@ class RebalanceStatus(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
+
         status, errors = rest.rebalance_status()
         _exitIfErrors(errors)
 
@@ -1626,6 +1664,8 @@ class RebalanceStop(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
+
         _, errors = rest.stop_rebalance()
         _exitIfErrors(errors)
 
@@ -1657,6 +1697,7 @@ class Recovery(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         servers = apply_default_port(opts.servers)
         for server in servers:
@@ -1695,6 +1736,7 @@ class ResetAdminPassword(LocalSubcommand):
         token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
         rest = ClusterManager("http://127.0.0.1:" + opts.port, "@localtoken", token)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         if opts.new_password is not None and opts.regenerate == True:
             _exitIfErrors(["Cannot specify both --new-password and --regenerate at the same time"])
@@ -1742,6 +1784,7 @@ class ServerAdd(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
@@ -1801,6 +1844,7 @@ class ServerEshell(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         # Cluster does not need to be initialized for this command
+        check_versions(rest)
 
         result, errors = rest.node_info()
         _exitIfErrors(errors)
@@ -1861,6 +1905,7 @@ class ServerInfo(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         # Cluster does not need to be initialized for this command
+        check_versions(rest)
 
         result, errors = rest.node_info()
         _exitIfErrors(errors)
@@ -1886,6 +1931,8 @@ class ServerList(Subcommand):
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
+        check_versions(rest)
+
         result, errors = rest.pools('default')
         _exitIfErrors(errors)
 
@@ -1926,6 +1973,7 @@ class ServerReadd(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         servers = apply_default_port(opts.servers)
         for server in servers:
@@ -2011,6 +2059,7 @@ class SettingAlert(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         if opts.enabled == "1":
             if opts.email_recipients is None:
@@ -2099,6 +2148,7 @@ class SettingAudit(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size):
             _exitIfErrors(["No settings specified to be changed"])
@@ -2151,6 +2201,7 @@ class SettingAutofailover(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         if opts.enabled == "1":
             opts.enabled = "true"
@@ -2232,6 +2283,7 @@ class SettingAutoreprovision(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         if opts.enabled == "1":
             opts.enabled = "true"
@@ -2290,6 +2342,7 @@ class SettingCluster(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota \
                 or opts.eventing_mem_quota or opts.name:
@@ -2389,6 +2442,7 @@ class SettingCompaction(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         if opts.db_perc is not None and (opts.db_perc < 2 or opts.db_perc > 100):
             _exitIfErrors(["--compaction-db-percentage must be between 2 and 100"])
@@ -2540,6 +2594,7 @@ class SettingIndex(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
@@ -2595,6 +2650,7 @@ class SettingLdap(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         admins = ""
         if opts.admins:
@@ -2649,6 +2705,7 @@ class SettingNotification(Subcommand):
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
+        check_versions(rest)
 
         enabled = None
         if opts.enabled == "1":
@@ -2693,11 +2750,10 @@ class SettingPasswordPolicy(Subcommand):
         group.add_argument("--special-char", dest="special_char", action="store_true", default=False,
                            help="Specifies new passwords must at least one special character")
 
-
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
-
+        check_versions(rest)
 
         actions = sum([opts.get, opts.set])
         if actions == 0:
@@ -2744,6 +2800,7 @@ class SettingSecurity(Subcommand):
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
+        check_versions(rest)
 
         errors = None
         if opts.disable_http_ui == '1':
@@ -2801,10 +2858,10 @@ class SettingXdcr(Subcommand):
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
-
         check_cluster_initialized(rest)
-        enterprise, errors = rest.is_enterprise()
+        check_versions(rest)
 
+        enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
         if not enterprise and opts.compression:
             _exitIfErrors(["--enable-compression can only be configured on enterprise edition"])
@@ -2850,6 +2907,7 @@ class SettingMasterPassword(Subcommand):
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
+        check_versions(rest)
 
         if opts.new_password is not None:
             _, errors = rest.set_master_pwd(opts.new_password)
@@ -2899,6 +2957,7 @@ class SslManage(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         if opts.regenerate is not None:
             try:
@@ -2988,6 +3047,7 @@ class UserManage(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get])
         if num_selectors == 0:
@@ -3172,6 +3232,7 @@ class XdcrReplicate(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
@@ -3315,6 +3376,7 @@ class XdcrSetup(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         actions = sum([opts.create, opts.delete, opts.edit, opts.list])
         if actions == 0:
@@ -3447,6 +3509,7 @@ class EventingFunctionSetup(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy])
         if actions == 0:
@@ -3564,6 +3627,7 @@ class UserChangePassword(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_cluster_initialized(rest)
+        check_versions(rest)
 
         rest.user_change_passsword(opts.new_pass)
 
