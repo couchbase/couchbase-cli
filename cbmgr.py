@@ -3649,3 +3649,113 @@ class UserChangePassword(Subcommand):
     @staticmethod
     def get_description():
         return "Change user password"
+
+
+class CollectionManage(Subcommand):
+    """The collections-manage subcommand"""
+
+    def __init__(self):
+        super(CollectionManage, self).__init__()
+        self.parser.prog = "couchbase-cli collection-manage"
+        group = self.parser.add_argument_group("Collection manage option")
+        group.add_argument("--bucket", dest="bucket", metavar="<bucket>", required=True, help="The bucket to use")
+        group.add_argument("--create-scope", dest="create_scope", metavar="<scope>", default=None,
+                           help="The name of the scope to make")
+        group.add_argument("--delete-scope", dest="delete_scope", metavar="<scope>", default=None,
+                           help="The name of the scope to remove")
+        group.add_argument("--list-scopes", dest="list_scopes", action="store_true", default=None,
+                           help="List all of the scopes in the bucket")
+        group.add_argument("--create-collection", dest="create_collection", metavar="<collection>", default=None,
+                           help="The path to the collection to make")
+        group.add_argument("--delete-collection", dest="delete_collection", metavar="<collection>", default=None,
+                           help="The path to the collection to remove")
+        group.add_argument("--list-collections", dest="list_collections", metavar="<scope>", default=None,
+                           const="_default", nargs='?', help="List all of the collections in the scope")
+        group.add_argument("--max-ttl", dest="max_ttl", metavar="<seconds>", type=int,
+                           help="Set the maximum TTL the collection will accept")
+
+    def execute(self, opts):
+        cmds = [opts.create_scope, opts.delete_scope, opts.list_scopes, opts.create_collection, opts.delete_collection,
+                opts.list_collections]
+        cmd_total = sum(cmd is not None for cmd in cmds)
+
+        args = "--create-scope, --delete-scope, --list-scopes, --create-collection, --delete-collection, or " \
+               "--list-collections"
+        if cmd_total == 0:
+            _exitIfErrors(["Must specify one of the following: " + args])
+        elif cmd_total != 1:
+            _exitIfErrors(["Only one of the following may be specified: " + args])
+
+        if opts.max_ttl is not None and opts.create_collection is None:
+            _exitIfErrors(["--max-ttl can only be set with --create-collection"])
+
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_cluster_initialized(rest)
+        check_versions(rest)
+
+        if opts.create_scope:
+            self._create_scope(rest, opts)
+        if opts.delete_scope:
+            self._delete_scope(rest, opts)
+        if opts.list_scopes:
+            self._list_scopes(rest, opts)
+        if opts.create_collection:
+            self._create_collection(rest, opts)
+        if opts.delete_collection:
+            self._delete_collection(rest, opts)
+        if opts.list_collections:
+            self._list_collections(rest, opts)
+
+
+    def _create_scope(self, rest, opts):
+        _, errors = rest.create_scope(opts.bucket, opts.create_scope)
+        _exitIfErrors(errors)
+        _success("Scope created")
+
+    def _delete_scope(self, rest, opts):
+        _, errors = rest.delete_scope(opts.bucket, opts.delete_scope)
+        _exitIfErrors(errors)
+        _success("Scope deleted")
+
+    def _list_scopes(self, rest, opts):
+        manifest, errors = rest.get_manifest(opts.bucket)
+        _exitIfErrors(errors)
+        for scope in manifest:
+            print scope
+
+    def _create_collection(self, rest, opts):
+        scope, collection = self._get_scope_collection(opts.create_collection)
+        _, errors = rest.create_collection(opts.bucket, scope, collection, opts.max_ttl)
+        _exitIfErrors(errors)
+        _success("Collection created")
+
+    def _delete_collection(self, rest, opts):
+        scope, collection =  self._get_scope_collection(opts.delete_collection)
+        _, errors = rest.delete_collection(opts.bucket, scope, collection)
+        _exitIfErrors(errors)
+        _success("Collection deleted")
+
+    def _list_collections(self, rest, opts):
+        manifest, errors = rest.get_manifest(opts.bucket)
+        _exitIfErrors(errors)
+        if opts.list_collections in manifest:
+            for collection in manifest[opts.list_collections]:
+                print collection
+        else:
+            _exitIfErrors(["Scope {0} does not exist".format(opts.list_collections)])
+
+    def _get_scope_collection(self, path):
+        paths = path.split('.')
+        if len(paths) == 2:
+            return paths[0], paths[1]
+        _exitIfErrors(["Path is not valid. It should be: scope.collection"])
+
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-collection-manage" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Manage collections in a bucket"

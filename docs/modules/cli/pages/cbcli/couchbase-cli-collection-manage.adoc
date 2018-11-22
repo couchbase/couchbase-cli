@@ -1,0 +1,113 @@
+= couchbase-cli-collection-manage(1)
+ifndef::doctype-manpage[:doctitle: collection-manage]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-collection-manage -
+endif::[]
+Manage collections and scopes in a bucket
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli collection-manage_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--bucket <bucket>] [--create-scope <scope>]
+    [--delete-scope <scope>] [--list-scopes] [--create-collection <collection>]
+    [--delete-collection <collection>] [--list-collections <scope>]
+    [--max-ttl <seconds>]
+
+== DESCRIPTION
+
+This command is used to manage collections and scopes in a bucket.
+Collections allow the user to categorize the data in the bucket
+by creating collections and specifying a collection when adding
+documents to a bucket. Scopes are the grouping of collections,
+which allows further categorization and ease of management.
+
+The following rules define a valid collection or scope name:
+
+* Must be between 1 and 30 bytes long
+* Can only contain characters A-Z, a-z, 0-9 and the following
+symbols _ - %
+* Cannot start with _ or %
+
+Only Couchbase and Ephemeral bucket has Collection support.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--bucket <bucket>::
+  The name of the bucket.
+
+--create-scope <scope>::
+  Makes a scope in the bucket with the name provided.
+
+--delete-scope <scope>::
+  Removes the scope from the bucket with the name provided.
+
+--list-scopes::
+  Shows all scopes in the bucket.
+
+--create-collection <collection>::
+  Makes the collection in the scope. The option can takes a path in
+  dot format (scope.collection), specifying the scope in which the
+  collection and the name to be created.
+
+--delete-collection <collection>::
+  Removes the collection from the scope. The option can take a path
+  in dot format (scope.collection), specifying the scope from which
+  the collection and collection-name are to be removed.
+
+--list-collections [<scope>]::
+  Shows all the collections in the scope provided. If the scope is not
+  provided, it will show the collections in the  "_default" scope.
+
+--max-ttl <seconds>::
+  Specifies the maximum TTL (time-to-live) for all documents in the
+  collection, in seconds. If enabled and a document is mutated with
+  no TTL or a TTL greater than than the maximum, its TTL will be set
+  to the maximum TTL. Setting this option to 0 disables the use of
+  max-TTL, and the largest TTL that is allowed is 2147483647.
+
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To create a new scope called "chairs" in the furniture bucket.
+
+  $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
+   -p password --bucket furniture --create-scope chairs
+
+To create a new collection called "couches" in the chairs scope in the
+furniture bucket.
+
+  $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
+   -p password --bucket furniture --create-collection chairs.couches
+
+To list all of the collections in the chairs scope in the furniture
+bucket.
+
+  $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
+   -p password --bucket furniture --list-collections chairs
+
+To delete the couches collection from the chairs scope in the
+furniture bucket.
+
+  $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
+   -p password --bucket furniture --delete-collection chairs.couches
+
+
+To delete the chair scope from the furniture bucket
+
+  $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
+   -p password --bucket furniture --delete-scope chairs
+
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

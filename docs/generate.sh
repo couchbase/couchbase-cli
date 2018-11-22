@@ -49,6 +49,7 @@ gen_docs couchbase-cli-cluster-init.adoc 1
 gen_docs couchbase-cli-collect-logs-start.adoc 1
 gen_docs couchbase-cli-collect-logs-status.adoc 1
 gen_docs couchbase-cli-collect-logs-stop.adoc 1
+gen_docs couchbase-cli-collection-manage.adoc 1
 gen_docs couchbase-cli-eventing-function-setup.adoc 1
 gen_docs couchbase-cli-failover.adoc 1
 gen_docs couchbase-cli-group-manage.adoc 1

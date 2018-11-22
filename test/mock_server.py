@@ -264,6 +264,12 @@ def get_my_roles(rest_params=None, server_args=None, path="", endpointMatch=None
     return 200, []
 
 
+def get_collection_manifest(rest_params=None, server_args=None, path="", endpointMatch=None):
+    if 'collection_manifest'in server_args:
+        return 200, server_args['collection_manifest']
+    return 200, []
+
+
 endpoints = [
     ('/close$', {'GET': do_nothing}),
     ('/whoami', {'GET': get_my_roles}),
@@ -282,6 +288,9 @@ endpoints = [
     ('/pools/default/buckets/\w+/controller/compactDatabases$', {'POST': do_nothing}),
     ('/pools/default/buckets/\w+/ddocs$', {'GET': get_ddocs}),
     ('/pools/default/buckets/\w+/controller/compactBucket$', {'POST': do_nothing}),
+    ('/pools/default/buckets/\w+/collections$', {'GET': get_collection_manifest, 'POST': do_nothing}),
+    ('/pools/default/buckets/\w+/collections/\w+$', {'POST': do_nothing, 'DELETE': do_nothing}),
+    ('/pools/default/buckets/\w+/collections/\w+/\w+$', {'DELETE': do_nothing}),
     ('/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
     ('/settings/passwordPolicy$', {'POST': do_nothing, 'GET': get_password_policy}),
     ('/settings/rbac/users$', {'POST': do_nothing, 'GET': get_rbac_user}),

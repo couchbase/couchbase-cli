@@ -1210,5 +1210,48 @@ class TestUserChangePassword(CommandTest):
         self.rest_parameter_match(expected_params)
 
 
+class TestCollectionManage(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'collection-manage'] + cluster_connect_args + ['--bucket', 'name']
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        super(TestCollectionManage, self).setUp()
+
+    def test_create_scope(self):
+        self.no_error_run(self.command + ['--create-scope', 'scope_1'], self.server_args)
+        self.assertIn('POST:/pools/default/buckets/name/collections', self.server.trace)
+        expected_params = ['name=scope_1']
+        self.rest_parameter_match(expected_params)
+
+    def test_delete_scope(self):
+        self.no_error_run(self.command + ['--delete-scope', 'scope_1'], self.server_args)
+        self.assertIn('DELETE:/pools/default/buckets/name/collections/scope_1', self.server.trace)
+
+    def list_scopes(self):
+        self.server_args['collection_manifest'] = {"scope_1":{"collection_1":{}}, "scope_2":{"collection_2":{}}}
+        self.no_error_run(self.command + ['--list-scopes'], self.server_args)
+        self.assertIn('GET:/pools/default/buckets/name/collections', self.server.trace)
+        expected_out = ['scope_1', 'scope_2']
+        for p in expected_out:
+            self.assertIn(p, self.str_output)
+
+    def test_create_collection(self):
+        self.no_error_run(self.command + ['--create-collection', 'scope_1.collection_1', '--max-ttl', '100'],
+                          self.server_args)
+        self.assertIn('POST:/pools/default/buckets/name/collections/scope_1', self.server.trace)
+        expected_params = ['name=collection_1', 'maxTTL=100']
+        self.rest_parameter_match(expected_params)
+
+    def test_delete_collection(self):
+        self.no_error_run(self.command + ['--delete-collection', 'scope_1.collection_1'], self.server_args)
+        self.assertIn('DELETE:/pools/default/buckets/name/collections/scope_1/collection_1', self.server.trace)
+
+    def list_collections(self):
+        self.server_args['collection_manifest'] = {"scope_1":{"collection_1":{}, "collection_2":{}}}
+        self.no_error_run(self.command + ['--list-collections', 'scope_1'], self.server_args)
+        self.assertIn('GET:/pools/default/buckets/name/collections', self.server.trace)
+        expected_out = ['collection_1', 'collection_2']
+        for p in expected_out:
+            self.assertIn(p, self.str_output)
+
 if __name__ == '__main__':
     unittest.main()

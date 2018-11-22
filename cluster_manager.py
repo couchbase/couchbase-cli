@@ -1445,6 +1445,33 @@ class ClusterManager(object):
         url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(function) + '/settings'
         return self._post_json(url, parms)
 
+    def create_scope(self, bucket, scope):
+        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections'
+        params = {"name": scope}
+        return self._post_form_encoded(url, params)
+
+    def delete_scope(self, bucket, scope):
+        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections/' \
+              + urllib.quote_plus(scope)
+        return self._delete(url, None)
+
+    def create_collection(self, bucket, scope, collection, max_ttl):
+        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections/' \
+              + urllib.quote_plus(scope)
+        params = {"name": collection}
+        if max_ttl:
+            params["maxTTL"] = max_ttl
+        return self._post_form_encoded(url, params)
+
+    def delete_collection(self, bucket, scope, collection):
+        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections/' \
+              + urllib.quote_plus(scope) + '/' + urllib.quote_plus(collection)
+        return self._delete(url, None)
+
+    def get_manifest(self, bucket):
+        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections'
+        return self._get(url)
+
     # Low level methods for basic HTML operations
 
     @request
