@@ -86,4 +86,7 @@ ENDIF (BUILD_ENTERPRISE)
 INSTALL(DIRECTORY requests
         DESTINATION lib/python/)
 
+INSTALL(DIRECTORY natsort
+        DESTINATION lib/python/)
+
 ADD_SUBDIRECTORY(docs)
