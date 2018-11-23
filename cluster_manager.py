@@ -760,7 +760,7 @@ class ClusterManager(object):
         url = self.hostname + '/pools/default/buckets/' + name + '/controller/doFlush'
         return self._post_form_encoded(url, None)
 
-    def compact_bucket(self, name, view_only, data_only):
+    def compact_bucket(self, name, data_only, view_only):
         if data_only and not view_only:
             url = self.hostname + '/pools/default/buckets/' + name + \
                 '/controller/compactDatabases'
