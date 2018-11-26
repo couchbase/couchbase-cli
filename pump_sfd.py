@@ -12,6 +12,7 @@ import threading
 import couchstore
 import couchbaseConstants
 import pump
+from cb_bin_client import decodeCollectionID
 from collections import defaultdict
 
 SFD_SCHEME = "couchstore-files://"
@@ -204,7 +205,11 @@ class SFDSource(pump.Source):
 
         def change_callback(doc_info):
             if doc_info:
-                key = doc_info.id
+                # Handle the new key name spacing for collections and co
+                cid, key = decodeCollectionID(doc_info.id)
+                # Only support keys in the _default collection
+                if cid != 0:
+                    return
                 if self.skip(key, vbucket_id):
                     return
 
