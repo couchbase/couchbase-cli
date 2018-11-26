@@ -889,7 +889,7 @@ class ClusterManager(object):
         if move_from_group is None:
             return None, ["Group to move servers from `%s` not found" % from_group]
         if move_to_group is None:
-            return None, ["Group to move servers to `%s` not found" % from_group]
+            return None, ["Group to move servers to `%s` not found" % to_group]
 
         # Find the servers to move in the from group
         nodes_to_move = []
