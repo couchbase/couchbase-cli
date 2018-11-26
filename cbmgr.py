@@ -1413,7 +1413,7 @@ class GroupManage(Subcommand):
     def _rename(self, rest, opts):
         if opts.name is None:
             _exitIfErrors(["--group-name is required with --rename option"])
-        _, errors = rest.rename_server_group(opts.rename, opts.name)
+        _, errors = rest.rename_server_group(opts.name, opts.rename)
         _exitIfErrors(errors)
         _success("Server group renamed")
 
