@@ -16,7 +16,12 @@ import time
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
-from cb_version import VERSION  # pylint: disable=import-error
+
+try:
+    from cb_version import VERSION  # pylint: disable=import-error
+except ImportError:
+    VERSION = "0.0.0-0000-community"
+    print "WARNING: Could not import cb_version, setting VERSION to {0}".format(VERSION)
 
 COUCHBASE_DEFAULT_PORT = 8091
 
