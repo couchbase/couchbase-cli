@@ -184,8 +184,16 @@ class MemcachedClient(object):
         """Decrement or create the named counter."""
         return self.__incrdecr(couchbaseConstants.CMD_DECR, key, amt, init, exp)
 
-    def _doMetaCmd(self, cmd, key, value, cas, exp, flags, seqno, remote_cas):
-        extra = struct.pack('>IIQQ', flags, exp, seqno, remote_cas)
+    def _doMetaCmd(self, cmd, key, value, cas, exp, flags, seqno, remote_cas, options=None, meta_len=None):
+        extra = None
+        if options is None and meta_len is None:
+            extra = struct.pack('>IIQQ', flags, exp, seqno, remote_cas)
+        if options is not None and meta_len is not None:
+            extra = struct.pack('>IIQQIH', flags, exp, seqno, remote_cas, options, meta_len)
+        if options is not None and meta_len is None:
+            extra = struct.pack('>IIQQI', flags, exp, seqno, remote_cas, options)
+        if options is None and meta_len is not None:
+            extra = struct.pack('>IIQQH', flags, exp, seqno, remote_cas, meta_len)
         return self._doCmd(cmd, key, value, extra, cas)
 
     def _doRevCmd(self, cmd, key, exp, flags, value, rev, cas=0):
@@ -199,10 +207,10 @@ class MemcachedClient(object):
         """Set a value in the memcached server."""
         return self._mutate(couchbaseConstants.CMD_SET, key, exp, flags, 0, val)
 
-    def setWithMeta(self, key, value, exp, flags, seqno, remote_cas):
+    def setWithMeta(self, key, value, exp, flags, seqno, remote_cas, options=None, meta_len=None):
         """Set a value and its meta data in the memcached server."""
         return self._doMetaCmd(couchbaseConstants.CMD_SET_WITH_META,
-                               key, value, 0, exp, flags, seqno, remote_cas)
+                               key, value, 0, exp, flags, seqno, remote_cas, options, meta_len)
 
     def setWithRev(self, key, exp, flags, value, rev):
         """Set a value and its revision in the memcached server."""
