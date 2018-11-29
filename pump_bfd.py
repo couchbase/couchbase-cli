@@ -244,15 +244,16 @@ class BFD:
         snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
         seqno_list.extend(recursive_glob(path, 'seqno.json'))
 
-        accudir, accu_dirs = BFD.find_latest_dir(timedir, "accu")
-        if accudir:
-            last_backup = accudir
-            path = BFD.construct_dir(accudir, bucket_name, node_name)
-            if os.path.isdir(path):
-                file_list.extend(recursive_glob(path, 'data-*.cbb'))
-                failoverlog_list.extend(recursive_glob(path, 'failover.json'))
-                snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
-                seqno_list.extend(recursive_glob(path, 'seqno.json'))
+        if mode.find("accu") < 0:
+            accudir, accu_dirs = BFD.find_latest_dir(timedir, "accu")
+            if accudir:
+                path = BFD.construct_dir(accudir, bucket_name, node_name)
+                last_backup = path
+                if os.path.isdir(path):
+                    file_list.extend(recursive_glob(path, 'data-*.cbb'))
+                    failoverlog_list.extend(recursive_glob(path, 'failover.json'))
+                    snapshot_list.extend(recursive_glob(path, 'snapshot_markers.json'))
+                    seqno_list.extend(recursive_glob(path, 'seqno.json'))
         if mode.find("diff") >= 0:
             diffdir, diff_dirs = BFD.find_latest_dir(timedir, "diff")
             if diff_dirs:
