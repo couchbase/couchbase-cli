@@ -2743,7 +2743,7 @@ class SettingPasswordPolicy(Subcommand):
                            help="Get the current password policy")
         group.add_argument("--set", dest="set", action="store_true", default=False,
                            help="Set a new password policy")
-        group.add_argument("--min-length", dest="min_length", type=(int), default=False,
+        group.add_argument("--min-length", dest="min_length", type=(int), default=0,
                            metavar="<num>",
                            help="Specifies the minimum password length for new passwords")
         group.add_argument("--uppercase", dest="upper_case", action="store_true", default=False,
