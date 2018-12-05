@@ -1357,7 +1357,6 @@ class GroupManage(Subcommand):
         check_versions(rest)
 
         cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
-        print cmds
         if sum(cmd is not None for cmd in cmds) == 0:
             _exitIfErrors(["Must specify one of the following: --create, " +
                            "--delete, --list, --move-servers, or --rename"])
