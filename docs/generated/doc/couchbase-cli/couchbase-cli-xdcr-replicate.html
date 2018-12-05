@@ -539,6 +539,12 @@ environment variable CB_REST_PASSWORD.</p>
 <dd>
 <p>A regular expression used to filter the replication stream.</p>
 </dd>
+<dt class="hdlist1">--filter-skip-restream</dt>
+<dd>
+<p>With the specified flag, XDCR will remove all checkpoints and restart the
+replication such that all mutations that fit the new filter will be
+re-replicated to the target.</p>
+</dd>
 <dt class="hdlist1">--xdcr-replicator &lt;id&gt;</dt>
 <dd>
 <p>The XDCR Replication ID. To get a list of replicator ID&#8217;s use the --list

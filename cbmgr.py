@@ -3201,6 +3201,8 @@ class XdcrReplicate(Subcommand):
                            help="The replication protocol (capi or xmem)")
         group.add_argument("--filter-expression", dest="filter", metavar="<regex>",
                            help="Regular expression to filter replication streams")
+        group.add_argument("--filter-skip-restream", dest="filter_skip", action="store_true", default=False,
+                           help="Restart the replication. It must be specified together with --filter-expression")
         group.add_argument("--xdcr-replicator", dest="replicator_id", metavar="<id>",
                            help="Replication ID")
         group.add_argument("--checkpoint-interval", dest="chk_int", type=(int), metavar="<seconds>",
@@ -3317,16 +3319,21 @@ class XdcrReplicate(Subcommand):
                 print "   status: %s" % task["status"]
                 print "   source: %s" % task["source"]
                 print "   target: %s" % task["target"]
+                if "filterExpression" in task and task["filterExpression"] != "":
+                    print "   filter: %s" % task["filterExpression"]
 
     def _settings(self, rest, opts):
         if opts.replicator_id is None:
             _exitIfErrors(["--xdcr-replicator is needed to change a replicators settings"])
+        if opts.filter_skip and opts.filter is None:
+            _exitIfErrors(["--filter-expersion is needed with the --filter-skip-restream option"])
         _, errors = rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size,
                                                   opts.doc_batch_size, opts.fail_interval,
                                                   opts.rep_thresh, opts.src_nozzles,
                                                   opts.dst_nozzles, opts.usage_limit,
                                                   opts.compression, opts.log_level,
-                                                  opts.stats_interval, opts.replicator_id)
+                                                  opts.stats_interval, opts.replicator_id, opts.filter,
+                                                  opts.filter_skip)
         _exitIfErrors(errors)
 
         _success("XDCR replicator settings updated")

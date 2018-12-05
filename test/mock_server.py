@@ -294,7 +294,8 @@ endpoints = [
     ('/settings/web$', {'POST': do_nothing}),
     ('/settings/autoFailover', {'POST': do_nothing}),
     ('/settings/autoReprovision', {'POST': do_nothing}),
-    ('/settings/replications', {'POST': do_nothing}),
+    ('/settings/replications$', {'POST': do_nothing}),
+    ('/settings/replications/(\d|\w)+$', {'POST': do_nothing}),
     ('/node/controller/setupServices$', {'POST': do_nothing}),
     ('/nodes/self/controller/settings$', {'POST': do_nothing}),
     ('/nodes/self$', {'GET': get_node_info}),
@@ -305,6 +306,8 @@ endpoints = [
     ('/controller/reAddNode$', {'POST': do_nothing}),
     ('/controller/startGracefulFailover$', {'POST': do_nothing}),
     ('/controller/cancelLogsCollection$', {'POST': do_nothing}),
+    ('/controller/createReplication$', {'POST': do_nothing}),
+    ('/controller/cancelXCDR/(\d|\w)+$', {'DELETE': do_nothing}),
     ('/controller/setAutoCompaction$', {'POST': do_nothing}),
     ('/controller/startLogsCollection', {'POST': start_log_collection})
 ]

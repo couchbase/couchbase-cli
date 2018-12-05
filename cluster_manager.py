@@ -1302,12 +1302,19 @@ class ClusterManager(object):
     def xdcr_replicator_settings(self, chk_interval, worker_batch_size,
                                  doc_batch_size, fail_interval, replication_thresh,
                                  src_nozzles, dst_nozzles, usage_limit, compression,
-                                 log_level, stats_interval, replicator_id):
+                                 log_level, stats_interval, replicator_id, filter, filter_skip):
         url = self.hostname + '/settings/replications/' + urllib.quote_plus(replicator_id)
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                                        fail_interval, replication_thresh, src_nozzles,
                                        dst_nozzles, usage_limit, compression, log_level,
                                        stats_interval)
+        if filter is not None:
+            params['filterExpression'] = filter
+            filter_numeric = "0"
+            if filter_skip:
+                filter_numeric = "1"
+            params['filterSkipRestream'] = filter_numeric
+
         return self._post_form_encoded(url, params)
 
     def xdcr_global_settings(self, chk_interval, worker_batch_size, doc_batch_size,

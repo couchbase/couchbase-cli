@@ -65,6 +65,11 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --filter-expression <regex>::
   A regular expression used to filter the replication stream.
 
+--filter-skip-restream::
+  With the specified flag, XDCR will remove all checkpoints and restart the
+  replication such that all mutations that fit the new filter will be
+  re-replicated to the target.
+
 --xdcr-replicator <id>::
   The XDCR Replication ID. To get a list of replicator ID's use the --list
   flag.

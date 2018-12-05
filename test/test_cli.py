@@ -1105,7 +1105,60 @@ class TestUserManage(CommandTest):
         expected_params = ['name=name', 'roles=admin']
         self.rest_parameter_match(expected_params)
 
-# TODO: TestXdrcReplicate
+
+class TestXdcrReplicate(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'xdcr-replicate'] + cluster_connect_args
+        self.cmd_args = ['--xdcr-cluster-name', 'name', '--xdcr-hostname', 'hostname', '--xdcr-username', 'username',
+                         '--xdcr-password', 'pwd']
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        super(TestXdcrReplicate, self).setUp()
+
+    def test_create_EE(self):
+        self.no_error_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+                                          '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:[a-zA-z]+',
+                                          '--xdcr-replication-mode', 'capi', '--enable-compression', '1'],
+                          self.server_args)
+        self.assertIn('POST:/controller/createReplication', self.server.trace)
+        expectedParams = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1', 'compressionType=Auto',
+                          'type=capi', 'filterExpression=key%3A%5Ba-zA-z%5D%2B', 'replicationType=continuous']
+
+        self.rest_parameter_match(expectedParams)
+
+    def test_create_CE_with_EE(self):
+        self.server_args['enterprise'] = False
+        self.system_exit_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+                                          '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:[a-zA-z]+',
+                                          '--xdcr-replication-mode', 'capi', '--enable-compression', '1'],
+                          self.server_args)
+        self.assertIn('can only be configured on enterprise edition', self.str_output)
+
+    def test_delete_replicate(self):
+        self.no_error_run(self.command + ['--delete', '--xdcr-replicator', '1'], self.server_args)
+        self.assertIn('DELETE:/controller/cancelXCDR/1', self.server.trace)
+
+    def test_settings(self):
+        self.no_error_run(self.command + ['--settings', '--xdcr-replicator', '1', '--filter-expression', 'key:',
+                                          '--filter-skip-restream', '--enable-compression', '1',
+                                          '--checkpoint-interval', '60', '--worker-batch-size', '5000',
+                                          '--doc-batch-size', '5000', '--failure-restart-interval', '100',
+                                          '--optimistic-replication-threshold', '100', '--stats-interval', '200',
+                                          '--log-level', 'Info', '--bandwidth-usage-limit', '5'], self.server_args)
+        self.assertIn('POST:/settings/replications/1', self.server.trace)
+        expected_params = ['checkpointInterval=60', 'workerBatchSize=5000', 'docBatchSizeKb=5000',
+                           'failureRestartInterval=100', 'optimisticReplicationThreshold=100', 'statsInterval=200',
+                           'compressionType=Auto', 'filterExpression=key%3A', 'filterSkipRestream=1', 'logLevel=Info',
+                           'networkUsageLimit=5']
+        self.rest_parameter_match(expected_params)
+
+    def test_list_replicate(self):
+        self.no_error_run(self.command + ['--list'], self.server_args)
+        self.assertIn('GET:/pools/default/tasks', self.server.trace)
+
+    def test_pause_resume(self):
+        self.no_error_run(self.command + ['--resume', '--xdcr-replicator', '1'], self.server_args)
+        self.assertIn('GET:/pools/default/tasks', self.server.trace)
+
 
 
 class TestXdcrSetup(CommandTest):
