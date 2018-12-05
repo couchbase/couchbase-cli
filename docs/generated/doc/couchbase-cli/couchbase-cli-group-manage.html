@@ -504,7 +504,7 @@ environment variable CB_REST_PASSWORD.</p>
 </dd>
 <dt class="hdlist1">--rename &lt;group&gt;</dt>
 <dd>
-<p>Renames a server group.</p>
+<p>Renames a server group. It takes the new name of the group as a parameter.</p>
 </dd>
 <dt class="hdlist1">--move-servers &lt;server_list&gt;</dt>
 <dd>
@@ -571,7 +571,7 @@ a port other that 8091.</p>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli group-manage -c 192.168.1.5 -u Administrator \
- -p password --rename rack1 --group-name rack2</pre>
+ -p password --group-name rack1 --rename rack2</pre>
 </div>
 </div>
 <div class="paragraph">

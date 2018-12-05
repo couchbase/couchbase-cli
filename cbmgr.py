@@ -1340,7 +1340,7 @@ class GroupManage(Subcommand):
                            default=None, help="Delete a server group")
         group.add_argument("--list", dest="list", action="store_true",
                            default=None, help="List all server groups")
-        group.add_argument("--rename", dest="rename", help="Rename a server group")
+        group.add_argument("--rename", dest="rename", help="Rename a server group. It takes the new name of the group.")
         group.add_argument("--group-name", dest="name", metavar="<name>",
                            help="The name of the server group")
         group.add_argument("--move-servers", dest="move_servers", metavar="<server_list>",
