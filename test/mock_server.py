@@ -263,12 +263,26 @@ def get_my_roles(rest_params=None, server_args=None, path="", endpointMatch=None
         return 200, server_args['whoami']
     return 200, []
 
-
 def get_collection_manifest(rest_params=None, server_args=None, path="", endpointMatch=None):
     if 'collection_manifest'in server_args:
         return 200, server_args['collection_manifest']
     return 200, []
 
+def get_group(rest_params=None, server_args=None, path="", endpointMatch=None):
+    if 'group' in server_args:
+        return 200, server_args['group']
+    return 200, {}
+
+
+def get_user_groups(rest_params=None, server_args=None, path="", endpointMatch=None):
+    if 'user-group' in server_args:
+        return 200, server_args['user-group']
+    return 200, {}
+
+def get_ldap_settings(rest_params=None, server_args=None, path="", endpointMatch=None):
+    if 'ldap' in server_args:
+        return 200, server_args['ldap']
+    return 200, {}
 
 endpoints = [
     ('/close$', {'GET': do_nothing}),
@@ -294,8 +308,12 @@ endpoints = [
     ('/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
     ('/settings/passwordPolicy$', {'POST': do_nothing, 'GET': get_password_policy}),
     ('/settings/rbac/users$', {'POST': do_nothing, 'GET': get_rbac_user}),
+    ('/settings/rbac/users/\w+$', {'PUT': do_nothing, 'GET': get_user_groups}),
+    ('/settings/rbac/groups/(\w|-)+', {'PUT': do_nothing, 'DELETE': do_nothing, 'GET': get_group}),
+    ('/settings/rbac/groups', {'GET': get_group}),
     ('/settings/rbac/users/\w+/\w+$', {'DELETE': do_nothing, 'PUT': do_nothing}),
     ('/settings/saslauthdAuth$', {'POST': do_nothing}),
+    ('/settings/ldap', {'POST': do_nothing, 'GET': get_ldap_settings}),
     ('/settings/alerts$', {'POST': do_nothing}),
     ('/settings/security$', {'POST': do_nothing}),
     ('/settings/audit$', {'POST': do_nothing}),

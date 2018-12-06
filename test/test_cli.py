@@ -887,14 +887,14 @@ class TestSettingIndex(CommandTest):
         self.assertIn('No settings specified to be changed', self.str_output)
 
 
-class TestLdap(CommandTest):
+class TestSASL(CommandTest):
     def setUp(self):
-        self.command = ['couchbase-cli', 'setting-ldap'] + cluster_connect_args
+        self.command = ['couchbase-cli', 'setting-saslauthd'] + cluster_connect_args
         self.basic_args = [
-            '--ldap-enabled', '1', '--ldap-admins', 'admin1,admin2', '--ldap-roadmins', 'admin3,admin4',
+            '--enabled', '1', '--admins', 'admin1,admin2', '--roadmins', 'admin3,admin4',
         ]
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
-        super(TestLdap, self).setUp()
+        super(TestSASL, self).setUp()
 
     def test_ldap_enabled_default_none(self):
         self.no_error_run(self.command + self.basic_args, self.server_args)
@@ -903,13 +903,13 @@ class TestLdap(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_ldap_enabled_default_admins(self):
-        self.no_error_run(self.command + self.basic_args + ['--ldap-default', 'admins'], self.server_args)
+        self.no_error_run(self.command + self.basic_args + ['--default', 'admins'], self.server_args)
         expected_params = ['roAdmins=admin3%0Aadmin4', 'enabled=true']
         self.assertIn('POST:/settings/saslauthdAuth', self.server.trace)
         self.rest_parameter_match(expected_params)
 
     def test_ldap_enabled_default_roadmins(self):
-        self.no_error_run(self.command + self.basic_args + ['--ldap-default', 'roadmins'], self.server_args)
+        self.no_error_run(self.command + self.basic_args + ['--default', 'roadmins'], self.server_args)
         expected_params = ['admins=admin1%0Aadmin2', 'enabled=true']
         self.assertIn('POST:/settings/saslauthdAuth', self.server.trace)
         self.rest_parameter_match(expected_params)
@@ -1105,6 +1105,63 @@ class TestUserManage(CommandTest):
         expected_params = ['name=name', 'roles=admin']
         self.rest_parameter_match(expected_params)
 
+    def test_create_group_basic(self):
+        self.no_error_run(self.command + ['--set-group', '--group-name', 'user-group', '--roles', 'admin',
+                                          '--group-description', 'Lorem ipsum dolor', '--ldap-ref', 'some-ref'],
+                          self.server_args)
+        self.assertIn('PUT:/settings/rbac/groups/user-group', self.server.trace)
+        expected_params = ['description=Lorem+ipsum+dolor', 'roles=admin', 'ldap_group_ref=some-ref']
+        self.rest_parameter_match(expected_params)
+
+    def test_create_group_no_roles(self):
+        self.system_exit_run(self.command + ['--set-group', '--group-name', 'user-group',
+                                          '--group-description', 'Lorem ipsum dolor', '--ldap-ref', 'some-ref'],
+                          self.server_args)
+        self.assertIn('--roles is required with --set-group', self.str_output)
+
+    def test_create_group_no_name(self):
+        self.system_exit_run(self.command + ['--set-group', '--roles', 'ro_admin',
+                                          '--group-description', 'Lorem ipsum dolor', '--ldap-ref', 'some-ref'],
+                          self.server_args)
+        self.assertIn('--group-name is required with --set-group', self.str_output)
+
+    def test_create_group_non_ldap(self):
+        self.no_error_run(self.command + ['--set-group', '--group-name', 'user-group', '--roles', 'admin',
+                                          '--group-description', 'Lorem ipsum dolor'],
+                          self.server_args)
+        self.assertIn('PUT:/settings/rbac/groups/user-group', self.server.trace)
+        expected_params = ['description=Lorem+ipsum+dolor', 'roles=admin']
+        self.rest_parameter_match(expected_params)
+
+    def test_delete_group(self):
+        self.no_error_run(self.command + ['--delete-group', '--group-name', 'name'], self.server_args)
+        self.assertIn('DELETE:/settings/rbac/groups/name', self.server.trace)
+
+    def test_delete_group_no_name(self):
+        self.system_exit_run(self.command + ['--delete-group'], self.server_args)
+        self.assertIn('--group-name is required with the --delete-group option', self.str_output)
+
+    def test_list_group(self):
+        self.server_args['group'] = [{'group': 'group'}]
+        self.no_error_run(self.command + ['--list-group'], self.server_args)
+        self.assertIn('GET:/settings/rbac/groups', self.server.trace)
+
+    def test_get_group(self):
+        self.server_args['group'] = {'group': 'group'}
+        self.no_error_run(self.command + ['--get-group', '--group-name', 'name'], self.server_args)
+        self.assertIn('GET:/settings/rbac/groups/name', self.server.trace)
+
+    def test_get_group_no_group_name(self):
+        self.system_exit_run(self.command + ['--get-group'], self.server_args)
+        self.assertIn('--group-name is required with the --get-group option', self.str_output)
+
+    def test_edit_users_group(self):
+        self.no_error_run(self.command + ['--edit-users-groups', '--rbac-username', 'username', '--user-groups',
+                                          'group1,group2'], self.server_args)
+        self.assertIn('PUT:/settings/rbac/users/username', self.server.trace)
+        expected_params = ['groups=group1%2Cgroup2']
+        self.rest_parameter_match(expected_params)
+
 
 class TestXdcrReplicate(CommandTest):
     def setUp(self):
@@ -1160,7 +1217,6 @@ class TestXdcrReplicate(CommandTest):
         self.assertIn('GET:/pools/default/tasks', self.server.trace)
 
 
-
 class TestXdcrSetup(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'xdcr-setup'] + cluster_connect_args
@@ -1196,6 +1252,7 @@ class TestXdcrSetup(CommandTest):
             self.assertIn(p, self.str_output)
 
 # TODO: TestEventingFunctionSetup
+
 
 class TestUserChangePassword(CommandTest):
     def setUp(self):
@@ -1252,6 +1309,39 @@ class TestCollectionManage(CommandTest):
         expected_out = ['collection_1', 'collection_2']
         for p in expected_out:
             self.assertIn(p, self.str_output)
+
+
+class TestSettingLdap(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'setting-ldap'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        self.authentication_args = ['--authentication-enabled', '1', '--hosts', '0.0.0.0', '--port', '369',
+                                    '--encryption', 'none', '--request-timeout', '2000', '--max-parallel', '20',
+                                    '--max-cache-size', '20', '--cache-value-lifetime', '2000000',
+                                    '--disable-cert-validation']
+        self.authorization_args = ['--authorization-enabled', '1', '--query-dn', 'admin', '--query-pass', 'pass',
+                                   '--enable-nested-groups', '1', '--nested-group-max-depth', '10', '--group-query',
+                                   '%D?memberOf?base']
+        super(TestSettingLdap, self).setUp()
+
+    def test_set_ldap_authentication_only(self):
+        self.no_error_run(self.command + self.authentication_args + ['--authorization-enabled', '0'], self.server_args)
+        self.assertIn('POST:/settings/ldap', self.server.trace)
+        expected_params = ['authentication_enabled=true', 'authorization_enabled=false', 'hosts=0.0.0.0', 'port=369',
+                           'encryption=no+encryption', 'request_timeout=2000', 'max_parallel_connections=20',
+                           'max_cache_size=20', 'cache_value_lifetime=2000000', 'server_cert_validation=false']
+        self.rest_parameter_match(expected_params)
+
+    def test_set_ldap_all(self):
+        self.no_error_run(self.command + self.authentication_args + self.authorization_args, self.server_args)
+        self.assertIn('POST:/settings/ldap', self.server.trace)
+        expected_params = ['authentication_enabled=true', 'authorization_enabled=true', 'hosts=0.0.0.0', 'port=369',
+                           'encryption=no+encryption', 'request_timeout=2000', 'max_parallel_connections=20',
+                           'max_cache_size=20', 'cache_value_lifetime=2000000', 'query_dn=admin', 'query_pass=pass',
+                           'nested_groups_enabled=true', 'nested_groups_max_depth=10',
+                           'groups_query=%25D%3FmemberOf%3Fbase', 'server_cert_validation=false']
+        self.rest_parameter_match(expected_params)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -74,6 +74,7 @@ gen_docs couchbase-cli-setting-autoreprovision.adoc 1
 gen_docs couchbase-cli-setting-cluster.adoc 1
 gen_docs couchbase-cli-setting-compaction.adoc 1
 gen_docs couchbase-cli-setting-index.adoc 1
+gen_docs couchbase-cli-setting-saslauthd.adoc 1
 gen_docs couchbase-cli-setting-ldap.adoc 1
 gen_docs couchbase-cli-setting-notification.adoc 1
 gen_docs couchbase-cli-setting-password-policy.adoc 1

@@ -2633,22 +2633,22 @@ class SettingIndex(Subcommand):
         return "Modify index settings"
 
 
-class SettingLdap(Subcommand):
-    """The setting ldap subcommand"""
+class SettingSaslauthd(Subcommand):
+    """The setting sasl subcommand"""
 
     def __init__(self):
-        super(SettingLdap, self).__init__()
-        self.parser.prog = "couchbase-cli setting-ldap"
-        group = self.parser.add_argument_group("LDAP settings")
-        group.add_argument("--ldap-enabled", dest="enabled", metavar="<1|0>", required=True,
-                           choices=["0", "1"], help="Enable/disable LDAP")
-        group.add_argument("--ldap-admins", dest="admins", metavar="<user_list>",
+        super(SettingSaslauthd, self).__init__()
+        self.parser.prog = "couchbase-cli setting-saslauthd"
+        group = self.parser.add_argument_group("saslauthd settings")
+        group.add_argument("--enabled", dest="enabled", metavar="<1|0>", required=True,
+                           choices=["0", "1"], help="Enable/disable saslauthd")
+        group.add_argument("--admins", dest="admins", metavar="<user_list>",
                            help="A comma separated list of full admins")
-        group.add_argument("--ldap-roadmins", dest="roadmins", metavar="<user_list>",
+        group.add_argument("--roadmins", dest="roadmins", metavar="<user_list>",
                            help="A comma separated list of read only admins")
-        group.add_argument("--ldap-default", dest="default", default="none",
+        group.add_argument("--default", dest="default", default="none",
                            choices=["admins", "roadmins", "none"], metavar="<default>",
-                           help="Enable/disable LDAP")
+                           help="Default roles for saslauthd users")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -2668,23 +2668,145 @@ class SettingLdap(Subcommand):
         if opts.enabled == '1':
             if opts.default == 'admins':
                 if ro_admins:
-                    _warning("--ldap-ro-admins option ignored since default is read only admins")
-                _, errors = rest.ldap_settings('true', ro_admins, None)
+                    _warning("--ro-admins option ignored since default is read only admins")
+                _, errors = rest.sasl_settings('true', ro_admins, None)
             elif opts.default == 'roadmins':
                 if admins:
-                    _warning("--ldap-admins option ignored since default is admins")
-                _, errors = rest.ldap_settings('true', None, admins)
+                    _warning("--admins option ignored since default is admins")
+                _, errors = rest.sasl_settings('true', None, admins)
             else:
-                _, errors = rest.ldap_settings('true', ro_admins, admins)
+                _, errors = rest.sasl_settings('true', ro_admins, admins)
         else:
             if admins:
-                _warning("--ldap-admins option ignored since ldap is being disabled")
+                _warning("--admins option ignored since saslauthd is being disabled")
             if ro_admins:
-                _warning("--ldap-roadmins option ignored since ldap is being disabled")
-            _, errors = rest.ldap_settings('false', "", "")
+                _warning("--roadmins option ignored since saslauthd is being disabled")
+            _, errors = rest.sasl_settings('false', "", "")
 
         _exitIfErrors(errors)
 
+        _success("saslauthd settings modified")
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-saslauthd" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Modify saslauthd settings"
+
+
+class SettingLdap(Subcommand):
+    """The setting Ldap subcommand"""
+
+    def __init__(self):
+        super(SettingLdap, self).__init__()
+        self.parser.prog = "couchbase-cli setting-ldap"
+        group = self.parser.add_argument_group("LDAP settings")
+        group.add_argument("--get", dest="get", default=False, action="store_true",
+                           help='When the get flag is provided it will retrieve the current ldap settings' )
+        group.add_argument("--authentication-enabled", dest="authentication_enabled", metavar="<1|0>", required=True,
+                           choices=["1", "0"], help="Enable LDAP authentication, otherwise it defaults to disable")
+        group.add_argument("--authorization-enabled", dest="authorization_enabled", metavar="<1|0>", required=True,
+                           choices=["1", "0"], help="Enable LDAP authorization, otherwise defaults to false")
+        group.add_argument("--hosts", dest="hosts", metavar="<host_list>",
+                           help="Coma separated list of LDAP servers")
+        group.add_argument("--port", dest="port", metavar="<port>", help="LDAP port. (Default 389)", type=(int),
+                           default=389)
+        group.add_argument("--encryption", dest="encryption", metavar="<tsl|startTLS|none>",
+                           choices=["tsl", "startTLS", "none"], default="none", help="Encryption used")
+        group.add_argument("--disable-cert-validation", dest="disable_cert_val", default=False, action="store_true",
+                           help="Disable server certificate validation.")
+        group.add_argument("--ca-cert", dest="cacert", metavar="<path>",
+                           help="CA certificate to be used for LDAP server certificate validation, required if" +
+                                " certificate validation is not disabled")
+        group.add_argument("--user-dn-mapping", metavar="<mapping>", dest="user_dn_mapping",
+                           help="Username to DN mapping. If not specified username is used as user's DN")
+        group.add_argument("--request-timeout", metavar="<ms>", dest="timeout",
+                           help="Request time out in milliseconds")
+        group.add_argument("--max-parallel", dest="max_parallel", metavar="<max>", type=(int), default=100,
+                           help="Maximum number of parallel connections that can be established")
+        group.add_argument("--max-cache-size", dest="max_cache_size", metavar="<size>",
+                           help="Maximum cache size")
+        group.add_argument("--cache-value-lifetime", dest="cache_value_lifetime", metavar="<ms>",
+                           help="Cache value lifetime in milliseconds")
+        group.add_argument("--query-dn", dest="query_dn", metavar="<dn>",
+                           help="DN")
+        group.add_argument("--query-pass", dest="query_pass", metavar="<pass>", help="Password")
+        group.add_argument("--group-query", dest="group_query", metavar="<query>",
+                           help="LDAP query to get user's groups by username")
+        group.add_argument("--enable-nested-groups", dest="nested_groups", metavar="<1|0>",
+                           choices=["0", "1"])
+        group.add_argument("--nested-group-max-depth", dest="nested_max_depth", metavar="<max>", type=(int),
+                           help="Maximum number of recursive group requests allowed. [1 - 100]")
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_cluster_initialized(rest)
+        check_versions(rest)
+        enterprise, errors = rest.is_enterprise()
+        _exitIfErrors(errors)
+
+        if not enterprise:
+            _exitIfErrors(["LDAP settings are only available in enterprise edition"])
+
+        if opts.get:
+            data, rv = rest.get_ldap()
+            _exitIfErrors(rv)
+            print(data)
+        else:
+            self._set(opts, rest)
+
+    def _set(self, opts, rest):
+        if opts.authentication_enabled == '1':
+            opts.authentication_enabled = 'true'
+        else:
+            opts.authentication_enabled = 'false'
+
+        if opts.authorization_enabled == '1':
+            if opts.authentication_enabled == 'false':
+                _exitIfErrors(['authentication must be enabled to use authorization'])
+            if opts.query_dn is None or opts.query_pass is None:
+                _exitIfErrors(['--query-pass and --query-dn are required with --authorization-enabled'])
+            if opts.group_query is None:
+                _exitIfErrors(['--group-query is required when authorization is enabled'])
+
+            opts.authorization_enabled = 'true'
+        else:
+            opts.authorization_enabled = 'false'
+
+        if not opts.disable_cert_val:
+            if opts.cacert is None:
+                _exitIfErrors(['--ca-cert is required when server certificate verification is active.'])
+                opts.cacert = _exit_on_file_read_failure(opts.cacert)
+
+
+        if opts.encryption == "tsl":
+            opts.encryption = "TLS"
+        elif opts.encryption == "startTLS":
+            opts.encryption = "StartTLS"
+        elif opts.encryption == "none":
+            opts.encryption = "no encryption"
+
+        if opts.nested_groups == '1':
+            opts.nested_groups = 'true'
+        elif opts.nested_groups == '0':
+            opts.nested_groups = 'false'
+            if opts.nested_max_depth is not None:
+                _exitIfErrors('nested groups must be enabled to use --nested-group-max-depth option')
+
+        if opts.nested_max_depth is not None and (opts.nested_max_depth < 1 or
+                                                         opts.nested_max_depth > 100):
+            _exitIfErrors(['maximum nested depth must be between 1 and 100'])
+
+        _, errors = rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts, opts.port,
+                                       opts.encryption, opts.user_dn_mapping, opts.timeout, opts.max_parallel,
+                                       opts.max_cache_size, opts.cache_value_lifetime, opts.query_dn, opts.query_pass,
+                                       opts.group_query, opts.nested_groups, opts.nested_max_depth,
+                                       opts.disable_cert_val, opts.cacert)
+
+        _exitIfErrors(errors)
         _success("LDAP settings modified")
 
     @staticmethod
@@ -3035,6 +3157,16 @@ class UserManage(Subcommand):
                            help="List my roles")
         group.add_argument("--set", dest="set", action="store_true", default=False,
                            help="Create a new RBAC user")
+        group.add_argument("--set-group", dest="set_group", action="store_true", default=False,
+                           help="Create or edit a user group")
+        group.add_argument("--delete-group", dest="delete_group", action="store_true", default=False,
+                           help="Delete a user group")
+        group.add_argument("--list-groups", dest="list_group", action="store_true", default=False,
+                           help="List all groups")
+        group.add_argument("--get-group", dest="get_group", action="store_true", default=False,
+                           help="Get group")
+        group.add_argument("--edit-users-groups", dest="user_add", action="store_true", default=False,
+                           help="Add a user to a group")
         group.add_argument("--rbac-username", dest="rbac_user", metavar="<username>",
                            help="The RBAC username")
         group.add_argument("--rbac-password", dest="rbac_pass", metavar="<password>",
@@ -3046,6 +3178,10 @@ class UserManage(Subcommand):
         group.add_argument("--auth-domain", dest="auth_domain", metavar="<domain>",
                            choices=["external", "local"],
                            help="The authentication type for the specified user")
+        group.add_argument("--user-groups", dest="groups", metavar="<groups>", help="List of groups for the user")
+        group.add_argument("--group-name", dest="group", metavar="<group>", help="Group name")
+        group.add_argument("--group-description", dest="description", metavar="<text>", help="Group description")
+        group.add_argument("--ldap-ref", dest="ldap_ref", metavar="<ref>", help="LDAP group's DN")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -3053,11 +3189,14 @@ class UserManage(Subcommand):
         check_cluster_initialized(rest)
         check_versions(rest)
 
-        num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get])
+        num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get, opts.get_group,
+                             opts.list_group, opts.delete_group, opts.set_group, opts.user_add])
         if num_selectors == 0:
-            _exitIfErrors(["Must specify --delete, --list, --my_roles, --set or --get"])
+            _exitIfErrors(["Must specify --delete, --list, --my_roles, --set, --get, --get-group, --set-group, " +
+                           "--list-groups, --edit-users-groups or --delete-group"])
         elif num_selectors != 1:
-            _exitIfErrors(["Only one of the following can be specified: --delete, --list, --my_roles, --set or --get"])
+            _exitIfErrors(["Only one of the following can be specified:--delete, --list, --my_roles, --set, --get," +
+                           " --get-group, --set-group, --list-groups, --edit-users-groups or --delete-group"])
 
         if opts.delete:
             self._delete(rest, opts)
@@ -3069,6 +3208,54 @@ class UserManage(Subcommand):
             self._set(rest, opts)
         elif opts.get:
             self._get(rest, opts)
+        elif opts.get_group:
+            self._get_group(rest, opts)
+        elif opts.set_group:
+            self._set_group(rest, opts)
+        elif opts.user_add:
+            self._set_users_groups(rest, opts)
+        elif opts.list_group:
+            self._list_groups(rest, opts)
+        elif opts.delete_group:
+            self._delete_group(rest, opts)
+
+    def _delete_group(self, rest, opts):
+        if opts.group is None:
+            _exitIfErrors(['--group-name is required with the --delete-group option'])
+
+        _, errors = rest.delete_user_group(opts.group)
+        _exitIfErrors(errors)
+
+    def _get_group(self, rest, opts):
+        if opts.group is None:
+            _exitIfErrors(['--group-name is required with the --get-group option'])
+
+        group, errors = rest.get_user_group(opts.group)
+        _exitIfErrors(errors)
+        print(json.dumps(group, indent=2))
+
+    def _set_users_groups(self, rest, opts):
+        if opts.username is None:
+            _exitIfErrors(['--rbac-username is required with the --edit-users-groups option'])
+        if opts.groups is None:
+            _exitIfErrors(['--user-groups is required with the --edit-users-groups option'])
+
+        _, errors = rest.add_user_to_group(opts.rbac_user, opts.groups)
+        _exitIfErrors(errors)
+
+    def _set_group(self, rest, opts):
+        if opts.group is None:
+            _exitIfErrors(['--group-name is required with --set-group'])
+        if opts.roles is None:
+            _exitIfErrors(['--roles is required with --set-group'])
+
+        _, errors = rest.set_user_group(opts.group, opts.roles, opts.description, opts.ldap_ref)
+        _exitIfErrors(errors)
+
+    def _list_groups(self, rest, opts):
+        groups, errors = rest.list_user_groups()
+        _exitIfErrors(errors)
+        print(json.dumps(groups, indent=2))
 
     def _delete(self, rest, opts):
         if opts.rbac_user is None:
@@ -3147,13 +3334,17 @@ class UserManage(Subcommand):
         if opts.rbac_pass is not None and opts.auth_domain == "external":
             _warning("--rbac-password cannot be used with the external auth domain")
             opts.rbac_pass = None
-        if opts.roles is None:
-            _exitIfErrors(["--roles is required with the --set option"])
+        if opts.roles is None and opts.groups is None:
+            _exitIfErrors(["--roles or --user-groups are required with the --set option"])
         if opts.auth_domain is None:
             _exitIfErrors(["--auth-domain is required with the --set option"])
 
         _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.rbac_name, opts.roles, opts.auth_domain)
         _exitIfErrors(errors)
+
+        if opts.groups is not None:
+            _, errors = rest.add_user_to_group()
+
 
         if "query_external_access" in opts.roles:
             _warning("Granting the query_external_access role permits execution of the N1QL " +

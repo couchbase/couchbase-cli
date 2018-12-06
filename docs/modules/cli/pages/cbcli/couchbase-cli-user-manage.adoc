@@ -13,14 +13,17 @@ Manage RBAC users
 [verse]
 _couchbase-cli user-manage_ [--cluster <url>] [--username <user>]
     [--password <password>] [--delete] [--list] [--my-roles] [--set]
-    [-- get] [--rbac-username <username>] [--rbac-password <password>]
-    [--rbac-name <name>] [--roles <roles_list>] [--auth_domain <domain>]
+    [--set-group] [--delete-group] [--list-groups] [--get-group]
+    [--add-user-to-group] [-- get] [--rbac-username <username>]
+    [--rbac-password <password>] [--rbac-name <name>] [--roles <roles_list>]
+    [--auth_domain <domain>] [--user-groups <group>]
+    [--group-description <text>] [--ldap-ref <ref>]
 
 == DESCRIPTION
 
 This command allows administrators to assign and manage roles to different users
-in their organization. Users can either be managed locally by Couchbase or
-externally through the use of an external domain.
+and user groups in their organization. Users can either be managed locally by
+Couchbase or externally through the use of an external domain.
 
 == OPTIONS
 
@@ -43,6 +46,21 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --get::
   Retrieves the RBAC user specified by --rbac-username and show their roles.
+
+--set-group::
+  Creates or updates a user group.
+
+--delete-group::
+  Deletes a user group.
+
+--list-groups::
+  List all groups.
+
+--get-group::
+  Gets the details of a group.
+
+--add-user-to-group::
+  Adds a rbac user to a group
 
 --rbac-username <username>::
   Specifies the username of the RBAC user to modify. This option is used when
@@ -70,6 +88,19 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   be set to either _local_ or _external_. Loacl users are users that are
   managed directly by the Couchbase cluster. External users are users
   managed by an external source suchas LDAP.
+
+--user-groups <groups>::
+  Specifies the groups the user should be added to. This is used when creating
+   a user, and should be specified as a comma separated list.
+
+--group-name <group>::
+  Specifies the target group for the group operations.
+
+--group-description <text>::
+  Specifies the group description, it is used with --set-group.
+
+--ldap-ref <ref>::
+  Specifies the LDAP group's DN, to link the couchbase group with the LDAP one.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
@@ -280,6 +311,32 @@ run the following command.
 
   $ couchbase-cli user-manage -c 127.0.0.1:8091 -u jdoe -p cbpass \
    --my-roles
+
+To create a user group with name admins and roles admin and reference to and
+LDAP group reference admins run the following command.
+
+    $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+    -p password --set-group --group-name admins --roles admin \
+    --group-description "CB admins" --ldap-ref admins
+
+To delete a user group "admins" you have to run the following command.
+
+   $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+    -p password --delete-group --group-name admins
+
+To get a user group "admins" you have to run the following command. This
+will show the associated roles.
+
+   $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+    -p password --get-group --group-name admins
+
+To add or remove roles a user group "admins" you have to first get the current
+roles using the previous command and then use the set command bellow giving it
+an amended version of the roles.
+
+   $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+    -p password --set-group --group-name admins --roles admin \
+    --group-description "CB admins" --ldap-ref ro_admin
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

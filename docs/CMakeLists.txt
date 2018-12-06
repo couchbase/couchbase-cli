@@ -38,6 +38,7 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-setting-compaction.html
   generated/doc/couchbase-cli/couchbase-cli-setting-index.html
   generated/doc/couchbase-cli/couchbase-cli-setting-ldap.html
+  generated/doc/couchbase-cli/couchbase-cli-setting-saslauthd.html
   generated/doc/couchbase-cli/couchbase-cli-setting-notification.html
   generated/doc/couchbase-cli/couchbase-cli-setting-password-policy.html
   generated/doc/couchbase-cli/couchbase-cli-setting-security.html
@@ -94,6 +95,7 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-setting-compaction.1
     generated/man/man1/couchbase-cli-setting-index.1
     generated/man/man1/couchbase-cli-setting-ldap.1
+    generated/man/man1/couchbase-cli-setting-saslauthd.1
     generated/man/man1/couchbase-cli-setting-notification.1
     generated/man/man1/couchbase-cli-setting-password-policy.1
     generated/man/man1/couchbase-cli-setting-security.1

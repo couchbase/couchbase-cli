@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-ldap
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-01-18
+.\"      Date: 2019-01-23
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-01-18" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-01-23" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,20 +28,24 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-setting\-ldap \- Modifies LDAP settings
+couchbase\-cli\-setting\-ldap \- Configure LDAP
 .SH "SYNOPSIS"
 .sp
 .nf
 \fIcouchbase\-cli setting\-ldap\fP [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>] [\-\-ldap\-admins <admins_list>]
-    [\-\-ldap\-roadmins <ro_admin_list>] [\-\-ldap\-default <default>]
-    [\-\-ldap\-enabled <num>]
+    [\-\-password <password>] [\-\-authentication\-enabled <1|0>]
+    [\-\-authorization\-enabled <1|0>] [\-\-hosts <host_list>] [\-\-port <port>]
+    [\-\-encryption <tls|startTLS|none>] [\-\-disable\-cert\-validation]
+    [\-\-ca\-cert <path>] [\-\-user\-dn\-mapping <mapping>][\-\-request\-timeout <ms>]
+    [\-\-max\-parallel <max>] [\-\-max\-cache\-size <size>]
+    [\-\-cache\-value\-lifetime <ms>] [\-\-query\-dn <dn>] [\-\-query\-pass <pass>]
+    [\-\-group\-query <query>] [\-\-enable\-nested\-groups <0|1>]
+    [\-\-nested\-group\-max\-depth <depth>]
 .fi
 .br
 .SH "DESCRIPTION"
 .sp
-This command allows users to enable LDAP on their cluster as well as add
-administrator and read\-only administrator LDAP users to their cluster.
+This command allows administrators to configure and connect LDAP servers.
 .SH "OPTIONS"
 .sp
 \-c, \-\-cluster
@@ -67,109 +71,104 @@ non\-echoed stdin. You may also specify your password by using the
 environment variable CB_REST_PASSWORD.
 .RE
 .sp
-\-\-ldap\-admins <admins_list>
+\-\-authentication\-enabled <1|0>
 .RS 4
-A list of LDAP users who should have administrator privileges on this
-cluster. This list should be comma separated if multiple users are being
-added.
+Enables using LDAP to authenticate users
 .RE
 .sp
-\-\-ldap\-roadmins <ro_admin_list>
+\-\-authorization\-enabled <1|0>
 .RS 4
-A list of LDAP users who should have read\-only administrator privileges on
-this cluster. This list should be comma separated if multiple users are
-being added.
+Enables using LDAP to give users authorization
 .RE
 .sp
-\-\-ldap\-enabled <num>
+\-\-host <host_list>
 .RS 4
-Enables or disables LDAP on this cluster. To enable LDAP set this option to
-"1". To disable LDAP set this parameter to "0".
+Specifies a comma separated list of LDAP hosts.
 .RE
 .sp
-\-\-ldap\-default <default>
+\-\-port <port>
 .RS 4
-Specifies the default role for LDAP users who have not been explicitly been
-added to the cluster. This option may be set to "admins", "ro_admins", or
-"none". If this option is set to "admins" then all LDAP users not explicitly
-add to this cluster have administrator privileges. If this option is set to
-"roadmins" then all LDAP users not explicitly add to this cluster have
-read\-only administrator privileges. If this option is set to "none" then all
-LDAP users not explicitly add to this cluster will have no access. This
-option default to "none".
-.RE
-.SH "HOST FORMATS"
-.sp
-When specifying a host for the couchbase\-cli command the following formats are expected:
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.  sp -1
-.  IP \(bu 2.3
-.\}
-\f(CRcouchbase://<addr>\fP
+LDAP port.
 .RE
 .sp
+\-\-encryption <ssl|tsl|none>
 .RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.  sp -1
-.  IP \(bu 2.3
-.\}
-\f(CR<addr>:<port>\fP
+Security used to communicate with LDAP servers. Supported options
+[tls, startTLS, none].
 .RE
 .sp
+\-\-disable\-cert\-validation
 .RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.  sp -1
-.  IP \(bu 2.3
-.\}
-\f(CRhttp://<addr>:<port>\fP
+Disable server certificate validation.
 .RE
 .sp
-It is recommended to use the couchbase://<addr> format for standard
-installations. The other two formats allow an option to take a port number which
-is needed for non\-default installations where the admin port has been set up on
-a port other that 8091.
-.SH "EXAMPLES"
+\-\-ca\-cert <path>
+.RS 4
+CA certificate to be used for server\(cqs certificate validation, required if
+certificate validation is not disabled
+.RE
 .sp
-To enable LDAP on a cluster run the following command.
+\-\-request\-timeout <ms>
+.RS 4
+The timeout for LDAP requests in milliseconds.
+.RE
 .sp
-.if n .RS 4
-.nf
-$ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-\-username Administrator \(rs
- \-\-password password \-\-ldap\-enabled 1
-.fi
-.if n .RE
+\-\-user\-dn\-mapping <mapping>
+.RS 4
+User to DN mapping, if not specified username is used as user\(cqs DN.
+.RE
 .sp
-To add users alice and barry as Administrators and users clair and daniel as
-Read\-Only Administrators run the following command.
+\-\-max\-parallel\-connections <max>
+.RS 4
+Maximum number of parallel connections that can be established with LDAP
+servers.
+.RE
 .sp
-.if n .RS 4
-.nf
-$ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-\-username Administrator \(rs
- \-\-password password \-\-ldap\-enabled 1 \-\-ldap\-admins alice,barry \(rs
- \-\-ldap\-ro\-admins clair,daniel
-.fi
-.if n .RE
+\-\-max\-cache\-size <size>
+.RS 4
+Maximum size of cache, defaults to 10000.
+.RE
 .sp
-To enable LDAP and allow all LDAP users to have Amdinistrator access run the
-following command.
+\-\-cache\-value\-lifetime <ms>
+.RS 4
+Lifetime of values in cache in milliseconds. Default 300000 ms.
+.RE
 .sp
-.if n .RS 4
-.nf
-$ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-\-username Administrator \(rs
- \-\-password password \-\-ldap\-enabled 1 \-\-ldap\-default admins
-.fi
-.if n .RE
+\-\-query\-dn <dn>
+.RS 4
+DN for groups synchronization
+.RE
+.sp
+\-\-query\-pass <pass>
+.RS 4
+Password for groups synchronization
+.RE
+.sp
+\-\-group\-query <query>
+.RS 4
+LDAP query to get users\(aq group by username. RFC4516 format, like
+\(aq%D?memberOf?base\(aq. This option works the following way: if attribute is
+present in the query the list of attributes in the query result is considered
+as list of user’s groups (single entry result is expected). %u and %D
+placeholders could be used.
+%u \- username,
+%D \- user’s DN.
+If attribute is not present in the query every returned entry is considered
+as a group;
+.RE
+.sp
+\-\-nested\-groups\-enabled <0|1>
+.RS 4
+If enabled Couchbase server will try to recursively search for groups for
+every discovered ldap group.
+.RE
+.sp
+\-\-nested\-groups\-max\-depth <depth>
+.RS 4
+Maximum number of recursive groups requests the server is allowed to perform.
+This option is only valid when nested groups are enabled. The depth is an
+integer between 1 and 100, default is 10.
+.RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_USERNAME
@@ -188,7 +187,6 @@ password are not cached in their command line history.
 .RE
 .SH "SEE ALSO"
 .sp
-\fBcouchbase\-cli\-admin\-role\-manage\fP(1),
 \fBcouchbase\-cli\-user\-manage\fP(1)
 .SH "COUCHBASE\-CLI"
 .sp

@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 1.5.7.1">
+<meta name="generator" content="Asciidoctor 1.5.8">
 <meta name="author" content="Couchbase">
-<title>couchbase-cli-user-manage(1)</title>
+<title>couchbase-cli-setting-saslauthd(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -80,7 +80,7 @@ h2{font-size:1.6875em}
 h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
 h4,h5{font-size:1.125em}
 h6{font-size:1em}
-hr{border:solid #ddddd8;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em;height:0}
+hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em;height:0}
 em,i{font-style:italic;line-height:inherit}
 strong,b{font-weight:bold;line-height:inherit}
 small{font-size:60%;line-height:inherit}
@@ -142,9 +142,9 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #content{margin-top:1.25em}
 #content::before{content:none}
 #header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
-#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #ddddd8}
-#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #ddddd8;padding-bottom:8px}
-#header .details{border-bottom:1px solid #ddddd8;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:-ms-flexbox;display:-webkit-flex;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:-ms-flexbox;display:-webkit-flex;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap}
 #header .details span:first-child{margin-left:-.125em}
 #header .details span.email a{color:rgba(0,0,0,.85)}
 #header .details br{display:none}
@@ -153,8 +153,8 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #header .details br+span#revremark::before{content:"\00a0|\00a0"}
 #header #revnumber{text-transform:capitalize}
 #header #revnumber::after{content:"\00a0"}
-#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #ddddd8;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
-#toc{border-bottom:1px solid #efefed;padding-bottom:.5em}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #e7e7e9;padding-bottom:.5em}
 #toc>ul{margin-left:.125em}
 #toc ul.sectlevel0>li>a{font-style:italic}
 #toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
@@ -165,13 +165,13 @@ p a>code:hover{color:rgba(0,0,0,.9)}
 #toctitle{color:#7a2518;font-size:1.2em}
 @media screen and (min-width:768px){#toctitle{font-size:1.375em}
 body.toc2{padding-left:15em;padding-right:0}
-#toc.toc2{margin-top:0!important;background-color:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #efefed;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2{margin-top:0!important;background-color:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
 #toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
 #toc.toc2>ul{font-size:.9em;margin-bottom:0}
 #toc.toc2 ul ul{margin-left:0;padding-left:1em}
 #toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
 body.toc2.toc-right{padding-left:0;padding-right:15em}
-body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #efefed;left:auto;right:0}}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
 @media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
 #toc.toc2{width:20em}
 #toc.toc2 #toctitle{font-size:1.375em}
@@ -188,7 +188,7 @@ body.toc2.toc-right{padding-left:0;padding-right:20em}}
 @media screen and (min-width:768px){#content{margin-bottom:1.25em}
 .sect1{padding-bottom:1.25em}}
 .sect1:last-child{padding-bottom:0}
-.sect1+.sect1{border-top:1px solid #efefed}
+.sect1+.sect1{border-top:1px solid #e7e7e9}
 #content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
 #content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
 #content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
@@ -203,7 +203,7 @@ table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font
 .admonitionblock>table td.icon{text-align:center;width:80px}
 .admonitionblock>table td.icon img{max-width:none}
 .admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
-.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #ddddd8;color:rgba(0,0,0,.6)}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6)}
 .admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
 .exampleblock>.content{border-style:solid;border-width:1px;border-color:#e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;-webkit-border-radius:4px;border-radius:4px}
 .exampleblock>.content>:first-child{margin-top:0}
@@ -215,10 +215,10 @@ table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font
 .exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
 .literalblock pre,.listingblock pre:not(.highlight),.listingblock pre[class="highlight"],.listingblock pre[class^="highlight "],.listingblock pre.CodeRay,.listingblock pre.prettyprint{background:#f7f7f8}
 .sidebarblock .literalblock pre,.sidebarblock .listingblock pre:not(.highlight),.sidebarblock .listingblock pre[class="highlight"],.sidebarblock .listingblock pre[class^="highlight "],.sidebarblock .listingblock pre.CodeRay,.sidebarblock .listingblock pre.prettyprint{background:#f2f1f1}
-.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{-webkit-border-radius:4px;border-radius:4px;word-wrap:break-word;padding:1em;font-size:.8125em}
-.literalblock pre.nowrap,.literalblock pre[class].nowrap,.listingblock pre.nowrap,.listingblock pre[class].nowrap{overflow-x:auto;white-space:pre;word-wrap:normal}
+.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{-webkit-border-radius:4px;border-radius:4px;word-wrap:break-word;overflow-x:auto;padding:1em;font-size:.8125em}
 @media screen and (min-width:768px){.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{font-size:.90625em}}
 @media screen and (min-width:1280px){.literalblock pre,.literalblock pre[class],.listingblock pre,.listingblock pre[class]{font-size:1em}}
+.literalblock pre.nowrap,.literalblock pre.nowrap pre,.listingblock pre.nowrap,.listingblock pre.nowrap pre{white-space:pre;word-wrap:normal}
 .literalblock.output pre{color:#f7f7f8;background-color:rgba(0,0,0,.9)}
 .listingblock pre.highlightjs{padding:0}
 .listingblock pre.highlightjs>code{padding:1em;-webkit-border-radius:4px;border-radius:4px}
@@ -231,19 +231,16 @@ table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font
 table.pyhltable{border-collapse:separate;border:0;margin-bottom:0;background:none}
 table.pyhltable td{vertical-align:top;padding-top:0;padding-bottom:0;line-height:1.45}
 table.pyhltable td.code{padding-left:.75em;padding-right:0}
-pre.pygments .lineno,table.pyhltable td:not(.code){color:#999;padding-left:0;padding-right:.5em;border-right:1px solid #ddddd8}
+pre.pygments .lineno,table.pyhltable td:not(.code){color:#999;padding-left:0;padding-right:.5em;border-right:1px solid #dddddf}
 pre.pygments .lineno{display:inline-block;margin-right:.25em}
 table.pyhltable .linenodiv{background:none!important;padding-right:0!important}
 .quoteblock{margin:0 1em 1.25em 1.5em;display:table}
 .quoteblock>.title{margin-left:-1.5em;margin-bottom:.75em}
-.quoteblock blockquote,.quoteblock blockquote p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
 .quoteblock blockquote{margin:0;padding:0;border:0}
 .quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
 .quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
-.quoteblock .attribution{margin-top:.5em;margin-right:.5ex;text-align:right}
-.quoteblock .quoteblock{margin-left:0;margin-right:0;padding:.5em 0;border-left:3px solid rgba(0,0,0,.6)}
-.quoteblock .quoteblock blockquote{padding:0 0 0 .75em}
-.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
 .verseblock{margin:0 1em 1.25em}
 .verseblock pre{font-family:"Open Sans","DejaVu Sans",sans;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
 .verseblock pre strong{font-weight:400}
@@ -251,10 +248,13 @@ table.pyhltable .linenodiv{background:none!important;padding-right:0!important}
 .quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
 .quoteblock .attribution br,.verseblock .attribution br{display:none}
 .quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
 .quoteblock.abstract{margin:0 1em 1.25em;display:block}
 .quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
-.quoteblock.abstract blockquote,.quoteblock.abstract blockquote p{word-spacing:0;line-height:1.6}
-.quoteblock.abstract blockquote::before,.quoteblock.abstract p::before{display:none}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin:0 0 1.25em;padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
+.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;text-align:left;margin-right:0}
 table.tableblock{max-width:100%;border-collapse:separate}
 p.tableblock:last-child{margin-bottom:0}
 td.tableblock>.content{margin-bottom:-1.25em}
@@ -313,8 +313,8 @@ td.hdlist1{font-weight:bold;padding-bottom:1.25em}
 .colist td:not([class]):first-child img{max-width:none}
 .colist td:not([class]):last-child{padding:.25em 0}
 .thumb,.th{line-height:0;display:inline-block;border:solid 4px #fff;-webkit-box-shadow:0 0 0 1px #ddd;box-shadow:0 0 0 1px #ddd}
-.imageblock.left,.imageblock[style*="float: left"]{margin:.25em .625em 1.25em 0}
-.imageblock.right,.imageblock[style*="float: right"]{margin:.25em 0 1.25em .625em}
+.imageblock.left{margin:.25em .625em 1.25em 0}
+.imageblock.right{margin:.25em 0 1.25em .625em}
 .imageblock>.title{margin-bottom:0}
 .imageblock.thumb,.imageblock.th{border-width:6px}
 .imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
@@ -408,7 +408,7 @@ svg{max-width:100%}
 p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
 h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
 #toc,.sidebarblock,.exampleblock>.content{background:none!important}
-#toc{border-bottom:1px solid #ddddd8!important;padding-bottom:0!important}
+#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
 body.book #header{text-align:center}
 body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
 body.book #header .details{border:0!important;display:block;padding:0!important}
@@ -433,10 +433,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>couchbase-cli-user-manage(1) Manual Page</h1>
+<h1>couchbase-cli-setting-saslauthd(1) Manual Page</h1>
 <h2 id="_name">NAME</h2>
 <div class="sectionbody">
-<p>couchbase-cli-user-manage - Manage RBAC users</p>
+<p>couchbase-cli-setting-saslauthd - Modifies saslauthd settings</p>
 </div>
 </div>
 <div id="content">
@@ -444,13 +444,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<pre class="content"><em>couchbase-cli user-manage</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-    [--password &lt;password&gt;] [--delete] [--list] [--my-roles] [--set]
-    [--set-group] [--delete-group] [--list-groups] [--get-group]
-    [--add-user-to-group] [-- get] [--rbac-username &lt;username&gt;]
-    [--rbac-password &lt;password&gt;] [--rbac-name &lt;name&gt;] [--roles &lt;roles_list&gt;]
-    [--auth_domain &lt;domain&gt;] [--user-groups &lt;group&gt;]
-    [--group-description &lt;text&gt;] [--ldap-ref &lt;ref&gt;]</pre>
+<pre class="content"><em>couchbase-cli setting-saslauthd</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
+    [--password &lt;password&gt;] [--admins &lt;admins_list&gt;]
+    [--roadmins &lt;ro_admin_list&gt;] [--default &lt;default&gt;]
+    [--enable &lt;num&gt;]</pre>
 </div>
 </div>
 </div>
@@ -458,9 +455,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command allows administrators to assign and manage roles to different users
-and user groups in their organization. Users can either be managed locally by
-Couchbase or externally through the use of an external domain.</p>
+<p>This command allows users to enable SASL on their cluster as well as add
+administrator and read-only administrator SASL users to their cluster.</p>
 </div>
 </div>
 </div>
@@ -492,97 +488,33 @@ given then the command will prompt the user for a password through
 non-echoed stdin. You may also specify your password by using the
 environment variable CB_REST_PASSWORD.</p>
 </dd>
-<dt class="hdlist1">--delete</dt>
+<dt class="hdlist1">--admins &lt;admins_list&gt;</dt>
 <dd>
-<p>Deletes an RBAC user profile from the cluster. You must have full
-administrator privileges in order to delete a user profile.</p>
+<p>A list of SASL users who should have administrator privileges on this
+cluster. This list should be comma separated if multiple users are being
+added.</p>
 </dd>
-<dt class="hdlist1">--list</dt>
+<dt class="hdlist1">--roadmins &lt;ro_admin_list&gt;</dt>
 <dd>
-<p>Lists all RBAC user profiles in the cluster and show their roles. You must
-have full administrator privileges in order to list all user profiles.</p>
+<p>A list of SASL users who should have read-only administrator privileges on
+this cluster. This list should be comma separated if multiple users are
+being added.</p>
 </dd>
-<dt class="hdlist1">--my-roles</dt>
+<dt class="hdlist1">--enabled &lt;num&gt;</dt>
 <dd>
-<p>Shows the current users RBAC user profile.</p>
+<p>Enables or disables SASL on this cluster. To enable SASL set this option to
+"1". To disable SASL set this parameter to "0".</p>
 </dd>
-<dt class="hdlist1">--set</dt>
+<dt class="hdlist1">--default &lt;default&gt;</dt>
 <dd>
-<p>Creates or updates an RBAC user profile. You must have full administrator
-privileges in order to create or update a user profile.</p>
-</dd>
-<dt class="hdlist1">--get</dt>
-<dd>
-<p>Retrieves the RBAC user specified by --rbac-username and show their roles.</p>
-</dd>
-<dt class="hdlist1">--set-group</dt>
-<dd>
-<p>Creates or updates a user group.</p>
-</dd>
-<dt class="hdlist1">--delete-group</dt>
-<dd>
-<p>Deletes a user group.</p>
-</dd>
-<dt class="hdlist1">--list-groups</dt>
-<dd>
-<p>List all groups.</p>
-</dd>
-<dt class="hdlist1">--get-group</dt>
-<dd>
-<p>Gets the details of a group.</p>
-</dd>
-<dt class="hdlist1">--add-user-to-group</dt>
-<dd>
-<p>Adds a rbac user to a group</p>
-</dd>
-<dt class="hdlist1">--rbac-username &lt;username&gt;</dt>
-<dd>
-<p>Specifies the username of the RBAC user to modify. This option is used when
-deleting, creating, or updating an RBAC user profile.</p>
-</dd>
-<dt class="hdlist1">--rbac-password &lt;password&gt;</dt>
-<dd>
-<p>Specifies the password to be used for an RBAC user profile. This option is
-used only when creating or updating a <em>local</em> RBAC user profile. Couchbase
-does not store password for <em>external</em> RBAC roles.</p>
-</dd>
-<dt class="hdlist1">--rbac-name &lt;name&gt;</dt>
-<dd>
-<p>Specifies the name to be used for an RBAC user profile. This option is used
-when creating or updating an RBAC user profile and it is recommanded that
-this option be set to the users full name.</p>
-</dd>
-<dt class="hdlist1">--roles &lt;roles_list&gt;</dt>
-<dd>
-<p>Specifies the roles to be given to an RBAC user profile. This option is used
-when creating or updating an RBAC user profile and it is specified as a
-comma separated list of roles. See the ROLES section for more details on the
-available roles in Couchbase.</p>
-</dd>
-<dt class="hdlist1">--auth-domain &lt;domain&gt;</dt>
-<dd>
-<p>Specifies the auth_domain to used for an RBAC user profile. This option is
-used when deleting, creating or updating an RBAC user profile and it if may
-be set to either <em>local</em> or <em>external</em>. Loacl users are users that are
-managed directly by the Couchbase cluster. External users are users
-managed by an external source suchas LDAP.</p>
-</dd>
-<dt class="hdlist1">--user-groups &lt;groups&gt;</dt>
-<dd>
-<p>Specifies the groups the user should be added to. This is used when creating
- a user, and should be specified as a comma separated list.</p>
-</dd>
-<dt class="hdlist1">--group-name &lt;group&gt;</dt>
-<dd>
-<p>Specifies the target group for the group operations.</p>
-</dd>
-<dt class="hdlist1">--group-description &lt;text&gt;</dt>
-<dd>
-<p>Specifies the group description, it is used with --set-group.</p>
-</dd>
-<dt class="hdlist1">--ldap-ref &lt;ref&gt;</dt>
-<dd>
-<p>Specifies the LDAP group&#8217;s DN, to link the couchbase group with the LDAP one.</p>
+<p>Specifies the default role for SASL users who have not been explicitly been
+added to the cluster. This option may be set to "admins", "ro_admins", or
+"none". If this option is set to "admins" then all SASL users not explicitly
+add to this cluster have administrator privileges. If this option is set to
+"roadmins" then all SASL users not explicitly add to this cluster have
+read-only administrator privileges. If this option is set to "none" then all
+SASL users not explicitly add to this cluster will have no access. This
+option default to "none".</p>
 </dd>
 </dl>
 </div>
@@ -613,313 +545,39 @@ installations. The other two formats allow an option to take a port number which
 is needed for non-default installations where the admin port has been set up on
 a port other that 8091.</p>
 </div>
-<div class="sect2">
-<h3 id="_roles">ROLES</h3>
-<div class="dlist">
-<div class="title">Cluster-Wide Roles:</div>
-<dl>
-<dt class="hdlist1">admin</dt>
-<dd>
-<p>Give the user permissions to manage all Couchbase configuration settings,
-and read and write all data in the cluster. This user can make changes to
-anything in the cluster.</p>
-</dd>
-<dt class="hdlist1">bucket_admin[&#8230;&#8203;]</dt>
-<dd>
-<p>Gives the user permissions to manage bucket settings. This role can be
-assigned globally to all buckets or to a particular bucket. For XDCR
-operations, the user can start/stop replication for the buckets they
-administer, but they cannot set up the XDCR cluster references. To give
-a user the ability to manage all bucket settings set their role to
-bucket_admin[*]. To give the user permission to manage bucket settings on a
-single bucket named <em>default</em> then specify the role as
-bucket_admin[default]. If the user needs to be manage multiple buckets, for
-example <em>default</em> and <em>app</em>, then set the role as bucket[default,app].</p>
-</dd>
-<dt class="hdlist1">cluster_admin</dt>
-<dd>
-<p>Gives the user permissions to read, write and manage all cluster-level
-settings except security.</p>
-</dd>
-<dt class="hdlist1">replication_admin</dt>
-<dd>
-<p>Allows the user to configure XDCR topology and manage XDCR replications.</p>
-</dd>
-<dt class="hdlist1">ro_admin</dt>
-<dd>
-<p>Gives the user read-only access and cannot make any changes to the system.
-This user has read-only access to cluster overview, design documents
-(without the ability to create or query views), bucket summaries (without
-the ability to create or view documents), XDCR cluster references, XDCR
-replications, and cluster settings.</p>
-</dd>
-<dt class="hdlist1">view_admin[&#8230;&#8203;]</dt>
-<dd>
-<p>Gives the user privileges to define views and then run these views on data
-to ensure that views are defined properly. This applies both to the
-map-reduce and spatial views. To give a user the ability to manage views on
-all buckets set their role to views_admin[*]. To give the user permission to
-manage views on a single bucket named <em>default</em> then specify the role as
-views_admin[default]. If the user needs to be manage views for multiple
-buckets, for example <em>default</em> and <em>app</em>, then set the role as
-views_admin[default,app].</p>
-</dd>
-</dl>
-</div>
-<div class="dlist">
-<div class="title">Data Service Roles:</div>
-<dl>
-<dt class="hdlist1">data_reader[&#8230;&#8203;]</dt>
-<dd>
-<p>Gives the user permission to read data through Couchbases key-value APIs.
-To give a user read-only access for all buckets set their role to
-data_reader[*]. To give the user read-only access to data on a single
-bucket named <em>default</em> then specify their role as data_reader[default].
-If the user needs read-only access to data for multiple buckets, for example
-<em>default</em> and <em>app</em>, then set their role as data_reader[default,app].</p>
-</dd>
-<dt class="hdlist1">data_writer[&#8230;&#8203;]</dt>
-<dd>
-<p>Gives the user permission to read and write data through Couchbases
-key-value APIs. The user cannot however modify the settings of a bucket.
-To give a user read-write access for all buckets set their role to
-data_writer[*]. To give the user read-write access to data on a single
-bucket named <em>default</em> then specify their role as data_writer[default].
-If the user needs read-write access to data for multiple buckets, for
-example <em>default</em> and <em>app</em>, then set their role as
-data_writer[default,app].</p>
-</dd>
-<dt class="hdlist1">data_dcp_reader[&#8230;&#8203;]</dt>
-<dd>
-<p>Gives the user permission to create Couchbase DCP connections. To give a
-user the ability to create DCP connections for all buckets set their role to
-data_dcp_reader[*]. To give the user the ability to create DCP connections
-on a single bucket named <em>default</em> then specify their role as
-data_dcp_reader[default]. If the user needs to be able to create DCP
-connections for multiple buckets, for example <em>default</em> and <em>app</em>, then set
-their role as data_dcp_reader[default,app].</p>
-</dd>
-<dt class="hdlist1">data_backup[&#8230;&#8203;]</dt>
-<dd>
-<p>Gives the user permission to backup and restore data in Couchbase. To give a
-user the ability to backup and restore data for all buckets set their role
-to data_backup[*]. To give the user the ability to backup and restore data
-on a single bucket named <em>default</em> then specify their role as
-data_backup[default]. If the user needs to be able to backup and restore
-data for multiple buckets, for example <em>default</em> and <em>app</em>, then set their
-role as data_backup[default,app].</p>
-</dd>
-<dt class="hdlist1">data_monitoring[&#8230;&#8203;]</dt>
-<dd>
-<p>Gives the user permission to read monitoring data related to the data
-service in Couchbase. To give a user the ability to monitor data for all
-buckets set their role to data_monitoring[*]. To give the user the ability
-to monitor data on a single bucket named <em>default</em> then specify their role
-as data_monitoring[default]. If the user needs to be able to monitor data
-for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
-as data_monitoring[default,app].</p>
-</dd>
-</dl>
-</div>
-<div class="dlist">
-<div class="title">Full Text Service Roles:</div>
-<dl>
-<dt class="hdlist1">fts_admin[&#8230;&#8203;]</dt>
-<dd>
-<p>Gives the user full administrator access for the Full Text Indexing service
-for the specified buckets. To give a user full administrator access for FTS
-on all buckets set their role to fts_admin[*]. To give the user full
-administrator access for FTS on a single bucket named <em>default</em> then specify
-their role as fts_admin[default]. If the user needs full administrator
-access for FTS for multiple buckets, for example <em>default</em> and <em>app</em>, then
-set their role as fts_admin[default,app].</p>
-</dd>
-<dt class="hdlist1">fts_searcher[&#8230;&#8203;]</dt>
-<dd>
-<p>Allows the user to query full text indexes for the specified buckets. To
-give a user the ability to query full text indexes on all buckets set their
-role to fts_searcher[*]. To give the ability to query FTS indexes on a
-single bucket named <em>default</em> then specify their role as
-fts_searcher[default]. If the user needs to query FTS indexes on multiple
-multiple buckets, for example <em>default</em> and <em>app</em>, then set their role as
-fts_searcher[default,app].</p>
-</dd>
-</dl>
-</div>
-<div class="dlist">
-<div class="title">Query Service Roles:</div>
-<dl>
-<dt class="hdlist1">manage_index[&#8230;&#8203;]</dt>
-<dd>
-<p>Allows the user to create and delete indexes on the specified buckets. To
-give a user the ability to create and delete indexes on all buckets set
-their role to manage_index[*]. To give the user permission to create and
-delete indexes on a single bucket named <em>default</em> then specify their role
-as manage_index[default]. If the user needs to be create and delete indexes
-for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
-as manage_index[default,app].</p>
-</dd>
-<dt class="hdlist1">query_delete[&#8230;&#8203;]</dt>
-<dd>
-<p>Allows the user to execute DELETE query statements on the specified buckets.
-To give a user the ability execute DELETE statements on all buckets set
-their role to query_delete[*]. To give the user permission to execute
-DELETE statements on a single bucket named <em>default</em> then specify their role
-as query_delete[default]. If the user needs to be execute DELETE statements
-for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
-as query_delete[default,app].</p>
-</dd>
-<dt class="hdlist1">query_insert[&#8230;&#8203;]</dt>
-<dd>
-<p>Allows the user to execute INSERT query statements on the specified buckets.
-To give a user the ability execute INSERT statements on all buckets set
-their role to query_insert[*]. To give the user permission to execute
-INSERT statements on a single bucket named <em>default</em> then specify their role
-as query_insert[default]. If the user needs to be execute INSERT statements
-for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
-as query_insert[default,app].</p>
-</dd>
-<dt class="hdlist1">query_select[&#8230;&#8203;]</dt>
-<dd>
-<p>Allows the user to execute SELECT query statements on the specified buckets.
-To give a user the ability execute SELECT statements on all buckets set
-their role to query_select[*]. To give the user permission to execute
-SELECT statements on a single bucket named <em>default</em> then specify their role
-as query_select[default]. If the user needs to be execute SELECT statements
-for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
-as query_select[default,app].</p>
-</dd>
-<dt class="hdlist1">query_update[&#8230;&#8203;]</dt>
-<dd>
-<p>Allows the user to execute UPDATE query statements on the specified buckets.
-To give a user the ability execute UPDATE statements on all buckets set
-their role to query_update[*]. To give the user permission to execute
-UPDATE statements on a single bucket named <em>default</em> then specify their role
-as query_update[default]. If the user needs to be execute UPDATE statements
-for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
-as query_update[default,app].</p>
-</dd>
-<dt class="hdlist1">system_catalog[&#8230;&#8203;]</dt>
-<dd>
-<p>Allows the users to run queries against the system catalog on the specified
-buckets. To give a user the ability to run queries against the system
-catalog on all buckets set their role to system_catalog[*]. To give the user
-permission to run queries against the system catalog on a single bucket
-named <em>default</em> then specify their role as system_catalog[default]. If the
-user needs to be run queries against the system catalog for multiple
-buckets, for example <em>default</em> and <em>app</em>, then set their role as
-system_catalog[default,app].</p>
-</dd>
-</dl>
-</div>
-</div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>To create an local RBAC user profile for a user named "John Doe" with username
-jdoe and password cbpass with roles to manage the <em>default</em> bucket and all
-XDCR replication run the following command</p>
+<p>To enable SASL on a cluster run the following command.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --set --rbac-username jdoe --rbac-password cbpass \
- --rbac-name "John Doe" --roles bucket_admin[default],replication_admin \
- --auth-domain local</pre>
+<pre>$ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
+ --password password --enable 1</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>If you have external user source setup in your cluster and you want to add a
-user "John Doe" with username jdoe who should have the ability to manage only
-views for all bucket run the following command</p>
+<p>To add users alice and barry as Administrators and users clair and daniel as
+Read-Only Administrators run the following command.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --set --rbac-username jdoe --rbac-name "John Doe" \
- --roles view_admin[*] --auth-domain external</pre>
+<pre>$ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
+ --password password --enable 1 --admins alice,barry \
+ --ro-admins clair,daniel</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To list the current RBAC user profiles run the following command.</p>
+<p>To enable SASL and allow all SASL users to have Administrator access run the
+following command.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --list</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To delete an external user named jdoe run the following command.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --delete --rbac-username jdoe --auth-domain external</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To delete a local user named jdoe run the following command.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --delete --rbac-username jdoe --auth-domain local</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To see the user profile for a user with the username jdoe and password cbpass
-run the following command.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u jdoe -p cbpass \
- --my-roles</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To create a user group with name admins and roles admin and reference to and
-LDAP group reference admins run the following command.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
--p password --set-group --group-name admins --roles admin \
---group-description "CB admins" --ldap-ref admins</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To delete a user group "admins" you have to run the following command.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --delete-group --group-name admins</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To get a user group "admins" you have to run the following command. This
-will show the associated roles.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --get-group --group-name admins</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To add or remove roles a user group "admins" you have to first get the current
-roles using the previous command and then use the set command bellow giving it
-an amended version of the roles.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --set-group --group-name admins --roles admin \
- --group-description "CB admins" --ldap-ref ro_admin</pre>
+<pre>$ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
+ --password password --enable 1 --default admins</pre>
 </div>
 </div>
 </div>
@@ -950,7 +608,8 @@ password are not cached in their command line history.</p>
 <h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><a href="couchbase-cli-setting-ldap.html">couchbase-cli-setting-ldap(1)</a></p>
+<p><a href="couchbase-cli-admin-role-manage.html">couchbase-cli-admin-role-manage(1)</a>,
+<a href="couchbase-cli-user-manage.html">couchbase-cli-user-manage(1)</a></p>
 </div>
 </div>
 </div>

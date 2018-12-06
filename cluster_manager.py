@@ -953,6 +953,50 @@ class ClusterManager(object):
             params["roles"] = roles
         return self._put(url, params)
 
+    def add_user_to_group(self, user, groups):
+        if user is None:
+            return None, ['User is required']
+        if groups is None:
+            return None, ['A list of groups is required']
+
+        url = self.hostname + '/settings/rbac/users/%s' % user
+
+        params = {'groups': groups}
+        return self._put(url, params)
+
+    def get_user_group(self, group):
+        if group is None:
+            return None, ['group name is required']
+
+        url = self.hostname + '/settings/rbac/groups/%s' % group
+        return self._get(url)
+
+    def delete_user_group(self, group):
+        if group is None:
+            return None, ['group name is required']
+
+        url = self.hostname + '/settings/rbac/groups/%s' % group
+        return self._delete(url, dict())
+
+    def set_user_group(self, group, roles, description, ldap_ref):
+        if group is None:
+            return None, ['Group name is required']
+        if roles is None:
+            return None, ['roles are required']
+
+        url = self.hostname + '/settings/rbac/groups/%s' % group
+        params = {'roles': roles}
+        if description is not None:
+            params['description'] = description
+        if ldap_ref is not None:
+            params['ldap_group_ref'] = ldap_ref
+
+        return self._put(url, params)
+
+    def list_user_groups(self):
+        url = self.hostname + '/settings/rbac/groups'
+        return self._get(url)
+
     def get_password_policy(self):
         url = self.hostname + '/settings/passwordPolicy'
         return self._get(url)
@@ -1132,8 +1176,8 @@ class ClusterManager(object):
         url = self.hostname + '/settings/indexes'
         return self._get(url)
 
-    def ldap_settings(self, enabled, read_only_admins, admins):
-        """ Sets LDAP Settings
+    def sasl_settings(self, enabled, read_only_admins, admins):
+        """ Sets Sasl Settings
 
         enabled - The string "true" or "false"
         admins - A new line separated list or the string "asterisk"
@@ -1147,6 +1191,59 @@ class ClusterManager(object):
             params["roAdmins"] = read_only_admins
         if admins is not None:
             params["admins"] = admins
+
+        return self._post_form_encoded(url, params)
+
+    def get_ldap(self):
+        url = self.hostname + '/settings/ldap'
+        return self._get(url)
+
+    def ldap_settings(self, authentication_enabled, authorization_enabled, hosts, port, encryption, user_dn_mapping,
+                    timeout, max_parallel, max_cache, cache_lifetime, query_dn, query_pass, group_query,
+                    nested_groups, nested_groups_max_depth, disabled_ca_ver, ca):
+        url = self.hostname + '/settings/ldap'
+        if authentication_enabled is None or authorization_enabled is None:
+            return ['authentication-enabled and authorization-enabled are required']
+
+        if hosts is None:
+            return ['hosts are required']
+
+        params = {
+            "authentication_enabled": authentication_enabled,
+            "authorization_enabled": authorization_enabled,
+            "hosts": hosts
+        }
+
+        if port is not None:
+            params['port'] = port
+        if encryption is not None:
+            params['encryption'] = encryption
+        if user_dn_mapping is not None:
+            params['userd_dn_mapping'] = user_dn_mapping
+        if timeout is not None:
+            params['request_timeout'] = timeout
+        if max_parallel is not None:
+            params['max_parallel_connections'] = max_parallel
+        if max_cache is not None:
+            params['max_cache_size'] = max_cache
+        if cache_lifetime is not None:
+            params['cache_value_lifetime'] = cache_lifetime
+        if query_dn is not None:
+            params['query_dn'] = query_dn
+        if query_pass is not None:
+            params['query_pass'] = query_pass
+        if group_query is not None:
+            params['groups_query'] = group_query
+        if nested_groups is not None:
+            params['nested_groups_enabled'] = nested_groups
+        if nested_groups_max_depth is not None:
+            params['nested_groups_max_depth'] = nested_groups_max_depth
+        if disabled_ca_ver:
+            params['server_cert_validation'] = 'false'
+        else:
+            params['server_cert_validation'] = 'true'
+        if ca and not disabled_ca_ver:
+            params['cacert'] = ca
 
         return self._post_form_encoded(url, params)
 

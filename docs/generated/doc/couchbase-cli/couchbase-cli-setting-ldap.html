@@ -436,7 +436,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h1>couchbase-cli-setting-ldap(1) Manual Page</h1>
 <h2 id="_name">NAME</h2>
 <div class="sectionbody">
-<p>couchbase-cli-setting-ldap - Modifies LDAP settings</p>
+<p>couchbase-cli-setting-ldap - Configure LDAP</p>
 </div>
 </div>
 <div id="content">
@@ -445,9 +445,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli setting-ldap</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-    [--password &lt;password&gt;] [--ldap-admins &lt;admins_list&gt;]
-    [--ldap-roadmins &lt;ro_admin_list&gt;] [--ldap-default &lt;default&gt;]
-    [--ldap-enabled &lt;num&gt;]</pre>
+    [--password &lt;password&gt;] [--authentication-enabled &lt;1|0&gt;]
+    [--authorization-enabled &lt;1|0&gt;] [--hosts &lt;host_list&gt;] [--port &lt;port&gt;]
+    [--encryption &lt;tls|startTLS|none&gt;] [--disable-cert-validation]
+    [--ca-cert &lt;path&gt;] [--user-dn-mapping &lt;mapping&gt;][--request-timeout &lt;ms&gt;]
+    [--max-parallel &lt;max&gt;] [--max-cache-size &lt;size&gt;]
+    [--cache-value-lifetime &lt;ms&gt;] [--query-dn &lt;dn&gt;] [--query-pass &lt;pass&gt;]
+    [--group-query &lt;query&gt;] [--enable-nested-groups &lt;0|1&gt;]
+    [--nested-group-max-depth &lt;depth&gt;]</pre>
 </div>
 </div>
 </div>
@@ -455,8 +460,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This command allows users to enable LDAP on their cluster as well as add
-administrator and read-only administrator LDAP users to their cluster.</p>
+<p>This command allows administrators to configure and connect LDAP servers.</p>
 </div>
 </div>
 </div>
@@ -488,97 +492,89 @@ given then the command will prompt the user for a password through
 non-echoed stdin. You may also specify your password by using the
 environment variable CB_REST_PASSWORD.</p>
 </dd>
-<dt class="hdlist1">--ldap-admins &lt;admins_list&gt;</dt>
+<dt class="hdlist1">--authentication-enabled &lt;1|0&gt;</dt>
 <dd>
-<p>A list of LDAP users who should have administrator privileges on this
-cluster. This list should be comma separated if multiple users are being
-added.</p>
+<p>Enables using LDAP to authenticate users</p>
 </dd>
-<dt class="hdlist1">--ldap-roadmins &lt;ro_admin_list&gt;</dt>
+<dt class="hdlist1">--authorization-enabled &lt;1|0&gt;</dt>
 <dd>
-<p>A list of LDAP users who should have read-only administrator privileges on
-this cluster. This list should be comma separated if multiple users are
-being added.</p>
+<p>Enables using LDAP to give users authorization</p>
 </dd>
-<dt class="hdlist1">--ldap-enabled &lt;num&gt;</dt>
+<dt class="hdlist1">--host &lt;host_list&gt;</dt>
 <dd>
-<p>Enables or disables LDAP on this cluster. To enable LDAP set this option to
-"1". To disable LDAP set this parameter to "0".</p>
+<p>Specifies a comma separated list of LDAP hosts.</p>
 </dd>
-<dt class="hdlist1">--ldap-default &lt;default&gt;</dt>
+<dt class="hdlist1">--port &lt;port&gt;</dt>
 <dd>
-<p>Specifies the default role for LDAP users who have not been explicitly been
-added to the cluster. This option may be set to "admins", "ro_admins", or
-"none". If this option is set to "admins" then all LDAP users not explicitly
-add to this cluster have administrator privileges. If this option is set to
-"roadmins" then all LDAP users not explicitly add to this cluster have
-read-only administrator privileges. If this option is set to "none" then all
-LDAP users not explicitly add to this cluster will have no access. This
-option default to "none".</p>
+<p>LDAP port.</p>
+</dd>
+<dt class="hdlist1">--encryption &lt;ssl|tsl|none&gt;</dt>
+<dd>
+<p>Security used to communicate with LDAP servers. Supported options
+[tls, startTLS, none].</p>
+</dd>
+<dt class="hdlist1">--disable-cert-validation</dt>
+<dd>
+<p>Disable server certificate validation.</p>
+</dd>
+<dt class="hdlist1">--ca-cert &lt;path&gt;</dt>
+<dd>
+<p>CA certificate to be used for server&#8217;s certificate validation, required if
+certificate validation is not disabled</p>
+</dd>
+<dt class="hdlist1">--request-timeout &lt;ms&gt;</dt>
+<dd>
+<p>The timeout for LDAP requests in milliseconds.</p>
+</dd>
+<dt class="hdlist1">--user-dn-mapping &lt;mapping&gt;</dt>
+<dd>
+<p>User to DN mapping, if not specified username is used as user&#8217;s DN.</p>
+</dd>
+<dt class="hdlist1">--max-parallel-connections &lt;max&gt;</dt>
+<dd>
+<p>Maximum number of parallel connections that can be established with LDAP
+servers.</p>
+</dd>
+<dt class="hdlist1">--max-cache-size &lt;size&gt;</dt>
+<dd>
+<p>Maximum size of cache, defaults to 10000.</p>
+</dd>
+<dt class="hdlist1">--cache-value-lifetime &lt;ms&gt;</dt>
+<dd>
+<p>Lifetime of values in cache in milliseconds. Default 300000 ms.</p>
+</dd>
+<dt class="hdlist1">--query-dn &lt;dn&gt;</dt>
+<dd>
+<p>DN for groups synchronization</p>
+</dd>
+<dt class="hdlist1">--query-pass &lt;pass&gt;</dt>
+<dd>
+<p>Password for groups synchronization</p>
+</dd>
+<dt class="hdlist1">--group-query &lt;query&gt;</dt>
+<dd>
+<p>LDAP query to get users' group by username. RFC4516 format, like
+'%D?memberOf?base'. This option works the following way: if attribute is
+present in the query the list of attributes in the query result is considered
+as list of user’s groups (single entry result is expected). %u and %D
+placeholders could be used.
+%u - username,
+%D - user’s DN.
+If attribute is not present in the query every returned entry is considered
+as a group;</p>
+</dd>
+<dt class="hdlist1">--nested-groups-enabled &lt;0|1&gt;</dt>
+<dd>
+<p>If enabled Couchbase server will try to recursively search for groups for
+every discovered ldap group.</p>
+</dd>
+<dt class="hdlist1">--nested-groups-max-depth &lt;depth&gt;</dt>
+<dd>
+<p>Maximum number of recursive groups requests the server is allowed to perform.
+This option is only valid when nested groups are enabled. The depth is an
+integer between 1 and 100, default is 10.</p>
 </dd>
 </dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_host_formats">HOST FORMATS</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>When specifying a host for the couchbase-cli command the following formats are expected:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>couchbase://&lt;addr&gt;</code></p>
-</li>
-<li>
-<p><code>&lt;addr&gt;:&lt;port&gt;</code></p>
-</li>
-<li>
-<p><code>http://&lt;addr&gt;:&lt;port&gt;</code></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>It is recommended to use the couchbase://&lt;addr&gt; format for standard
-installations. The other two formats allow an option to take a port number which
-is needed for non-default installations where the admin port has been set up on
-a port other that 8091.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_examples">EXAMPLES</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To enable LDAP on a cluster run the following command.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
- --password password --ldap-enabled 1</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To add users alice and barry as Administrators and users clair and daniel as
-Read-Only Administrators run the following command.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
- --password password --ldap-enabled 1 --ldap-admins alice,barry \
- --ldap-ro-admins clair,daniel</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To enable LDAP and allow all LDAP users to have Amdinistrator access run the
-following command.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
- --password password --ldap-enabled 1 --ldap-default admins</pre>
-</div>
 </div>
 </div>
 </div>
@@ -608,8 +604,7 @@ password are not cached in their command line history.</p>
 <h2 id="_see_also">SEE ALSO</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><a href="couchbase-cli-admin-role-manage.html">couchbase-cli-admin-role-manage(1)</a>,
-<a href="couchbase-cli-user-manage.html">couchbase-cli-user-manage(1)</a></p>
+<p><a href="couchbase-cli-user-manage.html">couchbase-cli-user-manage(1)</a></p>
 </div>
 </div>
 </div>

@@ -6,70 +6,94 @@ ifdef::doctype-manpage[]
 
 couchbase-cli-setting-ldap -
 endif::[]
-Modifies LDAP settings
+Configure LDAP
 
 == SYNOPSIS
-
 [verse]
 _couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--ldap-admins <admins_list>]
-    [--ldap-roadmins <ro_admin_list>] [--ldap-default <default>]
-    [--ldap-enabled <num>]
+    [--password <password>] [--authentication-enabled <1|0>]
+    [--authorization-enabled <1|0>] [--hosts <host_list>] [--port <port>]
+    [--encryption <tls|startTLS|none>] [--disable-cert-validation]
+    [--ca-cert <path>] [--user-dn-mapping <mapping>][--request-timeout <ms>]
+    [--max-parallel <max>] [--max-cache-size <size>]
+    [--cache-value-lifetime <ms>] [--query-dn <dn>] [--query-pass <pass>]
+    [--group-query <query>] [--enable-nested-groups <0|1>]
+    [--nested-group-max-depth <depth>]
+
 
 == DESCRIPTION
 
-This command allows users to enable LDAP on their cluster as well as add
-administrator and read-only administrator LDAP users to their cluster.
+This command allows administrators to configure and connect LDAP servers.
 
 == OPTIONS
 
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
---ldap-admins <admins_list>::
-  A list of LDAP users who should have administrator privileges on this
-  cluster. This list should be comma separated if multiple users are being
-  added.
+--authentication-enabled <1|0>::
+  Enables using LDAP to authenticate users
 
---ldap-roadmins <ro_admin_list>::
-  A list of LDAP users who should have read-only administrator privileges on
-  this cluster. This list should be comma separated if multiple users are
-  being added.
+--authorization-enabled <1|0>::
+  Enables using LDAP to give users authorization
 
---ldap-enabled <num>::
-  Enables or disables LDAP on this cluster. To enable LDAP set this option to
-  "1". To disable LDAP set this parameter to "0".
+--host <host_list>::
+  Specifies a comma separated list of LDAP hosts.
 
---ldap-default <default>::
-  Specifies the default role for LDAP users who have not been explicitly been
-  added to the cluster. This option may be set to "admins", "ro_admins", or
-  "none". If this option is set to "admins" then all LDAP users not explicitly
-  add to this cluster have administrator privileges. If this option is set to
-  "roadmins" then all LDAP users not explicitly add to this cluster have
-  read-only administrator privileges. If this option is set to "none" then all
-  LDAP users not explicitly add to this cluster will have no access. This
-  option default to "none".
+--port <port>::
+  LDAP port.
 
-include::{partialsdir}/cbcli/part-host-formats.adoc[]
+--encryption <ssl|tsl|none>::
+  Security used to communicate with LDAP servers. Supported options
+  [tls, startTLS, none].
 
-== EXAMPLES
+--disable-cert-validation::
+  Disable server certificate validation.
 
-To enable LDAP on a cluster run the following command.
+--ca-cert <path>::
+  CA certificate to be used for server's certificate validation, required if
+  certificate validation is not disabled
 
-  $ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
-   --password password --ldap-enabled 1
+--request-timeout <ms>::
+  The timeout for LDAP requests in milliseconds.
 
-To add users alice and barry as Administrators and users clair and daniel as
-Read-Only Administrators run the following command.
+--user-dn-mapping <mapping>::
+  User to DN mapping, if not specified username is used as user's DN.
 
-  $ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
-   --password password --ldap-enabled 1 --ldap-admins alice,barry \
-   --ldap-ro-admins clair,daniel
+--max-parallel-connections <max>::
+  Maximum number of parallel connections that can be established with LDAP
+  servers.
 
-To enable LDAP and allow all LDAP users to have Amdinistrator access run the
-following command.
+--max-cache-size <size>::
+  Maximum size of cache, defaults to 10000.
 
-  $ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
-   --password password --ldap-enabled 1 --ldap-default admins
+--cache-value-lifetime <ms>::
+  Lifetime of values in cache in milliseconds. Default 300000 ms.
+
+--query-dn <dn>::
+  DN for groups synchronization
+
+--query-pass <pass>::
+  Password for groups synchronization
+
+--group-query <query>::
+  LDAP query to get users' group by username. RFC4516 format, like
+  '%D?memberOf?base'. This option works the following way: if attribute is
+  present in the query the list of attributes in the query result is considered
+  as list of user’s groups (single entry result is expected). %u and %D
+  placeholders could be used.
+  %u - username,
+  %D - user’s DN.
+  If attribute is not present in the query every returned entry is considered
+  as a group;
+
+--nested-groups-enabled <0|1>::
+  If enabled Couchbase server will try to recursively search for groups for
+  every discovered ldap group.
+
+--nested-groups-max-depth <depth>::
+  Maximum number of recursive groups requests the server is allowed to perform.
+  This option is only valid when nested groups are enabled. The depth is an
+  integer between 1 and 100, default is 10.
+
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
@@ -77,7 +101,6 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 
 == SEE ALSO
 
-man:couchbase-cli-admin-role-manage[1],
 man:couchbase-cli-user-manage[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]
