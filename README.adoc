@@ -34,6 +34,13 @@ The generate.sh script requires the *asciidoctor* command to be available on
 your machine (which in turn requires Ruby). Installation of this software is
 covered in the next section.
 
+== Running unit test
+
+To run the unit tests use the following command from the `couchbase-cli` directory.
+
+  $ python -m unittest discover -s ./test
+
+
 === macOS Requirements
 
  $ brew install asciidoctor
