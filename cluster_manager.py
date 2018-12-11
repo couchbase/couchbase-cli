@@ -1367,7 +1367,7 @@ class ClusterManager(object):
         return self._post_form_encoded(url, params)
 
     def delete_xdcr_replicator(self, replicator_id):
-        url = self.hostname + '/controller/cancelXCDR/' + urllib.quote_plus(replicator_id)
+        url = self.hostname + '/controller/cancelXDCR/' + urllib.quote_plus(replicator_id)
         return self._delete(url, None)
 
     def pause_xdcr_replication(self, replicator_id):
