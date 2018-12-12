@@ -10,6 +10,7 @@ import socket
 import random
 import struct
 import exceptions
+import ssl
 
 from couchbaseConstants import REQ_MAGIC_BYTE, RES_MAGIC_BYTE
 from couchbaseConstants import REQ_PKT_FMT, RES_PKT_FMT, MIN_RECV_PACKET
@@ -77,18 +78,24 @@ class MemcachedClient(object):
 
     vbucketId = 0
 
-    def __init__(self, host='127.0.0.1', port=11211, family=socket.AF_UNSPEC):
+    def __init__(self, host='127.0.0.1', port=11211, family=socket.AF_UNSPEC, use_ssl=False, verify=True, cacert=None):
         self.host = host
         self.port = port
-
         for info in socket.getaddrinfo(self.host, self.port, family,
                                        socket.SOCK_STREAM):
             _family, socktype, proto, _, sockaddr = info
             try:
                 sock = socket.socket(_family, socktype, proto)
                 sock.settimeout(10)
-                sock.connect_ex(sockaddr)
+                if use_ssl:
+                    certReq = ssl.CERT_REQUIRED
+                    if not verify:
+                        certReq = ssl.CERT_NONE
+                    sock = ssl.wrap_socket(sock, server_side=False, do_handshake_on_connect=True, cert_reqs=certReq,
+                                           ca_certs=cacert)
+
                 self.s = sock
+                self.s.connect_ex(sockaddr)
                 break
             except socket.error as sock_error:
                 # If we get here socket objects will be close()d via

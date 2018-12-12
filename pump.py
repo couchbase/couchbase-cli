@@ -18,6 +18,7 @@ import zlib
 import platform
 import subprocess
 import socket
+import ssl
 
 import couchbaseConstants
 import cb_bin_client
@@ -967,14 +968,20 @@ def parse_spec(opts, spec, port):
 
     return host, port, username, password, p[2]
 
-def rest_request(host, port, user, pswd, ssl, path, method='GET', body='', reason='', headers=None):
+def rest_request(host, port, user, pswd, use_ssl, path, method='GET', body='', reason='', headers=None, verify=True,
+                 ca_cert=None):
     if reason:
         reason = "; reason: %s" % (reason)
     logging.debug("rest_request: %s@%s:%s%s%s" % (tag_user_data(user), host, port, path, reason))
-    if ssl:
+    if use_ssl:
         if port not in [couchbaseConstants.SSL_REST_PORT, couchbaseConstants.SSL_QUERY_PORT]:
             return ("error: invalid port %s used when ssl option is specified") % port, None, None
-        conn = httplib.HTTPSConnection(host, port)
+        ctx = ssl.create_default_context(cafile=ca_cert)
+        if not verify:
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+
+        conn = httplib.HTTPSConnection(host, port, context=ctx)
     else:
         conn = httplib.HTTPConnection(host, port)
     try:
@@ -1010,9 +1017,9 @@ def rest_headers(user, pswd, headers=None):
         headers['Authorization'] = auth
     return headers
 
-def rest_request_json(host, port, user, pswd, ssl, path, reason=''):
+def rest_request_json(host, port, user, pswd, ssl, path, reason='', verify=True, cacert=None):
     err, conn, rest_json = rest_request(host, port, user, pswd, ssl, path,
-                                        reason=reason)
+                                        reason=reason, verify=verify, ca_cert=cacert)
     if err:
         return err, None, None
     if conn:
@@ -1119,8 +1126,8 @@ def hostport(hoststring, port=11210):
             port = int(matches.group(3))
     return host, port
 
-def get_mcd_conn(host, port, username, password, bucket):
-    conn = cb_bin_client.MemcachedClient(host, port)
+def get_mcd_conn(host, port, username, password, bucket, use_ssl=False, verify=True, ca_cert=None):
+    conn = cb_bin_client.MemcachedClient(host, port, use_ssl=use_ssl, verify=verify, cacert=ca_cert)
     if not conn:
         return "error: could not connect to memcached: " + \
             host + ":" + str(port), None

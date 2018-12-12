@@ -315,7 +315,7 @@ class MCSink(pump.Sink):
             pump.parse_spec(opts, spec, int(getattr(opts, "port", 11211)))
         if opts.ssl:
             ports = couchbaseConstants.SSL_PORT
-        rv, conn = MCSink.connect_mc(host, port, user, pswd, None)
+        rv, conn = MCSink.connect_mc(host, port, user, pswd, None, opts.ssl, opts.no_ssl_verify, opts.cacert)
         if rv != 0:
             return rv, None
         conn.close()
@@ -341,16 +341,17 @@ class MCSink(pump.Sink):
                             int(getattr(self.opts, "port", 11211)))
         if self.opts.ssl:
             port = couchbaseConstants.SSL_PORT
-        return MCSink.connect_mc(host, port, user, pswd, self.sink_map["name"])
+        return MCSink.connect_mc(host, port, user, pswd, self.sink_map["name"], self.opts.ssl)
 
     @staticmethod
-    def connect_mc(host, port, username, password, bucket):
+    def connect_mc(host, port, username, password, bucket, use_ssl=False, verify=True, ca_cert=None):
         username = str(username).encode("ascii")
         password = str(password).encode("ascii")
         if bucket is not None:
             bucket = str(bucket).encode("ascii")
 
-        return pump.get_mcd_conn(host, port, username, password, bucket)
+        return pump.get_mcd_conn(host, port, username, password, bucket, use_ssl=use_ssl, verify=verify,
+                                 ca_cert=ca_cert)
 
     def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque, dtype, nmeta, conf_res):
         ext_meta = ''

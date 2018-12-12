@@ -234,8 +234,9 @@ class ClusterManager(object):
                 n1ql_port_name = 'n1qlSSL'
                 mgmt_port_name = 'mgmtSSL'
                 event_port_name = 'eventingSSL'
+                index_port_name = 'indexHttps'
+                fts_port_name = 'ftsSSL'
 
-                # The is no ssl port for the index or fts services
 
             if service_name == MGMT_SERVICE and mgmt_port_name in node['services']:
                 hosts.append(http_prefix + node_host + ':' + str(node['services'][mgmt_port_name]))

@@ -6,7 +6,7 @@ Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 
 import struct
 
-SSL_PORT = 11209
+SSL_PORT = 11207
 SSL_REST_PORT = 18091
 QUERY_PORT = 8093
 SSL_QUERY_PORT = 18093
