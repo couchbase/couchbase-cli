@@ -56,7 +56,8 @@ class GenSource(pump.Source):
                'prefix': "",
                'ratio-sets': 0.05,
                'json': 0,
-               'low-compression': False}
+               'low-compression': False,
+               'xattr': False}
         for kv in spec[len("gen:"):].split(','):
             if kv:
                 k = kv.split('=')[0].strip()
@@ -87,6 +88,7 @@ class GenSource(pump.Source):
         ratio_sets = cfg['ratio-sets']
         exit_after_creates = cfg['exit-after-creates']
         low_compression  = cfg['low-compression']
+        xattrs = cfg['xattr']
         itr = None
         collections = self.opts.collection
         if collections:
@@ -122,7 +124,10 @@ class GenSource(pump.Source):
                batch.bytes < batch_max_bytes):
             if ratio_sets >= float(self.cur_sets) / float(self.cur_ops or 1):
                 self.cur_sets = self.cur_sets + 1
-                cmd = couchbaseConstants.CMD_TAP_MUTATION
+                if xattrs:
+                    cmd = couchbaseConstants.CMD_SUBDOC_MULTIPATH_MUTATION
+                else:
+                    cmd = couchbaseConstants.CMD_DCP_MUTATION
                 if self.cur_items < max_items:
                     key = str(self.cur_items)
                     self.cur_items = self.cur_items + 1
@@ -130,7 +135,10 @@ class GenSource(pump.Source):
                     key = str(self.cur_sets % self.cur_items)
             else:
                 self.cur_gets = self.cur_gets + 1
-                cmd = couchbaseConstants.CMD_GET
+                if xattrs:
+                    cmd = couchbaseConstants.CMD_SUBDOC_MULTIPATH_LOOKUP
+                else:
+                    cmd = couchbaseConstants.CMD_GET
                 key = str(self.cur_gets % self.cur_items)
             self.cur_ops = self.cur_ops + 1
 
@@ -138,6 +146,9 @@ class GenSource(pump.Source):
                 value = self.body % (prefix, key, int(key) % 101, key)
             else:
                 value = self.body
+
+            if xattrs:
+                value = {"obj": value, "xattr_f": "field1", "xattr_v": "\"value1\""}
 
             # generate a collection key
             if itr:

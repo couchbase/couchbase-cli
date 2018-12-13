@@ -57,7 +57,8 @@ class WorkloadGen(pump_transfer.Transfer):
                     "size" : "min-value-size",
                     "prefix" : "prefix",
                     "json" : "json",
-                    "low_compression" : "low-compression"
+                    "low_compression" : "low-compression",
+                    "xattr":"xattr"
                    }
 
         sink_opts = {"node" : "http://"}
@@ -170,6 +171,8 @@ class WorkloadGen(pump_transfer.Transfer):
                      help="generate document data that is difficult to compress")
         p.add_option("-c", "--collection", type="string", action="append",
                      help=optparse.SUPPRESS_HELP)
+        p.add_option('--xattr', action="store_true", default=False,
+                     help='generate extended attributes for inserted documents')
         return p
 
 

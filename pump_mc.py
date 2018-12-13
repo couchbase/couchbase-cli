@@ -167,6 +167,19 @@ class MCSink(pump.Sink):
             if self.skip(key, vbucket_id_msg):
                 continue
 
+            if cmd == couchbaseConstants.CMD_SUBDOC_MULTIPATH_MUTATION:
+                err, req = self.format_multipath_mutation(key, val, vbucket_id, cas, i)
+                if err != 0:
+                    return err
+                self.append_req(m, req)
+                continue
+            if cmd == couchbaseConstants.CMD_SUBDOC_MULTIPATH_LOOKUP:
+                err, req = self.format_multipath_lookup(key, val, vbucket_id, cas, i)
+                if err != 0:
+                    return err
+                self.append_req(m, req)
+                continue
+
             rv, cmd = self.translate_cmd(cmd, operation, meta)
             if rv != 0:
                 return rv
@@ -201,6 +214,55 @@ class MCSink(pump.Sink):
                 return "error: conn.sendall() exception: %s" % (e)
 
         return 0
+
+    @staticmethod
+    def format_multipath_mutation(key, value, vbucketId, cas=0, opaque=0):
+        if 'obj' not in value:
+            return 'value has invalid format for multipath mutation', None
+        if 'xattr_f' not in value:
+            return 'value has invalid format for multipath mutation', None
+        if 'xattr_v' not in value:
+            return 'value has invalid format for multipath mutation', None
+
+        obj = value['obj']
+        xattr_f = value['xattr_f']
+        xattr_v = value['xattr_v']
+
+        subop_format = ">BBHI"
+        sbcmd_len = 8 * 2 + len(obj) + len(xattr_f) + len(xattr_v)
+        total_body_len = sbcmd_len + 1 +len(key)
+        subcmd_msg0 = struct.pack(subop_format, couchbaseConstants.CMD_SUBDOC_DICT_UPSERT,
+                                  couchbaseConstants.SUBDOC_FLAG_XATTR_PATH, len(xattr_f), len(xattr_v))
+        subcmd_msg0 += xattr_f + xattr_v
+        subcmd_msg1 = struct.pack(subop_format, couchbaseConstants.CMD_SET, 0,
+                                 0, len(obj))
+        subcmd_msg1 += obj
+
+        msg_head = struct.pack(couchbaseConstants.REQ_PKT_FMT, couchbaseConstants.REQ_MAGIC_BYTE,
+                               couchbaseConstants.CMD_SUBDOC_MULTIPATH_MUTATION, len(key),
+                               1, 0, vbucketId, total_body_len, opaque, cas)
+        extras = struct.pack(">B", couchbaseConstants.SUBDOC_FLAG_MKDOC)
+
+        return 0, (msg_head+extras+key+subcmd_msg0+subcmd_msg1, None, None, None, None)
+
+    @staticmethod
+    def format_multipath_lookup(key, value, vbucketId, cas=0, opaque=0):
+        if 'xattr_f' not in value:
+            return 'value has invalid format for multipath lookup', None
+
+        field = value['xattr_f']
+        subcmd_fmt = '>BBH'
+        subcmd_msg0 = struct.pack(subcmd_fmt, couchbaseConstants.CMD_SUBDOC_GET,
+                                  couchbaseConstants.SUBDOC_FLAG_XATTR_PATH, len(field))
+        subcmd_msg0 += field
+        subcmd_msg1 = struct.pack(subcmd_fmt, couchbaseConstants.CMD_GET, 0, 0)
+
+        total_body_len = len(subcmd_msg0) +len(subcmd_msg1) + len(key)
+        msg_head = struct.pack(couchbaseConstants.REQ_PKT_FMT, couchbaseConstants.REQ_MAGIC_BYTE,
+                               couchbaseConstants.CMD_SUBDOC_MULTIPATH_LOOKUP, len(key),
+                               0, 0, vbucketId, total_body_len, opaque, cas)
+
+        return 0, (msg_head+key+subcmd_msg0+subcmd_msg1, None, None, None, None)
 
     def recv_msgs(self, conn, msgs, vbucket_id=None, verify_opaque=True):
         refresh = False
