@@ -76,7 +76,6 @@ class CSVSource(pump.Source):
 
         cmd = couchbaseConstants.CMD_TAP_MUTATION
         vbucket_id = 0x0000ffff
-        cas, exp, flg = 0, 0, 0
 
         while (self.r and
                batch.size() < batch_max_size and
@@ -92,8 +91,7 @@ class CSVSource(pump.Source):
                     else:
                         doc[field] = number_try_parse(vals[i])
                 if doc['id']:
-                    doc_json = json.dumps(doc)
-                    msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc_json, 0, 0, 0, 0)
+                    msg = (cmd, vbucket_id, doc['id'], doc['flags'], doc['expiration'], 0, '', doc['value'], 0, 0, 0, 0)
                     batch.append(msg, len(doc))
             except StopIteration:
                 self.done = True
