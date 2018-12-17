@@ -1135,7 +1135,7 @@ class TestXdcrReplicate(CommandTest):
 
     def test_delete_replicate(self):
         self.no_error_run(self.command + ['--delete', '--xdcr-replicator', '1'], self.server_args)
-        self.assertIn('DELETE:/controller/cancelXCDR/1', self.server.trace)
+        self.assertIn('DELETE:/controller/cancelXDCR/1', self.server.trace)
 
     def test_settings(self):
         self.no_error_run(self.command + ['--settings', '--xdcr-replicator', '1', '--filter-expression', 'key:',

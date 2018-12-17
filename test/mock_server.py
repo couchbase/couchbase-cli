@@ -307,7 +307,7 @@ endpoints = [
     ('/controller/startGracefulFailover$', {'POST': do_nothing}),
     ('/controller/cancelLogsCollection$', {'POST': do_nothing}),
     ('/controller/createReplication$', {'POST': do_nothing}),
-    ('/controller/cancelXCDR/(\d|\w)+$', {'DELETE': do_nothing}),
+    ('/controller/cancelXDCR/(\d|\w)+$', {'DELETE': do_nothing}),
     ('/controller/setAutoCompaction$', {'POST': do_nothing}),
     ('/controller/startLogsCollection', {'POST': start_log_collection})
 ]
