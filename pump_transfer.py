@@ -277,8 +277,8 @@ class Backup(Transfer):
 
     def opt_parser_options(self, p):
         p.add_option("-b", "--bucket-source",
-                     action="store", type="string", default=None,
-                     help="""single bucket from source to backup""")
+                     action="append", type="string", default=[],
+                     help="""single or multiple buckets from source to backup""")
         p.add_option("", "--single-node",
                      action="store_true", default=False,
                      help="""use a single server node from the source only,
