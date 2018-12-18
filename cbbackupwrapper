@@ -241,6 +241,8 @@ if __name__ == '__main__':
     path = args.path.strip()
     if path == ".":
         path = os.path.abspath(path)
+    if backupDir == ".":
+        backupDir = os.path.abspath(backupDir)
 
     # Check to see if root backup directory exists
     if not os.path.isdir(backupDir):
