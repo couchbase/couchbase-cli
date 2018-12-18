@@ -1032,10 +1032,17 @@ def rest_request_json(host, port, user, pswd, ssl, path, reason='', verify=True,
                 "; please check URL, username (-u) and password (-p)") % \
                 (host, port, path, e), None, None
 
-def rest_couchbase(opts, spec):
+def rest_couchbase(opts, spec, check_sink_credential=False):
     spec = spec.replace('couchbase://', 'http://')
     spec_parts = parse_spec(opts, spec, 8091)
-    rest = ClusterManager(spec, opts.username, opts.password, opts.ssl, False,
+
+    username = opts.username
+    password = opts.password
+    if check_sink_credential and opts.username_dst is not None and opts.password_dst is not None:
+        username = opts.username_dest
+        password = opts.password_dest
+
+    rest = ClusterManager(spec, username, password, opts.ssl, False,
                           None, False)
 
     result, errors = rest.list_buckets(True)

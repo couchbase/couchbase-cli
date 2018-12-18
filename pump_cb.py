@@ -149,7 +149,9 @@ class CBSink(pump_mc.MCSink):
 
     @staticmethod
     def check(opts, spec, source_map):
-        rv, sink_map = pump.rest_couchbase(opts, spec)
+
+        rv, sink_map = pump.rest_couchbase(opts, spec,
+                                           opts.username_dest is not None and opts.password_dest is not None)
         if rv != 0:
             return rv, None
 
@@ -199,7 +201,12 @@ class CBSink(pump_mc.MCSink):
             return "error: could not parse fts index definitions; exception: %s" % (e)
 
         try:
-            rest = ClusterManager(sink_spec, opts.username, opts.password, opts.ssl, opts.no_ssl_verify,
+            username = opts.username
+            password = opts.password
+            if opts.username_dest is not None and opts.password_dest is not None:
+                username = opts.username_dest
+                password = opts.password_dest
+            rest = ClusterManager(sink_spec, username, password, opts.ssl, opts.no_ssl_verify,
                                   opts.cacert, False)
             _, errors = rest.restore_fts_index_metadata(index_defs)
             return errors
@@ -220,7 +227,12 @@ class CBSink(pump_mc.MCSink):
 
         try:
             sink_bucket = sink_map['buckets'][0]
-            rest = ClusterManager(sink_spec, opts.username, opts.password, opts.ssl, opts.no_ssl_verify,
+            username = opts.username
+            password = opts.password
+            if opts.username_dest is not None and opts.password_dest is not None:
+                username = opts.username_dest
+                password = opts.password_dest
+            rest = ClusterManager(sink_spec, username, password, opts.ssl, opts.no_ssl_verify,
                                   opts.cacert, False)
             _, errors = rest.restore_index_metadata(sink_bucket['name'], sd)
             return errors
@@ -263,6 +275,10 @@ class CBSink(pump_mc.MCSink):
         if user is None:
             user = spec_parts[2] # Default to the main REST user/pwsd.
             pswd = spec_parts[3]
+
+        if opts.username_dest is not None and opts.password_dest is not None:
+            user = opts.username_dest
+            user = opts.password_dest
         if type(sd) is dict:
 
             id = sd.get('_id', None)
@@ -365,7 +381,12 @@ class CBSink(pump_mc.MCSink):
             if self.opts.ssl:
                 port = couchbaseConstants.SSL_PORT
             bucket = bucket['name']
-            rv, conn = CBSink.connect_mc(host, port, self.opts.username, self.opts.password, bucket, self.opts.ssl,
+            username = self.opts.username
+            password = self.opts.password
+            if self.opts.username_dest is not None and self.opts.password_dest is not None:
+                username = self.opts.username_dest
+                password = self.opts.password_dest
+            rv, conn = CBSink.connect_mc(host, port, username, password, bucket, self.opts.ssl,
                                          self.opts.no_ssl_verify, self.opts.cacert)
             if rv != 0:
                 logging.error("error: CBSink.connect() for send: " + rv)

@@ -186,6 +186,12 @@ from a source cluster into the caching layer at the destination""")
         p.add_option("-p", "--password",
                      action="store", type="string", default=None,
                      help="REST password for source cluster or server node")
+        p.add_option("-U", "--username-dest",
+                     action="store", type="string", default=None,
+                     help="REST username for destination cluster or server node")
+        p.add_option("-P", "--password-dest",
+                     action="store", type="string", default=None,
+                     help="REST password for destination cluster or server node")
         p.add_option("-s", "--ssl",
                      action="store_true", default=False,
                      help="Transfer data with SSL enabled")
