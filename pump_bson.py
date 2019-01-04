@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import bson
+import bson # pylint: disable=import-error
 import os
 import json
 import struct

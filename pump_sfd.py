@@ -9,7 +9,7 @@ import json
 import struct
 import threading
 
-import couchstore
+import couchstore # pylint: disable=import-error
 import couchbaseConstants
 import pump
 from cb_bin_client import decodeCollectionID

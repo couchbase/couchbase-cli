@@ -298,6 +298,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 need_ack = False
                 seqno = 0
                 if cmd == couchbaseConstants.CMD_DCP_REQUEST_STREAM:
+                    total_bytes_read -= bytes_read
                     if errcode == couchbaseConstants.ERR_SUCCESS:
                         pair_index = (self.source_bucket['name'], self.source_node['hostname'])
                         start = 0
@@ -408,6 +409,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     if cmd == couchbaseConstants.CMD_DCP_DELETE:
                         batch.adjust_size += 1
                 elif cmd == couchbaseConstants.CMD_DCP_FLUSH:
+                    total_bytes_read -= bytes_read
                     logging.warn("stopping: saw CMD_DCP_FLUSH")
                     self.dcp_done = True
                     break
@@ -425,12 +427,15 @@ class DCPStreamSource(pump.Source, threading.Thread):
                         self.cur['snapshot'][pair_index] = {}
                     self.cur['snapshot'][pair_index][opaque] = (ss_start_seqno, ss_end_seqno)
                 elif cmd == couchbaseConstants.CMD_DCP_NOOP:
+                    total_bytes_read -= bytes_read
                     need_ack = True
                 elif cmd == couchbaseConstants.CMD_DCP_BUFFER_ACK:
+                    total_bytes_read -= bytes_read
                     if errcode != couchbaseConstants.ERR_SUCCESS:
                         logging.warning("buffer ack response errcode:%s" % errcode)
                     continue
                 else:
+                    total_bytes_read -= bytes_read
                     logging.warn("warning: unexpected DCP message: %s" % cmd)
                     return "unexpected DCP message: %s" % cmd, batch
 
@@ -556,7 +561,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
     def ack_buffer_size(self, buf_size):
         if self.flow_control:
             try:
-                opaque=self.r.randint(0, 2**32)
+                opaque = 0
                 self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_BUFFER_ACK, '', '', \
                     opaque, struct.pack(">I", int(buf_size)))
                 logging.debug("Send buffer size: %d" % buf_size)
