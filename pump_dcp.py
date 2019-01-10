@@ -48,7 +48,9 @@ class DCPStreamSource(pump.Source, threading.Thread):
         self.ack_last = False
         self.cmd_last = None
         self.num_msg = 0
-        self.version_supported = self.source_node['version'].split(".") >= ["3", "0", "0"]
+        # change made to support development version
+        self.version_supported = self.source_node['version'].split(".") >= ["3", "0", "0"] or \
+                                 (self.source_node['version'].split(".") == ['0', '0', '0-0000-enterprise'])
         self.recv_min_bytes = int(opts.extra.get("recv_min_bytes", 4096))
         self.batch_max_bytes = int(opts.extra.get("batch_max_bytes", 400000))
         self.flow_control = int(opts.extra.get("flow_control", 1))
@@ -193,15 +195,15 @@ class DCPStreamSource(pump.Source, threading.Thread):
             return None
 
         node_vbucket_map = []
-        nodename = self.source_node.get('hostname', 'N/A').split(":")[0]
+        nodename = self.source_node.get('hostname', 'N/A').split(":")[0] + ":" + str(self.source_node['ports']['direct'])
         nodeindex = -1
         for index, node in enumerate(server_list):
-            if nodename in node:
+            if nodename == node:
                 nodeindex = index
                 break
-        for index, vblist in enumerate(vbucket_map):
+        for vbucket_id, vblist in enumerate(vbucket_map):
             if vblist[0] >= 0 and vblist[0] == nodeindex:
-                node_vbucket_map.append(index)
+                node_vbucket_map.append(vbucket_id)
         return node_vbucket_map
 
     def provide_batch(self):
