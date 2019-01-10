@@ -267,7 +267,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             while (not self.dcp_done and
                    batch.size() < batch_max_size and
                    batch.bytes < batch_max_bytes):
-
+                last_processed = total_bytes_read
                 if self.response.empty():
                     if len(self.stream_list) > 0:
                         logging.debug("no response while there %s active streams" % len(self.stream_list))
