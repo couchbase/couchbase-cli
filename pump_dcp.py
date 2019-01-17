@@ -269,7 +269,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             while (not self.dcp_done and
                    batch.size() < batch_max_size and
                    batch.bytes < batch_max_bytes):
-                last_processed = total_bytes_read
+
                 if self.response.empty():
                     if len(self.stream_list) > 0:
                         logging.debug("no response while there %s active streams" % len(self.stream_list))
@@ -277,12 +277,14 @@ class DCPStreamSource(pump.Source, threading.Thread):
                         no_response_count = no_response_count + 1
                         #if not had a response after a minimum of 30 seconds then state we are done
                         if no_response_count == 120:
-                            logging.warn("no response for 30 seconds while there %s active streams"
+                            logging.warning("no response for 30 seconds while there %s active streams"
                                          % len(self.stream_list))
                             self.dcp_done = True
                     else:
                         self.dcp_done = True
                     continue
+
+                no_response_count = 0
                 unprocessed_size = total_bytes_read - last_processed
                 if unprocessed_size > delta_ack_size:
                     rv = self.ack_buffer_size(unprocessed_size)
@@ -582,7 +584,6 @@ class DCPStreamSource(pump.Source, threading.Thread):
         bytes_read = ''
         rd_timeout = 1
         desc = [self.dcp_conn.s]
-        extra_bytes = 0
         while self.running:
             try:
                 if self.dcp_done:
@@ -606,20 +607,17 @@ class DCPStreamSource(pump.Source, threading.Thread):
                                       bytes_read[0:couchbaseConstants.MIN_RECV_PACKET])
 
                     if len(bytes_read) < (couchbaseConstants.MIN_RECV_PACKET+bodylen):
-                        extra_bytes = len(bytes_read)
                         break
 
                     rd_timeout = 0
-                    body = bytes_read[couchbaseConstants.MIN_RECV_PACKET : \
-                                      couchbaseConstants.MIN_RECV_PACKET+bodylen]
+                    body = bytes_read[couchbaseConstants.MIN_RECV_PACKET:couchbaseConstants.MIN_RECV_PACKET+bodylen]
                     bytes_read = bytes_read[couchbaseConstants.MIN_RECV_PACKET+bodylen:]
                     self.response.put((opcode, status, opaque, cas, keylen, extlen, body, \
                                        bodylen, datatype, \
-                                       couchbaseConstants.MIN_RECV_PACKET+bodylen+extra_bytes))
-                    extra_bytes = 0
+                                       couchbaseConstants.MIN_RECV_PACKET+bodylen))
             except socket.error:
                 break
-            except Exception, e:
+            except Exception:
                 pass
 
     def setup_dcp_streams(self):
