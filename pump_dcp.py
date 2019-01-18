@@ -83,6 +83,9 @@ class DCPStreamSource(pump.Source, threading.Thread):
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
+        # Ephemeral buckets do not have design docs
+        if source_bucket['bucketType'] == 'ephemeral':
+            return 0, None
         spec_parts = source_map.get('spec_parts')
         if not spec_parts:
             return "error: no design spec_parts", None

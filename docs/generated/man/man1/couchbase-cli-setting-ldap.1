@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-ldap
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-01-18
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-01-18" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,7 +35,7 @@ couchbase\-cli\-setting\-ldap \- Modifies LDAP settings
 \fIcouchbase\-cli setting\-ldap\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-ldap\-admins <admins_list>]
     [\-\-ldap\-roadmins <ro_admin_list>] [\-\-ldap\-default <default>]
-    [\-\-ldap\-enable <num>]
+    [\-\-ldap\-enabled <num>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -146,7 +146,7 @@ To enable LDAP on a cluster run the following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-\-username Administrator \(rs
- \-\-password password \-\-enable\-ldap 1
+ \-\-password password \-\-ldap\-enabled 1
 .fi
 .if n .RE
 .sp
@@ -156,7 +156,7 @@ Read\-Only Administrators run the following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-\-username Administrator \(rs
- \-\-password password \-\-enable\-ldap 1 \-\-ldap\-admins alice,barry \(rs
+ \-\-password password \-\-ldap\-enabled 1 \-\-ldap\-admins alice,barry \(rs
  \-\-ldap\-ro\-admins clair,daniel
 .fi
 .if n .RE
@@ -167,7 +167,7 @@ following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-\-username Administrator \(rs
- \-\-password password \-\-enable\-ldap 1 \-\-ldap\-default admins
+ \-\-password password \-\-ldap\-enabled 1 \-\-ldap\-default admins
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

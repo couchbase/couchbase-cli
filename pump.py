@@ -143,10 +143,9 @@ class PumpingStation(ProgressReporter):
                 sys.stderr.write("transfer design doc only. bucket msgs will be skipped.\n")
 
             if not self.opts.extra.get("data_only", 0):
-                if 'bucketType' in source_bucket and source_bucket['bucketType'] == 'membase':
-                    rv = self.transfer_bucket_design(source_bucket, source_map, sink_map)
-                    if rv:
-                        logging.warn(rv)
+                rv = self.transfer_bucket_design(source_bucket, source_map, sink_map)
+                if rv:
+                    logging.warn(rv)
                 rv = self.transfer_bucket_index(source_bucket, source_map, sink_map)
                 if rv:
                     logging.warn(rv)
