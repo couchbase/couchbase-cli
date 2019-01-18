@@ -14,7 +14,7 @@ Modifies LDAP settings
 _couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>]
     [--password <password>] [--ldap-admins <admins_list>]
     [--ldap-roadmins <ro_admin_list>] [--ldap-default <default>]
-    [--ldap-enable <num>]
+    [--ldap-enabled <num>]
 
 == DESCRIPTION
 
@@ -56,20 +56,20 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 To enable LDAP on a cluster run the following command.
 
   $ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
-   --password password --enable-ldap 1
+   --password password --ldap-enabled 1
 
 To add users alice and barry as Administrators and users clair and daniel as
 Read-Only Administrators run the following command.
 
   $ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
-   --password password --enable-ldap 1 --ldap-admins alice,barry \
+   --password password --ldap-enabled 1 --ldap-admins alice,barry \
    --ldap-ro-admins clair,daniel
 
 To enable LDAP and allow all LDAP users to have Amdinistrator access run the
 following command.
 
   $ couchbase-cli setting-ldap -c 192.168.1.5 --username Administrator \
-   --password password --enable-ldap 1 --ldap-default admins
+   --password password --ldap-enabled 1 --ldap-default admins
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
