@@ -560,7 +560,7 @@ class ClusterManager(object):
                 if "statusIsStale" in task:
                     if task["statusIsStale"] or task["statusIsStale"] == "true":
                         rv["status"] = "stale"
-                        rv["msg"] = "Current status us stale, please retry"
+                        rv["msg"] = "Current status is stale, please retry"
 
             break
 
