@@ -387,19 +387,11 @@ class CBSink(pump_mc.MCSink):
                 username = self.opts.username_dest
                 password = self.opts.password_dest
             rv, conn = CBSink.connect_mc(host, port, username, password, bucket, self.opts.ssl,
-                                         self.opts.no_ssl_verify, self.opts.cacert)
+                                         self.opts.no_ssl_verify, self.opts.cacert,
+                                         collections=self.opts.collection!=None)
             if rv != 0:
                 logging.error("error: CBSink.connect() for send: " + rv)
                 return rv, None
             mconns[host_port] = conn
-
-            if self.opts.collection:
-                try:
-                    # HELO collections
-                    conn.helo([couchbaseConstants.HELO_COLLECTIONS])
-                except Exception, e:
-                    logging.warn("fail to call hello command, maybe it is not supported")
-                    pass
-
             self.add_start_event(conn)
         return 0, conn

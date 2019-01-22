@@ -1132,7 +1132,7 @@ def hostport(hoststring, port=11210):
             port = int(matches.group(3))
     return host, port
 
-def get_mcd_conn(host, port, username, password, bucket, use_ssl=False, verify=True, ca_cert=None):
+def get_mcd_conn(host, port, username, password, bucket, use_ssl=False, verify=True, ca_cert=None, collections=False):
     conn = cb_bin_client.MemcachedClient(host, port, use_ssl=use_ssl, verify=verify, cacert=ca_cert)
     if not conn:
         return "error: could not connect to memcached: " + \
@@ -1147,8 +1147,12 @@ def get_mcd_conn(host, port, username, password, bucket, use_ssl=False, verify=T
     except socket.error, e:
         return "error: SASL auth socket error: %s:%s, %s" % (host, port, e), None
 
+    features = [couchbaseConstants.HELO_XATTR, couchbaseConstants.HELO_XERROR]
+    if collections:
+        features.append(couchbaseConstants.HELO_COLLECTIONS)
+
     try:
-        conn.helo([couchbaseConstants.HELO_XATTR, couchbaseConstants.HELO_XERROR])
+        conn.helo(features)
     except EOFError, e:
         return "error: HELO error: %s:%s, %s" % (host, port, e), None
     except cb_bin_client.MemcachedError, e:
