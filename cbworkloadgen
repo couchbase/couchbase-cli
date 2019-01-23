@@ -36,16 +36,16 @@ class WorkloadGen(pump_transfer.Transfer):
         local_args = [argv[0]]
         local_args.append(src)
         local_args.append(sink)
-        for v in common_opts.itervalues():
+        for v in common_opts.values():
             local_args.append(v[0])
             local_args.append(v[1])
 
-        for v in count_opts.itervalues():
+        for v in count_opts.values():
             if v[1] is not None:
                 for i in range(v[1]):
                     local_args.append(v[0])
 
-        for v in bool_opts.itervalues():
+        for v in bool_opts.values():
             if v[1]:
                 local_args.append(v[0])
         return pump_transfer.Transfer.main(self, local_args)
@@ -84,7 +84,7 @@ class WorkloadGen(pump_transfer.Transfer):
         opts, rest = p.parse_args(argv[1:])
 
         gen_str = "gen:"
-        for key in gen_opts.iterkeys():
+        for key in gen_opts.keys():
             val = getattr(opts, key, None)
             if val is not None:
                 if key in ("loop", "json"):
@@ -93,27 +93,27 @@ class WorkloadGen(pump_transfer.Transfer):
         if gen_str[-1] == ",":
             gen_str = gen_str[:-1]
         sink_str = ""
-        for key in sink_opts.iterkeys():
+        for key in sink_opts.keys():
             val = getattr(opts, key, None)
             if val:
                 sink_str += sink_opts[key] + val
 
-        for key in common_opts.iterkeys():
+        for key in common_opts.keys():
             val = getattr(opts, key, None)
             if val:
                 common_opts[key][1] = str(val)
 
-        for key in list_opts.iterkeys():
+        for key in list_opts.keys():
             val = getattr(opts, key, None)
             if val:
                 common_opts[key][1] =  list(val)
 
-        for key in count_opts.iterkeys():
+        for key in count_opts.keys():
             val = getattr(opts, key, None)
             if val:
                 count_opts[key][1] = int(val)
 
-        for key in bool_opts.iterkeys():
+        for key in bool_opts.keys():
             val = getattr(opts, key, None)
             if val:
                 bool_opts[key][1] = True

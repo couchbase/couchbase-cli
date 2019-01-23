@@ -2,7 +2,7 @@
 
 import logging
 import os
-import Queue
+import queue
 import random
 import json
 import socket
@@ -10,7 +10,6 @@ import struct
 import time
 import threading
 import select
-import exceptions
 
 import cb_bin_client
 import couchbaseConstants
@@ -57,7 +56,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
         self.vbucket_list = getattr(opts, "vbucket_list", None)
         self.r=random.Random()
         self.queue_size = int(opts.extra.get("dcp_consumer_queue_length", 1000))
-        self.response = Queue.Queue(self.queue_size)
+        self.response = queue.Queue(self.queue_size)
         self.running = False
         self.stream_list = {}
         self.unack_size = 0
@@ -136,7 +135,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             if errors:
                 return errors, None
             return 0, json.dumps(result["result"])
-        except ServiceNotAvailableException, e:
+        except ServiceNotAvailableException as e:
             return 0, None
 
     @staticmethod
@@ -148,7 +147,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             if errors:
                 return errors, None
             return 0, json.dumps(result)
-        except ServiceNotAvailableException, e:
+        except ServiceNotAvailableException as e:
             return 0, None
 
     def get_conflict_resolution_type(self):
@@ -161,16 +160,16 @@ class DCPStreamSource(pump.Source, threading.Thread):
         sasl_user = str(self.source_bucket.get("name"))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
-                                 "user": sasl_user,
+                                 "user": pump.returnString(sasl_user),
                                 },
-                 "mode": getattr(self.opts, "mode", "diff"),
-                 "source_bucket": self.source_bucket['name'],
-                 "source_node": self.source_node['hostname']
+                 "mode": pump.returnString(getattr(self.opts, "mode", "diff")),
+                 "source_bucket": pump.returnString(self.source_bucket['name']),
+                 "source_node": pump.returnString(self.source_node['hostname'])
                 }
         if conn:
             try:
                 conn.audit(couchbaseConstants.AUDIT_EVENT_BACKUP_START, json.dumps(event))
-            except Exception, e:
+            except Exception as e:
                 logging.warn("auditing error: %s" % e)
         return 0
 
@@ -178,20 +177,20 @@ class DCPStreamSource(pump.Source, threading.Thread):
         sasl_user = str(self.source_bucket.get("name"))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
-                                 "user": sasl_user
+                                 "user": pump.returnString(sasl_user)
                                 },
-                 "source_bucket": self.source_bucket['name'],
-                 "source_node": self.source_node['hostname']
+                 "source_bucket": pump.returnString(self.source_bucket['name']),
+                 "source_node": pump.returnString(self.source_node['hostname'])
                 }
         if conn:
             try:
                 conn.audit(couchbaseConstants.AUDIT_EVENT_BACKUP_STOP, json.dumps(event))
-            except Exception, e:
+            except Exception as e:
                 logging.warn("auditing error: %s" % e)
         return 0
 
     def build_node_vbucket_map(self):
-        if self.source_bucket.has_key("vBucketServerMap"):
+        if "vBucketServerMap" in self.source_bucket:
             server_list = self.source_bucket["vBucketServerMap"]["serverList"]
             vbucket_map = self.source_bucket["vBucketServerMap"]["vBucketMap"]
         else:
@@ -584,7 +583,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             logging.error("socket to memcached server is not created yet.")
             return
 
-        bytes_read = ''
+        bytes_read = b''
         rd_timeout = 1
         desc = [self.dcp_conn.s]
         while self.running:
@@ -602,7 +601,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     data = reader.recv(self.recv_min_bytes)
                     logging.debug("Read %d bytes off the wire" % len(data))
                     if len(data) == 0:
-                        raise exceptions.EOFError("Got empty data (remote died?).")
+                        raise EOFError("Got empty data (remote died?).")
                     bytes_read += data
                 while len(bytes_read) >= couchbaseConstants.MIN_RECV_PACKET:
                     magic, opcode, keylen, extlen, datatype, status, bodylen, opaque, cas= \
@@ -620,7 +619,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                                        couchbaseConstants.MIN_RECV_PACKET+bodylen))
             except socket.error:
                 break
-            except Exception:
+            except Exception as e:
                 pass
 
     def setup_dcp_streams(self):
@@ -634,12 +633,12 @@ class DCPStreamSource(pump.Source, threading.Thread):
         seqno_list = {}
         vb_list = {}
         for key, val in stats.items():
-            vb, counter = key.split(":")
+            vb, counter = key.decode().split(":")
             if counter in [DCPStreamSource.VB_UUID,
                            DCPStreamSource.HIGH_SEQNO,
                            DCPStreamSource.ABS_HIGH_SEQNO,
                            DCPStreamSource.PURGE_SEQNO]:
-                if not vb_list.has_key(vb[3:]):
+                if vb[3:] not in vb_list:
                     vb_list[vb[3:]] = {}
                 vb_list[vb[3:]][counter] = int(val)
         flags = 0
@@ -650,11 +649,11 @@ class DCPStreamSource(pump.Source, threading.Thread):
             vbucketsOrDict = json.loads(self.vbucket_list)
             if type(vbucketsOrDict) is dict:
                 vbuckets = []
-                for key, value in vbucketsOrDict.iteritems():
+                for key, value in vbucketsOrDict.items():
                     vbuckets += value
             else:
                 vbuckets = vbucketsOrDict
-        for vbid in vb_list.iterkeys():
+        for vbid in vb_list:
             if int(vbid) not in self.node_vbucket_map:
                 #skip nonactive vbucket
                 continue

@@ -1,92 +1,52 @@
 PROJECT(CouchbaseClient)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
-# Generate the python wrappers
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/couchbase-cli)
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbtransfer)
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen)
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery)
-CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cblogredaction)
+# Initialize venv for this directory
+GET_FILENAME_COMPONENT (_snappy_libdir "${SNAPPY_LIBRARIES}" DIRECTORY)
+PyVenv (
+  INCLUDE_DIRS ${SNAPPY_INCLUDE_DIR}
+  LIBRARY_DIRS ${_snappy_libdir}
+)
+
 # Generate the Version module
 CONFIGURE_FILE (cb_version.cmake.py
                 cb_version.py)
 
-INSTALL(PROGRAMS
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/couchbase-cli
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbtransfer
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbworkloadgen
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrecovery
-        ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cblogredaction
-        DESTINATION bin)
+# Copy couchstore.py from couchstore so we can import it
+CONFIGURE_FILE (../couchstore/python/couchstore.py couchstore.py COPYONLY)
 
-INSTALL(PROGRAMS
-        couchbase-cli
-        cbtransfer
-        cbworkloadgen
-        cbrecovery
-        cblogredaction
-        DESTINATION lib/python)
-
-  CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                  ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackup)
-  CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                  ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestore)
-  CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                  ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackupwrapper)
-  CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/wrapper/wrapper
-                  ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestorewrapper)
-
-  INSTALL(PROGRAMS
-          ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackup
-          ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestore
-          ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbbackupwrapper
-          ${CMAKE_CURRENT_BINARY_DIR}/wrapper/cbrestorewrapper
-          DESTINATION bin)
-
-  INSTALL(PROGRAMS
-          cbbackup
-          cbrestore
-          cbbackupwrapper
-          cbrestorewrapper
-          DESTINATION lib/python)
-
-INSTALL(FILES
-        argparse.py
-        cb_bin_client.py
-        cb_util.py
-        cbmgr.py
-        cbsnappy.py
-        cluster_manager.py
-        couchbaseConstants.py
-        pbar.py
-        pump.py
-        pump_bfd.py
-        pump_bson.py
-        pump_cb.py
-        pump_csv.py
-        pump_gen.py
-        pump_json.py
-        pump_mc.py
-        pump_sfd.py
-        pump_transfer.py
-        pump_dcp.py
-        ${CMAKE_CURRENT_BINARY_DIR}/cb_version.py
-        DESTINATION lib/python)
+# List of "hidden" pump modules, ie, those which are imported
+# dynamically and might therefore not be detectable by PyInstaller.
+SET (hidden_pumps
+  pump_json
+  pump_sfd
+)
 IF (BUILD_ENTERPRISE)
-    INSTALL(FILES
-            pump_bfd2.py
-            DESTINATION lib/python)
-ENDIF (BUILD_ENTERPRISE)
+  LIST (APPEND hidden_pumps pump_bfd2)
+ENDIF ()
 
-INSTALL(DIRECTORY requests
-        DESTINATION lib/python/)
+PyInstall (TARGET couchbase-cli SCRIPT couchbase-cli INSTALL_PATH bin)
+PyInstall (TARGET cblogredaction SCRIPT cblogredaction INSTALL_PATH bin)
+PyInstall (TARGET cbrestorewrapper SCRIPT cbrestorewrapper INSTALL_PATH bin)
 
-INSTALL(DIRECTORY natsort
-        DESTINATION lib/python/)
+IF (APPLE)
+  # Due to a bug in PyInstaller, it won't find dylib dependencies on MacOS
+  # if they're in non-standard locations. So for libsnappy we have to
+  # explicitly copy it into the package.
+  SET (_extra_bins EXTRA_BIN "${_snappy_libdir}/libsnappy.1.dylib")
+ENDIF ()
+
+# These tools all use the pump libraries so their PyInstall()
+# directives look the same
+FOREACH (PUMP_TOOL cbbackup cbbackupwrapper cbrecovery cbrestore cbtransfer cbworkloadgen)
+  PyInstall (TARGET ${PUMP_TOOL} SCRIPT ${PUMP_TOOL}
+    INSTALL_PATH bin
+    IMPORTS ${hidden_pumps}
+    LIBRARY_DIRS "${_snappy_libdir}" "${CMAKE_BINARY_DIR}/couchstore"
+    ${_extra_bins}
+    DEPENDS couchstore
+  )
+ENDFOREACH ()
+
 
 ADD_SUBDIRECTORY(docs)

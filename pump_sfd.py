@@ -3,7 +3,7 @@
 import glob
 import logging
 import os
-import Queue
+import queue
 import re
 import json
 import struct
@@ -93,11 +93,11 @@ class SFDSource(pump.Source):
                         else:
                             return "error: missing vbucket_state from: %s" \
                                 % (f), None
-                except Exception, e:
+                except Exception as e:
                     return ("error: could not read _local/vbstate from: %s" +
                             "; exception: %s") % (f, e), None
                 store.close()
-            except Exception, e:
+            except Exception as e:
                 return ("error: could not read couchstore file: %s" +
                         "; exception: %s") % (f, e), None
 
@@ -130,13 +130,13 @@ class SFDSource(pump.Source):
             if not doc_info.deleted:
                 try:
                     doc_contents = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
-                except Exception, e:
+                except Exception as e:
                     return ("error: could not read design doc: %s" +
                             "; source_spec: %s; exception: %s") % \
                             (doc_info.id, source_spec, e), None
                 try:
                     doc = json.loads(doc_contents)
-                except ValueError, e:
+                except ValueError as e:
                     return ("error: could not parse design doc: %s" +
                             "; source_spec: %s; exception: %s") % \
                             (doc_info.id, source_spec, e), None
@@ -156,7 +156,7 @@ class SFDSource(pump.Source):
 
         if not self.queue:
             name = "c" + threading.currentThread().getName()[1:]
-            self.queue = Queue.Queue(2)
+            self.queue = queue.Queue(2)
             self.thread = threading.Thread(target=self.loader, name=name)
             self.thread.daemon = True
             self.thread.start()
@@ -214,17 +214,18 @@ class SFDSource(pump.Source):
                     return
 
                 if doc_info.deleted:
-                    cmd = couchbaseConstants.CMD_TAP_DELETE
+                    cmd = couchbaseConstants.CMD_DCP_DELETE
                     val = ''
                 else:
-                    cmd = couchbaseConstants.CMD_TAP_MUTATION
+                    cmd = couchbaseConstants.CMD_DCP_MUTATION
                     val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
                 try:
-                    if len(doc_info.revMeta) == 18:
+                    rev_meta_bytes = doc_info.revMeta.getBytes()
+                    if len(rev_meta_bytes) == 18:
                         conf_res = 0
-                        cas, exp, flg, flex_meta, dtype = struct.unpack(SFD_REV_META, doc_info.revMeta)
-                    elif len(doc_info.revMeta) == 19:
-                        cas, exp, flg, flex_meta, dtype, conf_res = struct.unpack(SFD_REV_META_PRE_4_6, doc_info.revMeta)
+                        cas, exp, flg, flex_meta, dtype = struct.unpack(SFD_REV_META, rev_meta_bytes)
+                    elif len(rev_meta_bytes) == 19:
+                        cas, exp, flg, flex_meta, dtype, conf_res = struct.unpack(SFD_REV_META_PRE_4_6, rev_meta_bytes)
                     else:
                         raise ValueError('Does not match pre- or post-4.6 format')
                     meta = doc_info.revSequence
@@ -232,7 +233,7 @@ class SFDSource(pump.Source):
                     nmeta = 0
                     msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res)
                     abatch[0].append(msg, len(val))
-                except Exception, e:
+                except Exception as e:
                     self.queue.put(("error: could not read couchstore file due to unsupported file format version;"
                                     " exception: %s"% e, None))
                     return
@@ -251,7 +252,7 @@ class SFDSource(pump.Source):
                 store = couchstore.CouchStore(f, 'r')
                 store.forEachChange(0, change_callback)
                 store.close()
-            except Exception, e:
+            except Exception as e:
                 #MB-12270: Some files may be deleted due to compaction. We can
                 #safely ingore them and move to next file.
                 pass
@@ -284,7 +285,7 @@ class SFDSink(pump.Sink):
                 return self.future_done(future, 0)
 
             vbuckets = batch.group_by_vbucket_id(SFD_VBUCKETS, self.rehash)
-            for vbucket_id, msgs in vbuckets.iteritems():
+            for vbucket_id, msgs in vbuckets.items():
                 checkpoint_id = 0
                 max_deleted_seqno = 0
 
@@ -304,25 +305,26 @@ class SFDSink(pump.Sink):
                     flex_meta = 1
                     d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg, flex_meta, dtype))
                     if meta:
+                        meta = hex(meta)
                         if len(meta) > 8:
                             meta = meta[0:8]
                         if len(meta) < 8:
                             meta = ('\x00\x00\x00\x00\x00\x00\x00\x00' + meta)[-8:]
+                        meta = meta.encode()
                         d.revSequence, = struct.unpack(SFD_REV_SEQ, meta)
                     else:
                         d.revSequence = 1
 
                     if seqno:
                         d.sequence = int(seqno)
-                    if cmd == couchbaseConstants.CMD_TAP_MUTATION:
+                    if cmd == couchbaseConstants.CMD_TAP_MUTATION or cmd == couchbaseConstants.CMD_DCP_MUTATION:
                         v = str(val)
                         try:
-                            if (re.match('^\\s*{', v) and
-                                json.loads(v) is not None):
+                            if re.match('^\\s*{', v) and json.loads(v) is not None:
                                 d.contentType = couchstore.DocumentInfo.IS_JSON
                         except ValueError:
                             pass # NON_JSON is already the default contentType.
-                    elif cmd == couchbaseConstants.CMD_TAP_DELETE:
+                    elif cmd == couchbaseConstants.CMD_TAP_DELETE or cmd == couchbaseConstants.CMD_DCP_DELETE:
                         v = None
                     else:
                         self.future_done(future,
@@ -358,7 +360,7 @@ class SFDSink(pump.Sink):
 
                     store.commit()
                     store.close()
-                except Exception, e:
+                except Exception as e:
                     self.future_done(future,
                                      "error: could not save couchstore data"
                                      "; vbucket_id: %s; store_path: %s"
@@ -375,7 +377,7 @@ class SFDSink(pump.Sink):
                           'max_deleted_seqno': str(max_deleted_seqno)})
         try:
             store.localDocs['_local/vbstate'] = doc
-        except Exception, e:
+        except Exception as e:
             return "error: save_vbucket_state() failed: " + str(e)
         return 0
 
@@ -414,7 +416,7 @@ class SFDSink(pump.Sink):
 
         try:
             sd = json.loads(source_design)
-        except ValueError, e:
+        except ValueError as e:
             return "error: could not parse source_design: " + source_design
 
         rv, d = data_dir(sink_spec)
@@ -482,7 +484,7 @@ class SFDSink(pump.Sink):
         if not os.path.isdir(bucket_dir):
             try:
                 os.mkdir(bucket_dir)
-            except OSError, e:
+            except OSError as e:
                 return ("error: could not create bucket_dir: %s; exception: %s"
                         % (bucket_dir, e)), None
 
@@ -501,7 +503,7 @@ def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c
                 "; found: %s") % (glob_pattern, store_paths), None, None
     try:
         return 0, couchstore.CouchStore(str(store_paths[0]), mode), store_paths[0]
-    except Exception, e:
+    except Exception as e:
         return ("error: could not open couchstore file: %s" +
                 "; exception: %s") % (store_paths[0], e), None, None
 

@@ -10,7 +10,7 @@ import string
 import sys
 import datetime
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import fnmatch
 import sqlite3
 
@@ -36,7 +36,7 @@ class BFD:
 
     @staticmethod
     def get_file_path(spec, bucket_name, file):
-        bucket_name = urllib.quote_plus(bucket_name).encode('ascii')
+        bucket_name = urllib.parse.quote_plus(bucket_name)
         bucket_path = os.path.join(os.path.normpath(spec), "bucket-" + bucket_name)
         if os.path.isdir(bucket_path):
             return os.path.join(bucket_path, file)
@@ -51,8 +51,8 @@ class BFD:
     @staticmethod
     def construct_dir(parent, bucket_name, node_name):
         return os.path.join(parent,
-                    "bucket-" + urllib.quote_plus(bucket_name).encode('ascii'),
-                    "node-" + urllib.quote_plus(node_name).encode('ascii'))
+                    "bucket-" + urllib.parse.quote_plus(bucket_name),
+                    "node-" + urllib.parse.quote_plus(node_name))
 
     @staticmethod
     def check_full_dbfiles(parent_dir):
@@ -138,8 +138,8 @@ class BFD:
     @staticmethod
     def db_dir(spec, bucket_name, node_name, tmstamp=None, mode=None, new_session=False):
         parent_dir = os.path.normpath(spec) + \
-                        '/bucket-' + urllib.quote_plus(bucket_name).encode('ascii') + \
-                        '/node-' + urllib.quote_plus(node_name).encode('ascii')
+                        '/bucket-' + urllib.parse.quote_plus(bucket_name) + \
+                        '/node-' + urllib.parse.quote_plus(node_name)
         if os.path.isdir(parent_dir):
             return parent_dir
 
@@ -276,7 +276,7 @@ class BFD:
                 json_data = json.load(json_file)
                 json_file.close()
 
-                for vbid, seq in json_data.iteritems():
+                for vbid, seq in json_data.items():
                     if not seq:
                         continue
                     if seqno.get(vbid) < seq:
@@ -290,10 +290,10 @@ class BFD:
                 json_data = json.load(json_file)
                 json_file.close()
 
-                for vbid, flogs in json_data.iteritems():
+                for vbid, flogs in json_data.items():
                     if not flogs:
                         continue
-                    elif vbid not in failover_log.keys():
+                    elif vbid not in failover_log:
                         failover_log[vbid] = flogs
                     else:
                         for logpair in flogs:
@@ -310,7 +310,7 @@ class BFD:
                 json_data = json.load(json_file)
                 json_file.close()
 
-                for vbid, markers in json_data.iteritems():
+                for vbid, markers in json_data.items():
                     snapshot_markers[vbid] = markers
             except IOError:
                 pass
@@ -371,7 +371,7 @@ class BFDSource(BFD, pump.Source):
                 return "error: not a bucket directory: " + bucket_dir, None
 
             bucket_name = os.path.basename(bucket_dir)[len("bucket-"):].strip()
-            bucket_name = urllib.unquote_plus(bucket_name).encode('ascii')
+            bucket_name = urllib.parse.unquote_plus(bucket_name).encode('ascii')
             if not bucket_name:
                 return "error: bucket_name too short: " + bucket_dir, None
 
@@ -384,7 +384,7 @@ class BFDSource(BFD, pump.Source):
                     return "error: not a node directory: " + node_dir, None
 
                 node_name = os.path.basename(node_dir)[len("node-"):].strip()
-                node_name = urllib.unquote_plus(node_name).encode('ascii')
+                node_name = urllib.parse.unquote_plus(node_name).encode('ascii')
                 if not node_name:
                     return "error: node_name too short: " + node_dir, None
 
@@ -414,7 +414,7 @@ class BFDSource(BFD, pump.Source):
                 d = f.read()
                 f.close()
                 return 0, d
-            except IOError, e:
+            except IOError as e:
                 return ("error: could not read %s; exception: %s") % (path, e), None
         return 0, None
 
@@ -519,7 +519,7 @@ class BFDSource(BFD, pump.Source):
 
             return 0, batch
 
-        except Exception, e:
+        except Exception as e:
             self.done = True
             if self.cursor_db:
                 self.cursor_db[0].close()
@@ -687,11 +687,19 @@ class BFDSink(BFD, pump.Sink):
                         return self.future_done(future,
                                                 "error: BFDSink bad cmd: " +
                                                 str(cmd))
+                    keyb = key
+                    if isinstance(key, str):
+                        keyb = key.encode('utf-8')
+
+                    metab = str(meta).encode('utf-8')
+                    valb = val
+                    if isinstance(val, str):
+                        valb = val.encode('utf-8')
                     c.execute(s, (cmd, vbucket_id,
-                                  sqlite3.Binary(key),
+                                  sqlite3.Binary(keyb),
                                   flg, exp, str(cas),
-                                  sqlite3.Binary(str(meta)),
-                                  sqlite3.Binary(val),
+                                  sqlite3.Binary(metab),
+                                  sqlite3.Binary(valb),
                                   seqno,
                                   dtype,
                                   nmeta,
@@ -703,9 +711,9 @@ class BFDSink(BFD, pump.Sink):
                 BFD.write_json_file(db_dir, "seqno.json", seqno_map)
                 self.future_done(future, 0) # No return to keep looping.
 
-            except sqlite3.Error, e:
+            except sqlite3.Error as e:
                 return self.future_done(future, "error: db error: " + str(e))
-            except Exception, e:
+            except Exception as e:
                 return self.future_done(future, "error: db exception: " + str(e))
 
     @staticmethod
@@ -763,7 +771,7 @@ class BFDSink(BFD, pump.Sink):
                 f = open(path, 'w')
                 f.write(index_defs)
                 f.close()
-            except IOError, e:
+            except IOError as e:
                 return ("error: could not write %s; exception: %s") % (path, e), None
         return 0
 
@@ -775,7 +783,7 @@ class BFDSink(BFD, pump.Sink):
         if rv != 0:
             return rv, None, None
 
-        path = dir + "/data-%s.cbb" % (string.rjust(str(num), 4, '0'))
+        path = dir + "/data-%s.cbb" % (str(num).rjust(4, '0'))
         rv, db = create_db(path, self.opts)
         if rv != 0:
             return rv, None, None
@@ -822,7 +830,7 @@ class BFDSink(BFD, pump.Sink):
         if not os.path.isdir(d):
             try:
                 os.makedirs(d)
-            except OSError, e:
+            except OSError as e:
                 if not os.path.isdir(d):
                     return "error: could not mkdirs: %s; exception: %s" % (d, e), None
         return 0, d
@@ -862,7 +870,7 @@ def create_db(db_path, opts):
 
         return 0, db
 
-    except Exception, e:
+    except Exception as e:
         return "error: create_db exception: " + str(e), None
 
 
@@ -887,7 +895,7 @@ def connect_db(db_path, opts, version):
 
         return 0, db, version.index(cur)
 
-    except Exception, e:
+    except Exception as e:
         return "error: connect_db exception: " + str(e), None
 
 
@@ -902,7 +910,7 @@ def cleanse_helper(d):
         for x in d:
             cleanse_helper(x)
     elif type(d) is dict:
-        for k, v in d.iteritems():
+        for k, v in d.items():
             if "assword" in k:
                 d[k] = '<...ELIDED...>'
             else:

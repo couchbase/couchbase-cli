@@ -57,7 +57,7 @@ class Transfer:
         if opts_etc:
             opts.etc = opts_etc # Used for unit tests, etc.
 
-        process_name = os.path.basename(argv[0]) + "-" + "".join(random.sample(string.letters, 16))
+        process_name = os.path.basename(argv[0]) + "-" + "".join(random.sample(string.ascii_letters, 16))
         setattr(opts, "process_name", process_name)
 
         logging.info(self.name + "...")
@@ -104,7 +104,7 @@ class Transfer:
 
         min_thread = 1
         max_thread = 20
-        if opts.threads not in range(min_thread, max_thread):
+        if opts.threads not in list(range(min_thread, max_thread)):
             return "\nError: option -t: value is out of range [%s, %s]" % \
                    (min_thread, max_thread), \
                    None, None, None
@@ -406,16 +406,16 @@ def opt_parse_extra(extra, extra_defaults):
     extra_in = dict([(x[0], x[1]) for x in
                      [(kv + '=').split('=') for kv in
                       (extra or "").split(',')]])
-    for k, v in extra_in.iteritems():
+    for k, v in extra_in.items():
         if k and not extra_defaults.get(k):
             sys.exit("error: unknown extra option: " + k)
     return dict([(k, float(extra_in.get(k, extra_defaults[k][0])))
-                 for k in extra_defaults.iterkeys()])
+                 for k in extra_defaults.keys()])
 
 def opt_extra_help(parser, extra_defaults):
     extra_help = "; ".join(["%s=%s (%s)" %
                            (k, extra_defaults[k][0], extra_defaults[k][1])
-                           for k in sorted(extra_defaults.iterkeys())])
+                           for k in sorted(extra_defaults.keys())])
 
     group = optparse.OptionGroup(parser, "Available extra config parameters (-x)",
                         extra_help)
@@ -439,12 +439,6 @@ try:
     import pump_sfd
     SOURCES.append(pump_sfd.SFDSource)
     SINKS.append(pump_sfd.SFDSink)
-except ImportError:
-    pass
-
-try:
-    import pump_bson
-    SOURCES.append(pump_bson.BSONSource)
 except ImportError:
     pass
 

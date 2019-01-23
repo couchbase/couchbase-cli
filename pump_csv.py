@@ -6,11 +6,11 @@ import os
 import json
 import sys
 import struct
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import couchbaseConstants
 import pump
-import cbsnappy as snappy
+import snappy
 
 # Our max document size is 20MB, but let's make this extra large in case the
 # are spaces and such that can be removed before sending to Couchbase.
@@ -57,15 +57,15 @@ class CSVSource(pump.Source):
 
         if not self.r:
             try:
-                self.r = csv.reader(open(self.spec, 'rU'))
-                self.fields = self.r.next()
+                self.r = csv.reader(open(self.spec, 'r', encoding='utf-8'))
+                self.fields = next(self.r)
                 if not 'id' in self.fields:
                     return ("error: no 'id' field in 1st line of csv: %s" %
                             (self.spec)), None
             except StopIteration:
                 return ("error: could not read 1st line of csv: %s" %
                         (self.spec)), None
-            except IOError, e:
+            except IOError as e:
                 return ("error: could not open csv: %s; exception: %s" %
                         (self.spec, e)), None
 
@@ -81,7 +81,7 @@ class CSVSource(pump.Source):
                batch.size() < batch_max_size and
                batch.bytes < batch_max_bytes):
             try:
-                vals = self.r.next()
+                vals = next(self.r)
                 doc = {}
                 for i, field in enumerate(self.fields):
                     if i >= len(vals):
@@ -91,12 +91,12 @@ class CSVSource(pump.Source):
                     else:
                         doc[field] = number_try_parse(vals[i])
                 if doc['id']:
-                    msg = (cmd, vbucket_id, doc['id'], doc['flags'], doc['expiration'], 0, '', doc['value'], 0, 0, 0, 0)
+                    msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc['value'], 0, 0, 0, 0)
                     batch.append(msg, len(doc))
             except StopIteration:
                 self.done = True
                 self.r = None
-            except Exception, e:
+            except Exception as e:
                 logging.error("error: fails to read from csv file, %s", e)
                 continue
 
@@ -175,8 +175,8 @@ class CSVSink(pump.Sink):
                 if self.spec.endswith(".csv"):
                     filename = self.get_csvfile(self.spec[len(CSVSink.CSV_JSON_SCHEME):])
                     try:
-                        self.csvfile = open(filename, "wb")
-                    except IOError, e:
+                        self.csvfile = open(filename, "w", encoding='utf-8')
+                    except IOError as e:
                         return ("error: could not write csv to file:%s" % filename), None
                 self.writer = csv.writer(self.csvfile)
                 self.writer.writerow(self.fields)
@@ -184,8 +184,8 @@ class CSVSink(pump.Sink):
                 if self.spec.endswith(".csv"):
                     filename = self.get_csvfile(self.spec[len(CSVSink.CSV_SCHEME):])
                     try:
-                        self.csvfile = open(filename, "wb")
-                    except IOError, e:
+                        self.csvfile = open(filename, "w",  encoding='utf-8')
+                    except IOError as e:
                         return ("error: could not write csv to file:%s" % \
                                filename), None
                 self.writer = csv.writer(self.csvfile)
@@ -193,6 +193,8 @@ class CSVSink(pump.Sink):
         msg_tuple_format = 0
         for msg in batch.msgs:
             cmd, vbucket_id, key, flg, exp, cas, meta, val = msg[:8]
+            if isinstance(val, bytes):
+                val = val.decode()
             if self.skip(key, vbucket_id):
                 continue
             if not msg_tuple_format:
@@ -203,7 +205,7 @@ class CSVSink(pump.Sink):
             if dtype > 2:
                 try:
                     val = snappy.uncompress(val)
-                except Exception, err:
+                except Exception as err:
                     pass
             try:
                 if cmd in [couchbaseConstants.CMD_TAP_MUTATION,
@@ -216,7 +218,7 @@ class CSVSink(pump.Sink):
                                 if type(doc) == dict:
                                     for field in self.fields:
                                         if field == 'id':
-                                            row.append(key)
+                                            row.append(pump.returnString(key))
                                         else:
                                             row.append(doc[field])
                                     self.writer.writerow(row)
@@ -224,7 +226,7 @@ class CSVSink(pump.Sink):
                                 pass
                     else:
                         #rev = self.convert_meta(meta)
-                        self.writer.writerow([key, flg, exp, cas, val, meta, vbucket_id, dtype])
+                        self.writer.writerow([pump.returnString(key), flg, exp, cas, val, meta, vbucket_id, dtype])
                 elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_DCP_DELETE]:
                     pass
                 elif cmd == couchbaseConstants.CMD_GET:
@@ -247,9 +249,9 @@ class CSVSink(pump.Sink):
         extension = os.path.splitext(base)
         filename = extension[0]
         if self.bucket_name():
-            filename = filename + "_" + urllib.quote_plus(self.bucket_name())
+            filename = filename + "_" + urllib.parse.quote_plus(self.bucket_name())
         if self.node_name():
-            filename = filename + "_" + urllib.quote_plus(self.node_name())
+            filename = filename + "_" + urllib.parse.quote_plus(self.node_name())
         return filename + extension[1]
 
     def convert_meta(self, meta):

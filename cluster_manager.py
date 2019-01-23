@@ -5,11 +5,10 @@ import csv
 import json
 import requests
 import os
-import StringIO
+import io
 import sys
 import time
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
 
 MAX_LEN_PASSWORD = 24
 
@@ -38,7 +37,7 @@ def request(f):
         url = args[1]
         try:
             return f(*args, **kwargs)
-        except requests.exceptions.ConnectionError, e:
+        except requests.exceptions.ConnectionError as e:
             if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(e):
                 return None, ['Certificate verification failed.\n' +
                 'If you are using self-signed certificates you can re-run this command with\n' +
@@ -50,7 +49,7 @@ def request(f):
             elif str(e).startswith('[SSL]'):
                 return None, ['Unable to connect with the given CA certificate']
             return None, ['Unable to connect to host at %s' % cm.hostname]
-        except requests.exceptions.ReadTimeout, e:
+        except requests.exceptions.ReadTimeout as e:
             return None, ['Request to host `%s` timed out after %d seconds' % (url, cm.timeout)]
     return g
 
@@ -74,7 +73,7 @@ class ClusterManager(object):
         self.verifyCert = verifyCert
         self.cert = cert
 
-        parsed = urlparse.urlparse(hostname)
+        parsed = urllib.parse.urlparse(hostname)
         if sslFlag:
             hostport = parsed.hostname.split(':')
             if parsed.scheme == 'http://':
@@ -156,7 +155,7 @@ class ClusterManager(object):
 
         bucket_index_defs = []
         if "indexDefs" in result and result["indexDefs"] is not None:
-            for _, index_def in result["indexDefs"]["indexDefs"].iteritems():
+            for _, index_def in result["indexDefs"]["indexDefs"].items():
                 if index_def["type"] == "fulltext-index" and index_def["sourceName"] == bucket:
                     bucket_index_defs.append(index_def)
         return bucket_index_defs, None
@@ -549,7 +548,7 @@ class ClusterManager(object):
                 acc = 0
                 if "perNode" in task["detailedProgress"]:
 
-                    for _, node in task["detailedProgress"]["perNode"].iteritems():
+                    for _, node in task["detailedProgress"]["perNode"].items():
                         acc += node["ingoing"]["docsTotal"] - node["ingoing"]["docsTransferred"]
                         acc += node["outgoing"]["docsTotal"] - node["outgoing"]["docsTransferred"]
 
@@ -1255,13 +1254,13 @@ class ClusterManager(object):
         paramDict = {"roles" : roleList}
         userIds = []
         userNames = []
-        userF = StringIO.StringIO(userList)
+        userF = io.StringIO(userList)
         for idList in csv.reader(userF, delimiter=','):
             userIds.extend(idList)
 
         # did they specify user names?
         if userNameList != None:
-            userNameF = StringIO.StringIO(userNameList)
+            userNameF = io.StringIO(userNameList)
             for nameList in csv.reader(userNameF, delimiter=','):
                 userNames.extend(nameList)
             if len(userNames) != len(userIds):
@@ -1283,7 +1282,7 @@ class ClusterManager(object):
 
     def deleteRoles(self,userList):
         # need a separate REST call for each user in the comma-delimited user list
-        userF = StringIO.StringIO(userList)
+        userF = io.StringIO(userList)
         reader = csv.reader(userF, delimiter=',')
         for users in reader:
             for user in users:
@@ -1368,7 +1367,7 @@ class ClusterManager(object):
         params = {}
 
         if edit:
-            url += '/' + urllib.quote(name)
+            url += '/' + urllib.parse.quote(name)
 
         if name is not None:
             params["name"] = name
@@ -1392,7 +1391,7 @@ class ClusterManager(object):
         return self._post_form_encoded(url, params)
 
     def delete_xdcr_reference(self, name):
-        url = self.hostname + '/pools/default/remoteClusters/' + urllib.quote(name)
+        url = self.hostname + '/pools/default/remoteClusters/' + urllib.parse.quote(name)
         return self._delete(url, None)
 
     def list_xdcr_references(self):
@@ -1403,7 +1402,8 @@ class ClusterManager(object):
                                  doc_batch_size, fail_interval, replication_thresh,
                                  src_nozzles, dst_nozzles, usage_limit, compression,
                                  log_level, stats_interval, replicator_id, filter, filter_skip):
-        url = self.hostname + '/settings/replications/' + urllib.quote_plus(replicator_id)
+
+        url = self.hostname + '/settings/replications/' + urllib.parse.quote_plus(replicator_id)
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                                        fail_interval, replication_thresh, src_nozzles,
                                        dst_nozzles, usage_limit, compression, log_level,
@@ -1474,16 +1474,16 @@ class ClusterManager(object):
         return self._post_form_encoded(url, params)
 
     def delete_xdcr_replicator(self, replicator_id):
-        url = self.hostname + '/controller/cancelXDCR/' + urllib.quote_plus(replicator_id)
+        url = self.hostname + '/controller/cancelXDCR/' + urllib.parse.quote_plus(replicator_id)
         return self._delete(url, None)
 
     def pause_xdcr_replication(self, replicator_id):
-        url = self.hostname + '/settings/replications/' + urllib.quote_plus(replicator_id)
+        url = self.hostname + '/settings/replications/' + urllib.parse.quote_plus(replicator_id)
         params = { "pauseRequested": "true" }
         return self._post_form_encoded(url, params)
 
     def resume_xdcr_replication(self, replicator_id):
-        url = self.hostname + '/settings/replications/' + urllib.quote_plus(replicator_id)
+        url = self.hostname + '/settings/replications/' + urllib.parse.quote_plus(replicator_id)
         params = { "pauseRequested": "false" }
         return self._post_form_encoded(url, params)
 
@@ -1523,7 +1523,7 @@ class ClusterManager(object):
 
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
-        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(function)
+        url = hosts[0] + '/api/v1/functions/' + urllib.parse.quote_plus(function)
         return self._delete(url, None)
 
     def deploy_function(self, function, deploy):
@@ -1542,34 +1542,34 @@ class ClusterManager(object):
             parms["deployment_status"] = False
             parms["processing_status"] = False
 
-        url = hosts[0] + '/api/v1/functions/' + urllib.quote_plus(function) + '/settings'
+        url = hosts[0] + '/api/v1/functions/' + urllib.parse.quote_plus(function) + '/settings'
         return self._post_json(url, parms)
 
     def create_scope(self, bucket, scope):
-        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections'
+        url = self.hostname + '/pools/default/buckets/' + urllib.parse.quote_plus(bucket) + '/collections'
         params = {"name": scope}
         return self._post_form_encoded(url, params)
 
     def delete_scope(self, bucket, scope):
-        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections/' \
-              + urllib.quote_plus(scope)
+        url = self.hostname + '/pools/default/buckets/' + urllib.parse.quote_plus(bucket) + '/collections/' \
+              + urllib.parse.quote_plus(scope)
         return self._delete(url, None)
 
     def create_collection(self, bucket, scope, collection, max_ttl):
-        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections/' \
-              + urllib.quote_plus(scope)
+        url = self.hostname + '/pools/default/buckets/' + urllib.parse.quote_plus(bucket) + '/collections/' \
+              + urllib.parse.quote_plus(scope)
         params = {"name": collection}
         if max_ttl:
             params["maxTTL"] = max_ttl
         return self._post_form_encoded(url, params)
 
     def delete_collection(self, bucket, scope, collection):
-        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections/' \
-              + urllib.quote_plus(scope) + '/' + urllib.quote_plus(collection)
+        url = self.hostname + '/pools/default/buckets/' + urllib.parse.quote_plus(bucket) + '/collections/' \
+              + urllib.parse.quote_plus(scope) + '/' + urllib.parse.quote_plus(collection)
         return self._delete(url, None)
 
     def get_manifest(self, bucket):
-        url = self.hostname + '/pools/default/buckets/' + urllib.quote_plus(bucket) + '/collections'
+        url = self.hostname + '/pools/default/buckets/' + urllib.parse.quote_plus(bucket) + '/collections'
         return self._get(url)
 
     # Low level methods for basic HTML operations
@@ -1577,7 +1577,7 @@ class ClusterManager(object):
     @request
     def _get(self, url):
         if self.debug:
-            print "GET %s" % url
+            print("GET %s" % url)
         response = requests.get(url, auth=(self.username, self.password), verify=self.verifyCert,
                                 cert=self.cert, timeout=self.timeout,
                                 headers=self.headers)
@@ -1588,7 +1588,7 @@ class ClusterManager(object):
         if self.debug:
             if params is None:
                 params = {}
-            print "POST %s %s" % (url, urllib.urlencode(params))
+            print("POST %s %s" % (url, urllib.parse.urlencode(params)))
         response = requests.post(url, auth=(self.username, self.password), data=params,
                                  cert=self.cert, verify=self.verifyCert, timeout=self.timeout,
                                  headers=self.headers)
@@ -1599,7 +1599,7 @@ class ClusterManager(object):
         if self.debug:
             if params is None:
                 params = {}
-            print "POST %s %s" % (url, json.dumps(params))
+            print("POST %s %s" % (url, json.dumps(params)))
         response = requests.post(url, auth=(self.username, self.password), json=params,
                                  cert=self.cert, verify=self.verifyCert, timeout=self.timeout,
                                  headers=self.headers)
@@ -1610,7 +1610,7 @@ class ClusterManager(object):
         if self.debug:
             if params is None:
                 params = {}
-            print "PUT %s %s" % (url, urllib.urlencode(params))
+            print("PUT %s %s" % (url, urllib.parse.urlencode(params)))
         response = requests.put(url, params, auth=(self.username, self.password),
                                 cert=None, verify=self.verifyCert, timeout=self.timeout,
                                 headers=self.headers)
@@ -1621,7 +1621,7 @@ class ClusterManager(object):
         if self.debug:
             if params is None:
                 params = {}
-            print "PUT %s %s" % (url, json.dumps(params))
+            print("PUT %s %s" % (url, json.dumps(params)))
         response = requests.put(url, auth=(self.username, self.password), json=params,
                                 cert=None, verify=self.verifyCert, timeout=self.timeout,
                                 headers = self.headers)
@@ -1632,7 +1632,7 @@ class ClusterManager(object):
         if self.debug:
             if params is None:
                 params = {}
-            print "DELETE %s %s" % (url, urllib.urlencode(params))
+            print("DELETE %s %s" % (url, urllib.parse.urlencode(params)))
         response = requests.delete(url, auth=(self.username, self.password), data=params,
                                    cert=None, verify=self.verifyCert, timeout=self.timeout,
                                    headers=self.headers)
@@ -1647,7 +1647,7 @@ def _handle_response(response, debug):
         if response.content:
             response.encoding = 'utf-8'
             output += ', {0}'.format(response.content)
-        print output
+        print(output)
     if response.status_code in [200, 202]:
         if 'Content-Type' not in response.headers:
             return "", None
@@ -1669,7 +1669,7 @@ def _handle_response(response, debug):
                 if "errors" in errors and isinstance(errors["errors"], dict):
                     errors = errors["errors"]
                 rv = list()
-                for key, value in errors.iteritems():
+                for key, value in errors.items():
                     rv.append(key + " - " + str(value))
                 return None, rv
         return None, [response.text]

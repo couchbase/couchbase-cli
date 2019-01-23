@@ -32,7 +32,7 @@ class Redact_file(object):
         Takes a regex match of the tag and returns a string with the data
         between the tags has been redacted.
         """
-        hash_object = hashlib.sha1(self.salt + str(match.group(2)))
+        hash_object = hashlib.sha1((self.salt + str(match.group(2))).encode('utf-8'))
         return match.group(1) + hash_object.hexdigest() + match.group(3)
 
     def _redact_line(self, logline):
@@ -59,7 +59,7 @@ class Redact_file(object):
                     logging.debug('{0} - Starting redaction file size is {1}'
                                   ' bytes'.format(self.log, os.fstat(log_file.fileno()).st_size))
                     with open(redacted_log, 'w+') as redacted_file:
-                        hashed_salt = hashlib.sha1(self.salt + self.salt).hexdigest()
+                        hashed_salt = hashlib.sha1((self.salt + self.salt).encode()).hexdigest()
                         redacted_file.write('Hash of the salt used to redact the file: {0}\n'.format(hashed_salt))
                         logging.debug('{0} - Log redacted using salt: <ud>{1}</ud>'.format(self.log, self.salt))
                         for line_number, line in enumerate(log_file, 1):
@@ -78,7 +78,7 @@ class Redact_file(object):
                                  ' unmatched tags'.format(self.log, line_number, total_redacted_tags, warning_lines))
                 except IOError as e:
                     logging.error('{0} - {1}'.format(redacted_log, e.strerror))
-                except Exception, e:
+                except Exception as e:
                     # Should not get here in a production environment, but this is useful for development
                     logging.error('{0} - Unexpected error: {1}'.format(self.log, e))
         except IOError as e:

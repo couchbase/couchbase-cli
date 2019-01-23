@@ -10,7 +10,7 @@ import re
 import string
 import subprocess
 import sys
-import urlparse
+import urllib.parse
 import time
 
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
@@ -21,7 +21,7 @@ try:
     from cb_version import VERSION  # pylint: disable=import-error
 except ImportError:
     VERSION = "0.0.0-0000-community"
-    print "WARNING: Could not import cb_version, setting VERSION to {0}".format(VERSION)
+    print ("WARNING: Could not import cb_version, setting VERSION to {0}".format(VERSION))
 
 COUCHBASE_DEFAULT_PORT = 8091
 
@@ -107,18 +107,18 @@ def find_subcommands():
     return subcommands
 
 def _success(msg):
-    print "SUCCESS: " + msg
+    print("SUCCESS: " + msg)
 
 def _deprecated(msg):
-    print "DEPRECATED: " + msg
+    print("DEPRECATED: " + msg)
 
 def _warning(msg):
-    print "WARNING: " + msg
+    print("WARNING: " + msg)
 
 def _exitIfErrors(errors):
     if errors:
         for error in errors:
-            print "ERROR: " + error
+            print("ERROR: " + error)
         sys.exit(1)
 
 def _exit_on_file_write_failure(fname, to_write):
@@ -126,7 +126,7 @@ def _exit_on_file_write_failure(fname, to_write):
         wfile = open(fname, 'w')
         wfile.write(to_write)
         wfile.close()
-    except IOError, error:
+    except IOError as error:
         _exitIfErrors([error])
 
 def _exit_on_file_read_failure(fname, toReport = None):
@@ -135,7 +135,7 @@ def _exit_on_file_read_failure(fname, toReport = None):
         read_bytes = rfile.read()
         rfile.close()
         return read_bytes
-    except IOError, error:
+    except IOError as error:
         if toReport is None:
             _exitIfErrors([error.strerror + " `" + fname + "`"])
         else:
@@ -232,16 +232,16 @@ class CBHostAction(Action):
     """Allows the handling of hostnames on the command line"""
 
     def __call__(self, parser, namespace, values, option_string=None):
-        parsed = urlparse.urlparse(values)
+        parsed = urllib.parse.urlparse(values)
 
         # If the netloc is empty then it means that there was no scheme added
         # to the URI and we are parsing it as a path. In this case no scheme
         # means HTTP so we can add that scheme to the hostname provided.
         if parsed.netloc == "":
-            parsed = urlparse.urlparse("http://" + values)
+            parsed = urllib.parse.urlparse("http://" + values)
 
         if parsed.scheme == "":
-            parsed = urlparse.urlparse("http://" + values)
+            parsed = urllib.parse.urlparse("http://" + values)
 
         if parsed.path != "" or parsed.params != "" or parsed.query != "" or parsed.fragment != "":
             raise ArgumentError(self, "%s is not an accepted hostname" % values)
@@ -327,7 +327,7 @@ class CBHelpAction(Action):
         if os.name == "nt":
             try:
                 subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
-            except OSError, e:
+            except OSError as e:
                 _exitIfErrors(["Unable to open man page using your browser, %s" % e])
         else:
             try:
@@ -405,7 +405,7 @@ class CouchbaseCLI(Command):
             self.parser.exit(1)
 
         if args[1] == "--version":
-            print VERSION
+            print (VERSION)
             sys.exit(0)
 
         if not args[1] in ["-h", "--help", "--version"] and  args[1].startswith("-"):
@@ -578,11 +578,11 @@ class AdminRoleManage(Subcommand):
         if opts.my_roles:
             data, errors = rest.my_roles()
             _exitIfErrors(errors)
-            print json.dumps(data, indent=2)
+            print(json.dumps(data, indent=2))
         elif opts.get_roles:
             data, errors = rest.list_rbac_users()
             _exitIfErrors(errors)
-            print json.dumps(data, indent=2)
+            print(json.dumps(data, indent=2))
         elif opts.set_users:
             data, errors = rest.setRoles(opts.set_users, opts.roles, opts.set_names)
             _exitIfErrors(errors)
@@ -1069,7 +1069,7 @@ class BucketFlush(Subcommand):
         if not opts.force:
             question = "Running this command will totally PURGE database data from disk. " + \
                        "Do you really want to do it? (Yes/No)"
-            confirm = raw_input(question)
+            confirm = input(question)
             if confirm not in ('y', 'Y', 'yes', 'Yes'):
                 return
 
@@ -1103,14 +1103,14 @@ class BucketList(Subcommand):
         _exitIfErrors(errors)
 
         if opts.output == 'json':
-            print json.dumps(result)
+            print(json.dumps(result))
         else:
             for bucket in result:
-                print '%s' % bucket['name']
-                print ' bucketType: %s' % bucket['bucketType']
-                print ' numReplicas: %s' % bucket['replicaNumber']
-                print ' ramQuota: %s' % bucket['quota']['ram']
-                print ' ramUsed: %s' % bucket['basicStats']['memUsed']
+                print('%s' % bucket['name'])
+                print(' bucketType: %s' % bucket['bucketType'])
+                print(' numReplicas: %s' % bucket['replicaNumber'])
+                print(' ramQuota: %s' % bucket['quota']['ram'])
+                print(' ramUsed: %s' % bucket['basicStats']['memUsed'])
 
     @staticmethod
     def get_man_page_name():
@@ -1223,19 +1223,19 @@ class CollectLogsStatus(Subcommand):
                 self._print_task(task)
 
         if not found:
-            print "No log collection tasks were found"
+            print("No log collection tasks were found")
 
     def _print_task(self, task):
-        print "Status: %s" % task['status']
+        print("Status: %s" % task['status'])
         if 'perNode' in task:
-            print "Details:"
-            for node, node_status in task["perNode"].iteritems():
-                print '\tNode:', node
-                print '\tStatus:', node_status['status']
+            print("Details:")
+            for node, node_status in task["perNode"].items():
+                print('\tNode:', node)
+                print('\tStatus:', node_status['status'])
                 for field in ["path", "statusCode", "url", "uploadStatusCode", "uploadOutput"]:
                     if field in node_status:
-                        print '\t', field, ":", node_status[field]
-            print
+                        print('\t', field, ":", node_status[field])
+            print()
 
     @staticmethod
     def get_man_page_name():
@@ -1397,9 +1397,9 @@ class GroupManage(Subcommand):
         for group in groups["groups"]:
             if opts.name is None or opts.name == group['name']:
                 found = True
-                print '%s' % group['name']
+                print('%s' % group['name'])
                 for node in group['nodes']:
-                    print ' server: %s' % node["hostname"]
+                    print(' server: %s' % node["hostname"])
         if not found and opts.name:
             _exitIfErrors(["Invalid group name: %s" % opts.name])
 
@@ -1445,7 +1445,7 @@ class HostList(Subcommand):
         _exitIfErrors(errors)
 
         for node in result['nodes']:
-            print node['hostname']
+            print(node['hostname'])
 
     @staticmethod
     def get_man_page_name():
@@ -1491,7 +1491,7 @@ class MasterPassword(LocalSubcommand):
             password = getpass.getpass("\nEnter master password:")
         password = "\"" + password.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
-        randChars = ''.join(random.choice(string.ascii_letters) for i in xrange(20))
+        randChars = ''.join(random.choice(string.ascii_letters) for i in range(20))
         name = 'cb-%s@127.0.0.1' % randChars
 
         instr = "Res = rpc:call('" + node + "', encryption_service, set_password, [" \
@@ -1503,9 +1503,9 @@ class MasterPassword(LocalSubcommand):
         res = res.strip(' \t\n\r')
 
         if res == "ok":
-            print "SUCCESS: Password accepted. Node started booting."
+            print("SUCCESS: Password accepted. Node started booting.")
         elif res == "retry":
-            print "Incorrect password."
+            print("Incorrect password.")
             self.prompt_for_master_pwd(node, cookie, '')
         elif res == "{error,not_allowed}":
             _exitIfErrors(["Password was already supplied"])
@@ -1646,7 +1646,7 @@ class RebalanceStatus(Subcommand):
         status, errors = rest.rebalance_status()
         _exitIfErrors(errors)
 
-        print json.dumps(status, indent=2)
+        print(json.dumps(status, indent=2))
 
     @staticmethod
     def get_man_page_name():
@@ -1751,7 +1751,7 @@ class ResetAdminPassword(LocalSubcommand):
         elif opts.regenerate:
             result, errors = rest.regenerate_admin_password()
             _exitIfErrors(errors)
-            print result["password"]
+            print(result["password"])
         else:
             _exitIfErrors(["No parameters specified"])
 
@@ -1869,7 +1869,7 @@ class ServerEshell(Subcommand):
             else:
                 _exitIfErrors(["Unknown vm type `%s`" % opts.vm])
 
-        rand_chars = ''.join(random.choice(string.ascii_letters) for i in xrange(20))
+        rand_chars = ''.join(random.choice(string.ascii_letters) for i in range(20))
         name = 'ctl-%s@127.0.0.1' % rand_chars
 
         cb_erl = os.path.join(opts.erl_path, 'erl')
@@ -1914,7 +1914,7 @@ class ServerInfo(Subcommand):
         result, errors = rest.node_info()
         _exitIfErrors(errors)
 
-        print json.dumps(result, sort_keys=True, indent=2)
+        print(json.dumps(result, sort_keys=True, indent=2))
 
     @staticmethod
     def get_man_page_name():
@@ -1944,7 +1944,7 @@ class ServerList(Subcommand):
             if node.get('otpNode') is None:
                 raise Exception("could not access node")
 
-            print node['otpNode'], node['hostname'], node['status'], node['clusterMembership']
+            print(node['otpNode'], node['hostname'], node['status'], node['clusterMembership'])
 
     @staticmethod
     def get_man_page_name():
@@ -2904,7 +2904,7 @@ class SettingPasswordPolicy(Subcommand):
     def _get(self, rest, opts):
         policy, errors = rest.get_password_policy()
         _exitIfErrors(errors)
-        print json.dumps(policy, sort_keys=True, indent=2)
+        print(json.dumps(policy, sort_keys=True, indent=2))
 
     def _set(self, rest, opts):
         _, errors = rest.set_password_policy(opts.min_length, opts.upper_case, opts.lower_case,
@@ -3107,14 +3107,14 @@ class SslManage(Subcommand):
             certificate, errors = rest.retrieve_cluster_certificate(opts.extended)
             _exitIfErrors(errors)
             if isinstance(certificate, dict):
-                print json.dumps(certificate, sort_keys=True, indent=2)
+                print(json.dumps(certificate, sort_keys=True, indent=2))
             else:
-                print certificate
+                print(certificate)
         elif opts.node_cert:
-            host = urlparse.urlparse(opts.cluster).netloc
+            host = urllib.parse.urlparse(opts.cluster).netloc
             certificate, errors = rest.retrieve_node_certificate(host)
             _exitIfErrors(errors)
-            print json.dumps(certificate, sort_keys=True, indent=2)
+            print(json.dumps(certificate, sort_keys=True, indent=2))
         elif opts.upload_cert:
             certificate = _exit_on_file_read_failure(opts.upload_cert)
             _, errors = rest.upload_cluster_certificate(certificate)
@@ -3136,7 +3136,7 @@ class SslManage(Subcommand):
         elif opts.show_client_auth:
             result, errors = rest.retrieve_client_cert_auth()
             _exitIfErrors(errors)
-            print json.dumps(result, sort_keys=True, indent=2)
+            print(json.dumps(result, sort_keys=True, indent=2))
         else:
             _exitIfErrors(["No options specified"])
 
@@ -3296,7 +3296,7 @@ class UserManage(Subcommand):
 
         result, errors = rest.list_rbac_users()
         _exitIfErrors(errors)
-        print json.dumps(result, indent=2)
+        print(json.dumps(result, indent=2))
 
     def _get(self, rest, opts):
         if opts.rbac_user is None:
@@ -3315,7 +3315,7 @@ class UserManage(Subcommand):
         user = [u for u in result if u['id'] == opts.rbac_user]
 
         if len(user) != 0:
-            print json.dumps(user, indent=2)
+            print(json.dumps(user, indent=2))
         else:
             _exitIfErrors(["no user %s" % opts.rbac_user])
 
@@ -3333,7 +3333,7 @@ class UserManage(Subcommand):
 
         result, errors = rest.my_roles()
         _exitIfErrors(errors)
-        print json.dumps(result, indent=2)
+        print(json.dumps(result, indent=2))
 
     def _set(self, rest, opts):
         if opts.rbac_user is None:
@@ -3515,12 +3515,13 @@ class XdcrReplicate(Subcommand):
         _exitIfErrors(errors)
         for task in tasks:
             if task["type"] == "xdcr":
-                print 'stream id: %s' % task['id']
-                print "   status: %s" % task["status"]
-                print "   source: %s" % task["source"]
-                print "   target: %s" % task["target"]
+                print('stream id: %s' % task['id'])
+                print("   status: %s" % task["status"])
+                print("   source: %s" % task["source"])
+                print("   target: %s" % task["target"])
                 if "filterExpression" in task and task["filterExpression"] != "":
-                    print "   filter: %s" % task["filterExpression"]
+                    print("   filter: %s" % task["filterExpression"])
+
 
     def _settings(self, rest, opts):
         if opts.replicator_id is None:
@@ -3676,11 +3677,11 @@ class XdcrSetup(Subcommand):
 
         for cluster in clusters:
             if not cluster["deleted"]:
-                print "cluster name: %s" % cluster["name"]
-                print "        uuid: %s" % cluster["uuid"]
-                print "   host name: %s" % cluster["hostname"]
-                print "   user name: %s" % cluster["username"]
-                print "         uri: %s" % cluster["uri"]
+                print("cluster name: %s" % cluster["name"])
+                print("        uuid: %s" % cluster["uuid"])
+                print("   host name: %s" % cluster["hostname"])
+                print("   user name: %s" % cluster["username"])
+                print("         uri: %s" % cluster["uri"])
 
     @staticmethod
     def get_man_page_name():
@@ -3803,15 +3804,15 @@ class EventingFunctionSetup(Subcommand):
         _exitIfErrors(errors)
 
         for function in functions:
-            print function['appname']
+            print(function['appname'])
             status = ''
             if function['settings']['deployment_status']:
                 status = 'Deployed'
             else:
                 status = 'Undeployed'
-            print ' Status: ' + status
-            print ' Source Bucket: ' + function['depcfg']['source_bucket']
-            print ' Metadata Bucket: ' + function['depcfg']['metadata_bucket']
+            print(' Status: ' + status)
+            print(' Source Bucket: ' + function['depcfg']['source_bucket'])
+            print(' Metadata Bucket: ' + function['depcfg']['metadata_bucket'])
 
     @staticmethod
     def get_man_page_name():
@@ -3922,7 +3923,7 @@ class CollectionManage(Subcommand):
         manifest, errors = rest.get_manifest(opts.bucket)
         _exitIfErrors(errors)
         for scope in manifest:
-            print scope
+            print(scope)
 
     def _create_collection(self, rest, opts):
         scope, collection = self._get_scope_collection(opts.create_collection)
@@ -3941,7 +3942,7 @@ class CollectionManage(Subcommand):
         _exitIfErrors(errors)
         if opts.list_collections in manifest:
             for collection in manifest[opts.list_collections]:
-                print collection
+                print(collection)
         else:
             _exitIfErrors(["Scope {0} does not exist".format(opts.list_collections)])
 

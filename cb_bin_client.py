@@ -9,9 +9,7 @@ import array
 import socket
 import random
 import struct
-import exceptions
 import ssl
-
 from couchbaseConstants import REQ_MAGIC_BYTE, RES_MAGIC_BYTE
 from couchbaseConstants import REQ_PKT_FMT, RES_PKT_FMT, MIN_RECV_PACKET
 from couchbaseConstants import SET_PKT_FMT, INCRDECR_RES_FMT
@@ -38,7 +36,8 @@ def encodeCollectionId(cid):
 
 def decodeCollectionID(key):
     # A leb128 varint encodes the CID
-    data = array.array('B', key)
+    data = array.array('B')
+    data.fromstring(key)
     cid = data[0] & 0x7f
     end = 1
     if (data[0] & 0x80) == 0x80:
@@ -52,20 +51,20 @@ def decodeCollectionID(key):
         end = end + 1
         if end == len(data):
             #  We should of stopped for a stop byte, not the end of the buffer
-            raise exceptions.ValueError("encoded key did not contain a stop byte")
+            raise ValueError("encoded key did not contain a stop byte")
     return cid, key[end:]
 
 def skipCollectionID(key):
     _, k = decodeCollectionID(key)
     return k
 
-class MemcachedError(exceptions.Exception):
+class MemcachedError(Exception):
     """Error raised when a command fails."""
 
     def __init__(self, status, msg):
-        supermsg='Memcached error #' + `status`
+        supermsg='Memcached error #' + repr(status)
         if msg: supermsg += ":  " + msg
-        exceptions.Exception.__init__(self, supermsg)
+        Exception.__init__(self, supermsg)
 
         self.status=status
         self.msg=msg
@@ -123,24 +122,34 @@ class MemcachedClient(object):
         msg=struct.pack(fmt, magic,
             cmd, len(key), len(extraHeader), dtype, vbucketId,
                 len(key) + len(extraHeader) + len(val) + len(extraMeta), opaque, cas)
+        if isinstance(extraHeader, str):
+            extraHeader = extraHeader.encode('utf8')
+        if isinstance(val, str):
+            val = val.encode('utf8')
+        if isinstance(extraMeta, str):
+            extraMeta = extraMeta.encode('utf8')
+        if isinstance(msg, str):
+            msg = msg.encode('utf8')
+        if isinstance(key, str):
+            key = key.encode('utf8')
         self.s.sendall(msg + extraHeader + key + val + extraMeta)
 
     def _recvMsg(self):
-        response = ""
+        response = b''
         while len(response) < MIN_RECV_PACKET:
             data = self.s.recv(MIN_RECV_PACKET - len(response))
-            if data == '':
-                raise exceptions.EOFError("Got empty data (remote died?).")
+            if data == b'':
+                raise EOFError("Got empty data (remote died?).")
             response += data
         assert len(response) == MIN_RECV_PACKET
         magic, cmd, keylen, extralen, dtype, errcode, remaining, opaque, cas=\
             struct.unpack(RES_PKT_FMT, response)
 
-        rv = ""
+        rv = b''
         while remaining > 0:
             data = self.s.recv(remaining)
-            if data == '':
-                raise exceptions.EOFError("Got empty data (remote died?).")
+            if data == b'':
+                raise EOFError("Got empty data (remote died?).")
             rv += data
             remaining -= len(data)
 
@@ -315,6 +324,12 @@ class MemcachedClient(object):
 
     def sasl_auth_plain(self, user, password, foruser=''):
         """Perform plain auth."""
+        if isinstance(user, bytes):
+            user = user.decode()
+        if isinstance(password, bytes):
+            password = password.decode()
+        if isinstance(foruser, bytes):
+            foruser = foruser.decode()
         return self.sasl_auth_start('PLAIN', '\0'.join([foruser, user, password]))
 
     def stop_persistence(self):
@@ -324,7 +339,7 @@ class MemcachedClient(object):
         return self._doCmd(couchbaseConstants.CMD_START_PERSISTENCE, '', '')
 
     def set_param(self, key, val, type):
-        print "setting param:", key, val
+        print("setting param:", key, val)
         type = struct.pack(couchbaseConstants.SET_PARAM_FMT, type)
         return self._doCmd(couchbaseConstants.CMD_SET_PARAM, key, val, type)
 
@@ -355,7 +370,7 @@ class MemcachedClient(object):
         opaqued=dict(enumerate(keys))
         terminal=len(opaqued)+10
         # Send all of the keys in quiet
-        for k,v in opaqued.iteritems():
+        for k,v in opaqued.items():
             self._sendCmd(couchbaseConstants.CMD_GETQ, v, '', k)
 
         self._sendCmd(couchbaseConstants.CMD_NOOP, '', '', terminal)
@@ -379,14 +394,14 @@ class MemcachedClient(object):
 
         # If this is a dict, convert it to a pair generator
         if hasattr(items, 'iteritems'):
-            items = items.iteritems()
+            items = items.items()
 
         opaqued=dict(enumerate(items))
         terminal=len(opaqued)+10
         extra=struct.pack(SET_PKT_FMT, flags, exp)
 
         # Send all of the keys in quiet
-        for opaque,kv in opaqued.iteritems():
+        for opaque,kv in opaqued.items():
             self._sendCmd(couchbaseConstants.CMD_SETQ, kv[0], kv[1], opaque, extra)
 
         self._sendCmd(couchbaseConstants.CMD_NOOP, '', '', terminal)
@@ -398,7 +413,7 @@ class MemcachedClient(object):
             try:
                 opaque, cas, data = self._handleSingleResponse(None)
                 done = opaque == terminal
-            except MemcachedError, e:
+            except MemcachedError as e:
                 failed.append(e)
 
         return failed
@@ -413,7 +428,7 @@ class MemcachedClient(object):
         extra = ''
 
         # Send all of the keys in quiet
-        for opaque, k in opaqued.iteritems():
+        for opaque, k in opaqued.items():
             self._sendCmd(couchbaseConstants.CMD_DELETEQ, k, '', opaque, extra)
 
         self._sendCmd(couchbaseConstants.CMD_NOOP, '', '', terminal)
@@ -425,7 +440,7 @@ class MemcachedClient(object):
             try:
                 opaque, cas, data = self._handleSingleResponse(None)
                 done = opaque == terminal
-            except MemcachedError, e:
+            except MemcachedError as e:
                 failed.append(e)
 
         return failed

@@ -13,7 +13,7 @@ import re
 import string
 import sys
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import json
 
@@ -101,26 +101,26 @@ class Recovery(pump_transfer.Transfer):
         return 0
 
     def aggregate_stats(self, cur):
-        for k, val in cur.iteritems():
+        for k, val in cur.items():
             self.stats[k] += val
         return 0
 
     def report_stats(self):
         delta = time.time() - self.start_time
-        x = sorted([k for k in self.stats.iterkeys() if "_sink_" in k])
+        x = sorted([k for k in self.stats.keys() if "_sink_" in k])
 
         width_k = max([5] + [len(k.replace("tot_sink_", "")) for k in x] + [len("Recovery")])
         width_v = max([20] + [len(str(self.stats[k])) for k in x])
         width_s = max([10] + [len("%0.1f" % (self.stats[k] / delta)) for k in x])
         sys.stderr.write("\n %s : %s | %s\n"
-             % (string.ljust("Recovery", width_k),
-                string.rjust("Total", width_v),
-                string.rjust("Per sec", width_s)))
+             % ("Recovery".ljust(width_k),
+                "Total".rjust(width_v),
+                "Per sec".rjust(width_s)))
         for k in x:
             sys.stderr.write(" %s : %s | %s\n"
-                 % (string.ljust(k.replace("tot_sink_", ""), width_k),
-                    string.rjust(str(self.stats[k]), width_v),
-                    string.rjust("%0.1f" % (self.stats[k] / delta), width_s)))
+                 % (k.replace("tot_sink_", "").ljust(width_k),
+                    str(self.stats[k]).rjust(width_v),
+                    ("%0.1f" % (self.stats[k] / delta)).rjust(width_s)))
 
         total_vbucket = 0
         if self.recovery_map:
@@ -165,7 +165,7 @@ class Recovery(pump_transfer.Transfer):
             cmd = "commitVBucket"
             reason_msg = 'Activate vbucket:%s' % vbucket
         if vbucket is not None:
-            params = urllib.urlencode({"vbucket": vbucket})
+            params = urllib.parse.urlencode({"vbucket": vbucket})
         else:
             params = None
         url = '/pools/default/buckets/%s/controller/%s?recovery_uuid=%s' %\

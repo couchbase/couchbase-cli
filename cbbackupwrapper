@@ -8,14 +8,14 @@ import base64
 import optparse
 import os
 import platform
-import Queue
+import queue
 import re
 import json
 import subprocess
 import sys
 import threading
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from cluster_manager import ClusterManager
 
@@ -47,19 +47,19 @@ See the cbrestorewrapper.py script for restoring backups made with this script."
 bucketList = []
 vbucketList = []
 backup_complete = False
-process_queue = Queue.Queue()
+process_queue = queue.Queue()
 lock = threading.Lock()
 
 def _exit_if_errors(errors):
     if errors:
         for error in errors:
-            print "ERROR: " + error
+            print("ERROR: " + error)
         sys.exit(1)
 
 def opt_extra_help(parser, extra_defaults):
     extra_help = "; ".join(["%s=%s (%s)" %
                            (k, extra_defaults[k][0], extra_defaults[k][1])
-                           for k in sorted(extra_defaults.iterkeys())])
+                           for k in sorted(extra_defaults.keys())])
 
     group = optparse.OptionGroup(parser, "Available extra config parameters (-x)",
                         extra_help)
@@ -93,11 +93,11 @@ def opt_parse_extra(extra, extra_defaults):
     extra_in = dict([(x[0], x[1]) for x in
                      [(kv + '=').split('=') for kv in
                       (extra or "").split(',')]])
-    for k, v in extra_in.iteritems():
+    for k, v in extra_in.items():
         if k and not extra_defaults.get(k):
             sys.exit("error: unknown extra option: " + k)
     return dict([(k, float(extra_in.get(k, extra_defaults[k][0])))
-                 for k in extra_defaults.iterkeys()])
+                 for k in extra_defaults.keys()])
 
 def argumentParsing():
     usage = "usage: %prog CLUSTER BACKUPDIR OPTIONS"
@@ -155,7 +155,7 @@ def findAllVbucketsForBucket(node, bucket, restport, username, password, single_
     _exit_if_errors(errors)
 
     if not single_node:
-        return range(len(result['vBucketServerMap']['vBucketMap']))
+        return list(range(len(result['vBucketServerMap']['vBucketMap'])))
     else:
         thisNode = None
         for node in result["nodes"]:
@@ -186,13 +186,13 @@ def findAllVbucketsForBucket(node, bucket, restport, username, password, single_
 
 # Get the buckets that exist on the cluster
 def getBuckets(node, rest_port, username, password):
-    request = urllib2.Request(
+    request = urllib.request.Request(
         'http://' + node + ':' + rest_port + '/pools/default/buckets')
     base64string = base64.encodestring(
         '%s:%s' % (username, password)).replace('\n', '')
     request.add_header('Authorization', 'Basic %s' % base64string)
     try:
-        response = urllib2.urlopen(request)
+        response = urllib.request.urlopen(request)
     except:
         print('Authorization failed.  Please check username and password.')
         sys.exit(1)
@@ -215,18 +215,18 @@ def consumer(id, verbose):
             commandline = process_queue.get(block=True, timeout=2)
             if verbose:
                 with lock:
-                    print "T(%s): %s" %(id, commandline)
+                    print("T(%s): %s" %(id, commandline))
             p = subprocess.Popen(commandline, shell=True)
             p.wait()
             if p.returncode == 1:
                 with lock:
-                    print 'Error with backup for running %s' % commandline
+                    print('Error with backup for running %s' % commandline)
             process_queue.task_done()
             time.sleep(1)
         except Exception as e:
             if process_queue.empty():
                 return
-            print 'Exception ' + str(e)
+            print('Exception ' + str(e))
 
 if __name__ == '__main__':
     # Parse the arguments given.
@@ -253,11 +253,11 @@ if __name__ == '__main__':
 
     # Check to see if path is correct
     if not os.path.isdir(path):
-        print 'The path to cbbackup does not exist'
-        print 'Please run with a different path'
+        print('The path to cbbackup does not exist')
+        print('Please run with a different path')
         sys.exit(1)
     if not os.path.isfile(os.path.join(path, backup_exe)):
-        print 'cbbackup could not be found in ' + path
+        print('cbbackup could not be found in ' + path)
         sys.exit(1)
 
     # Check to see if log directory exists if not create it
@@ -292,8 +292,8 @@ if __name__ == '__main__':
                 bucketList.append(args.bucket_source)
 
         if len(bucketList) == 0:
-            print 'Bucket ' + args.bucket_source + ' does not exist'
-            print 'Please enter a different bucket'
+            print('Bucket ' + args.bucket_source + ' does not exist')
+            print('Please enter a different bucket')
             sys.exit(1)
 
     # For each bucket
@@ -329,7 +329,7 @@ if __name__ == '__main__':
         worker_threads.append(t)
 
     # Group the number of vbuckets per process
-    print 'Waiting for the backup to complete...'
+    print('Waiting for the backup to complete...')
     processes = []
     for i in range(0, len(vbucketList), int(args.number)):
         chunk = vbucketList[i:i + int(args.number)]
@@ -348,4 +348,4 @@ if __name__ == '__main__':
         worker.join()
 
     with lock:
-        print 'SUCCESSFULLY COMPLETED!'
+        print('SUCCESSFULLY COMPLETED!')

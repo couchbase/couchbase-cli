@@ -58,7 +58,7 @@ class JSONSource(pump.Source):
                     "json": doc,
                     "meta": {"id": id}
                 }}
-        except ValueError, error:
+        except ValueError as error:
             logging.error("Fail to read json file with error:" + str(error))
 
     @staticmethod
@@ -143,7 +143,7 @@ class JSONSource(pump.Source):
                     value = fp.read()
                     fp.close()
                     self.save_doc(batch, key, value)
-                except IOError, error:
+                except IOError as error:
                     logging.error("Fail to load json file with error" + str(error))
 
         if not self.docs:

@@ -10,7 +10,7 @@ import sys
 import cb_bin_client
 import couchbaseConstants
 import pump
-import cbsnappy as snappy
+import snappy
 from cb_util import tag_user_data
 
 try:
@@ -187,7 +187,7 @@ class MCSink(pump.Sink):
                 if self.uncompress and val:
                     try:
                         val = snappy.uncompress(val)
-                    except Exception, err:
+                    except Exception as err:
                         pass
             if cmd == couchbaseConstants.CMD_GET:
                 val, flg, exp, cas = '', 0, 0, 0
@@ -209,8 +209,8 @@ class MCSink(pump.Sink):
 
         if m:
             try:
-                conn.s.sendall(''.join(m))
-            except socket.error, e:
+                conn.s.sendall(self.join_str_and_bytes(m))
+            except socket.error as e:
                 return "error: conn.sendall() exception: %s" % (e)
 
         return 0
@@ -263,6 +263,16 @@ class MCSink(pump.Sink):
                                0, 0, vbucketId, total_body_len, opaque, cas)
 
         return 0, (msg_head+key+subcmd_msg0+subcmd_msg1, None, None, None, None)
+
+    @staticmethod
+    def join_str_and_bytes(lst):
+        out = b''
+        for x in lst:
+            if isinstance(x, str):
+                out += x.encode('utf-8')
+            else:
+                out += x
+        return out
 
     def recv_msgs(self, conn, msgs, vbucket_id=None, verify_opaque=True):
         refresh = False
@@ -328,7 +338,7 @@ class MCSink(pump.Sink):
                 else:
                     return "error: MCSink MC error: " + str(r_status), None, None
 
-            except Exception, e:
+            except Exception as e:
                 logging.error("MCSink exception: %s", e)
                 return "error: MCSink exception: " + str(e), None, None
         return 0, retry, refresh
@@ -338,7 +348,7 @@ class MCSink(pump.Sink):
             # The source gave no meta, so use regular commands.
             self.op_map = OP_MAP
 
-        if cmd in[couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_DCP_MUTATION] :
+        if cmd in[couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_DCP_MUTATION]:
             m = self.op_map.get(op, None)
             if m:
                 return 0, m
@@ -360,9 +370,15 @@ class MCSink(pump.Sink):
         if ext:
             m.append(ext)
         if key:
-            m.append(str(key))
+            if isinstance(key, bytes):
+                m.append(key.decode())
+            else:
+                m.append(str(key))
         if val:
-            m.append(str(val))
+            if isinstance(val, bytes):
+                m.append(val.decode())
+            else:
+                m.append(str(val))
         if extra_meta:
             m.append(extra_meta)
 
@@ -437,6 +453,7 @@ class MCSink(pump.Sink):
                         # The seq_no might be 32-bits from 2.0DP4, so pad with 0x00's.
                         seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + seq_no)[-8:]
 
+                    seq_no = seq_no.encode()
                     check_seqno, = struct.unpack(">Q", seq_no)
                     if check_seqno:
                         ext = (struct.pack(">II", flg, exp) + seq_no +
@@ -484,7 +501,7 @@ class MCSink(pump.Sink):
         val = ''
 
         buf, cmd, errcode, extlen, keylen, data, cas, opaque = \
-            self.recv_msg(conn.s, getattr(conn, 'buf', ''))
+            self.recv_msg(conn.s, getattr(conn, 'buf', b''))
         conn.buf = buf
 
         if data:
@@ -512,7 +529,7 @@ class MCSink(pump.Sink):
                 data = skt.recv(max(nbytes - len(buf), 4096))
             except socket.timeout:
                 logging.error("error: recv socket.timeout")
-            except Exception, e:
+            except Exception as e:
                 logging.error("error: recv exception: " + str(e))
 
             if not data:

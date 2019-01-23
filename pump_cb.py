@@ -3,7 +3,7 @@
 import logging
 import json
 import time
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import couchbaseConstants
 import pump
@@ -29,17 +29,17 @@ class CBSink(pump_mc.MCSink):
         sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
-                                 "user": sasl_user,
+                                 "user": pump.returnString(sasl_user),
                                 },
                  "mode": getattr(self.opts, "mode", "diff"),
-                 "source_bucket": self.source_bucket['name'],
-                 "source_node": self.source_node['hostname'],
-                 "target_bucket": self.sink_map['buckets'][0]['name']
+                 "source_bucket": pump.returnString(self.source_bucket['name']),
+                 "source_node": pump.returnString(self.source_node['hostname']),
+                 "target_bucket": pump.returnString(self.sink_map['buckets'][0]['name'])
                 }
         if conn:
             try:
                 conn.audit(couchbaseConstants.AUDIT_EVENT_RESTORE_SINK_START, json.dumps(event))
-            except Exception, e:
+            except Exception as e:
                 logging.warn("auditing error: %s" % e)
         return 0
 
@@ -47,16 +47,16 @@ class CBSink(pump_mc.MCSink):
         sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
-                                 "user": sasl_user
+                                 "user": pump.returnString(sasl_user)
                                 },
-                 "source_bucket": self.source_bucket['name'],
-                 "source_node": self.source_node['hostname'],
-                 "target_bucket": self.sink_map['buckets'][0]['name']
+                 "source_bucket": pump.returnString(self.source_bucket['name']),
+                 "source_node": pump.returnString(self.source_node['hostname']),
+                 "target_bucket": pump.returnString(self.sink_map['buckets'][0]['name'])
                 }
         if conn:
             try:
                 conn.audit(couchbaseConstants.AUDIT_EVENT_RESTORE_SINK_STOP, json.dumps(event))
-            except Exception, e:
+            except Exception as e:
                 logging.warn("auditing error: %s" % e)
         return 0
 
@@ -69,7 +69,7 @@ class CBSink(pump_mc.MCSink):
         vbuckets = batch.group_by_vbucket_id(vbuckets_num, self.rehash)
 
         # Scatter or send phase.
-        for vbucket_id, msgs in vbuckets.iteritems():
+        for vbucket_id, msgs in vbuckets.items():
             rv, conn = self.find_conn(mconns, vbucket_id, msgs)
             if rv != 0:
                 return rv, None, None
@@ -85,7 +85,7 @@ class CBSink(pump_mc.MCSink):
         need_refresh = False
 
         # Gather or recv phase.
-        for vbucket_id, msgs in vbuckets.iteritems():
+        for vbucket_id, msgs in vbuckets.items():
             rv, conn = self.find_conn(mconns, vbucket_id, msgs)
             if rv != 0:
                 return rv, None, None
@@ -125,7 +125,7 @@ class CBSink(pump_mc.MCSink):
                     continue
                 otpNode = node["otpNode"].encode('ascii')
                 mcdHost = otpNode.split("@")[1] + ":" + str(node["ports"]["direct"])
-                for remap_node, remap_vbs in vbucket_list.iteritems():
+                for remap_node, remap_vbs in vbucket_list.items():
                     if remap_node == otpNode and mcdHost in server_vb_map["serverList"]:
                         idx = server_vb_map["serverList"].index(mcdHost)
                         for vb in remap_vbs:
@@ -164,14 +164,14 @@ class CBSink(pump_mc.MCSink):
 
         # Adjust sink_map['buckets'] to have only our sink_bucket.
         sink_buckets = [bucket for bucket in sink_map['buckets']
-                        if bucket['name'] == sink_bucket_name]
+                        if pump.returnString(bucket['name']) == pump.returnString(sink_bucket_name)]
         if not sink_buckets:
-            return "error: missing bucket-destination: " + sink_bucket_name + \
-                " at destination: " + spec + \
+            return "error: missing bucket-destination: {0}".format(sink_bucket_name) + \
+                " at destination: {0}".format(spec) + \
                 "; perhaps your username/password is missing or incorrect", None
         if len(sink_buckets) != 1:
-            return "error: multiple buckets with name: " + sink_bucket_name + \
-                " at destination: " + spec, None
+            return "error: multiple buckets with name:{0}".format(sink_bucket_name) + \
+                " at destination: {0}".format(spec), None
         sink_map['buckets'] = sink_buckets
         if opts.extra.get("allow_recovery_vb_remap", 0) == 1:
             error = CBSink.map_recovery_buckets(sink_map, sink_bucket_name, opts.vbucket_list)
@@ -197,7 +197,7 @@ class CBSink(pump_mc.MCSink):
             index_defs = json.loads(source_design)
             if not index_defs:
                return 0
-        except ValueError, e:
+        except ValueError as e:
             return "error: could not parse fts index definitions; exception: %s" % (e)
 
         try:
@@ -210,7 +210,7 @@ class CBSink(pump_mc.MCSink):
                                   opts.cacert, False)
             _, errors = rest.restore_fts_index_metadata(index_defs)
             return errors
-        except ServiceNotAvailableException, e:
+        except ServiceNotAvailableException as e:
             return "No fts service in cluster, skipping restore of indexes"
 
     @staticmethod
@@ -222,7 +222,7 @@ class CBSink(pump_mc.MCSink):
             sd = json.loads(source_design)
             if not sd:
                return 0
-        except ValueError, e:
+        except ValueError as e:
             return "error: could not parse source design; exception: %s" % (e)
 
         try:
@@ -236,7 +236,7 @@ class CBSink(pump_mc.MCSink):
                                   opts.cacert, False)
             _, errors = rest.restore_index_metadata(sink_bucket['name'], sd)
             return errors
-        except ServiceNotAvailableException, e:
+        except ServiceNotAvailableException as e:
             return "No index service in cluster, skipping restore of indexes"
 
     @staticmethod
@@ -246,7 +246,7 @@ class CBSink(pump_mc.MCSink):
             return 0
         try:
             sd = json.loads(source_design)
-        except ValueError, e:
+        except ValueError as e:
             return "error: could not parse source design; exception: %s" % (e)
         if not sd:
             return 0
@@ -305,7 +305,7 @@ class CBSink(pump_mc.MCSink):
                         if result and 'errors' in result:
                             for error in result['errors']:
                                 logging.error('N1QL query %s failed due to error `%s`' % (stmt['statement'], error['msg']))
-                except ServiceNotAvailableException, e:
+                except ServiceNotAvailableException as e:
                     logging.error("Failed to restore indexes, cluster does not contain a" +
                                   " query node")
         elif type(sd) is list:
@@ -337,9 +337,9 @@ class CBSink(pump_mc.MCSink):
 
                 js_doc = json.dumps(js)
                 if id.startswith(CBSink.DDOC_HEAD):
-                    id = CBSink.DDOC_HEAD + urllib.quote(id[len(CBSink.DDOC_HEAD):], '')
+                    id = CBSink.DDOC_HEAD + urllib.parse.quote(id[len(CBSink.DDOC_HEAD):], '')
                 else:
-                    id = urllib.quote(id, '')
+                    id = urllib.parse.quote(id, '')
                 logging.debug("design_doc: " + js_doc)
                 logging.debug("design_doc id: " + id + " at: " + path + "/" + id)
 
@@ -353,7 +353,7 @@ class CBSink(pump_mc.MCSink):
                     if err:
                         return ("error: could not restore design doc id: %s" +
                                 "; response: %s; err: %s") % (id, response, err)
-                except Exception, e:
+                except Exception as e:
                     return ("error: design sink exception: %s" +
                             "; couch_api_base: %s") % (e, couch_api_base)
 
@@ -393,5 +393,13 @@ class CBSink(pump_mc.MCSink):
                 logging.error("error: CBSink.connect() for send: " + rv)
                 return rv, None
             mconns[host_port] = conn
+            if self.opts.collection:
+                try:
+                    # HELO collections
+                    conn.helo([couchbaseConstants.HELO_COLLECTIONS])
+                except Exception as e:
+                    logging.warn("fail to call hello command, maybe it is not supported")
+                    pass
+
             self.add_start_event(conn)
         return 0, conn

@@ -153,10 +153,10 @@ class GenSource(pump.Source):
             # generate a collection key
             if itr:
                 try:
-                    cid = int(itr.next(), 16)
+                    cid = int(next(itr), 16)
                 except StopIteration:
                     itr = iter(collections)
-                    cid = int(itr.next(), 16)
+                    cid = int(next(itr), 16)
 
                 encodedCid = encodeCollectionId(cid)
                 # Generate the pack format and pack the key

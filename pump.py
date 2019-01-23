@@ -3,17 +3,17 @@
 import os
 import base64
 import copy
-import httplib
+import http.client
 import logging
 import re
-import Queue
+import queue
 import json
 import string
 import sys
 import threading
 import time
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import zlib
 import platform
 import subprocess
@@ -25,7 +25,7 @@ import cb_bin_client
 from cb_util import tag_user_data
 from cluster_manager import ClusterManager
 from collections import defaultdict
-import cbsnappy as snappy
+import snappy
 
 # TODO: (1) optionally log into backup directory
 
@@ -54,25 +54,25 @@ class ProgressReporter(object):
         cur_time = time.time()
         delta = cur_time - self.prev_time
         c, p = self.cur, self.prev  # pylint: disable=no-member
-        x = sorted([k for k in c.iterkeys() if "_sink_" in k])
+        x = sorted([k for k in c.keys() if "_sink_" in k])
 
         width_k = max([5] + [len(k.replace("tot_sink_", "")) for k in x])
         width_v = max([20] + [len(str(c[k])) for k in x])
         width_d = max([10] + [len(str(c[k] - p[k])) for k in x])
         width_s = max([10] + [len("%0.1f" % ((c[k] - p[k]) / delta)) for k in x])
         emit(prefix + " %s : %s | %s | %s"
-             % (string.ljust("", width_k),
-                string.rjust("total", width_v),
-                string.rjust("last", width_d),
-                string.rjust("per sec", width_s)))
+             % ("".ljust(width_k),
+                "total".rjust(width_v),
+                "last".rjust(width_d),
+                "per sec".rjust(width_s)))
         verbose_set = ["tot_sink_batch", "tot_sink_msg"]
         for k in x:
             if k not in verbose_set or self.opts.verbose > 0:  # pylint: disable=no-member
                 emit(prefix + " %s : %s | %s | %s"
-                 % (string.ljust(k.replace("tot_sink_", ""), width_k),
-                    string.rjust(str(c[k]), width_v),
-                    string.rjust(str(c[k] - p[k]), width_d),
-                    string.rjust("%0.1f" % ((c[k] - p[k]) / delta), width_s)))
+                 % (k.replace("tot_sink_", "").ljust(width_k),
+                    str(c[k]).rjust(width_v),
+                    str(c[k] - p[k]).rjust(width_d),
+                    ("%0.1f" % ((c[k] - p[k]) / delta)).rjust(width_s)))
         self.prev_time = cur_time
         self.prev = copy.copy(c)
 
@@ -133,7 +133,7 @@ class PumpingStation(ProgressReporter):
 
         for source_bucket in sorted(source_buckets,
                                     key=lambda b: b['name']):
-            logging.info("bucket: " + source_bucket['name'])
+            logging.info("bucket: {0}".format(source_bucket['name']))
 
             if not self.opts.extra.get("design_doc_only", 0):
                 rv = self.transfer_bucket_msgs(source_bucket, source_map, sink_map)
@@ -186,15 +186,16 @@ class PumpingStation(ProgressReporter):
         """Filter the source_buckets if a bucket_source was specified."""
         source_buckets = source_map['buckets']
         logging.debug("source_buckets: " +
-                      ",".join([n['name'] for n in source_buckets]))
+                      ",".join([returnString(n['name']) for n in source_buckets]))
 
         bucket_source = getattr(self.opts, "bucket_source", None)
+        bucket_source = returnString(bucket_source)
         if bucket_source:
             logging.debug("bucket_source: " + bucket_source)
             source_buckets = [b for b in source_buckets
-                              if b['name'] == bucket_source]
+                              if returnString(b['name']) == bucket_source]
             logging.debug("source_buckets filtered: " +
-                          ",".join([n['name'] for n in source_buckets]))
+                          ",".join([returnString(n['name']) for n in source_buckets]))
         return source_buckets
 
     def filter_source_nodes(self, source_bucket, source_map):
@@ -209,7 +210,7 @@ class PumpingStation(ProgressReporter):
         else:
             source_nodes = source_bucket['nodes']
 
-        logging.debug(" source_nodes: " + ",".join([n.get('hostname', NA)
+        logging.debug(" source_nodes: " + ",".join([returnString(n.get('hostname', NA))
                                                     for n in source_nodes]))
         return source_nodes
 
@@ -224,9 +225,8 @@ class PumpingStation(ProgressReporter):
         self.ctl['tot_msg'] = 0
 
         for source_node in sorted(source_nodes,
-                                  key=lambda n: n.get('hostname', NA)):
-            logging.debug(" enqueueing node: " +
-                          source_node.get('hostname', NA))
+                                  key=lambda n: returnString(n.get('hostname', NA))):
+            logging.debug(" enqueueing node: {0}".format(source_node.get('hostname', NA)))
             self.queue.put((source_bucket, source_node, source_map, sink_map))
 
             rv, tot = self.source_class.total_msgs(self.opts,
@@ -252,8 +252,8 @@ class PumpingStation(ProgressReporter):
 
         sys.stderr.write(self.bar(self.ctl['run_msg'],
                                   self.ctl['tot_msg']) + "\n")
-        sys.stderr.write("bucket: " + source_bucket['name'] +
-                         ", msgs transferred...\n")
+        sys.stderr.write("bucket: {0}, msgs transferred...\n".format(source_bucket['name']))
+
         def emit(msg):
             sys.stderr.write(msg + "\n")
         self.report(emit=emit)
@@ -362,7 +362,7 @@ class PumpingStation(ProgressReporter):
         if self.queue:
             return
 
-        self.queue = Queue.Queue(queue_size)
+        self.queue = queue.Queue(queue_size)
 
         threads = [threading.Thread(target=PumpingStation.run_worker,
                                     name="w" + str(i), args=(self, i))
@@ -716,7 +716,7 @@ class Batch(object):
                     key = cb_bin_client.skipCollectionID(key)
                 # Special case when the source did not supply a vbucket_id
                 # (such as stdin source), so we calculate it.
-                vbucket_id = ((zlib.crc32(key) >> 16) & 0x7FFF) % vbuckets_num
+                vbucket_id = ((zlib.crc32(key.encode()) >> 16) & 0x7FFF) % vbuckets_num
                 msg = (cmd, vbucket_id) + msg[2:]
             g[vbucket_id].append(msg)
         return g
@@ -883,7 +883,7 @@ class StdOutSink(Sink):
             if dtype > 2:
                 try:
                     val = snappy.uncompress(val)
-                except Exception, err:
+                except Exception as err:
                     pass
             try:
                 if cmd == couchbaseConstants.CMD_TAP_MUTATION or \
@@ -941,7 +941,7 @@ def parse_spec(opts, spec, port):
     """Parse host, port, username, password, path from opts and spec."""
 
     # Example spec: http://Administrator:password@HOST:8091
-    p = urlparse.urlparse(spec)
+    p = urllib.parse.urlparse(spec)
 
     # Example netloc: Administrator:password@HOST:8091
     #ParseResult tuple(scheme, netloc, path, params, query, fragment)
@@ -980,14 +980,15 @@ def rest_request(host, port, user, pswd, use_ssl, path, method='GET', body='', r
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
 
-        conn = httplib.HTTPSConnection(host, port, context=ctx)
+        conn = http.client.HTTPSConnection(host, port, context=ctx)
+
     else:
-        conn = httplib.HTTPConnection(host, port)
+        conn = http.client.HTTPConnection(host, port)
     try:
         header = rest_headers(user, pswd, headers)
         conn.request(method, path, body, header)
         resp = conn.getresponse()
-    except Exception, e:
+    except Exception as e:
         return ("error: could not access REST API: %s:%s%s" +
                 "; please check source URL, server status, username (-u) and password (-p)" +
                 "; exception: %s%s") % \
@@ -1011,8 +1012,7 @@ def rest_headers(user, pswd, headers=None):
     if not headers:
         headers = {'Content-Type': 'application/json'}
     if user:
-        auth = 'Basic ' + \
-            string.strip(base64.encodestring(user + ':' + (pswd or '')))
+        auth = 'Basic ' + base64.encodebytes((user + ':' + (pswd or '')).strip().encode('utf-8')).decode().strip()
         headers['Authorization'] = auth
     return headers
 
@@ -1025,7 +1025,7 @@ def rest_request_json(host, port, user, pswd, ssl, path, reason='', verify=True,
         conn.close()
     try:
         return None, rest_json, json.loads(rest_json)
-    except ValueError, e:
+    except ValueError as e:
         return ("error: could not decode JSON from REST API: %s:%s%s" +
                 "; exception: %s" +
                 "; please check URL, username (-u) and password (-p)") % \
@@ -1065,8 +1065,7 @@ def filter_bucket_nodes(bucket, spec_parts):
         host_port = '[' + host + ']:' + str(port)
     else:
         host_port = host + ':' + str(port)
-    return filter(lambda n: n.get('hostname') == host_port,
-                  bucket['nodes'])
+    return [n for n in bucket['nodes'] if n.get('hostname') == host_port]
 
 def get_ip():
     ip = None
@@ -1076,7 +1075,7 @@ def get_ip():
                   '../var/lib/couchbase/ip']:
         try:
             f = open(fname, 'r')
-            ip = string.strip(f.read())
+            ip = f.read().strip()
             f.close()
             if ip and len(ip):
                 if ip.find('@'):
@@ -1099,7 +1098,7 @@ def find_source_bucket_name(opts, source_map):
         source_bucket = source_map['buckets'][0]['name']
     if not source_bucket:
         return "error: please specify a bucket_source", None
-    logging.debug("source_bucket: " + source_bucket)
+    logging.debug("source_bucket: {0}".format(source_bucket))
     return 0, source_bucket
 
 def find_sink_bucket_name(opts, source_bucket):
@@ -1107,7 +1106,7 @@ def find_sink_bucket_name(opts, source_bucket):
     sink_bucket = getattr(opts, "bucket_destination", None) or source_bucket
     if not sink_bucket:
         return "error: please specify a bucket_destination", None
-    logging.debug("sink_bucket: " + sink_bucket)
+    logging.debug("sink_bucket: {0}".format(sink_bucket))
     return 0, sink_bucket
 
 def mkdirs(targetpath):
@@ -1140,11 +1139,11 @@ def get_mcd_conn(host, port, username, password, bucket, use_ssl=False, verify=T
 
     try:
         conn.sasl_auth_plain(username, password)
-    except EOFError, e:
+    except EOFError as e:
         return "error: SASL auth error: %s:%s, %s" % (host, port, e), None
-    except cb_bin_client.MemcachedError, e:
+    except cb_bin_client.MemcachedError as e:
         return "error: SASL auth failed: %s:%s, %s" % (host, port, e), None
-    except socket.error, e:
+    except socket.error as e:
         return "error: SASL auth socket error: %s:%s, %s" % (host, port, e), None
 
     features = [couchbaseConstants.HELO_XATTR, couchbaseConstants.HELO_XERROR]
@@ -1153,21 +1152,29 @@ def get_mcd_conn(host, port, username, password, bucket, use_ssl=False, verify=T
 
     try:
         conn.helo(features)
-    except EOFError, e:
+    except EOFError as e:
         return "error: HELO error: %s:%s, %s" % (host, port, e), None
-    except cb_bin_client.MemcachedError, e:
+    except cb_bin_client.MemcachedError as e:
         return "error: HELO failed: %s:%s, %s" % (host, port, e), None
-    except socket.error, e:
+    except socket.error as e:
         return "error: HELO socket error: %s:%s, %s" % (host, port, e), None
 
     if bucket:
         try:
             conn.bucket_select(bucket)
-        except EOFError, e:
+        except EOFError as e:
             return "error: Bucket select error: %s:%s %s, %s" % (host, port, bucket, e), None
-        except cb_bin_client.MemcachedError, e:
+        except cb_bin_client.MemcachedError as e:
             return "error: Bucket select failed: %s:%s %s, %s" % (host, port, bucket, e), None
-        except socket.error, e:
+        except socket.error as e:
             return "error: Bucket select socket error: %s:%s %s, %s" % (host, port, bucket, e), None
 
     return 0, conn
+
+
+def returnString(byte_or_str):
+    if byte_or_str is None:
+        return None
+    if isinstance(byte_or_str, bytes):
+        return byte_or_str.decode()
+    return str(byte_or_str)
