@@ -15,7 +15,7 @@ _couchbase-cli setting-autofailover_ [--cluster <url>] [--username <user>]
     [--password <password>] [--enable-auto-failover <num>]
     [--auto-failover-timeout <seconds>]
     [--enable-failover-on-data-disk-issues <num>]
-    [--failover-data-disk-period <seconds>]
+    [--failover-data-disk-period <seconds>] [--can-abort-rebalance <1|0>]
 
 == DESCRIPTION
 
@@ -75,6 +75,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   node may be automatically failed over.
   "--enable-failover-on-data-disk-issues" must be set when this option is
   used. The failover data disk period ranges from 5 to 3600 seconds.
+
+--can-abort-rebalance <1|0>::
+  Enables auto-failover to abort rebalance and perform auto-failover.
+  This feature is only available in Couchbase Enterprise Edition.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

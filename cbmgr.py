@@ -2200,6 +2200,8 @@ class SettingAutofailover(Subcommand):
                            metavar="<seconds>", type=(int),
                            help="The amount of time the Data Serivce disk failures has to be happening for to trigger"
                                 " an auto-failover")
+        group.add_argument("--can-abort-rebalance", metavar="<1|0>", choices=["1", "0"], dest="canAbortRebalance",
+                           help="Enables auto-failover to abort rebalance and perform the failover. (EE only)")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -2232,6 +2234,8 @@ class SettingAutofailover(Subcommand):
                 _exitIfErrors(["Auto failover on Data Service disk issues can only be configured on enterprise edition"])
             if opts.maxFailovers:
                 _exitIfErrors(["--max-count can only be configured on enterprise edition"])
+            if opts.canAbortRebalance:
+                _exitIfErrors(["--can-abort-rebalance can only be configured on enterprise edition"])
 
         if not any([opts.enabled, opts.timeout, opts.enableFailoverOnDataDiskIssues, opts.failoverOnDataDiskPeriod,
                     opts.enableFailoverOfServerGroups, opts.maxFailovers]):
@@ -2255,9 +2259,14 @@ class SettingAutofailover(Subcommand):
             if opts.timeout:
                 _warning("Timeout specified will not take affect because auto-failover is being disabled")
 
+        if opts.canAbortRebalance == '1':
+            opts.canAbortRebalance = 'true'
+        elif opts.canAbortRebalance == '0':
+            opts.canAbortRebalance ='false'
+
         _, errors = rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.enableFailoverOfServerGroups,
                                                    opts.maxFailovers, opts.enableFailoverOnDataDiskIssues,
-                                                   opts.failoverOnDataDiskPeriod)
+                                                   opts.failoverOnDataDiskPeriod, opts.canAbortRebalance)
         _exitIfErrors(errors)
 
         _success("Auto-failover settings modified")

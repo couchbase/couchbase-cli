@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-autofailover
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-01-24
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-AUTOFAILOVER" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-AUTOFAILOVER" "1" "2019-01-24" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -36,7 +36,7 @@ couchbase\-cli\-setting\-autofailover \- Modifies auto\-failover settings
     [\-\-password <password>] [\-\-enable\-auto\-failover <num>]
     [\-\-auto\-failover\-timeout <seconds>]
     [\-\-enable\-failover\-on\-data\-disk\-issues <num>]
-    [\-\-failover\-data\-disk\-period <seconds>]
+    [\-\-failover\-data\-disk\-period <seconds>] [\-\-can\-abort\-rebalance <1|0>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -128,6 +128,12 @@ failures. The Data Service is checked every second for disk failures. If
 node may be automatically failed over.
 "\-\-enable\-failover\-on\-data\-disk\-issues" must be set when this option is
 used. The failover data disk period ranges from 5 to 3600 seconds.
+.RE
+.sp
+\-\-can\-abort\-rebalance <1|0>
+.RS 4
+Enables auto\-failover to abort rebalance and perform auto\-failover.
+This feature is only available in Couchbase Enterprise Edition.
 .RE
 .SH "HOST FORMATS"
 .sp
