@@ -2727,7 +2727,7 @@ class SettingLdap(Subcommand):
         group.add_argument("--max-parallel", dest="max_parallel", metavar="<max>", type=(int), default=100,
                            help="Maximum number of parallel connections that can be established")
         group.add_argument("--max-cache-size", dest="max_cache_size", metavar="<size>",
-                           help="Maximum cache size")
+                           help="Maximum number of cached LDAP requests")
         group.add_argument("--cache-value-lifetime", dest="cache_value_lifetime", metavar="<ms>",
                            help="Cache value lifetime in milliseconds")
         group.add_argument("--query-dn", dest="query_dn", metavar="<dn>",
