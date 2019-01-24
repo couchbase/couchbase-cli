@@ -1064,6 +1064,11 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def set_dp_mode(self):
+        url = self.hostname + '/settings/developerPreview'
+        params = {'enabled': 'true'}
+        return self._post_form_encoded(url, params)
+
     def set_autoreprovision_settings(self, enabled, max_nodes):
         url = self.hostname + '/settings/autoReprovision'
 

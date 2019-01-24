@@ -1,0 +1,60 @@
+= couchbase-cli-enable-developer-preview(1)
+ifndef::doctype-manpage[:doctitle: enable-developer-preview]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-enable-developer-preview -
+endif::[]
+Enable developer preview mode in target cluster
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli enable-developer-preview_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--enable] [--list]
+
+== DESCRIPTION
+
+This command enables developer preview in the target cluster. Once enabled it
+can not be disabled and the cluster will not be able to upgrade. Do not use
+developer preview mode in production clusters. This command will prompt for
+user confirmation.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--enable::
+  Will set the cluster into developer preview mode after user confirmation
+  that they want to set the cluster in developer preview mode.
+
+--list::
+  Specifies if the cluster is in developer preview mode.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To enable developer preview mode on:
+
+  $ couchbase-cli enable-developer-preview -c 192.168.1.5:8091 -u Administrator \
+   -p password --enable
+  $ Developer preview cannot be disabled once it is enabled. If you enter
+    developer preview mode you will not be able to upgrade.
+    DO NOT USE IN PRODUCTION.
+    Are you sure [y/n]: y
+    SUCCESS: Cluster is in developer preview mode
+
+To check cluster mode:
+
+  $ couchbase-cli enable-developer-preview -c localhost:9000 -u Administrator \
+    -p password --list
+  $ Cluster is in developer preview mode
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

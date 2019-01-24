@@ -3960,3 +3960,55 @@ class CollectionManage(Subcommand):
     @staticmethod
     def get_description():
         return "Manage collections in a bucket"
+
+
+class EnableDeveloperPreview(Subcommand):
+    """"The enable developer preview command"""
+
+    def __init__(self):
+        super(EnableDeveloperPreview, self).__init__()
+        self.parser.prog = "couchbase-cli enable-developer-preview"
+        group = self.parser.add_argument_group("Developer preview option")
+        group.add_argument('--enable', dest='enable', required=False, action="store_true",
+                           help='Enable developer preview mode in target cluster')
+        group.add_argument('--list', dest='list', required=False, action="store_true",
+                           help='Check if cluster is in developer preview mode')
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_versions(rest)
+
+        if not (opts.enable or opts.list):
+            _exitIfErrors(['--enable or --list must be provided'])
+        if opts.enable and opts.list:
+            _exitIfErrors(['cannot provide both --enable and --list'])
+
+        if opts.enable:
+            confirm = input('Developer preview cannot be disabled once it is enabled. ' +
+                            'If you enter developer preview mode you will not be able to ' +
+                            'upgrade. DO NOT USE IN PRODUCTION.\nAre you sure [y/n]: ')
+            if confirm == 'y':
+                _, errors = rest.set_dp_mode()
+                _exitIfErrors(errors)
+                _success("Cluster is in developer preview mode")
+            elif confirm == 'n':
+                _success("Developer preview mode has NOT been enabled")
+            else:
+                _exitIfErrors(["Unknown option provided"])
+
+        if opts.list:
+            pools, rv = rest.pools()
+            _exitIfErrors(rv)
+            if 'isDeveloperPreview' in pools and pools['isDeveloperPreview']:
+                print('Cluster is in developer preview mode')
+            else:
+                print('Cluster is NOT in developer preview mode')
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-enable-developer-preview" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Enable developer preview mode in target cluster"
