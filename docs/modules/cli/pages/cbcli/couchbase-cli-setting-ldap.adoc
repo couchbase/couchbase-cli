@@ -63,7 +63,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   servers.
 
 --max-cache-size <size>::
-  Maximum number of requests that can be cached, defaults to 1000.
+  Maximum number of requests that can be cached, defaults to 10000.
 
 --cache-value-lifetime <ms>::
   Lifetime of values in cache in milliseconds. Default 300000 ms.
