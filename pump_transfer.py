@@ -263,11 +263,11 @@ class Backup(Transfer):
                 "Online backup of a couchbase cluster or server node.\n\n" \
                 "Examples:\n" \
                 "   The first backup to a given directory is a full backup, any subsequent ones are incremental.\n" \
-                "       %prog http://HOST:8091 /backup-42\n\n" \
+                "       %prog -u Administrator -p password http://HOST:8091 /backup-42\n\n" \
                 "   To take a differential backup after taking a full backup. \n" \
-                "       %prog couchbase://HOST:8091 /backup-43 -m diff\n\n" \
+                "       %prog -u Administrator -p password couchbase://HOST:8091 /backup-43 -m diff\n\n" \
                 "   To take an accumulative backup after taking a full backup. \n" \
-                "       %prog couchbase://HOST:8091 /backup-43 -m accu --single-node\n\n" \
+                "       %prog -u Administrator -p password couchbase://HOST:8091 /backup-43 -m accu --single-node\n\n" \
                 "Note: A full backup task is always triggered for a new sink location\n" \
                 "   no matter what backup mode is specified.\n"
         else:
@@ -276,9 +276,9 @@ class Backup(Transfer):
                 "Online backup of a couchbase cluster or server node.\n\n" \
                 "Examples:\n" \
                 "   Take a full backup of a cluster. \n" \
-                "       %prog http://HOST:8091 /backup-42\n\n" \
+                "       %prog -u Administrator -p password http://HOST:8091 /backup-42\n\n" \
                 "   Take a full backup for a single node. \n" \
-                "       %prog couchbase://HOST:8091 /backup-43 --single-node\n" \
+                "       %prog -u Administrator -p password couchbase://HOST:8091 /backup-43 --single-node\n" \
 
 
     def opt_parser_options(self, p):
