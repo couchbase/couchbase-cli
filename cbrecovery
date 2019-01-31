@@ -193,12 +193,6 @@ class Recovery(pump_transfer.Transfer):
                      action="store", type="string", default="default",
                      metavar="default",
                      help="""destination bucket to recover to """)
-        p.add_option("-U", "--username-destination",
-                     action="store", type="string", default=None,
-                     help="REST username for destination cluster or server node")
-        p.add_option("-P", "--password-destination",
-                     action="store", type="string", default=None,
-                     help="REST password for destination cluster or server node")
         self.opt_parser_options_common(p)
 
         p.remove_option("-k")
