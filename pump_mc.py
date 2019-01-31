@@ -10,7 +10,7 @@ import sys
 import cb_bin_client
 import couchbaseConstants
 import pump
-import snappy
+import snappy # pylint: disable=import-error
 from cb_util import tag_user_data
 
 try:

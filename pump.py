@@ -25,7 +25,7 @@ import cb_bin_client
 from cb_util import tag_user_data
 from cluster_manager import ClusterManager
 from collections import defaultdict
-import snappy
+import snappy # pylint: disable=import-error
 
 # TODO: (1) optionally log into backup directory
 

@@ -98,7 +98,7 @@ class Transfer:
                 (self.source_alias, self.sink_alias), \
                 None, None, None
 
-        err = self.check_opts(opts)
+        err = self.check_opts(opts)  # pylint: disable=assignment-from-none
         if err:
             return err, None, None, None
 

@@ -1,8 +1,4 @@
 """Mock server only emulates CB rest endpoints but has no functionality"""
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import object
 import socket
 import threading
 import requests

@@ -1,16 +1,10 @@
 """This test do not ensure correct server side behaviour they only check that the cli makes the correct requests and
 that validates input correctly"""
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
 import unittest
 import sys
 import json
 import itertools
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 import time
 import threading
 from cbmgr import CouchbaseCLI

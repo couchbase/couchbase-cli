@@ -10,7 +10,7 @@ import urllib.request, urllib.parse, urllib.error
 
 import couchbaseConstants
 import pump
-import snappy
+import snappy # pylint: disable=import-error
 
 # Our max document size is 20MB, but let's make this extra large in case the
 # are spaces and such that can be removed before sending to Couchbase.
@@ -91,7 +91,7 @@ class CSVSource(pump.Source):
                     else:
                         doc[field] = number_try_parse(vals[i])
                 if doc['id']:
-                    msg = (cmd, vbucket_id, doc['id'], flg, exp, cas, '', doc['value'], 0, 0, 0, 0)
+                    msg = (cmd, vbucket_id, doc['id'], 0, 0, 0, '', doc['value'], 0, 0, 0, 0)
                     batch.append(msg, len(doc))
             except StopIteration:
                 self.done = True
