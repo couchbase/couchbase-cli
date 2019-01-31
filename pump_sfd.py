@@ -303,7 +303,7 @@ class SFDSink(pump.Sink):
 
                     d = couchstore.DocumentInfo(str(key))
                     flex_meta = 1
-                    d.revMeta = str(struct.pack(SFD_REV_META, cas, exp, flg, flex_meta, dtype))
+                    d.revMeta = struct.pack(SFD_REV_META, cas, exp, flg, flex_meta, dtype)
                     if meta:
                         meta = hex(meta)
                         if len(meta) > 8:
