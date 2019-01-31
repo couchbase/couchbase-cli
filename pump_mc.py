@@ -41,6 +41,14 @@ OP_MAP_WITH_META = {
     }
 
 
+def to_bytes(bytes_or_str):
+    if isinstance(bytes_or_str, str):
+        value = bytes_or_str.encode()  # uses 'utf-8' for encoding
+    else:
+        value = bytes_or_str
+    return value  # Instance of bytes
+
+
 class MCSink(pump.Sink):
     """Dumb client sink using binary memcached protocol.
        Used when moxi or memcached is destination."""
@@ -225,8 +233,8 @@ class MCSink(pump.Sink):
             return 'value has invalid format for multipath mutation', None
 
         obj = value['obj']
-        xattr_f = value['xattr_f']
-        xattr_v = value['xattr_v']
+        xattr_f = to_bytes(value['xattr_f'])
+        xattr_v = to_bytes(value['xattr_v'])
 
         subop_format = ">BBHI"
         sbcmd_len = 8 * 2 + len(obj) + len(xattr_f) + len(xattr_v)
@@ -250,7 +258,7 @@ class MCSink(pump.Sink):
         if 'xattr_f' not in value:
             return 'value has invalid format for multipath lookup', None
 
-        field = value['xattr_f']
+        field = to_bytes(value['xattr_f'])
         subcmd_fmt = '>BBH'
         subcmd_msg0 = struct.pack(subcmd_fmt, couchbaseConstants.CMD_SUBDOC_GET,
                                   couchbaseConstants.SUBDOC_FLAG_XATTR_PATH, len(field))
@@ -268,10 +276,7 @@ class MCSink(pump.Sink):
     def join_str_and_bytes(lst):
         out = b''
         for x in lst:
-            if isinstance(x, str):
-                out += x.encode('utf-8')
-            else:
-                out += x
+            out += to_bytes(x)
         return out
 
     def recv_msgs(self, conn, msgs, vbucket_id=None, verify_opaque=True):
@@ -475,7 +480,7 @@ class MCSink(pump.Sink):
         elif (cmd == couchbaseConstants.CMD_DELETE or
               cmd == couchbaseConstants.CMD_GET or
               cmd == couchbaseConstants.CMD_NOOP):
-            ext = ''
+            ext = b''
         else:
             return "error: MCSink - unknown cmd for request: " + str(cmd), None
 
@@ -533,7 +538,7 @@ class MCSink(pump.Sink):
                 logging.error("error: recv exception: " + str(e))
 
             if not data:
-                return None, ''
+                return None, b''
             buf += data
 
         return buf[:nbytes], buf[nbytes:]
