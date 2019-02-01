@@ -350,7 +350,7 @@ class Command(object):
     """A Couchbase CLI Command"""
 
     def __init__(self):
-        self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False)
+        self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False, allow_abbrev=False)
 
     def parse(self, args):
         """Parses the subcommand"""
@@ -439,7 +439,7 @@ class Subcommand(Command):
 
     def __init__(self, deprecate_username=False, deprecate_password=False, cluster_default=None):
         super(Subcommand, self).__init__()
-        self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False)
+        self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False, allow_abbrev=False)
         group = self.parser.add_argument_group("Cluster options")
         group.add_argument("-c", "--cluster", dest="cluster", required=(cluster_default==None),
                            metavar="<cluster>", action=CBHostAction, default=cluster_default,
@@ -500,7 +500,7 @@ class LocalSubcommand(Command):
 
     def __init__(self):
         super(LocalSubcommand, self).__init__()
-        self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False)
+        self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False, allow_abbrev=False)
         group = self.parser.add_argument_group(title="Local command options",
                                                description="This command has to be execute on the locally running" +
                                                            " Couchbase Server.")
@@ -2190,7 +2190,7 @@ class SettingAutofailover(Subcommand):
                            type=(int), help="The auto-failover timeout")
         group.add_argument("--enable-failover-of-server-groups", dest="enableFailoverOfServerGroups", metavar="<1|0>",
                            choices=["0", "1"], help="Enable/disable auto-failover of server Groups")
-        group.add_argument("--max-failovers ", dest="maxFailovers", metavar="<1|2|3>", choices=["1", "2", "3"],
+        group.add_argument("--max-failovers", dest="maxFailovers", metavar="<1|2|3>", choices=["1", "2", "3"],
                            help="Maximum number of times an auto-failover event can happen")
         group.add_argument("--enable-failover-on-data-disk-issues", dest="enableFailoverOnDataDiskIssues",
                            metavar="<1|0>", choices=["0", "1"],

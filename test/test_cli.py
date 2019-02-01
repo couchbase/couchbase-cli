@@ -669,7 +669,7 @@ class TestServerList(CommandTest):
 class TestSettingAlert(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'setting-alert'] + cluster_connect_args
-        self.email_args = ['--enable-email-alert', '1', '--email-recipient', 'email1', '--email-sender', 'email2',
+        self.email_args = ['--enable-email-alert', '1', '--email-recipients', 'email1', '--email-sender', 'email2',
                            '--email-host', 'emailhost', '--email-port', '3000', '--enable-email-encrypt', '1',
                            '--email-user', 'emailuser', '--email-password', 'emailpwd']
         self.all_allerts = ['--alert-auto-failover-node', '--alert-auto-failover-max-reached',
@@ -1137,7 +1137,7 @@ class TestUserManage(CommandTest):
 
     def test_list_group(self):
         self.server_args['group'] = [{'group': 'group'}]
-        self.no_error_run(self.command + ['--list-group'], self.server_args)
+        self.no_error_run(self.command + ['--list-groups'], self.server_args)
         self.assertIn('GET:/settings/rbac/groups', self.server.trace)
 
     def test_get_group(self):
