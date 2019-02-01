@@ -13,8 +13,8 @@ Manage collections and scopes in a bucket
 [verse]
 _couchbase-cli collection-manage_ [--cluster <url>] [--username <user>]
     [--password <password>] [--bucket <bucket>] [--create-scope <scope>]
-    [--delete-scope <scope>] [--list-scopes] [--create-collection <collection>]
-    [--delete-collection <collection>] [--list-collections <scope>]
+    [--drop-scope <scope>] [--list-scopes] [--create-collection <collection>]
+    [--drop-collection <collection>] [--list-collections <scope>]
     [--max-ttl <seconds>]
 
 == DESCRIPTION
@@ -44,7 +44,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --create-scope <scope>::
   Makes a scope in the bucket with the name provided.
 
---delete-scope <scope>::
+--drop-scope <scope>::
   Removes the scope from the bucket with the name provided.
 
 --list-scopes::
@@ -55,7 +55,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   dot format (scope.collection), specifying the scope in which the
   collection and the name to be created.
 
---delete-collection <collection>::
+--drop-collection <collection>::
   Removes the collection from the scope. The option can take a path
   in dot format (scope.collection), specifying the scope from which
   the collection and collection-name are to be removed.
@@ -93,17 +93,17 @@ bucket.
   $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
    -p password --bucket furniture --list-collections chairs
 
-To delete the couches collection from the chairs scope in the
+To drop the couches collection from the chairs scope in the
 furniture bucket.
 
   $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
-   -p password --bucket furniture --delete-collection chairs.couches
+   -p password --bucket furniture --drop-collection chairs.couches
 
 
-To delete the chair scope from the furniture bucket
+To drop the chair scope from the furniture bucket
 
   $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
-   -p password --bucket furniture --delete-scope chairs
+   -p password --bucket furniture --drop-scope chairs
 
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES

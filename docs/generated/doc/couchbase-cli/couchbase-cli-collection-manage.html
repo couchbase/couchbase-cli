@@ -446,8 +446,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli collection-manage</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--bucket &lt;bucket&gt;] [--create-scope &lt;scope&gt;]
-    [--delete-scope &lt;scope&gt;] [--list-scopes] [--create-collection &lt;collection&gt;]
-    [--delete-collection &lt;collection&gt;] [--list-collections &lt;scope&gt;]
+    [--drop-scope &lt;scope&gt;] [--list-scopes] [--create-collection &lt;collection&gt;]
+    [--drop-collection &lt;collection&gt;] [--list-collections &lt;scope&gt;]
     [--max-ttl &lt;seconds&gt;]</pre>
 </div>
 </div>
@@ -520,7 +520,7 @@ environment variable CB_REST_PASSWORD.</p>
 <dd>
 <p>Makes a scope in the bucket with the name provided.</p>
 </dd>
-<dt class="hdlist1">--delete-scope &lt;scope&gt;</dt>
+<dt class="hdlist1">--drop-scope &lt;scope&gt;</dt>
 <dd>
 <p>Removes the scope from the bucket with the name provided.</p>
 </dd>
@@ -534,7 +534,7 @@ environment variable CB_REST_PASSWORD.</p>
 dot format (scope.collection), specifying the scope in which the
 collection and the name to be created.</p>
 </dd>
-<dt class="hdlist1">--delete-collection &lt;collection&gt;</dt>
+<dt class="hdlist1">--drop-collection &lt;collection&gt;</dt>
 <dd>
 <p>Removes the collection from the scope. The option can take a path
 in dot format (scope.collection), specifying the scope from which
@@ -617,22 +617,22 @@ bucket.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>To delete the couches collection from the chairs scope in the
+<p>To drop the couches collection from the chairs scope in the
 furniture bucket.</p>
 </div>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
- -p password --bucket furniture --delete-collection chairs.couches</pre>
+ -p password --bucket furniture --drop-collection chairs.couches</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To delete the chair scope from the furniture bucket</p>
+<p>To drop the chair scope from the furniture bucket</p>
 </div>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
- -p password --bucket furniture --delete-scope chairs</pre>
+ -p password --bucket furniture --drop-scope chairs</pre>
 </div>
 </div>
 </div>

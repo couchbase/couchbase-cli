@@ -1274,7 +1274,7 @@ class TestCollectionManage(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_delete_scope(self):
-        self.no_error_run(self.command + ['--delete-scope', 'scope_1'], self.server_args)
+        self.no_error_run(self.command + ['--drop-scope', 'scope_1'], self.server_args)
         self.assertIn('DELETE:/pools/default/buckets/name/collections/scope_1', self.server.trace)
 
     def list_scopes(self):
@@ -1293,7 +1293,7 @@ class TestCollectionManage(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_delete_collection(self):
-        self.no_error_run(self.command + ['--delete-collection', 'scope_1.collection_1'], self.server_args)
+        self.no_error_run(self.command + ['--drop-collection', 'scope_1.collection_1'], self.server_args)
         self.assertIn('DELETE:/pools/default/buckets/name/collections/scope_1/collection_1', self.server.trace)
 
     def list_collections(self):

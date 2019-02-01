@@ -1550,7 +1550,7 @@ class ClusterManager(object):
         params = {"name": scope}
         return self._post_form_encoded(url, params)
 
-    def delete_scope(self, bucket, scope):
+    def drop_scope(self, bucket, scope):
         url = self.hostname + '/pools/default/buckets/' + urllib.parse.quote_plus(bucket) + '/collections/' \
               + urllib.parse.quote_plus(scope)
         return self._delete(url, None)
@@ -1563,7 +1563,7 @@ class ClusterManager(object):
             params["maxTTL"] = max_ttl
         return self._post_form_encoded(url, params)
 
-    def delete_collection(self, bucket, scope, collection):
+    def drop_collection(self, bucket, scope, collection):
         url = self.hostname + '/pools/default/buckets/' + urllib.parse.quote_plus(bucket) + '/collections/' \
               + urllib.parse.quote_plus(scope) + '/' + urllib.parse.quote_plus(collection)
         return self._delete(url, None)

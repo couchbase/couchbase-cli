@@ -3862,13 +3862,13 @@ class CollectionManage(Subcommand):
         group.add_argument("--bucket", dest="bucket", metavar="<bucket>", required=True, help="The bucket to use")
         group.add_argument("--create-scope", dest="create_scope", metavar="<scope>", default=None,
                            help="The name of the scope to make")
-        group.add_argument("--delete-scope", dest="delete_scope", metavar="<scope>", default=None,
+        group.add_argument("--drop-scope", dest="drop_scope", metavar="<scope>", default=None,
                            help="The name of the scope to remove")
         group.add_argument("--list-scopes", dest="list_scopes", action="store_true", default=None,
                            help="List all of the scopes in the bucket")
         group.add_argument("--create-collection", dest="create_collection", metavar="<collection>", default=None,
                            help="The path to the collection to make")
-        group.add_argument("--delete-collection", dest="delete_collection", metavar="<collection>", default=None,
+        group.add_argument("--drop-collection", dest="drop_collection", metavar="<collection>", default=None,
                            help="The path to the collection to remove")
         group.add_argument("--list-collections", dest="list_collections", metavar="<scope>", default=None,
                            const="_default", nargs='?', help="List all of the collections in the scope")
@@ -3876,11 +3876,11 @@ class CollectionManage(Subcommand):
                            help="Set the maximum TTL the collection will accept")
 
     def execute(self, opts):
-        cmds = [opts.create_scope, opts.delete_scope, opts.list_scopes, opts.create_collection, opts.delete_collection,
+        cmds = [opts.create_scope, opts.drop_scope, opts.list_scopes, opts.create_collection, opts.drop_collection,
                 opts.list_collections]
         cmd_total = sum(cmd is not None for cmd in cmds)
 
-        args = "--create-scope, --delete-scope, --list-scopes, --create-collection, --delete-collection, or " \
+        args = "--create-scope, --drop-scope, --list-scopes, --create-collection, --drop-collection, or " \
                "--list-collections"
         if cmd_total == 0:
             _exitIfErrors(["Must specify one of the following: " + args])
@@ -3897,14 +3897,14 @@ class CollectionManage(Subcommand):
 
         if opts.create_scope:
             self._create_scope(rest, opts)
-        if opts.delete_scope:
-            self._delete_scope(rest, opts)
+        if opts.drop_scope:
+            self._drop_scope(rest, opts)
         if opts.list_scopes:
             self._list_scopes(rest, opts)
         if opts.create_collection:
             self._create_collection(rest, opts)
-        if opts.delete_collection:
-            self._delete_collection(rest, opts)
+        if opts.drop_collection:
+            self._drop_collection(rest, opts)
         if opts.list_collections:
             self._list_collections(rest, opts)
 
@@ -3914,8 +3914,8 @@ class CollectionManage(Subcommand):
         _exitIfErrors(errors)
         _success("Scope created")
 
-    def _delete_scope(self, rest, opts):
-        _, errors = rest.delete_scope(opts.bucket, opts.delete_scope)
+    def _drop_scope(self, rest, opts):
+        _, errors = rest.drop_scope(opts.bucket, opts.drop_scope)
         _exitIfErrors(errors)
         _success("Scope deleted")
 
@@ -3931,9 +3931,9 @@ class CollectionManage(Subcommand):
         _exitIfErrors(errors)
         _success("Collection created")
 
-    def _delete_collection(self, rest, opts):
-        scope, collection =  self._get_scope_collection(opts.delete_collection)
-        _, errors = rest.delete_collection(opts.bucket, scope, collection)
+    def _drop_collection(self, rest, opts):
+        scope, collection = self._get_scope_collection(opts.drop_collection)
+        _, errors = rest.drop_collection(opts.bucket, scope, collection)
         _exitIfErrors(errors)
         _success("Collection deleted")
 
