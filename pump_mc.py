@@ -232,7 +232,8 @@ class MCSink(pump.Sink):
         if 'xattr_v' not in value:
             return 'value has invalid format for multipath mutation', None
 
-        obj = value['obj']
+        key = to_bytes(key)
+        obj = to_bytes(value['obj'])
         xattr_f = to_bytes(value['xattr_f'])
         xattr_v = to_bytes(value['xattr_v'])
 
@@ -258,7 +259,9 @@ class MCSink(pump.Sink):
         if 'xattr_f' not in value:
             return 'value has invalid format for multipath lookup', None
 
+        key = to_bytes(key)
         field = to_bytes(value['xattr_f'])
+
         subcmd_fmt = '>BBH'
         subcmd_msg0 = struct.pack(subcmd_fmt, couchbaseConstants.CMD_SUBDOC_GET,
                                   couchbaseConstants.SUBDOC_FLAG_XATTR_PATH, len(field))
