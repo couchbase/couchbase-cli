@@ -15,7 +15,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.server.rest_server.trace.append(f'GET:{parsed.path}')
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'GET' in fns:
-                return self.handle_fn(fns['GET'], parsed.path)
+                return self.handle_fn(fns['GET'], parsed.path, parsed.query)
 
         self.not_found()
 
@@ -49,7 +49,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.send_response(404)
         self.finish()
 
-    def handle_fn(self, fn, path):
+    def handle_fn(self, fn, path, params=None):
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len).decode('utf-8')
         post_body = post_body.split('&')
@@ -57,7 +57,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             if e == "":
                 continue
             self.server.rest_server.rest_params.append(e)
-        code, response = fn(post_body, self.server.rest_server.args, path)
+        code, response = fn(post_body, self.server.rest_server.args, path, params)
         self.send_response(code)
 
         if response is not None:
@@ -259,10 +259,12 @@ def get_my_roles(rest_params=None, server_args=None, path="", endpointMatch=None
         return 200, server_args['whoami']
     return 200, []
 
+
 def get_collection_manifest(rest_params=None, server_args=None, path="", endpointMatch=None):
     if 'collection_manifest'in server_args:
         return 200, server_args['collection_manifest']
     return 200, []
+
 
 def get_group(rest_params=None, server_args=None, path="", endpointMatch=None):
     if 'group' in server_args:
@@ -275,13 +277,17 @@ def get_user_groups(rest_params=None, server_args=None, path="", endpointMatch=N
         return 200, server_args['user-group']
     return 200, {}
 
+
 def get_ldap_settings(rest_params=None, server_args=None, path="", endpointMatch=None):
     if 'ldap' in server_args:
         return 200, server_args['ldap']
     return 200, {}
 
+
 def get_by_path(rest_params=None, server_args=None, path="", endpointMatch=None):
     if path in server_args:
+        if endpointMatch:
+            server_args['query'] = endpointMatch
         return 200, server_args[path]
     return 200, {}
 
@@ -293,6 +299,7 @@ endpoints = [
     ('/pools/default/remoteClusters(/)?$', {'POST': do_nothing, 'GET': get_remote_cluster}),
     ('/pools/default/remoteClusters/\w+$', {'DELETE': do_nothing, 'POST': do_nothing}),
     ('/pools/default/tasks$', {'GET': get_tasks}),
+    ('/pools/default/nodeServices$', {'GET': get_by_path}),
     ('/pools/default/serverGroups$', {'POST': do_nothing, 'GET': get_server_groups}),
     ('/pools/default/serverGroups/\d+$', {'DELETE': do_nothing, 'PUT': do_nothing}),
     ('/pools/default/serverGroups/\d+/addNode$', {'POST': do_nothing}),
@@ -339,5 +346,8 @@ endpoints = [
     ('/controller/createReplication$', {'POST': do_nothing}),
     ('/controller/cancelXDCR/(\d|\w)+$', {'DELETE': do_nothing}),
     ('/controller/setAutoCompaction$', {'POST': do_nothing}),
-    ('/controller/startLogsCollection', {'POST': start_log_collection})
+    ('/controller/startLogsCollection$', {'POST': start_log_collection}),
+    # other services api
+    ('/getIndexMetadata$', {'GET': get_by_path}),
+    ('/api/index', {'GET': get_by_path})
 ]
