@@ -15,7 +15,7 @@ _couchbase-cli setting-cluster_ [--cluster <url>] [--cluster-username <username>
     [--cluster-password <password>] [--cluster-port <port>]
       [--cluster-ramsize <megabytes>] [--cluster-name <name>]
       [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
-      [--cluster-eventing-ramsize <megabytes>]
+      [--cluster-eventing-ramsize <megabytes>] [--cluster-analytics-ramsize <megabytes>]
 
 == DESCRIPTION
 
