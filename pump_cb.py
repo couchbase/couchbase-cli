@@ -11,6 +11,11 @@ import pump_mc
 
 from cluster_manager import ClusterManager, ServiceNotAvailableException
 
+def _to_string(str_or_bytes):
+    if isinstance(str_or_bytes, bytes):
+        return str_or_bytes.decode()
+    return str_or_bytes
+
 
 class CBSink(pump_mc.MCSink):
     DDOC_HEAD = "_design/"
@@ -123,10 +128,10 @@ class CBSink(pump_mc.MCSink):
             for node in bucket_info["nodes"]:
                 if "direct" not in node["ports"]:
                     continue
-                otpNode = node["otpNode"].encode('ascii')
+                otpNode = _to_string(node["otpNode"])
                 mcdHost = otpNode.split("@")[1] + ":" + str(node["ports"]["direct"])
                 for remap_node, remap_vbs in vbucket_list.items():
-                    if remap_node == otpNode and mcdHost in server_vb_map["serverList"]:
+                    if _to_string(remap_node) == otpNode and mcdHost in server_vb_map["serverList"]:
                         idx = server_vb_map["serverList"].index(mcdHost)
                         for vb in remap_vbs:
                             server_vb_map["vBucketMap"][vb][0] = idx

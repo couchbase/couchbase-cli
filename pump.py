@@ -1037,7 +1037,7 @@ def rest_couchbase(opts, spec, check_sink_credential=False):
 
     username = opts.username
     password = opts.password
-    if check_sink_credential and opts.username_dst is not None and opts.password_dst is not None:
+    if check_sink_credential and opts.username_dest is not None and opts.password_dest is not None:
         username = opts.username_dest
         password = opts.password_dest
 
