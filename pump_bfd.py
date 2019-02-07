@@ -22,6 +22,7 @@ CBB_VERSION = [2004, 2014, 2015] # sqlite pragma user version.
 DDOC_FILE_NAME = "design.json"
 INDEX_FILE_NAME = "index.json"
 FTS_FILE_NAME = "fts_index.json"
+FTS_ALIAS_FILE_NAME = "fts_alias.json"
 
 
 class BFD:
@@ -406,6 +407,26 @@ class BFDSource(BFD, pump.Source):
         return BFDSource.read_index_file(source_spec, source_bucket, FTS_FILE_NAME)
 
     @staticmethod
+    def provide_fts_alias(opts, source_spec, source_bucket, source_map):
+        base_dir = source_spec
+        path, dirs = BFD.find_latest_dir(source_spec, None)
+        if path:
+            path, dirs = BFD.find_latest_dir(path, None)
+            if path:
+                base_dir = path
+
+        if os.path.exists(os.path.join(base_dir, FTS_ALIAS_FILE_NAME)):
+            try:
+                f = open(os.path.join(base_dir, FTS_ALIAS_FILE_NAME), 'r')
+                d = f.read()
+                f.close()
+                return 0, d
+            except IOError as e:
+                return "error: could not write {}; exception: {}{".format(path, e), None
+
+        return 0, None
+
+    @staticmethod
     def read_index_file(source_spec, source_bucket, file_name):
         path = BFD.get_file_path(source_spec, source_bucket['name'], file_name)
         if os.path.exists(path):
@@ -759,6 +780,24 @@ class BFDSink(BFD, pump.Sink):
     @staticmethod
     def consume_fts_index(opts, sink_spec, sink_map, source_bucket, source_map, index_defs):
         return BFDSink.write_index_file(sink_spec, source_bucket, index_defs, FTS_FILE_NAME)
+
+    @staticmethod
+    def consume_fts_alias(opts, sink_spec, sink_map, source_bucket, source_map, alias):
+        base_dir = sink_spec
+        path, dirs = BFD.find_latest_dir(sink_spec, None)
+        if path:
+            path, dirs = BFD.find_latest_dir(path, None)
+            if path:
+                base_dir = path
+
+        try:
+            f = open(os.path.join(base_dir, FTS_ALIAS_FILE_NAME), 'w')
+            f.write(alias)
+            f.close()
+        except IOError as e:
+            return "error: could not write {}; exception: {}{".format(path, e), None
+
+        return 0, None
 
     @staticmethod
     def write_index_file(sink_spec, source_bucket, index_defs, file_name):

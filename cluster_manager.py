@@ -139,6 +139,27 @@ class ClusterManager(object):
 
         return None, None
 
+    def get_fts_index_alias(self):
+        hosts, errors = self.get_hostnames_for_service(FTS_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(FTS_SERVICE)
+
+        url = hosts[0] + '/api/index'
+        result, errors = self._get(url)
+        if errors:
+            return None, errors
+
+        index_defs = []
+        if "indexDefs" in result and result["indexDefs"] is not None:
+            for _, index in result['indexDefs']['indexDefs'].items():
+                if index['type'] == 'fulltext-alias':
+                    index_defs.append(index)
+
+        return index_defs, None
+
     def get_fts_index_metadata(self, bucket):
         hosts, errors = self.get_hostnames_for_service(FTS_SERVICE)
         if errors:

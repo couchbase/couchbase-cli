@@ -150,6 +150,18 @@ class DCPStreamSource(pump.Source, threading.Thread):
         except ServiceNotAvailableException as e:
             return 0, None
 
+    @staticmethod
+    def provide_fts_alias(opts, source_spec, source_bucket, source_map):
+        try:
+            rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, opts.no_ssl_verify,
+                                  opts.cacert, False)
+            result, errors = rest.get_fts_index_alias()
+            if errors:
+                return errors, None
+            return 0, json.dumps(result)
+        except ServiceNotAvailableException as e:
+            return 0, None
+
     def get_conflict_resolution_type(self):
         confResType = "seqno"
         if "conflictResolutionType" in self.source_bucket:
