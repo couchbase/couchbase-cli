@@ -1,0 +1,58 @@
+= couchbase-cli-setting-on-demand(1)
+ifndef::doctype-manpage[:doctitle: setting-on-demand]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-setting-on-demand -
+endif::[]
+Manage on demand pricing settings
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli setting-on-demand [--cluster <url>] [--username <user>]
+    [--password <password>] [--set] [--get] [--generate-report]
+    [--reporting-enabled <1|0>] [--contract-id <id>]
+    [--customer-token <token>]
+
+== DESCRIPTION
+
+Allows updating of on demand pricing settings as well as the generation of RAM/cores
+usage reports.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--get::
+  Retrieves the current licensing settings.
+
+--set::
+  Specify new license settings.
+
+--generate-report::
+  Generates a new usage report informing of the amount of RAM and number of
+  cores in use.
+
+--reporting-enabled <1|0>::
+  Specify where reporting is enabled.
+
+--contract-id <id>::
+  Specify the contract id.
+
+--customer-token <token>::
+  Specify the customer token.
+
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

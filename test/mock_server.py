@@ -280,6 +280,11 @@ def get_ldap_settings(rest_params=None, server_args=None, path="", endpointMatch
         return 200, server_args['ldap']
     return 200, {}
 
+def get_by_path(rest_params=None, server_args=None, path="", endpointMatch=None):
+    if path in server_args:
+        return 200, server_args[path]
+    return 200, {}
+
 endpoints = [
     ('/close$', {'GET': do_nothing}),
     ('/whoami', {'GET': get_my_roles}),
@@ -314,6 +319,8 @@ endpoints = [
     ('/settings/security$', {'POST': do_nothing}),
     ('/settings/audit$', {'POST': do_nothing}),
     ('/settings/stats$', {'POST': do_nothing}),
+    ('/settings/license$', {'POST': do_nothing, 'GET': get_by_path}),
+    ('/settings/license/validate$', {'POST': do_nothing, 'GET': get_by_path}),
     ('/settings/web$', {'POST': do_nothing}),
     ('/settings/autoFailover', {'POST': do_nothing}),
     ('/settings/autoReprovision', {'POST': do_nothing}),
