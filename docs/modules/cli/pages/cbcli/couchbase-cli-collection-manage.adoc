@@ -51,13 +51,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Shows all scopes in the bucket.
 
 --create-collection <collection>::
-  Makes the collection in the scope. The option can takes a path in
-  dot format (scope.collection), specifying the scope in which the
+  Makes the collection in the scope. The option takes a path in dot
+  format (scope.collection), specifying the scope in which the
   collection and the name to be created.
 
 --drop-collection <collection>::
-  Removes the collection from the scope. The option can take a path
-  in dot format (scope.collection), specifying the scope from which
+  Removes the collection from the scope. The option takes a path in
+  dot format (scope.collection), specifying the scope from which
   the collection and collection-name are to be removed.
 
 --list-collections [<scope>]::

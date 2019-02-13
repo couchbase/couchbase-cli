@@ -3946,7 +3946,8 @@ class CollectionManage(Subcommand):
     def _get_scope_collection(self, path):
         paths = path.split('.')
         if len(paths) == 2:
-            return paths[0], paths[1]
+            if not '' in paths:
+                return paths[0], paths[1]
         _exitIfErrors(["Path is not valid. It should be: scope.collection"])
 
 
