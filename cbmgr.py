@@ -1295,9 +1295,6 @@ class Failover(Subcommand):
         check_versions(rest)
 
         opts.servers_to_failover = apply_default_port(opts.servers_to_failover)
-        if not opts.force and len(opts.servers_to_failover) != 1:
-            _exitIfErrors(["Only one node at a time can be gracefully failed over"])
-
         _, errors = rest.failover(opts.servers_to_failover, opts.force)
         _exitIfErrors(errors)
 
