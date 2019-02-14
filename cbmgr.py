@@ -4010,3 +4010,70 @@ class EnableDeveloperPreview(Subcommand):
     @staticmethod
     def get_description():
         return "Enable developer preview mode in target cluster"
+
+
+class SettingAlternateAddress(Subcommand):
+    """"Setting alternate address command"""
+
+    def __init__(self):
+        super(SettingAlternateAddress, self).__init__()
+        self.parser.prog = "couchbase-cli setting-alternate-address"
+        group = self.parser.add_argument_group("Configure alternate addresses")
+        group.add_argument('--set', dest='set', required=False, action="store_true",
+                           help='Set external address configuration for the node')
+        group.add_argument('--remove', dest='remove', required=False, action="store_true",
+                           help='Remove external address configuration')
+        group.add_argument('--list', dest='list', required=False, action='store_true',
+                           help='Retrieve current alternate address configuration for all nodes')
+        group.add_argument('--hostname', dest='alternate_hostname', metavar="<host>", help='Alternate address')
+        group.add_argument('--ports', dest='ports', metavar="<ports>",
+                           help="A comma separated list specifying port mappings for the services")
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_versions(rest)
+
+        flags_used = sum([opts.set, opts.list, opts.remove])
+        if flags_used != 1:
+            _exitIfErrors(['Use exactly one of --set, --list or --remove'])
+
+        if opts.list:
+            add, error = rest.get_alternate_address()
+            _exitIfErrors(error)
+            print(json.dumps(add))
+        if opts.set:
+            ports, error = self._parse_ports(opts.ports)
+            _exitIfErrors(error)
+            _, error = rest.set_alternate_address(opts.alternate_hostname, ports)
+            _exitIfErrors(error)
+        if opts.remove:
+            _, error = rest.delete_alternate_address()
+            _exitIfErrors(error)
+            _success('Alternate address configuration deleted')
+
+    @staticmethod
+    def _parse_ports(ports):
+        if ports is None:
+            return None, None
+
+        port_mappings = ports.split(',')
+        map = []
+        for port_value_pair in port_mappings:
+            p_v = port_value_pair.split('=')
+            if len(p_v) != 2:
+                return None, ['invalid port mapping: {}'.format(port_value_pair)]
+            try:
+                int(p_v[1])
+            except ValueError:
+                return None, ['invalid port mapping: {}'.format(port_value_pair)]
+            map.append((p_v[0], p_v[1]))
+        return map, None
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-alternate-address" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Configure alternate addresses"

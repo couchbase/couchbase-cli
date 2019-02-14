@@ -34,6 +34,7 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-setting-audit.html
   generated/doc/couchbase-cli/couchbase-cli-setting-autofailover.html
   generated/doc/couchbase-cli/couchbase-cli-setting-autoreprovision.html
+  generated/doc/couchbase-cli/couchbase-cli-setting-alternate-address.html
   generated/doc/couchbase-cli/couchbase-cli-setting-cluster.html
   generated/doc/couchbase-cli/couchbase-cli-setting-compaction.html
   generated/doc/couchbase-cli/couchbase-cli-setting-index.html
@@ -91,6 +92,7 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-setting-audit.1
     generated/man/man1/couchbase-cli-setting-autofailover.1
     generated/man/man1/couchbase-cli-setting-autoreprovision.1
+    generated/man/man1/couchbase-cli-setting-alternate-address.1
     generated/man/man1/couchbase-cli-setting-cluster.1
     generated/man/man1/couchbase-cli-setting-compaction.1
     generated/man/man1/couchbase-cli-setting-index.1

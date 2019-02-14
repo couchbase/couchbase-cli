@@ -1598,6 +1598,33 @@ class ClusterManager(object):
         url = self.hostname + '/pools/default/buckets/' + urllib.parse.quote_plus(bucket) + '/collections'
         return self._get(url)
 
+    def set_alternate_address(self, hostname, ports):
+        url = self.hostname + '/node/controller/setupAlternateAddresses/external'
+        params = {}
+        if hostname:
+            params['hostname'] = hostname
+        if ports:
+            for (name, value) in ports:
+                params[name] = value
+
+        return self._put(url, params)
+
+    def delete_alternate_address(self):
+        url = self.hostname + '/node/controller/setupAlternateAddresses/external'
+        return self._delete(url, {})
+
+    def get_alternate_address(self):
+        url = self.hostname + '/pools/default/nodeServices'
+        node_services, error = self._get(url)
+        if error:
+            return None, error
+
+        alternate_address = []
+        for node in node_services['nodesExt']:
+            if 'alternateAddresses' in node:
+                alternate_address.append(node['alternateAddresses']['external'])
+        return alternate_address, None
+
     # Low level methods for basic HTML operations
 
     @request

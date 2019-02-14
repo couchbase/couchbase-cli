@@ -1,0 +1,69 @@
+= couchbase-cli-settings-alternate-address(1)
+ifndef::doctype-manpage[:doctitle: setting-alternate-address]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-setting-alternate-address -
+endif::[]
+Modify alternate addresses
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli setting-alternate-address [--cluster <url>] [--username <user>]
+    [--password <password>] [--list] [--set] [--remove] [--hostname <host>]
+    [--ports <ports>]
+
+== DESCRIPTION
+
+This command is used to set the alternate address for a node. This alternate address
+allows the node to be connected by a different address, this is useful when an external
+agent tries to connect via a NAT'd environment such as cloud or kubernetes environments.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--list::
+  Show current alternate addresses
+
+--set::
+  Set alternate address for the node specified in the -c/--cluster option.
+
+--remove::
+  Remove alternate address for the node specified in the -c/--cluster option.
+
+--hostname <host>::
+  Alternate host address
+
+--ports <port>::
+  Alternate port mappings. Specified as a comma separated list: e.g. --ports
+  kv=9000,kvSSL=9999. If not specified defaults will be used
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To set the alternate address and custom ports for node 192.168.1.5 we would use the
+following command
+
+  $ couchbase-cli setting-alterante-address -c 192.168.1.5:8091 --username cur_user \
+   --password cur_password --hostoname 10.10.10.10 \
+   --ports mgmt=1100,capi=2000,capiSSL=3000
+
+To see the current alternate address configuration we would use the --list flag as
+follows:
+
+  $ couchbase-cli setting-cluster -c 192.168.1.5:8091 --username Administrator \
+   --password password --list
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-cluster-init[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
