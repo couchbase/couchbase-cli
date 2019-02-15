@@ -232,6 +232,22 @@ class ClusterManager(object):
         if errors:
             return None, errors
 
+        # this block of code will check if we are using internal or external address
+        # first get the host being used to get the node services info
+        used_host = urllib.parse.urlparse(self.hostname).hostname
+        useAlt = False
+        # next check if its external or internal
+        for node in data['nodesExt']:
+            if not 'hostname' in node and (used_host == '127.0.0.1' or used_host == 'localhost'):
+                useAlt = False
+                break
+            if 'hostname' in node and used_host == node['hostname']:
+                useAlt = False
+                break
+            if 'alternateAddresses' in node and node['alternateAddresses']['external']['hostname'] == used_host:
+                useAlt = True
+                break
+
         hosts = []
         for node in data['nodesExt']:
             node_host = '127.0.0.1'
@@ -257,21 +273,33 @@ class ClusterManager(object):
                 index_port_name = 'indexHttps'
                 fts_port_name = 'ftsSSL'
 
+            services = node['services']
 
-            if service_name == MGMT_SERVICE and mgmt_port_name in node['services']:
-                hosts.append(http_prefix + node_host + ':' + str(node['services'][mgmt_port_name]))
+            if useAlt and 'alternateAddresses' not in node:
+                continue
 
-            if service_name == N1QL_SERVICE and n1ql_port_name in node['services']:
-                hosts.append(http_prefix + node_host + ':' + str(node['services'][n1ql_port_name]))
+            if 'alternateAddresses' in node and useAlt:
+                alt_node_host = node['alternateAddresses']['external']['hostname']
+                # Check for Raw IPv6 address
+                if ':' in alt_node_host:
+                    alt_node_host = '[' + alt_node_host + ']'
+                node_host = alt_node_host
+                services = node['alternateAddresses']['external']['ports']
 
-            if service_name == INDEX_SERVICE and index_port_name in node['services']:
-                hosts.append(http_prefix + node_host + ':' + str(node['services'][index_port_name]))
+            if service_name == MGMT_SERVICE and mgmt_port_name in services:
+                hosts.append(http_prefix + node_host + ':' + str(services[mgmt_port_name]))
 
-            if service_name == FTS_SERVICE and fts_port_name in node['services']:
-                hosts.append(http_prefix + node_host + ':' + str(node['services'][fts_port_name]))
+            if service_name == N1QL_SERVICE and n1ql_port_name in services:
+                hosts.append(http_prefix + node_host + ':' + str(services[n1ql_port_name]))
 
-            if service_name == EVENT_SERVICE and event_port_name in node['services']:
-                hosts.append(http_prefix + node_host + ':' + str(node['services'][event_port_name]))
+            if service_name == INDEX_SERVICE and index_port_name in services:
+                hosts.append(http_prefix + node_host + ':' + str(services[index_port_name]))
+
+            if service_name == FTS_SERVICE and fts_port_name in services:
+                hosts.append(http_prefix + node_host + ':' + str(services[fts_port_name]))
+
+            if service_name == EVENT_SERVICE and event_port_name in services:
+                hosts.append(http_prefix + node_host + ':' + str(services[event_port_name]))
 
         return hosts, None
 

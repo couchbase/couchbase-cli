@@ -230,6 +230,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
         return node_vbucket_map
 
     def provide_batch(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch]]:
+        alternate_add = getattr(self, 'alt_add', None)
         if not self.version_supported:
             return "error: cannot back up 2.x or older clusters with 3.x tools", None
 
@@ -513,6 +514,24 @@ class DCPStreamSource(pump.Source, threading.Thread):
             bucket = str(self.source_bucket.get("name"))
             if self.opts.ssl:
                 port = couchbaseConstants.SSL_PORT
+
+            if getattr(self, 'alt_add', None):
+                if 'alternateAddresses' in self.source_node:
+                    host = self.source_node['alternateAddresses']['external']['hostname']
+                    if 'ports' not in self.source_node['alternateAddresses']['external']:
+                        return ['no data port available in external address: {}'. format(host)], None
+
+                    alterante_ports = self.source_node['alternateAddresses']['external']['ports']
+                    if self.opts.ssl:
+                        if 'kvSSL' not in alterante_ports:
+                            return ['Secure data port not available in external host: {}'.format(host)]
+                        port = alterante_ports['kvSSL']
+                    elif 'kv' not in alterante_ports:
+                        return ['Data port not available in external host: {}'.format(host)]
+                    else:
+                        port = alterante_ports['kv']
+                else:
+                    return ['alterante address not available in node: {}'.format(self.source_node['otpNode'])], None
 
             logging.debug("  DCPStreamSource connecting mc: " + host + ":" + str(port))
 

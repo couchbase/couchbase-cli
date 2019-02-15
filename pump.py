@@ -284,10 +284,51 @@ class PumpingStation(ProgressReporter):
         self.ctl['run_msg'] = 0
         self.ctl['tot_msg'] = 0
 
+        # Checks to be done:
+        #    1. If source is a CB server check if hostname given is default or external:
+        #       this is done by comparing self.source_spec to source_node[hostname] or to the alternate address
+        #        1.1 Mark that all nodes in the server have to be connected using (default/external) depending on 1
+        #    2. Check if sink is a CB server and if hostname given is default or external:
+        #       This is done by comparing the sink_spec to the sink map
+        #        2.2 ark that all nodes in the server have to be connected using (default/external) depending on 2
+        #    3. Pass this information through the queue to the worker
+
+        # step 1:
+        alt_add = {'source': False, 'sink': False}
+        if self.source_spec.startswith('http://') or self.source_spec.startswith('https://'):
+            host = self.source_spec.lstrip("https://")
+            host = host.lstrip("http://")
+            ix = host.rfind(":")
+            if ix != -1:
+                try:
+                    _ = int(host[ix+1:])
+                    host = host[:ix]
+                except ValueError:
+                    pass
+            for sn in source_nodes:
+                if 'alternateAddresses' in sn and sn['alternateAddresses']['external']['hostname'] == host:
+                    alt_add['source'] = True
+                    break
+        # step 2:
+        if self.sink_spec.startswith('http://') or self.sink_spec.startswith('https://'):
+            host = self.sink_spec.lstrip("https://")
+            host = host.lstrip("http://")
+            ix = host.rfind(":")
+            if ix != -1:
+                try:
+                    _ = int(host[ix + 1:])
+                    host = host[:ix]
+                except ValueError:
+                    pass
+            for n in sink_map['buckets'][0]['nodes']:
+                if 'alternateAddresses' in n and host == n['alternateAddresses']['external']['hostname']:
+                    alt_add['sink'] = True
+                    break
+
         for source_node in sorted(source_nodes,
                                   key=lambda n: returnString(n.get('hostname', NA))):
             logging.debug(" enqueueing node: {0}".format(source_node.get('hostname', NA)))
-            self.queue.put((source_bucket, source_node, source_map, sink_map))
+            self.queue.put((source_bucket, source_node, source_map, sink_map, alt_add))
 
             rv, tot = self.source_class.total_msgs(self.opts,
                                                    source_bucket,
@@ -373,10 +414,11 @@ class PumpingStation(ProgressReporter):
     @staticmethod
     def run_worker(self, thread_index):
         while not self.ctl['stop']:
-            source_bucket, source_node, source_map, sink_map = \
+            source_bucket, source_node, source_map, sink_map, alt_add = \
                 self.queue.get()
             hostname = source_node.get('hostname', NA)
             logging.debug(" node: %s" % (hostname))
+            logging.debug(" Use alternate addresses: {}".format(alt_add))
 
             curx = defaultdict(int)
             self.source_class.check_spec(source_bucket,
@@ -393,9 +435,11 @@ class PumpingStation(ProgressReporter):
             source = self.source_class(self.opts, self.source_spec, source_bucket,
                                        source_node, source_map, sink_map, self.ctl,
                                        curx)
+            setattr(source, 'alt_add', alt_add['source'])
             sink = self.sink_class(self.opts, self.sink_spec, source_bucket,
                                    source_node, source_map, sink_map, self.ctl,
                                    curx)
+            setattr(sink, 'alt_add', alt_add['sink'])
 
             src_conf_res = source.get_conflict_resolution_type()
             snk_conf_res = sink.get_conflict_resolution_type()

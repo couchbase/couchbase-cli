@@ -417,6 +417,51 @@ class CBSink(pump_mc.MCSink):
 
         # Primary server for a vbucket_id is the 0'th entry.
         host_port = serverList[vBucketMap[vbucket_id][0]]
+        server_host, _ = pump.hostport(host_port)
+        if getattr(self, 'alt_add', None):
+            host = None
+            port = None
+            for n in bucket['nodes']:
+                if 'alternateAddresses' not in n:
+                    # we could raise an error if one of the nodes does not have an alternate address
+                    continue
+
+                node_host = '127.0.0.1'
+                if 'hostname' in n:
+                    node_host, _ = pump.hostport(n['hostname'])
+
+                # if server does not match continue
+                if node_host != server_host:
+                    continue
+
+                # if correct node check alternate address
+                host = n['alternateAddresses']['external']['hostname']
+                if self.opts.ssl:
+                    if 'kvSSL' in n['alternateAddresses']['external']['ports']:
+                        port = n['alternateAddresses']['external']['ports']['kvSSL']
+                    else:
+                        return 'Host does not have a secure data port', None
+                elif 'kv' in n['alternateAddresses']['external']['ports']:
+                    port = n['alternateAddresses']['external']['ports']['kv']
+                else:
+                    return 'Host does not have data service', None
+                break
+
+            if host is None or port is None:
+                return 'No alternate address information found for host "{}"'.format(host_port), None
+
+            # wrap ipv6 address with []
+            if ':' in host and not host.startswith('['):
+                host = '[' + host + ']'
+
+            try:
+                port_int = int(port)
+            except ValueError:
+                return 'Invalid port "{}"'.format(port), None
+
+            host_port = host + ":" + str(port)
+
+        logging.debug('Conencting to host "{}" for vbucket {}'.format(host_port, vbucket_id))
 
         conn = mconns.get(host_port, None)
         if conn is None:
