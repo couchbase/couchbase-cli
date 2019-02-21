@@ -423,13 +423,5 @@ class CBSink(pump_mc.MCSink):
                 logging.error("error: CBSink.connect() for send: " + rv)
                 return rv, None
             mconns[host_port] = conn
-            if self.opts.collection:
-                try:
-                    # HELO collections
-                    conn.helo([couchbaseConstants.HELO_COLLECTIONS])
-                except Exception as e:
-                    logging.warn("fail to call hello command, maybe it is not supported")
-                    pass
-
             self.add_start_event(conn)
         return 0, conn

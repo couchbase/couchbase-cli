@@ -58,13 +58,20 @@ class GenSource(pump.Source):
                'json': 0,
                'low-compression': False,
                'xattr': False}
+
         for kv in spec[len("gen:"):].split(','):
             if kv:
                 k = kv.split('=')[0].strip()
                 v = kv.split('=')[1].strip()
                 try:
                     if k in cfg:
-                        cfg[k] = type(cfg[k])(v)
+                        # this type casting does not work for bools so this code has to be added
+                        if v == 'True':
+                            cfg[k] = True
+                        elif v == 'False':
+                            cfg[k] = False
+                        else:
+                            cfg[k] = type(cfg[k])(v)
                     else:
                         return "error: unknown workload gen parameter: %s" % (k), None
                 except ValueError:
@@ -161,12 +168,12 @@ class GenSource(pump.Source):
                 encodedCid = encodeCollectionId(cid)
                 # Generate the pack format and pack the key
                 docKey = struct.pack(
-                    "!" + str(len(encodedCid)) + "s"
+                    ("!" + str(len(encodedCid)) + "s"
                         + str(len(prefix)) + "s"
-                        + str(len(key)) + "s",
+                        + str(len(key)) + "s").encode(),
                     encodedCid,
-                    prefix,
-                    key);
+                    prefix.encode(),
+                    key.encode());
             else:
                 docKey = prefix + key
 

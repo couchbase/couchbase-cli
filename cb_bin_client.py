@@ -32,7 +32,7 @@ def encodeCollectionId(cid):
             output.append(0)
         else:
             output[-1] = byte
-    return output.tostring()
+    return output.tobytes()
 
 def decodeCollectionID(key):
     # A leb128 varint encodes the CID

@@ -735,9 +735,12 @@ class Batch(object):
                     # Collections embeds the ID into the key field, but does not
                     # hash the ID as part of VB hashing
                     key = cb_bin_client.skipCollectionID(key)
+
+                if isinstance(key, str):
+                    key = key.encode()
                 # Special case when the source did not supply a vbucket_id
                 # (such as stdin source), so we calculate it.
-                vbucket_id = ((zlib.crc32(key.encode()) >> 16) & 0x7FFF) % vbuckets_num
+                vbucket_id = ((zlib.crc32(key) >> 16) & 0x7FFF) % vbuckets_num
                 msg = (cmd, vbucket_id) + msg[2:]
             g[vbucket_id].append(msg)
         return g
