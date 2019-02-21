@@ -41,7 +41,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --port <port>::
   LDAP port.
 
---encryption <ssl|tsl|none>::
+--encryption <tls|startTLS|none>::
   Security used to communicate with LDAP servers. Supported options
   [tls, startTLS, none].
 

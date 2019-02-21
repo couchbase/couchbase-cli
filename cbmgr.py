@@ -2710,17 +2710,17 @@ class SettingLdap(Subcommand):
         self.parser.prog = "couchbase-cli setting-ldap"
         group = self.parser.add_argument_group("LDAP settings")
         group.add_argument("--get", dest="get", default=False, action="store_true",
-                           help='When the get flag is provided it will retrieve the current ldap settings' )
-        group.add_argument("--authentication-enabled", dest="authentication_enabled", metavar="<1|0>", required=True,
+                           help='When the get flag is provided it will retrieve the current ldap settings')
+        group.add_argument("--authentication-enabled", dest="authentication_enabled", metavar="<1|0>",
                            choices=["1", "0"], help="Enable LDAP authentication, otherwise it defaults to disable")
-        group.add_argument("--authorization-enabled", dest="authorization_enabled", metavar="<1|0>", required=True,
+        group.add_argument("--authorization-enabled", dest="authorization_enabled", metavar="<1|0>",
                            choices=["1", "0"], help="Enable LDAP authorization, otherwise defaults to false")
         group.add_argument("--hosts", dest="hosts", metavar="<host_list>",
                            help="Coma separated list of LDAP servers")
         group.add_argument("--port", dest="port", metavar="<port>", help="LDAP port. (Default 389)", type=(int),
                            default=389)
-        group.add_argument("--encryption", dest="encryption", metavar="<tsl|startTLS|none>",
-                           choices=["tsl", "startTLS", "none"], default="none", help="Encryption used")
+        group.add_argument("--encryption", dest="encryption", metavar="<tls|startTLS|none>",
+                           choices=["tls", "startTLS", "none"], default="none", help="Encryption used")
         group.add_argument("--disable-cert-validation", dest="disable_cert_val", default=False, action="store_true",
                            help="Disable server certificate validation.")
         group.add_argument("--ca-cert", dest="cacert", metavar="<path>",
@@ -2762,6 +2762,8 @@ class SettingLdap(Subcommand):
             _exitIfErrors(rv)
             print(data)
         else:
+            if opts.authentication_enabled is None or opts.authorization_enabled is None:
+                _exitIfErrors(['the following arguments are required: --authentication-enabled, --authorization-enabled'])
             self._set(opts, rest)
 
     def _set(self, opts, rest):
@@ -2787,13 +2789,12 @@ class SettingLdap(Subcommand):
                 _exitIfErrors(['--ca-cert is required when server certificate verification is active.'])
                 opts.cacert = _exit_on_file_read_failure(opts.cacert)
 
-
-        if opts.encryption == "tsl":
+        if opts.encryption == "tls":
             opts.encryption = "TLS"
         elif opts.encryption == "startTLS":
-            opts.encryption = "StartTLS"
+            opts.encryption = "StartTLSExtension"
         elif opts.encryption == "none":
-            opts.encryption = "no encryption"
+            opts.encryption = "false"
 
         if opts.nested_groups == '1':
             opts.nested_groups = 'true'
