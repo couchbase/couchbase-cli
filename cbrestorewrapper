@@ -131,8 +131,7 @@ all data that are collected will be restored""")
 def getBuckets(node, rest_port, username, password):
     request = urllib.request.Request(
         'http://' + node + ':' + rest_port + '/pools/default/buckets')
-    base64string = base64.encodestring(
-        '%s:%s' % (username, password)).replace('\n', '')
+    base64string = base64.encodebytes(('{0}:{1}'.format(username, password)).encode()).decode().replace('\n', '')
     request.add_header('Authorization', 'Basic %s' % base64string)
     try:
         response = urllib.request.urlopen(request)
