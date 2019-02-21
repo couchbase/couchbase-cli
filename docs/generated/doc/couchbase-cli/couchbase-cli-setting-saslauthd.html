@@ -447,7 +447,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <pre class="content"><em>couchbase-cli setting-saslauthd</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--admins &lt;admins_list&gt;]
     [--roadmins &lt;ro_admin_list&gt;] [--default &lt;default&gt;]
-    [--enable &lt;num&gt;]</pre>
+    [--enabled &lt;1|0&gt;]</pre>
 </div>
 </div>
 </div>
@@ -500,7 +500,7 @@ added.</p>
 this cluster. This list should be comma separated if multiple users are
 being added.</p>
 </dd>
-<dt class="hdlist1">--enabled &lt;num&gt;</dt>
+<dt class="hdlist1">--enabled &lt;1|0&gt;</dt>
 <dd>
 <p>Enables or disables SASL on this cluster. To enable SASL set this option to
 "1". To disable SASL set this parameter to "0".</p>
@@ -556,7 +556,7 @@ a port other that 8091.</p>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
- --password password --enable 1</pre>
+ --password password --enabled 1</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -566,8 +566,8 @@ Read-Only Administrators run the following command.</p>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
- --password password --enable 1 --admins alice,barry \
- --ro-admins clair,daniel</pre>
+ --password password --enabled 1 --admins alice,barry \
+ --roadmins clair,daniel</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -577,7 +577,7 @@ following command.</p>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
- --password password --enable 1 --default admins</pre>
+ --password password --enabled 1 --default admins</pre>
 </div>
 </div>
 </div>

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-saslauthd
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2018-12-11
+.\"      Date: 2019-02-21
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-SASLAUTHD" "1" "2018-12-11" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-SASLAUTHD" "1" "2019-02-21" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,7 +35,7 @@ couchbase\-cli\-setting\-saslauthd \- Modifies saslauthd settings
 \fIcouchbase\-cli setting\-saslauthd\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-admins <admins_list>]
     [\-\-roadmins <ro_admin_list>] [\-\-default <default>]
-    [\-\-enable <num>]
+    [\-\-enabled <1|0>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -81,7 +81,7 @@ this cluster. This list should be comma separated if multiple users are
 being added.
 .RE
 .sp
-\-\-enabled <num>
+\-\-enabled <1|0>
 .RS 4
 Enables or disables SASL on this cluster. To enable SASL set this option to
 "1". To disable SASL set this parameter to "0".
@@ -146,7 +146,7 @@ To enable SASL on a cluster run the following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli setting\-saslauthd \-c 192.168.1.5 \-\-username Administrator \(rs
- \-\-password password \-\-enable 1
+ \-\-password password \-\-enabled 1
 .fi
 .if n .RE
 .sp
@@ -156,8 +156,8 @@ Read\-Only Administrators run the following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli setting\-saslauthd \-c 192.168.1.5 \-\-username Administrator \(rs
- \-\-password password \-\-enable 1 \-\-admins alice,barry \(rs
- \-\-ro\-admins clair,daniel
+ \-\-password password \-\-enabled 1 \-\-admins alice,barry \(rs
+ \-\-roadmins clair,daniel
 .fi
 .if n .RE
 .sp
@@ -167,7 +167,7 @@ following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli setting\-saslauthd \-c 192.168.1.5 \-\-username Administrator \(rs
- \-\-password password \-\-enable 1 \-\-default admins
+ \-\-password password \-\-enabled 1 \-\-default admins
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
