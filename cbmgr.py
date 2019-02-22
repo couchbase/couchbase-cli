@@ -3188,7 +3188,8 @@ class UserManage(Subcommand):
         group.add_argument("--user-groups", dest="groups", metavar="<groups>", help="List of groups for the user")
         group.add_argument("--group-name", dest="group", metavar="<group>", help="Group name")
         group.add_argument("--group-description", dest="description", metavar="<text>", help="Group description")
-        group.add_argument("--ldap-ref", dest="ldap_ref", metavar="<ref>", help="LDAP group's DN")
+        group.add_argument("--ldap-ref", dest="ldap_ref", metavar="<ref>", help="LDAP group's DN. Should be prefixed" +
+                                                                                " by `domain=`")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,

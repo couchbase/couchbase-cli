@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-12-10
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-02-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2018-12-10" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2019-02-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -164,7 +164,7 @@ managed by an external source suchas LDAP.
 \-\-user\-groups <groups>
 .RS 4
 Specifies the groups the user should be added to. This is used when creating
- a user, and should be specified as a comma separated list.
+a user, and should be specified as a comma separated list.
 .RE
 .sp
 \-\-group\-name <group>
@@ -180,6 +180,7 @@ Specifies the group description, it is used with \-\-set\-group.
 \-\-ldap\-ref <ref>
 .RS 4
 Specifies the LDAP group\(cqs DN, to link the couchbase group with the LDAP one.
+For example \-\-ldap\-ref domain=admins. Prefix the group\(cqs DN with domain=.
 .RE
 .SH "HOST FORMATS"
 .sp
