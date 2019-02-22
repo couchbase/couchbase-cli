@@ -193,6 +193,12 @@ class GenSource(pump.Source):
         """Returns max-items only if exit-after-creates was specified.
            Else, total msgs is unknown as GenSource does not stop generating."""
         if source_map['cfg']['exit-after-creates'] and source_map['cfg']['ratio-sets'] > 0:
-            total_ops = source_map['cfg']['max-items'] / source_map['cfg']['ratio-sets']
-            return 0, int(total_ops)
+            ratio = source_map['cfg']['ratio-sets']
+            ops = 0
+            sets = 0
+            while sets != source_map['cfg']['max-items']:
+                if ratio >= float(sets)/float(ops or 1):
+                    sets += 1
+                ops += 1
+            return 0, ops
         return 0, None
