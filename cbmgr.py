@@ -2987,6 +2987,8 @@ class SettingXdcr(Subcommand):
                            help="The XDCR log level")
         group.add_argument("--stats-interval", dest="stats_interval", metavar="<ms>",
                            help="The interval for statistics updates (in milliseconds)")
+        group.add_argument('--max-processes', dest='max_proc', metavar="<num>", type=int,
+                           help='Number of processes to be allocated to XDCR. The default is 4.')
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -3009,7 +3011,7 @@ class SettingXdcr(Subcommand):
                                               opts.rep_thresh, opts.src_nozzles,
                                               opts.dst_nozzles, opts.usage_limit,
                                               opts.compression, opts.log_level,
-                                              opts.stats_interval)
+                                              opts.stats_interval, opts.max_proc)
         _exitIfErrors(errors)
 
         _success("Global XDCR settings updated")
@@ -3432,6 +3434,8 @@ class XdcrReplicate(Subcommand):
                            help="The XDCR log level")
         group.add_argument("--stats-interval", dest="stats_interval", metavar="<ms>",
                            help="The interval for statistics updates (in milliseconds)")
+        group.add_argument("--priority", dest="priority", choices=['High', 'Medium', 'Low'],
+                           metavar="<High|Medium|Low>", help='XDCR priority, by default set to High')
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -3521,7 +3525,6 @@ class XdcrReplicate(Subcommand):
                 if "filterExpression" in task and task["filterExpression"] != "":
                     print("   filter: %s" % task["filterExpression"])
 
-
     def _settings(self, rest, opts):
         if opts.replicator_id is None:
             _exitIfErrors(["--xdcr-replicator is needed to change a replicators settings"])
@@ -3533,7 +3536,7 @@ class XdcrReplicate(Subcommand):
                                                   opts.dst_nozzles, opts.usage_limit,
                                                   opts.compression, opts.log_level,
                                                   opts.stats_interval, opts.replicator_id, opts.filter,
-                                                  opts.filter_skip)
+                                                  opts.filter_skip, opts.priority)
         _exitIfErrors(errors)
 
         _success("XDCR replicator settings updated")

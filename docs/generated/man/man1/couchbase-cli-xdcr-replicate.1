@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-12-05
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-03-05
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2018-12-05" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2019-03-05" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -43,6 +43,7 @@ couchbase\-cli\-xdcr\-replicate \- Creates a replication between two data center
     [\-\-target\-nozzle\-per\-node <num>] [\-\-bandwidth\-usage\-limit <num>]
     [\-\-enable\-compression <num>] [\-\-stats\-interval <milliseconds>]
     [\-\-optimistic\-replication\-threshold <bytes>] [\-\-log\-level <level>]
+    [\-\-priority <High|Medium|Low>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -206,6 +207,12 @@ The XDCR log level.
 \-\-stats\-interval <milliseconds>
 .RS 4
 The interval for statistics updates in milliseconds.
+.RE
+.sp
+\-\-priority <High|Medium|Low>
+.RS 4
+Specify the priority for the replication. The options are High, Medium or
+Low. The default priority is High.
 .RE
 .SH "HOST FORMATS"
 .sp

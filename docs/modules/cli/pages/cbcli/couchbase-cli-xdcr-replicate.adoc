@@ -22,6 +22,7 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>]
     [--target-nozzle-per-node <num>] [--bandwidth-usage-limit <num>]
     [--enable-compression <num>] [--stats-interval <milliseconds>]
     [--optimistic-replication-threshold <bytes>] [--log-level <level>]
+    [--priority <High|Medium|Low>]
 
 == DESCRIPTION
 
@@ -117,6 +118,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --stats-interval <milliseconds>::
   The interval for statistics updates in milliseconds.
+
+--priority <High|Medium|Low>::
+  Specify the priority for the replication. The options are High, Medium or
+  Low. The default priority is High.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

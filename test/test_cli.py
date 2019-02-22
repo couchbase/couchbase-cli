@@ -997,7 +997,7 @@ class TestSettingXdcr(CommandTest):
         self.cmd_args = ['--checkpoint-interval', '60', '--worker-batch-size', '50', '--doc-batch-size', '40',
                          '--failure-restart-interval', '30', '--optimistic-replication-threshold', '20',
                          '--source-nozzle-per-node', '10', '--target-nozzle-per-node', '5', '--bandwidth-usage-limit',
-                         '4', '--log-level', 'Trace', '--stats-interval', '3']
+                         '4', '--log-level', 'Trace', '--stats-interval', '3', '--max-processes', '8']
         self.EE_args = ['--enable-compression', '1']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestSettingXdcr, self).setUp()
@@ -1007,7 +1007,7 @@ class TestSettingXdcr(CommandTest):
         self.assertIn('POST:/settings/replications', self.server.trace)
         expected_params = ['targetNozzlePerNode=5', 'docBatchSizeKb=40', 'logLevel=Trace', 'failureRestartInterval=30',
                            'networkUsageLimit=4', 'optimisticReplicationThreshold=20', 'statsInterval=3',
-                           'checkpointInterval=60', 'workerBatchSize=50', 'sourceNozzlePerNode=10']
+                           'checkpointInterval=60', 'workerBatchSize=50', 'sourceNozzlePerNode=10', 'goMaxProcs=8']
         self.rest_parameter_match(expected_params)
 
     def test_set_xdcr_settings_EE(self):
@@ -1016,7 +1016,7 @@ class TestSettingXdcr(CommandTest):
         expected_params = ['targetNozzlePerNode=5', 'docBatchSizeKb=40', 'logLevel=Trace', 'failureRestartInterval=30',
                            'networkUsageLimit=4', 'optimisticReplicationThreshold=20', 'statsInterval=3',
                            'checkpointInterval=60', 'workerBatchSize=50', 'sourceNozzlePerNode=10',
-                           'compressionType=Auto']
+                           'compressionType=Auto', 'goMaxProcs=8']
         self.rest_parameter_match(expected_params)
 
     def test_set_xdcr_settings_EE_in_CE(self):
@@ -1194,12 +1194,13 @@ class TestXdcrReplicate(CommandTest):
                                           '--checkpoint-interval', '60', '--worker-batch-size', '5000',
                                           '--doc-batch-size', '5000', '--failure-restart-interval', '100',
                                           '--optimistic-replication-threshold', '100', '--stats-interval', '200',
-                                          '--log-level', 'Info', '--bandwidth-usage-limit', '5'], self.server_args)
+                                          '--log-level', 'Info', '--bandwidth-usage-limit', '5', '--priority', 'Medium'
+                                          ], self.server_args)
         self.assertIn('POST:/settings/replications/1', self.server.trace)
         expected_params = ['checkpointInterval=60', 'workerBatchSize=5000', 'docBatchSizeKb=5000',
                            'failureRestartInterval=100', 'optimisticReplicationThreshold=100', 'statsInterval=200',
                            'compressionType=Auto', 'filterExpression=key%3A', 'filterSkipRestream=1', 'logLevel=Info',
-                           'networkUsageLimit=5']
+                           'networkUsageLimit=5', 'priority=Medium']
         self.rest_parameter_match(expected_params)
 
     def test_list_replicate(self):

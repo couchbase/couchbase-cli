@@ -18,6 +18,7 @@ _couchbase-cli setting-xdcr_ [--cluster <url>] [--username <user>]
     [--target-nozzle-per-node <num>] [--bandwidth-usage-limit <num>]
     [--enable-compression <num>] [--stats-interval <milliseconds>]
     [--optimistic-replication-threshold <bytes>] [--log-level <level>]
+    [--max-processes <num>]
 
 == DESCRIPTION
 
@@ -71,6 +72,11 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --stats-interval <milliseconds>::
   The interval for statistics updates in milliseconds.
+
+--max-processes <num>::
+  Specify the number of processes allocated to XDCR. As new replications are
+  added, it will require more resources to maintain the replication throughput.
+  This option allows to allocate more resources to XDCR.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

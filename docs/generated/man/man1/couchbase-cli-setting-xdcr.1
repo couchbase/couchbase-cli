@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-xdcr
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-02-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-XDCR" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-XDCR" "1" "2019-02-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -39,6 +39,7 @@ couchbase\-cli\-setting\-xdcr \- Modifies cross data center replication (XDCR) s
     [\-\-target\-nozzle\-per\-node <num>] [\-\-bandwidth\-usage\-limit <num>]
     [\-\-enable\-compression <num>] [\-\-stats\-interval <milliseconds>]
     [\-\-optimistic\-replication\-threshold <bytes>] [\-\-log\-level <level>]
+    [\-\-max\-processes <num>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -134,6 +135,13 @@ The XDCR log level.
 \-\-stats\-interval <milliseconds>
 .RS 4
 The interval for statistics updates in milliseconds.
+.RE
+.sp
+\-\-max\-processes <num>
+.RS 4
+Specify the number of processes allocated to XDCR. As new replications are
+added, it will require more resources to maintain the replication throughput.
+This option allows to allocate more resources to XDCR.
 .RE
 .SH "HOST FORMATS"
 .sp

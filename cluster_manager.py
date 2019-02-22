@@ -1427,7 +1427,7 @@ class ClusterManager(object):
     def xdcr_replicator_settings(self, chk_interval, worker_batch_size,
                                  doc_batch_size, fail_interval, replication_thresh,
                                  src_nozzles, dst_nozzles, usage_limit, compression,
-                                 log_level, stats_interval, replicator_id, filter, filter_skip):
+                                 log_level, stats_interval, replicator_id, filter, filter_skip, priority):
 
         url = self.hostname + '/settings/replications/' + urllib.parse.quote_plus(replicator_id)
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
@@ -1440,16 +1440,21 @@ class ClusterManager(object):
             if filter_skip:
                 filter_numeric = "1"
             params['filterSkipRestream'] = filter_numeric
+        if priority:
+            params['priority'] = priority
 
         return self._post_form_encoded(url, params)
 
     def xdcr_global_settings(self, chk_interval, worker_batch_size, doc_batch_size,
                              fail_interval, replication_threshold, src_nozzles,
-                             dst_nozzles, usage_limit, compression, log_level, stats_interval):
+                             dst_nozzles, usage_limit, compression, log_level, stats_interval, max_proc):
         url = self.hostname + '/settings/replications'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                                        fail_interval, replication_threshold, src_nozzles,
                                        dst_nozzles, usage_limit, compression, log_level, stats_interval)
+        if max_proc:
+            params['goMaxProcs'] = max_proc
+
         return self._post_form_encoded(url, params)
 
     def _get_xdcr_params(self, chk_interval, worker_batch_size, doc_batch_size,
