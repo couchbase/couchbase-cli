@@ -77,11 +77,15 @@ class WorkloadGen(pump_transfer.Transfer):
         count_opts = {"verbose" : ["-v", None]}
 
         bool_opts = {"ssl": ["-s", None],
+                     "force_txn": ["--force-txn", None]
                     }
 
         p = optparse.OptionParser(usage=self.usage)
         self.add_parser_options(p)
         opts, rest = p.parse_args(argv[1:])
+
+        # optimisation to avoid having to check the xattrs for txn when loading the data using cbworkloadgen
+        setattr(opts, 'force_txn', True)
 
         gen_str = "gen:"
         for key in gen_opts.keys():

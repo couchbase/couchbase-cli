@@ -2,6 +2,7 @@
 
 import logging
 import json
+import re
 import socket
 import struct
 import time
@@ -40,6 +41,7 @@ OP_MAP_WITH_META = {
     'delete': couchbaseConstants.CMD_DELETE_WITH_META
     }
 
+ATR_EXP = re.compile(r'atr-\d+-#([a-f1-9]+)$')
 
 def to_bytes(bytes_or_str):
     if isinstance(bytes_or_str, str):
@@ -206,6 +208,14 @@ class MCSink(pump.Sink):
             # A tombstone can contain Xattrs
             if cmd == couchbaseConstants.CMD_DELETE_WITH_META and not dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
                 val = ''
+
+            # on mutations filter txn related data
+            if cmd == couchbaseConstants.CMD_SET_WITH_META or cmd == couchbaseConstants.CMD_SET:
+                if not getattr(self.opts, 'force_txn', False):
+                    skip, val, cas, exp, dtype = self.filter_out_txn(key, val, cas, exp, dtype)
+                    if skip:
+                        continue
+
             rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
                                        ctypes.c_uint32(flg).value,
                                        exp, cas, meta, i, dtype, nmeta,
@@ -222,6 +232,100 @@ class MCSink(pump.Sink):
                 return "error: conn.sendall() exception: %s" % (e)
 
         return 0
+
+    @staticmethod
+    def filter_out_txn(key, val, cas, exp, data_type):
+        """This function return signature is [skip:bool, val:bytes, cas:num, exp:num, data_type:num]
+           skip is true if the key matches an ATR or a client record, otherwise it will be false.
+           If the value has XATTRS they will be checked fot txn object that if it exists will be removed"""
+        str_key = key
+        if isinstance(str_key, bytes):
+            str_key = str_key.decode()
+
+        if str_key == 'txn-client-record':
+            logging.info('(TXN) Skipped the transfer of the txn-client-record')
+            return True, val, cas, exp, data_type
+
+        if ATR_EXP.match(str_key):
+            logging.info('(TXN) Skipped the transfer of the ATR: {}'.format(str_key))
+            return True, val, cas, exp, data_type
+
+        # If it does not have XATTRS return all values as they where
+        if not (data_type & couchbaseConstants.DATATYPE_HAS_XATTR > 0):
+            return False, val, cas, exp, data_type
+
+        # Get the length of the xattrs
+        xattr_len_bytes = val[:4]
+        xattr_len_int = int.from_bytes(xattr_len_bytes, byteorder='big', signed=False)
+
+        # extended attributes length is invalid return as normal and let the server deal with it
+        if xattr_len_int > len(val):
+            return False, val, cas, exp, data_type
+
+        # look for a txn on the xattrs
+        xattrs = val[4:xattr_len_int+7]
+        txn_marker = {}
+        ix = 0
+        while ix < len(xattrs):
+            pair_len = int.from_bytes(xattrs[ix: ix + 4], byteorder='big', signed=False)
+            ix += 4
+            # get the key for the xattr object
+            xattr_key = ''
+            while ix + len(xattr_key) < len(xattrs) and xattrs[ix + len(xattr_key)] != 0:
+                xattr_key += chr(xattrs[ix + len(xattr_key)])
+
+            # check if the key is txn if it matches create a marker and break
+            if xattr_key == 'txn':
+                txn_marker = {
+                    'start': ix,
+                    'length': pair_len,
+                    'body': xattrs[ix+len(xattr_key)+1: pair_len+ix-len(xattr_key)+2],
+                }
+                break
+
+            # otherwise skip body and move on to next xattr
+            ix += pair_len
+
+        if txn_marker == {}:
+            return False, val, cas, exp, data_type
+
+        # check if txn is valid JSON if not let the server handle it
+        try:
+            txn_xattr = json.loads(txn_marker['body'].decode())
+        except Exception as e:
+            logging.debug('(TXN) txn is invalid json')
+            return False, val, cas, exp, data_type
+
+        # get cas and expiry from the txn
+        if 'cas' in txn_xattr:
+            cas = int(txn_xattr['cas'])
+        if 'expiry' in txn_xattr:
+            exp = int(txn_xattr['expiry'])
+
+        # Remove txn xattrs from value
+        logging.info('(TXN) Removing transaction extended attributes "<ud>{}</ud>" from key <ud>{}</ud>'.
+                     format(txn_marker['body'], str_key))
+
+        new_xattr_len = xattr_len_int - txn_marker['length'] - 4
+        # check if the are any xattrs left
+        if new_xattr_len <= 0:
+            # copy everything after the xattrs
+            val = val[xattr_len_int+4:]
+            data_type = 0x00  # Raw bytes
+            try:
+                valid_json = json.loads(val.decode())
+                data_type = 0x01  # Raw json
+            except Exception as e:
+                data_type = 0x00
+            return False, val, cas, exp, data_type
+
+        # create new value package starting with new xattr len
+        new_val = new_xattr_len.to_bytes(4, 'big', signed=False)
+        if txn_marker['start'] != 4:
+            new_val += val[4: txn_marker['start']]
+
+        new_val += val[4+txn_marker['start']+txn_marker['length']:]
+        return False, new_val, cas, exp, data_type
 
     @staticmethod
     def format_multipath_mutation(key, value, vbucketId, cas=0, opaque=0):
