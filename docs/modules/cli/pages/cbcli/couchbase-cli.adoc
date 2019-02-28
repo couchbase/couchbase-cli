@@ -155,6 +155,18 @@ man:couchbase-cli-xdcr-replicate[1]::
 man:couchbase-cli-xdcr-setup[1]::
   Manages XDCR replications.
 
+man::couchbase-cli-setting-saslauth[1]::
+  Manage saslauth settings.
+
+man::couchbase-cli-enable-developer-preview[1]::
+  Enable developer preview.
+
+man::couchbase-cli-collection-manage[1]::
+  Manage collections.
+
+man::couchbase-cli-setting-on-demand[1]::
+  Manage on demand pricing settings.
+
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
