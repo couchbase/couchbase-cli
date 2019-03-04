@@ -379,7 +379,10 @@ class MCSink(pump.Sink):
             m.append(ext)
         if key:
             if isinstance(key, bytes):
-                m.append(key.decode())
+                # MB-33229: append key as-is, don't decode as there can be raw
+                # bytes (due to collection leb128 prefix). A memcached key can
+                # legally contain any byte, not just utf8
+                m.append(key)
             else:
                 m.append(str(key))
         if val:
