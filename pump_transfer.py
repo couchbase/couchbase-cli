@@ -10,6 +10,8 @@ import string
 import sys
 import threading
 
+from typing import Optional, Union, Tuple, List, Dict
+
 import pump
 import pump_bfd
 import pump_csv
@@ -20,12 +22,14 @@ import pump_dcp
 
 from pump import PumpingStation
 
-def exit_handler(err):
+
+def exit_handler(err: Optional[str]):
     if err:
         sys.stderr.write(str(err) + "\n")
         sys.exit(1)
     else:
         sys.exit(0)
+
 
 class Transfer:
     """Base class for 2.0 Backup/Restore/Transfer."""
@@ -45,7 +49,6 @@ class Transfer:
             "  %prog couchstore-files:///opt/couchbase/var/lib/couchbase/data/ /backup-XXX\n" \
             "  %prog couchstore-files:///opt/couchbase/var/lib/couchbase/data/ couchbase://DEST:8091\n"
 
-
     def main(self, argv, opts_etc=None):
         if threading.currentThread().getName() == "MainThread":
             threading.currentThread().setName("mt")
@@ -55,7 +58,7 @@ class Transfer:
             return err
 
         if opts_etc:
-            opts.etc = opts_etc # Used for unit tests, etc.
+            opts.etc = opts_etc  # Used for unit tests, etc.
 
         process_name = os.path.basename(argv[0]) + "-" + "".join(random.sample(string.ascii_letters, 16))
         setattr(opts, "process_name", process_name)

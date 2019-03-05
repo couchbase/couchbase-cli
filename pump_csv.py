@@ -8,6 +8,8 @@ import sys
 import struct
 import urllib.request, urllib.parse, urllib.error
 
+from typing import Tuple, Union, Any, Dict, List, Optional
+
 import couchbaseConstants
 import pump
 import snappy # pylint: disable=import-error
@@ -15,6 +17,7 @@ import snappy # pylint: disable=import-error
 # Our max document size is 20MB, but let's make this extra large in case the
 # are spaces and such that can be removed before sending to Couchbase.
 csv.field_size_limit(100 * 1024 * 1024)
+
 
 def number_try_parse(s):
     for func in (int, float):
@@ -25,6 +28,7 @@ def number_try_parse(s):
         except ValueError:
             pass
     return s
+
 
 class CSVSource(pump.Source):
     """Reads csv file, where first line is field names and one field
@@ -38,20 +42,21 @@ class CSVSource(pump.Source):
         self.r = None # An iterator of csv.reader()
 
     @staticmethod
-    def can_handle(opts, spec):
+    def can_handle(opts, spec: str) -> bool:
         return spec.endswith(".csv") and os.path.isfile(spec)
 
     @staticmethod
-    def check(opts, spec):
+    def check(opts, spec: str) -> Tuple[couchbaseConstants.PUMP_ERROR, Dict[str, Any]]:
         return 0, {'spec': spec,
                    'buckets': [{'name': os.path.basename(spec),
                                 'nodes': [{'hostname': 'N/A'}]}]}
 
     @staticmethod
-    def provide_design(opts, source_spec, source_bucket, source_map):
+    def provide_design(opts, source_spec, source_bucket, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                              Optional[str]]:
         return 0, None
 
-    def provide_batch(self):
+    def provide_batch(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch]]:
         if self.done:
             return 0, None
 
@@ -91,7 +96,8 @@ class CSVSource(pump.Source):
                     else:
                         doc[field] = number_try_parse(vals[i])
                 if doc['id']:
-                    msg = (cmd, vbucket_id, doc['id'], 0, 0, 0, '', doc['value'], 0, 0, 0, 0)
+                    msg: couchbaseConstants.BATCH_MSG = (cmd, vbucket_id, doc['id'].encode(), 0, 0, 0, b'',
+                                                        doc['value'].encode(), 0, 0, 0, 0)
                     batch.append(msg, len(doc))
             except StopIteration:
                 self.done = True
@@ -118,28 +124,28 @@ class CSVSink(pump.Sink):
         self.writer = None
         self.fields = None
 
-    def bucket_name(self):
+    def bucket_name(self) -> str:
         if 'name' in self.source_bucket:
             return self.source_bucket['name']
         else:
             return ""
 
-    def node_name(self):
+    def node_name(self) -> str:
         if 'hostname' in self.source_node:
             return self.source_node['hostname']
         else:
             return ""
 
     @staticmethod
-    def can_handle(opts, spec):
+    def can_handle(opts, spec: str) -> bool:
         if spec.startswith(CSVSink.CSV_SCHEME) or spec.startswith(CSVSink.CSV_JSON_SCHEME):
-            opts.threads = 1 # Force 1 thread to not overlap stdout.
+            opts.threads = 1  # Force 1 thread to not overlap stdout.
             return True
         return False
 
     @staticmethod
-    def check(opts, spec, source_map):
-        rv = 0
+    def check(opts, spec, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR, Any]:
+        rv: couchbaseConstants.PUMP_ERROR = 0
         if spec.endswith(".csv"):
             if spec.startswith(CSVSink.CSV_JSON_SCHEME):
                 targetpath = spec[len(CSVSink.CSV_JSON_SCHEME):]
@@ -152,13 +158,14 @@ class CSVSink(pump.Sink):
 
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_design):
+                       source_bucket, source_map, source_design) -> couchbaseConstants.PUMP_ERROR:
         if source_design:
             logging.warn("warning: cannot save bucket design"
                          " on a CSV destination")
         return 0
 
-    def consume_batch_async(self, batch):
+    def consume_batch_async(self, batch: pump.Batch) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                              Optional[pump.SinkBatchFuture]]:
         if not self.writer:
             self.csvfile = sys.stdout
             if self.spec.startswith(CSVSink.CSV_JSON_SCHEME):
@@ -193,8 +200,7 @@ class CSVSink(pump.Sink):
         msg_tuple_format = 0
         for msg in batch.msgs:
             cmd, vbucket_id, key, flg, exp, cas, meta, val = msg[:8]
-            if isinstance(val, bytes):
-                val = val.decode()
+            val = val.decode()
             if self.skip(key, vbucket_id):
                 continue
             if not msg_tuple_format:
@@ -245,7 +251,7 @@ class CSVSink(pump.Sink):
             self.csvfile.close()
             self.csvfile = None
 
-    def get_csvfile(self, base):
+    def get_csvfile(self, base: str) -> str:
         extension = os.path.splitext(base)
         filename = extension[0]
         if self.bucket_name():
@@ -254,13 +260,13 @@ class CSVSink(pump.Sink):
             filename = filename + "_" + urllib.parse.quote_plus(self.node_name())
         return filename + extension[1]
 
-    def convert_meta(self, meta):
+    def convert_meta(self, meta) -> int:
         seq_no = str(meta)
         if len(seq_no) > 8:
             seq_no = seq_no[0:8]
         if len(seq_no) < 8:
             seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + seq_no)[-8:]
-        check_seqno, = struct.unpack(">Q", seq_no)
+        check_seqno, = struct.unpack(">Q", seq_no.encode())
         if not check_seqno:
             check_seqno = 1
 

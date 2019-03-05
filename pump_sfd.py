@@ -8,6 +8,7 @@ import re
 import json
 import struct
 import threading
+from typing import Tuple, Any, List, Dict, Optional
 
 import couchstore # pylint: disable=import-error
 import couchbaseConstants
@@ -27,6 +28,7 @@ SFD_RE = "^([0-9]+)\\.couch\\.([0-9]+)$"
 # TODO: (1) SFDSink - ensure right user for bucket_dir.
 # TODO: (1) SFDSink - ensure right user for couchstore file.
 
+
 class SFDSource(pump.Source):
     """Reads couchstore files from a couchbase server data directory."""
 
@@ -36,22 +38,23 @@ class SFDSource(pump.Source):
                                         source_map, sink_map, ctl, cur)
         self.done = False
         self.queue = None
+        print('Starting sfd source:  ', spec)
 
     @staticmethod
-    def can_handle(opts, spec):
+    def can_handle(opts, spec: str) -> bool:
         return spec.startswith(SFD_SCHEME)
 
     @staticmethod
-    def check_base(opts, spec):
+    def check_base(opts, spec: str) -> couchbaseConstants.PUMP_ERROR:
         # Skip immediate superclass Source.check_base(),
         # since SFDSource can handle different vbucket states.
         return pump.EndPoint.check_base(opts, spec)
 
     @staticmethod
-    def check(opts, spec):
+    def check(opts, spec: str) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[Dict[str, Any]]]:
         rv, d = data_dir(spec)
         if rv != 0:
-            return rv
+            return rv, None
 
         buckets = []
 
@@ -74,13 +77,13 @@ class SFDSource(pump.Source):
         return 0, {'spec': spec, 'buckets': buckets}
 
     @staticmethod
-    def vbucket_states(opts, spec, bucket_dir):
+    def vbucket_states(opts, spec, bucket_dir) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[Dict[str, Any]]]:
         """Reads all the latest couchstore files in a directory, and returns
            map of state string (e.g., 'active') to map of vbucket_id to doc."""
-        vbucket_states = defaultdict(dict)
+        vbucket_states: Dict[str, Any] = defaultdict(dict)
 
         for f in latest_couch_files(bucket_dir):
-            vbucket_id = int(re.match(SFD_RE, os.path.basename(f)).group(1))
+            vbucket_id = int(re.match(SFD_RE, os.path.basename(f)).group(1))  # type: ignore
             try:
                 store = couchstore.CouchStore(f, 'r')
                 try:
@@ -106,7 +109,8 @@ class SFDSource(pump.Source):
         return "error: no vbucket_states in files: %s" % (bucket_dir), None
 
     @staticmethod
-    def provide_design(opts, source_spec, source_bucket, source_map):
+    def provide_design(opts, source_spec: str, source_bucket, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                                   Optional[str]]:
         rv, d = data_dir(source_spec)
         if rv != 0:
             return rv, None
@@ -150,7 +154,7 @@ class SFDSource(pump.Source):
 
         return 0, json.dumps(rows)
 
-    def provide_batch(self):
+    def provide_batch(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch]]:
         if self.done:
             return 0, None
 
@@ -201,15 +205,17 @@ class SFDSource(pump.Source):
         vbucket_id = None
 
         # Level of indirection since we can't use python 3 nonlocal statement.
-        abatch = [pump.Batch(self)]
+        abatch: List[pump.Batch] = [pump.Batch(self)]
 
         def change_callback(doc_info):
             if doc_info:
                 # Handle the new key name spacing for collections and co
-                cid, key = decodeCollectionID(doc_info.id)
+                cid, key = decodeCollectionID(doc_info.id.encode())
                 # Only support keys in the _default collection
                 if cid != 0:
+                    logging.debug('Skipping as not default collection')
                     return
+
                 if self.skip(key, vbucket_id):
                     return
 
@@ -228,7 +234,7 @@ class SFDSource(pump.Source):
                         cas, exp, flg, flex_meta, dtype, conf_res = struct.unpack(SFD_REV_META_PRE_4_6, rev_meta_bytes)
                     else:
                         raise ValueError('Does not match pre- or post-4.6 format')
-                    meta = doc_info.revSequence
+                    meta = bytes([doc_info.revSequence])
                     seqno = doc_info.sequence
                     nmeta = 0
                     msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res)
@@ -253,8 +259,8 @@ class SFDSource(pump.Source):
                 store.forEachChange(0, change_callback)
                 store.close()
             except Exception as e:
-                #MB-12270: Some files may be deleted due to compaction. We can
-                #safely ingore them and move to next file.
+                # MB-12270: Some files may be deleted due to compaction. We can
+                # safely ignore them and move to next file.
                 pass
 
         if abatch[0].size():
@@ -274,13 +280,12 @@ class SFDSink(pump.Sink):
 
     @staticmethod
     def run(self):
-        destination_vbucket_state = \
-            getattr(self.opts, 'destination_vbucket_state', 'active')
+        destination_vbucket_state = getattr(self.opts, 'destination_vbucket_state', 'active')
 
         vbucket_states = self.source_node.get('vbucket_states', {})
 
         while not self.ctl['stop']:
-            batch, future = self.pull_next_batch()
+            batch, future = self.pull_next_batch()  # type: pump.Batch, pump.SinkBatchFuture
             if not batch:
                 return self.future_done(future, 0)
 
@@ -302,19 +307,15 @@ class SFDSink(pump.Sink):
                         continue
 
                     # TODO: add default collection to all keys in CC this should change to have the correct collection
-                    if isinstance(key, str):
-                        key = key.encode()
                     key = encodeCollectionId(0) + key
-                    d = couchstore.DocumentInfo(key)
+                    d = couchstore.DocumentInfo(key.decode())
                     flex_meta = 1
                     d.revMeta = struct.pack(SFD_REV_META, cas, exp, flg, flex_meta, dtype)
-                    if meta:
-                        meta = hex(meta)
+                    if len(meta) != 0:
                         if len(meta) > 8:
                             meta = meta[0:8]
                         if len(meta) < 8:
-                            meta = ('\x00\x00\x00\x00\x00\x00\x00\x00' + meta)[-8:]
-                        meta = meta.encode()
+                            meta = (b'\x00\x00\x00\x00\x00\x00\x00\x00' + meta)[-8:]
                         d.revSequence, = struct.unpack(SFD_REV_SEQ, meta)
                     else:
                         d.revSequence = 1
@@ -389,11 +390,11 @@ class SFDSink(pump.Sink):
         return 0
 
     @staticmethod
-    def can_handle(opts, spec):
+    def can_handle(opts, spec: str) -> bool:
         return spec.startswith(SFD_SCHEME)
 
     @staticmethod
-    def check_base(opts, spec):
+    def check_base(opts, spec: str) -> couchbaseConstants.PUMP_ERROR:
         if getattr(opts, "destination_operation", None) != None:
             return ("error: --destination-operation" +
                     " is not supported by this destination: %s") % (spec)
@@ -403,12 +404,12 @@ class SFDSink(pump.Sink):
         return pump.EndPoint.check_base(opts, spec)
 
     @staticmethod
-    def check(opts, spec, source_map):
+    def check(opts, spec: str, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR, None]:
         # TODO: (2) SFDSink - check disk space.
 
         rv, dir = data_dir(spec)
         if rv != 0:
-            return rv
+            return rv, None
         if not os.path.isdir(dir):
             return "error: not a directory: " + dir, None
         if not os.access(dir, os.W_OK):
@@ -417,7 +418,7 @@ class SFDSink(pump.Sink):
 
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_design):
+                       source_bucket, source_map, source_design) -> couchbaseConstants.PUMP_ERROR:
         if not source_design:
             return 0
 
@@ -449,26 +450,27 @@ class SFDSink(pump.Sink):
             for row in sd['rows']:
                 logging.debug("design_doc row: " + str(row))
 
-                d = couchstore.DocumentInfo(str(row['id']))
+                doc_info = couchstore.DocumentInfo(str(row['id']))
                 if '_rev' in row['doc']:
-                    d.revMeta = str(row['doc']['_rev'])
+                    doc_info.revMeta = str(row['doc']['_rev'])
                     del row['doc']['_rev']
-                d.contentType = couchstore.DocumentInfo.IS_JSON
+                doc_info.contentType = couchstore.DocumentInfo.IS_JSON
 
-                bulk_keys.append(d)
+                bulk_keys.append(doc_info)
                 bulk_vals.append(json.dumps(row['doc']))
 
             if bulk_keys and bulk_vals:
-                store.saveMultiple(bulk_keys, bulk_vals) # TODO: Compress ddocs?
+                store.saveMultiple(bulk_keys, bulk_vals)  # type: ignore # TODO: Compress ddocs?
 
-        store.commit()
-        store.close()
+        store.commit()  # type: ignore
+        store.close()  # type: ignore
         return 0
 
-    def consume_batch_async(self, batch):
+    def consume_batch_async(self, batch: Optional[pump.Batch]) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                        Optional[pump.SinkBatchFuture]]:
         return self.push_next_batch(batch, pump.SinkBatchFuture(self, batch))
 
-    def open_store(self, vbucket_id):
+    def open_store(self, vbucket_id: int):
         # data_dir   => /opt/couchbase/var/lib/couchbase/data/
         # bucket_dir =>   default/
         # store_path =>     VBUCKET_ID.couch.COMPACTION_NUM
@@ -482,10 +484,10 @@ class SFDSink(pump.Sink):
         return open_latest_store(bucket_dir, "%s.couch.*" % (vbucket_id), SFD_RE,
                                  str(vbucket_id) + ".couch.1", mode='c')
 
-    def find_bucket_dir(self):
+    def find_bucket_dir(self) -> Tuple[couchbaseConstants.PUMP_ERROR, str]:
         rv, d = data_dir(self.spec)
         if rv != 0:
-            return rv, None
+            return rv, ''
 
         bucket_dir = d + '/' + self.source_bucket['name']
         if not os.path.isdir(bucket_dir):
@@ -493,46 +495,50 @@ class SFDSink(pump.Sink):
                 os.mkdir(bucket_dir)
             except OSError as e:
                 return ("error: could not create bucket_dir: %s; exception: %s"
-                        % (bucket_dir, e)), None
+                        % (bucket_dir, e)), ''
 
         return 0, bucket_dir
 
-def open_latest_store(bucket_dir, glob_pattern, filter_re, default_name, mode='c'):
+
+def open_latest_store(bucket_dir: str, glob_pattern: str, filter_re: str, default_name: str, mode: str = 'c') \
+        -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[couchstore.CouchStore], str]:
     store_paths = latest_couch_files(bucket_dir,
                                      glob_pattern=glob_pattern,
                                      filter_re=filter_re)
     if not store_paths:
         if mode == 'r':
-            return 0, None, None
+            return 0, None, ''
         store_paths = [bucket_dir + '/' + default_name]
     if len(store_paths) != 1:
         return ("error: no single, latest couchstore file: %s" +
-                "; found: %s") % (glob_pattern, store_paths), None, None
+                "; found: %s") % (glob_pattern, store_paths), None, ''
     try:
         return 0, couchstore.CouchStore(str(store_paths[0]), mode), store_paths[0]
     except Exception as e:
         return ("error: could not open couchstore file: %s" +
-                "; exception: %s") % (store_paths[0], e), None, None
+                "; exception: %s") % (store_paths[0], e), None, ''
 
-def latest_couch_files(bucket_dir, glob_pattern='*.couch.*', filter_re=SFD_RE):
+
+def latest_couch_files(bucket_dir: str, glob_pattern: str = '*.couch.*', filter_re: str = SFD_RE) -> List[str]:
     """Given directory of *.couch.VER files, returns files with largest VER suffixes."""
     files = glob.glob(bucket_dir + '/' + glob_pattern)
     files = [f for f in files if re.match(filter_re, os.path.basename(f))]
     matches = [(re.match(filter_re, os.path.basename(f)), f) for f in files]
-    latest = {}
+    latest: Dict[str, Tuple[int, str]] = {}
     for match, file in matches:
-        top, _ = latest.get(match.group(1), (-1, None))
-        cur = int(match.group(2))
+        top, _ = latest.get(match.group(1), (-1, None))  # type: ignore
+        cur = int(match.group(2))  # type: ignore
         if cur > top:
-            latest[match.group(1)] = (cur, file)
+            latest[match.group(1)] = (cur, file)  # type: ignore
     return sorted([file for top, file in latest.values()])
 
-def data_dir(spec):
+
+def data_dir(spec: str) -> Tuple[couchbaseConstants.PUMP_ERROR, str]:
     if not spec.startswith(SFD_SCHEME):
-        return "error: wrong scheme in spec: " + spec, None
+        return "error: wrong scheme in spec: " + spec, ''
     dir = spec[len(SFD_SCHEME):]
     if dir:
         return 0, os.path.normpath(dir)
     else:
-        return "error: missing dir in spec: " + spec, None
+        return "error: missing dir in spec: " + spec, ''
 

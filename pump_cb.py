@@ -5,13 +5,17 @@ import json
 import time
 import urllib.request, urllib.parse, urllib.error
 
+from typing import Optional, Tuple, List, Dict, Union, Any
+
 import couchbaseConstants
+import cb_bin_client
 import pump
 import pump_mc
 
 from cluster_manager import ClusterManager, ServiceNotAvailableException
 
-def _to_string(str_or_bytes):
+
+def _to_string(str_or_bytes: Union[str, bytes]) -> str:
     if isinstance(str_or_bytes, bytes):
         return str_or_bytes.decode()
     return str_or_bytes
@@ -30,7 +34,7 @@ class CBSink(pump_mc.MCSink):
 
         self.rehash = opts.extra.get("rehash", 0)
 
-    def add_start_event(self, conn):
+    def add_start_event(self, conn: Optional[cb_bin_client.MemcachedClient]) -> couchbaseConstants.PUMP_ERROR:
         sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
@@ -48,7 +52,7 @@ class CBSink(pump_mc.MCSink):
                 logging.warn("auditing error: %s" % e)
         return 0
 
-    def add_stop_event(self, conn):
+    def add_stop_event(self, conn: Optional[cb_bin_client.MemcachedClient]) -> couchbaseConstants.PUMP_ERROR:
         sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
@@ -65,7 +69,8 @@ class CBSink(pump_mc.MCSink):
                 logging.warn("auditing error: %s" % e)
         return 0
 
-    def scatter_gather(self, mconns, batch):
+    def scatter_gather(self, mconns: Dict[str, cb_bin_client.MemcachedClient], batch: pump.Batch) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch], Optional[bool]]:
         sink_map_buckets = self.sink_map['buckets']
         if len(sink_map_buckets) != 1:
             return "error: CBSink.run() expected 1 bucket in sink_map", None, None
@@ -78,8 +83,9 @@ class CBSink(pump_mc.MCSink):
             rv, conn = self.find_conn(mconns, vbucket_id, msgs)
             if rv != 0:
                 return rv, None, None
-            rv = self.send_msgs(conn, msgs, self.operation(),
-                                vbucket_id=vbucket_id)
+            if conn is not None:
+                rv = self.send_msgs(conn, msgs, self.operation(),
+                                    vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None, None
 
@@ -94,7 +100,8 @@ class CBSink(pump_mc.MCSink):
             rv, conn = self.find_conn(mconns, vbucket_id, msgs)
             if rv != 0:
                 return rv, None, None
-            rv, retry, refresh = self.recv_msgs(conn, msgs, vbucket_id=vbucket_id)
+            if conn is not None:
+                rv, retry, refresh = self.recv_msgs(conn, msgs, vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None, None
             if retry:
@@ -105,16 +112,16 @@ class CBSink(pump_mc.MCSink):
         if need_refresh:
             self.refresh_sink_map()
 
-        return 0, retry_batch, retry_batch and not need_refresh
+        return 0, retry_batch, retry_batch is not None and not need_refresh
 
     @staticmethod
-    def map_recovery_buckets(sink_map, bucket_name, vbucket_list):
+    def map_recovery_buckets(sink_map: Dict[str, Any], bucket_name: str, vbucket_list: str):
         """When we do recovery of vbuckets the vbucket map is not up to date, but
         ns_server does tell us where the destination vbuckets are. This function
         looks at the recovery plan and modifies the vbucket map in order to ensure
         that we send the recovery data to the right server."""
-        vbucket_list = json.loads(vbucket_list)
-        if type(vbucket_list) is not dict:
+        vbucket_list_dict: Dict[Any, Any] = json.loads(vbucket_list)
+        if type(vbucket_list_dict) is not dict:
             return "Expected recovery map to be a dictionary"
 
         server_vb_map = None
@@ -130,34 +137,36 @@ class CBSink(pump_mc.MCSink):
                     continue
                 otpNode = _to_string(node["otpNode"])
                 mcdHost = otpNode.split("@")[1] + ":" + str(node["ports"]["direct"])
-                for remap_node, remap_vbs in vbucket_list.items():
-                    if _to_string(remap_node) == otpNode and mcdHost in server_vb_map["serverList"]:
-                        idx = server_vb_map["serverList"].index(mcdHost)
-                        for vb in remap_vbs:
-                            server_vb_map["vBucketMap"][vb][0] = idx
+                for remap_node, remap_vbs in vbucket_list_dict.items():
+                    if _to_string(remap_node) == otpNode and mcdHost in server_vb_map["serverList"]:  # type: ignore
+                        idx = server_vb_map["serverList"].index(mcdHost)  # type: ignore
+                        for vb in remap_vbs:  # type: ignore
+                            server_vb_map["vBucketMap"][vb][0] = idx  # type: ignore
 
         return None
 
     @staticmethod
-    def can_handle(opts, spec):
+    def can_handle(opts, spec: str) -> bool:
         return (spec.startswith("http://") or
                 spec.startswith("couchbase://") or
                 spec.startswith("https://"))
 
     @staticmethod
-    def check_source(opts, source_class, source_spec, sink_class, sink_spec):
-        if (source_spec.startswith("http://") or
-            source_spec.startswith("couchbase://")):
-            return None
+    def check_source(opts, source_class, source_spec: str, sink_class, sink_spec: str) -> couchbaseConstants.PUMP_ERROR:
+        if source_spec.startswith("http://") or source_spec.startswith("couchbase://"):
+            return 0
         return pump.Sink.check_source(opts, source_class, source_spec,
                                       sink_class, sink_spec)
 
     @staticmethod
-    def check(opts, spec, source_map):
-
+    def check(opts, spec: str, source_map: Dict[str, Any]) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                    Optional[Dict[str, Any]]]:
         rv, sink_map = pump.rest_couchbase(opts, spec,
                                            opts.username_dest is not None and opts.password_dest is not None)
         if rv != 0:
+            return rv, None
+
+        if sink_map is None:
             return rv, None
 
         rv, source_bucket_name = pump.find_source_bucket_name(opts, source_map)
@@ -180,12 +189,12 @@ class CBSink(pump_mc.MCSink):
         sink_map['buckets'] = sink_buckets
         if opts.extra.get("allow_recovery_vb_remap", 0) == 1:
             error = CBSink.map_recovery_buckets(sink_map, sink_bucket_name, opts.vbucket_list)
-            if error:
+            if error is not None:
                 return error, None
 
         return 0, sink_map
 
-    def refresh_sink_map(self):
+    def refresh_sink_map(self) -> couchbaseConstants.PUMP_ERROR:
         """Grab a new vbucket-server-map."""
         logging.warn("refreshing sink map: %s" % (self.spec))
         rv, new_sink_map = CBSink.check(self.opts, self.spec, self.source_map)
@@ -194,14 +203,15 @@ class CBSink(pump_mc.MCSink):
         return rv
 
     @staticmethod
-    def consume_fts_index(opts, sink_spec, sink_map, source_bucket, source_map, source_design):
+    def consume_fts_index(opts, sink_spec: str, sink_map, source_bucket,
+                          source_map, source_design: Union[str, bytes]) -> couchbaseConstants.PUMP_ERROR:
         if not source_design:
             return 0
 
         try:
             index_defs = json.loads(source_design)
             if not index_defs:
-               return 0
+                return 0
         except ValueError as e:
             return "error: could not parse fts index definitions; exception: %s" % (e)
 
@@ -219,7 +229,8 @@ class CBSink(pump_mc.MCSink):
             return "No fts service in cluster, skipping restore of aliases"
 
     @staticmethod
-    def consume_fts_alias(opts, sink_spec, sink_map, source_bucket, source_map, source_design):
+    def consume_fts_alias(opts, sink_spec: str, sink_map, source_bucket,
+                          source_map, source_design: Union[str, bytes]) -> couchbaseConstants.PUMP_ERROR:
         if not source_design:
             return 0
         try:
@@ -242,9 +253,9 @@ class CBSink(pump_mc.MCSink):
         except ServiceNotAvailableException as e:
             return "No fts service in cluster, skipping restore of indexes"
 
-
     @staticmethod
-    def consume_index(opts, sink_spec, sink_map, source_bucket, source_map, source_design):
+    def consume_index(opts, sink_spec: str, sink_map, source_bucket,
+                      source_map, source_design: Union[str, bytes]) -> couchbaseConstants.PUMP_ERROR:
         if not source_design:
             return 0
 
@@ -270,8 +281,8 @@ class CBSink(pump_mc.MCSink):
             return "No index service in cluster, skipping restore of indexes"
 
     @staticmethod
-    def consume_design(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_design):
+    def consume_design(opts, sink_spec: str, sink_map, source_bucket,
+                       source_map, source_design: Union[str, bytes]) -> couchbaseConstants.PUMP_ERROR:
         if not source_design:
             return 0
         try:
@@ -313,9 +324,10 @@ class CBSink(pump_mc.MCSink):
 
             id = sd.get('_id', None)
             if id:
+                str_source = _to_string(source_design)
                 err, conn, response = \
                     pump.rest_request(host, int(port), user, pswd, opts.ssl,
-                                      path + "/" + id, method='PUT', body=source_design,
+                                      path + "/" + id, method='PUT', body=str_source,
                                       reason="consume_design", verify=opts.no_ssl_verify, ca_cert=opts.cacert)
                 if conn:
                     conn.close()
@@ -391,7 +403,8 @@ class CBSink(pump_mc.MCSink):
 
         return 0
 
-    def find_conn(self, mconns, vbucket_id, msgs):
+    def find_conn(self, mconns: Dict[str, cb_bin_client.MemcachedClient], vbucket_id: int, msgs) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[cb_bin_client.MemcachedClient]]:
         bucket = self.sink_map['buckets'][0]
 
         vBucketMap = bucket['vBucketServerMap']['vBucketMap']
@@ -406,7 +419,7 @@ class CBSink(pump_mc.MCSink):
         host_port = serverList[vBucketMap[vbucket_id][0]]
 
         conn = mconns.get(host_port, None)
-        if not conn:
+        if conn is None:
             host, port = pump.hostport(host_port, 11210)
             if self.opts.ssl:
                 port = couchbaseConstants.SSL_PORT
@@ -420,8 +433,9 @@ class CBSink(pump_mc.MCSink):
                                          self.opts.no_ssl_verify, self.opts.cacert,
                                          collections=self.opts.collection!=None)
             if rv != 0:
-                logging.error("error: CBSink.connect() for send: " + rv)
+                logging.error("error: CBSink.connect() for send: " + str(rv))
                 return rv, None
-            mconns[host_port] = conn
-            self.add_start_event(conn)
+            if conn is not None:
+                mconns[host_port] = conn
+                self.add_start_event(conn)
         return 0, conn

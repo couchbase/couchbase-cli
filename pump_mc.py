@@ -7,7 +7,7 @@ import socket
 import struct
 import time
 import sys
-
+from typing import Tuple, Any, Optional, Dict, List, Union
 import cb_bin_client
 import couchbaseConstants
 import pump
@@ -51,6 +51,13 @@ def to_bytes(bytes_or_str):
     return value  # Instance of bytes
 
 
+class txnMarker:
+    def __init__(self, start: int, length: int, body: bytes):
+        self.start = start
+        self.length = length
+        self.body = body
+
+
 class MCSink(pump.Sink):
     """Dumb client sink using binary memcached protocol.
        Used when moxi or memcached is destination."""
@@ -75,7 +82,7 @@ class MCSink(pump.Sink):
         self.push_next_batch(None, None)
 
     @staticmethod
-    def check_base(opts, spec):
+    def check_base(opts, spec: str) -> couchbaseConstants.PUMP_ERROR:
         if getattr(opts, "destination_vbucket_state", "active") != "active":
             return ("error: only --destination-vbucket-state=active" +
                     " is supported by this destination: %s") % (spec)
@@ -93,10 +100,10 @@ class MCSink(pump.Sink):
     def run(self):
         """Worker thread to asynchronously store batches into sink."""
 
-        mconns = {} # State kept across scatter_gather() calls.
-        backoff_cap = self.opts.extra.get("backoff_cap", 10)
+        mconns: Dict[str, cb_bin_client.MemcachedClient] = {}  # State kept across scatter_gather() calls.
+        backoff_cap: int = self.opts.extra.get("backoff_cap", 10)
         while not self.ctl['stop']:
-            batch, future = self.pull_next_batch()
+            batch, future = self.pull_next_batch()  # type: Optional[pump.Batch], pump.SinkBatchFuture
             if not batch:
                 self.future_done(future, 0)
                 self.close_mconns(mconns)
@@ -124,35 +131,36 @@ class MCSink(pump.Sink):
 
         self.close_mconns(mconns)
 
-    def get_conflict_resolution_type(self):
+    def get_conflict_resolution_type(self) -> str:
         bucket = self.sink_map["buckets"][0]
         confResType = "seqno"
         if "conflictResolutionType" in bucket:
             confResType = bucket["conflictResolutionType"]
         return confResType
 
-    def close_mconns(self, mconns):
+    def close_mconns(self, mconns: Dict[str, cb_bin_client.MemcachedClient]):
         for k, conn in mconns.items():
             self.add_stop_event(conn)
             conn.close()
 
-    def scatter_gather(self, mconns, batch):
-        conn = mconns.get("conn")
+    def scatter_gather(self, mconns: Dict[str, cb_bin_client.MemcachedClient], batch: pump.Batch) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch], Optional[bool]]:
+        conn: Optional[cb_bin_client.MemcachedClient] = mconns.get("conn")
         if not conn:
             rv, conn = self.connect()
             if rv != 0:
-                return rv, None
-            mconns["conn"] = conn
+                return rv, None, None
+            mconns["conn"] = conn  # type: ignore
 
         # TODO: (1) MCSink - run() handle --data parameter.
 
         # Scatter or send phase.
-        rv = self.send_msgs(conn, batch.msgs, self.operation())
+        rv = self.send_msgs(conn, batch.msgs, self.operation())  # type: ignore
         if rv != 0:
             return rv, None, None
 
         # Gather or recv phase.
-        rv, retry, refresh = self.recv_msgs(conn, batch.msgs)
+        rv, retry, refresh = self.recv_msgs(conn, batch.msgs)  # type: ignore
         if refresh:
             self.refresh_sink_map()
         if retry:
@@ -160,8 +168,9 @@ class MCSink(pump.Sink):
 
         return rv, None, None
 
-    def send_msgs(self, conn, msgs, operation, vbucket_id=None):
-        m = []
+    def send_msgs(self, conn: cb_bin_client.MemcachedClient, msgs: List[couchbaseConstants.BATCH_MSG], operation: str,
+                  vbucket_id: Optional[int] = None) -> couchbaseConstants.PUMP_ERROR:
+        m: List[bytes] = []
 
         msg_format_length = 0
         for i, msg in enumerate(msgs):
@@ -178,14 +187,14 @@ class MCSink(pump.Sink):
                 continue
 
             if cmd == couchbaseConstants.CMD_SUBDOC_MULTIPATH_MUTATION:
-                err, req = self.format_multipath_mutation(key, val, vbucket_id, cas, i)
-                if err != 0:
+                err, req = self.format_multipath_mutation(key, val, vbucket_id_msg, cas, i)
+                if err:
                     return err
                 self.append_req(m, req)
                 continue
             if cmd == couchbaseConstants.CMD_SUBDOC_MULTIPATH_LOOKUP:
-                err, req = self.format_multipath_lookup(key, val, vbucket_id, cas, i)
-                if err != 0:
+                err, req = self.format_multipath_lookup(key, val, vbucket_id_msg, cas, i)
+                if err:
                     return err
                 self.append_req(m, req)
                 continue
@@ -200,15 +209,14 @@ class MCSink(pump.Sink):
                     except Exception as err:
                         pass
             if cmd == couchbaseConstants.CMD_GET:
-                val, flg, exp, cas = '', 0, 0, 0
+                val, flg, exp, cas = b'', 0, 0, 0
             if cmd == couchbaseConstants.CMD_NOOP:
-                key, val, flg, exp, cas = '', '', 0, 0, 0
+                key, val, flg, exp, cas = b'', b'', 0, 0, 0
             if cmd == couchbaseConstants.CMD_DELETE:
-                val = ''
+                val = b''
             # A tombstone can contain Xattrs
             if cmd == couchbaseConstants.CMD_DELETE_WITH_META and not dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
-                val = ''
-
+                val = b''
             # on mutations filter txn related data
             if cmd == couchbaseConstants.CMD_SET_WITH_META or cmd == couchbaseConstants.CMD_SET:
                 if not getattr(self.opts, 'force_txn', False):
@@ -216,10 +224,10 @@ class MCSink(pump.Sink):
                     if skip:
                         continue
 
-            rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,
+            rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,  # type: ignore
                                        ctypes.c_uint32(flg).value,
                                        exp, cas, meta, i, dtype, nmeta,
-                                       conf_res)
+                                       conf_res)  # type: ignore
             if rv != 0:
                 return rv
 
@@ -227,14 +235,14 @@ class MCSink(pump.Sink):
 
         if m:
             try:
-                conn.s.sendall(self.join_str_and_bytes(m))
+                conn.s.sendall(self.join_str_and_bytes(m))  # type: ignore
             except socket.error as e:
                 return "error: conn.sendall() exception: %s" % (e)
 
         return 0
 
     @staticmethod
-    def filter_out_txn(key, val, cas, exp, data_type):
+    def filter_out_txn(key: bytes, val: bytes, cas: int, exp: int, data_type: int) -> Tuple[bool, bytes, int, int, int]:
         """This function return signature is [skip:bool, val:bytes, cas:num, exp:num, data_type:num]
            skip is true if the key matches an ATR or a client record, otherwise it will be false.
            If the value has XATTRS they will be checked fot txn object that if it exists will be removed"""
@@ -243,10 +251,7 @@ class MCSink(pump.Sink):
         if not (data_type & couchbaseConstants.DATATYPE_HAS_XATTR > 0):
             return False, val, cas, exp, data_type
 
-        str_key = key
-        if isinstance(str_key, bytes):
-            str_key = str_key.decode()
-
+        str_key = key.decode()
         if str_key == 'txn-client-record':
             logging.info('(TXN) Skipped the transfer of the txn-client-record')
             return True, val, cas, exp, data_type
@@ -265,7 +270,7 @@ class MCSink(pump.Sink):
 
         # look for a txn on the xattrs
         xattrs = val[4:xattr_len_int+7]
-        txn_marker = {}
+        txn_marker: Optional[txnMarker] = None
         ix = 0
         while ix < len(xattrs):
             pair_len = int.from_bytes(xattrs[ix: ix + 4], byteorder='big', signed=False)
@@ -277,22 +282,18 @@ class MCSink(pump.Sink):
 
             # check if the key is txn if it matches create a marker and break
             if xattr_key == 'txn':
-                txn_marker = {
-                    'start': ix,
-                    'length': pair_len,
-                    'body': xattrs[ix+len(xattr_key)+1: pair_len+ix-len(xattr_key)+2],
-                }
+                txn_marker = txnMarker(ix, pair_len, xattrs[ix+len(xattr_key)+1: pair_len+ix-len(xattr_key)+2])
                 break
 
             # otherwise skip body and move on to next xattr
             ix += pair_len
 
-        if txn_marker == {}:
+        if txn_marker is None:
             return False, val, cas, exp, data_type
 
         # check if txn is valid JSON if not let the server handle it
         try:
-            txn_xattr = json.loads(txn_marker['body'].decode())
+            txn_xattr = json.loads(txn_marker.body.decode())
         except Exception as e:
             logging.debug('(TXN) txn is invalid json')
             return False, val, cas, exp, data_type
@@ -305,9 +306,9 @@ class MCSink(pump.Sink):
 
         # Remove txn xattrs from value
         logging.info('(TXN) Removing transaction extended attributes "<ud>{}</ud>" from key <ud>{}</ud>'.
-                     format(txn_marker['body'], str_key))
+                     format(txn_marker.body, str_key))
 
-        new_xattr_len = xattr_len_int - txn_marker['length'] - 4
+        new_xattr_len = xattr_len_int - txn_marker.length - 4
         # check if the are any xattrs left
         if new_xattr_len <= 0:
             # copy everything after the xattrs
@@ -322,34 +323,39 @@ class MCSink(pump.Sink):
 
         # create new value package starting with new xattr len
         new_val = new_xattr_len.to_bytes(4, 'big', signed=False)
-        if txn_marker['start'] != 4:
-            new_val += val[4: txn_marker['start']]
+        if txn_marker.start != 4:
+            new_val += val[4: txn_marker.start]
 
-        new_val += val[4+txn_marker['start']+txn_marker['length']:]
+        new_val += val[4+txn_marker.start + txn_marker.length:]
         return False, new_val, cas, exp, data_type
 
     @staticmethod
-    def format_multipath_mutation(key, value, vbucketId, cas=0, opaque=0):
-        if 'obj' not in value:
-            return 'value has invalid format for multipath mutation', None
-        if 'xattr_f' not in value:
-            return 'value has invalid format for multipath mutation', None
-        if 'xattr_v' not in value:
-            return 'value has invalid format for multipath mutation', None
+    def format_multipath_mutation(key: bytes, value: bytes, vbucketId: int, cas: int = 0, opaque: int = 0) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, couchbaseConstants.REQUEST]:
+        empty_tuple = (b'', None, None, None, None)
+        try:
+            json_value: Dict[str, Any] = json.loads(value)
+        except Exception:
+            return 'value has invalid format for multipath mutation', empty_tuple
 
-        key = to_bytes(key)
-        obj = to_bytes(value['obj'])
-        xattr_f = to_bytes(value['xattr_f'])
-        xattr_v = to_bytes(value['xattr_v'])
+        if 'obj' not in json_value:
+            return 'value has invalid format for multipath mutation', empty_tuple
+        if 'xattr_f' not in json_value:
+            return 'value has invalid format for multipath mutation', empty_tuple
+        if 'xattr_v' not in json_value:
+            return 'value has invalid format for multipath mutation', empty_tuple
+
+        obj: bytes = to_bytes(json_value['obj'])
+        xattr_f: bytes = to_bytes(json_value['xattr_f'])
+        xattr_v: bytes = to_bytes(json_value['xattr_v'])
 
         subop_format = ">BBHI"
         sbcmd_len = 8 * 2 + len(obj) + len(xattr_f) + len(xattr_v)
-        total_body_len = sbcmd_len + 1 +len(key)
+        total_body_len = sbcmd_len + 1 + len(key)
         subcmd_msg0 = struct.pack(subop_format, couchbaseConstants.CMD_SUBDOC_DICT_UPSERT,
                                   couchbaseConstants.SUBDOC_FLAG_XATTR_PATH, len(xattr_f), len(xattr_v))
         subcmd_msg0 += xattr_f + xattr_v
-        subcmd_msg1 = struct.pack(subop_format, couchbaseConstants.CMD_SET, 0,
-                                 0, len(obj))
+        subcmd_msg1 = struct.pack(subop_format, couchbaseConstants.CMD_SET, 0, 0, len(obj))
         subcmd_msg1 += obj
 
         msg_head = struct.pack(couchbaseConstants.REQ_PKT_FMT, couchbaseConstants.REQ_MAGIC_BYTE,
@@ -360,12 +366,18 @@ class MCSink(pump.Sink):
         return 0, (msg_head+extras+key+subcmd_msg0+subcmd_msg1, None, None, None, None)
 
     @staticmethod
-    def format_multipath_lookup(key, value, vbucketId, cas=0, opaque=0):
-        if 'xattr_f' not in value:
-            return 'value has invalid format for multipath lookup', None
+    def format_multipath_lookup(key: bytes, value: bytes, vbucketId: int, cas: int = 0, opaque: int = 0) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, couchbaseConstants.REQUEST]:
+        empty_tuple = (b'', None, None, None, None)
+        try:
+            json_value: Dict[str, Any] = json.loads(value)
+        except Exception:
+            return 'value has invalid format for multipath mutation', empty_tuple
 
-        key = to_bytes(key)
-        field = to_bytes(value['xattr_f'])
+        if 'xattr_f' not in json_value:
+            return 'value has invalid format for multipath lookup', empty_tuple
+
+        field: bytes = to_bytes(json_value['xattr_f'])
 
         subcmd_fmt = '>BBH'
         subcmd_msg0 = struct.pack(subcmd_fmt, couchbaseConstants.CMD_SUBDOC_GET,
@@ -373,7 +385,7 @@ class MCSink(pump.Sink):
         subcmd_msg0 += field
         subcmd_msg1 = struct.pack(subcmd_fmt, couchbaseConstants.CMD_GET, 0, 0)
 
-        total_body_len = len(subcmd_msg0) +len(subcmd_msg1) + len(key)
+        total_body_len = len(subcmd_msg0) + len(subcmd_msg1) + len(key)
         msg_head = struct.pack(couchbaseConstants.REQ_PKT_FMT, couchbaseConstants.REQ_MAGIC_BYTE,
                                couchbaseConstants.CMD_SUBDOC_MULTIPATH_LOOKUP, len(key),
                                0, 0, vbucketId, total_body_len, opaque, cas)
@@ -381,13 +393,16 @@ class MCSink(pump.Sink):
         return 0, (msg_head+key+subcmd_msg0+subcmd_msg1, None, None, None, None)
 
     @staticmethod
-    def join_str_and_bytes(lst):
+    def join_str_and_bytes(lst: List[bytes]) -> bytes:
         out = b''
         for x in lst:
-            out += to_bytes(x)
+            out += x
         return out
 
-    def recv_msgs(self, conn, msgs, vbucket_id=None, verify_opaque=True):
+    def recv_msgs(self, conn: cb_bin_client.MemcachedClient, msgs: List[couchbaseConstants.BATCH_MSG],
+                  vbucket_id: Optional[int] = None, verify_opaque: bool = True) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                                         Optional[bool],
+                                                                                         Optional[bool]]:
         refresh = False
         retry = False
 
@@ -401,7 +416,7 @@ class MCSink(pump.Sink):
 
             try:
                 r_cmd, r_status, r_ext, r_key, r_val, r_cas, r_opaque = \
-                    self.read_conn(conn)
+                    self.read_conn(conn)  # type: ignore
                 if verify_opaque and i != r_opaque:
                     return "error: opaque mismatch: %s %s" % (i, r_opaque), None, None
 
@@ -423,19 +438,19 @@ class MCSink(pump.Sink):
                     retry = True # Retry the whole batch again next time.
                     continue     # But, finish recv'ing current batch.
                 elif r_status == couchbaseConstants.ERR_NOT_MY_VBUCKET:
-                    msg = ("received NOT_MY_VBUCKET;"
+                    err_msg = ("received NOT_MY_VBUCKET;"
                            " perhaps the cluster is/was rebalancing;"
                            " vbucket_id: %s, key: %s, spec: %s, host:port: %s:%s"
                            % (vbucket_id_msg, tag_user_data(key), self.spec,
                               conn.host, conn.port))
                     if self.opts.extra.get("nmv_retry", 1):
-                        logging.warn("warning: " + msg)
+                        logging.warn("warning: " + err_msg)
                         refresh = True
                         retry = True
                         self.cur["tot_sink_not_my_vbucket"] = \
                             self.cur.get("tot_sink_not_my_vbucket", 0) + 1
                     else:
-                        return "error: " + msg, None, None
+                        return "error: " + err_msg, None, None
                 elif r_status == couchbaseConstants.ERR_UNKNOWN_COMMAND:
                     if self.op_map == OP_MAP:
                         if not retry:
@@ -456,8 +471,8 @@ class MCSink(pump.Sink):
                 return "error: MCSink exception: " + str(e), None, None
         return 0, retry, refresh
 
-    def translate_cmd(self, cmd, op, meta):
-        if len(str(meta)) <= 0:
+    def translate_cmd(self, cmd: int, op: str, meta: bytes) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[int]]:
+        if len(meta) == 0:
             # The source gave no meta, so use regular commands.
             self.op_map = OP_MAP
 
@@ -477,59 +492,50 @@ class MCSink(pump.Sink):
 
         return "error: MCSink - unknown cmd: %s, op: %s" % (cmd, op), None
 
-    def append_req(self, m, req):
+    def append_req(self, m: List[bytes], req: couchbaseConstants.REQUEST):
         hdr, ext, key, val, extra_meta = req
         m.append(hdr)
         if ext:
             m.append(ext)
         if key:
-            if isinstance(key, bytes):
-                # MB-33229: append key as-is, don't decode as there can be raw
-                # bytes (due to collection leb128 prefix). A memcached key can
-                # legally contain any byte, not just utf8
-                m.append(key)
-            else:
-                m.append(str(key))
+            m.append(key)
         if val:
-            if isinstance(val, bytes):
-                m.append(val.decode())
-            else:
-                m.append(str(val))
+            m.append(val)
         if extra_meta:
             m.append(extra_meta)
 
     @staticmethod
-    def can_handle(opts, spec):
+    def can_handle(opts, spec: str) -> bool:
         return (spec.startswith("memcached://") or
                 spec.startswith("memcached-binary://"))
 
     @staticmethod
-    def check(opts, spec, source_map):
-        host, port, user, pswd, path = \
-            pump.parse_spec(opts, spec, int(getattr(opts, "port", 11211)))
+    def check(opts, spec: str, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[Dict[str, Any]]]:
+        host, port, user, pswd, path = pump.parse_spec(opts, spec, int(getattr(opts, "port", 11211)))
         if opts.ssl:
             ports = couchbaseConstants.SSL_PORT
         rv, conn = MCSink.connect_mc(host, port, user, pswd, None, opts.ssl, opts.no_ssl_verify, opts.cacert)
         if rv != 0:
             return rv, None
-        conn.close()
+        conn.close()  # type: ignore
         return 0, None
 
-    def refresh_sink_map(self):
+    def refresh_sink_map(self) -> couchbaseConstants.PUMP_ERROR:
         return 0
 
     @staticmethod
     def consume_design(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_design):
+                       source_bucket, source_map, source_design) -> couchbaseConstants.PUMP_ERROR:
         if source_design:
             logging.warn("warning: cannot restore bucket design"
                          " on a memached destination")
         return 0
 
-    def consume_batch_async(self, batch):
+    def consume_batch_async(self, batch: Optional[pump.Batch]) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                        Optional[pump.SinkBatchFuture]]:
         return self.push_next_batch(batch, pump.SinkBatchFuture(self, batch))
 
-    def connect(self):
+    def connect(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[cb_bin_client.MemcachedClient]]:
         host, port, user, pswd, path = \
             pump.parse_spec(self.opts, self.spec,
                             int(getattr(self.opts, "port", 11211)))
@@ -539,16 +545,19 @@ class MCSink(pump.Sink):
                                  self.opts.ssl, collections=self.opts.collection)
 
     @staticmethod
-    def connect_mc(host, port, username, password, bucket, use_ssl=False, verify=True, ca_cert=None, collections=False):
-        username = str(username).encode("ascii")
-        password = str(password).encode("ascii")
-        if bucket is not None:
-            bucket = str(bucket).encode("ascii")
+    def connect_mc(host: str, port: int, username: str, password: str, bucket: Optional[str], use_ssl: bool = False,
+                   verify: bool = True, ca_cert: str = None, collections: bool = False)-> \
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[cb_bin_client.MemcachedClient]]:
         return pump.get_mcd_conn(host, port, username, password, bucket, use_ssl=use_ssl, verify=verify,
                                  ca_cert=ca_cert, collections=collections)
 
-    def cmd_request(self, cmd, vbucket_id, key, val, flg, exp, cas, meta, opaque, dtype, nmeta, conf_res):
-        ext_meta = ''
+    def cmd_request(self, cmd: int, vbucket_id: int, key: bytes, val: bytes, flg: int, exp: int, cas: int,
+                    meta: Optional[bytes],
+                    opaque: int, dtype: int, nmeta: Any, conf_res: Optional[str]) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                                           Tuple[bytes, bytes, bytes,
+                                                                                                 bytes, bytes]]:
+        ext_meta = b''
+        empty_tuple = (b'', b'', b'', b'', b'')
         if (cmd == couchbaseConstants.CMD_SET_WITH_META or
             cmd == couchbaseConstants.CMD_ADD_WITH_META or
             cmd == couchbaseConstants.CMD_DELETE_WITH_META):
@@ -558,9 +567,9 @@ class MCSink(pump.Sink):
                 force |= 1
             if int(self.lww_restore) == 1:
                 force |= 2
-            if meta:
+            if meta is not None and len(meta) != 0:
                 try:
-                    ext = struct.pack(">IIQQI", flg, exp, int(str(meta)), cas, force)
+                    ext = struct.pack(">IIQQI", flg, exp, int.from_bytes(meta, byteorder='big'), cas, force)
                 except ValueError:
                     seq_no = str(meta)
                     if len(seq_no) > 8:
@@ -569,10 +578,10 @@ class MCSink(pump.Sink):
                         # The seq_no might be 32-bits from 2.0DP4, so pad with 0x00's.
                         seq_no = ('\x00\x00\x00\x00\x00\x00\x00\x00' + seq_no)[-8:]
 
-                    seq_no = seq_no.encode()
-                    check_seqno, = struct.unpack(">Q", seq_no)
+                    seq_no_bytes: bytes = seq_no.encode()
+                    check_seqno, = struct.unpack(">Q", seq_no_bytes)
                     if check_seqno:
-                        ext = (struct.pack(">II", flg, exp) + seq_no +
+                        ext = (struct.pack(">II", flg, exp) + seq_no_bytes +
                                struct.pack(">QI", cas, force))
                     else:
                         ext = struct.pack(">IIQQI", flg, exp, 1, cas, force)
@@ -593,7 +602,7 @@ class MCSink(pump.Sink):
               cmd == couchbaseConstants.CMD_NOOP):
             ext = b''
         else:
-            return "error: MCSink - unknown cmd for request: " + str(cmd), None
+            return "error: MCSink - unknown cmd for request: " + str(cmd), empty_tuple
 
         # Couchase currently allows only the xattr datatype to be set so we need
         # to strip out all of the other datatype flags
@@ -602,23 +611,22 @@ class MCSink(pump.Sink):
         hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque, dtype)
         return 0, (hdr, ext, key, val, ext_meta)
 
-    def cmd_header(self, cmd, vbucket_id, key, val, ext, cas, opaque,
-                   dtype=0,
-                   fmt=couchbaseConstants.REQ_PKT_FMT,
-                   magic=couchbaseConstants.REQ_MAGIC_BYTE):
+    def cmd_header(self, cmd: int, vbucket_id: int, key: bytes, val: bytes, ext: bytes, cas: int, opaque: int,
+                   dtype: int = 0,
+                   fmt: str = couchbaseConstants.REQ_PKT_FMT,
+                   magic: int = couchbaseConstants.REQ_MAGIC_BYTE) -> bytes:
 
         return struct.pack(fmt, magic, cmd,
                            len(key), len(ext), dtype, vbucket_id,
                            len(key) + len(ext) + len(val), opaque, cas)
 
-    def read_conn(self, conn):
-        ext = ''
-        key = ''
-        val = ''
+    def read_conn(self, conn: cb_bin_client.MemcachedClient) -> Tuple[int, int, bytes, bytes, bytes, int, int]:
+        ext = b''
+        key = b''
+        val = b''
 
-        buf, cmd, errcode, extlen, keylen, data, cas, opaque = \
-            self.recv_msg(conn.s, getattr(conn, 'buf', b''))
-        conn.buf = buf
+        buf, cmd, errcode, extlen, keylen, data, cas, opaque = self.recv_msg(conn.s, getattr(conn, 'buf', b''))
+        conn.buf = buf  # type: ignore
 
         if data:
             ext = data[0:extlen]
@@ -627,20 +635,20 @@ class MCSink(pump.Sink):
 
         return cmd, errcode, ext, key, val, cas, opaque
 
-    def recv_msg(self, sock, buf):
+    def recv_msg(self, sock: socket.socket, buf: bytes) -> Tuple[bytes, int, int, int, int, bytes, int, int]:
         pkt, buf = self.recv(sock, couchbaseConstants.MIN_RECV_PACKET, buf)
-        if not pkt:
+        if len(pkt) == 0:
             raise EOFError()
         magic, cmd, keylen, extlen, dtype, errcode, datalen, opaque, cas = \
-            struct.unpack(couchbaseConstants.RES_PKT_FMT, pkt)
+            struct.unpack(couchbaseConstants.RES_PKT_FMT, pkt)  # type: int, int, int, int, int, int, int, int, int
         if magic != couchbaseConstants.RES_MAGIC_BYTE:
             raise Exception("unexpected recv_msg magic: " + str(magic))
         data, buf = self.recv(sock, datalen, buf)
         return buf, cmd, errcode, extlen, keylen, data, cas, opaque
 
-    def recv(self, skt, nbytes, buf):
+    def recv(self, skt: socket.socket, nbytes: int, buf: bytes) -> Tuple[bytes, bytes]:
         while len(buf) < nbytes:
-            data = None
+            data: bytes = b''
             try:
                 data = skt.recv(max(nbytes - len(buf), 4096))
             except socket.timeout:
@@ -648,8 +656,8 @@ class MCSink(pump.Sink):
             except Exception as e:
                 logging.error("error: recv exception: " + str(e))
 
-            if not data:
-                return None, b''
+            if data == b'':
+                return b'', b''
             buf += data
 
         return buf[:nbytes], buf[nbytes:]

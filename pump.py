@@ -19,6 +19,7 @@ import platform
 import subprocess
 import socket
 import ssl
+from typing import List, Dict, Optional, Any, Tuple, Union, Sequence
 
 import couchbaseConstants
 import cb_bin_client
@@ -34,6 +35,62 @@ LOGGING_FORMAT = '%(asctime)s: %(threadName)s %(message)s'
 NA = 'N/A'
 
 
+class Batch(object):
+    """Holds a batch of data being transfered from source to sink."""
+
+    def __init__(self, source):
+        self.source = source
+        self.msgs: List[couchbaseConstants.BATCH_MSG] = []
+        self.bytes: int = 0
+        self.adjust_size: int = 0
+
+    def append(self, msg: couchbaseConstants.BATCH_MSG, num_bytes: int):
+        self.msgs.append(msg)
+        self.bytes = self.bytes + num_bytes
+
+    def size(self) -> int:
+        return len(self.msgs)
+
+    def msg(self, i: int) -> couchbaseConstants.BATCH_MSG:
+        return self.msgs[i]
+
+    def group_by_vbucket_id(self, vbuckets_num, rehash=0) -> Dict[int, List[couchbaseConstants.BATCH_MSG]]:
+        """Returns dict of vbucket_id->[msgs] grouped by msg's vbucket_id."""
+        g: Dict[int, List[couchbaseConstants.BATCH_MSG]] = defaultdict(list)
+        for msg in self.msgs:
+            cmd, vbucket_id, key = msg[:3]
+            if vbucket_id == 0x0000ffff or rehash == 1:
+                if self.source.opts.collection:
+                    # Collections embeds the ID into the key field, but does not
+                    # hash the ID as part of VB hashing
+                    key = cb_bin_client.skipCollectionID(key)
+
+                if isinstance(key, str):
+                    key = key.encode()
+                # Special case when the source did not supply a vbucket_id
+                # (such as stdin source), so we calculate it.
+                vbucket_id = ((zlib.crc32(key) >> 16) & 0x7FFF) % vbuckets_num
+                msg = (cmd, vbucket_id) + msg[2:]  # type: ignore
+            g[vbucket_id].append(msg)
+        return g
+
+
+class SinkBatchFuture(object):
+    """Future completion of a sink consuming a batch."""
+
+    def __init__(self, sink, batch):
+        self.sink = sink
+        self.batch = batch
+        self.done = threading.Event()
+        self.done_rv = None
+
+    def wait_until_consumed(self):
+        self.done.wait()
+        return self.done_rv
+
+
+# --------------------------------------------------
+
 class ProgressReporter(object):
     """Mixin to report progress"""
 
@@ -42,18 +99,18 @@ class ProgressReporter(object):
         self.prev_time = self.beg_time
         self.prev = defaultdict(int)
 
-    def report(self, prefix="", emit=None):
+    def report(self, prefix: str = "", emit=None):
         if not emit:
             emit = logging.info
 
         if getattr(self, "source", None):
-            emit(prefix + "source : %s" % (self.source))  # pylint: disable=no-member
+            emit(prefix + "source : %s" % (self.source))  # type: ignore # pylint: disable=no-member
         if getattr(self, "sink", None):
-            emit(prefix + "sink   : %s" % (self.sink))  # pylint: disable=no-member
+            emit(prefix + "sink   : %s" % (self.sink))  # type: ignore # pylint: disable=no-member
 
         cur_time = time.time()
         delta = cur_time - self.prev_time
-        c, p = self.cur, self.prev  # pylint: disable=no-member
+        c, p = self.cur, self.prev  # type: ignore # pylint: disable=no-member
         x = sorted([k for k in c.keys() if "_sink_" in k])
 
         width_k = max([5] + [len(k.replace("tot_sink_", "")) for k in x])
@@ -67,7 +124,7 @@ class ProgressReporter(object):
                 "per sec".rjust(width_s)))
         verbose_set = ["tot_sink_batch", "tot_sink_msg"]
         for k in x:
-            if k not in verbose_set or self.opts.verbose > 0:  # pylint: disable=no-member
+            if k not in verbose_set or self.opts.verbose > 0:  # type: ignore # pylint: disable=no-member
                 emit(prefix + " %s : %s | %s | %s"
                  % (k.replace("tot_sink_", "").ljust(width_k),
                     str(c[k]).rjust(width_v),
@@ -166,26 +223,26 @@ class PumpingStation(ProgressReporter):
         sys.stderr.write("done\n")
         return 0
 
-    def check_endpoints(self):
+    def check_endpoints(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Dict[str, Any], Dict[str, Any]]:
         logging.debug("source_class: %s", self.source_class)
         rv = self.source_class.check_base(self.opts, self.source_spec)
         if rv != 0:
-            return rv, None, None
+            return rv, {}, {}
         rv, source_map = self.source_class.check(self.opts, self.source_spec)
         if rv != 0:
-            return rv, None, None
+            return rv, {}, {}
 
         logging.debug("sink_class: %s", self.sink_class)
         rv = self.sink_class.check_base(self.opts, self.sink_spec)
         if rv != 0:
-            return rv, None, None
+            return rv, {}, {}
         rv, sink_map = self.sink_class.check(self.opts, self.sink_spec, source_map)
         if rv != 0:
-            return rv, None, None
+            return rv, {}, {}
 
         return rv, source_map, sink_map
 
-    def filter_source_buckets(self, source_map):
+    def filter_source_buckets(self, source_map: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Filter the source_buckets if a bucket_source was specified."""
         source_buckets = source_map['buckets']
         logging.debug("source_buckets: " +
@@ -201,7 +258,7 @@ class PumpingStation(ProgressReporter):
                           ",".join([returnString(n['name']) for n in source_buckets]))
         return source_buckets
 
-    def filter_source_nodes(self, source_bucket, source_map):
+    def filter_source_nodes(self, source_bucket: Dict[str, Any], source_map):
         """Filter the source_bucket's nodes if single_node was specified."""
         if getattr(self.opts, "single_node", None):
             if not source_map.get('spec_parts'):
@@ -217,7 +274,7 @@ class PumpingStation(ProgressReporter):
                                                     for n in source_nodes]))
         return source_nodes
 
-    def transfer_bucket_msgs(self, source_bucket, source_map, sink_map):
+    def transfer_bucket_msgs(self, source_bucket: Dict[str, Any], source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         source_nodes = self.filter_source_nodes(source_bucket, source_map)
 
         # Transfer bucket msgs with a Pump per source server.
@@ -251,7 +308,7 @@ class PumpingStation(ProgressReporter):
         if rv != 0:
             return rv
 
-        time.sleep(0.01) # Allows threads to update counters.
+        time.sleep(0.01)  # Allows threads to update counters.
 
         sys.stderr.write(self.bar(self.ctl['run_msg'],
                                   self.ctl['tot_msg']) + "\n")
@@ -263,7 +320,7 @@ class PumpingStation(ProgressReporter):
 
         return 0
 
-    def transfer_bucket_design(self, source_bucket, source_map, sink_map):
+    def transfer_bucket_design(self, source_bucket, source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         """Transfer bucket design (e.g., design docs, views)."""
         rv, source_design = \
             self.source_class.provide_design(self.opts, self.source_spec,
@@ -278,7 +335,7 @@ class PumpingStation(ProgressReporter):
                                                 source_design)
         return rv
 
-    def transfer_bucket_index(self, source_bucket, source_map, sink_map):
+    def transfer_bucket_index(self, source_bucket, source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         """Transfer bucket index meta."""
         rv, source_design = \
             self.source_class.provide_index(self.opts, self.source_spec,
@@ -291,7 +348,7 @@ class PumpingStation(ProgressReporter):
                                                 source_design)
         return rv
 
-    def transfer_bucket_fts_index(self, source_bucket, source_map, sink_map):
+    def transfer_bucket_fts_index(self, source_bucket, source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         """Transfer bucket index meta."""
         rv, source_design = \
             self.source_class.provide_fts_index(self.opts, self.source_spec,
@@ -304,7 +361,7 @@ class PumpingStation(ProgressReporter):
                                                    source_design)
         return rv
 
-    def transfer_fts_alias(self, source_bucket, source_map, sink_map):
+    def transfer_fts_alias(self, source_bucket, source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         """Transfer fts alias meta."""
         rv, alias = self.source_class.provide_fts_alias(self.opts, self.source_spec, source_bucket, source_map)
         if rv == 0:
@@ -370,7 +427,7 @@ class PumpingStation(ProgressReporter):
 
             self.queue.task_done()
 
-    def start_workers(self, queue_size):
+    def start_workers(self, queue_size: int):
         if self.queue:
             return
 
@@ -456,7 +513,7 @@ class Pump(ProgressReporter):
 
         return self.done(0)
 
-    def done(self, rv):
+    def done(self, rv) -> couchbaseConstants.PUMP_ERROR:
         self.source.close()
         self.sink.close()
 
@@ -495,7 +552,7 @@ class EndPoint(object):
         self.only_vbucket_id = getattr(opts, "id", None)
 
     @staticmethod
-    def check_base(opts, spec):
+    def check_base(opts, spec) -> couchbaseConstants.PUMP_ERROR:
         k = getattr(opts, "key", None)
         if k:
             try:
@@ -505,13 +562,13 @@ class EndPoint(object):
         return 0
 
     @staticmethod
-    def check_spec(source_bucket, source_node, opts, spec, cur):
+    def check_spec(source_bucket, source_node, opts, spec, cur) -> couchbaseConstants.PUMP_ERROR:
         cur['seqno'] = {}
         cur['failoverlog'] = {}
         cur['snapshot'] = {}
         return 0
 
-    def get_conflict_resolution_type(self):
+    def get_conflict_resolution_type(self) -> str:
         return "any"
 
     def __repr__(self):
@@ -523,19 +580,18 @@ class EndPoint(object):
     def close(self):
         pass
 
-    def skip(self, key, vbucket_id):
-        if (self.only_key_re and not re.search(self.only_key_re, key)):
-            logging.warn("skipping msg with key: " + tag_user_data(key))
+    def skip(self, key: Union[str, bytes], vbucket_id: int) -> bool:
+        if self.only_key_re and not re.search(self.only_key_re, returnString(key)):
+            logging.warning("skipping msg with key: " + tag_user_data(returnString(key)))
             return True
 
-        if (self.only_vbucket_id is not None and
-            self.only_vbucket_id != vbucket_id):
-            logging.warn("skipping msg of vbucket_id: " + str(vbucket_id))
+        if self.only_vbucket_id is not None and self.only_vbucket_id != vbucket_id:
+            logging.warning("skipping msg of vbucket_id: " + str(vbucket_id))
             return True
 
         return False
 
-    def get_timestamp(self):
+    def get_timestamp(self) -> str:
         # milliseconds with three digits
         return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -557,7 +613,7 @@ class Source(EndPoint):
         assert False, "unimplemented"
 
     @staticmethod
-    def check_base(opts, spec):
+    def check_base(opts, spec) -> couchbaseConstants.PUMP_ERROR:
         rv = EndPoint.check_base(opts, spec)
         if rv != 0:
             return rv
@@ -611,7 +667,7 @@ class Sink(EndPoint):
         assert False, "unimplemented"
 
     @staticmethod
-    def check_base(opts, spec):
+    def check_base(opts, spec) -> couchbaseConstants.PUMP_ERROR:
         rv = EndPoint.check_base(opts, spec)
         if rv != 0:
             return rv
@@ -635,17 +691,17 @@ class Sink(EndPoint):
 
     @staticmethod
     def consume_index(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_design):
+                       source_bucket, source_map, source_design) -> couchbaseConstants.PUMP_ERROR:
         return 0
 
     @staticmethod
     def consume_fts_index(opts, sink_spec, sink_map,
-                          source_bucket, source_map, source_design):
+                          source_bucket, source_map, source_design) -> couchbaseConstants.PUMP_ERROR:
         return 0
 
     @staticmethod
     def consume_fts_alias(opts, sink_spec, sink_map,
-                          source_bucket, source_map, source_design):
+                          source_bucket, source_map, source_design) -> couchbaseConstants.PUMP_ERROR:
         return 0
 
     def consume_batch_async(self, batch):
@@ -653,12 +709,12 @@ class Sink(EndPoint):
         assert False, "unimplemented"
 
     @staticmethod
-    def check_source(opts, source_class, source_spec, sink_class, sink_spec):
+    def check_source(opts, source_class, source_spec: str, sink_class, sink_spec: str) -> couchbaseConstants.PUMP_ERROR:
         if source_spec == sink_spec:
             return "error: source and sink must be different;" \
                 " source: " + source_spec + \
                 " sink: " + sink_spec
-        return None
+        return 0
 
     def operation(self):
         if not self.op:
@@ -677,7 +733,8 @@ class Sink(EndPoint):
         self.worker.daemon = True
         self.worker.start()
 
-    def push_next_batch(self, batch, future):
+    def push_next_batch(self, batch: Optional[Batch], future: Optional[SinkBatchFuture]) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[SinkBatchFuture]]:
         """Push batch/future to worker."""
         if not self.worker.isAlive():
             return "error: cannot use a dead worker", None
@@ -686,7 +743,7 @@ class Sink(EndPoint):
         self.worker_go.set()
         return 0, future
 
-    def pull_next_batch(self):
+    def pull_next_batch(self) -> Tuple[Optional[Batch], SinkBatchFuture]:
         """Worker calls this method to get the next batch/future."""
         self.worker_go.wait()
         batch, future = self.worker_work
@@ -702,62 +759,6 @@ class Sink(EndPoint):
         if future:
             future.done_rv = rv
             future.done.set()
-
-
-# --------------------------------------------------
-
-class Batch(object):
-    """Holds a batch of data being transfered from source to sink."""
-
-    def __init__(self, source):
-        self.source = source
-        self.msgs = []
-        self.bytes = 0
-        self.adjust_size = 0
-
-    def append(self, msg, num_bytes):
-        self.msgs.append(msg)
-        self.bytes = self.bytes + num_bytes
-
-    def size(self):
-        return len(self.msgs)
-
-    def msg(self, i):
-        return self.msgs[i]
-
-    def group_by_vbucket_id(self, vbuckets_num, rehash=0):
-        """Returns dict of vbucket_id->[msgs] grouped by msg's vbucket_id."""
-        g = defaultdict(list)
-        for msg in self.msgs:
-            cmd, vbucket_id, key = msg[:3]
-            if vbucket_id == 0x0000ffff or rehash == 1:
-                if self.source.opts.collection:
-                    # Collections embeds the ID into the key field, but does not
-                    # hash the ID as part of VB hashing
-                    key = cb_bin_client.skipCollectionID(key)
-
-                if isinstance(key, str):
-                    key = key.encode()
-                # Special case when the source did not supply a vbucket_id
-                # (such as stdin source), so we calculate it.
-                vbucket_id = ((zlib.crc32(key) >> 16) & 0x7FFF) % vbuckets_num
-                msg = (cmd, vbucket_id) + msg[2:]
-            g[vbucket_id].append(msg)
-        return g
-
-
-class SinkBatchFuture(object):
-    """Future completion of a sink consuming a batch."""
-
-    def __init__(self, sink, batch):
-        self.sink = sink
-        self.batch = batch
-        self.done = threading.Event()
-        self.done_rv = None
-
-    def wait_until_consumed(self):
-        self.done.wait()
-        return self.done_rv
 
 
 # --------------------------------------------------
@@ -823,7 +824,7 @@ class StdInSource(Source):
                     return "error: value end read failed at: " + line, None
 
                 if not self.skip(key, vbucket_id):
-                    msg = (cmd, vbucket_id, key, flg, exp, 0, '', val, 0, 0, 0)
+                    msg = (cmd, vbucket_id, key, flg, exp, 0, b'', val, 0, 0, 0)
                     batch.append(msg, len(val))
             elif parts[0] == 'delete':
                 if len(parts) != 2:
@@ -831,7 +832,7 @@ class StdInSource(Source):
                 cmd = couchbaseConstants.CMD_TAP_DELETE
                 key = parts[1]
                 if not self.skip(key, vbucket_id):
-                    msg = (cmd, vbucket_id, key, 0, 0, 0, '', '', 0, 0, 0)
+                    msg = (cmd, vbucket_id, key, 0, 0, 0, b'', b'', 0, 0, 0)
                     batch.append(msg, 0)
             else:
                 return "error: expected set/add/delete but got: " + line, None
@@ -955,20 +956,23 @@ CMD_STR = {
     couchbaseConstants.CMD_NOOP: "NOOP"
 }
 
-def get_username(username):
+
+def get_username(username: str) -> str:
     return username or os.environ.get('CB_REST_USERNAME', '')
 
-def get_password(password):
+
+def get_password(password: str) -> str:
     return password or os.environ.get('CB_REST_PASSWORD', '')
 
-def parse_spec(opts, spec, port):
+
+def parse_spec(opts, spec: str, port: int) -> Tuple[str, int, str, str, Any]:
     """Parse host, port, username, password, path from opts and spec."""
 
     # Example spec: http://Administrator:password@HOST:8091
     p = urllib.parse.urlparse(spec)
 
     # Example netloc: Administrator:password@HOST:8091
-    #ParseResult tuple(scheme, netloc, path, params, query, fragment)
+    # ParseResult tuple(scheme, netloc, path, params, query, fragment)
     netloc = p[1]
 
     if not netloc: # When urlparse() can't parse non-http URI's.
@@ -980,7 +984,7 @@ def parse_spec(opts, spec, port):
     try:
        val = int(port)
     except ValueError:
-       logging.warn("\"" + port + "\" is not int, reset it to default port number")
+       logging.warning("\"{}\" is not int, reset it to default port number".format(port))
        port = 8091
 
     username = get_username(opts.username)
@@ -991,21 +995,27 @@ def parse_spec(opts, spec, port):
 
     return host, port, username, password, p[2]
 
-def rest_request(host, port, user, pswd, use_ssl, path, method='GET', body='', reason='', headers=None, verify=True,
-                 ca_cert=None):
+
+def rest_request(host: str, port: int, user: Optional[str], pswd: Optional[str], use_ssl: bool, path: str,
+                 method: str = 'GET', body: str = '', reason: str = '', headers: Optional[Dict[str, Any]] = None,
+                 verify: bool = True, ca_cert: Optional[str] = None) -> Tuple[Optional[str],
+                                                                              Union[http.client.HTTPConnection,
+                                                                              http.client.HTTPSConnection, None],
+                                                                              bytes]:
+
+    conn: Union[http.client.HTTPConnection, http.client.HTTPSConnection, None] = None
     if reason:
         reason = "; reason: %s" % (reason)
     logging.debug("rest_request: %s@%s:%s%s%s" % (tag_user_data(user), host, port, path, reason))
     if use_ssl:
         if port not in [couchbaseConstants.SSL_REST_PORT, couchbaseConstants.SSL_QUERY_PORT]:
-            return ("error: invalid port %s used when ssl option is specified") % port, None, None
+            return ("error: invalid port %s used when ssl option is specified") % port, None, b''
         ctx = ssl.create_default_context(cafile=ca_cert)
         if not verify:
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
 
         conn = http.client.HTTPSConnection(host, port, context=ctx)
-
     else:
         conn = http.client.HTTPConnection(host, port)
     try:
@@ -1016,7 +1026,7 @@ def rest_request(host, port, user, pswd, use_ssl, path, method='GET', body='', r
         return ("error: could not access REST API: %s:%s%s" +
                 "; please check source URL, server status, username (-u) and password (-p)" +
                 "; exception: %s%s") % \
-                (host, port, path, e, reason), None, None
+                (host, port, path, e, reason), None, b''
 
     if resp.status in [200, 201, 202, 204, 302]:
         return None, conn, resp.read()
@@ -1025,22 +1035,28 @@ def rest_request(host, port, user, pswd, use_ssl, path, method='GET', body='', r
     if resp.status == 401:
         return ("error: unable to access REST API: %s:%s%s" +
                 "; please check source URL, server status, username (-u) and password (-p)%s") % \
-                (host, port, path, reason), None, None
+                (host, port, path, reason), None, b''
 
     return ("error: unable to access REST API: %s:%s%s" +
             "; please check source URL, server status, username (-u) and password (-p)" +
             "; response: %s%s") % \
-            (host, port, path, resp.status, reason), None, None
+            (host, port, path, resp.status, reason), None, b''
 
-def rest_headers(user, pswd, headers=None):
+
+def rest_headers(user: Optional[str], pswd: Optional[str], headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
     if not headers:
         headers = {'Content-Type': 'application/json'}
-    if user:
+    if user is not None:
         auth = 'Basic ' + base64.encodebytes((user + ':' + (pswd or '')).strip().encode('utf-8')).decode().strip()
         headers['Authorization'] = auth
     return headers
 
-def rest_request_json(host, port, user, pswd, ssl, path, reason='', verify=True, cacert=None):
+
+def rest_request_json(host: str, port: int, user: Optional[str], pswd: Optional[str], ssl: bool, path: str,
+                      reason: str = '', verify: bool = True, cacert: Optional[str] = None) -> Tuple[Optional[str],
+                                                                                                    Optional[bytes],
+                                                                                                    Optional[Dict[
+                                                                                                        str, Any]]]:
     err, conn, rest_json = rest_request(host, port, user, pswd, ssl, path,
                                         reason=reason, verify=verify, ca_cert=cacert)
     if err:
@@ -1055,7 +1071,9 @@ def rest_request_json(host, port, user, pswd, ssl, path, reason='', verify=True,
                 "; please check URL, username (-u) and password (-p)") % \
                 (host, port, path, e), None, None
 
-def rest_couchbase(opts, spec, check_sink_credential=False):
+
+def rest_couchbase(opts, spec: str, check_sink_credential: bool =False) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                                 Optional[Dict[str, Any]]]:
     spec = spec.replace('couchbase://', 'http://')
     spec_parts = parse_spec(opts, spec, 8091)
 
@@ -1077,10 +1095,10 @@ def rest_couchbase(opts, spec, check_sink_credential=False):
         if bucket["bucketType"] in ["membase", "couchbase", "ephemeral"]:
             buckets.append(bucket)
 
-
     return 0, {'spec': spec, 'buckets': buckets, 'spec_parts': parse_spec(opts, spec, 8091)}
 
-def filter_bucket_nodes(bucket, spec_parts):
+
+def filter_bucket_nodes(bucket: Dict[str, Any], spec_parts: Sequence[Any]) -> List[Any]:
     host, port = spec_parts[:2]
     if host in ['localhost', '127.0.0.1']:
         host = get_ip()
@@ -1091,7 +1109,8 @@ def filter_bucket_nodes(bucket, spec_parts):
         host_port = host + ':' + str(port)
     return [n for n in bucket['nodes'] if n.get('hostname') == host_port]
 
-def get_ip():
+
+def get_ip() -> str:
     ip = None
     for fname in ['/opt/couchbase/var/lib/couchbase/ip_start',
                   '/opt/couchbase/var/lib/couchbase/ip',
@@ -1111,7 +1130,8 @@ def get_ip():
         ip = '127.0.0.1'
     return ip
 
-def find_source_bucket_name(opts, source_map):
+
+def find_source_bucket_name(opts, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR, str]:
     """If the caller didn't specify a bucket_source and
        there's only one bucket in the source_map, use that."""
     source_bucket = getattr(opts, "bucket_source", None)
@@ -1121,19 +1141,21 @@ def find_source_bucket_name(opts, source_map):
         len(source_map['buckets']) == 1):
         source_bucket = source_map['buckets'][0]['name']
     if not source_bucket:
-        return "error: please specify a bucket_source", None
+        return "error: please specify a bucket_source", ''
     logging.debug("source_bucket: {0}".format(source_bucket))
     return 0, source_bucket
 
-def find_sink_bucket_name(opts, source_bucket):
+
+def find_sink_bucket_name(opts, source_bucket) -> Tuple[couchbaseConstants.PUMP_ERROR, str]:
     """Default bucket_destination to the same as bucket_source."""
     sink_bucket = getattr(opts, "bucket_destination", None) or source_bucket
     if not sink_bucket:
-        return "error: please specify a bucket_destination", None
+        return "error: please specify a bucket_destination", ''
     logging.debug("sink_bucket: {0}".format(sink_bucket))
     return 0, sink_bucket
 
-def mkdirs(targetpath):
+
+def mkdirs(targetpath: str) -> couchbaseConstants.PUMP_ERROR:
     upperdirs = os.path.dirname(targetpath)
     if upperdirs and not os.path.exists(upperdirs):
         try:
@@ -1142,7 +1164,8 @@ def mkdirs(targetpath):
             return "Cannot create upper directories for file:%s" % targetpath
     return 0
 
-def hostport(hoststring, port=11210):
+
+def hostport(hoststring: str, port: int = 11210) -> Tuple[str, int]:
     if hoststring.startswith('['):
         matches = re.match(r'^\[([^\]]+)\](:(\d+))?$', hoststring)
     else:
@@ -1155,7 +1178,10 @@ def hostport(hoststring, port=11210):
             port = int(matches.group(3))
     return host, port
 
-def get_mcd_conn(host, port, username, password, bucket, use_ssl=False, verify=True, ca_cert=None, collections=False):
+
+def get_mcd_conn(host: str, port: int, username: str, password: str, bucket: Optional[str], use_ssl: bool = False,
+                 verify: bool = True, ca_cert: Optional[str] = None, collections: bool = False) -> \
+        Tuple[couchbaseConstants.PUMP_ERROR, Optional[cb_bin_client.MemcachedClient]]:
     conn = cb_bin_client.MemcachedClient(host, port, use_ssl=use_ssl, verify=verify, cacert=ca_cert)
     if not conn:
         return "error: could not connect to memcached: " + \
@@ -1185,7 +1211,7 @@ def get_mcd_conn(host, port, username, password, bucket, use_ssl=False, verify=T
 
     if bucket:
         try:
-            conn.bucket_select(bucket)
+            conn.bucket_select(bucket.encode())
         except EOFError as e:
             return "error: Bucket select error: %s:%s %s, %s" % (host, port, bucket, e), None
         except cb_bin_client.MemcachedError as e:
@@ -1196,7 +1222,7 @@ def get_mcd_conn(host, port, username, password, bucket, use_ssl=False, verify=T
     return 0, conn
 
 
-def returnString(byte_or_str):
+def returnString(byte_or_str: Union[str, bytes, int]) -> str:
     if byte_or_str is None:
         return None
     if isinstance(byte_or_str, bytes):

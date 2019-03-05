@@ -5,6 +5,14 @@ Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 """
 
 import struct
+from typing import Union, Tuple, Optional
+
+PUMP_ERROR = Union[str, int]
+# batch message: (cmd, vbucket_id, key, flg, exp, cas, rev_seqno/rev, val, seqno, dtype, metalen, conf_res/notthis)
+BATCH_MSG1 = Tuple[int, int, bytes, int, int, int, bytes, bytes, int, int, int, int]
+BATCH_MSG2 = Tuple[int, int, bytes, int, int, int, bytes, bytes, int, int, int]
+BATCH_MSG = Union[BATCH_MSG1, BATCH_MSG2]
+REQUEST = Tuple[bytes, Optional[bytes], Optional[bytes], Optional[bytes], Optional[bytes]]
 
 SSL_PORT = 11207
 SSL_REST_PORT = 18091
@@ -155,11 +163,11 @@ FLAG_DCP_PRODUCER = 0x01
 FLAG_DCP_XATTRS   = 0x04
 
 #DCP control keys
-KEY_DCP_CONNECTION_BUFFER_SIZE = "connection_buffer_size"
-KEY_DCP_STREAM_BUFFER_SIZE = "stream_buffer_size"
-KEY_DCP_NOOP = "enable_noop"
-KEY_DCP_NOOP_INTERVAL = "set_noop_interval"
-KEY_DCP_EXT_METADATA = "enable_ext_metadata"
+KEY_DCP_CONNECTION_BUFFER_SIZE = b"connection_buffer_size"
+KEY_DCP_STREAM_BUFFER_SIZE = b"stream_buffer_size"
+KEY_DCP_NOOP = b"enable_noop"
+KEY_DCP_NOOP_INTERVAL = b"set_noop_interval"
+KEY_DCP_EXT_METADATA = b"enable_ext_metadata"
 
 # event IDs for the SYNC command responses
 CMD_SYNC_EVENT_PERSISTED  = 1

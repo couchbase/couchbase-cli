@@ -8,7 +8,7 @@ import sys
 import shutil
 import tempfile
 import zipfile
-
+from typing import Tuple, Any, List, Optional, Dict
 import couchbaseConstants
 import pump
 
@@ -22,25 +22,24 @@ class JSONSource(pump.Source):
                  source_map, sink_map, ctl, cur):
         super(JSONSource, self).__init__(opts, spec, source_bucket, source_node,
                                          source_map, sink_map, ctl, cur)
-        self.done = False
+        self.done: bool = False
         self.docs = list()
         self.file_iter = None
 
     @staticmethod
-    def can_handle(opts, spec):
+    def can_handle(opts, spec: str) -> bool:
         return spec.startswith(JSON_SCHEME) and \
             (os.path.isfile(spec.replace(JSON_SCHEME, "")) or \
              os.path.isdir(spec.replace(JSON_SCHEME, "")) or \
              spec.endswith(".zip"))
 
     @staticmethod
-    def check(opts, spec):
-
+    def check(opts, spec: str) -> Tuple[couchbaseConstants.PUMP_ERROR, Dict[str, Any]]:
         return 0, {'spec': spec,
                    'buckets': [{'name': os.path.normpath(os.path.basename(spec)),
                                 'nodes': [{'hostname': 'N/A'}]}]}
 
-    def save_doc(self, batch, dockey, docvalue):
+    def save_doc(self, batch: pump.Batch, dockey: bytes, docvalue: bytes):
         cmd = couchbaseConstants.CMD_TAP_MUTATION
         vbucket_id = 0x0000ffff
         # common flags:       0x02000000 (JSON)
@@ -49,7 +48,7 @@ class JSONSource(pump.Source):
         try:
             doc = json.loads(docvalue)
             if '_id' not in doc:
-                msg = (cmd, vbucket_id, dockey, flg, exp, cas, '', docvalue, 0, 0, 0, 0)
+                msg = (cmd, vbucket_id, dockey, flg, exp, cas, b'', docvalue, 0, 0, 0, 0)
                 batch.append(msg, len(docvalue))
             else:
                 id = doc['_id'].encode('UTF-8')
@@ -62,11 +61,11 @@ class JSONSource(pump.Source):
             logging.error("Fail to read json file with error:" + str(error))
 
     @staticmethod
-    def gen_dockey(filename):
+    def gen_dockey(filename: str) -> str:
         return os.path.splitext(os.path.basename(filename))[0]
 
     @staticmethod
-    def enumerate_files(subdir, file_candidate, skip_views, skip_docs):
+    def enumerate_files(subdir: str, file_candidate: List[str], skip_views: bool, skip_docs: bool):
         for item in os.listdir(subdir):
             path = os.path.join(subdir, item)
             if os.path.isfile(path):
@@ -79,7 +78,8 @@ class JSONSource(pump.Source):
                     JSONSource.enumerate_files(path, file_candidate, skip_views, skip_docs)
 
     @staticmethod
-    def provide_design(opts, source_spec, source_bucket, source_map):
+    def provide_design(opts, source_spec: str, source_bucket, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                                   List[bytes]]:
         design_files = list()
         f = source_spec.replace(JSON_SCHEME, "")
 
@@ -99,17 +99,17 @@ class JSONSource(pump.Source):
                 design_files.append(zf.read(path))
             zf.close()
         elif os.path.isdir(f):
-            files = list()
+            files: List[str] = list()
             JSONSource.enumerate_files(f, files, False, True)
             for path in files:
                 if os.path.isfile(path):
-                    f = open(path, 'r')
-                    design_files.append(f.read())
-                    f.close()
+                    f = open(path, 'rb')  # type: ignore
+                    design_files.append(f.read())  # type: ignore
+                    f.close()  # type: ignore
 
         return 0, design_files
 
-    def provide_batch(self):
+    def provide_batch(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch]]:
         if self.done:
             return 0, None
 
@@ -139,10 +139,10 @@ class JSONSource(pump.Source):
                 if key.endswith('.json'):
                     key = key[:-5]
                 try:
-                    fp = open(path, 'r')
+                    fp = open(path, 'rb')
                     value = fp.read()
                     fp.close()
-                    self.save_doc(batch, key, value)
+                    self.save_doc(batch, key.encode(), value)
                 except IOError as error:
                     logging.error("Fail to load json file with error" + str(error))
 

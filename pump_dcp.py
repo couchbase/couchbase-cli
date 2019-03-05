@@ -11,9 +11,10 @@ import time
 import threading
 import select
 
+from typing import Dict, List, Any, Optional, Tuple, Union
+
 import cb_bin_client
 import couchbaseConstants
-
 import pump
 import pump_mc
 import pump_cb
@@ -21,6 +22,7 @@ import pump_cb
 from cluster_manager import ClusterManager, ServiceNotAvailableException
 
 bool_to_str = lambda value: str(bool(int(value))).lower()
+
 
 class DCPStreamSource(pump.Source, threading.Thread):
     """Can read from cluster/server/bucket via DCP streaming."""
@@ -32,45 +34,45 @@ class DCPStreamSource(pump.Source, threading.Thread):
     HIGH_SEQNO_BYTE = 8
     UUID_BYTE = 8
 
-    def __init__(self, opts, spec, source_bucket, source_node,
-                 source_map, sink_map, ctl, cur):
+    def __init__(self, opts, spec: str, source_bucket, source_node: Dict[str, Any],
+                 source_map, sink_map, ctl: Dict[str, Any], cur: Dict[str, Any]):
         if spec.startswith("https://"):
             setattr(opts, "ssl", True)
         super(DCPStreamSource, self).__init__(opts, spec, source_bucket, source_node,
                                             source_map, sink_map, ctl, cur)
         threading.Thread.__init__(self)
 
-        self.dcp_done = False
-        self.dcp_conn = None
-        self.mem_conn = None
-        self.dcp_name = opts.process_name
-        self.ack_last = False
-        self.cmd_last = None
-        self.num_msg = 0
+        self.dcp_done: bool = False
+        self.dcp_conn: Optional[cb_bin_client.MemcachedClient] = None
+        self.mem_conn: Optional[cb_bin_client.MemcachedClient] = None
+        self.dcp_name: str = opts.process_name
+        self.ack_last: bool = False
+        self.cmd_last: Optional[int] = None
+        self.num_msg: int = 0
         # change made to support development version
-        self.version_supported = self.source_node['version'].split(".") >= ["3", "0", "0"] or \
+        self.version_supported: bool = self.source_node['version'].split(".") >= ["3", "0", "0"] or \
                                  (self.source_node['version'].split(".") == ['0', '0', '0-0000-enterprise'])
-        self.recv_min_bytes = int(opts.extra.get("recv_min_bytes", 4096))
-        self.batch_max_bytes = int(opts.extra.get("batch_max_bytes", 400000))
+        self.recv_min_bytes: int = int(opts.extra.get("recv_min_bytes", 4096))
+        self.batch_max_bytes: int = int(opts.extra.get("batch_max_bytes", 400000))
         self.flow_control = int(opts.extra.get("flow_control", 1))
         self.vbucket_list = getattr(opts, "vbucket_list", None)
         self.r=random.Random()
         self.queue_size = int(opts.extra.get("dcp_consumer_queue_length", 1000))
-        self.response = queue.Queue(self.queue_size)
+        self.response: queue.Queue = queue.Queue(self.queue_size)
         self.running = False
-        self.stream_list = {}
+        self.stream_list: Dict[Any, Any] = {}
         self.unack_size = 0
-        self.node_vbucket_map = None
+        self.node_vbucket_map: Optional[List[int]] = None
 
     @staticmethod
-    def can_handle(opts, spec):
+    def can_handle(opts, spec: str) -> bool:
         return (spec.startswith("http://") or
                 spec.startswith("couchbase://") or
                 spec.startswith("https://")
                 )
 
     @staticmethod
-    def check(opts, spec):
+    def check(opts, spec: str)-> Tuple[couchbaseConstants.PUMP_ERROR, Optional[Dict[str, Any]]]:
         err, map = pump.rest_couchbase(opts, spec)
         if err:
             return err, map
@@ -81,7 +83,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
         return 0, map
 
     @staticmethod
-    def provide_design(opts, source_spec, source_bucket, source_map):
+    def provide_design(opts, source_spec: str, source_bucket: Dict[str, Any], source_map) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[str]]:
         # Ephemeral buckets do not have design docs
         if source_bucket['bucketType'] == 'ephemeral':
             return 0, None
@@ -99,7 +102,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
 
         couch_api_base = source_nodes[0].get('couchApiBase')
         if not couch_api_base:
-            return 0, None # No couchApiBase; probably not 2.0.
+            return 0, None  # No couchApiBase; probably not 2.0.
 
         err, ddocs_json, ddocs = \
             pump.rest_request_json(host, int(port), user, pswd, opts.ssl,
@@ -118,8 +121,11 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 pump.rest_request_json(host, int(port), None, None, opts.ssl,
                                        path + ddocs_qry,
                                        reason="provide_design-2.0DP4", verify=opts.no_ssl_verify, cacert=opts.cacert)
-        if err:
+        if err is not None:
             return err, None
+
+        if ddocs is None:
+            return 0, None
 
         if not ddocs.get('rows', None):
             return 0, None
@@ -127,7 +133,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
             return 0, json.dumps(ddocs.get('rows', []))
 
     @staticmethod
-    def provide_index(opts, source_spec, source_bucket, source_map):
+    def provide_index(opts, source_spec: str, source_bucket: Dict[str, Any], source_map) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[str]]:
         try:
             rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, opts.no_ssl_verify,
                                   opts.cacert, False)
@@ -139,7 +146,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
             return 0, None
 
     @staticmethod
-    def provide_fts_index(opts, source_spec, source_bucket, source_map):
+    def provide_fts_index(opts, source_spec: str, source_bucket: Dict[str, Any], source_map) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[str]]:
         try:
             rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, opts.no_ssl_verify,
                                   opts.cacert, False)
@@ -151,7 +159,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
             return 0, None
 
     @staticmethod
-    def provide_fts_alias(opts, source_spec, source_bucket, source_map):
+    def provide_fts_alias(opts, source_spec: str, source_bucket: Dict[str, Any], source_map) -> \
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[str]]:
         try:
             rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, opts.no_ssl_verify,
                                   opts.cacert, False)
@@ -162,13 +171,13 @@ class DCPStreamSource(pump.Source, threading.Thread):
         except ServiceNotAvailableException as e:
             return 0, None
 
-    def get_conflict_resolution_type(self):
+    def get_conflict_resolution_type(self) -> str:
         confResType = "seqno"
         if "conflictResolutionType" in self.source_bucket:
             confResType = self.source_bucket["conflictResolutionType"]
         return confResType
 
-    def add_start_event(self, conn):
+    def add_start_event(self, conn: Optional[cb_bin_client.MemcachedClient]) -> couchbaseConstants.PUMP_ERROR:
         sasl_user = str(self.source_bucket.get("name"))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
@@ -185,7 +194,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 logging.warn("auditing error: %s" % e)
         return 0
 
-    def add_stop_event(self, conn):
+    def add_stop_event(self, conn: Optional[cb_bin_client.MemcachedClient]) -> couchbaseConstants.PUMP_ERROR:
         sasl_user = str(self.source_bucket.get("name"))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
@@ -201,7 +210,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 logging.warn("auditing error: %s" % e)
         return 0
 
-    def build_node_vbucket_map(self):
+    def build_node_vbucket_map(self) -> Optional[List[int]]:
         if "vBucketServerMap" in self.source_bucket:
             server_list = self.source_bucket["vBucketServerMap"]["serverList"]
             vbucket_map = self.source_bucket["vBucketServerMap"]["vBucketMap"]
@@ -220,7 +229,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 node_vbucket_map.append(vbucket_id)
         return node_vbucket_map
 
-    def provide_batch(self):
+    def provide_batch(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch]]:
         if not self.version_supported:
             return "error: cannot back up 2.x or older clusters with 3.x tools", None
 
@@ -261,7 +270,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             cur_sleep = min(cur_sleep * 2, 20) # Max backoff sleep 20 seconds.
             cur_retry = cur_retry + 1
 
-    def provide_dcp_batch_actual(self):
+    def provide_dcp_batch_actual(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch]]:
         batch = pump.Batch(self)
 
         batch_max_size = self.opts.extra['batch_max_size']
@@ -270,15 +279,14 @@ class DCPStreamSource(pump.Source, threading.Thread):
         last_processed = 0
         total_bytes_read = 0
 
-        vbid = 0
-        cmd = 0
-        start_seqno = 0
-        end_seqno = 0
-        vb_uuid = 0
-        hi_seqno = 0
-        ss_start_seqno = 0
-        ss_end_seqno = 0
-        no_response_count = 0
+        vbid: int = 0
+        start_seqno: int = 0
+        end_seqno: int = 0
+        vb_uuid: int = 0
+        hi_seqno: int = 0
+        ss_start_seqno: int = 0
+        ss_end_seqno: int = 0
+        no_response_count: int = 0
         try:
             while (not self.dcp_done and
                    batch.size() < batch_max_size and
@@ -289,7 +297,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                         logging.debug("no response while there %s active streams" % len(self.stream_list))
                         time.sleep(.25)
                         no_response_count = no_response_count + 1
-                        #if not had a response after a minimum of 30 seconds then state we are done
+                        # if not had a response after a minimum of 30 seconds then state we are done
                         if no_response_count == 120:
                             logging.warning("no response for 30 seconds while there %s active streams"
                                          % len(self.stream_list))
@@ -308,11 +316,11 @@ class DCPStreamSource(pump.Source, threading.Thread):
                         last_processed = total_bytes_read
 
                 cmd, errcode, opaque, cas, keylen, extlen, data, datalen, dtype, bytes_read = \
-                    self.response.get()
+                    self.response.get()  # type: int, int, int, int, int, int, bytes, int, int, int
                 total_bytes_read += bytes_read
                 rv = 0
                 metalen = flags = flg = exp = 0
-                key = val = ext = ''
+                key = val = ext = b''
                 need_ack = False
                 seqno = 0
                 if cmd == couchbaseConstants.CMD_DCP_REQUEST_STREAM:
@@ -323,7 +331,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                         step = DCPStreamSource.HIGH_SEQNO_BYTE + DCPStreamSource.UUID_BYTE
                         while start+step <= datalen:
                             uuid, seqno = struct.unpack(
-                                            couchbaseConstants.DCP_VB_UUID_SEQNO_PKT_FMT, \
+                                            couchbaseConstants.DCP_VB_UUID_SEQNO_PKT_FMT,
                                             data[start:start + step])
                             if pair_index not in self.cur['failoverlog']:
                                 self.cur['failoverlog'][pair_index] = {}
@@ -361,7 +369,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
                                         break
                         ss_start_seqno = start_seqno
                         ss_end_seqno = start_seqno
-                        self.request_dcp_stream(vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
+                        self.request_dcp_stream(vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno,
+                                                ss_end_seqno)
 
                         del self.stream_list[opaque]
                         self.stream_list[opaque] = \
@@ -391,9 +400,9 @@ class DCPStreamSource(pump.Source, threading.Thread):
                             extra_index += 3
                             if id == couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION:
                                 if extlen == 1:
-                                    conf_res, = struct.unpack(">B",extra_meta[extra_index:extra_index+1])
+                                    conf_res, = struct.unpack(">B", extra_meta[extra_index:extra_index+1])
                                 elif extlen == 2:
-                                    conf_res, = struct.unpack(">H",extra_meta[extra_index:extra_index+2])
+                                    conf_res, = struct.unpack(">H", extra_meta[extra_index:extra_index+2])
                                 elif extlen == 4:
                                     conf_res, = struct.unpack(">I", extra_meta[extra_index:extra_index+4])
                                 elif extlen == 8:
@@ -404,15 +413,13 @@ class DCPStreamSource(pump.Source, threading.Thread):
                             extra_index += extlen
 
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno, val, seqno, dtype, \
-                               metalen, conf_res)
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, bytes([rev_seqno]), val, seqno, dtype, metalen,
+                               conf_res)
                         batch.append(msg, len(val))
                         self.num_msg += 1
-                elif cmd == couchbaseConstants.CMD_DCP_DELETE or \
-                     cmd == couchbaseConstants.CMD_DCP_EXPIRATION:
+                elif cmd == couchbaseConstants.CMD_DCP_DELETE or cmd == couchbaseConstants.CMD_DCP_EXPIRATION:
                     vbucket_id = errcode
-                    seqno, rev_seqno, metalen = \
-                        struct.unpack(couchbaseConstants.DCP_DELETE_PKT_FMT, data[0:extlen])
+                    seqno, rev_seqno, metalen = struct.unpack(couchbaseConstants.DCP_DELETE_PKT_FMT, data[0:extlen])
                     key_start = extlen
                     val_start = key_start + keylen
                     key = data[extlen:val_start]
@@ -420,15 +427,14 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     if dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
                         val = data[val_start:]
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno, val, seqno, dtype, \
-                               metalen, 0)
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, bytes([rev_seqno]), val, seqno, dtype, metalen, 0)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                     if cmd == couchbaseConstants.CMD_DCP_DELETE:
                         batch.adjust_size += 1
                 elif cmd == couchbaseConstants.CMD_DCP_FLUSH:
                     total_bytes_read -= bytes_read
-                    logging.warn("stopping: saw CMD_DCP_FLUSH")
+                    logging.warning("stopping: saw CMD_DCP_FLUSH")
                     self.dcp_done = True
                     break
                 elif cmd == couchbaseConstants.CMD_DCP_END_STREAM:
@@ -436,8 +442,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     if not len(self.stream_list):
                         self.dcp_done = True
                 elif cmd == couchbaseConstants.CMD_DCP_SNAPSHOT_MARKER:
-                    ss_start_seqno, ss_end_seqno, _ = \
-                        struct.unpack(couchbaseConstants.DCP_SNAPSHOT_PKT_FMT, data[0:extlen])
+                    ss_start_seqno, ss_end_seqno, _ = struct.unpack(couchbaseConstants.DCP_SNAPSHOT_PKT_FMT,
+                                                                    data[0:extlen])
                     pair_index = (self.source_bucket['name'], self.source_node['hostname'])
                     if not self.cur['snapshot']:
                         self.cur['snapshot'] = {}
@@ -454,15 +460,16 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     continue
                 else:
                     total_bytes_read -= bytes_read
-                    logging.warn("warning: unexpected DCP message: %s" % cmd)
+                    logging.warning("warning: unexpected DCP message: %s" % cmd)
                     return "unexpected DCP message: %s" % cmd, batch
 
                 if need_ack:
                     self.ack_last = True
                     try:
-                        self.dcp_conn._sendMsg(cmd, '', '', opaque, vbucketId=0,
-                                          fmt=couchbaseConstants.RES_PKT_FMT,
-                                          magic=couchbaseConstants.RES_MAGIC_BYTE)
+                        if self.dcp_conn is not None:
+                            self.dcp_conn._sendMsg(cmd, b'', b'', opaque, vbucketId=0,
+                                                   fmt=couchbaseConstants.RES_PKT_FMT,
+                                                   magic=couchbaseConstants.RES_MAGIC_BYTE)
                     except socket.error:
                         return ("error: socket.error on sendall();"
                                 " perhaps the source server: %s was rebalancing"
@@ -522,9 +529,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
             flags = couchbaseConstants.FLAG_DCP_PRODUCER | couchbaseConstants.FLAG_DCP_XATTRS
             extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, flags)
             try:
-                opaque=self.r.randint(0, 2**32)
-                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONNECT, self.dcp_name, \
-                                       '', opaque, extra)
+                opaque = self.r.randint(0, 2**32)
+                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONNECT, self.dcp_name.encode() , b'', opaque, extra)
                 self.dcp_conn._handleSingleResponse(opaque)
 
                 buff_size = 0
@@ -536,19 +542,18 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 opaque=self.r.randint(0, 2**32)
                 self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
                                        couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
-                                       str(self.batch_max_bytes * 10), opaque)
+                                       str(self.batch_max_bytes * 10).encode(), opaque)
                 self.dcp_conn._handleSingleResponse(opaque)
 
                 opaque=self.r.randint(0, 2**32)
                 self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
-                                       couchbaseConstants.KEY_DCP_NOOP,
-                                       "true", opaque)
+                                       couchbaseConstants.KEY_DCP_NOOP, b'true', opaque)
                 self.dcp_conn._handleSingleResponse(opaque)
 
                 opaque=self.r.randint(0, 2**32)
                 self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
                                        couchbaseConstants.KEY_DCP_NOOP_INTERVAL,
-                                       str(180), opaque)
+                                       b'180', opaque)
                 self.dcp_conn._handleSingleResponse(opaque)
             except EOFError:
                 return "error: Fail to set up DCP connection"
@@ -560,7 +565,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 opaque=self.r.randint(0, 2**32)
                 self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_CONTROL,
                                        couchbaseConstants.KEY_DCP_EXT_METADATA,
-                                       bool_to_str(True), opaque)
+                                       bool_to_str(True).encode(), opaque)
                 self.dcp_conn._handleSingleResponse(opaque)
             except EOFError:
                 return "error: Fail to set up DCP connection"
@@ -576,19 +581,20 @@ class DCPStreamSource(pump.Source, threading.Thread):
             self.setup_dcp_streams()
         return 0
 
-    def ack_buffer_size(self, buf_size):
+    def ack_buffer_size(self, buf_size: int) -> couchbaseConstants.PUMP_ERROR:
         if self.flow_control:
             try:
                 opaque = 0
-                self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_BUFFER_ACK, '', '', \
-                    opaque, struct.pack(">I", int(buf_size)))
-                logging.debug("Send buffer size: %d" % buf_size)
+                if self.dcp_conn is not None:
+                    self.dcp_conn._sendCmd(couchbaseConstants.CMD_DCP_BUFFER_ACK, b'', b'', opaque,
+                                            struct.pack(">I", int(buf_size)))
+                    logging.debug("Send buffer size: %d" % buf_size)
             except socket.error:
                 return "error: socket error during sending buffer ack msg"
             except EOFError:
                 return "error: send buffer ack msg"
 
-        return None
+        return 0
 
     def run(self):
         if not self.dcp_conn:
@@ -635,8 +641,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 pass
 
     def setup_dcp_streams(self):
-        #send request to retrieve vblist and uuid for the node
-        stats = self.mem_conn.stats("vbucket-seqno")
+        # send request to retrieve vblist and uuid for the node
+        stats = self.mem_conn.stats(b'vbucket-seqno')
         if not stats:
             return "error: fail to retrive vbucket seqno", None
         self.mem_conn.close()
@@ -700,13 +706,13 @@ class DCPStreamSource(pump.Source, threading.Thread):
                                     uuid, ss_start_seqno, ss_end_seqno)
 
     def request_dcp_stream(self,
-                           vbid,
-                           flags,
-                           start_seqno,
-                           end_seqno,
-                           vb_uuid,
-                           ss_start_seqno,
-                           ss_end_seqno):
+                           vbid: int,
+                           flags: int,
+                           start_seqno: int,
+                           end_seqno: int,
+                           vb_uuid: int,
+                           ss_start_seqno: int,
+                           ss_end_seqno: int):
         if not self.dcp_conn:
             return "error: no dcp connection setup yet.", None
         extra = struct.pack(couchbaseConstants.DCP_STREAM_REQ_PKT_FMT,
@@ -716,12 +722,12 @@ class DCPStreamSource(pump.Source, threading.Thread):
                             int(vb_uuid),
                             int(ss_start_seqno),
                             int(ss_end_seqno))
-        self.dcp_conn._sendMsg(couchbaseConstants.CMD_DCP_REQUEST_STREAM, '', '', vbid, \
-                               extra, 0, 0, vbid)
+        self.dcp_conn._sendMsg(couchbaseConstants.CMD_DCP_REQUEST_STREAM, b'', b'', vbid, extra, 0, 0, vbid)
         self.stream_list[vbid] = (vbid, flags, start_seqno, end_seqno, vb_uuid, ss_start_seqno, ss_end_seqno)
 
     @staticmethod
-    def total_msgs(opts, source_bucket, source_node, source_map):
+    def total_msgs(opts, source_bucket: Dict[str, Any], source_node, source_map: Dict[str, Any]) ->\
+            Tuple[couchbaseConstants.PUMP_ERROR, Optional[int]]:
         source_name = source_node.get("hostname", None)
         if not source_name:
             return 0, None
@@ -744,7 +750,9 @@ class DCPStreamSource(pump.Source, threading.Thread):
             if err:
                 return 0, None
 
-            nodeStats = data.get("nodeStats", None)
+            if data is not None:
+                nodeStats = data.get("nodeStats", None)
+
             if not nodeStats:
                 return 0, None
             vals = nodeStats.get(source_name, None)
@@ -755,7 +763,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
         total_msgs = stats_vals["curr_items"]
         resident_ratio = stats_vals["vb_active_resident_items_ratio"]
         if 0 < resident_ratio < 100:
-            #for DGM case, server will transfer both in-memory items and
-            #backfill all items on disk
+            # for DGM case, server will transfer both in-memory items and
+            # backfill all items on disk
             total_msgs += (resident_ratio/100.0) * stats_vals["curr_items"]
         return 0, int(total_msgs)

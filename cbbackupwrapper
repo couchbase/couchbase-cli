@@ -16,6 +16,7 @@ import sys
 import threading
 import time
 import urllib.request, urllib.error, urllib.parse
+from typing import Any, List
 
 from cluster_manager import ClusterManager
 
@@ -147,7 +148,9 @@ def argumentParsing():
 
     return options, rest[0], rest[1]
 
-def findAllVbucketsForBucket(node, bucket, restport, username, password, single_node):
+
+def findAllVbucketsForBucket(node: str, bucket: str, restport: str, username: str, password: str,
+                             single_node: bool) -> List[Any]:
     cluster = "http://" + node + ":" + restport
     rest = ClusterManager(cluster, username, password, False, False, None, False)
 
@@ -184,8 +187,9 @@ def findAllVbucketsForBucket(node, bucket, restport, username, password, single_
 
         return vbucketList
 
+
 # Get the buckets that exist on the cluster
-def getBuckets(node, rest_port, username, password):
+def getBuckets(node: str, rest_port: str, username: str, password: str) -> List[Any]:
     request = urllib.request.Request(
         'http://' + node + ':' + rest_port + '/pools/default/buckets')
     base64string = base64.encodebytes(('{0}:{1}'.format(username, password)).encode()).decode().replace('\n', '')
@@ -205,7 +209,8 @@ def getBuckets(node, rest_port, username, password):
             bucketsOnCluster.append(bucket)
     return bucketsOnCluster
 
-def consumer(id, verbose):
+
+def consumer(id: int, verbose: bool):
     while True:
         try:
             if backup_complete:
