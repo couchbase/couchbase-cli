@@ -12,7 +12,7 @@ Modifies notification settings
 
 [verse]
 _couchbase-cli setting-notification_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--enable-notification <int>]
+    [--password <password>] [--enable-notifications <int>]
 
 == DESCRIPTION
 
@@ -34,12 +34,12 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 To enable notifications on a Couchbase cluster run the following command\&.
 
-  $ couchbase-cli setting-notification -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli setting-notifications -c 192.168.1.5 -u Administrator \
    -p password --enable-notification 1
 
 To disable notifications run the following command.
 
-  $ couchbase-cli setting-notification -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli setting-notifications -c 192.168.1.5 -u Administrator \
    -p password --enable-notification 0
 
 == DISCUSSION
