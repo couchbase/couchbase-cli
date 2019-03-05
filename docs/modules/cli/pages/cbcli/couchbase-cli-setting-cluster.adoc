@@ -11,11 +11,13 @@ Modifies cluster settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-cluster_ [--cluster <url>] [--cluster-username <username>]
+_couchbase-cli setting-cluster_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--cluster-username <username>]
     [--cluster-password <password>] [--cluster-port <port>]
-      [--cluster-ramsize <megabytes>] [--cluster-name <name>]
-      [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
-      [--cluster-eventing-ramsize <megabytes>]
+    [--cluster-ramsize <megabytes>] [--cluster-name <name>]
+    [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
+    [--cluster-eventing-ramsize <megabytes>]
+    [--cluster-analytics-ramsize <megabytes>]
 
 == DESCRIPTION
 
@@ -54,6 +56,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   if the Eventing service is specified in the --services option. This quota
   will be assigned to all future nodes added to the cluster with the eventing
   service.
+
+--cluster-analytics-ramsize::
+  Sets the Analytics service memory quota (in MB). This parameter is required
+  if the Analytics service is specified in the --services option. This quota
+  will be assigned to all future nodes added to the cluster with the
+  Analytics service.
 
 --cluster-name::
   Sets the name for this cluster. Naming clusters is useful when you have
