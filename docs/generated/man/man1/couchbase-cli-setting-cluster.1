@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-cluster
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-03-06
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-CLUSTER" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-CLUSTER" "1" "2019-03-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -32,11 +32,13 @@ couchbase\-cli\-setting\-cluster \- Modifies cluster settings
 .SH "SYNOPSIS"
 .sp
 .nf
-\fIcouchbase\-cli setting\-cluster\fP [\-\-cluster <url>] [\-\-cluster\-username <username>]
+\fIcouchbase\-cli setting\-cluster\fP [\-\-cluster <url>] [\-\-username <user>]
+    [\-\-password <password>] [\-\-cluster\-username <username>]
     [\-\-cluster\-password <password>] [\-\-cluster\-port <port>]
-      [\-\-cluster\-ramsize <megabytes>] [\-\-cluster\-name <name>]
-      [\-\-cluster\-index\-ramsize <megabytes>] [\-\-cluster\-fts\-ramsize <megabytes>]
-      [\-\-cluster\-eventing\-ramsize <megabytes>]
+    [\-\-cluster\-ramsize <megabytes>] [\-\-cluster\-name <name>]
+    [\-\-cluster\-index\-ramsize <megabytes>] [\-\-cluster\-fts\-ramsize <megabytes>]
+    [\-\-cluster\-eventing\-ramsize <megabytes>]
+    [\-\-cluster\-analytics\-ramsize <megabytes>]
 .fi
 .br
 .SH "DESCRIPTION"
