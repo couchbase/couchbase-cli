@@ -11,11 +11,13 @@ Modifies cluster settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-cluster_ [--cluster <url>] [--cluster-username <username>]
+_couchbase-cli setting-cluster_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--cluster-username <username>]
     [--cluster-password <password>] [--cluster-port <port>]
-      [--cluster-ramsize <megabytes>] [--cluster-name <name>]
-      [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
-      [--cluster-eventing-ramsize <megabytes>]
+    [--cluster-ramsize <megabytes>] [--cluster-name <name>]
+    [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
+    [--cluster-eventing-ramsize <megabytes>]
+    [--cluster-analytics-ramsize <megabytes>]
 
 == DESCRIPTION
 
