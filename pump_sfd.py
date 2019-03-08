@@ -12,7 +12,7 @@ import threading
 import couchstore # pylint: disable=import-error
 import couchbaseConstants
 import pump
-from cb_bin_client import decodeCollectionID
+from cb_bin_client import decodeCollectionID, encodeCollectionId
 from collections import defaultdict
 
 SFD_SCHEME = "couchstore-files://"
@@ -215,10 +215,10 @@ class SFDSource(pump.Source):
 
                 if doc_info.deleted:
                     cmd = couchbaseConstants.CMD_DCP_DELETE
-                    val = ''
+                    val = b''
                 else:
                     cmd = couchbaseConstants.CMD_DCP_MUTATION
-                    val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
+                    val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS).encode()
                 try:
                     rev_meta_bytes = doc_info.revMeta.getBytes()
                     if len(rev_meta_bytes) == 18:
@@ -301,7 +301,11 @@ class SFDSink(pump.Sink):
                     if self.skip(key, vbucket_id):
                         continue
 
-                    d = couchstore.DocumentInfo(str(key))
+                    # TODO: add default collection to all keys in CC this should change to have the correct collection
+                    if isinstance(key, str):
+                        key = key.encode()
+                    key = encodeCollectionId(0) + key
+                    d = couchstore.DocumentInfo(key)
                     flex_meta = 1
                     d.revMeta = struct.pack(SFD_REV_META, cas, exp, flg, flex_meta, dtype)
                     if meta:
@@ -318,10 +322,13 @@ class SFDSink(pump.Sink):
                     if seqno:
                         d.sequence = int(seqno)
                     if cmd == couchbaseConstants.CMD_TAP_MUTATION or cmd == couchbaseConstants.CMD_DCP_MUTATION:
-                        v = str(val)
                         try:
-                            if re.match('^\\s*{', v) and json.loads(v) is not None:
+                            v = val
+                            if dtype & 0x01:
                                 d.contentType = couchstore.DocumentInfo.IS_JSON
+                            # Why do this when we have a flag for it?
+                            # if re.match('^\\s*{', v) and json.loads(v) is not None:
+                            #     d.contentType = couchstore.DocumentInfo.IS_JSON
                         except ValueError:
                             pass # NON_JSON is already the default contentType.
                     elif cmd == couchbaseConstants.CMD_TAP_DELETE or cmd == couchbaseConstants.CMD_DCP_DELETE:
