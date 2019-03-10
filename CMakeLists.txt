@@ -1,13 +1,6 @@
 PROJECT(CouchbaseClient)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
-# Initialize venv for this directory
-GET_FILENAME_COMPONENT (_snappy_libdir "${SNAPPY_LIBRARIES}" DIRECTORY)
-PyVenv (
-  INCLUDE_DIRS ${SNAPPY_INCLUDE_DIR}
-  LIBRARY_DIRS ${_snappy_libdir}
-)
-
 # Generate the Version module
 CONFIGURE_FILE (cb_version.cmake.py
                 cb_version.py)
@@ -15,38 +8,44 @@ CONFIGURE_FILE (cb_version.cmake.py
 # Copy couchstore.py from couchstore so we can import it
 CONFIGURE_FILE (../couchstore/python/couchstore.py couchstore.py COPYONLY)
 
-# List of "hidden" pump modules, ie, those which are imported
-# dynamically and might therefore not be detectable by PyInstaller.
-SET (hidden_pumps
-  pump_json
-  pump_sfd
-)
+# Install all executable Python scripts, with wrappers
+PyWrapper (BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+    SCRIPTS
+    couchbase-cli
+    cblogredaction
+    cbrestorewrapper
+    cbbackup
+    cbbackupwrapper
+    cbrecovery
+    cbrestore
+    cbtransfer
+    cbworkloadgen)
+
+# Install dependent Python files
+INSTALL (FILES
+    cb_bin_client.py
+    cb_util.py
+    cbmgr.py
+    cluster_manager.py
+    couchbaseConstants.py
+    pbar.py
+    pump.py
+    pump_bfd.py
+    pump_cb.py
+    pump_csv.py
+    pump_gen.py
+    pump_json.py
+    pump_mc.py
+    pump_sfd.py
+    pump_transfer.py
+    pump_dcp.py
+    ${CMAKE_CURRENT_BINARY_DIR}/cb_version.py
+    ${CMAKE_CURRENT_BINARY_DIR}/couchstore.py
+    DESTINATION lib/python)
 IF (BUILD_ENTERPRISE)
-  LIST (APPEND hidden_pumps pump_bfd2)
+  INSTALL (FILES pump_bfd2.py DESTINATION lib/python)
 ENDIF ()
 
-PyInstall (TARGET couchbase-cli SCRIPT couchbase-cli INSTALL_PATH bin)
-PyInstall (TARGET cblogredaction SCRIPT cblogredaction INSTALL_PATH bin)
-PyInstall (TARGET cbrestorewrapper SCRIPT cbrestorewrapper INSTALL_PATH bin)
-
-IF (APPLE)
-  # Due to a bug in PyInstaller, it won't find dylib dependencies on MacOS
-  # if they're in non-standard locations. So for libsnappy we have to
-  # explicitly copy it into the package.
-  SET (_extra_bins EXTRA_BIN "${_snappy_libdir}/libsnappy.1.dylib")
-ENDIF ()
-
-# These tools all use the pump libraries so their PyInstall()
-# directives look the same
-FOREACH (PUMP_TOOL cbbackup cbbackupwrapper cbrecovery cbrestore cbtransfer cbworkloadgen)
-  PyInstall (TARGET ${PUMP_TOOL} SCRIPT ${PUMP_TOOL}
-    INSTALL_PATH bin
-    IMPORTS ${hidden_pumps}
-    LIBRARY_DIRS "${_snappy_libdir}" "${CMAKE_BINARY_DIR}/couchstore"
-    ${_extra_bins}
-    DEPENDS couchstore
-  )
-ENDFOREACH ()
-
+INSTALL (DIRECTORY requests DESTINATION lib/python)
 
 ADD_SUBDIRECTORY(docs)
