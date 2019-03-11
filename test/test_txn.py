@@ -108,9 +108,15 @@ class TestFilterOutTXN(unittest.TestCase):
                 item.data_type = cbcs.DATATYPE_HAS_XATTR
             elif data_set_type == DataSetType.ATR:
                 item.key = b'atr-' + str(i).encode() + b'-#ffff'
+                xattr = get_XATTR_pair(item.key, i)
+                item.val = get_value_with_XATTR(xattr, b'rawbytes')
+                item.data_type = cbcs.DATATYPE_HAS_XATTR
                 item.exp_skip = True
             elif data_set_type == DataSetType.TXN_CLIENT_RECORD:
                 item.key = b'txn-client-record'
+                xattr = get_XATTR_pair(item.key, i)
+                item.val = get_value_with_XATTR(xattr, b'rawbytes')
+                item.data_type = cbcs.DATATYPE_HAS_XATTR
                 item.exp_skip = True
             data_set.append(item)
         return data_set

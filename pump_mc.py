@@ -238,6 +238,11 @@ class MCSink(pump.Sink):
         """This function return signature is [skip:bool, val:bytes, cas:num, exp:num, data_type:num]
            skip is true if the key matches an ATR or a client record, otherwise it will be false.
            If the value has XATTRS they will be checked fot txn object that if it exists will be removed"""
+
+        # If it does not have XATTRS return all values as they where
+        if not (data_type & couchbaseConstants.DATATYPE_HAS_XATTR > 0):
+            return False, val, cas, exp, data_type
+
         str_key = key
         if isinstance(str_key, bytes):
             str_key = str_key.decode()
@@ -249,10 +254,6 @@ class MCSink(pump.Sink):
         if ATR_EXP.match(str_key):
             logging.info('(TXN) Skipped the transfer of the ATR: {}'.format(str_key))
             return True, val, cas, exp, data_type
-
-        # If it does not have XATTRS return all values as they where
-        if not (data_type & couchbaseConstants.DATATYPE_HAS_XATTR > 0):
-            return False, val, cas, exp, data_type
 
         # Get the length of the xattrs
         xattr_len_bytes = val[:4]
