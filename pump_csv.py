@@ -65,14 +65,11 @@ class CSVSource(pump.Source):
                 self.r = csv.reader(open(self.spec, 'r', encoding='utf-8'))
                 self.fields = next(self.r)
                 if not 'id' in self.fields:
-                    return ("error: no 'id' field in 1st line of csv: %s" %
-                            (self.spec)), None
+                    return f'error: no \'id\' field in 1st line of csv: {self.spec}', None
             except StopIteration:
-                return ("error: could not read 1st line of csv: %s" %
-                        (self.spec)), None
+                return f'error: could not read 1st line of csv: {self.spec}', None
             except IOError as e:
-                return ("error: could not open csv: %s; exception: %s" %
-                        (self.spec, e)), None
+                return f'error: could not open csv: {self.spec}; exception: {e!s}', None
 
         batch = pump.Batch(self)
 
@@ -103,7 +100,7 @@ class CSVSource(pump.Source):
                 self.done = True
                 self.r = None
             except Exception as e:
-                logging.error("error: fails to read from csv file, %s", e)
+                logging.error(f'error: fails to read from csv file {e}')
                 continue
 
         if batch.size() <= 0:
@@ -184,7 +181,7 @@ class CSVSink(pump.Sink):
                     try:
                         self.csvfile = open(filename, "w", encoding='utf-8')
                     except IOError as e:
-                        return ("error: could not write csv to file:%s" % filename), None
+                        return f'error: could not write csv to file: {filename}', None
                 self.writer = csv.writer(self.csvfile)
                 self.writer.writerow(self.fields)
             else:
@@ -193,8 +190,7 @@ class CSVSink(pump.Sink):
                     try:
                         self.csvfile = open(filename, "w",  encoding='utf-8')
                     except IOError as e:
-                        return ("error: could not write csv to file:%s" % \
-                               filename), None
+                        return f'error: could not write csv to file: {filename}', None
                 self.writer = csv.writer(self.csvfile)
                 self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev', 'vbid', 'dtype'])
         msg_tuple_format = 0
@@ -238,7 +234,7 @@ class CSVSink(pump.Sink):
                 elif cmd == couchbaseConstants.CMD_GET:
                     pass
                 else:
-                    return "error: CSVSink - unknown cmd: " + str(cmd), None
+                    return f'error: CSVSink - unknown cmd: {cmd!s}', None
             except IOError:
                 return "error: could not write csv to stdout", None
 
@@ -255,9 +251,9 @@ class CSVSink(pump.Sink):
         extension = os.path.splitext(base)
         filename = extension[0]
         if self.bucket_name():
-            filename = filename + "_" + urllib.parse.quote_plus(self.bucket_name())
+            filename = f'{filename}_{urllib.parse.quote_plus(self.bucket_name())}'
         if self.node_name():
-            filename = filename + "_" + urllib.parse.quote_plus(self.node_name())
+            filename = f'{filename}_{urllib.parse.quote_plus(self.node_name())}'
         return filename + extension[1]
 
     def convert_meta(self, meta) -> int:

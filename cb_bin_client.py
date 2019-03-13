@@ -67,15 +67,16 @@ class MemcachedError(Exception):
     """Error raised when a command fails."""
 
     def __init__(self, status: int, msg: str):
-        supermsg='Memcached error #' + repr(status)
-        if msg: supermsg += ":  " + msg
+        supermsg = f'Memcached error #{repr(status)}'
+        if msg:
+            supermsg += f':  {msg}'
         Exception.__init__(self, supermsg)
 
         self.status=status
         self.msg=msg
 
     def __repr__(self):
-        return "<MemcachedError #%d ``%s''>" % (self.status, self.msg)
+        return f'<MemcachedError #{self.status} ``{self.msg}''>'
 
 
 class MemcachedClient(object):
@@ -149,13 +150,12 @@ class MemcachedClient(object):
             rv += data
             remaining -= len(data)
 
-        assert (magic in (RES_MAGIC_BYTE, REQ_MAGIC_BYTE)), "Got magic: %d" % magic
+        assert (magic in (RES_MAGIC_BYTE, REQ_MAGIC_BYTE)), f'Got magic: {magic}'
         return cmd, errcode, opaque, cas, keylen, extralen, rv
 
     def _handleKeyedResponse(self, myopaque: Union[int, None]) -> Tuple[int, int, int, int, int, bytes]:
         cmd, errcode, opaque, cas, keylen, extralen, rv = self._recvMsg()
-        assert myopaque is None or opaque == myopaque, \
-            "expected opaque %x, got %x" % (myopaque, opaque)  # type: ignore
+        assert myopaque is None or opaque == myopaque, f'expected opaque {myopaque:x}, got {opaque:x}'
         if errcode != 0:
             raise MemcachedError(errcode,  str(rv))
         return cmd, opaque, cas, keylen, extralen, rv
@@ -184,7 +184,7 @@ class MemcachedClient(object):
         return self._cat(couchbaseConstants.CMD_PREPEND, key, cas, value)
 
     def __incrdecr(self, cmd, key, amt, init, exp):
-        something, cas, val=self._doCmd(cmd, key, '',
+        something, cas, val=self._doCmd(cmd, key, b'',
             struct.pack(couchbaseConstants.INCRDECR_PKT_FMT, amt, init, exp))
         return struct.unpack(INCRDECR_RES_FMT, val)[0], cas
 

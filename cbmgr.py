@@ -21,7 +21,7 @@ try:
     from cb_version import VERSION  # pylint: disable=import-error
 except ImportError:
     VERSION = "0.0.0-0000-community"
-    print ("WARNING: Could not import cb_version, setting VERSION to {0}".format(VERSION))
+    print(f'WARNING: Could not import cb_version, setting VERSION to {VERSION}')
 
 COUCHBASE_DEFAULT_PORT = 8091
 
@@ -75,9 +75,9 @@ def process_services(services, enterprise):
     svc_candidate = ["data", "index", "query", "fts", "eventing", "analytics"]
     for svc in svc_set:
         if svc not in svc_candidate:
-            return None, ["`%s` is not a valid service" % svc]
+            return None, [f'`{svc}` is not a valid service']
         if not enterprise and svc in ["eventing", "analytics"]:
-            return None, ["{0} service is only available on Enterprise Edition".format(svc)]
+            return None, [f'{svc} service is only available on Enterprise Edition']
 
     if not enterprise:
         # Valid CE node service configuration
@@ -85,10 +85,9 @@ def process_services(services, enterprise):
         ce_svc_40 = set(["data", "index", "query"])
         ce_svc_45 = set(["data", "index", "query", "fts"])
         if svc_set not in [ce_svc_30, ce_svc_40, ce_svc_45]:
-            return None, ["Invalid service configuration. Community Edition only supports nodes with the following"
-                          " combinations of services: '{0}', '{1}' or '{2}'".format(''.join(ce_svc_30),
-                                                                                    ','.join(ce_svc_40),
-                                                                                    ','.join(ce_svc_45))]
+            return None, [f"Invalid service configuration. Community Edition only supports nodes with the following"
+                          f" combinations of services: '{''.join(ce_svc_30)}', '{','.join(ce_svc_40)}' or "
+                          f"'{','.join(ce_svc_45)}'"]
 
     services = ",".join(svc_set)
     for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"], ["analytics", "cbas"]]:
@@ -107,18 +106,18 @@ def find_subcommands():
     return subcommands
 
 def _success(msg):
-    print("SUCCESS: " + msg)
+    print(f'SUCCESS: {msg}')
 
 def _deprecated(msg):
-    print("DEPRECATED: " + msg)
+    print(f'DEPRECATED: {msg}')
 
 def _warning(msg):
-    print("WARNING: " + msg)
+    print(f'WARNING: {msg}')
 
 def _exitIfErrors(errors):
     if errors:
         for error in errors:
-            print("ERROR: " + error)
+            print(f'ERROR: {error}')
         sys.exit(1)
 
 def _exit_on_file_write_failure(fname, to_write):
@@ -137,7 +136,7 @@ def _exit_on_file_read_failure(fname, toReport = None):
         return read_bytes
     except IOError as error:
         if toReport is None:
-            _exitIfErrors([error.strerror + " `" + fname + "`"])
+            _exitIfErrors([f'{error.strerror} `{fname}`'])
         else:
             _exitIfErrors([toReport])
 
@@ -154,7 +153,7 @@ def apply_default_port(nodes):
     def append_port(node):
         if re.match('.*:\d+$', node):
             return node
-        return node + ':8091'
+        return f'{node}:8091'
     return [append_port(x) for x in nodes]
 
 
@@ -173,8 +172,7 @@ def check_versions(rest):
     minor_cli = VERSION[VERSION.index('.') + 1: VERSION.index('.', len(major_cli) + 1)]
 
     if major_cli != major_couch or minor_cli != minor_couch:
-        _warning("couchbase-cli version {0} does not match couchbase server version {1}".format(VERSION,
-                                                                                                server_version))
+        _warning(f'couchbase-cli version {VERSION} does not match couchbase server version {server_version}')
 
 class CLIHelpFormatter(HelpFormatter):
     """Format help with indented section bodies"""
@@ -343,7 +341,7 @@ class CliParser(ArgumentParser):
         super(CliParser, self).__init__(*args, **kwargs)
 
     def error(self, message):
-        self.exit(2, ('ERROR: %s\n') % (message))
+        self.exit(2, f'ERROR: {message}\n')
 
 
 class Command(object):
@@ -409,9 +407,9 @@ class CouchbaseCLI(Command):
             sys.exit(0)
 
         if not args[1] in ["-h", "--help", "--version"] and  args[1].startswith("-"):
-            _exitIfErrors(["Unknown subcommand: '{0}'. The first argument has to be a subcommand like 'bucket-list' or"
-                           " 'rebalance', please see couchbase-cli -h for the full list of commands and"
-                           " options".format(args[1])])
+            _exitIfErrors([f"Unknown subcommand: '{args[1]}'. The first argument has to be a subcommand like"
+                           f" 'bucket-list' or 'rebalance', please see couchbase-cli -h for the full list of commands"
+                           f" and options"])
 
 
         l1_args = self.parser.parse_args(args[1:2])
@@ -849,7 +847,7 @@ class BucketCreate(Subcommand):
                 opts.view_frag_size is not None or opts.from_hour is not None or opts.from_min is not None or
                 opts.to_hour is not None or opts.to_min is not None or opts.abort_outside is not None or
                 opts.paralleldb_and_view_compact is not None or opts.purge_interval is not None)):
-            _warning("ignoring compaction settings as bucket type %s does not accept it" % opts.type)
+            _warning(f'ignoring compaction settings as bucket type {opts.type} does not accept it')
 
 
         priority = None
@@ -1012,7 +1010,7 @@ class BucketEdit(Subcommand):
                      opts.from_min is not None or opts.to_hour is not None or opts.to_min is not None or
                      opts.abort_outside is not None or opts.paralleldb_and_view_compact is not None or
                      opts.purge_interval is not None)):
-            _exitIfErrors(["compaction settings can not be specified for a %s bucket" % bucket["bucketType"]])
+            _exitIfErrors([f'compaction settings can not be specified for a {bucket["bucketType"]} bucket'])
 
         priority = None
         if opts.priority is not None:
@@ -1106,11 +1104,11 @@ class BucketList(Subcommand):
             print(json.dumps(result))
         else:
             for bucket in result:
-                print('%s' % bucket['name'])
-                print(' bucketType: %s' % bucket['bucketType'])
-                print(' numReplicas: %s' % bucket['replicaNumber'])
-                print(' ramQuota: %s' % bucket['quota']['ram'])
-                print(' ramUsed: %s' % bucket['basicStats']['memUsed'])
+                print(f'{bucket["name"]}')
+                print(f' bucketType: {bucket["bucketType"]}')
+                print(f' numReplicas: {bucket["replicaNumber"]}')
+                print(f' ramQuota: {bucket["quota"]["ram"]}')
+                print(f' ramUsed: {bucket["basicStats"]["memUsed"]}')
 
     @staticmethod
     def get_man_page_name():
@@ -1226,7 +1224,7 @@ class CollectLogsStatus(Subcommand):
             print("No log collection tasks were found")
 
     def _print_task(self, task):
-        print("Status: %s" % task['status'])
+        print(f'Status: {task["status"]}')
         if 'perNode' in task:
             print("Details:")
             for node, node_status in task["perNode"].items():
@@ -1394,11 +1392,11 @@ class GroupManage(Subcommand):
         for group in groups["groups"]:
             if opts.name is None or opts.name == group['name']:
                 found = True
-                print('%s' % group['name'])
+                print(group['name'])
                 for node in group['nodes']:
-                    print(' server: %s' % node["hostname"])
+                    print(f' server: {node["hostname"]}')
         if not found and opts.name:
-            _exitIfErrors(["Invalid group name: %s" % opts.name])
+            _exitIfErrors([f'Invalid group name: {opts.name}'])
 
     def _move(self, rest, opts):
         if opts.from_group is None:
@@ -1489,7 +1487,7 @@ class MasterPassword(LocalSubcommand):
         password = "\"" + password.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
         randChars = ''.join(random.choice(string.ascii_letters) for i in range(20))
-        name = 'cb-%s@127.0.0.1' % randChars
+        name = f'cb-{randChars}@127.0.0.1'
 
         instr = "Res = rpc:call('" + node + "', encryption_service, set_password, [" \
                 + password + "]), io:format(\"~p~n\", [Res])."
@@ -1524,7 +1522,7 @@ class MasterPassword(LocalSubcommand):
             rc = p.returncode
             return output, error
         except OSError:
-            _exitIfErrors(["Could not locate the %s executable" % name])
+            _exitIfErrors([f'Could not locate the {name} executable'])
 
     @staticmethod
     def get_man_page_name():
@@ -1860,14 +1858,14 @@ class ServerEshell(Subcommand):
             [short, _] = node.split('@')
 
             if opts.vm == 'babysitter':
-                node = 'babysitter_of_%s@127.0.0.1' % short
+                node = f'babysitter_of_{short}@127.0.0.1'
             elif opts.vm == 'couchdb':
-                node = 'couchdb_%s@127.0.0.1' % short
+                node = f'couchdb_{short}@127.0.0.1'
             else:
-                _exitIfErrors(["Unknown vm type `%s`" % opts.vm])
+                _exitIfErrors([f'Unknown vm type `{opts.vm}`'])
 
         rand_chars = ''.join(random.choice(string.ascii_letters) for i in range(20))
-        name = 'ctl-%s@127.0.0.1' % rand_chars
+        name = f'ctl-{rand_chars}@127.0.0.1'
 
         cb_erl = os.path.join(opts.erl_path, 'erl')
         if os.path.isfile(cb_erl):
@@ -2552,21 +2550,21 @@ class SettingCompaction(Subcommand):
         minute = None
         if opt_value:
             if opt_value.find(':') == -1:
-                _exitIfErrors(["Invalid value for %s, must be in form XX:XX" % opt_name])
+                _exitIfErrors([f'Invalid value for {opt_name}, must be in form XX:XX'])
             hour, minute = opt_value.split(':', 1)
             try:
                 hour = int(hour)
             except ValueError:
-                _exitIfErrors(["Invalid hour value for %s, must be an integer" % opt_name])
+                _exitIfErrors([f'Invalid hour value for {opt_name}, must be an integer'])
             if hour not in range(24):
-                _exitIfErrors(["Invalid hour value for %s, must be 0-23" % opt_name])
+                _exitIfErrors([f'Invalid hour value for {opt_name}, must be 0-23'])
 
             try:
                 minute = int(minute)
             except ValueError:
-                _exitIfErrors(["Invalid minute value for %s, must be an integer" % opt_name])
+                _exitIfErrors([f'Invalid minute value for {opt_name}, must be an integer'])
             if minute not in range(60):
-                _exitIfErrors(["Invalid minute value for %s, must be 0-59" % opt_name])
+                _exitIfErrors([f'Invalid minute value for {opt_name}, must be 0-59'])
         return hour, minute
 
     @staticmethod
@@ -3098,11 +3096,11 @@ class SslManage(Subcommand):
             try:
                 open(opts.regenerate, 'a').close()
             except IOError:
-                _exitIfErrors(["Unable to create file at `%s`" % opts.regenerate])
+                _exitIfErrors([f'Unable to create file at `{opts.regenerate}`'])
             certificate, errors = rest.regenerate_cluster_certificate()
             _exitIfErrors(errors)
             _exit_on_file_write_failure(opts.regenerate, certificate)
-            _success("Certificate regenerate and copied to '%s'" % (opts.regenerate))
+            _success(f'Certificate regenerate and copied to `{opts.regenerate}`')
         elif opts.cluster_cert:
             certificate, errors = rest.retrieve_cluster_certificate(opts.extended)
             _exitIfErrors(errors)
@@ -3119,7 +3117,7 @@ class SslManage(Subcommand):
             certificate = _exit_on_file_read_failure(opts.upload_cert)
             _, errors = rest.upload_cluster_certificate(certificate)
             _exitIfErrors(errors)
-            _success("Uploaded cluster certificate to %s" % (opts.cluster))
+            _success(f'Uploaded cluster certificate to {opts.cluster}')
         elif opts.set_cert:
             _, errors = rest.set_node_certificate()
             _exitIfErrors(errors)
@@ -3129,7 +3127,7 @@ class SslManage(Subcommand):
             try:
                 config = json.loads(data)
             except ValueError as e:
-                _exitIfErrors(["Client auth config does not contain valid json: %s" % e])
+                _exitIfErrors([f'Client auth config does not contain valid json: {e}'])
             _, errors = rest.set_client_cert_auth(config)
             _exitIfErrors(errors)
             _success("SSL client auth updated")
@@ -3318,7 +3316,7 @@ class UserManage(Subcommand):
         if len(user) != 0:
             print(json.dumps(user, indent=2))
         else:
-            _exitIfErrors(["no user %s" % opts.rbac_user])
+            _exitIfErrors([f'no user {opts.rbac_user}'])
 
     def _my_roles(self, rest, opts):
         if opts.rbac_user is not None:
@@ -3518,12 +3516,12 @@ class XdcrReplicate(Subcommand):
         _exitIfErrors(errors)
         for task in tasks:
             if task["type"] == "xdcr":
-                print('stream id: %s' % task['id'])
-                print("   status: %s" % task["status"])
-                print("   source: %s" % task["source"])
-                print("   target: %s" % task["target"])
+                print(f'stream id: {task["id"]}')
+                print(f'   status: {task["status"]}')
+                print(f'   source: {task["source"]}')
+                print(f'   target: {task["target"]}')
                 if "filterExpression" in task and task["filterExpression"] != "":
-                    print("   filter: %s" % task["filterExpression"])
+                    print(f'   filter: {task["filterExpression"]}')
 
     def _settings(self, rest, opts):
         if opts.replicator_id is None:
@@ -3611,15 +3609,16 @@ class XdcrSetup(Subcommand):
             cmd = "edit"
 
         if opts.name is None:
-            _exitIfErrors(["--xdcr-cluster-name is required to %s a cluster connection" % cmd])
+            _exitIfErrors([f'--xdcr-cluster-name is required to {cmd} a cluster connection'])
         if opts.hostname is None:
-            _exitIfErrors(["--xdcr-hostname is required to %s a cluster connections" % cmd])
+            _exitIfErrors([f'--xdcr-hostname is required to {cmd} a cluster connections'])
         if opts.username is None:
-            _exitIfErrors(["--xdcr-username is required to %s a cluster connections" % cmd])
+            _exitIfErrors([f'--xdcr-username is required to {cmd} a cluster connections'])
         if opts.password is None:
-            _exitIfErrors(["--xdcr-password is required to %s a cluster connections" % cmd])
+            _exitIfErrors([f'--xdcr-password is required to {cmd} a cluster connections'])
         if (opts.encrypt is not None or opts.encryption_type is not None) and opts.secure_connection is not None:
-            _exitIfErrors(["Cannot use deprecated flags --xdcr-demand-encryption or --xdcr-encryption-type with --xdcr-secure-connection"])
+            _exitIfErrors(["Cannot use deprecated flags --xdcr-demand-encryption or --xdcr-encryption-type with"
+                           " --xdcr-secure-connection"])
 
         if opts.secure_connection == "none":
             opts.encrypt = "0"
@@ -3679,11 +3678,11 @@ class XdcrSetup(Subcommand):
 
         for cluster in clusters:
             if not cluster["deleted"]:
-                print("cluster name: %s" % cluster["name"])
-                print("        uuid: %s" % cluster["uuid"])
-                print("   host name: %s" % cluster["hostname"])
-                print("   user name: %s" % cluster["username"])
-                print("         uri: %s" % cluster["uri"])
+                print(f'cluster name: {cluster["name"]}')
+                print(f'        uuid: {cluster["uuid"]}')
+                print(f'   host name: {cluster["hostname"]}')
+                print(f'   user name: {cluster["username"]}')
+                print(f'         uri: {cluster["uri"]}')
 
     @staticmethod
     def get_man_page_name():
@@ -3768,7 +3767,7 @@ class EventingFunctionSetup(Subcommand):
             if function["appname"] == opts.name:
                 exported_function = [function]
         if not exported_function:
-            _exitIfErrors(["Function '{}' does not exist".format(opts.name)])
+            _exitIfErrors([f'Function {opts.name} does not exist'])
         _exit_on_file_write_failure(opts.filename, json.dumps(exported_function, separators=(',',':')))
         _success("Function exported to: " + opts.filename)
 
@@ -3778,7 +3777,7 @@ class EventingFunctionSetup(Subcommand):
         exported_functions, errors = rest.export_functions()
         _exitIfErrors(errors)
         _exit_on_file_write_failure(opts.filename, json.dumps(exported_functions, separators=(',',':')))
-        _success("All functions exported to: " + opts.filename)
+        _success(f'All functions exported to: {opts.filename}')
 
     def _delete(self, rest, opts):
         if not opts.name:
@@ -3812,9 +3811,9 @@ class EventingFunctionSetup(Subcommand):
                 status = 'Deployed'
             else:
                 status = 'Undeployed'
-            print(' Status: ' + status)
-            print(' Source Bucket: ' + function['depcfg']['source_bucket'])
-            print(' Metadata Bucket: ' + function['depcfg']['metadata_bucket'])
+            print(f' Status: {status}')
+            print(f' Source Bucket: {function["depcfg"]["source_bucket"]}')
+            print(f' Metadata Bucket: {function["depcfg"]["metadata_bucket"]}')
 
     @staticmethod
     def get_man_page_name():
@@ -3885,9 +3884,9 @@ class CollectionManage(Subcommand):
         args = "--create-scope, --drop-scope, --list-scopes, --create-collection, --drop-collection, or " \
                "--list-collections"
         if cmd_total == 0:
-            _exitIfErrors(["Must specify one of the following: " + args])
+            _exitIfErrors([f'Must specify one of the following: {args}'])
         elif cmd_total != 1:
-            _exitIfErrors(["Only one of the following may be specified: " + args])
+            _exitIfErrors([f'Only one of the following may be specified: {args}'])
 
         if opts.max_ttl is not None and opts.create_collection is None:
             _exitIfErrors(["--max-ttl can only be set with --create-collection"])
@@ -3946,7 +3945,7 @@ class CollectionManage(Subcommand):
             for collection in manifest['scopes'][opts.list_collections]['collections'].keys():
                 print(collection)
         else:
-            _exitIfErrors(["Scope {0} does not exist".format(opts.list_collections)])
+            _exitIfErrors([f"Scope {opts.list_collections} does not exist"])
 
     def _get_scope_collection(self, path):
         paths = path.split('.')
@@ -4067,11 +4066,11 @@ class SettingAlternateAddress(Subcommand):
         for port_value_pair in port_mappings:
             p_v = port_value_pair.split('=')
             if len(p_v) != 2:
-                return None, ['invalid port mapping: {}'.format(port_value_pair)]
+                return None, [f'invalid port mapping: {port_value_pair}']
             try:
                 int(p_v[1])
             except ValueError:
-                return None, ['invalid port mapping: {}'.format(port_value_pair)]
+                return None, [f'invalid port mapping: {port_value_pair}']
             map.append((p_v[0], p_v[1]))
         return map, None
 
@@ -4136,11 +4135,11 @@ class SettingOnDemand(Subcommand):
         if json_out:
             print(json.dumps(licensing_info))
         else:
-            print('Reporting enabled: {}'.format(licensing_info['reporting_enabled']))
-            print('Contract id: {}'.format(licensing_info['contract_id']))
-            print('Reporting interval: {} ms'.format(licensing_info['reporting_interval']))
-            print('Reporting time out: {} ms'.format(licensing_info['reporting_timeout']))
-            print('Reporting endpoint: {}'.format(licensing_info['reporting_endpoint']))
+            print(f'Reporting enabled: {licensing_info["reporting_enabled"]}')
+            print(f'Contract id: {licensing_info["contract_id"]}')
+            print(f'Reporting interval: {licensing_info["reporting_interval"]} ms')
+            print(f'Reporting time out: {licensing_info["reporting_timeout"]} ms')
+            print(f'Reporting endpoint: {licensing_info["reporting_endpoint"]}')
 
     @staticmethod
     def _configure(rest, reporting_enabled, contract_id, customer_token):

@@ -37,8 +37,7 @@ processes = {}
 bucket_target = ""
 
 def opt_extra_help(parser, extra_defaults):
-    extra_help = "; ".join(["%s=%s (%s)" %
-                           (k, extra_defaults[k][0], extra_defaults[k][1])
+    extra_help = "; ".join([f'{k}={extra_defaults[k][0]} ({ extra_defaults[k][1]})'
                            for k in sorted(extra_defaults.keys())])
 
     group = optparse.OptionGroup(parser, "Available extra config parameters (-x)",
@@ -75,7 +74,7 @@ def opt_parse_extra(extra, extra_defaults):
                       (extra or "").split(',')]])
     for k, v in extra_in.items():
         if k and not extra_defaults.get(k):
-            sys.exit("error: unknown extra option: " + k)
+            sys.exit(f'error: unknown extra option: {k}')
     return dict([(k, float(extra_in.get(k, extra_defaults[k][0])))
                  for k in extra_defaults.keys()])
 
@@ -131,8 +130,8 @@ all data that are collected will be restored""")
 def getBuckets(node, rest_port, username, password):
     request = urllib.request.Request(
         'http://' + node + ':' + rest_port + '/pools/default/buckets')
-    base64string = base64.encodebytes(('{0}:{1}'.format(username, password)).encode()).decode().replace('\n', '')
-    request.add_header('Authorization', 'Basic %s' % base64string)
+    base64string = base64.encodebytes(f'{username}:{password}'.encode()).decode().replace('\n', '')
+    request.add_header('Authorization', f'Basic {base64string}')
     try:
         response = urllib.request.urlopen(request)
     except:
@@ -168,7 +167,7 @@ if __name__ == '__main__':
 
     # Check to see if root backup directory exists
     if not os.path.isdir(backupDir):
-        print('\n\nThe directory ' + backupDir + ' does not exist')
+        print(f'\n\nThe directory {backupDir} does not exist')
         print('Please enter a different backup directory\n')
         sys.exit(1)
     # Check to see if path is correct
@@ -177,7 +176,7 @@ if __name__ == '__main__':
         print('Please run with a different path')
         sys.exit(1)
     if not os.path.isfile(os.path.join(path, restore_exe)):
-        print('cbrestore could not be found in ' + path)
+        print(f'cbrestore could not be found in {path}')
         sys.exit(1)
 
     # Check to see if log directory exists if not create it
@@ -188,7 +187,7 @@ if __name__ == '__main__':
         try:
             os.mkdir(dir)
         except:
-            print('Error trying to create directory ' + dir)
+            print(f'Error trying to create directory {dir}')
             sys.exit(1)
 
     # Separate out node and REST port
@@ -219,7 +218,7 @@ if __name__ == '__main__':
                 bucketList.append(bucket_target)
 
         if len(bucketList) == 0:
-            print('Bucket ' + bucket_target + ' does not exist')
+            print(f'Bucket {bucket_target} does not exist')
             print('Please enter a different bucket')
             sys.exit(1)
 
@@ -288,9 +287,8 @@ if __name__ == '__main__':
         for p in processes:
             p.wait()
             if p.returncode == 1:
-                print('Error with backup - look in ' + os.path.join(backupDir, 'logs', processes[p]) \
-                                                     + '-restore-' + bucket + \
-                    '.err for details')
+                print(f'Error with backup - look in '
+                      f'{os.path.join(backupDir, "logs", processes[p])}-restore-{bucket}.err for details')
             else:
                 successCount += 1
 

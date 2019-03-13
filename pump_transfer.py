@@ -60,19 +60,19 @@ class Transfer:
         if opts_etc:
             opts.etc = opts_etc  # Used for unit tests, etc.
 
-        process_name = os.path.basename(argv[0]) + "-" + "".join(random.sample(string.ascii_letters, 16))
+        process_name = f'{os.path.basename(argv[0])}-{"".join(random.sample(string.ascii_letters, 16))}'
         setattr(opts, "process_name", process_name)
 
-        logging.info(self.name + "...")
-        logging.info(" source : %s", source)
-        logging.info(" sink   : %s", sink)
-        logging.info(" opts   : %s", opts.safe)
+        logging.info(f'{self.name}...')
+        logging.info(f' source : {source}')
+        logging.info(f' sink   : {sink}')
+        logging.info(f' opts   : {opts.safe}')
 
         source_class, sink_class = self.find_handlers(opts, source, sink)
         if not source_class:
-            return "error: unknown type of source: " + source
+            return f'error: unknown type of source: {source}'
         if not sink_class:
-            return "error: unknown type of sink: " + sink
+            return f'error: unknown type of sink: {sink}'
         err = sink_class.check_source(opts, source_class, source, sink_class, sink)
         if err:
             return err
@@ -97,9 +97,7 @@ class Transfer:
         opts, rest = p.parse_args(argv[1:])
         if len(rest) != 2:
             p.print_help()
-            return "\nError: please provide both a %s and a %s" % \
-                (self.source_alias, self.sink_alias), \
-                None, None, None
+            return f'\nError: please provide both a {self.source_alias} and a {self.sink_alias}', None, None, None
 
         err = self.check_opts(opts)  # pylint: disable=assignment-from-none
         if err:
@@ -108,9 +106,7 @@ class Transfer:
         min_thread = 1
         max_thread = 20
         if opts.threads not in list(range(min_thread, max_thread)):
-            return "\nError: option -t: value is out of range [%s, %s]" % \
-                   (min_thread, max_thread), \
-                   None, None, None
+            return f'\nError: option -t: value is out of range [{min_thread}, {max_thread}]', None, None, None
 
         if opts.username is None:
             username = os.environ.get('CB_REST_USERNAME', None)
@@ -417,8 +413,7 @@ def opt_parse_extra(extra, extra_defaults):
                  for k in extra_defaults.keys()])
 
 def opt_extra_help(parser, extra_defaults):
-    extra_help = "; ".join(["%s=%s (%s)" %
-                           (k, extra_defaults[k][0], extra_defaults[k][1])
+    extra_help = "; ".join([f'{k}={extra_defaults[k][0]} ({extra_defaults[k][1]})'
                            for k in sorted(extra_defaults.keys())])
 
     group = optparse.OptionGroup(parser, "Available extra config parameters (-x)",

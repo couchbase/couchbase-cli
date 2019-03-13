@@ -93,7 +93,7 @@ class WorkloadGen(pump_transfer.Transfer):
             if val is not None:
                 if key in ("loop", "json"):
                     val = int(val)
-                gen_str += gen_opts[key] + "=" + str(val) + ","
+                gen_str += f'{gen_opts[key]}={val!s},'
         if gen_str[-1] == ",":
             gen_str = gen_str[:-1]
         sink_str = ""

@@ -49,7 +49,7 @@ class CBSink(pump_mc.MCSink):
             try:
                 conn.audit(couchbaseConstants.AUDIT_EVENT_RESTORE_SINK_START, json.dumps(event))
             except Exception as e:
-                logging.warn("auditing error: %s" % e)
+                logging.warning(f'auditing error: {e}')
         return 0
 
     def add_stop_event(self, conn: Optional[cb_bin_client.MemcachedClient]) -> couchbaseConstants.PUMP_ERROR:
@@ -66,7 +66,7 @@ class CBSink(pump_mc.MCSink):
             try:
                 conn.audit(couchbaseConstants.AUDIT_EVENT_RESTORE_SINK_STOP, json.dumps(event))
             except Exception as e:
-                logging.warn("auditing error: %s" % e)
+                logging.warning(f'auditing error: {e}')
         return 0
 
     def scatter_gather(self, mconns: Dict[str, cb_bin_client.MemcachedClient], batch: pump.Batch) -> \
@@ -180,12 +180,10 @@ class CBSink(pump_mc.MCSink):
         sink_buckets = [bucket for bucket in sink_map['buckets']
                         if pump.returnString(bucket['name']) == pump.returnString(sink_bucket_name)]
         if not sink_buckets:
-            return "error: missing bucket-destination: {0}".format(sink_bucket_name) + \
-                " at destination: {0}".format(spec) + \
-                "; perhaps your username/password is missing or incorrect", None
+            return f'error: missing bucket-destination: {sink_bucket_name} at destination: {spec};' \
+                f' perhaps your username/password is missing or incorrect', None
         if len(sink_buckets) != 1:
-            return "error: multiple buckets with name:{0}".format(sink_bucket_name) + \
-                " at destination: {0}".format(spec), None
+            return f'error: multiple buckets with name:{sink_bucket_name} at destination: {spec}', None
         sink_map['buckets'] = sink_buckets
         if opts.extra.get("allow_recovery_vb_remap", 0) == 1:
             error = CBSink.map_recovery_buckets(sink_map, sink_bucket_name, opts.vbucket_list)
@@ -196,7 +194,7 @@ class CBSink(pump_mc.MCSink):
 
     def refresh_sink_map(self) -> couchbaseConstants.PUMP_ERROR:
         """Grab a new vbucket-server-map."""
-        logging.warn("refreshing sink map: %s" % (self.spec))
+        logging.warning(f'refreshing sink map: {self.spec}')
         rv, new_sink_map = CBSink.check(self.opts, self.spec, self.source_map)
         if rv == 0:
             self.sink_map = new_sink_map
@@ -213,7 +211,7 @@ class CBSink(pump_mc.MCSink):
             if not index_defs:
                 return 0
         except ValueError as e:
-            return "error: could not parse fts index definitions; exception: %s" % (e)
+            return f'error: could not parse fts index definitions; exception: {e!s}'
 
         try:
             username = opts.username
@@ -238,7 +236,7 @@ class CBSink(pump_mc.MCSink):
             if not index_defs:
                 return 0
         except ValueError as e:
-            return "error: could not parse fts index definitions; exception: %s" % (e)
+            return f'error: could not parse fts index definitions; exception: {e!s}'
 
         try:
             username = opts.username
@@ -264,7 +262,7 @@ class CBSink(pump_mc.MCSink):
             if not sd:
                return 0
         except ValueError as e:
-            return "error: could not parse source design; exception: %s" % (e)
+            return f'error: could not parse source design; exception: {e!s}'
 
         try:
             sink_bucket = sink_map['buckets'][0]
@@ -288,7 +286,7 @@ class CBSink(pump_mc.MCSink):
         try:
             sd = json.loads(source_design)
         except ValueError as e:
-            return "error: could not parse source design; exception: %s" % (e)
+            return f'error: could not parse source design; exception: {e!s}'
         if not sd:
             return 0
 
@@ -307,10 +305,8 @@ class CBSink(pump_mc.MCSink):
             return "error: design sink nodes missing"
         couch_api_base = sink_nodes[0].get('couchApiBase')
         if not couch_api_base:
-            return "error: cannot restore bucket design" \
-                " on a couchbase cluster that does not support couch API;" \
-                " the couchbase cluster may be an older, pre-2.0 version;" \
-                " please check your cluster URL: " + sink_spec
+            return f'error: cannot restore bucket design on a couchbase cluster that does not support couch API;' \
+                f' the couchbase cluster may be an older, pre-2.0 version; please check your cluster URL: {sink_spec}'
         host, port, user, pswd, path = \
             pump.parse_spec(opts, couch_api_base, 8092)
         if user is None:
@@ -327,38 +323,36 @@ class CBSink(pump_mc.MCSink):
                 str_source = _to_string(source_design)
                 err, conn, response = \
                     pump.rest_request(host, int(port), user, pswd, opts.ssl,
-                                      path + "/" + id, method='PUT', body=str_source,
+                                      f'{path}/{id}', method='PUT', body=str_source,
                                       reason="consume_design", verify=opts.no_ssl_verify, ca_cert=opts.cacert)
                 if conn:
                     conn.close()
                 if err:
-                    return ("error: could not restore design doc id: %s" +
-                            "; response: %s; err: %s") % (id, response, err)
+                    return f'error: could not restore design doc id: {id}; response: {response}; err: {err}'
             else:
                 stmts = sd.get('statements', [])
-                hostname = 'http://' + spec_parts[0] + ':' + str(spec_parts[1])
+                hostname = f'http://{spec_parts[0]}:{spec_parts[1]!s}'
                 cm = ClusterManager(hostname, user, pswd, opts.ssl)
                 try:
                     for stmt in stmts:
                         result, errors = cm.n1ql_query(stmt['statement'], stmt.get('args', None))
                         if errors:
-                            logging.error('N1QL query %s failed due to %s' % (stmt['statement'], errors))
+                            logging.error(f'N1QL query {stmt["statement"]} failed due to {errors}')
 
                         if result and 'errors' in result:
                             for error in result['errors']:
-                                logging.error('N1QL query %s failed due to error `%s`' % (stmt['statement'], error['msg']))
+                                logging.error(f'N1QL query {stmt["statement"]} failed due to error `{error["msg"]}`')
                 except ServiceNotAvailableException as e:
-                    logging.error("Failed to restore indexes, cluster does not contain a" +
-                                  " query node")
+                    logging.error("Failed to restore indexes, cluster does not contain a query node")
         elif type(sd) is list:
             for row in sd:
-                logging.debug("design_doc row: " + str(row))
+                logging.debug(f'design_doc row: {row!s}')
 
                 doc = row.get('doc', None)
                 if not doc:
                     stmt = row.get('statement', None)
                     if not stmt:
-                        return "error: missing design doc or index statement in row: %s" % (row)
+                        return f'error: missing design doc or index statement in row: {row}'
                     else:
                         #publish index
                         return 0
@@ -367,7 +361,7 @@ class CBSink(pump_mc.MCSink):
                     js = doc['json']
                     id = doc['meta'].get('id', None)
                     if not id:
-                        return "error: missing id for design doc: %s" % (row)
+                        return f'error: missing id for design doc: {row}'
                 else:
                     # Handle design-doc from 2.0DP4.
                     js = doc
@@ -375,31 +369,29 @@ class CBSink(pump_mc.MCSink):
                         del js['_rev']
                     id = row.get('id', None)
                     if not id:
-                        return "error: missing id for row: %s" % (row)
+                        return f'error: missing id for row: {row}'
 
                 js_doc = json.dumps(js)
                 if id.startswith(CBSink.DDOC_HEAD):
                     id = CBSink.DDOC_HEAD + urllib.parse.quote(id[len(CBSink.DDOC_HEAD):], '')
                 else:
                     id = urllib.parse.quote(id, '')
-                logging.debug("design_doc: " + js_doc)
-                logging.debug("design_doc id: " + id + " at: " + path + "/" + id)
+                logging.debug(f'design_doc: {js_doc}')
+                logging.debug(f'design_doc id: {id} at: {path}/{id}')
 
                 try:
                     err, conn, response = \
                         pump.rest_request(host, int(port), user, pswd, opts.ssl,
-                                          path + "/" + id, method='PUT', body=js_doc,
+                                          f'{path}/{id}', method='PUT', body=js_doc,
                                           reason="consume_design", verify=opts.no_ssl_verify, ca_cert=opts.cacert)
                     if conn:
                         conn.close()
                     if err:
-                        return ("error: could not restore design doc id: %s" +
-                                "; response: %s; err: %s") % (id, response, err)
+                        return f'error: could not restore design doc id: {id}; response: {response}; err: {err}'
                 except Exception as e:
-                    return ("error: design sink exception: %s" +
-                            "; couch_api_base: %s") % (e, couch_api_base)
+                    return f'error: design sink exception: {e}; couch_api_base: {couch_api_base}'
 
-                logging.debug("design_doc created at: " + path + "/" + id)
+                logging.debug(f'design_doc created at: {path}/{id}')
 
         return 0
 
@@ -411,9 +403,9 @@ class CBSink(pump_mc.MCSink):
         serverList = bucket['vBucketServerMap']['serverList']
 
         if vbucket_id > len(vBucketMap):
-            return "error: map missing vbucket_id: " + str(vbucket_id) + \
-                "; perhaps your source does not have vbuckets" + \
-                "; if so, try using moxi (HOST:11211) as a destination", None
+            return f'error: map missing vbucket_id: {vbucket_id!s}' \
+                f'; perhaps your source does not have vbuckets; if so, try using moxi (HOST:11211) as a destination',\
+                   None
 
         # Primary server for a vbucket_id is the 0'th entry.
         host_port = serverList[vBucketMap[vbucket_id][0]]
@@ -478,7 +470,7 @@ class CBSink(pump_mc.MCSink):
                                          self.opts.no_ssl_verify, self.opts.cacert,
                                          collections=self.opts.collection!=None)
             if rv != 0:
-                logging.error("error: CBSink.connect() for send: " + str(rv))
+                logging.error(f'error: CBSink.connect() for send: {rv}')
                 return rv, None
             if conn is not None:
                 mconns[host_port] = conn

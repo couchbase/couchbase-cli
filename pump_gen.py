@@ -41,7 +41,7 @@ class GenSource(pump.Source):
         return 0, {'cfg': cfg,
                    'spec': spec,
                    'buckets': [{'name': 'default',
-                                'nodes': [{'hostname': 'N/A-' + str(i)}
+                                'nodes': [{'hostname': f'N/A-{i!s}'}
                                           for i in range(opts.threads)]}]}
 
     @staticmethod
@@ -75,9 +75,9 @@ class GenSource(pump.Source):
                         else:
                             cfg[k] = type(cfg[k])(v)  # type: ignore
                     else:
-                        return "error: unknown workload gen parameter: %s" % (k), None
+                        return f'error: unknown workload gen parameter: {k}', None
                 except ValueError:
-                    return "error: could not parse value from: %s" % (kv), None
+                    return f'error: could not parse value from: {kv}', None
         return 0, cfg
 
     @staticmethod
@@ -116,11 +116,7 @@ class GenSource(pump.Source):
                 # else a string of 0 is fine, but will compress very well.
                 document = "0" * cfg['min-value-size']
 
-            if json_body:
-                self.body = '{"name": "%s%s", "age": %s, "index": %s,' + \
-                            ' "body": "%s"}' % document
-            else:
-                self.body = document
+            self.body = document
 
         batch = pump.Batch(self)
 
@@ -153,7 +149,7 @@ class GenSource(pump.Source):
             self.cur_ops = self.cur_ops + 1
 
             if json_body:
-                value = (self.body % (prefix, key, int(key) % 101, key))
+                value = f'{{"name": "{prefix}{key}", "age": {int(key) % 101}, "index": "{key}", "body":"{self.body}"}}'
             else:
                 value = self.body
 

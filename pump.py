@@ -104,9 +104,9 @@ class ProgressReporter(object):
             emit = logging.info
 
         if getattr(self, "source", None):
-            emit(prefix + "source : %s" % (self.source))  # type: ignore # pylint: disable=no-member
+            emit(f'{prefix}source : {self.source}')  # type: ignore # pylint: disable=no-member
         if getattr(self, "sink", None):
-            emit(prefix + "sink   : %s" % (self.sink))  # type: ignore # pylint: disable=no-member
+            emit(f'{prefix}sink   : {self.sink}')  # type: ignore # pylint: disable=no-member
 
         cur_time = time.time()
         delta = cur_time - self.prev_time
@@ -117,19 +117,13 @@ class ProgressReporter(object):
         width_v = max([20] + [len(str(c[k])) for k in x])
         width_d = max([10] + [len(str(c[k] - p[k])) for k in x])
         width_s = max([10] + [len("%0.1f" % ((c[k] - p[k]) / delta)) for k in x])
-        emit(prefix + " %s : %s | %s | %s"
-             % ("".ljust(width_k),
-                "total".rjust(width_v),
-                "last".rjust(width_d),
-                "per sec".rjust(width_s)))
+        emit(f'{prefix} {"":<{width_k}} : {"total":>{width_v}} | {"last":>{width_d}} | {"per sec":>{width_s}}')
         verbose_set = ["tot_sink_batch", "tot_sink_msg"]
         for k in x:
             if k not in verbose_set or self.opts.verbose > 0:  # type: ignore # pylint: disable=no-member
-                emit(prefix + " %s : %s | %s | %s"
-                 % (k.replace("tot_sink_", "").ljust(width_k),
-                    str(c[k]).rjust(width_v),
-                    str(c[k] - p[k]).rjust(width_d),
-                    ("%0.1f" % ((c[k] - p[k]) / delta)).rjust(width_s)))
+                per_sec = f'{(c[k] - p[k]) / delta:0.1f}'
+                emit(f'{prefix} {k.replace("tot_sink_", ""):<{width_k}} : {c[k]!s:>{width_v}} | '
+                     f'{(c[k]-p[k])!s:>{width_d}} | {per_sec:>{width_s}}')
         self.prev_time = cur_time
         self.prev = copy.copy(c)
 
@@ -143,9 +137,8 @@ class ProgressReporter(object):
         pct = float(current) / total
         max_hash = 20
         num_hash = int(round(pct * max_hash))
-        return ("  [%s%s] %0.1f%% (%s/estimated %s msgs)%s" %
-                ('#' * num_hash, ' ' * (max_hash - num_hash),
-                 100.0 * pct, current, total, cr))
+        return (f'  [{"#" * num_hash}{" " * (max_hash - num_hash)}] {100.0*pct:0.1f}% ({current}/estimated {total} '
+                f'msgs){cr}')
 
 
 class PumpingStation(ProgressReporter):
@@ -182,15 +175,13 @@ class PumpingStation(ProgressReporter):
         if not source_buckets:
             bucket_source = getattr(self.opts, "bucket_source", None)
             if bucket_source:
-                return ("error: there is no bucket: %s at source: %s" %
-                        (bucket_source, self.source_spec))
+                return f'error: there is no bucket: {bucket_source} at source: {self.source_spec}'
             else:
-                return ("error: no transferrable buckets at source: %s" %
-                        (self.source_spec))
+                return f'error: no transferable buckets at source: {self.source_spec}'
 
         for source_bucket in sorted(source_buckets,
                                     key=lambda b: b['name']):
-            logging.info("bucket: {0}".format(source_bucket['name']))
+            logging.info(f'bucket: {source_bucket["name"]}')
 
             if not self.opts.extra.get("design_doc_only", 0):
                 rv = self.transfer_bucket_msgs(source_bucket, source_map, sink_map)
@@ -224,7 +215,7 @@ class PumpingStation(ProgressReporter):
         return 0
 
     def check_endpoints(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Dict[str, Any], Dict[str, Any]]:
-        logging.debug("source_class: %s", self.source_class)
+        logging.debug(f'source_class: {self.source_class}')
         rv = self.source_class.check_base(self.opts, self.source_spec)
         if rv != 0:
             return rv, {}, {}
@@ -232,7 +223,7 @@ class PumpingStation(ProgressReporter):
         if rv != 0:
             return rv, {}, {}
 
-        logging.debug("sink_class: %s", self.sink_class)
+        logging.debug(f'sink_class: {self.sink_class}')
         rv = self.sink_class.check_base(self.opts, self.sink_spec)
         if rv != 0:
             return rv, {}, {}
@@ -245,33 +236,29 @@ class PumpingStation(ProgressReporter):
     def filter_source_buckets(self, source_map: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Filter the source_buckets if a bucket_source was specified."""
         source_buckets = source_map['buckets']
-        logging.debug("source_buckets: " +
-                      ",".join([returnString(n['name']) for n in source_buckets]))
+        logging.debug(f'source_buckets: {",".join([returnString(n["name"]) for n in source_buckets])}')
 
         bucket_source = getattr(self.opts, "bucket_source", None)
         bucket_source = returnString(bucket_source)
         if bucket_source:
-            logging.debug("bucket_source: " + bucket_source)
+            logging.debug(f'bucket_source: {bucket_source}')
             source_buckets = [b for b in source_buckets
                               if returnString(b['name']) == bucket_source]
-            logging.debug("source_buckets filtered: " +
-                          ",".join([returnString(n['name']) for n in source_buckets]))
+            logging.debug(f'source_buckets filtered: {",".join([returnString(n["name"]) for n in source_buckets])}')
         return source_buckets
 
     def filter_source_nodes(self, source_bucket: Dict[str, Any], source_map):
         """Filter the source_bucket's nodes if single_node was specified."""
         if getattr(self.opts, "single_node", None):
             if not source_map.get('spec_parts'):
-                return ("error: no single_node from source: %s" +
-                        "; the source may not support the --single-node flag") % \
-                        (self.source_spec)
+                return (f'error: no single_node from source: {self.source_spec}; the source may not support the'
+                        f' --single-node flag')
             source_nodes = filter_bucket_nodes(source_bucket,
                                                source_map.get('spec_parts'))
         else:
             source_nodes = source_bucket['nodes']
 
-        logging.debug(" source_nodes: " + ",".join([returnString(n.get('hostname', NA))
-                                                    for n in source_nodes]))
+        logging.debug(f' source_nodes: {",".join([returnString(n.get("hostname", NA)) for n in source_nodes])}')
         return source_nodes
 
     def transfer_bucket_msgs(self, source_bucket: Dict[str, Any], source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
@@ -327,7 +314,7 @@ class PumpingStation(ProgressReporter):
 
         for source_node in sorted(source_nodes,
                                   key=lambda n: returnString(n.get('hostname', NA))):
-            logging.debug(" enqueueing node: {0}".format(source_node.get('hostname', NA)))
+            logging.debug(f' enqueueing node: {source_node.get("hostname", NA)}')
             self.queue.put((source_bucket, source_node, source_map, sink_map, alt_add))
 
             rv, tot = self.source_class.total_msgs(self.opts,
@@ -353,10 +340,10 @@ class PumpingStation(ProgressReporter):
 
         sys.stderr.write(self.bar(self.ctl['run_msg'],
                                   self.ctl['tot_msg']) + "\n")
-        sys.stderr.write("bucket: {0}, msgs transferred...\n".format(source_bucket['name']))
+        sys.stderr.write(f"bucket: {source_bucket['name']}, msgs transferred...\n")
 
         def emit(msg):
-            sys.stderr.write(msg + "\n")
+            sys.stderr.write(f'msg\n')
         self.report(emit=emit)
 
         return 0
@@ -417,8 +404,8 @@ class PumpingStation(ProgressReporter):
             source_bucket, source_node, source_map, sink_map, alt_add = \
                 self.queue.get()
             hostname = source_node.get('hostname', NA)
-            logging.debug(" node: %s" % (hostname))
-            logging.debug(" Use alternate addresses: {}".format(alt_add))
+            logging.debug(f' node: {hostname}')
+            logging.debug(f' Use alternate addresses: {alt_add}')
 
             curx = defaultdict(int)
             self.source_class.check_spec(source_bucket,
@@ -453,10 +440,9 @@ class PumpingStation(ProgressReporter):
                 forced = True
 
             if not forced and snk_conf_res != "any" and src_conf_res != "any" and src_conf_res != snk_conf_res:
-                logging.error("Cannot transfer data, source bucket `%s` uses " +
-                             "%s conflict resolution but sink bucket `%s` uses " +
-                             "%s conflict resolution", source_bucket["name"],
-                             src_conf_res, snk_bucket, snk_conf_res)
+                logging.error(f'Cannot transfer data, source bucket `{source_bucket["name"]}` uses {src_conf_res} '
+                              f'conflict resolution but sink bucket `{snk_bucket}` uses {snk_conf_res} conflict '
+                              f'resolution')
             else:
                 rv = Pump(self.opts, source, sink, source_map, sink_map, self.ctl,
                           curx).run()
@@ -465,7 +451,7 @@ class PumpingStation(ProgressReporter):
                     if isinstance(v, int):
                         self.cur[k] = self.cur.get(k, 0) + v
 
-                logging.debug(" node: %s, done; rv: %s" % (hostname, rv))
+                logging.debug(f' node: {hostname}, done; rv: {rv}')
                 if self.ctl['rv'] == 0 and rv != 0:
                     self.ctl['rv'] = rv
 
@@ -602,7 +588,7 @@ class EndPoint(object):
             try:
                 re.compile(k)
             except:
-                return "error: could not parse key regexp: " + k
+                return f'error: could not parse key regexp: {k}'
         return 0
 
     @staticmethod
@@ -616,21 +602,18 @@ class EndPoint(object):
         return "any"
 
     def __repr__(self):
-        return "%s(%s@%s)" % \
-            (self.spec,
-             self.source_bucket.get('name', ''),
-             self.source_node.get('hostname', ''))
+        return f'{self.spec}({self.source_bucket.get("name", "")}@{self.source_node.get("hostname", "")})'
 
     def close(self):
         pass
 
     def skip(self, key: Union[str, bytes], vbucket_id: int) -> bool:
         if self.only_key_re and not re.search(self.only_key_re, returnString(key)):
-            logging.warning("skipping msg with key: " + tag_user_data(returnString(key)))
+            logging.warning(f'skipping msg with key: {tag_user_data(key)}')
             return True
 
         if self.only_vbucket_id is not None and self.only_vbucket_id != vbucket_id:
-            logging.warning("skipping msg of vbucket_id: " + str(vbucket_id))
+            logging.warning(f'skipping msg of vbucket_id: {vbucket_id!s}')
             return True
 
         return False
@@ -716,11 +699,9 @@ class Sink(EndPoint):
         if rv != 0:
             return rv
         if getattr(opts, "destination_vbucket_state", "active") != "active":
-            return ("error: only --destination-vbucket-state=active" +
-                    " is supported by this destination: %s") % (spec)
+            return f'error: only --destination-vbucket-state=active is supported by this destination: {spec}'
         if getattr(opts, "destination_operation", None) != None:
-            return ("error: --destination-operation" +
-                    " is not supported by this destination: %s") % (spec)
+            return f'error: --destination-operation is not supported by this destination: {spec}'
         return 0
 
     @staticmethod
@@ -755,9 +736,7 @@ class Sink(EndPoint):
     @staticmethod
     def check_source(opts, source_class, source_spec: str, sink_class, sink_spec: str) -> couchbaseConstants.PUMP_ERROR:
         if source_spec == sink_spec:
-            return "error: source and sink must be different;" \
-                " source: " + source_spec + \
-                " sink: " + sink_spec
+            return f'error: source and sink must be different; source: {source_spec} sink: {sink_spec}'
         return 0
 
     def operation(self):
@@ -798,8 +777,7 @@ class Sink(EndPoint):
     def future_done(self, future, rv):
         """Worker calls this method to finish a batch/future."""
         if rv != 0:
-            logging.error("error: async operation: %s on sink: %s" %
-                          (rv, self))
+            logging.error(f'error: async operation: {rv} on sink: {self}')
         if future:
             future.done_rv = rv
             future.done.set()
@@ -851,7 +829,7 @@ class StdInSource(Source):
                 return "error: read empty line", None
             elif parts[0] == 'set' or parts[0] == 'add':
                 if len(parts) != 5:
-                    return "error: length of set/add line: " + line, None
+                    return f'error: length of set/add line: {line}', None
                 cmd = couchbaseConstants.CMD_TAP_MUTATION
                 key = parts[1]
                 flg = int(parts[2])
@@ -860,26 +838,26 @@ class StdInSource(Source):
                 if num > 0:
                     val = self.f.read(num)
                     if len(val) != num:
-                        return "error: value read failed at: " + line, None
+                        return f'error: value read failed at: {line}', None
                 else:
                     val = ''
                 end = self.f.read(2) # Read '\r\n'.
                 if len(end) != 2:
-                    return "error: value end read failed at: " + line, None
+                    return f'error: value end read failed at: {line}', None
 
                 if not self.skip(key, vbucket_id):
                     msg = (cmd, vbucket_id, key, flg, exp, 0, b'', val, 0, 0, 0)
                     batch.append(msg, len(val))
             elif parts[0] == 'delete':
                 if len(parts) != 2:
-                    return "error: length of delete line: " + line, None
+                    return f'error: length of delete line: {line}', None
                 cmd = couchbaseConstants.CMD_TAP_DELETE
                 key = parts[1]
                 if not self.skip(key, vbucket_id):
                     msg = (cmd, vbucket_id, key, 0, 0, 0, b'', b'', 0, 0, 0)
                     batch.append(msg, 0)
             else:
-                return "error: expected set/add/delete but got: " + line, None
+                return f'error: expected set/add/delete but got: {line}', None
 
         if batch.size() <= 0:
             return 0, None
@@ -904,13 +882,11 @@ class StdOutSink(Sink):
     @staticmethod
     def check_base(opts, spec):
         if getattr(opts, "destination_vbucket_state", "active") != "active":
-            return ("error: only --destination-vbucket-state=active" +
-                    " is supported by this destination: %s") % (spec)
+            return f'error: only --destination-vbucket-state=active is supported by this destination: {spec}'
 
         op = getattr(opts, "destination_operation", None)
-        if not op in [None, 'set', 'add', 'get']:
-            return ("error: --destination-operation unsupported value: %s" +
-                    "; use set, add, get") % (op)
+        if op not in [None, 'set', 'add', 'get']:
+            return f'error: --destination-operation unsupported value: {op}; use set, add, get'
 
         # Skip immediate superclass Sink.check_base(),
         # since StdOutSink can handle different destination operations.
@@ -960,23 +936,21 @@ class StdOutSink(Sink):
                     if op_mutate:
                         # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
                         if mcd_compatible:
-                            stdout.write("%s %s %s %s %s\r\n" %
-                                         (op, key, flg, exp, len(val)))
+                            stdout.write(f'{op} {key} {flg} {exp} {len(val)!s}\r\n')
                         else:
-                            stdout.write("%s %s %s %s %s %s %s %s\r\n" %
-                                         (op, key, flg, exp, len(val), seqno, dtype, conf_res))
+                            stdout.write(f'{op} {key} {flg} {exp} {len(val)} {seqno} {dtype} {conf_res}\r\n')
                         stdout.write(val)
                         stdout.write("\r\n")
                     elif op == 'get':
-                        stdout.write("get %s\r\n" % (key))
+                        stdout.write(f'get {key}\r\n')
                 elif cmd == couchbaseConstants.CMD_TAP_DELETE or \
                      cmd == couchbaseConstants.CMD_DCP_DELETE:
                     if op_mutate:
-                        stdout.write("delete %s\r\n" % (key))
+                        stdout.write(f'delete {key}\r\n')
                 elif cmd == couchbaseConstants.CMD_GET:
-                    stdout.write("get %s\r\n" % (key))
+                    stdout.write(f'get {key}\r\n')
                 else:
-                    return "error: StdOutSink - unknown cmd: " + str(cmd), None
+                    return f'error: StdOutSink - unknown cmd: {cmd!s}', None
             except IOError:
                 return "error: could not write to stdout", None
 
@@ -1028,7 +1002,7 @@ def parse_spec(opts, spec: str, port: int) -> Tuple[str, int, str, str, Any]:
     try:
        val = int(port)
     except ValueError:
-       logging.warning("\"{}\" is not int, reset it to default port number".format(port))
+       logging.warning(f'"{port}" is not int, reset it to default port number')
        port = 8091
 
     username = get_username(opts.username)
@@ -1049,11 +1023,11 @@ def rest_request(host: str, port: int, user: Optional[str], pswd: Optional[str],
 
     conn: Union[http.client.HTTPConnection, http.client.HTTPSConnection, None] = None
     if reason:
-        reason = "; reason: %s" % (reason)
-    logging.debug("rest_request: %s@%s:%s%s%s" % (tag_user_data(user), host, port, path, reason))
+        reason = f'; reason: {reason}'
+    logging.debug(f'rest_request: {tag_user_data(user)}@{host}:{port}{path}{reason}')
     if use_ssl:
         if port not in [couchbaseConstants.SSL_REST_PORT, couchbaseConstants.SSL_QUERY_PORT]:
-            return ("error: invalid port %s used when ssl option is specified") % port, None, b''
+            return f'error: invalid port {port} used when ssl option is specified', None, b''
         ctx = ssl.create_default_context(cafile=ca_cert)
         if not verify:
             ctx.check_hostname = False
@@ -1067,31 +1041,26 @@ def rest_request(host: str, port: int, user: Optional[str], pswd: Optional[str],
         conn.request(method, path, body, header)
         resp = conn.getresponse()
     except Exception as e:
-        return ("error: could not access REST API: %s:%s%s" +
-                "; please check source URL, server status, username (-u) and password (-p)" +
-                "; exception: %s%s") % \
-                (host, port, path, e, reason), None, b''
+        return f'error: could not access REST API: {host}:{port}{path}; please check source URL, server status,' \
+                   f' username (-u) and password (-p); exception: {e}{reason}', None, b''
 
     if resp.status in [200, 201, 202, 204, 302]:
         return None, conn, resp.read()
 
     conn.close()
     if resp.status == 401:
-        return ("error: unable to access REST API: %s:%s%s" +
-                "; please check source URL, server status, username (-u) and password (-p)%s") % \
-                (host, port, path, reason), None, b''
+        return f'error: unable to access REST API: {host}:{port}{path}; please check source URL, server status,' \
+            f' username (-u) and password (-p) {reason}', None, b''
 
-    return ("error: unable to access REST API: %s:%s%s" +
-            "; please check source URL, server status, username (-u) and password (-p)" +
-            "; response: %s%s") % \
-            (host, port, path, resp.status, reason), None, b''
+    return f'error: unable to access REST API: {host}:{port}{path}; please check source URL, server status,' \
+        f' username (-u) and password (-p); response: {resp.status}{reason}', None, b''
 
 
 def rest_headers(user: Optional[str], pswd: Optional[str], headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
     if not headers:
         headers = {'Content-Type': 'application/json'}
-    if user is not None:
-        auth = 'Basic ' + base64.encodebytes((user + ':' + (pswd or '')).strip().encode('utf-8')).decode().strip()
+    if user:
+        auth = 'Basic ' + base64.encodebytes(f'{user}:{pswd or ""}'.strip().encode('utf-8')).decode().strip()
         headers['Authorization'] = auth
     return headers
 
@@ -1110,10 +1079,8 @@ def rest_request_json(host: str, port: int, user: Optional[str], pswd: Optional[
     try:
         return None, rest_json, json.loads(rest_json)
     except ValueError as e:
-        return ("error: could not decode JSON from REST API: %s:%s%s" +
-                "; exception: %s" +
-                "; please check URL, username (-u) and password (-p)") % \
-                (host, port, path, e), None, None
+        return f'error: could not decode JSON from REST API: {host}:{port}{path}; exception: {e};' \
+            f' please check URL, username (-u) and password (-p)', None, None
 
 
 def rest_couchbase(opts, spec: str, check_sink_credential: bool =False) -> Tuple[couchbaseConstants.PUMP_ERROR,
@@ -1148,9 +1115,9 @@ def filter_bucket_nodes(bucket: Dict[str, Any], spec_parts: Sequence[Any]) -> Li
         host = get_ip()
     # Convert from raw IPv6
     if ':' in host:
-        host_port = '[' + host + ']:' + str(port)
+        host_port = f'[{host}]:{port!s}'
     else:
-        host_port = host + ':' + str(port)
+        host_port = f'host:{port!s}'
     return [n for n in bucket['nodes'] if n.get('hostname') == host_port]
 
 
@@ -1186,7 +1153,7 @@ def find_source_bucket_name(opts, source_map) -> Tuple[couchbaseConstants.PUMP_E
         source_bucket = source_map['buckets'][0]['name']
     if not source_bucket:
         return "error: please specify a bucket_source", ''
-    logging.debug("source_bucket: {0}".format(source_bucket))
+    logging.debug(f'source_bucket: {source_bucket}')
     return 0, source_bucket
 
 
@@ -1195,7 +1162,7 @@ def find_sink_bucket_name(opts, source_bucket) -> Tuple[couchbaseConstants.PUMP_
     sink_bucket = getattr(opts, "bucket_destination", None) or source_bucket
     if not sink_bucket:
         return "error: please specify a bucket_destination", ''
-    logging.debug("sink_bucket: {0}".format(sink_bucket))
+    logging.debug(f'sink_bucket: {sink_bucket}')
     return 0, sink_bucket
 
 
@@ -1205,7 +1172,7 @@ def mkdirs(targetpath: str) -> couchbaseConstants.PUMP_ERROR:
         try:
             os.makedirs(upperdirs)
         except:
-            return "Cannot create upper directories for file:%s" % targetpath
+            return f'Cannot create upper directories for file: {targetpath}'
     return 0
 
 
@@ -1228,17 +1195,16 @@ def get_mcd_conn(host: str, port: int, username: str, password: str, bucket: Opt
         Tuple[couchbaseConstants.PUMP_ERROR, Optional[cb_bin_client.MemcachedClient]]:
     conn = cb_bin_client.MemcachedClient(host, port, use_ssl=use_ssl, verify=verify, cacert=ca_cert)
     if not conn:
-        return "error: could not connect to memcached: " + \
-            host + ":" + str(port), None
+        return f'error: could not connect to memcached: {host}:{port!s}', None
 
     try:
         conn.sasl_auth_plain(username, password)
     except EOFError as e:
-        return "error: SASL auth error: %s:%s, %s" % (host, port, e), None
+        return f'error: SASL auth error: {host}:{port}, {e}', None
     except cb_bin_client.MemcachedError as e:
-        return "error: SASL auth failed: %s:%s, %s" % (host, port, e), None
+        return f'error: SASL auth failed: {host}:{port}, {e}', None
     except socket.error as e:
-        return "error: SASL auth socket error: %s:%s, %s" % (host, port, e), None
+        return f'error: SASL auth socket error: {host}:{port}, {e}', None
 
     features = [couchbaseConstants.HELO_XATTR, couchbaseConstants.HELO_XERROR]
     if collections:
@@ -1247,21 +1213,21 @@ def get_mcd_conn(host: str, port: int, username: str, password: str, bucket: Opt
     try:
         conn.helo(features)
     except EOFError as e:
-        return "error: HELO error: %s:%s, %s" % (host, port, e), None
+        return f'error: HELO error: {host}:{port}, {e}', None
     except cb_bin_client.MemcachedError as e:
-        return "error: HELO failed: %s:%s, %s" % (host, port, e), None
+        return f'error: HELO failed:{host}:{port}, {e}', None
     except socket.error as e:
-        return "error: HELO socket error: %s:%s, %s" % (host, port, e), None
+        return f'error: HELO socket error: {host}:{port}, {e}', None
 
     if bucket:
         try:
             conn.bucket_select(bucket.encode())
         except EOFError as e:
-            return "error: Bucket select error: %s:%s %s, %s" % (host, port, bucket, e), None
+            return f'error: Bucket select error: {host}:{port} {bucket}, {e}', None
         except cb_bin_client.MemcachedError as e:
-            return "error: Bucket select failed: %s:%s %s, %s" % (host, port, bucket, e), None
+            return f'error: Bucket select failed: {host}:{port} {bucket}, {e}', None
         except socket.error as e:
-            return "error: Bucket select socket error: %s:%s %s, %s" % (host, port, bucket, e), None
+            return f'error: Bucket select socket error: {host}:{port} {bucket}, {e}', None
 
     return 0, conn
 

@@ -58,7 +58,7 @@ class JSONSource(pump.Source):
                     "meta": {"id": id}
                 }}
         except ValueError as error:
-            logging.error("Fail to read json file with error:" + str(error))
+            logging.error(f'Fail to read json file with error: {error!s}')
 
     @staticmethod
     def gen_dockey(filename: str) -> str:
@@ -144,7 +144,7 @@ class JSONSource(pump.Source):
                     fp.close()
                     self.save_doc(batch, key.encode(), value)
                 except IOError as error:
-                    logging.error("Fail to load json file with error" + str(error))
+                    logging.error(f'Fail to load json file with error: {error!s}')
 
         if not self.docs:
             self.done = True

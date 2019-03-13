@@ -84,14 +84,11 @@ class MCSink(pump.Sink):
     @staticmethod
     def check_base(opts, spec: str) -> couchbaseConstants.PUMP_ERROR:
         if getattr(opts, "destination_vbucket_state", "active") != "active":
-            return ("error: only --destination-vbucket-state=active" +
-                    " is supported by this destination: %s") % (spec)
+            return f'error: only --destination-vbucket-state=active is supported by this destination: {spec}'
 
         op = getattr(opts, "destination_operation", None)
         if not op in [None, 'set', 'add', 'get']:
-            return ("error: --destination-operation unsupported value: %s" +
-                    "; use set, add, get") % (op)
-
+            return f'error: --destination-operation unsupported value: {op}; use set, add, get'
         # Skip immediate superclass Sink.check_base(),
         # since MCSink can handle different destination operations.
         return pump.EndPoint.check_base(opts, spec)
@@ -124,7 +121,7 @@ class MCSink(pump.Sink):
 
                 if need_backoff:
                     backoff = min(backoff * 2.0, backoff_cap)
-                    logging.warn("backing off, secs: %s" % (backoff))
+                    logging.warning(f'backing off, secs: {backoff}')
                     time.sleep(backoff)
 
             self.future_done(future, 0)
@@ -237,7 +234,7 @@ class MCSink(pump.Sink):
             try:
                 conn.s.sendall(self.join_str_and_bytes(m))  # type: ignore
             except socket.error as e:
-                return "error: conn.sendall() exception: %s" % (e)
+                return f'error: conn.sendall() exception: {e}'
 
         return 0
 
@@ -257,7 +254,7 @@ class MCSink(pump.Sink):
             return True, val, cas, exp, data_type
 
         if ATR_EXP.match(str_key):
-            logging.info('(TXN) Skipped the transfer of the ATR: {}'.format(str_key))
+            logging.info(f'(TXN) Skipped the transfer of the ATR: {str_key}')
             return True, val, cas, exp, data_type
 
         # Get the length of the xattrs
@@ -305,8 +302,8 @@ class MCSink(pump.Sink):
             exp = int(txn_xattr['expiry'])
 
         # Remove txn xattrs from value
-        logging.info('(TXN) Removing transaction extended attributes "<ud>{}</ud>" from key <ud>{}</ud>'.
-                     format(txn_marker.body, str_key))
+        logging.info(f'(TXN) Removing transaction extended attributes "{tag_user_data(txn_marker.body)}" '
+                     f'from key {tag_user_data(str_key)}')
 
         new_xattr_len = xattr_len_int - txn_marker.length - 4
         # check if the are any xattrs left
@@ -418,7 +415,7 @@ class MCSink(pump.Sink):
                 r_cmd, r_status, r_ext, r_key, r_val, r_cas, r_opaque = \
                     self.read_conn(conn)  # type: ignore
                 if verify_opaque and i != r_opaque:
-                    return "error: opaque mismatch: %s %s" % (i, r_opaque), None, None
+                    return f'error: opaque mismatch: {i} {r_opaque}', None, None
 
                 if r_status == couchbaseConstants.ERR_SUCCESS:
                     continue
@@ -429,8 +426,7 @@ class MCSink(pump.Sink):
                 elif r_status == couchbaseConstants.ERR_KEY_ENOENT:
                     if (cmd != couchbaseConstants.CMD_TAP_DELETE and
                         cmd != couchbaseConstants.CMD_GET):
-                        logging.warn("item not found: %s, key: %s" %
-                                     (self.spec, tag_user_data(key)))
+                        logging.warning(f'item not found: {self.spec}, key: {tag_user_data(key)}')
                     continue
                 elif (r_status == couchbaseConstants.ERR_ETMPFAIL or
                       r_status == couchbaseConstants.ERR_EBUSY or
@@ -438,23 +434,21 @@ class MCSink(pump.Sink):
                     retry = True # Retry the whole batch again next time.
                     continue     # But, finish recv'ing current batch.
                 elif r_status == couchbaseConstants.ERR_NOT_MY_VBUCKET:
-                    err_msg = ("received NOT_MY_VBUCKET;"
-                           " perhaps the cluster is/was rebalancing;"
-                           " vbucket_id: %s, key: %s, spec: %s, host:port: %s:%s"
-                           % (vbucket_id_msg, tag_user_data(key), self.spec,
-                              conn.host, conn.port))
+                    str_msg = f'received NOT_MY_VBUCKET; perhaps the cluster is/was rebalancing;' \
+                        f' vbucket_id: {vbucket_id_msg}, key: {tag_user_data(key)}, spec: {self.spec},' \
+                        f' host:port: {conn.host}:{conn.port}'
                     if self.opts.extra.get("nmv_retry", 1):
-                        logging.warn("warning: " + err_msg)
+                        logging.warning(f'warning: {str_msg}')
                         refresh = True
                         retry = True
                         self.cur["tot_sink_not_my_vbucket"] = \
                             self.cur.get("tot_sink_not_my_vbucket", 0) + 1
                     else:
-                        return "error: " + err_msg, None, None
+                        return f'error: {str_msg}', None, None
                 elif r_status == couchbaseConstants.ERR_UNKNOWN_COMMAND:
                     if self.op_map == OP_MAP:
                         if not retry:
-                            return "error: unknown command: %s" % (r_cmd), None, None
+                            return f'error: unknown command: {r_cmd}', None, None
                     else:
                         if not retry:
                             logging.warn("destination does not take XXX-WITH-META"
@@ -467,8 +461,8 @@ class MCSink(pump.Sink):
                     return "error: MCSink MC error: " + str(r_status), None, None
 
             except Exception as e:
-                logging.error("MCSink exception: %s", e)
-                return "error: MCSink exception: " + str(e), None, None
+                logging.error(f'MCSink exception: {e}')
+                return f'error: MCSink exception: {e!s}', None, None
         return 0, retry, refresh
 
     def translate_cmd(self, cmd: int, op: str, meta: bytes) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[int]]:
@@ -480,7 +474,7 @@ class MCSink(pump.Sink):
             m = self.op_map.get(op, None)
             if m:
                 return 0, m
-            return "error: MCSink.translate_cmd, unsupported op: " + op, None
+            return f'error: MCSink.translate_cmd, unsupported op: {op}', None
 
         if cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_DCP_DELETE]:
             if op == 'get':
@@ -490,7 +484,7 @@ class MCSink(pump.Sink):
         if cmd == couchbaseConstants.CMD_GET:
             return 0, cmd
 
-        return "error: MCSink - unknown cmd: %s, op: %s" % (cmd, op), None
+        return f'error: MCSink - unknown cmd: {cmd}, op: {op}', None
 
     def append_req(self, m: List[bytes], req: couchbaseConstants.REQUEST):
         hdr, ext, key, val, extra_meta = req
@@ -602,7 +596,7 @@ class MCSink(pump.Sink):
               cmd == couchbaseConstants.CMD_NOOP):
             ext = b''
         else:
-            return "error: MCSink - unknown cmd for request: " + str(cmd), empty_tuple
+            return f'error: MCSink - unknown cmd for request: {cmd!s}', empty_tuple
 
         # Couchase currently allows only the xattr datatype to be set so we need
         # to strip out all of the other datatype flags
@@ -642,7 +636,7 @@ class MCSink(pump.Sink):
         magic, cmd, keylen, extlen, dtype, errcode, datalen, opaque, cas = \
             struct.unpack(couchbaseConstants.RES_PKT_FMT, pkt)  # type: int, int, int, int, int, int, int, int, int
         if magic != couchbaseConstants.RES_MAGIC_BYTE:
-            raise Exception("unexpected recv_msg magic: " + str(magic))
+            raise Exception(f'unexpected recv_msg magic: {magic!s}')
         data, buf = self.recv(sock, datalen, buf)
         return buf, cmd, errcode, extlen, keylen, data, cas, opaque
 
@@ -654,7 +648,7 @@ class MCSink(pump.Sink):
             except socket.timeout:
                 logging.error("error: recv socket.timeout")
             except Exception as e:
-                logging.error("error: recv exception: " + str(e))
+                logging.error(f'error: recv exception: {e!s}')
 
             if data == b'':
                 return b'', b''

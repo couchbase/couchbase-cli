@@ -45,7 +45,7 @@ class CommandTest(unittest.TestCase):
             self.cli.execute(self.cli.parse(cmd_args))
         except Exception as e:
             self.stop_capture()
-            self.fail('Error: \"{0}\" occurred. Exception: {1}'.format(self.str_output, e))
+            self.fail(f'Error: "{self.str_output}" occurred. Exception: {e}')
         self.stop_capture()
 
     def system_exit_run(self, cmd_args, server_args):

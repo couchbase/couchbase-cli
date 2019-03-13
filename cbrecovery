@@ -72,7 +72,7 @@ class Recovery(pump_transfer.Transfer):
         if err:
             return self.explain_error(err, cmd)
         if self.recovery_map:
-            sys.stderr.write("Missing vbuckets to be recovered:%s\n" % json.dumps(self.recovery_map))
+            sys.stderr.write(f'Missing vbuckets to be recovered:{json.dumps(self.recovery_map)}\n')
         else:
             sys.stderr.write("No missing vbuckets to be recovered.\n")
             return 0
@@ -112,22 +112,17 @@ class Recovery(pump_transfer.Transfer):
         width_k = max([5] + [len(k.replace("tot_sink_", "")) for k in x] + [len("Recovery")])
         width_v = max([20] + [len(str(self.stats[k])) for k in x])
         width_s = max([10] + [len("%0.1f" % (self.stats[k] / delta)) for k in x])
-        sys.stderr.write("\n %s : %s | %s\n"
-             % ("Recovery".ljust(width_k),
-                "Total".rjust(width_v),
-                "Per sec".rjust(width_s)))
+        sys.stderr.write(f'\n {"Recovery".ljust(width_k)} : {"Total".rjust(width_v)} | {"Per sec".rjust(width_s)}\n')
         for k in x:
-            sys.stderr.write(" %s : %s | %s\n"
-                 % (k.replace("tot_sink_", "").ljust(width_k),
-                    str(self.stats[k]).rjust(width_v),
-                    ("%0.1f" % (self.stats[k] / delta)).rjust(width_s)))
+            per_sec = f'{self.stats[k]/delta:0.1f}'
+            sys.stderr.write(f' {k.replace("tot_sink_", ""):<{width_k}} : {self.stats[k]!s:>{width_v}} |'
+                             f' {per_sec:>{width_s}}\n')
 
         total_vbucket = 0
         if self.recovery_map:
             for k, node in enumerate(self.recovery_map):
                 total_vbucket += len(node["vbuckets"])
-        sys.stderr.write("%d vbuckets recovered with elapsed time %0.2f seconds\n"
-             % (total_vbucket, delta))
+        sys.stderr.write(f'{total_vbucket} vbuckets recovered with elapsed time {delta:0.2f} seconds\n')
 
     def pre_transfer(self, opts, source, sink):
 
@@ -136,7 +131,7 @@ class Recovery(pump_transfer.Transfer):
 
         #retrieve a list of missing vbucket
         cmd = "startRecovery"
-        url = "/pools/default/buckets/%s/controller/%s" % (self.sink_bucket, cmd)
+        url = f'/pools/default/buckets/{self.sink_bucket}/controller/{cmd}'
         err, conn, response = \
             pump.rest_request(host, int(port), user, pwd, opts.ssl,
                               url, method='POST', reason='start_recovery')
@@ -163,13 +158,12 @@ class Recovery(pump_transfer.Transfer):
             reason_msg = "Stop recovery"
         else:
             cmd = "commitVBucket"
-            reason_msg = 'Activate vbucket:%s' % vbucket
+            reason_msg = f'Activate vbucket:{vbucket}'
         if vbucket is not None:
             params = urllib.parse.urlencode({"vbucket": vbucket})
         else:
             params = None
-        url = '/pools/default/buckets/%s/controller/%s?recovery_uuid=%s' %\
-              (self.sink_bucket, cmd, self.recovery_uuid)
+        url = f'/pools/default/buckets/{self.sink_bucket}/controller/{cmd}?recovery_uuid={self.recovery_uuid}'
         post_headers = {"Content-type": "application/x-www-form-urlencoded"}
         err, conn, response = \
             pump.rest_request(host, int(port), user, pwd, False,
@@ -179,7 +173,7 @@ class Recovery(pump_transfer.Transfer):
         if err:
             return err, cmd
         elif vbucket:
-            logging.debug("Recover and activate vbucket: %s" % vbucket)
+            logging.debug(f'Recover and activate vbucket: {vbucket}')
         return None, None
 
 
@@ -209,9 +203,9 @@ class Recovery(pump_transfer.Transfer):
         if m:
             errcode = m.groups()[0]
             if errcode in self.err_map[cmd]:
-                logging.error("Error: %s" % self.err_map[cmd][errcode])
+                logging.error(f'Error: {self.err_map[cmd][errcode]}')
             else:
-                logging.error("Error: unknown error code:%s" % errcode)
+                logging.error(f'Error: unknown error code:{errcode}')
         else:
             logging.error(err)
 

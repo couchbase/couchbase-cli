@@ -191,16 +191,15 @@ class TopologyProgressBar(object):
             cur_buckets_str = "0" + str(cur_bucket)
         if total_buckets < 10:
             total_buckets_str = "0" + str(total_buckets)
-        d_count_str = "Bucket: " + cur_buckets_str + "/" + total_buckets_str + " "
-        d_remain_str = " " + str(remaining) + " docs remaining"
+        d_count_str = f'Bucket: {cur_buckets_str}/{total_buckets_str} '
+        d_remain_str = f' {remaining!s} docs remaining'
 
         d_name_size = (self.term_width - len(d_remain_str) - len(d_count_str))
         if len(bucket_name) > (d_name_size - 2):
-            d_name_str = "(" + bucket_name[0:d_name_size - 5] + "...)"
+            d_name_str = f'({bucket_name[0:d_name_size - 5]}...)'
         else:
-            d_name_str = "(" + bucket_name + ")" + (' ' * (d_name_size - len(bucket_name) - 2))
+            d_name_str = f'({bucket_name }){" "* (d_name_size - len(bucket_name) - 2)}'
 
-        sys.stdout.write('{0}{1}\n'.format(self.type, " " * (self.term_width - len(self.type))))
-        sys.stdout.write("{0}{1}{2}\n".format(d_count_str, d_name_str, d_remain_str))
-        sys.stdout.write("[{0}{1}] {2}%\n".format(('='* bars), (' '* spaces),
-                                                  bold(str(round(perc_complete, 2)))))
+        sys.stdout.write(f'{self.type}{" " * (self.term_width - len(self.type))}\n')
+        sys.stdout.write(f'{d_count_str}{d_name_str}{d_remain_str}\n')
+        sys.stdout.write(f"[{'='* bars}{' ' * spaces}] {bold(str(round(perc_complete, 2)))}%\n")

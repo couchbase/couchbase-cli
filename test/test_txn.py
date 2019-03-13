@@ -44,18 +44,17 @@ class DataSetItem:
 
     def match(self, skip, val, cas, expiry, data_type):
         if self.exp_skip != skip:
-            return False, 'Expected skip to be {} got {} in element {}'.format(self.exp_skip, skip, self.key)
+            return False, f'Expected skip to be {self.exp_skip} got {skip} in element {self.key}'
         if skip:
             return True, ''
         if val != self.exp_val:
-            return False, 'Expected val to be {} got {} in element {}'.format(self.exp_val, val, self.key)
+            return False, f'Expected val to be {self.exp_val} got {val} in element {self.key}'
         if cas != self.exp_cas:
-            return False, 'Expected cas to be {} got {} in element {}'.format(self.exp_cas, cas, self.key)
+            return False, f'Expected cas to be {self.exp_cas} got {cas} in element {self.key}'
         if expiry != self.exp_expiry:
-            return False, 'Expected expiry to be {} got {} in element {}'.format(self.exp_expiry, expiry, self.key)
+            return False, f'Expected expiry to be {self.exp_expiry} got {expiry} in element {self.key}'
         if data_type != self.exp_data_type:
-            return False, 'Expected datatype to be {} got {} in element {}'.format(self.exp_data_type, data_type,
-                                                                                   self.key)
+            return False, f'Expected datatype to be {self.exp_data_type} got {data_type} in element {self.key}'
 
         return True, ''
 

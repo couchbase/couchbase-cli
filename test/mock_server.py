@@ -12,7 +12,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
-        self.server.rest_server.trace.append('GET:'+parsed.path)
+        self.server.rest_server.trace.append(f'GET:{parsed.path}')
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'GET' in fns:
                 return self.handle_fn(fns['GET'], parsed.path)
@@ -21,7 +21,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        self.server.rest_server.trace.append('POST:' + parsed.path)
+        self.server.rest_server.trace.append(f'POST:{parsed.path}')
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'POST' in fns:
                 return self.handle_fn(fns['POST'], parsed.path)
@@ -30,7 +30,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def do_PUT(self):
         parsed = urlparse(self.path)
-        self.server.rest_server.trace.append('PUT:' + parsed.path)
+        self.server.rest_server.trace.append(f'PUT:{parsed.path}')
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'PUT' in fns:
                 return self.handle_fn(fns['PUT'], parsed.path)
@@ -39,7 +39,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def  do_DELETE(self):
         parsed = urlparse(self.path)
-        self.server.rest_server.trace.append('DELETE:' + parsed.path)
+        self.server.rest_server.trace.append(f'DELETE:{parsed.path}')
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'DELETE' in fns:
                 return self.handle_fn(fns['DELETE'], parsed.path)
@@ -96,10 +96,10 @@ class MockRESTServer(object):
         self.args = args
 
     def host_port(self):
-        return self.host + ":" + str(self.port)
+        return f'{self.host}:{self.port!s}'
 
     def url(self):
-        return "http://" + self.host_port()
+        return f'http://{self.host_port()}'
 
     def _run(self):
         while not self.stop:
@@ -115,7 +115,7 @@ class MockRESTServer(object):
     def shutdown(self):
         self.stop = True
         try:
-            requests.get(self.url() + "/close", timeout=0.2)
+            requests.get(f'{self.url()}/close', timeout=0.2)
         except Exception:
             pass
 

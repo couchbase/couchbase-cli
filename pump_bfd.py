@@ -140,9 +140,8 @@ class BFD:
     @staticmethod
     def db_dir(spec: str, bucket_name: str, node_name: str, tmstamp: Optional[str] = None, mode: Optional[str] = None,
                new_session: bool = False) -> str:
-        parent_dir = os.path.normpath(spec) + \
-                        '/bucket-' + urllib.parse.quote_plus(bucket_name) + \
-                        '/node-' + urllib.parse.quote_plus(node_name)
+        parent_dir = f'{os.path.normpath(spec)}/bucket-{urllib.parse.quote_plus(bucket_name)}/node-' \
+            f'{urllib.parse.quote_plus(node_name)}'
         if os.path.isdir(parent_dir):
             return parent_dir
 
@@ -343,54 +342,54 @@ class BFDSource(BFD, pump.Source):
     @staticmethod
     def can_handle(opts, spec: str) -> Union[bool, List[str]]:
         if os.path.isdir(spec):
-            dirs = glob.glob(spec + "/bucket-*/node-*/data-*.cbb")
+            dirs = glob.glob(f'{spec}/bucket-*/node-*/data-*.cbb')
             if dirs:
                 return True
             path, dirs = BFD.find_latest_dir(spec, None)
             if path:
                 path, dirs = BFD.find_latest_dir(path, "full")
                 if path:
-                    return glob.glob(path + "*/bucket-*/node-*/data-*.cbb")
+                    return glob.glob(f'{path}*/bucket-*/node-*/data-*.cbb')
         return False
 
     @staticmethod
     def check(opts, spec: str) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[Dict[str, Any]]]:
         spec = os.path.normpath(spec)
         if not os.path.isdir(spec):
-            return "error: backup_dir is not a directory: " + spec, None
+            return f'error: backup_dir is not a directory: {spec}', None
 
         buckets = []
 
-        bucket_dirs = glob.glob(spec + "/bucket-*")
+        bucket_dirs = glob.glob(f'{spec}/bucket-*')
         if not bucket_dirs:
             # check 3.0 directory structure
             path, dirs = BFD.find_latest_dir(spec, None)
             if not path:
-                return "error: no backup directory found: " + spec, None
+                return f'error: no backup directory found: {spec}', None
             latest_dir, dir = BFD.find_latest_dir(path, "full")
             if not latest_dir:
-                return "error: no valid backup directory found: " + path, None
-            bucket_dirs = glob.glob(latest_dir + "/bucket-*")
+                return f'error: no valid backup directory found: {path}', None
+            bucket_dirs = glob.glob(f'{latest_dir}/bucket-*')
 
         for bucket_dir in sorted(bucket_dirs):
             if not os.path.isdir(bucket_dir):
-                return "error: not a bucket directory: " + bucket_dir, None
+                return f'error: not a bucket directory: {bucket_dir}', None
 
             bucket_name = urllib.parse.unquote_plus(os.path.basename(bucket_dir)[len("bucket-"):].strip()).encode()
             if not bucket_name:
-                return "error: bucket_name too short: " + bucket_dir, None
+                return f'error: bucket_name too short: {bucket_dir}', None
 
             bucket = { 'name': bucket_name, 'nodes': [] }
             buckets.append(bucket)
 
-            node_dirs = glob.glob(bucket_dir + "/node-*")
+            node_dirs = glob.glob(f'{bucket_dir}/node-*')
             for node_dir in sorted(node_dirs):
                 if not os.path.isdir(node_dir):
-                    return "error: not a node directory: " + node_dir, None
+                    return f'error: not a node directory: {node_dir}', None
 
                 node_name = urllib.parse.unquote_plus(os.path.basename(node_dir)[len("node-"):].strip()).encode()
                 if not node_name:
-                    return "error: node_name too short: " + node_dir, None
+                    return f'error: node_name too short: {node_dir}', None
 
                 bucket['nodes'].append({'hostname': node_name})  # type: ignore
 
@@ -428,7 +427,7 @@ class BFDSource(BFD, pump.Source):
                 f.close()
                 return 0, d
             except IOError as e:
-                return "error: could not write {}; exception: {}{".format(path, e), None
+                return f'error: could not write {path}; exception: {e}', None
 
         return 0, None
 
@@ -443,7 +442,7 @@ class BFDSource(BFD, pump.Source):
                 f.close()
                 return 0, d
             except IOError as e:
-                return ("error: could not read %s; exception: %s") % (path, e), None
+                return f'error: could not read {path}; exception: {e}', None
         return 0, None
 
     def get_conflict_resolution_type(self) -> str:
@@ -561,7 +560,7 @@ class BFDSource(BFD, pump.Source):
                 self.cursor_db[1].close()
             self.cursor_db = None
 
-            return "error: exception reading backup file: " + str(e), None
+            return f'error: exception reading backup file: {e!s}', None
 
     @staticmethod
     def total_msgs(opts, source_bucket, source_node, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[int]]:
@@ -601,7 +600,7 @@ class BFDSource(BFD, pump.Source):
         prec_list: List[str] = []
         path, dirs = BFD.find_latest_dir(spec, None)
         if not path:
-            return "error: No valid data in path: {}".format(spec), file_list
+            return f'error: No valid data in path: {spec}', file_list
 
         path, dirs = BFD.find_latest_dir(path, None)
         if not path:
@@ -715,9 +714,7 @@ class BFDSink(BFD, pump.Sink):
                                    couchbaseConstants.CMD_DCP_DELETE]:
                         if db:
                             db.close()
-                        return self.future_done(future,
-                                                "error: BFDSink bad cmd: " +
-                                                str(cmd))
+                        return self.future_done(future, f'error: BFDSink bad cmd: {cmd!s}')
                     keyb = key
                     metab = meta
                     valb = val
@@ -738,9 +735,9 @@ class BFDSink(BFD, pump.Sink):
                 self.future_done(future, 0) # No return to keep looping.
 
             except sqlite3.Error as e:
-                return self.future_done(future, "error: db error: " + str(e))
+                return self.future_done(future, f'error: db error: {e!s}')
             except Exception as e:
-                return self.future_done(future, "error: db exception: " + str(e))
+                return self.future_done(future, f'error: db exception: {e!s}')
 
     @staticmethod
     def can_handle(opts, spec: str) -> bool:
@@ -758,20 +755,20 @@ class BFDSink(BFD, pump.Sink):
         # Check that directory's empty.
         if os.path.exists(spec):
             if not os.path.isdir(spec):
-                return "error: backup directory is not a directory: " + spec, None
+                return f'error: backup directory is not a directory: {spec}', None
             if not os.access(spec, os.W_OK):
-                return "error: backup directory is not writable: " + spec, None
+                return f'error: backup directory is not writable: {spec}', None
             return 0, None
 
         # Or, that the parent directory exists.
         parent_dir = os.path.dirname(spec)
 
         if not os.path.exists(parent_dir):
-            return "error: missing parent directory: " + parent_dir, None
+            return f'error: missing parent directory: {parent_dir}', None
         if not os.path.isdir(parent_dir):
-            return "error: parent directory is not a directory: " + parent_dir, None
+            return f'error: parent directory is not a directory: {parent_dir}', None
         if not os.access(parent_dir, os.W_OK):
-            return "error: parent directory is not writable: " + parent_dir, None
+            return f'error: parent directory is not writable: {parent_dir}', None
         return 0, None
 
     @staticmethod
@@ -800,7 +797,7 @@ class BFDSink(BFD, pump.Sink):
             f.write(alias)
             f.close()
         except IOError as e:
-            return "error: could not write {}; exception: {}{".format(path, e), None
+            return f'error: could not write {path}; exception: {e}', None
 
         return 0, None
 
@@ -816,7 +813,7 @@ class BFDSink(BFD, pump.Sink):
                 f.write(index_defs)
                 f.close()
             except IOError as e:
-                return ("error: could not write %s; exception: %s") % (path, e), None
+                return f'error: could not write {path}; exception: {e}', None
         return 0
 
     def consume_batch_async(self, batch):
@@ -827,7 +824,7 @@ class BFDSink(BFD, pump.Sink):
         if rv != 0:
             return rv, None, None
 
-        path = dir + "/data-%s.cbb" % (str(num).rjust(4, '0'))
+        path = f'{dir}/data-{num!s:0>4}.cbb'
         rv, db = create_db(path, self.opts)
         if rv != 0:
             return rv, None, None
@@ -861,7 +858,7 @@ class BFDSink(BFD, pump.Sink):
                 os.mkdir(spec)
             except OSError as error:
                 if error.errno != errno.EEXIST:
-                    return "error: could not mkdir: %s; exception: %s" % (spec, error.strerror)
+                    return f'error: could not mkdir: {spec}; exception: {error.strerror}'
 
         new_session = self.ctl['new_session']
         self.ctl['new_session'] = False
@@ -876,7 +873,7 @@ class BFDSink(BFD, pump.Sink):
                 os.makedirs(d)
             except OSError as e:
                 if not os.path.isdir(d):
-                    return "error: could not mkdirs: %s; exception: %s" % (d, e), None
+                    return f'error: could not mkdirs: {d}; exception: {e}', None
         return 0, d
 
 
@@ -884,11 +881,11 @@ class BFDSink(BFD, pump.Sink):
 
 def create_db(db_path, opts):
     try:
-        logging.debug("  create_db: " + db_path)
+        logging.debug(f'  create_db: {db_path}')
 
         rv, db, ver = connect_db(db_path, opts, [0])
         if rv != 0:
-            logging.debug("fail to call connect_db:" + db_path)
+            logging.debug(f'fail to call connect_db: {db_path}')
             return rv, None
 
         # The cas column is type text, not integer, because sqlite
@@ -915,7 +912,7 @@ def create_db(db_path, opts):
         return 0, db
 
     except Exception as e:
-        return "error: create_db exception: " + str(e), None
+        return f'error: create_db exception: {e!s}', None
 
 
 def connect_db(db_path, opts, version):
@@ -924,23 +921,21 @@ def connect_db(db_path, opts, version):
         # TODO: (1) BFD - connect_db - use pragma max_page_count.
         # TODO: (1) BFD - connect_db - use pragma journal_mode.
 
-        logging.debug("  connect_db: " + db_path)
+        logging.debug(f'  connect_db: {db_path}')
 
         db = sqlite3.connect(db_path)
         db.text_factory = str
 
         cur = db.execute("pragma user_version").fetchall()[0][0]
         if cur not in version:
-            logging.debug("dbpath is not empty: " + db_path)
-            return "error: unexpected db user version: " + \
-                str(cur) + " vs " + str(version) + \
-                ", maybe a backup directory created by older releases is reused", \
-                None, None
+            logging.debug(f'db_path is not empty: {db_path}')
+            return f'error: unexpected db user version: {cur!s} vs {version!s}, maybe a backup directory created by' \
+                       f' older releases is reused', None, None
 
         return 0, db, version.index(cur)
 
     except Exception as e:
-        return "error: connect_db exception: " + str(e), None
+        return f'error: connect_db exception: {e!s}', None, None
 
 
 def cleanse(d):

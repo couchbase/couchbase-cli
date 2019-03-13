@@ -58,8 +58,7 @@ def _exit_if_errors(errors):
         sys.exit(1)
 
 def opt_extra_help(parser, extra_defaults):
-    extra_help = "; ".join(["%s=%s (%s)" %
-                           (k, extra_defaults[k][0], extra_defaults[k][1])
+    extra_help = "; ".join([f'{k}={extra_defaults[k][0]} ({extra_defaults[k][1]})'
                            for k in sorted(extra_defaults.keys())])
 
     group = optparse.OptionGroup(parser, "Available extra config parameters (-x)",
@@ -191,9 +190,9 @@ def findAllVbucketsForBucket(node: str, bucket: str, restport: str, username: st
 # Get the buckets that exist on the cluster
 def getBuckets(node: str, rest_port: str, username: str, password: str) -> List[Any]:
     request = urllib.request.Request(
-        'http://' + node + ':' + rest_port + '/pools/default/buckets')
-    base64string = base64.encodebytes(('{0}:{1}'.format(username, password)).encode()).decode().replace('\n', '')
-    request.add_header('Authorization', 'Basic %s' % base64string)
+        f'http://{node}:{rest_port}/pools/default/buckets')
+    base64string = base64.encodebytes(f'{username}:{password}'.encode()).decode().replace('\n', '')
+    request.add_header('Authorization', f'Basic {base64string}')
     try:
         response = urllib.request.urlopen(request)
     except:
@@ -203,7 +202,7 @@ def getBuckets(node: str, rest_port: str, username: str, password: str) -> List[
     data = json.loads(response.read())
     for item in data:
         if item['bucketType'] == 'memcached':
-            print('skipping bucket that is not a couchbase-bucket: {0}'.format(item['name']))
+            print(f'skipping bucket that is not a couchbase-bucket: {item["name"]}')
         else:
             bucket = item['name']
             bucketsOnCluster.append(bucket)
@@ -219,18 +218,18 @@ def consumer(id: int, verbose: bool):
             commandline = process_queue.get(block=True, timeout=2)
             if verbose:
                 with lock:
-                    print("T(%s): %s" %(id, commandline))
+                    print(f'T({id}): {commandline}')
             p = subprocess.Popen(commandline, shell=True)
             p.wait()
             if p.returncode == 1:
                 with lock:
-                    print('Error with backup for running %s' % commandline)
+                    print(f'Error with backup for running {commandline}')
             process_queue.task_done()
             time.sleep(1)
         except Exception as e:
             if process_queue.empty():
                 return
-            print('Exception ' + str(e))
+            print(f'Exception {str(e)}')
 
 if __name__ == '__main__':
     # Parse the arguments given.
@@ -253,7 +252,7 @@ if __name__ == '__main__':
         try:
             os.makedirs(backupDir)
         except:
-            sys.exit("Cannot create backup root directory:%s" % backupDir)
+            sys.exit(f'Cannot create backup root directory: {backupDir}')
 
     # Check to see if path is correct
     if not os.path.isdir(path):
@@ -261,7 +260,7 @@ if __name__ == '__main__':
         print('Please run with a different path')
         sys.exit(1)
     if not os.path.isfile(os.path.join(path, backup_exe)):
-        print('cbbackup could not be found in ' + path)
+        print(f'cbbackup could not be found in {path}')
         sys.exit(1)
 
     # Check to see if log directory exists if not create it
@@ -272,7 +271,7 @@ if __name__ == '__main__':
         try:
             os.mkdir(dir)
         except:
-            print('Error trying to create directory ' + dir)
+            print(f'Error trying to create directory {dir}')
             sys.exit(1)
 
     # Separate out node and REST port
@@ -296,7 +295,7 @@ if __name__ == '__main__':
                 bucketList.append(args.bucket_source)
 
         if len(bucketList) == 0:
-            print('Bucket ' + args.bucket_source + ' does not exist')
+            print(f'Bucket {args.bucket_source} does not exist')
             print('Please enter a different bucket')
             sys.exit(1)
 

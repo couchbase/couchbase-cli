@@ -58,12 +58,12 @@ class SFDSource(pump.Source):
 
         buckets = []
 
-        for bucket_dir in sorted(glob.glob(d + "/*/")):
-            if not glob.glob(bucket_dir + "/*.couch.*"):
+        for bucket_dir in sorted(glob.glob(f'{d}/*/')):
+            if not glob.glob(f'{bucket_dir}/*.couch.*'):
                 continue
             bucket_name = os.path.basename(os.path.dirname(bucket_dir))
             if not bucket_name:
-                return "error: bucket_name too short: " + bucket_dir, None
+                return f'error: bucket_name too short: {bucket_dir}', None
             rv, v = SFDSource.vbucket_states(opts, spec, bucket_dir)
             if rv != 0:
                 return rv, None
@@ -72,7 +72,7 @@ class SFDSource(pump.Source):
                                        'vbucket_states': v}]})
 
         if not buckets:
-            return "error: no bucket subdirectories at: " + d, None
+            return f'error: no bucket subdirectories at: {d}', None
 
         return 0, {'spec': spec, 'buckets': buckets}
 
@@ -94,19 +94,16 @@ class SFDSource(pump.Source):
                         if state:
                             vbucket_states[state][vbucket_id] = doc
                         else:
-                            return "error: missing vbucket_state from: %s" \
-                                % (f), None
+                            return f'error: missing vbucket_state from: {f}', None
                 except Exception as e:
-                    return ("error: could not read _local/vbstate from: %s" +
-                            "; exception: %s") % (f, e), None
+                    return f'error: could not read _local/vbstate from: {f}; exception: {e}', None
                 store.close()
             except Exception as e:
-                return ("error: could not read couchstore file: %s" +
-                        "; exception: %s") % (f, e), None
+                return f'error: could not read couchstore file: {f}; exception: {e}', None
 
         if vbucket_states:
             return 0, vbucket_states
-        return "error: no vbucket_states in files: %s" % (bucket_dir), None
+        return f'error: no vbucket_states in files: {bucket_dir}', None
 
     @staticmethod
     def provide_design(opts, source_spec: str, source_bucket, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR,
@@ -115,7 +112,7 @@ class SFDSource(pump.Source):
         if rv != 0:
             return rv, None
 
-        bucket_dir = d + '/' + source_bucket['name']
+        bucket_dir = f'{d}/{source_bucket["name"]}'
         if not os.path.isdir(bucket_dir):
             return 0, None
 
@@ -135,15 +132,13 @@ class SFDSource(pump.Source):
                 try:
                     doc_contents = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
                 except Exception as e:
-                    return ("error: could not read design doc: %s" +
-                            "; source_spec: %s; exception: %s") % \
-                            (doc_info.id, source_spec, e), None
+                    return f'error: could not read design doc: {doc_info.id}; source_spec: {source_spec};' \
+                               f' exception: {e}', None
                 try:
                     doc = json.loads(doc_contents)
                 except ValueError as e:
-                    return ("error: could not parse design doc: %s" +
-                            "; source_spec: %s; exception: %s") % \
-                            (doc_info.id, source_spec, e), None
+                    return f'error: could not parse design doc: {doc_info.id}; source_spec: {source_spec};' \
+                               f' exception: {e}', None
 
                 doc['id'] = doc.get('id', doc_info.id)
                 doc['_rev'] = doc.get('_rev', doc_info.revSequence)
@@ -182,20 +177,17 @@ class SFDSource(pump.Source):
 
         source_nodes = self.source_bucket['nodes']
         if len(source_nodes) != 1:
-            self.queue.put(("error: expected 1 node in source_bucket: %s"
-                            % (self.source_bucket['name']), None))
+            self.queue.put((f'error: expected 1 node in source_bucket: {self.source_bucket["name"]}', None))
             return
 
         vbucket_states = source_nodes[0].get('vbucket_states', None)
         if not vbucket_states:
-            self.queue.put(("error: missing vbucket_states in source_bucket: %s"
-                            % (self.source_bucket['name']), None))
+            self.queue.put((f'error: missing vbucket_states in source_bucket: {self.source_bucket["name"]}', None))
             return
 
         vbuckets = vbucket_states.get(source_vbucket_state, None)
         if vbuckets is None: # Empty dict is valid.
-            self.queue.put(("error: missing vbuckets in source_bucket: %s"
-                            % (self.source_bucket['name']), None))
+            self.queue.put((f'error: missing vbuckets in source_bucket: {self.source_bucket["name"]}', None))
             return
 
         batch_max_size = self.opts.extra['batch_max_size']
@@ -240,8 +232,8 @@ class SFDSource(pump.Source):
                     msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res)
                     abatch[0].append(msg, len(val))
                 except Exception as e:
-                    self.queue.put(("error: could not read couchstore file due to unsupported file format version;"
-                                    " exception: %s"% e, None))
+                    self.queue.put((f'error: could not read couchstore file due to unsupported file format version;'
+                                    f' exception: {e}', None))
                     return
 
             if (abatch[0].size() >= batch_max_size or
@@ -249,7 +241,7 @@ class SFDSource(pump.Source):
                 self.queue.put((0, abatch[0]))
                 abatch[0] = pump.Batch(self)
 
-        for f in latest_couch_files(d + '/' + self.source_bucket['name']):
+        for f in latest_couch_files(f'{d}/{self.source_bucket["name"]}'):
             vbucket_id = int(re.match(SFD_RE, os.path.basename(f)).group(1))
             if not vbucket_id in vbuckets:
                 continue
@@ -335,8 +327,7 @@ class SFDSink(pump.Sink):
                     elif cmd == couchbaseConstants.CMD_TAP_DELETE or cmd == couchbaseConstants.CMD_DCP_DELETE:
                         v = None
                     else:
-                        self.future_done(future,
-                                         "error: SFDSink bad cmd: " + str(cmd))
+                        self.future_done(future, f'error: SFDSink bad cmd: {cmd!s}')
                         store.close()
                         return
 
@@ -369,11 +360,8 @@ class SFDSink(pump.Sink):
                     store.commit()
                     store.close()
                 except Exception as e:
-                    self.future_done(future,
-                                     "error: could not save couchstore data"
-                                     "; vbucket_id: %s; store_path: %s"
-                                     "; exception: %s"
-                                     % (vbucket_id, store_path, e))
+                    self.future_done(future, f'error: could not save couchstore data; vbucket_id: {vbucket_id}; '
+                                             f'store_path: {store_path}; exception: {e}')
                     return
 
             self.future_done(future, 0) # No return to keep looping.
@@ -386,7 +374,7 @@ class SFDSink(pump.Sink):
         try:
             store.localDocs['_local/vbstate'] = doc
         except Exception as e:
-            return "error: save_vbucket_state() failed: " + str(e)
+            return f'error: save_vbucket_state() failed: {e!s}'
         return 0
 
     @staticmethod
@@ -396,8 +384,7 @@ class SFDSink(pump.Sink):
     @staticmethod
     def check_base(opts, spec: str) -> couchbaseConstants.PUMP_ERROR:
         if getattr(opts, "destination_operation", None) != None:
-            return ("error: --destination-operation" +
-                    " is not supported by this destination: %s") % (spec)
+            return f'error: --destination-operation is not supported by this destination: {spec}'
 
         # Skip immediate superclass Sink.check_base(),
         # since SFDSink can handle different vbucket states.
@@ -411,9 +398,9 @@ class SFDSink(pump.Sink):
         if rv != 0:
             return rv, None
         if not os.path.isdir(dir):
-            return "error: not a directory: " + dir, None
+            return f'error: not a directory: {dir}', None
         if not os.access(dir, os.W_OK):
-            return "error: directory is not writable: " + dir, None
+            return f'error: directory is not writable: {dir}', None
         return 0, None
 
     @staticmethod
@@ -425,13 +412,13 @@ class SFDSink(pump.Sink):
         try:
             sd = json.loads(source_design)
         except ValueError as e:
-            return "error: could not parse source_design: " + source_design
+            return f'error: could not parse source_design: {source_design}'
 
         rv, d = data_dir(sink_spec)
         if rv != 0:
             return rv
 
-        bucket_dir = d + '/' + source_bucket['name']
+        bucket_dir = f'{d}/{source_bucket["name"]}'
         if not os.path.isdir(bucket_dir):
             os.mkdir(bucket_dir)
 
@@ -475,14 +462,13 @@ class SFDSink(pump.Sink):
         # bucket_dir =>   default/
         # store_path =>     VBUCKET_ID.couch.COMPACTION_NUM
         if vbucket_id >= SFD_VBUCKETS:
-            return "error: vbucket_id too large: %s" % (vbucket_id), None, None
+            return f'error: vbucket_id too large: {vbucket_id}', None, None
 
         rv, bucket_dir = self.find_bucket_dir()
         if rv != 0:
             return rv, None, None
 
-        return open_latest_store(bucket_dir, "%s.couch.*" % (vbucket_id), SFD_RE,
-                                 str(vbucket_id) + ".couch.1", mode='c')
+        return open_latest_store(bucket_dir, f'{vbucket_id}.couch.*', SFD_RE, f'{vbucket_id!s}.couch.1', mode='c')
 
     def find_bucket_dir(self) -> Tuple[couchbaseConstants.PUMP_ERROR, str]:
         rv, d = data_dir(self.spec)
@@ -494,8 +480,7 @@ class SFDSink(pump.Sink):
             try:
                 os.mkdir(bucket_dir)
             except OSError as e:
-                return ("error: could not create bucket_dir: %s; exception: %s"
-                        % (bucket_dir, e)), ''
+                return f'error: could not create bucket_dir: {bucket_dir}; exception: {e}', ''
 
         return 0, bucket_dir
 
@@ -508,20 +493,17 @@ def open_latest_store(bucket_dir: str, glob_pattern: str, filter_re: str, defaul
     if not store_paths:
         if mode == 'r':
             return 0, None, ''
-        store_paths = [bucket_dir + '/' + default_name]
+        store_paths = [f'{bucket_dir}/{default_name}']
     if len(store_paths) != 1:
-        return ("error: no single, latest couchstore file: %s" +
-                "; found: %s") % (glob_pattern, store_paths), None, ''
+        return f'error: no single, latest couchstore file: {glob_pattern}; found: {store_paths}', None, ''
     try:
         return 0, couchstore.CouchStore(str(store_paths[0]), mode), store_paths[0]
     except Exception as e:
-        return ("error: could not open couchstore file: %s" +
-                "; exception: %s") % (store_paths[0], e), None, ''
-
+        return f'error: could not open couchstore file: {store_paths[0]}; exception: {e}', None, ''
 
 def latest_couch_files(bucket_dir: str, glob_pattern: str = '*.couch.*', filter_re: str = SFD_RE) -> List[str]:
     """Given directory of *.couch.VER files, returns files with largest VER suffixes."""
-    files = glob.glob(bucket_dir + '/' + glob_pattern)
+    files = glob.glob(f'{bucket_dir}/{glob_pattern}')
     files = [f for f in files if re.match(filter_re, os.path.basename(f))]
     matches = [(re.match(filter_re, os.path.basename(f)), f) for f in files]
     latest: Dict[str, Tuple[int, str]] = {}
@@ -535,10 +517,9 @@ def latest_couch_files(bucket_dir: str, glob_pattern: str = '*.couch.*', filter_
 
 def data_dir(spec: str) -> Tuple[couchbaseConstants.PUMP_ERROR, str]:
     if not spec.startswith(SFD_SCHEME):
-        return "error: wrong scheme in spec: " + spec, ''
+        return f'error: wrong scheme in spec: {spec}', ''
     dir = spec[len(SFD_SCHEME):]
     if dir:
         return 0, os.path.normpath(dir)
     else:
-        return "error: missing dir in spec: " + spec, ''
-
+        return f'error: missing dir in spec: {spec}', ''
