@@ -49,3 +49,11 @@ ENDIF ()
 INSTALL (DIRECTORY requests DESTINATION lib/python)
 
 ADD_SUBDIRECTORY(docs)
+
+ADD_CUSTOM_TARGET (couchbase-cli-clean
+    COMMAND git clean -dfx
+    COMMENT "Cleaning couchbase-cli directory"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+IF (TARGET realclean)
+    ADD_DEPENDENCIES (realclean couchbase-cli-clean)
+ENDIF ()
