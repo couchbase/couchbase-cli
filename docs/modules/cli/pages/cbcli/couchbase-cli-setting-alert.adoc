@@ -119,9 +119,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   This warning is only shown for if the index storage type is Memory Optimized
   Indexes (MOI).
 
---alert-timestamp-drift-exceeded
+--alert-timestamp-drift-exceeded::
   Specifies that an email alert should be sent if the clocks on two different
   machines in the cluster are more that five seconds apart.
+
+--alert-communication-issue::
+  Specifies that an email alert should be sent when nodes are experiencing
+  communication issues.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
