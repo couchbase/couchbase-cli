@@ -3434,6 +3434,14 @@ class XdcrReplicate(Subcommand):
                            help="The interval for statistics updates (in milliseconds)")
         group.add_argument("--priority", dest="priority", choices=['High', 'Medium', 'Low'],
                            metavar="<High|Medium|Low>", help='XDCR priority, by default set to High')
+        group.add_argument('--reset-expiry', choices=['1', '0'], metavar='<1|0>', dest='reset_expiry',
+                           default=None, help='When set to true the expiry of mutations will be set to zero')
+        group.add_argument('--filter-deletion', choices=['1', '0'], metavar='<1|0>', default=None, dest='filter_del',
+                           help='When set to true delete mutations will be filter out and not sent to the target '
+                                'cluster')
+        group.add_argument('--filter-expiration', choices=['1', '0'], metavar='<1|0>', default=None, dest='filter_exp',
+                           help='When set to true expiry mutations will be filter out and not sent to the target '
+                                'cluster')
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -3534,7 +3542,8 @@ class XdcrReplicate(Subcommand):
                                                   opts.dst_nozzles, opts.usage_limit,
                                                   opts.compression, opts.log_level,
                                                   opts.stats_interval, opts.replicator_id, opts.filter,
-                                                  opts.filter_skip, opts.priority)
+                                                  opts.filter_skip, opts.priority, opts.reset_expiry,
+                                                  opts.filter_del, opts.filter_exp)
         _exitIfErrors(errors)
 
         _success("XDCR replicator settings updated")

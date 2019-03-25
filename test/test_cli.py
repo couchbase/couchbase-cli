@@ -1203,6 +1203,15 @@ class TestXdcrReplicate(CommandTest):
                            'networkUsageLimit=5', 'priority=Medium']
         self.rest_parameter_match(expected_params)
 
+    def test_setting_filter_args(self):
+        self.no_error_run(self.command + ['--settings', '--xdcr-replicator', '1', '--filter-expression', 'key:',
+                                          '--filter-skip-restream', '--reset-expiry', '1',
+                                          '--filter-deletion', '0', '--filter-expiration', '1'], self.server_args)
+        self.assertIn('POST:/settings/replications/1', self.server.trace)
+        expected_params = ['filterExpression=key%3A', 'filterSkipRestream=1', 'filterBypassExpiry=true',
+                           'filterDeletion=false', 'filterExpiration=true']
+        self.rest_parameter_match(expected_params)
+
     def test_list_replicate(self):
         self.no_error_run(self.command + ['--list'], self.server_args)
         self.assertIn('GET:/pools/default/tasks', self.server.trace)

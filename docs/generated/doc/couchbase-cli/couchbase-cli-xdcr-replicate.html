@@ -455,7 +455,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--target-nozzle-per-node &lt;num&gt;] [--bandwidth-usage-limit &lt;num&gt;]
     [--enable-compression &lt;num&gt;] [--stats-interval &lt;milliseconds&gt;]
     [--optimistic-replication-threshold &lt;bytes&gt;] [--log-level &lt;level&gt;]
-    [--priority &lt;High|Medium|Low&gt;]</pre>
+    [--priority &lt;High|Medium|Low&gt;] [--reset-expiry &lt;1|0&gt;]
+    [--filter-deletion &lt;1|0&gt;] [--filter-expiration &lt;1|0&gt;]</pre>
 </div>
 </div>
 </div>
@@ -610,6 +611,24 @@ the target cluster supports compression.</p>
 <dd>
 <p>Specify the priority for the replication. The options are High, Medium or
 Low. The default priority is High.</p>
+</dd>
+<dt class="hdlist1">--reset-expiry &lt;1|0&gt;</dt>
+<dd>
+<p>When set to true, all mutations sent to the target cluster will have the
+expiration set to zero. This means documents will not expire in target
+cluster. This can be overridden by setting max-ttl on the target bucket.</p>
+</dd>
+<dt class="hdlist1">--filter-deletion &lt;1|0&gt;</dt>
+<dd>
+<p>When set to true, delete mutations will not be sent to the target cluster.
+This means documents will not be deleted in the target cluster via delete
+operations on the source cluster.</p>
+</dd>
+<dt class="hdlist1">--filter-expiration &lt;1|0&gt;</dt>
+<dd>
+<p>When set to true, expiry mutations will not be sent to the target cluster.
+This means documents will not be deleted in the target cluster via
+expirations on the source cluster.</p>
 </dd>
 </dl>
 </div>

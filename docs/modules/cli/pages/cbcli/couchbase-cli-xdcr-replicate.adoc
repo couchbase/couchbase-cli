@@ -22,7 +22,8 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>]
     [--target-nozzle-per-node <num>] [--bandwidth-usage-limit <num>]
     [--enable-compression <num>] [--stats-interval <milliseconds>]
     [--optimistic-replication-threshold <bytes>] [--log-level <level>]
-    [--priority <High|Medium|Low>]
+    [--priority <High|Medium|Low>] [--reset-expiry <1|0>]
+    [--filter-deletion <1|0>] [--filter-expiration <1|0>]
 
 == DESCRIPTION
 
@@ -122,6 +123,21 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --priority <High|Medium|Low>::
   Specify the priority for the replication. The options are High, Medium or
   Low. The default priority is High.
+
+--reset-expiry <1|0>::
+  When set to true, all mutations sent to the target cluster will have the
+  expiration set to zero. This means documents will not expire in target
+  cluster. This can be overridden by setting max-ttl on the target bucket.
+
+--filter-deletion <1|0>::
+  When set to true, delete mutations will not be sent to the target cluster.
+  This means documents will not be deleted in the target cluster via delete
+  operations on the source cluster.
+
+--filter-expiration <1|0>::
+  When set to true, expiry mutations will not be sent to the target cluster.
+  This means documents will not be deleted in the target cluster via
+  expirations on the source cluster.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

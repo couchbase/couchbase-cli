@@ -1454,7 +1454,8 @@ class ClusterManager(object):
     def xdcr_replicator_settings(self, chk_interval, worker_batch_size,
                                  doc_batch_size, fail_interval, replication_thresh,
                                  src_nozzles, dst_nozzles, usage_limit, compression,
-                                 log_level, stats_interval, replicator_id, filter, filter_skip, priority):
+                                 log_level, stats_interval, replicator_id, filter, filter_skip, priority,
+                                 reset_expiry, filter_del, filter_exp):
 
         url = f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
@@ -1469,6 +1470,12 @@ class ClusterManager(object):
             params['filterSkipRestream'] = filter_numeric
         if priority:
             params['priority'] = priority
+        if reset_expiry:
+            params['filterBypassExpiry'] = 'true' if reset_expiry == '1' else 'false'
+        if filter_del:
+            params['filterDeletion'] = 'true' if filter_del == '1' else 'false'
+        if filter_exp:
+            params['filterExpiration'] = 'true' if filter_exp == '1' else 'false'
 
         return self._post_form_encoded(url, params)
 

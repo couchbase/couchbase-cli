@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-03-05
+.\"      Date: 2019-03-28
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2019-03-05" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2019-03-28" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -43,7 +43,8 @@ couchbase\-cli\-xdcr\-replicate \- Creates a replication between two data center
     [\-\-target\-nozzle\-per\-node <num>] [\-\-bandwidth\-usage\-limit <num>]
     [\-\-enable\-compression <num>] [\-\-stats\-interval <milliseconds>]
     [\-\-optimistic\-replication\-threshold <bytes>] [\-\-log\-level <level>]
-    [\-\-priority <High|Medium|Low>]
+    [\-\-priority <High|Medium|Low>] [\-\-reset\-expiry <1|0>]
+    [\-\-filter\-deletion <1|0>] [\-\-filter\-expiration <1|0>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -213,6 +214,27 @@ The interval for statistics updates in milliseconds.
 .RS 4
 Specify the priority for the replication. The options are High, Medium or
 Low. The default priority is High.
+.RE
+.sp
+\-\-reset\-expiry <1|0>
+.RS 4
+When set to true, all mutations sent to the target cluster will have the
+expiration set to zero. This means documents will not expire in target
+cluster. This can be overridden by setting max\-ttl on the target bucket.
+.RE
+.sp
+\-\-filter\-deletion <1|0>
+.RS 4
+When set to true, delete mutations will not be sent to the target cluster.
+This means documents will not be deleted in the target cluster via delete
+operations on the source cluster.
+.RE
+.sp
+\-\-filter\-expiration <1|0>
+.RS 4
+When set to true, expiry mutations will not be sent to the target cluster.
+This means documents will not be deleted in the target cluster via
+expirations on the source cluster.
 .RE
 .SH "HOST FORMATS"
 .sp
