@@ -257,13 +257,11 @@ class PumpingStation(ProgressReporter):
                                                source_map.get('spec_parts'))
         else:
             source_nodes = source_bucket['nodes']
-
         logging.debug(f' source_nodes: {",".join([returnString(n.get("hostname", NA)) for n in source_nodes])}')
         return source_nodes
 
     def transfer_bucket_msgs(self, source_bucket: Dict[str, Any], source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         source_nodes = self.filter_source_nodes(source_bucket, source_map)
-
         # Transfer bucket msgs with a Pump per source server.
         self.start_workers(len(source_nodes))
         self.report_init()
@@ -1117,7 +1115,7 @@ def filter_bucket_nodes(bucket: Dict[str, Any], spec_parts: Sequence[Any]) -> Li
     if ':' in host:
         host_port = f'[{host}]:{port!s}'
     else:
-        host_port = f'host:{port!s}'
+        host_port = f'{host}:{port!s}'
     return [n for n in bucket['nodes'] if n.get('hostname') == host_port]
 
 
