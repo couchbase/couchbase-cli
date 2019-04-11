@@ -9,9 +9,7 @@ from typing import Union, Tuple, Optional
 
 PUMP_ERROR = Union[str, int]
 # batch message: (cmd, vbucket_id, key, flg, exp, cas, rev_seqno/rev, val, seqno, dtype, metalen, conf_res/notthis)
-BATCH_MSG1 = Tuple[int, int, bytes, int, int, int, bytes, bytes, int, int, int, int]
-BATCH_MSG2 = Tuple[int, int, bytes, int, int, int, bytes, bytes, int, int, int]
-BATCH_MSG = Union[BATCH_MSG1, BATCH_MSG2]
+BATCH_MSG = Tuple[int, int, bytes, int, int, int, bytes, bytes, int, int, int, int]
 REQUEST = Tuple[bytes, Optional[bytes], Optional[bytes], Optional[bytes], Optional[bytes]]
 
 SSL_PORT = 11207

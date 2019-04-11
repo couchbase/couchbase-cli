@@ -176,7 +176,7 @@ class MCSink(pump.Sink):
             cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg[:8]
             seqno = dtype = nmeta = conf_res = 0
             if msg_format_length > 8:
-                seqno, dtype, nmeta, conf_res = msg[8:]
+                seqno, dtype, nmeta, conf_res = msg[8:12]
             if vbucket_id is not None:
                 vbucket_id_msg = vbucket_id
 
@@ -196,8 +196,8 @@ class MCSink(pump.Sink):
                 self.append_req(m, req)
                 continue
 
-            rv, cmd = self.translate_cmd(cmd, operation, meta)
-            if rv != 0:
+            rv, translated_cmd = self.translate_cmd(cmd, operation, meta)
+            if translated_cmd is None:
                 return rv
             if dtype > 2:
                 if self.uncompress and val:
@@ -205,23 +205,23 @@ class MCSink(pump.Sink):
                         val = snappy.uncompress(val)
                     except Exception as err:
                         pass
-            if cmd == couchbaseConstants.CMD_GET:
+            if translated_cmd == couchbaseConstants.CMD_GET:
                 val, flg, exp, cas = b'', 0, 0, 0
-            if cmd == couchbaseConstants.CMD_NOOP:
+            if translated_cmd == couchbaseConstants.CMD_NOOP:
                 key, val, flg, exp, cas = b'', b'', 0, 0, 0
-            if cmd == couchbaseConstants.CMD_DELETE:
+            if translated_cmd == couchbaseConstants.CMD_DELETE:
                 val = b''
             # A tombstone can contain Xattrs
-            if cmd == couchbaseConstants.CMD_DELETE_WITH_META and not dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
+            if translated_cmd == couchbaseConstants.CMD_DELETE_WITH_META and not dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
                 val = b''
             # on mutations filter txn related data
-            if cmd == couchbaseConstants.CMD_SET_WITH_META or cmd == couchbaseConstants.CMD_SET:
+            if translated_cmd == couchbaseConstants.CMD_SET_WITH_META or translated_cmd == couchbaseConstants.CMD_SET:
                 if not getattr(self.opts, 'force_txn', False):
                     skip, val, cas, exp, dtype = self.filter_out_txn(key, val, cas, exp, dtype)
                     if skip:
                         continue
 
-            rv, req = self.cmd_request(cmd, vbucket_id_msg, key, val,  # type: ignore
+            rv, req = self.cmd_request(translated_cmd, vbucket_id_msg, key, val,  # type: ignore
                                        ctypes.c_uint32(flg).value,
                                        exp, cas, meta, i, dtype, nmeta,
                                        conf_res)  # type: ignore

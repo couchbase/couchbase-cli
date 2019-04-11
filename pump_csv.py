@@ -171,8 +171,8 @@ class CSVSink(pump.Sink):
                     self.future_done(future, 0)
                     return 0, future
 
-                cmd, vbucket_id, key, flg, exp, cas, meta, val = batch.msgs[0][:8]
-                doc = json.loads(val)
+                cmd, vbucket_id, key, flg, exp, cas, meta, val_bytes = batch.msgs[0][:8]
+                doc = json.loads(val_bytes)
                 self.fields = sorted(doc.keys())
                 if 'id' not in self.fields:
                     self.fields = ['id'] + self.fields
@@ -195,15 +195,15 @@ class CSVSink(pump.Sink):
                 self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev', 'vbid', 'dtype'])
         msg_tuple_format = 0
         for msg in batch.msgs:
-            cmd, vbucket_id, key, flg, exp, cas, meta, val = msg[:8]
-            val = val.decode()
+            cmd, vbucket_id, key, flg, exp, cas, meta, val_bytes = msg[:8]
+            val: str = val_bytes.decode()
             if self.skip(key, vbucket_id):
                 continue
             if not msg_tuple_format:
                 msg_tuple_format = len(msg)
             seqno = dtype = nmeta = 0
             if msg_tuple_format > 8:
-                seqno, dtype, nmeta, conf_res = msg[8:]
+                seqno, dtype, nmeta, conf_res = msg[8:12]
             if dtype > 2:
                 try:
                     val = snappy.uncompress(val)
