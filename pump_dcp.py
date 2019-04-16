@@ -410,7 +410,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                             extra_index += extlen
 
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, bytes([rev_seqno]), val, seqno, dtype, metalen,
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno.to_bytes(4, 'big'), val, seqno, dtype, metalen,
                                conf_res)
                         batch.append(msg, len(val))
                         self.num_msg += 1
@@ -424,7 +424,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     if dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
                         val = data[val_start:]
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, bytes([rev_seqno]), val, seqno, dtype, metalen, 0)
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno.to_bytes(4, 'big'), val, seqno, dtype, metalen, 0)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                     if cmd == couchbaseConstants.CMD_DCP_DELETE:
