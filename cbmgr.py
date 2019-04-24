@@ -34,6 +34,7 @@ BUCKET_TYPE_COUCHBASE = "membase"
 BUCKET_TYPE_MEMCACHED = "memcached"
 
 CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
+CB_ETC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "etc", "couchbase"))
 
 # On MacOS the config is store in the users home directory
 if platform.system() == "Darwin":
@@ -1874,8 +1875,14 @@ class ServerEshell(Subcommand):
             _warning("Cannot locate Couchbase erlang. Attempting to use non-Couchbase erlang")
             path = 'erl'
 
+        inetrc_file = os.path.join(CB_ETC_PATH, 'hosts.cfg')
+        if os.path.isfile(inetrc_file):
+            inetrc_opt = ['-kernel', 'inetrc', f'"{inetrc_file}"']
+        else:
+            inetrc_opt = []
+
         try:
-            subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node])
+            subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node] + inetrc_opt)
         except OSError:
             _exitIfErrors(["Unable to find the erl executable"])
 
