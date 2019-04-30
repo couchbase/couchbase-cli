@@ -1273,7 +1273,7 @@ class ClusterManager(object):
         if encryption is not None:
             params['encryption'] = encryption
         if user_dn_mapping is not None:
-            params['userd_dn_mapping'] = user_dn_mapping
+            params['user_dn_mapping'] = user_dn_mapping
         if timeout is not None:
             params['request_timeout'] = timeout
         if max_parallel is not None:
