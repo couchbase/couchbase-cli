@@ -1257,10 +1257,10 @@ class ClusterManager(object):
                     nested_groups, nested_groups_max_depth, disabled_ca_ver, ca):
         url = f'{self.hostname}/settings/ldap'
         if authentication_enabled is None or authorization_enabled is None:
-            return ['authentication-enabled and authorization-enabled are required']
+            return None, ['authentication-enabled and authorization-enabled are required']
 
         if hosts is None:
-            return ['hosts are required']
+            return None, ['hosts are required']
 
         params = {
             "authentication_enabled": authentication_enabled,

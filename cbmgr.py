@@ -2767,8 +2767,8 @@ class SettingLdap(Subcommand):
             _exitIfErrors(rv)
             print(data)
         else:
-            if opts.authentication_enabled is None or opts.authorization_enabled is None:
-                _exitIfErrors(['the following arguments are required: --authentication-enabled, --authorization-enabled'])
+            if opts.authentication_enabled is None or opts.authorization_enabled is None or opts.hosts is None:
+                _exitIfErrors(['the following arguments are required: --authentication-enabled, --authorization-enabled, --hosts'])
             self._set(opts, rest)
 
     def _set(self, opts, rest):
