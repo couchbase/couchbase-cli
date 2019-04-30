@@ -1496,7 +1496,7 @@ class MasterPassword(LocalSubcommand):
                 instr, "-run", "init", "stop"]
 
         res, error = self.run_process("erl", args)
-        res = res.strip(' \t\n\r')
+        res = res.decode().strip()
 
         if res == "ok":
             print("SUCCESS: Password accepted. Node started booting.")
