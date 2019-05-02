@@ -3231,7 +3231,7 @@ class UserManage(Subcommand):
         elif opts.user_add:
             self._set_users_groups(rest, opts)
         elif opts.list_group:
-            self._list_groups(rest, opts)
+            self._list_groups(rest)
         elif opts.delete_group:
             self._delete_group(rest, opts)
 
@@ -3241,6 +3241,7 @@ class UserManage(Subcommand):
 
         _, errors = rest.delete_user_group(opts.group)
         _exitIfErrors(errors)
+        _success(f"Group '{opts.group}' was deleted")
 
     def _get_group(self, rest, opts):
         if opts.group is None:
@@ -3258,6 +3259,7 @@ class UserManage(Subcommand):
 
         _, errors = rest.add_user_to_group(opts.rbac_user, opts.groups)
         _exitIfErrors(errors)
+        _success(f"User '{opts.username}' group memberships were updated")
 
     def _set_group(self, rest, opts):
         if opts.group is None:
@@ -3267,8 +3269,9 @@ class UserManage(Subcommand):
 
         _, errors = rest.set_user_group(opts.group, opts.roles, opts.description, opts.ldap_ref)
         _exitIfErrors(errors)
+        _success(f"Group '{opts.group}' was created")
 
-    def _list_groups(self, rest, opts):
+    def _list_groups(self, rest):
         groups, errors = rest.list_user_groups()
         _exitIfErrors(errors)
         print(json.dumps(groups, indent=2))
@@ -3287,7 +3290,7 @@ class UserManage(Subcommand):
 
         _, errors = rest.delete_rbac_user(opts.rbac_user, opts.auth_domain)
         _exitIfErrors(errors)
-        _success("RBAC user removed")
+        _success(f"User '{opts.rbac_user}' was removed")
 
     def _list(self, rest, opts):
         if opts.rbac_user is not None:
@@ -3367,7 +3370,7 @@ class UserManage(Subcommand):
                 "function CURL() and may allow access to other network endpoints in the local " +
                 "network and the Internet.")
 
-        _success("RBAC user set")
+        _success(f"User {opts.rbac_user} was created")
 
     @staticmethod
     def get_man_page_name():
