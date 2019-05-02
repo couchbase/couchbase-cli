@@ -3358,10 +3358,10 @@ class UserManage(Subcommand):
         _exitIfErrors(errors)
 
         if opts.groups is not None:
-            _, errors = rest.add_user_to_group()
+            groups = opts.groups.split (",")
+            _, errors = rest.add_user_to_group(opts.rbac_user, groups)
 
-
-        if "query_external_access" in opts.roles:
+        if opts.roles is not None and "query_external_access" in opts.roles:
             _warning("Granting the query_external_access role permits execution of the N1QL " +
                 "function CURL() and may allow access to other network endpoints in the local " +
                 "network and the Internet.")
