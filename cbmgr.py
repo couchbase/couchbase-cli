@@ -3192,7 +3192,8 @@ class UserManage(Subcommand):
         group.add_argument("--auth-domain", dest="auth_domain", metavar="<domain>",
                            choices=["external", "local"],
                            help="The authentication type for the specified user")
-        group.add_argument("--user-groups", dest="groups", metavar="<groups>", help="List of groups for the user")
+        group.add_argument("--user-groups", dest="groups", metavar="<groups>",
+                           help="List of groups for the user to be added to")
         group.add_argument("--group-name", dest="group", metavar="<group>", help="Group name")
         group.add_argument("--group-description", dest="description", metavar="<text>", help="Group description")
         group.add_argument("--ldap-ref", dest="ldap_ref", metavar="<ref>", help="LDAP group's DN. Should be prefixed" +
