@@ -2876,16 +2876,15 @@ class SettingPasswordPolicy(Subcommand):
                            help="Get the current password policy")
         group.add_argument("--set", dest="set", action="store_true", default=False,
                            help="Set a new password policy")
-        group.add_argument("--min-length", dest="min_length", type=(int), default=0,
-                           metavar="<num>",
+        group.add_argument("--min-length", dest="min_length", type=int, default=None, metavar="<num>",
                            help="Specifies the minimum password length for new passwords")
-        group.add_argument("--uppercase", dest="upper_case", action="store_true", default=False,
+        group.add_argument("--uppercase", dest="upper_case", metavar="<0|1>", choices=["0", "1"],
                            help="Specifies new passwords must contain an upper case character")
-        group.add_argument("--lowercase", dest="lower_case", action="store_true", default=False,
+        group.add_argument("--lowercase", dest="lower_case", metavar="<0|1>", choices=["0", "1"],
                            help="Specifies new passwords must contain a lower case character")
-        group.add_argument("--digit", dest="digit", action="store_true", default=False,
+        group.add_argument("--digit", dest="digit", metavar="<0|1>", choices=["0", "1"],
                            help="Specifies new passwords must at least one digit")
-        group.add_argument("--special-char", dest="special_char", action="store_true", default=False,
+        group.add_argument("--special-char", dest="special_char", metavar="<0|1>", choices=["0", "1"],
                            help="Specifies new passwords must at least one special character")
 
     def execute(self, opts):
@@ -2900,11 +2899,17 @@ class SettingPasswordPolicy(Subcommand):
             _exitIfErrors(["The --get and --set flags may not be specified at " +
                            "the same time"])
         elif opts.get:
-            self._get(rest, opts)
+            if opts.min_length is not None or any([opts.upper_case, opts.lower_case, opts.digit, opts.special_char]):
+                _exitIfErrors(["The --get flag must be used without any other arguments"])
+            self._get(rest)
         elif opts.set:
+            if opts.min_length is None:
+                _exitIfErrors(["--min-length is required when using --set flag"])
+            if opts.min_length <= 0:
+                    _exitIfErrors(["--min-length has to be greater than 0"])
             self._set(rest, opts)
 
-    def _get(self, rest, opts):
+    def _get(self, rest):
         policy, errors = rest.get_password_policy()
         _exitIfErrors(errors)
         print(json.dumps(policy, sort_keys=True, indent=2))

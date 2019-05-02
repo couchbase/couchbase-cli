@@ -932,7 +932,8 @@ class TestSettingPasswordPolicy(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'setting-password-policy'] + cluster_connect_args
         self.get_args = ['--get']
-        self.set_args = ['--set', '--min-length', '8', '--uppercase', '--lowercase', '--digit', '--special-char']
+        self.set_args = ['--set', '--min-length', '8', '--uppercase', '1', '--lowercase', '1', '--digit', '1',
+                         '--special-char', '1']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         self.server_args['password-policy'] = {
             'enforceDigits': False,
@@ -956,16 +957,6 @@ class TestSettingPasswordPolicy(CommandTest):
         self.no_error_run(self.command + self.set_args, self.server_args)
         expected_params = ['enforceDigits=true', 'enforceLowercase=true', 'enforceSpecialChars=true',
                            'enforceUppercase=true', 'minLength=8']
-
-        self.assertIn('POST:/settings/passwordPolicy', self.server.trace)
-        self.rest_parameter_match(expected_params)
-
-    def test_set_password_policy_no_options(self):
-        self.no_error_run(self.command + ['--set'], self.server_args)
-
-        self.stop_capture()
-        expected_params = ['enforceDigits=false', 'enforceLowercase=false', 'enforceSpecialChars=false',
-                           'enforceUppercase=false', 'minLength=0']
 
         self.assertIn('POST:/settings/passwordPolicy', self.server.trace)
         self.rest_parameter_match(expected_params)

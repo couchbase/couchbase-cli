@@ -1060,13 +1060,29 @@ class ClusterManager(object):
                             special_char):
         url = self.hostname + '/settings/passwordPolicy'
 
-        params = {
-            "minLength": min_length,
-            "enforceUppercase": "true" if upper_case else "false",
-            "enforceLowercase": "true" if lower_case else "false",
-            "enforceDigits": "true" if digit else "false",
-            "enforceSpecialChars": "true" if special_char else "false"
-        }
+        params = dict()
+        if min_length:
+            params["minLength"] = min_length
+        if upper_case:
+            if upper_case == "1":
+                params["enforceUppercase"] = "true"
+            else:
+                params["enforceUppercase"] ="false"
+        if lower_case:
+            if lower_case == "1":
+                params["enforceLowercase"] = "true"
+            else:
+                params["enforceLowercase"] ="false"
+        if digit:
+            if digit == "1":
+                params["enforceDigits"] = "true"
+            else:
+                params["enforceDigits"] = "false"
+        if special_char:
+            if special_char == "1":
+                params["enforceSpecialChars"] = "true"
+            else:
+                params["enforceSpecialChars"] ="false"
 
         return self._post_form_encoded(url, params)
 
