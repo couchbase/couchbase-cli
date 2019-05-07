@@ -1440,8 +1440,14 @@ class HostList(Subcommand):
         result, errors = rest.pools('default')
         _exitIfErrors(errors)
 
-        for node in result['nodes']:
-            print(node['hostname'])
+        if opts.output == 'json':
+            nodes_out = {'nodes': []}
+            for node in result['nodes']:
+                nodes_out['nodes'].append(node['hostname'])
+            print(json.dumps(nodes_out))
+        else:
+            for node in result['nodes']:
+                print(node['hostname'])
 
     @staticmethod
     def get_man_page_name():
