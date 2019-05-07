@@ -37,7 +37,6 @@ function gen_docs {
     modules/cli/pages/cbcli/${infile}
 }
 
-gen_docs couchbase-cli-admin-role-manage.adoc 1
 gen_docs couchbase-cli-bucket-compact.adoc 1
 gen_docs couchbase-cli-bucket-create.adoc 1
 gen_docs couchbase-cli-bucket-delete.adoc 1
