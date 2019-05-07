@@ -1741,7 +1741,7 @@ class ServerAdd(Subcommand):
             _, errors = rest.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
-        servers = apply_default_port(opts.servers)
+        servers = opts.servers.split(',')
         for server in servers:
             _, errors = rest.add_server(server, opts.group_name, opts.server_username,
                                         opts.server_password, opts.services)
