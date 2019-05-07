@@ -1568,6 +1568,37 @@ class ClusterManager(object):
         params = { "pauseRequested": "false" }
         return self._post_form_encoded(url, params)
 
+    def get_query_settings(self):
+        url = f'{self.hostname}/settings/querySettings'
+        return self._get(url)
+
+    def post_query_settings(self, pipeline_batch, pipeline_cap, scan_cap, timeout, prepared_limit, completed_limit,
+                            complete_threshold, log_level, max_parallelism, n1ql_feature_control):
+        url = f'{self.hostname}/settings/querySettings'
+        params = {}
+        if pipeline_batch is not None:
+            params['queryPipelineBatch'] = pipeline_batch
+        if pipeline_cap is not None:
+            params['queryPipelineBatch'] = pipeline_cap
+        if scan_cap is not None:
+            params['queryScanCap'] = scan_cap
+        if timeout is not None:
+            params['queryTimeout'] = timeout
+        if prepared_limit is not None:
+            params['queryPreparedLimit'] = prepared_limit
+        if completed_limit is not None:
+            params['queryCompletedLimit'] = completed_limit
+        if complete_threshold is not None:
+            params['queryCompletedThreshold'] = complete_threshold
+        if log_level is not None:
+            params['queryLogLevel'] = log_level
+        if max_parallelism is not None:
+            params['queryMaxParallelism'] = max_parallelism
+        if n1ql_feature_control is not None:
+            params['queryN1QLFeatCtrl'] = n1ql_feature_control
+
+        return self._post_form_encoded(url, params)
+
     def list_functions(self):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:

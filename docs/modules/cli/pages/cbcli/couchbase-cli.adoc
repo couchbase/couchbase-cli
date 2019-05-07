@@ -137,6 +137,9 @@ man:couchbase-cli-setting-notification[1]::
 man:couchbase-cli-setting-password-policy[1]::
   Modifies the password policy.
 
+man:couchbase-cli-setting-query[1]::
+  Modifies the query settings.
+
 man:couchbase-cli-setting-security[1]::
   Modifies security policies.
 

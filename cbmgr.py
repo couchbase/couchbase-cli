@@ -4122,3 +4122,70 @@ class SettingOnDemand(Subcommand):
     @staticmethod
     def get_description():
         return "Manage on demand pricing settings"
+
+
+class SettingQuery(Subcommand):
+    """"Command to configure query settings"""
+
+    def __init__(self):
+        super(SettingQuery, self).__init__()
+        self.parser.prog = "couchbase-cli setting-query"
+        group = self.parser.add_argument_group("Query service settings")
+        group.add_argument('--set', dest='set', action="store_true",
+                           help='Set query settings')
+        group.add_argument('--get', dest='get', action="store_true",
+                           help='Retrieve current query settings')
+        group.add_argument('--pipeline-batch', metavar='<num>', type=int, default=None,
+                           help='Number of items execution operators can batch.')
+        group.add_argument('--pipeline-cap', metavar='<num>', type=int, default=None,
+                           help='Maximum number of items each execution operator can buffer.')
+        group.add_argument('--scan-cap', metavar='<size>', type=int, default=None,
+                           help='Maximum buffer size for index scans.')
+        group.add_argument('--timeout', metavar='<ms>', type=int, default=None,
+                           help='Server execution timeout.')
+        group.add_argument('--prepared-limit', metavar='<max>', type=int, default=None,
+                           help='Maximum number of prepared statements.')
+        group.add_argument('--completed-limit', metavar='<max>', type=int, default=None,
+                           help='Maximum number of completed requests.')
+        group.add_argument('--completed-threshold', metavar='<ms>', type=int, default=None,
+                           help='Cache completed query lasting longer than this many milliseconds.')
+        group.add_argument('--log-level', choices=['trace', 'debug', 'info', 'warn', 'error', 'sever', 'none'],
+                           default=None, metavar='<trace|debug|info|warn|error|server|none>',
+                           help='Log level: debug, trace, info, warn, error, severe, none.')
+        group.add_argument('--max-parallelism', metavar='<max>', type=int, default=None,
+                           help='Maximum parallelism per query.')
+        group.add_argument('--n1ql-feature-control', metavar='<num>', type=int, default=None,
+                           help='N1QL Feature Controls')
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_versions(rest)
+
+        if sum([opts.get, opts.set]) != 1:
+            _exitIfErrors(['Please provide --set or --get, both can not be provided at the same time'])
+
+        if opts.get:
+            settings, err = rest.get_query_settings()
+            _exitIfErrors(err)
+            print(json.dumps(settings))
+        if opts.set:
+            if all(v is None for v in [opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
+                                       opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
+                                       opts.log_level, opts.max_parallelism, opts.n1ql_feature_control]):
+                _exitIfErrors(['Please provide at least one other option with --set'])
+
+            _, err = rest.post_query_settings(opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
+                                              opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
+                                              opts.log_level, opts.max_parallelism, opts.n1ql_feature_control)
+            _exitIfErrors(err)
+            _success('Updated the query settings')
+
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-query" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Manage query settings"

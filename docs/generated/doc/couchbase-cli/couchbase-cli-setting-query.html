@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.8">
 <meta name="author" content="Couchbase">
-<title>couchbase-cli(1)</title>
+<title>couchbase-cli-setting-query(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -433,10 +433,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>couchbase-cli(1) Manual Page</h1>
+<h1>couchbase-cli-setting-query(1) Manual Page</h1>
 <h2 id="_name">NAME</h2>
 <div class="sectionbody">
-<p>couchbase-cli - The Couchbase cluster management utility.</p>
+<p>couchbase-cli-setting-query - Manage query engine settings</p>
 </div>
 </div>
 <div id="content">
@@ -444,7 +444,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<pre class="content"><em>couchbase-cli &lt;command&gt; [options]</em></pre>
+<pre class="content">_couchbase-cli setting-query [--cluster &lt;url&gt;] [--username &lt;user&gt;]
+    [--password &lt;password&gt;] [--get] [--set] [--pipeline-batch &lt;num&gt;]
+    [--pipeline-cap &lt;num&gt;] [--scan-cap &lt;size&gt;] [--timeout &lt;ms&gt;]
+    [--prepared-limit &lt;max&gt;] [--completed-limit &lt;max&gt;]
+    [--log-level &lt;trace|debug|info|warn|error|server|none&gt;]
+    [--max-parallelism &lt;max&gt;] [--n1ql-feature-control &lt;num&gt;]</pre>
 </div>
 </div>
 </div>
@@ -452,8 +457,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The couchbase-cli script is the main command line interface for Couchbase
-cluster management.</p>
+<p>Manage query service settings</p>
 </div>
 </div>
 </div>
@@ -462,207 +466,76 @@ cluster management.</p>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">--version</dt>
+<dt class="hdlist1">-c</dt>
+<dt class="hdlist1">--cluster</dt>
 <dd>
-<p>Prints version information.</p>
+<p>Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.</p>
 </dd>
-<dt class="hdlist1">-h</dt>
-<dt class="hdlist1">--help</dt>
+<dt class="hdlist1">-u</dt>
+<dt class="hdlist1">--user &lt;username&gt;</dt>
 <dd>
-<p>Prints the short and long help messages.</p>
+<p>Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.</p>
 </dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_commands">COMMANDS</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="couchbase-cli-bucket-compact.html">couchbase-cli-bucket-compact(1)</a></dt>
+<dt class="hdlist1">-p</dt>
+<dt class="hdlist1">--password &lt;password&gt;</dt>
 <dd>
-<p>Compact a Couchbase data bucket.</p>
+<p>Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-bucket-create.html">couchbase-cli-bucket-create(1)</a></dt>
+<dt class="hdlist1">--get</dt>
 <dd>
-<p>Create a new Couchbase data bucket.</p>
+<p>Retrieve current query service settings.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-bucket-delete.html">couchbase-cli-bucket-delete(1)</a></dt>
+<dt class="hdlist1">--set</dt>
 <dd>
-<p>Delete a Couchbase data bucket.</p>
+<p>Set query engine settings.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-bucket-edit.html">couchbase-cli-bucket-edit(1)</a></dt>
+<dt class="hdlist1">--pipeline-batch &lt;num&gt;</dt>
 <dd>
-<p>Edit a Couchbase data bucket.</p>
+<p>Number of items execution operators can batch, the default is 16.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-bucket-flush.html">couchbase-cli-bucket-flush(1)</a></dt>
+<dt class="hdlist1">--pipeline-cap &lt;num&gt;</dt>
 <dd>
-<p>Flush a Couchbase data bucket.</p>
+<p>Maximum number of items each execution operator can buffer, the default 512.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-bucket-list.html">couchbase-cli-bucket-list(1)</a></dt>
+<dt class="hdlist1">--scan-cap &lt;size&gt;</dt>
 <dd>
-<p>List all Couchbase data buckets.</p>
+<p>Maximum buffer size for index scans; use zero or negative value to disable.
+The default 512.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-cluster-edit.html">couchbase-cli-cluster-edit(1)</a></dt>
+<dt class="hdlist1">--timeout &lt;ms&gt;</dt>
 <dd>
-<p>Edits cluster settings.</p>
+<p>Server execution timeout; use zero or negative value to disable. By default
+is unlimited.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-cluster-init.html">couchbase-cli-cluster-init(1)</a></dt>
+<dt class="hdlist1">--prepared-limit &lt;max&gt;</dt>
 <dd>
-<p>Initializes a Couchbase cluster.</p>
+<p>Maximum number of prepared statements, the default is 16384.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-collect-logs-start.html">couchbase-cli-collect-logs-start(1)</a></dt>
+<dt class="hdlist1">--completed-limit &lt;max&gt;</dt>
 <dd>
-<p>Start log collection.</p>
+<p>Maximum number of completed requests, the default is 4000.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-collect-logs-status.html">couchbase-cli-collect-logs-status(1)</a></dt>
+<dt class="hdlist1">--log-level &lt;trace|debug|info|warn|error|server|none&gt;</dt>
 <dd>
-<p>Get log collection status.</p>
+<p>Query engine log level, the default level is info.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-collect-logs-stop.html">couchbase-cli-collect-logs-stop(1)</a></dt>
+<dt class="hdlist1">--max-parallelism &lt;max&gt;</dt>
 <dd>
-<p>Stop the current log collection task.</p>
+<p>Maximum parallelism per query; use zero or negative value to disable.
+The default is 1.</p>
 </dd>
-<dt class="hdlist1"><a href="couchbase-cli-eventing-function-setup.html">couchbase-cli-eventing-function-setup(1)</a></dt>
+<dt class="hdlist1">--n1ql-feature-control &lt;num&gt;</dt>
 <dd>
-<p>Manage the Eventing Service functions.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-failover.html">couchbase-cli-failover(1)</a></dt>
-<dd>
-<p>Failover a server in the cluster.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-group-manage.html">couchbase-cli-group-manage(1)</a></dt>
-<dd>
-<p>Manage server groups.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-host-list.html">couchbase-cli-host-list(1)</a></dt>
-<dd>
-<p>Lists all hosts in the cluster.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-node-init.html">couchbase-cli-node-init(1)</a></dt>
-<dd>
-<p>Initializes a node.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-rebalance.html">couchbase-cli-rebalance(1)</a></dt>
-<dd>
-<p>Rebalances data across nodes in a cluster.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-rebalance-status.html">couchbase-cli-rebalance-status(1)</a></dt>
-<dd>
-<p>Show the current rebalance status.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-rebalance-stop.html">couchbase-cli-rebalance-stop(1)</a></dt>
-<dd>
-<p>Stops the current rebalance task.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-recovery.html">couchbase-cli-recovery(1)</a></dt>
-<dd>
-<p>Recovers a previously failed over node.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-reset-admin-password.html">couchbase-cli-reset-admin-password(1)</a></dt>
-<dd>
-<p>Resets the administrator password.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-server-add.html">couchbase-cli-server-add(1)</a></dt>
-<dd>
-<p>Adds a server to the cluster.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-server-info.html">couchbase-cli-server-info(1)</a></dt>
-<dd>
-<p>Displays server level information and statistics.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-server-list.html">couchbase-cli-server-list(1)</a></dt>
-<dd>
-<p>Lists all servers in the cluster.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-server-readd.html">couchbase-cli-server-readd(1)</a></dt>
-<dd>
-<p>Adds a server back to the cluster after a failover.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-alert.html">couchbase-cli-setting-alert(1)</a></dt>
-<dd>
-<p>Modifies alert settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-audit.html">couchbase-cli-setting-audit(1)</a></dt>
-<dd>
-<p>Modifies audit log settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-autofailover.html">couchbase-cli-setting-autofailover(1)</a></dt>
-<dd>
-<p>Modifies auto-failover settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-autoreprovision.html">couchbase-cli-setting-autoreprovision(1)</a></dt>
-<dd>
-<p>Modifies auto-reprovision settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-cluster.html">couchbase-cli-setting-cluster(1)</a></dt>
-<dd>
-<p>Modifies cluster settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-compaction.html">couchbase-cli-setting-compaction(1)</a></dt>
-<dd>
-<p>Modifies compaction settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-index.html">couchbase-cli-setting-index(1)</a></dt>
-<dd>
-<p>Modifies index settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-ldap.html">couchbase-cli-setting-ldap(1)</a></dt>
-<dd>
-<p>Modifies LDAP settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-notification.html">couchbase-cli-setting-notification(1)</a></dt>
-<dd>
-<p>Modifies notification settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-password-policy.html">couchbase-cli-setting-password-policy(1)</a></dt>
-<dd>
-<p>Modifies the password policy.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-query.html">couchbase-cli-setting-query(1)</a></dt>
-<dd>
-<p>Modifies the query settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-security.html">couchbase-cli-setting-security(1)</a></dt>
-<dd>
-<p>Modifies security policies.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-setting-xdcr.html">couchbase-cli-setting-xdcr(1)</a></dt>
-<dd>
-<p>Modifies cross datacenter replication (XDCR) settings.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-ssl-manage.html">couchbase-cli-ssl-manage(1)</a></dt>
-<dd>
-<p>Manage SSL certificates.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-user-manage.html">couchbase-cli-user-manage(1)</a></dt>
-<dd>
-<p>Manage RBAC users.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-xdcr-replicate.html">couchbase-cli-xdcr-replicate(1)</a></dt>
-<dd>
-<p>Manages XDCR cluster references.</p>
-</dd>
-<dt class="hdlist1"><a href="couchbase-cli-xdcr-setup.html">couchbase-cli-xdcr-setup(1)</a></dt>
-<dd>
-<p>Manages XDCR replications.</p>
-</dd>
-<dt class="hdlist1"><a href=":couchbase-cli-setting-saslauth.html">:couchbase-cli-setting-saslauth(1)</a></dt>
-<dd>
-<p>Manage saslauth settings.</p>
-</dd>
-<dt class="hdlist1"><a href=":couchbase-cli-enable-developer-preview.html">:couchbase-cli-enable-developer-preview(1)</a></dt>
-<dd>
-<p>Enable developer preview.</p>
-</dd>
-<dt class="hdlist1"><a href=":couchbase-cli-collection-manage.html">:couchbase-cli-collection-manage(1)</a></dt>
-<dd>
-<p>Manage collections.</p>
-</dd>
-<dt class="hdlist1"><a href=":couchbase-cli-setting-on-demand.html">:couchbase-cli-setting-on-demand(1)</a></dt>
-<dd>
-<p>Manage on demand pricing settings.</p>
+<p>N1QL Feature Controls.
+0x0001 (1) Disable Index Aggregation</p>
 </dd>
 </dl>
 </div>
@@ -696,6 +569,29 @@ a port other that 8091.</p>
 </div>
 </div>
 <div class="sect1">
+<h2 id="_examples">EXAMPLES</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To retrieve the query settings:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ couchbase-cli setting-query -c 127.0.01:8091 -u Administrator \
+ -p password --get</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To set any of the query settings for example maximum parallelism and log level:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ couchbase-cli setting-query -c 127.0.01:8091 -u Administrator \
+ -p password --set --log-level debug --max-parallelism 4</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_environment_and_configuration_variables">ENVIRONMENT AND CONFIGURATION VARIABLES</h2>
 <div class="sectionbody">
 <div class="dlist">
@@ -714,6 +610,14 @@ argument on the command line. It also allows the user to ensure that their
 password are not cached in their command line history.</p>
 </dd>
 </dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_see_also">SEE ALSO</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="couchbase-cli.html">couchbase-cli(1)</a></p>
 </div>
 </div>
 </div>

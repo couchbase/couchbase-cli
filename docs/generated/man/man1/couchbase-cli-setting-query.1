@@ -1,0 +1,213 @@
+'\" t
+.\"     Title: couchbase-cli-setting-query
+.\"    Author: Couchbase
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-05-09
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-SETTING\-QUERY" "1" "2019-05-09" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+couchbase\-cli\-setting\-query \- Manage query engine settings
+.SH "SYNOPSIS"
+.sp
+.nf
+_couchbase\-cli setting\-query [\-\-cluster <url>] [\-\-username <user>]
+    [\-\-password <password>] [\-\-get] [\-\-set] [\-\-pipeline\-batch <num>]
+    [\-\-pipeline\-cap <num>] [\-\-scan\-cap <size>] [\-\-timeout <ms>]
+    [\-\-prepared\-limit <max>] [\-\-completed\-limit <max>]
+    [\-\-log\-level <trace|debug|info|warn|error|server|none>]
+    [\-\-max\-parallelism <max>] [\-\-n1ql\-feature\-control <num>]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+Manage query service settings
+.SH "OPTIONS"
+.sp
+\-c, \-\-cluster
+.RS 4
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
+.RE
+.sp
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
+.RE
+.sp
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
+.RE
+.sp
+\-\-get
+.RS 4
+Retrieve current query service settings.
+.RE
+.sp
+\-\-set
+.RS 4
+Set query engine settings.
+.RE
+.sp
+\-\-pipeline\-batch <num>
+.RS 4
+Number of items execution operators can batch, the default is 16.
+.RE
+.sp
+\-\-pipeline\-cap <num>
+.RS 4
+Maximum number of items each execution operator can buffer, the default 512.
+.RE
+.sp
+\-\-scan\-cap <size>
+.RS 4
+Maximum buffer size for index scans; use zero or negative value to disable.
+The default 512.
+.RE
+.sp
+\-\-timeout <ms>
+.RS 4
+Server execution timeout; use zero or negative value to disable. By default
+is unlimited.
+.RE
+.sp
+\-\-prepared\-limit <max>
+.RS 4
+Maximum number of prepared statements, the default is 16384.
+.RE
+.sp
+\-\-completed\-limit <max>
+.RS 4
+Maximum number of completed requests, the default is 4000.
+.RE
+.sp
+\-\-log\-level <trace|debug|info|warn|error|server|none>
+.RS 4
+Query engine log level, the default level is info.
+.RE
+.sp
+\-\-max\-parallelism <max>
+.RS 4
+Maximum parallelism per query; use zero or negative value to disable.
+The default is 1.
+.RE
+.sp
+\-\-n1ql\-feature\-control <num>
+.RS 4
+N1QL Feature Controls.
+0x0001 (1) Disable Index Aggregation
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRcouchbase://<addr>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CR<addr>:<port>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRhttp://<addr>:<port>\fP
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
+.SH "EXAMPLES"
+.sp
+To retrieve the query settings:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli setting\-query \-c 127.0.01:8091 \-u Administrator \(rs
+ \-p password \-\-get
+.fi
+.if n .RE
+.sp
+To set any of the query settings for example maximum parallelism and log level:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli setting\-query \-c 127.0.01:8091 \-u Administrator \(rs
+ \-p password \-\-set \-\-log\-level debug \-\-max\-parallelism 4
+.fi
+.if n .RE
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
+.sp
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBcouchbase\-cli\fP(1)
+.SH "COUCHBASE\-CLI"
+.sp
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase
