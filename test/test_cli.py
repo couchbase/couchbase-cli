@@ -1384,5 +1384,56 @@ class TestSettingOnDemand(CommandTest):
         self.rest_parameter_match(expected_params, False)
 
 
+class TestChangeIpFamily(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'change-ip-family'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        super(TestChangeIpFamily, self).setUp()
+
+    def testGetSingleNode(self):
+        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet'}]}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Cluster using ipv4', self.str_output)
+        self.assertIn('GET:/pools/nodes', self.server.trace)
+
+    def testGetMultipleNode(self):
+        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet6'}, {'addressFamily': 'inet6'}]}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Cluster using ipv6', self.str_output)
+        self.assertIn('GET:/pools/nodes', self.server.trace)
+
+    def testGetMultipleNodeTLS(self):
+        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet6_tls'}, {'addressFamily': 'inet6_tls'}]}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Cluster using ipv6', self.str_output)
+        self.assertIn('GET:/pools/nodes', self.server.trace)
+
+    def testGetMultipleNodeMixed(self):
+        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet'}, {'addressFamily': 'inet6_tls'}]}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Cluster is in mixed mode', self.str_output)
+        self.assertIn('GET:/pools/nodes', self.server.trace)
+
+    def testSetIPv4(self):
+        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
+                                                                         'services': {'mgmt': '6789'}}]}
+        self.no_error_run(self.command + ['--set', '--ipv4'], self.server_args)
+        self.assertIn('Switched ip family of the cluster', self.str_output)
+        self.assertIn('GET:/pools/default/nodeServices', self.server.trace)
+        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
+        expected_params = {'external=inet_tcp', 'afamily=ipv4'}
+        self.rest_parameter_match(expected_params, True)
+
+    def testSetIPv6(self):
+        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
+                                                                         'services': {'mgmt': '6789'}}]}
+        self.no_error_run(self.command + ['--set', '--ipv6'], self.server_args)
+        self.assertIn('Switched ip family of the cluster', self.str_output)
+        self.assertIn('GET:/pools/default/nodeServices', self.server.trace)
+        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
+        expected_params = {'external=inet6_tcp', 'afamily=ipv6'}
+        self.rest_parameter_match(expected_params, True)
+
+
 if __name__ == '__main__':
     unittest.main()

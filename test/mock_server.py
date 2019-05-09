@@ -313,6 +313,7 @@ endpoints = [
     ('/pools/default/buckets/\w+/collections$', {'GET': get_collection_manifest, 'POST': do_nothing}),
     ('/pools/default/buckets/\w+/collections/\w+$', {'POST': do_nothing, 'DELETE': do_nothing}),
     ('/pools/default/buckets/\w+/collections/\w+/\w+$', {'DELETE': do_nothing}),
+    ('/pools/nodes', {'GET': get_by_path}),
     ('/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
     ('/settings/passwordPolicy$', {'POST': do_nothing, 'GET': get_password_policy}),
     ('/settings/rbac/users$', {'POST': do_nothing, 'GET': get_rbac_user}),
@@ -337,6 +338,8 @@ endpoints = [
     ('/nodes/self/controller/settings$', {'POST': do_nothing}),
     ('/nodes/self$', {'GET': get_node_info}),
     ('/node/controller/rename', {'POST': do_nothing}),
+    ('/node/controller/distProtocols', {'POST': do_nothing}),
+    ('/node/controller/setupNetConfig', {'POST': do_nothing}),
     ('/controller/failOver$', {'POST': do_nothing}),
     ('/controller/rebalance$', {'POST': do_nothing}),
     ('/controller/changePassword', {'POST': do_nothing}),
@@ -347,6 +350,7 @@ endpoints = [
     ('/controller/cancelXDCR/(\d|\w)+$', {'DELETE': do_nothing}),
     ('/controller/setAutoCompaction$', {'POST': do_nothing}),
     ('/controller/startLogsCollection$', {'POST': start_log_collection}),
+
     # other services api
     ('/getIndexMetadata$', {'GET': get_by_path}),
     ('/api/index', {'GET': get_by_path})

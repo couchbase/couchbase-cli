@@ -56,6 +56,9 @@ man:couchbase-cli-cluster-edit[1]::
 man:couchbase-cli-cluster-init[1]::
   Initializes a Couchbase cluster.
 
+man:couchbase-cli-change-ip-family[1]::
+  Change ip family used for node to node communication.
+
 man:couchbase-cli-collect-logs-start[1]::
   Start log collection.
 

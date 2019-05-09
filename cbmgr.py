@@ -4163,7 +4163,6 @@ class SettingQuery(Subcommand):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_versions(rest)
-
         if sum([opts.get, opts.set]) != 1:
             _exitIfErrors(['Please provide --set or --get, both can not be provided at the same time'])
 
@@ -4191,3 +4190,90 @@ class SettingQuery(Subcommand):
     @staticmethod
     def get_description():
         return "Manage query settings"
+
+
+class ChangeIpFamily(Subcommand):
+    """"Command to switch between IP family for node to node communication"""
+
+    def __init__(self):
+        super(ChangeIpFamily, self).__init__()
+        self.parser.prog = "couchbase-cli change-ip-family"
+        group = self.parser.add_argument_group("Change ip family options")
+        group.add_argument('--get', action="store_true", default=False, help='Retrieve current used IP family')
+        group.add_argument('--set', action="store_true", default=False, help='Change current used IP family')
+        group.add_argument('--ipv4', dest='ipv4', default=False, action="store_true",
+                           help='Set IP family to IPv4')
+        group.add_argument('--ipv6', dest='ipv6', default=False, action="store_true",
+                           help='Set IP family to IPv6')
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_versions(rest)
+
+        flags_used = sum([opts.set, opts.get])
+        if flags_used == 0:
+            _exitIfErrors(['Please provide one of --set, or --get'])
+        elif flags_used > 1:
+            _exitIfErrors(['Please provide only one of --set, or --get'])
+
+        if opts.get:
+            self._get(rest)
+        if opts.set:
+            if sum([opts.ipv6, opts.ipv4]) != 1:
+                _exitIfErrors(['Provided exactly one of --ipv4 or --ipv6 together with the --set option'])
+
+            self._set(rest, opts.ipv6, opts.ssl)
+
+    @staticmethod
+    def _set(rest, ipv6, ssl):
+        listener = 'inet6_tcp'if ipv6 else 'inet_tcp'
+        ip_fam = 'ipv6' if ipv6 else 'ipv4'
+        # this will start the correct listeners in all the nodes
+        node_data, err = rest.pools('default/nodeServices')
+        _exitIfErrors(err)
+
+        hosts = []
+        for n in node_data['nodesExt']:
+            host = f'http://{n["hostname"]}:{n["services"]["mgmt"]}'
+            if ssl:
+                host = f'https://{n["hostname"]}:{n["services"]["mgmtSSL"]}'
+            _, err = rest.set_communication_listeners(host, listener)
+            _exitIfErrors(err)
+            hosts.append(host)
+
+        for h in hosts:
+            _, err = rest.set_ip_family(h, ip_fam)
+            _exitIfErrors(err)
+            print(f'Switched ip family for node: {h}')
+
+        _success('Switched ip family of the cluster')
+
+    @staticmethod
+    def _get(rest):
+        # this will start the correct listeners in all the nodes
+        node_data, err = rest.pools('nodes')
+        _exitIfErrors(err)
+        fam = {}
+        for n in node_data['nodes']:
+            fam[n['addressFamily']] = True
+
+        family = list(fam.keys())
+        if len(family) == 1:
+            ipvFam = 'UNKNOWN'
+            if family[0] == 'inet' or family[0] == 'inet_tls':
+                ipvFam = 'ipv4'
+            elif family[0] == 'inet6' or family[0] == 'inet6_tls':
+                ipvFam = 'ipv6'
+
+            print(f'Cluster using {ipvFam}')
+        else:
+            print(f'Cluster is in mixed mode')
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-change-ip-family" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Change or get the address family"

@@ -1750,6 +1750,17 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def set_communication_listeners(self, host, listeners):
+        url = f'{host}/node/controller/distProtocols'
+        params = {'external': listeners}
+        return self._post_form_encoded(url, params)
+
+    def set_ip_family(self, host, ipfamily):
+        url = f'{host}/node/controller/setupNetConfig'
+        params = {'afamily': ipfamily}
+        return self._post_form_encoded(url, params)
+
+
     # Low level methods for basic HTML operations
 
     @request
