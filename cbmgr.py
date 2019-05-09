@@ -2869,19 +2869,25 @@ class SettingSecurity(Subcommand):
         self.parser.prog = "couchbase-cli setting-security"
         group = self.parser.add_argument_group("Cluster Security Settings")
         group.add_argument("--disable-http-ui", dest="disable_http_ui", metavar="<0|1>", choices=['0', '1'],
-                           default=False, help="Disables access to the UI over HTTP (0 or 1)")
-
+                           default=None, help="Disables access to the UI over HTTP (0 or 1)")
+        group.add_argument("--cluster-encryption-level", dest="cluster_encryption_level", metavar="<all|control>",
+                          choices=['all', 'control'], default=None,
+                          help="Set cluster encryption level, only used when cluster encryption enabled.")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_versions(rest)
 
-        errors = None
+        if opts.disable_http_ui is None and opts.cluster_encryption_level is None:
+            _exitIfErrors(['Please provide at least one of --cluster-encryption-level or --disable-http-ui'])
+
         if opts.disable_http_ui == '1':
-            _, errors = rest.set_security_settings(True)
-        else:
-            _, errors = rest.set_security_settings(False)
+           opts.disable_http_ui = 'true'
+        elif opts.disable_http_ui == '0':
+            opts.disable_http_ui = 'false'
+
+        _, errors = rest.set_security_settings(opts.disable_http_ui, opts.cluster_encryption_level)
         _exitIfErrors(errors)
         _success("Security policy updated")
 
@@ -4243,7 +4249,7 @@ class ChangeIpFamily(Subcommand):
             hosts.append(host)
 
         for h in hosts:
-            _, err = rest.set_ip_family(h, ip_fam)
+            _, err = rest.setup_net_config(h, ipfamily=ip_fam)
             _exitIfErrors(err)
             print(f'Switched ip family for node: {h}')
 
@@ -4277,3 +4283,94 @@ class ChangeIpFamily(Subcommand):
     @staticmethod
     def get_description():
         return "Change or get the address family"
+
+
+class ChangeClusterEncryption(Subcommand):
+    """"Command to enable/disable cluster encryption"""
+
+    def __init__(self):
+        super(ChangeClusterEncryption, self).__init__()
+        self.parser.prog = "couchbase-cli change-cluster-encryption"
+        group = self.parser.add_argument_group("Cluster encryption options")
+        group.add_argument('--enable', action="store_true", default=False, help='Enable cluster encryption')
+        group.add_argument('--disable', action="store_true", default=False, help='Disable cluster encryption')
+        group.add_argument('--get', action="store_true", default=False,
+                           help='Retrieve current status of cluster encryption (on or off)')
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_versions(rest)
+
+        flags_used = sum([opts.enable, opts.disable, opts.get])
+        if flags_used == 0:
+            _exitIfErrors(['Please provide one of --enable, --disable or --get'])
+        elif flags_used > 1:
+            _exitIfErrors(['Please provide only one of --enable, --disable or --get'])
+
+        if opts.get:
+            self._get(rest)
+        elif opts.enable:
+            self._change_encryption(rest, 'on', opts.ssl)
+        elif opts.disable:
+            self._change_encryption(rest, 'off', opts.ssl)
+
+    @staticmethod
+    def _change_encryption(rest, encryption, ssl):
+        node_data, err = rest.pools('default/nodeServices')
+        _exitIfErrors(err)
+
+        hosts = []
+        for n in node_data['nodesExt']:
+            host = f'http://{n["hostname"]}:{n["services"]["mgmt"]}'
+            if ssl:
+                host = f'https://{n["hostname"]}:{n["services"]["mgmtSSL"]}'
+
+            add_fam, err = rest.node_get_address_family(host)
+            _exitIfErrors(err)
+
+            if encryption == 'on':
+                add_fam += '_tls'
+            else:
+                add_fam += '_tcp'
+
+            _, err = rest.set_communication_listeners(host, add_fam)
+            _exitIfErrors(err)
+            hosts.append(host)
+
+        for h in hosts:
+            _, err = rest.setup_net_config(h, encryption=encryption)
+            _exitIfErrors(err)
+            print(f'Turned {encryption} encryption for node: {h}')
+
+        _success(f'Switched cluster encryption {encryption}')
+
+    @staticmethod
+    def _get(rest):
+        # this will start the correct listeners in all the nodes
+        node_data, err = rest.pools('nodes')
+        _exitIfErrors(err)
+        encrypted_nodes = []
+        unencrpyted_nodes = []
+        for n in node_data['nodes']:
+            if n['clusterEncryption']:
+                encrypted_nodes.append(n['hostname'])
+            else:
+                unencrpyted_nodes.append(n['hostname'])
+
+        if len(encrypted_nodes) == len(node_data['nodes']):
+            print('Cluster encryption is enabled')
+        elif len(unencrpyted_nodes) == len(node_data['nodes']):
+            print('Cluster encryption is disabled')
+        else:
+            print('Cluster is in mixed mode')
+            print(f'Nodes with encryption enabled: {encrypted_nodes}')
+            print(f'Nodes with encryption disabled: {unencrpyted_nodes}')
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-change-cluster-encryption" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Change or get the cluster encryption configuration"

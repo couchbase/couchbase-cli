@@ -1047,12 +1047,14 @@ class ClusterManager(object):
         url = f'{self.hostname}/settings/passwordPolicy'
         return self._get(url)
 
-    def set_security_settings(self, disable_http_ui):
+    def set_security_settings(self, disable_http_ui, cluster_encryption_level):
         url = f'{self.hostname}/settings/security'
+        params = {}
 
-        params = {
-            "disableUIOverHttp":  "true" if disable_http_ui else "false"
-        }
+        if disable_http_ui:
+            params['disableUIOverHttp'] = disable_http_ui
+        if cluster_encryption_level:
+            params['clusterEncryptionLevel'] = cluster_encryption_level
 
         return self._post_form_encoded(url, params)
 
@@ -1755,12 +1757,26 @@ class ClusterManager(object):
         params = {'external': listeners}
         return self._post_form_encoded(url, params)
 
-    def set_ip_family(self, host, ipfamily):
+    def setup_net_config(self, host, ipfamily=None, encryption=None):
         url = f'{host}/node/controller/setupNetConfig'
-        params = {'afamily': ipfamily}
+        params = {}
+        if ipfamily:
+            params['afamily'] = ipfamily
+        if encryption:
+            params['clusterEncryption'] = encryption
+
         return self._post_form_encoded(url, params)
 
+    def node_get_address_family(self, host):
+        node_data, err = self._get(f'{host}/pools/nodes')
+        if err:
+            return '', err
 
+        for n in node_data['nodes']:
+            if 'thisNode' in n and n['thisNode']:
+                return n['addressFamily'], None
+
+        return '', [f'Could not get data for {host}']
     # Low level methods for basic HTML operations
 
     @request

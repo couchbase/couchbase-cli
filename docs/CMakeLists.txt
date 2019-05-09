@@ -7,6 +7,7 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-bucket-flush.html
   generated/doc/couchbase-cli/couchbase-cli-bucket-list.html
   generated/doc/couchbase-cli/couchbase-cli-cluster-edit.html
+  generated/doc/couchbase-cli/couchbase-cli-change-cluster-encryption.html
   generated/doc/couchbase-cli/couchbase-cli-cluster-init.html
   generated/doc/couchbase-cli/couchbase-cli-change-ip-family.html
   generated/doc/couchbase-cli/couchbase-cli-collect-logs-start.html
@@ -67,6 +68,7 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-bucket-flush.1
     generated/man/man1/couchbase-cli-bucket-list.1
     generated/man/man1/couchbase-cli-cluster-edit.1
+    generated/man/man1/couchbase-cli-change-cluster-encryption.1
     generated/man/man1/couchbase-cli-cluster-init.1
     generated/man/man1/couchbase-cli-change-ip-family.1
     generated/man/man1/couchbase-cli-collect-logs-start.1

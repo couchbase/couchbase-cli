@@ -61,4 +61,10 @@ family is being used use the command below:
 
 include::{partialsdir}/cbcli/part-common-env.adoc[]
 
+== SEE ALSO
+
+man:couchbase-setting-security[1]
+man:couchbase-ssl-manage[1]
+man:couchbase-cli-cluster-encryption[1]
+
 include::{partialsdir}/cbcli/part-footer.adoc[]

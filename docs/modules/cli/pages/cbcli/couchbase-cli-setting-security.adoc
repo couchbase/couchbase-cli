@@ -13,10 +13,17 @@ Manage security policies
 [verse]
 _couchbase-cli setting-security_ [--cluster <url>] [--username <user>]
     [--password <password>] [--disable-http-ui <0|1>]
+    [--cluster-encryption-level <all|control>]
 
 == DESCRIPTION
 
-Allows enabling and disabling of the Couchbase Administration Console.
+Allows enabling and disabling of the Couchbase Administration Console
+as well as configuring the cluster encryption level. The level is used
+when cluster encryption is turned on. If th level is "all" then both data
+and control messages between the nodes in the cluster will be send over
+encrypted connections. If the level is "control" only control messages will be
+sent encrypted. By default when cluster encryption is turned on the level will
+be "control".
 
 == OPTIONS
 
@@ -28,6 +35,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   set this option to "0". By default, access to the UI over http is
   enabled.
 
+--cluster-encryption-level <all|control>::
+  Specifies the cluster encryption level.
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
@@ -38,6 +48,11 @@ command.
   $ couchbase-cli setting-security -c 192.168.1.5 -u Administrator \
    -p password --disable-http-ui 1
 
+To change the encryption level to "all" run the following command.
+
+  $ couchbase-cli setting-security -c 192.168.1.5 -u Administrator \
+   -p password --cluster-encryption-level all
+
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
 include::{partialsdir}/cbcli/part-common-env.adoc[]
@@ -45,5 +60,6 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 == SEE ALSO
 
 man:couchbase-cli[1]
+man:couchbase-cli-cluster-encryption[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]

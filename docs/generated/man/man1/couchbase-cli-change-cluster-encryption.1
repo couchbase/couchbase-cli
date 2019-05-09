@@ -1,13 +1,13 @@
 '\" t
-.\"     Title: couchbase-cli-setting-security
+.\"     Title: couchbase-cli-change-cluster-encryption
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-05-09
+.\"      Date: 2019-05-15
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2019-05-09" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-CHANGE\-CLUSTER\-ENCRYPTION" "1" "2019-05-15" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,24 +28,21 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-setting\-security \- Manage security policies
+couchbase\-cli\-change\-cluster\-encryption \- Changes cluster encryption
 .SH "SYNOPSIS"
 .sp
 .nf
-\fIcouchbase\-cli setting\-security\fP [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>] [\-\-disable\-http\-ui <0|1>]
-    [\-\-cluster\-encryption\-level <all|control>]
+\fIcouchbase\-cli change\-cluster\-encryption\fP [\-\-cluster <url>] [\-username <username>]
+    [\-\-password <password>] [\-\-get] [\-\-enable] [\-\-disable]
 .fi
 .br
 .SH "DESCRIPTION"
 .sp
-Allows enabling and disabling of the Couchbase Administration Console
-as well as configuring the cluster encryption level. The level is used
-when cluster encryption is turned on. If th level is "all" then both data
-and control messages between the nodes in the cluster will be send over
-encrypted connections. If the level is "control" only control messages will be
-sent encrypted. By default when cluster encryption is turned on the level will
-be "control".
+This command allows the enabling and disabling of cluster encryption this means
+data transferred between nodes in a cluster will be encrypted. The command will
+execute a series of instructions in each node in the cluster to switch them
+from sending and receiving over a non\-encrypted connection to an encrypted one
+or vice\-versa.
 .SH "OPTIONS"
 .sp
 \-c, \-\-cluster
@@ -71,17 +68,19 @@ non\-echoed stdin. You may also specify your password by using the
 environment variable CB_REST_PASSWORD.
 .RE
 .sp
-\-\-disable\-http\-ui <0|1>
+\-\-get
 .RS 4
-Specifies whether the Couchbase Administration UI can be accessible
-over http. To disable access set this option to "1". To enable access
-set this option to "0". By default, access to the UI over http is
-enabled.
+Display the cluster encryption setting
 .RE
 .sp
-\-\-cluster\-encryption\-level <all|control>
+\-\-enable
 .RS 4
-Specifies the cluster encryption level.
+Will enable cluster encryption
+.RE
+.sp
+\-\-disable
+.RS 4
+Will disable cluster encryption
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -126,22 +125,32 @@ is needed for non\-default installations where the admin port has been set up on
 a port other that 8091.
 .SH "EXAMPLES"
 .sp
-To disable the Couchbase Administration Console over HTTP run the following
-command.
+To enable cluster encryption in a cluster with two host
+\f(CR[cb1.mydomain.com:8091, cb2.mydomain.com:8091]\fP ran the following
+commands:
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli setting\-security \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-disable\-http\-ui 1
+$ couchbase\-cli change\-cluster\-encryption \-c cb1.mydomain.com:8091 \-\-username Administrator \(rs
+ \-\-password password \-\-enable
 .fi
 .if n .RE
 .sp
-To change the encryption level to "all" run the following command.
+To check if cluster encryption is on or off ran:
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli setting\-security \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-cluster\-encryption\-level all
+$ couchbase\-cli change\-cluster\-encryption \-c cb1.mydomain.com:8091 \-\-username Administrator \(rs
+  \-\-password password \-\-get
+.fi
+.if n .RE
+.sp
+To disable cluster encryption use the following command:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli change\-cluster\-encryption \-c cb1.mydomain.com:8091 \-\-username Administrator \(rs
+\-\-password password \-\-disable
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
@@ -162,8 +171,9 @@ password are not cached in their command line history.
 .RE
 .SH "SEE ALSO"
 .sp
-\fBcouchbase\-cli\fP(1)
-\fBcouchbase\-cli\-cluster\-encryption\fP(1)
+\fBcouchbase\-setting\-security\fP(1)
+\fBcouchbase\-ssl\-manage\fP(1)
+\fBcouchbase\-cli\-change\-ip\-family\fP(1)
 .SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase\-cli\fP(1) suite

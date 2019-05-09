@@ -1435,5 +1435,58 @@ class TestChangeIpFamily(CommandTest):
         self.rest_parameter_match(expected_params, True)
 
 
+class TestClusterEncryption(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'change-cluster-encryption'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        super(TestClusterEncryption, self).setUp()
+
+    def testErrorDisableAndEnable(self):
+        self.system_exit_run(self.command + ['--enable', '--disable'], self.server_args)
+
+    def testGetEncryptionFalse(self):
+        self.server_args['/pools/nodes'] = {'nodes': [{'clusterEncryption': False, 'hostname': 'host1'}]}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Cluster encryption is disabled', self.str_output)
+
+    def testGetEncryptionTrue(self):
+        self.server_args['/pools/nodes'] = {'nodes': [{'clusterEncryption': True, 'hostname': 'host1'}]}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Cluster encryption is enabled', self.str_output)
+
+    def testGetEncryptionMixedMode(self):
+        self.server_args['/pools/nodes'] = {'nodes': [{'clusterEncryption': True, 'hostname': 'host1'},
+                                                      {'clusterEncryption': False, 'hostname': 'host2'}]}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Cluster is in mixed mode', self.str_output)
+
+    def testEnableClusterEncryptionIPv4(self):
+        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
+                                                                         'services': {'mgmt': '6789'}}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet', 'thisNode': True}]}
+        self.no_error_run(self.command + ['--enable'], self.server_args)
+        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.rest_parameter_match(['external=inet_tls', 'clusterEncryption=on'])
+
+    def testDisableClusterEncryptionIPv4(self):
+        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
+                                                                         'services': {'mgmt': '6789'}}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet', 'thisNode': True}]}
+        self.no_error_run(self.command + ['--disable'], self.server_args)
+        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.rest_parameter_match(['external=inet_tcp', 'clusterEncryption=off'])
+
+    def testEnableClusterEncryptionIPv6(self):
+        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
+                                                                         'services': {'mgmt': '6789'}}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet6', 'thisNode': True}]}
+        self.no_error_run(self.command + ['--enable'], self.server_args)
+        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.rest_parameter_match(['external=inet6_tls', 'clusterEncryption=on'])
+
+
 if __name__ == '__main__':
     unittest.main()
