@@ -1811,8 +1811,10 @@ class ServerEshell(Subcommand):
         else:
             inetrc_opt = []
 
+        proto_dist = result['addressFamily'] + "_tcp"
+
         try:
-            subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node] + inetrc_opt)
+            subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist', proto_dist] + inetrc_opt)
         except OSError:
             _exitIfErrors(["Unable to find the erl executable"])
 
