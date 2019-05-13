@@ -3426,9 +3426,9 @@ class XdcrReplicate(Subcommand):
             self._settings(rest, opts)
 
     def _create(self, rest, opts):
-        _, errors = rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket,
-                                                 opts.from_bucket, opts.filter,
-                                                 opts.rep_mode, opts.compression)
+        _, errors = rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.filter,
+                                                 opts.rep_mode, opts.compression, opts.reset_expiry, opts.filter_del,
+                                                 opts.filter_exp)
         _exitIfErrors(errors)
 
         _success("XDCR replication created")

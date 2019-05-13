@@ -1535,7 +1535,8 @@ class ClusterManager(object):
             params["statsInterval"] = stats_interval
         return params
 
-    def create_xdcr_replication(self, name, to_bucket, from_bucket, filter, rep_mode, compression):
+    def  create_xdcr_replication(self, name, to_bucket, from_bucket, filter, rep_mode, compression,
+                                 reset_expiry, filter_del, filter_exp):
         url = f'{self.hostname}/controller/createReplication'
         params = { "replicationType": "continuous" }
 
@@ -1551,6 +1552,12 @@ class ClusterManager(object):
             params["filterExpression"] = filter
         if compression is not None:
             params["compressionType"] = compression
+        if reset_expiry:
+            params['filterBypassExpiry'] = 'true' if reset_expiry == '1' else 'false'
+        if filter_del:
+            params['filterDeletion'] = 'true' if filter_del == '1' else 'false'
+        if filter_exp:
+            params['filterExpiration'] = 'true' if filter_exp == '1' else 'false'
 
         return self._post_form_encoded(url, params)
 
