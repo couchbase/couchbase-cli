@@ -9,8 +9,6 @@ import time
 import urllib
 import urlparse
 
-MAX_LEN_PASSWORD = 24
-
 N1QL_SERVICE = 'n1ql'
 INDEX_SERVICE = 'index'
 MGMT_SERVICE = 'mgmt'
@@ -324,9 +322,6 @@ class ClusterManager(object):
         if username:
             params["username"] = username
         if password:
-            if len(password) > MAX_LEN_PASSWORD:
-                return None, ["Password length %s exceeds maximum length of %s characters" \
-                    % (len(password), MAX_LEN_PASSWORD)]
             params["password"] = password
         if port:
             params["port"] = port
