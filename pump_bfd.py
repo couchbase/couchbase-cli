@@ -661,7 +661,8 @@ class BFDSink(BFD, pump.Sink):
             if self.bucket_name() == bucket["name"]:
                 for node in bucket["nodes"]:
                     if node["hostname"] == self.node_name():
-                        version = node["version"].split("-")[0]
+                        if 'version' in node:
+                            version = node["version"].split("-")[0]
 
         seqno_map = {}
         for i in range(BFD.NUM_VBUCKET):
