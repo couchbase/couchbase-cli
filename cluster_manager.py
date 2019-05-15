@@ -1758,7 +1758,7 @@ class ClusterManager(object):
         if ipfamily:
             params['afamily'] = ipfamily
         if encryption:
-            params['clusterEncryption'] = encryption
+            params['nodeEncryption'] = encryption
 
         return self._post_form_encoded(url, params)
 

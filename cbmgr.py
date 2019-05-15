@@ -4353,7 +4353,7 @@ class ChangeClusterEncryption(Subcommand):
         encrypted_nodes = []
         unencrpyted_nodes = []
         for n in node_data['nodes']:
-            if n['clusterEncryption']:
+            if n['nodeEncryption']:
                 encrypted_nodes.append(n['hostname'])
             else:
                 unencrpyted_nodes.append(n['hostname'])

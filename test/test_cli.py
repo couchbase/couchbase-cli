@@ -1445,18 +1445,18 @@ class TestClusterEncryption(CommandTest):
         self.system_exit_run(self.command + ['--enable', '--disable'], self.server_args)
 
     def testGetEncryptionFalse(self):
-        self.server_args['/pools/nodes'] = {'nodes': [{'clusterEncryption': False, 'hostname': 'host1'}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'nodeEncryption': False, 'hostname': 'host1'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Cluster encryption is disabled', self.str_output)
 
     def testGetEncryptionTrue(self):
-        self.server_args['/pools/nodes'] = {'nodes': [{'clusterEncryption': True, 'hostname': 'host1'}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'nodeEncryption': True, 'hostname': 'host1'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Cluster encryption is enabled', self.str_output)
 
     def testGetEncryptionMixedMode(self):
-        self.server_args['/pools/nodes'] = {'nodes': [{'clusterEncryption': True, 'hostname': 'host1'},
-                                                      {'clusterEncryption': False, 'hostname': 'host2'}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'nodeEncryption': True, 'hostname': 'host1'},
+                                                      {'nodeEncryption': False, 'hostname': 'host2'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Cluster is in mixed mode', self.str_output)
 
@@ -1467,7 +1467,7 @@ class TestClusterEncryption(CommandTest):
         self.no_error_run(self.command + ['--enable'], self.server_args)
         self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.rest_parameter_match(['external=inet_tls', 'clusterEncryption=on'])
+        self.rest_parameter_match(['external=inet_tls', 'nodeEncryption=on'])
 
     def testDisableClusterEncryptionIPv4(self):
         self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
@@ -1476,7 +1476,7 @@ class TestClusterEncryption(CommandTest):
         self.no_error_run(self.command + ['--disable'], self.server_args)
         self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.rest_parameter_match(['external=inet_tcp', 'clusterEncryption=off'])
+        self.rest_parameter_match(['external=inet_tcp', 'nodeEncryption=off'])
 
     def testEnableClusterEncryptionIPv6(self):
         self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
@@ -1485,7 +1485,7 @@ class TestClusterEncryption(CommandTest):
         self.no_error_run(self.command + ['--enable'], self.server_args)
         self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.rest_parameter_match(['external=inet6_tls', 'clusterEncryption=on'])
+        self.rest_parameter_match(['external=inet6_tls', 'nodeEncryption=on'])
 
 
 if __name__ == '__main__':
