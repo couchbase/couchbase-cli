@@ -2868,36 +2868,74 @@ class SettingSecurity(Subcommand):
         super(SettingSecurity, self).__init__()
         self.parser.prog = "couchbase-cli setting-security"
         group = self.parser.add_argument_group("Cluster Security Settings")
+        group.add_argument('--get', default=False, action='store_true', help='Get security settings.')
+        group.add_argument('--set', default=False, action='store_true', help='Set security settings.')
         group.add_argument("--disable-http-ui", dest="disable_http_ui", metavar="<0|1>", choices=['0', '1'],
                            default=None, help="Disables access to the UI over HTTP (0 or 1)")
         group.add_argument("--cluster-encryption-level", dest="cluster_encryption_level", metavar="<all|control>",
                           choices=['all', 'control'], default=None,
                           help="Set cluster encryption level, only used when cluster encryption enabled.")
+        group.add_argument('--tls-min-version', dest='tls_min_version', metavar='<tlsv1.1|tlsv1.2>',
+                           choices=['tlsv1.1', 'tlsv1.2'],
+                           default=None, help='Set the minimum TLS version')
+        group.add_argument('--tls-honor-cipher-order', dest='tls_honor_cipher_order', metavar='<1|0>', choices=['1', '0'],
+                           help='Specify or not the cipher order has to be followed.', default=None)
+        group.add_argument('--cipher-suites', metavar='<ciphers>', default=None,
+                           help='Comma separated list of ciphers to use.If an empty string (e.g "") given it will'
+                                ' reset ciphers to default.')
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_versions(rest)
 
-        if opts.disable_http_ui is None and opts.cluster_encryption_level is None:
-            _exitIfErrors(['Please provide at least one of --cluster-encryption-level or --disable-http-ui'])
+        if sum([opts.get, opts.set]) != 1:
+            _exitIfErrors(['Provided either --set or --get.'])
 
-        if opts.disable_http_ui == '1':
-           opts.disable_http_ui = 'true'
-        elif opts.disable_http_ui == '0':
-            opts.disable_http_ui = 'false'
+        if opts.get:
+            val, err = rest.get_security_settings()
+            _exitIfErrors(err)
+            print(json.dumps(val))
+        elif opts.set:
+            self._set(rest, opts.disable_http_ui, opts.cluster_encryption_level, opts.tls_min_version,
+                      opts.tls_honor_cipher_order, opts.cipher_suites)
 
-        _, errors = rest.set_security_settings(opts.disable_http_ui, opts.cluster_encryption_level)
+
+    @staticmethod
+    def _set(rest, disable_http_ui, encryption_level, tls_min_version, honor_order, cipher_suites):
+        if not any([True if x is not None else False for x in [disable_http_ui, encryption_level, tls_min_version,
+                                                    honor_order, cipher_suites]]):
+            _exitIfErrors(['please provide at least one of -cluster-encryption-level,'
+                          ' --disable-http-ui, --tls-min-version, --tls-honor-cipher-order or --cipher-suites'
+                          ' together with --set'])
+
+        if disable_http_ui == '1':
+            disable_http_ui = 'true'
+        elif disable_http_ui == '0':
+            disable_http_ui = 'false'
+
+        if honor_order == '1':
+            honor_order = 'true'
+        elif honor_order == '0':
+            honor_order = 'false'
+
+        if cipher_suites == '':
+            cipher_suites = json.dumps([])
+        elif cipher_suites is not None:
+            cipher_suites = json.dumps(cipher_suites.split(','))
+
+        _, errors = rest.set_security_settings(disable_http_ui, encryption_level, tls_min_version,
+                                               honor_order, cipher_suites)
         _exitIfErrors(errors)
-        _success("Security policy updated")
+        _success("Security settings updated")
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-security-policy" + ".1" if os.name != "nt" else ".html"
+        return "couchbase-cli-setting-security" + ".1" if os.name != "nt" else ".html"
 
     @staticmethod
     def get_description():
-        return "Modify security policies"
+        return "Modify security settings"
 
 
 class SettingXdcr(Subcommand):

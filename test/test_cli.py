@@ -965,19 +965,33 @@ class TestSettingPasswordPolicy(CommandTest):
 class TestSettingSecurity(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'setting-security'] + cluster_connect_args
-        self.disable_args = ['--disable-http-ui']
+        self.set_args = ['--set', '--disable-http-ui']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestSettingSecurity, self).setUp()
 
-    def test_disable_http_ui(self):
-        self.no_error_run(self.command + self.disable_args + ['1'], self.server_args)
-        expected_params = ['disableUIOverHttp=true']
+    def test_set_settings(self):
+        self.no_error_run(self.command + ['--set', '--disable-http-ui', '1', '--cluster-encryption-level', 'all',
+                                          '--tls-honor-cipher-order', '1', '--tls-min-version', 'tlsv1.2'],
+                          self.server_args)
+        expected_params = ['disableUIOverHttp=true', 'clusterEncryptionLevel=all', 'tlsMinVersion=tlsv1.2',
+                           'honorCipherOrder=true']
         self.assertIn('POST:/settings/security', self.server.trace)
         self.rest_parameter_match(expected_params)
 
-    def test_enable_http_ui(self):
-        self.no_error_run(self.command + self.disable_args + ['0'], self.server_args)
-        expected_params = ['disableUIOverHttp=false']
+    def test_invalid_choice(self):
+        self.system_exit_run(self.command + ['--set', '--tls-min-version', 'tlsv2'], self.server_args)
+
+    def test_cipher_suites_empty(self):
+        self.no_error_run(self.command + ['--set', '--cipher-suites', ''],
+                          self.server_args)
+        expected_params = ['cipherSuites=%5B%5D']
+        self.assertIn('POST:/settings/security', self.server.trace)
+        self.rest_parameter_match(expected_params)
+
+    def test_cipher_suites_list(self):
+        self.no_error_run(self.command + ['--set', '--cipher-suites', 'suite1,suite2'],
+                          self.server_args)
+        expected_params = ['cipherSuites=%5B%22suite1%22%2C+%22suite2%22%5D']
         self.assertIn('POST:/settings/security', self.server.trace)
         self.rest_parameter_match(expected_params)
 

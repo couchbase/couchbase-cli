@@ -445,8 +445,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli setting-security</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-    [--password &lt;password&gt;] [--disable-http-ui &lt;0|1&gt;]
-    [--cluster-encryption-level &lt;all|control&gt;]</pre>
+    [--password &lt;password&gt;] [--set] [--get] [--disable-http-ui &lt;0|1&gt;]
+    [--cluster-encryption-level &lt;all|control&gt;]
+    [--tls-min-version &lt;tlsv1.1|tlsv1.2&gt;] [--tls-honor-cipher-order &lt;1|0&gt;]
+    [---cipher-suites &lt;ciphers&gt;]</pre>
 </div>
 </div>
 </div>
@@ -454,13 +456,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Allows enabling and disabling of the Couchbase Administration Console
-as well as configuring the cluster encryption level. The level is used
-when cluster encryption is turned on. If th level is "all" then both data
-and control messages between the nodes in the cluster will be send over
-encrypted connections. If the level is "control" only control messages will be
-sent encrypted. By default when cluster encryption is turned on the level will
-be "control".</p>
+<p>This command allows configuring cluster wide security settings.</p>
 </div>
 </div>
 </div>
@@ -492,16 +488,49 @@ given then the command will prompt the user for a password through
 non-echoed stdin. You may also specify your password by using the
 environment variable CB_REST_PASSWORD.</p>
 </dd>
+<dt class="hdlist1">--get</dt>
+<dd>
+<p>Gets current security settings.</p>
+</dd>
+<dt class="hdlist1">--set</dt>
+<dd>
+<p>Set new security settings.</p>
+</dd>
 <dt class="hdlist1">--disable-http-ui &lt;0|1&gt;</dt>
 <dd>
-<p>Specifies whether the Couchbase Administration UI can be accessible
+<p>Specifies whether the Couchbase Web Console can be accessible
 over http. To disable access set this option to "1". To enable access
 set this option to "0". By default, access to the UI over http is
 enabled.</p>
 </dd>
 <dt class="hdlist1">--cluster-encryption-level &lt;all|control&gt;</dt>
 <dd>
-<p>Specifies the cluster encryption level.</p>
+<p>Specifies the cluster encryption level. The level is used when cluster
+encryption is turned on. If the level is "all" then both data
+and control messages between the nodes in the cluster will be sent over
+encrypted connections. If the level is "control" only control messages will
+be sent encrypted. By default when cluster encryption is turned on, the
+level will be "control".</p>
+</dd>
+<dt class="hdlist1">--tls-min-version &lt;tlsv1.1|tlsv1.2&gt;</dt>
+<dd>
+<p>Specify the minimum TLS protocol version to be used across all of the
+Couhbase services.</p>
+</dd>
+<dt class="hdlist1">--tls-honor-cipher-order &lt;1|0&gt;</dt>
+<dd>
+<p>Specifies whether the cipher-order must be followed across all of the
+services. When set to 1, this allows weaker ciphers to be included in the
+cipher list for backwards compatibility of older clients/browsers while still
+forcing the newer clients to use stronger ciphers.</p>
+</dd>
+<dt class="hdlist1">--cipher-suites &lt;cipher&gt;</dt>
+<dd>
+<p>Specify the cipher suite to be used across all of the couchbase services.
+The ciphers have to be a comma separated list such as:
+"TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA",
+"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA". If an empty string is given ("")
+then the cipher list will be reset to its default.</p>
 </dd>
 </dl>
 </div>

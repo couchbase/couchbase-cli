@@ -1042,7 +1042,8 @@ class ClusterManager(object):
         url = f'{self.hostname}/settings/passwordPolicy'
         return self._get(url)
 
-    def set_security_settings(self, disable_http_ui, cluster_encryption_level):
+    def set_security_settings(self, disable_http_ui, cluster_encryption_level, tls_min_version,
+                              honor_order, cipher_suites):
         url = f'{self.hostname}/settings/security'
         params = {}
 
@@ -1050,8 +1051,17 @@ class ClusterManager(object):
             params['disableUIOverHttp'] = disable_http_ui
         if cluster_encryption_level:
             params['clusterEncryptionLevel'] = cluster_encryption_level
+        if tls_min_version:
+            params['tlsMinVersion'] = tls_min_version
+        if honor_order:
+            params['honorCipherOrder'] = honor_order
+        if cipher_suites:
+            params['cipherSuites'] = cipher_suites
 
         return self._post_form_encoded(url, params)
+
+    def get_security_settings(self):
+        return self._get(f'{self.hostname}/settings/security')
 
     def set_password_policy(self, min_length, upper_case, lower_case, digit,
                             special_char):

@@ -12,31 +12,55 @@ Manage security policies
 
 [verse]
 _couchbase-cli setting-security_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--disable-http-ui <0|1>]
+    [--password <password>] [--set] [--get] [--disable-http-ui <0|1>]
     [--cluster-encryption-level <all|control>]
+    [--tls-min-version <tlsv1.1|tlsv1.2>] [--tls-honor-cipher-order <1|0>]
+    [---cipher-suites <ciphers>]
 
 == DESCRIPTION
 
-Allows enabling and disabling of the Couchbase Administration Console
-as well as configuring the cluster encryption level. The level is used
-when cluster encryption is turned on. If th level is "all" then both data
-and control messages between the nodes in the cluster will be send over
-encrypted connections. If the level is "control" only control messages will be
-sent encrypted. By default when cluster encryption is turned on the level will
-be "control".
+This command allows configuring cluster wide security settings.
 
 == OPTIONS
 
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
+--get::
+  Gets current security settings.
+
+--set::
+  Set new security settings.
+
 --disable-http-ui <0|1>::
-  Specifies whether the Couchbase Administration UI can be accessible
+  Specifies whether the Couchbase Web Console can be accessible
   over http. To disable access set this option to "1". To enable access
   set this option to "0". By default, access to the UI over http is
   enabled.
 
 --cluster-encryption-level <all|control>::
-  Specifies the cluster encryption level.
+  Specifies the cluster encryption level. The level is used when cluster
+  encryption is turned on. If the level is "all" then both data
+  and control messages between the nodes in the cluster will be sent over
+  encrypted connections. If the level is "control" only control messages will
+  be sent encrypted. By default when cluster encryption is turned on, the
+  level will be "control".
+
+--tls-min-version <tlsv1.1|tlsv1.2>::
+  Specify the minimum TLS protocol version to be used across all of the
+  Couhbase services.
+
+--tls-honor-cipher-order <1|0>::
+  Specifies whether the cipher-order must be followed across all of the
+  services. When set to 1, this allows weaker ciphers to be included in the
+  cipher list for backwards compatibility of older clients/browsers while still
+  forcing the newer clients to use stronger ciphers.
+
+--cipher-suites <cipher>::
+  Specify the cipher suite to be used across all of the couchbase services.
+  The ciphers have to be a comma separated list such as:
+  "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA",
+  "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA". If an empty string is given ("")
+  then the cipher list will be reset to its default.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
