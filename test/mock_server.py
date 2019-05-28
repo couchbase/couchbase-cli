@@ -333,6 +333,7 @@ endpoints = [
     ('/settings/autoFailover', {'POST': do_nothing}),
     ('/settings/autoReprovision', {'POST': do_nothing}),
     ('/settings/replications$', {'POST': do_nothing}),
+    ('/settings/retryRebalance$', {'GET': get_by_path, 'POST': do_nothing}),
     ('/settings/replications/(\d|\w)+$', {'POST': do_nothing}),
     ('/node/controller/setupServices$', {'POST': do_nothing}),
     ('/nodes/self/controller/settings$', {'POST': do_nothing}),

@@ -551,6 +551,29 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def set_settings_rebalance_retry(self, enabled, wait_for, max_attempts):
+        url = f'{self.hostname}/settings/retryRebalance'
+
+        params = {'enabled': enabled}
+        if wait_for:
+            params['afterTimePeriod'] = wait_for
+        if max_attempts:
+            params['maxAttempts'] = max_attempts
+
+        return self._post_form_encoded(url, params)
+
+    def get_settings_rebalance_retry(self):
+        url = f'{self.hostname}/settings/retryRebalance'
+        return self._get(url)
+
+    def cancel_rebalance_retry(self, rebalance_id):
+        url = f'{self.hostname}/controller/cancelRebalanceRetry/{rebalance_id}'
+        return self._post_form_encoded(url, {})
+
+    def get_rebalance_info(self):
+        url = f'{self.hostname}/pools/default/pendingRetryRebalance'
+        return self._get(url)
+
     def rebalance_status(self):
         data, errors = self.get_tasks()
         if errors:

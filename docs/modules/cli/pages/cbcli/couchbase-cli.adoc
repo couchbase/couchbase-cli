@@ -146,6 +146,9 @@ man:couchbase-cli-setting-password-policy[1]::
 man:couchbase-cli-setting-query[1]::
   Modifies the query settings.
 
+man:couchbase-cli-setting-rebalance[1]::
+  Modifies the rebalance settings.
+
 man:couchbase-cli-setting-security[1]::
   Modifies security policies.
 

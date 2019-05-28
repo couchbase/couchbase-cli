@@ -4455,3 +4455,85 @@ class ChangeClusterEncryption(Subcommand):
     @staticmethod
     def get_description():
         return "Change or get the cluster encryption configuration"
+
+
+class SettingRebalance(Subcommand):
+    """The rebalance subcommand"""
+
+    def __init__(self):
+        super(SettingRebalance, self).__init__()
+        self.parser.prog = "couchbase-cli setting-rebalance"
+        group = self.parser.add_argument_group("Rebalance configuration")
+        group.add_argument("--set", default=False, action='store_true',
+                           help='Set the automatic rebalance retry settings.')
+        group.add_argument("--get", default=False, action='store_true',
+                           help='Get the automatic rebalance retry settings.')
+        group.add_argument('--cancel', default=False, action='store_true',
+                           help='Cancel pending rebalance retry.')
+        group.add_argument('--pending-info', default=False, action='store_true',
+                           help='Get info for pending rebalance retry.')
+        group.add_argument("--enable", metavar="<1|0>", choices=["1", "0"],
+                           help="Enable or disable automatic rebalance retry")
+        group.add_argument("--wait-for", metavar="<sec>", type=int,
+                           help="Specify the time to wat before retrying the rebalance [5-3600] seconds.")
+        group.add_argument("--max-attempts", metavar="<num>", type=int,
+                           help="Maximum number of rebalance retires [1-3].")
+        group.add_argument('--rebalance-id', metavar='<id>',
+                           help='Specify the id of the failed rebalance to cancel the retry.')
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_cluster_initialized(rest)
+        check_versions(rest)
+
+        enterprise, errors = rest.is_enterprise()
+        _exitIfErrors(errors)
+
+        if not enterprise:
+            _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
+
+        if sum([opts.set, opts.get, opts.cancel, opts.pending_info]) != 1:
+            _exitIfErrors(['Provide either --set, --get, --cancel or --pending-info'])
+
+        if opts.get:
+            settings, err = rest.get_settings_rebalance_retry()
+            _exitIfErrors(err)
+            if opts.output == 'json':
+                print(json.dumps(settings))
+            else:
+                print(f'Automatic rebalance retry {"enabled" if settings["enabled"] else "disabled"}')
+                print(f'Retry wait time: {settings["afterTimePeriod"]}')
+                print(f'Maximum number of retries: {settings["maxAttempts"]}')
+        elif opts.set:
+            if opts.enable == '1':
+                opts.enable = 'true'
+            else:
+                opts.enable = 'false'
+
+            if opts.wait_for is not None and (opts.wait_for < 5 or opts.wait_for > 3600):
+                _exitIfErrors(['--wait-for must be a value between 5 and 3600'])
+            if opts.max_attempts is not None and (opts.max_attempts < 1 or opts.max_attempts > 3):
+                _exitIfErrors(['--max-attempts must be a value between 1 and 3'])
+
+            _, err = rest.set_settings_rebalance_retry(opts.enable, opts.wait_for, opts.max_attempts)
+            _exitIfErrors(err)
+            _success('Automatic rebalance retry settings updated')
+        elif opts.cancel:
+            if opts.rebalance_id is None:
+                _exitIfErrors(['Provide the failed rebalance id using --rebalance-id <id>'])
+            _, err = rest.cancel_rebalance_retry(opts.rebalance_id)
+            _exitIfErrors(err)
+            _success('Rebalance retry canceled')
+        else:
+            rebalance_info, err = rest.get_rebalance_info()
+            _exitIfErrors(err)
+            print(json.dumps(rebalance_info))
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-setting-rebalance" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Configure automatic rebalance settings"

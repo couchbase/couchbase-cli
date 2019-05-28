@@ -1,0 +1,231 @@
+'\" t
+.\"     Title: couchbase-cli-setting-rebalance
+.\"    Author: Couchbase
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-05-29
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-SETTING\-REBALANCE" "1" "2019-05-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+couchbase\-cli\-setting\-rebalance \- Modifies rebalance retry settings
+.SH "SYNOPSIS"
+.sp
+.nf
+_couchbase\-cli setting\-rebalance [\-\-cluster <url>] [\-\-username <user>]
+    [\-\-set] [\-\-get] [\-\-cancel] [\-\-pending\-info] [\-\-enable <1|0>]
+    [\-\-wait\-for <sec>] [\-\-max\-attempts <num>] [\-\-rebalance\-id <id>]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+This command allows configuring and retrieving automatic rebalance retry
+settings as well as canceling and retrieving information of pending rebalance
+retries.
+.SH "OPTIONS"
+.sp
+\-c, \-\-cluster
+.RS 4
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
+.RE
+.sp
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
+.RE
+.sp
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
+.RE
+.sp
+\-\-set
+.RS 4
+Specify to configure the automatic rebalance retry settings.
+.RE
+.sp
+\-\-get
+.RS 4
+Specify to retrieve the automatic rebalance retry settings.
+.RE
+.sp
+\-\-cancel
+.RS 4
+Specify to cancel a pending rebalance retry, use \-\-rebalance\-id together
+with this option to provide the rebalance id.
+.RE
+.sp
+\-\-pending\-info
+.RS 4
+Specify to retrieve information of pending rebalance retries.
+.RE
+.sp
+\-\-enable <1|0>
+.RS 4
+Enable (1) or disable (0) automatic rebalance retry. This flag is required
+when using \-\-set. By default automatic rebalance retry is disabled.
+.RE
+.sp
+\-\-wait\-for <sec>
+.RS 4
+Specify the amount of time to wait after a failed rebalance before retrying.
+Time must be a value between 5 abd 3600 seconds. By default the wait time is
+300 seconds.
+.RE
+.sp
+\-\-max\-attempts <num>
+.RS 4
+Specify the number of times a failed rebalance will be retried. The value
+provided must be between 1 and 3, the default is 1.
+.RE
+.sp
+\-\-rebalance\-id <id>
+.RS 4
+Specify the rebalance id of a failed rebalance. Use together with \-\-cancel,
+to cancel a pending retry.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRcouchbase://<addr>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CR<addr>:<port>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRhttp://<addr>:<port>\fP
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
+.SH "EXAMPLES"
+.sp
+To retrieve the current automatic rebalance retry configuration use:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
+ \-p password \-\-get
+.fi
+.if n .RE
+.sp
+To enable automatic rebalance retry use the command bellow.
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
+ \-p password \-\-set \-\-enabled 1
+.fi
+.if n .RE
+.sp
+You can also set the the wait for period and the maximum number of retries. The
+command above enables automatic rebalance retry as well as setting the wait
+time before retrying to 60 seconds and the maximum number of retires to 2.
+.sp
+.if n .RS 4
+.nf
+ $ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
+\-p password \-\-set \-\-enabled 1 \-\-wait\-for 60 \-\-retries 2
+.fi
+.if n .RE
+.sp
+To retrieve information of the pending rebalance retries run the command bellow.
+.sp
+.if n .RS 4
+.nf
+ $ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
+\-p password \-\-pending\-info
+.fi
+.if n .RE
+.sp
+To cancel a pending rebalance retry run the command bellow where
+\f(CR4198f4b1564a800223271af76edd4f98\fP is the rebalance id, this can be retrieved using
+the \f(CR\-\-pending\-info\fP flag above.
+.sp
+.if n .RS 4
+.nf
+ $ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
+\-p password \-\-pending\-info \-\-rebalance\-id 4198f4b1564a800223271af76edd4f98
+.fi
+.if n .RE
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
+.sp
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBcouchbase\-cli\-rebalance\fP(1),
+\fBcouchbase\-cli\-rebalance\-status\fP(1)
+.SH "COUCHBASE\-CLI"
+.sp
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase

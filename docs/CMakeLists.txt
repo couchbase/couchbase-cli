@@ -45,6 +45,7 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-setting-saslauthd.html
   generated/doc/couchbase-cli/couchbase-cli-setting-notification.html
   generated/doc/couchbase-cli/couchbase-cli-setting-password-policy.html
+  generated/doc/couchbase-cli/couchbase-cli-setting-rebalance.html
   generated/doc/couchbase-cli/couchbase-cli-setting-security.html
   generated/doc/couchbase-cli/couchbase-cli-setting-xdcr.html
   generated/doc/couchbase-cli/couchbase-cli-ssl-manage.html
@@ -106,6 +107,7 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-setting-saslauthd.1
     generated/man/man1/couchbase-cli-setting-notification.1
     generated/man/man1/couchbase-cli-setting-password-policy.1
+    generated/man/man1/couchbase-cli-setting-rebalance.1
     generated/man/man1/couchbase-cli-setting-security.1
     generated/man/man1/couchbase-cli-setting-xdcr.1
     generated/man/man1/couchbase-cli-ssl-manage.1

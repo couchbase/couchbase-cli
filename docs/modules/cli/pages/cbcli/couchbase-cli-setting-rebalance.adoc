@@ -1,0 +1,101 @@
+= couchbase-cli-setting-rebalance(1)
+ifndef::doctype-manpage[:doctitle: setting-rebalance]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-setting-rebalance -
+endif::[]
+Modifies rebalance retry settings
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli setting-rebalance [--cluster <url>] [--username <user>]
+    [--set] [--get] [--cancel] [--pending-info] [--enable <1|0>]
+    [--wait-for <sec>] [--max-attempts <num>] [--rebalance-id <id>]
+
+== DESCRIPTION
+
+This command allows configuring and retrieving automatic rebalance retry
+settings as well as canceling and retrieving information of pending rebalance
+retries.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--set::
+  Specify to configure the automatic rebalance retry settings.
+
+--get::
+  Specify to retrieve the automatic rebalance retry settings.
+
+--cancel::
+  Specify to cancel a pending rebalance retry, use --rebalance-id together
+  with this option to provide the rebalance id.
+
+--pending-info::
+  Specify to retrieve information of pending rebalance retries.
+
+--enable <1|0>::
+  Enable (1) or disable (0) automatic rebalance retry. This flag is required
+  when using --set. By default automatic rebalance retry is disabled.
+
+--wait-for <sec>::
+  Specify the amount of time to wait after a failed rebalance before retrying.
+  Time must be a value between 5 abd 3600 seconds. By default the wait time is
+  300 seconds.
+
+--max-attempts <num>::
+  Specify the number of times a failed rebalance will be retried. The value
+  provided must be between 1 and 3, the default is 1.
+
+--rebalance-id <id>::
+  Specify the rebalance id of a failed rebalance. Use together with --cancel,
+  to cancel a pending retry.
+
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To retrieve the current automatic rebalance retry configuration use:
+
+  $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+   -p password --get
+
+To enable automatic rebalance retry use the command bellow.
+
+  $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+   -p password --set --enabled 1
+
+You can also set the the wait for period and the maximum number of retries. The
+command above enables automatic rebalance retry as well as setting the wait
+time before retrying to 60 seconds and the maximum number of retires to 2.
+
+    $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+   -p password --set --enabled 1 --wait-for 60 --retries 2
+
+To retrieve information of the pending rebalance retries run the command bellow.
+
+    $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+   -p password --pending-info
+
+To cancel a pending rebalance retry run the command bellow where
+`4198f4b1564a800223271af76edd4f98` is the rebalance id, this can be retrieved using
+the `--pending-info` flag above.
+
+    $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+   -p password --pending-info --rebalance-id 4198f4b1564a800223271af76edd4f98
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-rebalance[1],
+man:couchbase-cli-rebalance-status[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

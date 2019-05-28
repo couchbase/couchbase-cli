@@ -81,6 +81,7 @@ gen_docs couchbase-cli-setting-query.adoc 1
 gen_docs couchbase-cli-setting-notification.adoc 1
 gen_docs couchbase-cli-setting-password-policy.adoc 1
 gen_docs couchbase-cli-setting-security.adoc 1
+gen_docs couchbase-cli-setting-rebalance.adoc 1
 gen_docs couchbase-cli-setting-xdcr.adoc 1
 gen_docs couchbase-cli-ssl-manage.adoc 1
 gen_docs couchbase-cli-user-change-password.adoc 1

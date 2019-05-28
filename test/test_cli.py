@@ -1521,5 +1521,44 @@ class TestClusterEncryption(CommandTest):
         self.rest_parameter_match(['nodeEncryption=off', 'nodeEncryption=off', 'nodeEncryption=on'])
 
 
+class TestSettingRebalance(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'setting-rebalance'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        super(TestSettingRebalance, self).setUp()
+
+    def testCEInvalid(self):
+        self.server_args['enterprise'] = False
+        self.system_exit_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Automatic rebalance retry configuration is an Enterprise Edition only feature', self.str_output)
+
+    def testMoreThanOneAction(self):
+        self.system_exit_run(self.command + ['--get', '--set'], self.server_args)
+        self.assertIn('Provide either --set, --get, --cancel or --pending-info', self.str_output)
+
+    def testGetHumanFriendly(self):
+        self.server_args['/settings/retryRebalance'] = {"enabled": False, "afterTimePeriod": 300, "maxAttempts": 1}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        expected_output = ['Automatic rebalance retry disabled', 'Retry wait time: 300', 'Maximum number of retries: 1']
+        for e in expected_output:
+            self.assertIn(e, self.str_output)
+
+    def testGetJson(self):
+        self.server_args['/settings/retryRebalance'] = {"enabled": False, "afterTimePeriod": 300, "maxAttempts": 1}
+        self.no_error_run(self.command + ['--get', '--output', 'json'], self.server_args)
+        self.assertIn('{"enabled": false, "afterTimePeriod": 300, "maxAttempts": 1}', self.str_output)
+
+    def testSet(self):
+        self.no_error_run(self.command + ['--set', '--enable', '1', '--wait-for', '5', '--max-attempts', '3'],
+                          self.server_args)
+        expected_params = ['enabled=true', 'afterTimePeriod=5', 'maxAttempts=3']
+        self.rest_parameter_match(expected_params)
+
+    def testSetWaitForOutOfRange(self):
+        self.system_exit_run(self.command + ['--set', '--enable', '1', '--wait-for', '1', '--max-attempts', '3'],
+                          self.server_args)
+        self.assertIn('--wait-for must be a value between 5 and 3600', self.str_output)
+
+
 if __name__ == '__main__':
     unittest.main()
