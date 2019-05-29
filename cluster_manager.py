@@ -1779,7 +1779,9 @@ class ClusterManager(object):
 
         for n in node_data['nodes']:
             if 'thisNode' in n and n['thisNode']:
-                return n['addressFamily'], None
+                if 'addressFamily' in n:
+                    return n['addressFamily'], None
+                return '', [f'Node {host} must be version 6.5 or higher']
 
         return '', [f'Could not get data for {host}']
     # Low level methods for basic HTML operations
