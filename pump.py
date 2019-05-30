@@ -341,7 +341,7 @@ class PumpingStation(ProgressReporter):
         sys.stderr.write(f"bucket: {source_bucket['name']}, msgs transferred...\n")
 
         def emit(msg):
-            sys.stderr.write(f'msg\n')
+            sys.stderr.write(f'{msg}\n')
         self.report(emit=emit)
 
         return 0
