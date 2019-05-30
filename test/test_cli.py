@@ -1429,23 +1429,27 @@ class TestChangeIpFamily(CommandTest):
         self.assertIn('GET:/pools/nodes', self.server.trace)
 
     def testSetIPv4(self):
-        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
-                                                                         'services': {'mgmt': '6789'}}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
+                                                       'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv4'], self.server_args)
         self.assertIn('Switched ip family of the cluster', self.str_output)
-        self.assertIn('GET:/pools/default/nodeServices', self.server.trace)
-        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
-        expected_params = {'external=inet_tcp', 'afamily=ipv4'}
+        self.assertIn('GET:/pools/nodes', self.server.trace)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
+        expected_params = ['afamily=ipv4', 'afamily=ipv4', 'afamily=ipv6']
         self.rest_parameter_match(expected_params, True)
 
     def testSetIPv6(self):
-        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
-                                                                         'services': {'mgmt': '6789'}}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
+                                                       'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv6'], self.server_args)
         self.assertIn('Switched ip family of the cluster', self.str_output)
-        self.assertIn('GET:/pools/default/nodeServices', self.server.trace)
-        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
-        expected_params = {'external=inet6_tcp', 'afamily=ipv6'}
+        self.assertIn('GET:/pools/nodes', self.server.trace)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
+        expected_params = ['afamily=ipv6', 'afamily=ipv6', 'afamily=ipv4']
         self.rest_parameter_match(expected_params, True)
 
 
@@ -1475,31 +1479,22 @@ class TestClusterEncryption(CommandTest):
         self.assertIn('Cluster is in mixed mode', self.str_output)
 
     def testEnableClusterEncryptionIPv4(self):
-        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
-                                                                         'services': {'mgmt': '6789'}}]}
-        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet', 'thisNode': True}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
+                                                       'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--enable'], self.server_args)
-        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.rest_parameter_match(['external=inet_tls', 'nodeEncryption=on'])
+        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
+        self.rest_parameter_match(['nodeEncryption=on', 'nodeEncryption=on', 'nodeEncryption=off'])
 
     def testDisableClusterEncryptionIPv4(self):
-        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
-                                                                         'services': {'mgmt': '6789'}}]}
-        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet', 'thisNode': True}]}
+        self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
+                                                       'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--disable'], self.server_args)
-        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.rest_parameter_match(['external=inet_tcp', 'nodeEncryption=off'])
-
-    def testEnableClusterEncryptionIPv6(self):
-        self.server_args['/pools/default/nodeServices'] = {'nodesExt': [{'hostname': 'localhost',
-                                                                         'services': {'mgmt': '6789'}}]}
-        self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet6', 'thisNode': True}]}
-        self.no_error_run(self.command + ['--enable'], self.server_args)
-        self.assertIn('POST:/node/controller/distProtocols', self.server.trace)
-        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.rest_parameter_match(['external=inet6_tls', 'nodeEncryption=on'])
+        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
+        self.rest_parameter_match(['nodeEncryption=off', 'nodeEncryption=off', 'nodeEncryption=on'])
 
 
 if __name__ == '__main__':

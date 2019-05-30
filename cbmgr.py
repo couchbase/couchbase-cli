@@ -4273,18 +4273,18 @@ class ChangeIpFamily(Subcommand):
 
     @staticmethod
     def _set(rest, ipv6, ssl):
-        listener = 'inet6_tcp'if ipv6 else 'inet_tcp'
         ip_fam = 'ipv6' if ipv6 else 'ipv4'
         # this will start the correct listeners in all the nodes
-        node_data, err = rest.pools('default/nodeServices')
+        node_data, err = rest.pools('nodes')
         _exitIfErrors(err)
 
         hosts = []
-        for n in node_data['nodesExt']:
-            host = f'http://{n["hostname"]}:{n["services"]["mgmt"]}'
+        for n in node_data['nodes']:
+            host = f'http://{n["hostname"]}'
             if ssl:
-                host = f'https://{n["hostname"]}:{n["services"]["mgmtSSL"]}'
-            _, err = rest.set_communication_listeners(host, listener)
+                addr = host.rsplit(":", 1)[0]
+                host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
+            _, err = rest.enable_external_listener(host, ipfamily=ip_fam)
             _exitIfErrors(err)
             hosts.append(host)
 
@@ -4292,6 +4292,11 @@ class ChangeIpFamily(Subcommand):
             _, err = rest.setup_net_config(h, ipfamily=ip_fam)
             _exitIfErrors(err)
             print(f'Switched ip family for node: {h}')
+
+        for h in hosts:
+            value = 'ipv4' if ipv6  else 'ipv6'
+            _, err = rest.disable_external_listener(h, ipfamily=value)
+            _exitIfErrors(err)
 
         _success('Switched ip family of the cluster')
 
@@ -4357,24 +4362,16 @@ class ChangeClusterEncryption(Subcommand):
 
     @staticmethod
     def _change_encryption(rest, encryption, ssl):
-        node_data, err = rest.pools('default/nodeServices')
+        node_data, err = rest.pools('nodes')
         _exitIfErrors(err)
 
         hosts = []
-        for n in node_data['nodesExt']:
-            host = f'http://{n["hostname"]}:{n["services"]["mgmt"]}'
+        for n in node_data['nodes']:
+            host = f'http://{n["hostname"]}'
             if ssl:
-                host = f'https://{n["hostname"]}:{n["services"]["mgmtSSL"]}'
-
-            add_fam, err = rest.node_get_address_family(host)
-            _exitIfErrors(err)
-
-            if encryption == 'on':
-                add_fam += '_tls'
-            else:
-                add_fam += '_tcp'
-
-            _, err = rest.set_communication_listeners(host, add_fam)
+                addr = host.rsplit(":", 1)[0]
+                host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
+            _, err = rest.enable_external_listener(host, encryption=encryption)
             _exitIfErrors(err)
             hosts.append(host)
 
@@ -4382,6 +4379,11 @@ class ChangeClusterEncryption(Subcommand):
             _, err = rest.setup_net_config(h, encryption=encryption)
             _exitIfErrors(err)
             print(f'Turned {encryption} encryption for node: {h}')
+
+        for h in hosts:
+            value = 'off' if encryption == 'on' else 'on'
+            _, err = rest.disable_external_listener(h, encryption=value)
+            _exitIfErrors(err)
 
         _success(f'Switched cluster encryption {encryption}')
 
