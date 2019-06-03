@@ -1155,9 +1155,9 @@ class TestUserManage(CommandTest):
         self.assertIn('--group-name is required with the --get-group option', self.str_output)
 
     def test_edit_users_group(self):
-        self.no_error_run(self.command + ['--edit-users-groups', '--rbac-username', 'username', '--user-groups',
-                                          'group1,group2'], self.server_args)
-        self.assertIn('PUT:/settings/rbac/users/username', self.server.trace)
+        self.no_error_run(self.command + ['--edit-users-groups', '--auth-domain', 'local', '--rbac-username', 'username',
+                                          '--user-groups', 'group1,group2'], self.server_args)
+        self.assertIn('PUT:/settings/rbac/users/local/username', self.server.trace)
         expected_params = ['groups=group1%2Cgroup2']
         self.rest_parameter_match(expected_params)
 

@@ -3237,8 +3237,10 @@ class UserManage(Subcommand):
             _exitIfErrors(['--rbac-username is required with the --edit-users-groups option'])
         if opts.groups is None:
             _exitIfErrors(['--user-groups is required with the --edit-users-groups option'])
+        if opts.auth_domain is None:
+            _exitIfErrors(['--auth-domain is required with the --edit-users-groups option'])
 
-        _, errors = rest.add_user_to_group(opts.rbac_user, opts.groups)
+        _, errors = rest.add_user_to_group(opts.rbac_user, opts.groups, opts.auth_domain)
         _exitIfErrors(errors)
         _success(f"User '{opts.rbac_user}' group memberships were updated")
 

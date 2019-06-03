@@ -994,13 +994,15 @@ class ClusterManager(object):
             params["roles"] = roles
         return self._put(url, params)
 
-    def add_user_to_group(self, user, groups):
+    def add_user_to_group(self, user, groups, domain):
         if user is None:
             return None, ['User is required']
         if groups is None:
             return None, ['A list of groups is required']
+        if domain is None:
+            return None, ['The user domain is required']
 
-        url = f'{self.hostname}/settings/rbac/users/{user}'
+        url = f'{self.hostname}/settings/rbac/users/{domain}/{user}'
 
         params = {'groups': groups}
         return self._put(url, params)
