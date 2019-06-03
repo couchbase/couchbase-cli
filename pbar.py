@@ -202,4 +202,4 @@ class TopologyProgressBar(object):
 
         sys.stdout.write(f'{self.type}{" " * (self.term_width - len(self.type))}\n')
         sys.stdout.write(f'{d_count_str}{d_name_str}{d_remain_str}\n')
-        sys.stdout.write(f"[{'='* bars}{' ' * spaces}] {bold(str(round(perc_complete, 2)))}%\n")
+        sys.stdout.write(f"[{'='* bars}{' ' * spaces}] {bold(f'{perc_complete:.2f}')}%\n")
