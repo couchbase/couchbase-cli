@@ -3161,7 +3161,7 @@ class UserManage(Subcommand):
         group.add_argument("--get-group", dest="get_group", action="store_true", default=False,
                            help="Get group")
         group.add_argument("--edit-users-groups", dest="user_add", action="store_true", default=False,
-                           help="Add a user to a group")
+                           help="Update the groups of user")
         group.add_argument("--rbac-username", dest="rbac_user", metavar="<username>",
                            help="The RBAC username")
         group.add_argument("--rbac-password", dest="rbac_pass", metavar="<password>",
@@ -3345,7 +3345,7 @@ class UserManage(Subcommand):
         _exitIfErrors(errors)
 
         if opts.groups is not None:
-            groups = opts.groups.split (",")
+            groups = opts.groups.split(",")
             _, errors = rest.add_user_to_group(opts.rbac_user, groups)
 
         if opts.roles is not None and "query_external_access" in opts.roles:

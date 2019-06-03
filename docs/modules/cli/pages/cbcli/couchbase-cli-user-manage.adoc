@@ -14,9 +14,9 @@ Manage RBAC users
 _couchbase-cli user-manage_ [--cluster <url>] [--username <user>]
     [--password <password>] [--delete] [--list] [--my-roles] [--set]
     [--set-group] [--delete-group] [--list-groups] [--get-group]
-    [--add-user-to-group] [-- get] [--rbac-username <username>]
+    [--edit-users-groups] [-- get] [--rbac-username <username>]
     [--rbac-password <password>] [--rbac-name <name>] [--roles <roles_list>]
-    [--auth_domain <domain>] [--user-groups <group>]
+    [--auth-domain <domain>] [--user-groups <group>]
     [--group-description <text>] [--ldap-ref <ref>]
 
 == DESCRIPTION
@@ -59,8 +59,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --get-group::
   Gets the details of a group.
 
---add-user-to-group::
-  Adds a rbac user to a group
+--edit-users-groups::
+  Updates the groups the given RBAC user is part of.
 
 --rbac-username <username>::
   Specifies the username of the RBAC user to modify. This option is used when
@@ -83,7 +83,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   available roles in Couchbase.
 
 --auth-domain <domain>::
-  Specifies the auth_domain to used for an RBAC user profile. This option is
+  Specifies the auth domain to used for an RBAC user profile. This option is
   used when deleting, creating or updating an RBAC user profile and it if may
   be set to either _local_ or _external_. Loacl users are users that are
   managed directly by the Couchbase cluster. External users are users
@@ -91,10 +91,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --user-groups <groups>::
   Specifies the groups the user should be added to. This is used when creating
-   a user, and should be specified as a comma separated list.
+  a user (--set) or when updating the users group (--edit-user-groups), and
+  should be specified as a comma separated list.
 
 --group-name <group>::
-  Specifies the target group for the group operations.
+  Specifies the target group for the group operations (--set-group,
+  --delete-group, --get-group).
 
 --group-description <text>::
   Specifies the group description, it is used with --set-group.

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-02-22
+.\"      Date: 2019-06-03
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2019-02-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2019-06-03" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,9 +35,9 @@ couchbase\-cli\-user\-manage \- Manage RBAC users
 \fIcouchbase\-cli user\-manage\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-delete] [\-\-list] [\-\-my\-roles] [\-\-set]
     [\-\-set\-group] [\-\-delete\-group] [\-\-list\-groups] [\-\-get\-group]
-    [\-\-add\-user\-to\-group] [\-\- get] [\-\-rbac\-username <username>]
+    [\-\-edit\-users\-groups] [\-\- get] [\-\-rbac\-username <username>]
     [\-\-rbac\-password <password>] [\-\-rbac\-name <name>] [\-\-roles <roles_list>]
-    [\-\-auth_domain <domain>] [\-\-user\-groups <group>]
+    [\-\-auth\-domain <domain>] [\-\-user\-groups <group>]
     [\-\-group\-description <text>] [\-\-ldap\-ref <ref>]
 .fi
 .br
@@ -119,9 +119,9 @@ List all groups.
 Gets the details of a group.
 .RE
 .sp
-\-\-add\-user\-to\-group
+\-\-edit\-users\-groups
 .RS 4
-Adds a rbac user to a group
+Updates the groups the given RBAC user is part of.
 .RE
 .sp
 \-\-rbac\-username <username>
@@ -154,7 +154,7 @@ available roles in Couchbase.
 .sp
 \-\-auth\-domain <domain>
 .RS 4
-Specifies the auth_domain to used for an RBAC user profile. This option is
+Specifies the auth domain to used for an RBAC user profile. This option is
 used when deleting, creating or updating an RBAC user profile and it if may
 be set to either \fIlocal\fP or \fIexternal\fP. Loacl users are users that are
 managed directly by the Couchbase cluster. External users are users
@@ -164,12 +164,14 @@ managed by an external source suchas LDAP.
 \-\-user\-groups <groups>
 .RS 4
 Specifies the groups the user should be added to. This is used when creating
-a user, and should be specified as a comma separated list.
+a user (\-\-set) or when updating the users group (\-\-edit\-user\-groups), and
+should be specified as a comma separated list.
 .RE
 .sp
 \-\-group\-name <group>
 .RS 4
-Specifies the target group for the group operations.
+Specifies the target group for the group operations (\-\-set\-group,
+\-\-delete\-group, \-\-get\-group).
 .RE
 .sp
 \-\-group\-description <text>
