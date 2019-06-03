@@ -3240,7 +3240,7 @@ class UserManage(Subcommand):
 
         _, errors = rest.add_user_to_group(opts.rbac_user, opts.groups)
         _exitIfErrors(errors)
-        _success(f"User '{opts.username}' group memberships were updated")
+        _success(f"User '{opts.rbac_user}' group memberships were updated")
 
     def _set_group(self, rest, opts):
         if opts.group is None:
