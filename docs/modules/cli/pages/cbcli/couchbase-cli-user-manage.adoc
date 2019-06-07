@@ -88,7 +88,7 @@ bucket_admin[...]::
   bucket_admin[*]. To give the user permission to manage bucket settings on a
   single bucket named _default_ then specify the role as
   bucket_admin[default]. If the user needs to be manage multiple buckets, for
-  example _default_ and _app_, then set the role as bucket[default,app].
+  example _default_ and _app_, then set the role as bucket[default],bucket[app].
 
 cluster_admin::
   Gives the user permissions to read, write and manage all cluster-level
@@ -112,7 +112,7 @@ view_admin[...]::
   manage views on a single bucket named _default_ then specify the role as
   views_admin[default]. If the user needs to be manage views for multiple
   buckets, for example _default_ and _app_, then set the role as
-  views_admin[default,app].
+  views_admin[default],views_admin[app].
 
 .Data Service Roles:
 
@@ -132,7 +132,7 @@ data_reader_writer[...]::
   single bucket named _default_ then specify their role as
   data_reader_writer[default]. If the user needs read-write access to data
   for multiple buckets, for example _default_ and _app_, then set their role
-  as data_reader_writer[default,app].
+  as data_reader_writer[default],date_read_writer[app].
 
 data_dcp_reader[...]::
   Gives the user permission to create Couchbase DCP connections. To give a
@@ -141,7 +141,7 @@ data_dcp_reader[...]::
   on a single bucket named _default_ then specify their role as
   data_dcp_reader[default]. If the user needs to be able to create DCP
   connections for multiple buckets, for example _default_ and _app_, then set
-  their role as data_dcp_reader[default,app].
+  their role as data_dcp_reader[default],data_dcp_reader[app].
 
 data_backup[...]::
   Gives the user permission to backup and restore data in Couchbase. To give a
@@ -150,7 +150,7 @@ data_backup[...]::
   on a single bucket named _default_ then specify their role as
   data_backup[default]. If the user needs to be able to backup and restore
   data for multiple buckets, for example _default_ and _app_, then set their
-  role as data_backup[default,app].
+  role as data_backup[default],data_backup[app].
 
 data_monitoring[...]::
   Gives the user permission to read monitoring data related to the data
@@ -159,7 +159,7 @@ data_monitoring[...]::
   to monitor data on a single bucket named _default_ then specify their role
   as data_monitoring[default]. If the user needs to be able to monitor data
   for multiple buckets, for example _default_ and _app_, then set their role
-  as data_monitoring[default,app].
+  as data_monitoring[default],data_monitoring[app].
 
 .Full Text Service Roles:
 
@@ -170,7 +170,7 @@ fts_admin[...]::
   administrator access for FTS on a single bucket named _default_ then specify
   their role as fts_admin[default]. If the user needs full administrator
   access for FTS for multiple buckets, for example _default_ and _app_, then
-  set their role as fts_admin[default,app].
+  set their role as fts_admin[default],fts_admin[app].
 
 fts_searcher[...]::
   Allows the user to query full text indexes for the specified buckets. To
@@ -179,7 +179,7 @@ fts_searcher[...]::
   single bucket named _default_ then specify their role as
   fts_searcher[default]. If the user needs to query FTS indexes on multiple
   multiple buckets, for example _default_ and _app_, then set their role as
-  fts_searcher[default,app].
+  fts_searcher[default],fts_searcher[app].
 
 .Query Service Roles:
 
@@ -190,7 +190,7 @@ manage_index[...]::
   delete indexes on a single bucket named _default_ then specify their role
   as manage_index[default]. If the user needs to be create and delete indexes
   for multiple buckets, for example _default_ and _app_, then set their role
-  as manage_index[default,app].
+  as manage_index[default],manage_index[app].
 
 query_delete[...]::
   Allows the user to execute DELETE query statements on the specified buckets.
@@ -199,7 +199,7 @@ query_delete[...]::
   DELETE statements on a single bucket named _default_ then specify their role
   as query_delete[default]. If the user needs to be execute DELETE statements
   for multiple buckets, for example _default_ and _app_, then set their role
-  as query_delete[default,app].
+  as query_delete[default],query_delete[app].
 
 query_insert[...]::
   Allows the user to execute INSERT query statements on the specified buckets.
@@ -208,7 +208,7 @@ query_insert[...]::
   INSERT statements on a single bucket named _default_ then specify their role
   as query_insert[default]. If the user needs to be execute INSERT statements
   for multiple buckets, for example _default_ and _app_, then set their role
-  as query_insert[default,app].
+  as query_insert[default],query_insert[app].
 
 query_select[...]::
   Allows the user to execute SELECT query statements on the specified buckets.
@@ -217,7 +217,7 @@ query_select[...]::
   SELECT statements on a single bucket named _default_ then specify their role
   as query_select[default]. If the user needs to be execute SELECT statements
   for multiple buckets, for example _default_ and _app_, then set their role
-  as query_select[default,app].
+  as query_select[default],query_select[app].
 
 query_update[...]::
   Allows the user to execute UPDATE query statements on the specified buckets.
@@ -226,7 +226,7 @@ query_update[...]::
   UPDATE statements on a single bucket named _default_ then specify their role
   as query_update[default]. If the user needs to be execute UPDATE statements
   for multiple buckets, for example _default_ and _app_, then set their role
-  as query_update[default,app].
+  as query_update[default],query_update[app].
 
 system_catalog[...]::
   Allows the users to run queries against the system catalog on the specified
@@ -236,7 +236,7 @@ system_catalog[...]::
   named _default_ then specify their role as system_catalog[default]. If the
   user needs to be run queries against the system catalog for multiple
   buckets, for example _default_ and _app_, then set their role as
-  system_catalog[default,app].
+  system_catalog[default],system_catalog[app].
 
 == EXAMPLES
 
