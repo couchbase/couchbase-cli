@@ -35,7 +35,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --authorization-enabled <1|0>::
   Enables using LDAP to give users authorization
 
---host <host_list>::
+--hosts <host_list>::
   Specifies a comma separated list of LDAP hosts.
 
 --port <port>::
@@ -56,7 +56,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The timeout for LDAP requests in milliseconds.
 
 --user-dn-mapping <mapping>::
-  User to DN mapping, if not specified username is used as user's DN.
+  User to distinguished name (DN), if not specified username is used as user's
+  DN.
 
 --max-parallel-connections <max>::
   Maximum number of parallel connections that can be established with LDAP
@@ -69,21 +70,20 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Lifetime of values in cache in milliseconds. Default 300000 ms.
 
 --query-dn <dn>::
-  DN for groups synchronization
+  DN for user search and groups synchronization
 
 --query-pass <pass>::
-  Password for groups synchronization
+  Password for user search and groups synchronization
 
 --group-query <query>::
-  LDAP query to get users' group by username. RFC4516 format, like
-  '%D?memberOf?base'. This option works the following way: if attribute is
-  present in the query the list of attributes in the query result is considered
-  as list of user’s groups (single entry result is expected). %u and %D
-  placeholders could be used.
-  %u - username,
-  %D - user’s DN.
-  If attribute is not present in the query every returned entry is considered
-  as a group;
+  LDAP query, to get the users' groups by username in RFC4516 format.
+  The %u and %D placeholders can be used, for username and user's DN
+  respectively. If attribute is present in the query, the list of
+  attribute values in the search result is considered as list of user's
+  groups (single entry result is expected): for example: '%D?memberOf?base'.
+  If the attribute is not present in the query, every returned entry is
+  considered a group, for example:
+  'ou=groups,dc=example,dc=com??one?(member=%D)'
 
 --nested-groups-enabled <0|1>::
   If enabled Couchbase server will try to recursively search for groups for

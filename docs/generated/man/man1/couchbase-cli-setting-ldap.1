@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-ldap
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-02-21
+.\" Generator: Asciidoctor 2.0.9
+.\"      Date: 2019-06-07
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-02-21" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-06-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 couchbase\-cli\-setting\-ldap \- Configure LDAP
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 \fIcouchbase\-cli setting\-ldap\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -81,7 +82,7 @@ Enables using LDAP to authenticate users
 Enables using LDAP to give users authorization
 .RE
 .sp
-\-\-host <host_list>
+\-\-hosts <host_list>
 .RS 4
 Specifies a comma separated list of LDAP hosts.
 .RE
@@ -115,7 +116,8 @@ The timeout for LDAP requests in milliseconds.
 .sp
 \-\-user\-dn\-mapping <mapping>
 .RS 4
-User to DN mapping, if not specified username is used as user\(cqs DN.
+User to distinguished name (DN), if not specified username is used as user\(cqs
+DN.
 .RE
 .sp
 \-\-max\-parallel\-connections <max>
@@ -136,25 +138,24 @@ Lifetime of values in cache in milliseconds. Default 300000 ms.
 .sp
 \-\-query\-dn <dn>
 .RS 4
-DN for groups synchronization
+DN for user search and groups synchronization
 .RE
 .sp
 \-\-query\-pass <pass>
 .RS 4
-Password for groups synchronization
+Password for user search and groups synchronization
 .RE
 .sp
 \-\-group\-query <query>
 .RS 4
-LDAP query to get users\(aq group by username. RFC4516 format, like
-\(aq%D?memberOf?base\(aq. This option works the following way: if attribute is
-present in the query the list of attributes in the query result is considered
-as list of user’s groups (single entry result is expected). %u and %D
-placeholders could be used.
-%u \- username,
-%D \- user’s DN.
-If attribute is not present in the query every returned entry is considered
-as a group;
+LDAP query, to get the users\(aq groups by username in RFC4516 format.
+The %u and %D placeholders can be used, for username and user\(cqs DN
+respectively. If attribute is present in the query, the list of
+attribute values in the search result is considered as list of user\(cqs
+groups (single entry result is expected): for example: \(aq%D?memberOf?base\(aq.
+If the attribute is not present in the query, every returned entry is
+considered a group, for example:
+\(aqou=groups,dc=example,dc=com??one?(member=%D)\(aq
 .RE
 .sp
 \-\-nested\-groups\-enabled <0|1>
