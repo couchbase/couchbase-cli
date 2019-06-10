@@ -4273,9 +4273,19 @@ class ChangeIpFamily(Subcommand):
 
     @staticmethod
     def _set(rest, ipv6, ssl):
-        ip_fam = 'ipv6' if ipv6 else 'ipv4'
-        # this will start the correct listeners in all the nodes
+        ip_fam, ip_fam_disable = ('ipv6', 'ipv4') if ipv6 else ('ipv4', 'ipv6')
         node_data, err = rest.pools('nodes')
+
+        if err and err[0] == '"unknown pool"':
+            _, err = rest.enable_external_listener(ipfamily=ip_fam)
+            _exitIfErrors(err)
+            _, err = rest.setup_net_config(ipfamily=ip_fam)
+            _exitIfErrors(err)
+            _, err = rest.disable_external_listener(ipfamily=ip_fam_disable)
+            _exitIfErrors(err)
+            _success('Switched IP family of the cluster')
+            return
+
         _exitIfErrors(err)
 
         hosts = []
@@ -4284,18 +4294,17 @@ class ChangeIpFamily(Subcommand):
             if ssl:
                 addr = host.rsplit(":", 1)[0]
                 host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
-            _, err = rest.enable_external_listener(host, ipfamily=ip_fam)
+            _, err = rest.enable_external_listener(host=host, ipfamily=ip_fam)
             _exitIfErrors(err)
             hosts.append(host)
 
         for h in hosts:
-            _, err = rest.setup_net_config(h, ipfamily=ip_fam)
+            _, err = rest.setup_net_config(host=h, ipfamily=ip_fam)
             _exitIfErrors(err)
             print(f'Switched ip family for node: {h}')
 
         for h in hosts:
-            value = 'ipv4' if ipv6  else 'ipv6'
-            _, err = rest.disable_external_listener(h, ipfamily=value)
+            _, err = rest.disable_external_listener(host=h, ipfamily=ip_fam_disable)
             _exitIfErrors(err)
 
         _success('Switched ip family of the cluster')
@@ -4363,6 +4372,18 @@ class ChangeClusterEncryption(Subcommand):
     @staticmethod
     def _change_encryption(rest, encryption, ssl):
         node_data, err = rest.pools('nodes')
+        encryption_disable = 'off' if encryption == 'on' else 'on'
+
+        if err and err[0] == '"unknown pool"':
+            _, err = rest.enable_external_listener(encryption=encryption)
+            _exitIfErrors(err)
+            _, err = rest.setup_net_config(encryption=encryption)
+            _exitIfErrors(err)
+            _, err = rest.disable_external_listener(encryption=encryption_disable)
+            _exitIfErrors(err)
+            _success(f'Switched cluster encryption {encryption}')
+            return
+
         _exitIfErrors(err)
 
         hosts = []
@@ -4371,18 +4392,17 @@ class ChangeClusterEncryption(Subcommand):
             if ssl:
                 addr = host.rsplit(":", 1)[0]
                 host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
-            _, err = rest.enable_external_listener(host, encryption=encryption)
+            _, err = rest.enable_external_listener(host=host, encryption=encryption)
             _exitIfErrors(err)
             hosts.append(host)
 
         for h in hosts:
-            _, err = rest.setup_net_config(h, encryption=encryption)
+            _, err = rest.setup_net_config(host=h, encryption=encryption)
             _exitIfErrors(err)
             print(f'Turned {encryption} encryption for node: {h}')
 
         for h in hosts:
-            value = 'off' if encryption == 'on' else 'on'
-            _, err = rest.disable_external_listener(h, encryption=value)
+            _, err = rest.disable_external_listener(host=h, encryption=encryption_disable)
             _exitIfErrors(err)
 
         _success(f'Switched cluster encryption {encryption}')

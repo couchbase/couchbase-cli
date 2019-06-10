@@ -1759,8 +1759,9 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def enable_external_listener(self, host, ipfamily=None, encryption=None):
-        url = f'{host}/node/controller/enableExternalListener'
+    def enable_external_listener(self, host=None, ipfamily=None, encryption=None):
+        hostname = host if host else self.hostname
+        url = f'{hostname}/node/controller/enableExternalListener'
         params = {}
         if ipfamily:
             params['afamily'] = ipfamily
@@ -1768,8 +1769,9 @@ class ClusterManager(object):
             params['nodeEncryption'] = encryption
         return self._post_form_encoded(url, params)
 
-    def disable_external_listener(self, host, ipfamily=None, encryption=None):
-        url = f'{host}/node/controller/disableExternalListener'
+    def disable_external_listener(self, host=None, ipfamily=None, encryption=None):
+        hostname = host if host else self.hostname
+        url = f'{hostname}/node/controller/disableExternalListener'
         params = {}
         if ipfamily:
             params['afamily'] = ipfamily
@@ -1777,8 +1779,9 @@ class ClusterManager(object):
             params['nodeEncryption'] = encryption
         return self._post_form_encoded(url, params)
 
-    def setup_net_config(self, host, ipfamily=None, encryption=None):
-        url = f'{host}/node/controller/setupNetConfig'
+    def setup_net_config(self, host=None, ipfamily=None, encryption=None):
+        hostname = host if host else self.hostname
+        url = f'{hostname}/node/controller/setupNetConfig'
         params = {}
         if ipfamily:
             params['afamily'] = ipfamily
