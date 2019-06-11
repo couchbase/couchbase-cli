@@ -122,7 +122,8 @@ data_reader[...]::
   data_reader[*]. To give the user read-only access to data on a single
   bucket named _default_ then specify their role as data_reader[default].
   If the user needs read-only access to data for multiple buckets, for example
-  _default_ and _app_, then set their role as data_reader[default,app].
+  _default_ and _app_, then set their role as
+  data_reader[default],data_reader[app].
 
 data_reader_writer[...]::
   Gives the user permission to read and write data through Couchbases
