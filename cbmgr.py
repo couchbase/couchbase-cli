@@ -2237,7 +2237,7 @@ class SettingAutoreprovision(Subcommand):
         elif opts.enabled == "0":
             opts.enabled = "false"
 
-        if opts.enabled and opts.max_nodes is None:
+        if opts.enabled == "true" and opts.max_nodes is None:
             _exitIfErrors(["--max-nodes must be specified if auto-reprovision is enabled"])
 
         if not (opts.enabled or opts.max_nodes):
