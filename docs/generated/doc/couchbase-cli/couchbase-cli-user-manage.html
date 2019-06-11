@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.9">
+<meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="author" content="Couchbase">
 <title>couchbase-cli-user-manage(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
@@ -241,7 +241,7 @@ table.linenotable td.linenos{border-right:1px solid currentColor;opacity:.35;pad
 pre.pygments .lineno{border-right:1px solid currentColor;opacity:.35;display:inline-block;margin-right:.75em}
 pre.pygments .lineno::before{content:"";margin-right:-.125em}
 .quoteblock{margin:0 1em 1.25em 1.5em;display:table}
-.quoteblock>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock:not(.excerpt)>.title{margin-left:-1.5em;margin-bottom:.75em}
 .quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
 .quoteblock blockquote{margin:0;padding:0;border:0}
 .quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
@@ -258,7 +258,8 @@ pre.pygments .lineno::before{content:"";margin-right:-.125em}
 .quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
 .quoteblock.abstract{margin:0 1em 1.25em;display:block}
 .quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
-.quoteblock.excerpt,.quoteblock .quoteblock{margin:0 0 1.25em;padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt>blockquote,.quoteblock .quoteblock{padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin-left:0}
 .quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
 .quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;text-align:left;margin-right:0}
 table.tableblock{max-width:100%;border-collapse:separate}
@@ -452,8 +453,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <pre class="content"><em>couchbase-cli user-manage</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--delete] [--list] [--my-roles] [--set]
     [--set-group] [--delete-group] [--list-groups] [--get-group]
-    [--edit-users-groups] [-- get] [--rbac-username &lt;username&gt;]
-    [--rbac-password &lt;password&gt;] [--rbac-name &lt;name&gt;] [--roles &lt;roles_list&gt;]
+    [-- get] [--rbac-username &lt;username&gt;] [--rbac-password &lt;password&gt;]
+    [--rbac-name &lt;name&gt;] [--roles &lt;roles_list&gt;]
     [--auth-domain &lt;domain&gt;] [--user-groups &lt;group&gt;]
     [--group-description &lt;text&gt;] [--ldap-ref &lt;ref&gt;]</pre>
 </div>
@@ -536,10 +537,6 @@ privileges in order to create or update a user profile.</p>
 <dd>
 <p>Gets the details of a group.</p>
 </dd>
-<dt class="hdlist1">--edit-users-groups</dt>
-<dd>
-<p>Updates the groups the given RBAC user is part of.</p>
-</dd>
 <dt class="hdlist1">--rbac-username &lt;username&gt;</dt>
 <dd>
 <p>Specifies the username of the RBAC user to modify. This option is used when
@@ -575,7 +572,7 @@ managed by an external source suchas LDAP.</p>
 <dt class="hdlist1">--user-groups &lt;groups&gt;</dt>
 <dd>
 <p>Specifies the groups the user should be added to. This is used when creating
-a user (--set) or when updating the users group (--edit-user-groups), and
+a user (--set) or when updating the users group, and
 should be specified as a comma separated list.</p>
 </dd>
 <dt class="hdlist1">--group-name &lt;group&gt;</dt>

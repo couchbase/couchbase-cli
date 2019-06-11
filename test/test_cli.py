@@ -1066,11 +1066,17 @@ class TestUserManage(CommandTest):
             "domain": "local",
             "roles": [
               {
-                "role": "ro_admin"
+                "role": "ro_admin",
+                "origins": [{"type": "group"}, {"type": "user"}],
+              },
+              {
+                "role": "admin",
+                "origins": [{"type": "group"}],
               }
             ],
             "name": "name",
-            "password_change_date": "2018-11-15T15:01:16.000Z"
+            "password_change_date": "2018-11-15T15:01:16.000Z",
+            "groups": ["group1", "group2"]
           },
           {
             "id": "write",
@@ -1078,6 +1084,22 @@ class TestUserManage(CommandTest):
             "roles": [],
             "name": "name",
             "password_change_date": "2018-11-15T15:19:55.000Z"
+          }
+        ]
+        self.server_args['rbac-groups'] = [
+          {
+            "id": "group1",
+            "roles": [
+              {
+                "role": "bucket_full_access",
+                "bucket_name": "*"
+              },
+              {
+                "role": "replication_admin"
+              }
+            ],
+            "ldap_group_ref": "test=ldap",
+            "description": "descr"
           }
         ]
         super(TestUserManage, self).setUp()
@@ -1114,17 +1136,25 @@ class TestUserManage(CommandTest):
 
     def test_set_local_user(self):
         self.no_error_run(self.command + ['--set', '--rbac-username', 'username', '--rbac-password', 'pwd',
-                                          '--auth-domain', 'local', '--roles', 'admin', '--rbac-name', 'name'],
+                                          '--auth-domain', 'local', '--roles', 'admin', '--rbac-name', 'name', '--user-groups', ''],
                           self.server_args)
         self.assertIn('PUT:/settings/rbac/users/local/username', self.server.trace)
-        expected_params = ['name=name', 'password=pwd', 'roles=admin']
+        expected_params = ['name=name', 'password=pwd', 'roles=admin', 'groups=']
+        self.rest_parameter_match(expected_params)
+
+    def test_set_existing_user(self):
+        self.no_error_run(self.command + ['--set', '--rbac-username', 'read',
+                                          '--auth-domain', 'local', '--rbac-name', 'name2'],
+                          self.server_args)
+        self.assertIn('PUT:/settings/rbac/users/local/read', self.server.trace)
+        expected_params = ['name=name2', 'roles=ro_admin', 'groups=group1%2Cgroup2']
         self.rest_parameter_match(expected_params)
 
     def test_set_external_user(self):
         self.no_error_run(self.command + ['--set', '--rbac-username', 'username', '--auth-domain',
-                                         'external', '--roles', 'admin', '--rbac-name', 'name'], self.server_args)
+                                         'external', '--roles', 'admin', '--rbac-name', 'name', '--user-groups', ''], self.server_args)
         self.assertIn('PUT:/settings/rbac/users/external/username', self.server.trace)
-        expected_params = ['name=name', 'roles=admin']
+        expected_params = ['name=name', 'roles=admin', 'groups=']
         self.rest_parameter_match(expected_params)
 
     def test_create_group_basic(self):
@@ -1135,11 +1165,15 @@ class TestUserManage(CommandTest):
         expected_params = ['description=Lorem+ipsum+dolor', 'roles=admin', 'ldap_group_ref=some-ref']
         self.rest_parameter_match(expected_params)
 
-    def test_create_group_no_roles(self):
-        self.system_exit_run(self.command + ['--set-group', '--group-name', 'user-group',
-                                          '--group-description', 'Lorem ipsum dolor', '--ldap-ref', 'some-ref'],
+    def test_change_existing_group(self):
+        self.no_error_run(self.command + ['--set-group', '--group-name', 'group1',
+                                          '--group-description', 'Lorem ipsum dolor'],
                           self.server_args)
-        self.assertIn('--roles is required with --set-group', self.str_output)
+        self.assertIn('PUT:/settings/rbac/groups/group1', self.server.trace)
+        expected_params = ['description=Lorem+ipsum+dolor',
+                           'roles=bucket_full_access%5B%2A%5D%2Creplication_admin',
+                           'ldap_group_ref=test%3Dldap']
+        self.rest_parameter_match(expected_params)
 
     def test_create_group_no_name(self):
         self.system_exit_run(self.command + ['--set-group', '--roles', 'ro_admin',
@@ -1164,25 +1198,16 @@ class TestUserManage(CommandTest):
         self.assertIn('--group-name is required with the --delete-group option', self.str_output)
 
     def test_list_group(self):
-        self.server_args['group'] = [{'group': 'group'}]
         self.no_error_run(self.command + ['--list-groups'], self.server_args)
         self.assertIn('GET:/settings/rbac/groups', self.server.trace)
 
     def test_get_group(self):
-        self.server_args['group'] = {'group': 'group'}
-        self.no_error_run(self.command + ['--get-group', '--group-name', 'name'], self.server_args)
-        self.assertIn('GET:/settings/rbac/groups/name', self.server.trace)
+        self.no_error_run(self.command + ['--get-group', '--group-name', 'group1'], self.server_args)
+        self.assertIn('GET:/settings/rbac/groups/group1', self.server.trace)
 
     def test_get_group_no_group_name(self):
         self.system_exit_run(self.command + ['--get-group'], self.server_args)
         self.assertIn('--group-name is required with the --get-group option', self.str_output)
-
-    def test_edit_users_group(self):
-        self.no_error_run(self.command + ['--edit-users-groups', '--auth-domain', 'local', '--rbac-username', 'username',
-                                          '--user-groups', 'group1,group2'], self.server_args)
-        self.assertIn('PUT:/settings/rbac/users/local/username', self.server.trace)
-        expected_params = ['groups=group1%2Cgroup2']
-        self.rest_parameter_match(expected_params)
 
 
 class TestXdcrReplicate(CommandTest):

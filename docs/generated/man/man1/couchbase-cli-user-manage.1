@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.9
-.\"      Date: 2019-06-19
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2019-07-03
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2019-06-24" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2019-07-03" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -36,8 +36,8 @@ couchbase\-cli\-user\-manage \- Manage RBAC users
 \fIcouchbase\-cli user\-manage\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-delete] [\-\-list] [\-\-my\-roles] [\-\-set]
     [\-\-set\-group] [\-\-delete\-group] [\-\-list\-groups] [\-\-get\-group]
-    [\-\-edit\-users\-groups] [\-\- get] [\-\-rbac\-username <username>]
-    [\-\-rbac\-password <password>] [\-\-rbac\-name <name>] [\-\-roles <roles_list>]
+    [\-\- get] [\-\-rbac\-username <username>] [\-\-rbac\-password <password>]
+    [\-\-rbac\-name <name>] [\-\-roles <roles_list>]
     [\-\-auth\-domain <domain>] [\-\-user\-groups <group>]
     [\-\-group\-description <text>] [\-\-ldap\-ref <ref>]
 .fi
@@ -120,11 +120,6 @@ List all groups.
 Gets the details of a group.
 .RE
 .sp
-\-\-edit\-users\-groups
-.RS 4
-Updates the groups the given RBAC user is part of.
-.RE
-.sp
 \-\-rbac\-username <username>
 .RS 4
 Specifies the username of the RBAC user to modify. This option is used when
@@ -165,7 +160,7 @@ managed by an external source suchas LDAP.
 \-\-user\-groups <groups>
 .RS 4
 Specifies the groups the user should be added to. This is used when creating
-a user (\-\-set) or when updating the users group (\-\-edit\-user\-groups), and
+a user (\-\-set) or when updating the users group, and
 should be specified as a comma separated list.
 .RE
 .sp

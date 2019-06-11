@@ -3168,7 +3168,7 @@ class UserManage(Subcommand):
         group.add_argument("--my-roles", dest="my_roles", action="store_true", default=False,
                            help="List my roles")
         group.add_argument("--set", dest="set", action="store_true", default=False,
-                           help="Create a new RBAC user")
+                           help="Create or edit an RBAC user")
         group.add_argument("--set-group", dest="set_group", action="store_true", default=False,
                            help="Create or edit a user group")
         group.add_argument("--delete-group", dest="delete_group", action="store_true", default=False,
@@ -3177,8 +3177,6 @@ class UserManage(Subcommand):
                            help="List all groups")
         group.add_argument("--get-group", dest="get_group", action="store_true", default=False,
                            help="Get group")
-        group.add_argument("--edit-users-groups", dest="user_add", action="store_true", default=False,
-                           help="Update the groups of user")
         group.add_argument("--rbac-username", dest="rbac_user", metavar="<username>",
                            help="The RBAC username")
         group.add_argument("--rbac-password", dest="rbac_pass", metavar="<password>",
@@ -3203,13 +3201,13 @@ class UserManage(Subcommand):
         check_versions(rest)
 
         num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get, opts.get_group,
-                             opts.list_group, opts.delete_group, opts.set_group, opts.user_add])
+                             opts.list_group, opts.delete_group, opts.set_group])
         if num_selectors == 0:
             _exitIfErrors(["Must specify --delete, --list, --my_roles, --set, --get, --get-group, --set-group, " +
-                           "--list-groups, --edit-users-groups or --delete-group"])
+                           "--list-groups or --delete-group"])
         elif num_selectors != 1:
             _exitIfErrors(["Only one of the following can be specified:--delete, --list, --my_roles, --set, --get," +
-                           " --get-group, --set-group, --list-groups, --edit-users-groups or --delete-group"])
+                           " --get-group, --set-group, --list-groups or --delete-group"])
 
         if opts.delete:
             self._delete(rest, opts)
@@ -3225,8 +3223,6 @@ class UserManage(Subcommand):
             self._get_group(rest, opts)
         elif opts.set_group:
             self._set_group(rest, opts)
-        elif opts.user_add:
-            self._set_users_groups(rest, opts)
         elif opts.list_group:
             self._list_groups(rest)
         elif opts.delete_group:
@@ -3248,27 +3244,13 @@ class UserManage(Subcommand):
         _exitIfErrors(errors)
         print(json.dumps(group, indent=2))
 
-    def _set_users_groups(self, rest, opts):
-        if opts.username is None:
-            _exitIfErrors(['--rbac-username is required with the --edit-users-groups option'])
-        if opts.groups is None:
-            _exitIfErrors(['--user-groups is required with the --edit-users-groups option'])
-        if opts.auth_domain is None:
-            _exitIfErrors(['--auth-domain is required with the --edit-users-groups option'])
-
-        _, errors = rest.add_user_to_group(opts.rbac_user, opts.groups, opts.auth_domain)
-        _exitIfErrors(errors)
-        _success(f"User '{opts.rbac_user}' group memberships were updated")
-
     def _set_group(self, rest, opts):
         if opts.group is None:
             _exitIfErrors(['--group-name is required with --set-group'])
-        if opts.roles is None:
-            _exitIfErrors(['--roles is required with --set-group'])
 
         _, errors = rest.set_user_group(opts.group, opts.roles, opts.description, opts.ldap_ref)
         _exitIfErrors(errors)
-        _success(f"Group '{opts.group}' was created")
+        _success(f"Group '{opts.group}' set")
 
     def _list_groups(self, rest):
         groups, errors = rest.list_user_groups()
@@ -3347,29 +3329,23 @@ class UserManage(Subcommand):
     def _set(self, rest, opts):
         if opts.rbac_user is None:
             _exitIfErrors(["--rbac-username is required with the --set option"])
-        if opts.rbac_pass is None and opts.auth_domain == "local":
-            _exitIfErrors(["--rbac-password is required with the --set option"])
         if opts.rbac_pass is not None and opts.auth_domain == "external":
             _warning("--rbac-password cannot be used with the external auth domain")
             opts.rbac_pass = None
-        if opts.roles is None and opts.groups is None:
-            _exitIfErrors(["--roles or --user-groups are required with the --set option"])
         if opts.auth_domain is None:
             _exitIfErrors(["--auth-domain is required with the --set option"])
 
-        _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.rbac_name, opts.roles, opts.auth_domain)
+        _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, \
+                                       opts.rbac_name, opts.roles, \
+                                       opts.auth_domain, opts.groups)
         _exitIfErrors(errors)
-
-        if opts.groups is not None:
-            groups = opts.groups.split(",")
-            _, errors = rest.add_user_to_group(opts.rbac_user, groups)
 
         if opts.roles is not None and "query_external_access" in opts.roles:
             _warning("Granting the query_external_access role permits execution of the N1QL " +
                 "function CURL() and may allow access to other network endpoints in the local " +
                 "network and the Internet.")
 
-        _success(f"User {opts.rbac_user} was created")
+        _success(f"User {opts.rbac_user} set")
 
     @staticmethod
     def get_man_page_name():

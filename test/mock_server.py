@@ -266,15 +266,42 @@ def get_collection_manifest(rest_params=None, server_args=None, path="", endpoin
     return 200, []
 
 
-def get_group(rest_params=None, server_args=None, path="", endpointMatch=None):
-    if 'group' in server_args:
-        return 200, server_args['group']
+def get_groups(rest_params=None, server_args=None, path="", endpointMatch=None):
+    if 'rbac-groups' in server_args:
+        return 200, server_args['rbac-groups']
     return 200, {}
 
 
 def get_user_groups(rest_params=None, server_args=None, path="", endpointMatch=None):
     if 'user-group' in server_args:
         return 200, server_args['user-group']
+    return 200, {}
+
+
+def get_user(rest_params=None, server_args=None, path="", endpointMatch=None):
+    if 'rbac-users' in server_args:
+        res = re.search('/settings/rbac/users/([^/]+)/([^/]+)$', path)
+        if res is None:
+            return 404, 'Unknown user.'
+        domain = res.groups()[0]
+        name = res.groups()[1]
+        for u in server_args['rbac-users']:
+            if u['id'] == name and u['domain'] == domain:
+                return 200, u
+        return 404, 'Unknown user.'
+    return 200, {}
+
+
+def get_group(rest_params=None, server_args=None, path="", endpointMatch=None):
+    if 'rbac-groups' in server_args:
+        res = re.search('/settings/rbac/groups/([^/]+)$', path)
+        if res is None:
+            return 404, 'Unknown group.'
+        group = res.groups()[0]
+        for g in server_args['rbac-groups']:
+            if g['id'] == group:
+                return 200, g
+        return 404, 'Unknown group.'
     return 200, {}
 
 
@@ -319,8 +346,8 @@ endpoints = [
     ('/settings/rbac/users$', {'POST': do_nothing, 'GET': get_rbac_user}),
     ('/settings/rbac/users/\w+$', {'PUT': do_nothing, 'GET': get_user_groups}),
     ('/settings/rbac/groups/(\w|-)+', {'PUT': do_nothing, 'DELETE': do_nothing, 'GET': get_group}),
-    ('/settings/rbac/groups', {'GET': get_group}),
-    ('/settings/rbac/users/\w+/\w+$', {'DELETE': do_nothing, 'PUT': do_nothing}),
+    ('/settings/rbac/groups', {'GET': get_groups}),
+    ('/settings/rbac/users/\w+/\w+$', {'DELETE': do_nothing, 'PUT': do_nothing, 'GET': get_user}),
     ('/settings/saslauthdAuth$', {'POST': do_nothing}),
     ('/settings/ldap', {'POST': do_nothing, 'GET': get_ldap_settings}),
     ('/settings/alerts$', {'POST': do_nothing}),

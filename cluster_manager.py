@@ -999,7 +999,7 @@ class ClusterManager(object):
         url = f'{self.hostname}/whoami'
         return self._get(url)
 
-    def set_rbac_user(self, username, password, name, roles, auth_domain):
+    def set_rbac_user(self, username, password, name, roles, auth_domain, groups):
         if auth_domain is None:
             return None, ["The authentication type is required"]
 
@@ -1008,27 +1008,36 @@ class ClusterManager(object):
 
         url = f'{self.hostname}/settings/rbac/users/{auth_domain}/{username}'
 
+        defaults, errors = self._get(url)
+        if errors and errors[0] == '"Unknown user."':
+            defaults = {}
+        elif errors:
+            return None, errors
+
         params = {}
         if name is not None:
-            params["name"] = name
+            params['name'] = name
+        elif 'name' in defaults:
+            params['name'] = defaults['name']
         if password is not None:
-            params["password"] = password
+            params['password'] = password
         if roles is not None:
-            params["roles"] = roles
+            params['roles'] = roles;
+        elif 'roles' in defaults:
+            params['roles'] = self._format_user_roles(defaults['roles'])
+        if groups is not None:
+            params['groups'] = groups
+        elif 'groups' in defaults:
+            params['groups'] = ','.join(defaults['groups'])
+
         return self._put(url, params)
 
-    def add_user_to_group(self, user, groups, domain):
-        if user is None:
-            return None, ['User is required']
-        if groups is None:
-            return None, ['A list of groups is required']
-        if domain is None:
-            return None, ['The user domain is required']
+    def _format_user_roles(self, roles):
+        directly_assigned = filter(lambda r: any(o for o in r['origins'] if o['type'] == 'user'), roles)
+        return ",".join(self._format_role(r) for r in directly_assigned)
 
-        url = f'{self.hostname}/settings/rbac/users/{domain}/{user}'
-
-        params = {'groups': groups}
-        return self._put(url, params)
+    def _format_role(self, role):
+        return f'{role["role"]}' + (f'[{role["bucket_name"]}]' if 'bucket_name' in role else '')
 
     def get_user_group(self, group):
         if group is None:
@@ -1047,15 +1056,28 @@ class ClusterManager(object):
     def set_user_group(self, group, roles, description, ldap_ref):
         if group is None:
             return None, ['Group name is required']
-        if roles is None:
-            return None, ['roles are required']
 
         url = f'{self.hostname}/settings/rbac/groups/{group}'
-        params = {'roles': roles}
+
+        defaults, errors = self._get(url)
+        if errors and errors[0] == '"Unknown group."':
+            defaults = {}
+        elif errors:
+            return None, errors
+
+        params = {}
+        if roles is not None:
+            params['roles'] = roles
+        elif 'roles' in defaults:
+            params['roles'] = ",".join(self._format_role(r) for r in defaults['roles'])
         if description is not None:
             params['description'] = description
+        elif 'description' in defaults:
+            params['description'] = defaults['description']
         if ldap_ref is not None:
             params['ldap_group_ref'] = ldap_ref
+        elif 'ldap_group_ref' in defaults:
+            params['ldap_group_ref'] = defaults['ldap_group_ref']
 
         return self._put(url, params)
 
