@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-07-31
+.\" Generator: Asciidoctor 2.0.9
+.\"      Date: 2019-06-12
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2018-07-31" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2019-06-12" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 couchbase\-cli\-user\-manage \- Manage RBAC users
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 \fIcouchbase\-cli user\-manage\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -190,7 +191,7 @@ a user the ability to manage all bucket settings set their role to
 bucket_admin[*]. To give the user permission to manage bucket settings on a
 single bucket named \fIdefault\fP then specify the role as
 bucket_admin[default]. If the user needs to be manage multiple buckets, for
-example \fIdefault\fP and \fIapp\fP, then set the role as bucket[default,app].
+example \fIdefault\fP and \fIapp\fP, then set the role as bucket[default],bucket[app].
 .RE
 .sp
 cluster_admin
@@ -222,7 +223,7 @@ all buckets set their role to views_admin[*]. To give the user permission to
 manage views on a single bucket named \fIdefault\fP then specify the role as
 views_admin[default]. If the user needs to be manage views for multiple
 buckets, for example \fIdefault\fP and \fIapp\fP, then set the role as
-views_admin[default,app].
+views_admin[default],views_admin[app].
 .RE
 .sp
 .B Data Service Roles:
@@ -235,7 +236,8 @@ To give a user read\-only access for all buckets set their role to
 data_reader[*]. To give the user read\-only access to data on a single
 bucket named \fIdefault\fP then specify their role as data_reader[default].
 If the user needs read\-only access to data for multiple buckets, for example
-\fIdefault\fP and \fIapp\fP, then set their role as data_reader[default,app].
+\fIdefault\fP and \fIapp\fP, then set their role as
+data_reader[default],data_reader[app].
 .RE
 .sp
 data_writer[...]
@@ -258,7 +260,7 @@ data_dcp_reader[*]. To give the user the ability to create DCP connections
 on a single bucket named \fIdefault\fP then specify their role as
 data_dcp_reader[default]. If the user needs to be able to create DCP
 connections for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set
-their role as data_dcp_reader[default,app].
+their role as data_dcp_reader[default],data_dcp_reader[app].
 .RE
 .sp
 data_backup[...]
@@ -269,7 +271,7 @@ to data_backup[*]. To give the user the ability to backup and restore data
 on a single bucket named \fIdefault\fP then specify their role as
 data_backup[default]. If the user needs to be able to backup and restore
 data for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set their
-role as data_backup[default,app].
+role as data_backup[default],data_backup[app].
 .RE
 .sp
 data_monitoring[...]
@@ -280,7 +282,7 @@ buckets set their role to data_monitoring[*]. To give the user the ability
 to monitor data on a single bucket named \fIdefault\fP then specify their role
 as data_monitoring[default]. If the user needs to be able to monitor data
 for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set their role
-as data_monitoring[default,app].
+as data_monitoring[default],data_monitoring[app].
 .RE
 .sp
 .B Full Text Service Roles:
@@ -294,7 +296,7 @@ on all buckets set their role to fts_admin[*]. To give the user full
 administrator access for FTS on a single bucket named \fIdefault\fP then specify
 their role as fts_admin[default]. If the user needs full administrator
 access for FTS for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then
-set their role as fts_admin[default,app].
+set their role as fts_admin[default],fts_admin[app].
 .RE
 .sp
 fts_searcher[...]
@@ -305,7 +307,7 @@ role to fts_searcher[*]. To give the ability to query FTS indexes on a
 single bucket named \fIdefault\fP then specify their role as
 fts_searcher[default]. If the user needs to query FTS indexes on multiple
 multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set their role as
-fts_searcher[default,app].
+fts_searcher[default],fts_searcher[app].
 .RE
 .sp
 .B Query Service Roles:
@@ -319,7 +321,7 @@ their role to manage_index[*]. To give the user permission to create and
 delete indexes on a single bucket named \fIdefault\fP then specify their role
 as manage_index[default]. If the user needs to be create and delete indexes
 for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set their role
-as manage_index[default,app].
+as manage_index[default],manage_index[app].
 .RE
 .sp
 query_delete[...]
@@ -330,7 +332,7 @@ their role to query_delete[*]. To give the user permission to execute
 DELETE statements on a single bucket named \fIdefault\fP then specify their role
 as query_delete[default]. If the user needs to be execute DELETE statements
 for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set their role
-as query_delete[default,app].
+as query_delete[default],query_delete[app].
 .RE
 .sp
 query_insert[...]
@@ -341,7 +343,7 @@ their role to query_insert[*]. To give the user permission to execute
 INSERT statements on a single bucket named \fIdefault\fP then specify their role
 as query_insert[default]. If the user needs to be execute INSERT statements
 for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set their role
-as query_insert[default,app].
+as query_insert[default],query_insert[app].
 .RE
 .sp
 query_select[...]
@@ -352,7 +354,7 @@ their role to query_select[*]. To give the user permission to execute
 SELECT statements on a single bucket named \fIdefault\fP then specify their role
 as query_select[default]. If the user needs to be execute SELECT statements
 for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set their role
-as query_select[default,app].
+as query_select[default],query_select[app].
 .RE
 .sp
 query_update[...]
@@ -363,7 +365,7 @@ their role to query_update[*]. To give the user permission to execute
 UPDATE statements on a single bucket named \fIdefault\fP then specify their role
 as query_update[default]. If the user needs to be execute UPDATE statements
 for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set their role
-as query_update[default,app].
+as query_update[default],query_update[app].
 .RE
 .sp
 system_catalog[...]
@@ -375,7 +377,7 @@ permission to run queries against the system catalog on a single bucket
 named \fIdefault\fP then specify their role as system_catalog[default]. If the
 user needs to be run queries against the system catalog for multiple
 buckets, for example \fIdefault\fP and \fIapp\fP, then set their role as
-system_catalog[default,app].
+system_catalog[default],system_catalog[app].
 .RE
 .SH "EXAMPLES"
 .sp
