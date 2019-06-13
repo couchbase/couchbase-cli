@@ -1,3 +1,4 @@
+import ast
 import csv
 import json
 import os
@@ -105,8 +106,8 @@ class TestCSVSource(unittest.TestCase):
             # No id column
             writer = csv.DictWriter(f, fieldnames=['id', 'value'])
             writer.writeheader()
-            writer.writerow({'id': '0', 'value': 'v1.0'})
-            writer.writerow({'id': '1', 'value': {'a': 1}})
+            writer.writerow({'id': '0', 'value': b'v1.0'})
+            writer.writerow({'id': '1', 'value': b"{'a': 1}"})
             name = f.name
 
         msgs = [(cbcs.CMD_TAP_MUTATION, 0x0000ffff, b'0', 0, 0, 0, b'', b'v1.0', 0, 0, 0, 0),
@@ -708,7 +709,7 @@ class TestCSVSink(unittest.TestCase):
                     self.assertEqual(int(row[1]), flg)
                     self.assertEqual(int(row[2]), exp)
                     self.assertEqual(int(row[3]), cas)
-                    self.assertEqual(row[4], val.decode())
+                    self.assertEqual(ast.literal_eval(row[4]), val)
                     # self.assertEqual(row[5].encode(), meta) meta is not being stored properly at the moment
                     self.assertEqual(int(row[6]), vbid)
                     self.assertEqual(int(row[7]), dtype)
@@ -750,7 +751,7 @@ class TestCSVSink(unittest.TestCase):
                     self.assertEqual(int(row[1]), flg)
                     self.assertEqual(int(row[2]), exp)
                     self.assertEqual(int(row[3]), cas)
-                    self.assertEqual(row[4], val.decode())
+                    self.assertEqual(ast.literal_eval(row[4]), val)
                     # meta is not being stored properly at the moment see MB-32975
                     # self.assertEqual(row[5].encode(), meta)
                     self.assertEqual(int(row[6]), vbid)

@@ -9,6 +9,7 @@ import struct
 import urllib.request, urllib.parse, urllib.error
 
 from typing import Tuple, Union, Any, Dict, List, Optional
+from ast import literal_eval
 
 import couchbaseConstants
 import pump
@@ -94,7 +95,7 @@ class CSVSource(pump.Source):
                         doc[field] = number_try_parse(vals[i])
                 if doc['id']:
                     msg: couchbaseConstants.BATCH_MSG = (cmd, vbucket_id, doc['id'].encode(), 0, 0, 0, b'',
-                                                        doc['value'].encode(), 0, 0, 0, 0)
+                                                         literal_eval(doc['value']), 0, 0, 0, 0)
                     batch.append(msg, len(doc))
             except StopIteration:
                 self.done = True
@@ -196,7 +197,6 @@ class CSVSink(pump.Sink):
         msg_tuple_format = 0
         for msg in batch.msgs:
             cmd, vbucket_id, key, flg, exp, cas, meta, val_bytes = msg[:8]
-            val: str = val_bytes.decode()
             if self.skip(key, vbucket_id):
                 continue
             if not msg_tuple_format:
@@ -206,17 +206,17 @@ class CSVSink(pump.Sink):
                 seqno, dtype, nmeta, conf_res = msg[8:12]
             if dtype > 2:
                 try:
-                    val = snappy.uncompress(val)
+                    val_bytes = snappy.uncompress(val_bytes)
                 except Exception as err:
                     pass
             try:
                 if cmd in [couchbaseConstants.CMD_TAP_MUTATION,
                            couchbaseConstants.CMD_DCP_MUTATION]:
                     if self.fields:
-                        if val and len(val) > 0:
+                        if val_bytes and len(val_bytes) > 0:
                             try:
                                 row = []
-                                doc = json.loads(val)
+                                doc = json.loads(val_bytes)
                                 if type(doc) == dict:
                                     for field in self.fields:
                                         if field == 'id':
@@ -228,7 +228,7 @@ class CSVSink(pump.Sink):
                                 pass
                     else:
                         #rev = self.convert_meta(meta)
-                        self.writer.writerow([pump.returnString(key), flg, exp, cas, val, meta, vbucket_id, dtype])
+                        self.writer.writerow([pump.returnString(key), flg, exp, cas, val_bytes, meta, vbucket_id, dtype])
                 elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_DCP_DELETE]:
                     pass
                 elif cmd == couchbaseConstants.CMD_GET:

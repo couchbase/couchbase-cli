@@ -216,9 +216,9 @@ class SFDSource(pump.Source):
                     val = b''
                 else:
                     cmd = couchbaseConstants.CMD_DCP_MUTATION
-                    val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS).encode()
+                    val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
                 try:
-                    rev_meta_bytes = doc_info.revMeta.getBytes()
+                    rev_meta_bytes = doc_info.revMeta.get_bytes()
                     if len(rev_meta_bytes) == 18:
                         conf_res = 0
                         cas, exp, flg, flex_meta, dtype = struct.unpack(SFD_REV_META, rev_meta_bytes)
