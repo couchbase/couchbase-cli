@@ -4165,7 +4165,7 @@ class SettingOnDemand(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-settings-on-demand" + ".1" if os.name != "nt" else ".html"
+        return "couchbase-cli-setting-on-demand" + ".1" if os.name != "nt" else ".html"
 
     @staticmethod
     def get_description():
