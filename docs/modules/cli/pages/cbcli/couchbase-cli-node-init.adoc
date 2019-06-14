@@ -15,6 +15,7 @@ _couchbase-cli node-init_ [--cluster <url>] [--username <user>]
     [--password <password>] [--node-init-data-path <path>]
     [--node-init-index-path <path>] [--node-init-analytics-path <path>]
     [--node-init-hostname <hostname>] [--node-init-java-home <path>]
+    [--ipv4] [--ipv6]
 
 == DESCRIPTION
 
@@ -52,6 +53,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --node-init-java-home::
   Specifies the location of the Java Runtime Environment for the Analytics
   service to use.
+
+--ipv4::
+  Switch the node to use ipv4 for node to node communication
+
+--ipv6::
+  Switch the node to use ipv6 for node to node communication
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

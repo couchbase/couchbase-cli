@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-node-init
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-06-14
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-NODE\-INIT" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-NODE\-INIT" "1" "2019-06-14" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -36,6 +36,7 @@ couchbase\-cli\-node\-init \- Initializes a node
     [\-\-password <password>] [\-\-node\-init\-data\-path <path>]
     [\-\-node\-init\-index\-path <path>] [\-\-node\-init\-analytics\-path <path>]
     [\-\-node\-init\-hostname <hostname>] [\-\-node\-init\-java\-home <path>]
+    [\-\-ipv4] [\-\-ipv6]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -103,6 +104,16 @@ Specifies the hostname for this server.
 .RS 4
 Specifies the location of the Java Runtime Environment for the Analytics
 service to use.
+.RE
+.sp
+\-\-ipv4
+.RS 4
+Switch the node to use ipv4 for node to node communication
+.RE
+.sp
+\-\-ipv6
+.RS 4
+Switch the node to use ipv6 for node to node communication
 .RE
 .SH "HOST FORMATS"
 .sp

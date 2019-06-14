@@ -556,6 +556,30 @@ class TestNodeInit(CommandTest):
         ]
         self.rest_parameter_match(expected_params)
 
+    def test_node_init_ipv6_and_ipv4(self):
+        self.system_exit_run(self.command + self.name_args + ['--ipv4', '--ipv6'], self.server_args)
+        self.assertIn('Use either --ipv4 or --ipv6', self.str_output)
+
+    def test_node_init_ipv6(self):
+        self.no_error_run(self.command + self.name_args + ['--ipv6'], self.server_args)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
+        expected_params = [
+            'hostname=foo', 'afamily=ipv4', 'afamily=ipv6', 'afamily=ipv6'
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_node_init_ipv6(self):
+        self.no_error_run(self.command + self.name_args + ['--ipv4'], self.server_args)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
+        expected_params = [
+            'hostname=foo', 'afamily=ipv4', 'afamily=ipv4', 'afamily=ipv6'
+        ]
+        self.rest_parameter_match(expected_params)
+
 
 class TestRebalance(CommandTest):
     def setUp(self):

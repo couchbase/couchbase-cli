@@ -1481,6 +1481,10 @@ class NodeInit(Subcommand):
                            help="The path of the Java Runtime Environment (JRE) to use on this server")
         group.add_argument("--node-init-hostname", dest="hostname", metavar="<hostname>",
                            help="Sets the hostname for this server")
+        group.add_argument("--ipv6", dest="ipv6", action="store_true", default=False,
+                           help="Configure the node to communicate via ipv6")
+        group.add_argument("--ipv4", dest="ipv4", action="store_true", default=False,
+                           help="Configure the node to communicate via ipv4")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -1495,11 +1499,27 @@ class NodeInit(Subcommand):
             _, errors = rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path, opts.java_home)
             _exitIfErrors(errors)
 
+        if opts.ipv4 and opts.ipv6:
+            _exitIfErrors(["Use either --ipv4 or --ipv6"])
+
+        if opts.ipv6:
+            self._set_ipv(rest, "ipv6", "ipv4")
+        elif opts.ipv4:
+            self._set_ipv(rest, "ipv4", "ipv6")
+
         if opts.hostname:
             _, errors = rest.set_hostname(opts.hostname)
             _exitIfErrors(errors)
 
         _success("Node initialized")
+
+    def _set_ipv(self, rest, ip_enable, ip_disable):
+        _, err = rest.enable_external_listener(ipfamily=ip_enable)
+        _exitIfErrors(err)
+        _, err = rest.setup_net_config(ipfamily=ip_enable)
+        _exitIfErrors(err)
+        _, err = rest.disable_external_listener(ipfamily=ip_disable)
+        _exitIfErrors(err)
 
     @staticmethod
     def get_man_page_name():
