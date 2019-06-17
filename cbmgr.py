@@ -52,10 +52,10 @@ else:
 def check_cluster_initialized(rest):
     """Checks to see if the cluster is initialized"""
     initialized, errors = rest.is_cluster_initialized()
+    if errors:
+        _exitIfErrors(errors)
     if not initialized:
         _exitIfErrors(["Cluster is not initialized, use cluster-init to initialize the cluster"])
-    elif errors:
-        _exitIfErrors(errors)
 
 def index_storage_mode_to_param(value, default="plasma"):
     """Converts the index storage mode to what Couchbase understands"""
