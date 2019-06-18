@@ -453,9 +453,11 @@ class MemcachedClient(object):
         """Send a noop command."""
         return self._doCmd(couchbaseConstants.CMD_NOOP, b'', b'')
 
-    def helo(self, features: List[int]) -> Tuple[int, int, bytes]:
+    def helo(self, features: List[int]) -> Tuple[int, int, Tuple[int, ...]]:
         """Send a hello command for feature checking"""
-        return self._doCmd(couchbaseConstants.CMD_HELLO, b'', struct.pack('>' + ('H' * len(features)), *features))
+        r1, r2, value = self._doCmd(couchbaseConstants.CMD_HELLO, b'', struct.pack('>' + ('H' * len(features)), *features))
+        # divide length of value by 2 to find out how many 2-byte elements exist
+        return r1, r2, struct.unpack('>' + ('H' * int(len(value)/2)) , value)
 
     def delete(self, key: bytes, cas: int = 0) -> Tuple[int, int, bytes]:
         """Delete the value for a given key within the memcached server."""

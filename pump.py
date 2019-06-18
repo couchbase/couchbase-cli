@@ -1209,7 +1209,10 @@ def get_mcd_conn(host: str, port: int, username: str, password: str, bucket: Opt
         features.append(couchbaseConstants.HELO_COLLECTIONS)
 
     try:
-        conn.helo(features)
+        _, _, enabledFeatures = conn.helo(features)
+        for feature in features:
+            if feature not in enabledFeatures:
+                return f'error: HELO denied feature:{feature} {host}:{port}', None
     except EOFError as e:
         return f'error: HELO error: {host}:{port}, {e}', None
     except cb_bin_client.MemcachedError as e:
