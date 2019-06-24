@@ -102,8 +102,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Specifies the group description, it is used with --set-group.
 
 --ldap-ref <ref>::
-  Specifies the LDAP group's DN, to link the couchbase group with the LDAP one.
-  For example --ldap-ref domain=admins. Prefix the group's DN with domain=.
+  Specifies the LDAP group's distinguished name, to link the couchbase group
+  with the LDAP one.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
