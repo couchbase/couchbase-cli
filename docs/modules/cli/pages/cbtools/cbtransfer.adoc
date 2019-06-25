@@ -1,0 +1,316 @@
+= cbtransfer(1)
+ifndef::doctype-manpage[:doctitle: cbtransfer]
+
+ifdef::doctype-manpage[]
+== NAME
+
+cbtransfer -
+endif::[]
+The `cbtransfer` tool allows to transfer Couchbase data from cluster and
+various file formats.
+
+== SYNOPSIS
+[verse]
+_cbtransfer_ [--username <user>] [--password <password>] [--ssl]
+             [--no-ssl-verify] [--cacert <path>] [--username-dest <user>]
+             [--password-dest <password>] [--bucket-source <bucket>]
+             [--bucket-destination <bucket>] [--id <vbid>] [--key <regexp>]
+             [--single-node] [--source-vbucket-state <active|replica>]
+             [--destination-vbucket-state <active|replica>]
+             [--destination-operation <set|add|get>] [--dry-run]
+             [--verbose] [--silent] [--threads <num>] [--extra <options>]
+             [--help] source destination
+
+== DESCRIPTION
+
+The `cbtransfer` tool is a generic tool for transferring data from various
+types of source to various types of sinks. Both `cbbackup` and `cbrestore`
+are built upon this tool. The `cbbackup` tool is a transfer from a Couchbase
+Server source to a backup directory sink, and `cbrestore` is the opposite.
+
+The tool is a lightweight extract-transform-load (ETL) tool that transfers
+data between clusters and to and from files. The source and destination
+parameters are similar to URLs or file paths.
+
+The tool is at the following location:
+
+[cols="1,3"]
+|===
+| Operating system | Location
+
+| Linux
+| [.path]_/opt/couchbase/bin/_
+
+| Windows
+| [.path]_C:\Program Files\Couchbase\Server\bin\_
+
+| Mac OS X
+| [.path]_/Applications/Couchbase Server.app/Contents/Resources/couchbase-core/bin/_
+|===
+
+The supported sources are:
+
+    - Couchbase Server
+    - Backup directory (made by `cbbackup`)
+    - CSV files that where made by `cbtransfer`
+    - Couchstore files
+
+The supported sinks are:
+
+    - Couchbase Server
+    - Backup directory (same format as `cbbackup`)
+    - CSV (the format of the CSV is unique to Couchbase and can not be changed)
+    - Couchstore files
+    - Standard out
+
+Although `cbtransfer` can transfer from and to backup directories it is
+recommended that `cbbackup` and `cbrestore` are used for that purpose.
+
+== Options
+
+-u,--username <user>::
+  Specifies the username of the user executing the command. If you do not have
+  a user account with permission to execute the command then it will fail with
+  an unauthorized error.
+
+-p,--password <password>::
+  Specifies the password of the user executing the command. If you do not have
+  a user account with permission to execute the command then it will fail with
+  an unauthorized error.
+
+-s,--ssl::
+  (Deprecated) Specifies that the connection should use SSL verification. If
+  this flag is used then SSL will be used but the cluster certificate will not
+  be verified by the Certificate Authority. This flag is deprecated and not
+  recommended. If you wish to use SSL encryption it is recommended that you
+  specify the cluster host name using either _couchbases://_ or _https://_.
+  Each of these connection schemes will ensure that the connection is
+  encrypted with SSL. You may then use either --no-ssl-verify or --cacert in
+  order to customize how your SSL connection is set up.
+
+--no-ssl-verify::
+  Specifies that SSL verification should be used but that verifying that the
+  cluster certificate is valid should be skipped. Use of this flag is not
+  recommended for production environments because it does not protect the user
+  from a man-in-the-middle attack.
+
+--cacert <path>::
+  Specifies that the SSL connection should use the cacert provided when
+  connecting to the cluster. This argument takes the path the certificate
+  file as its value. This is the most secure way to connect to your cluster.
+
+-U,--username-dest <user>::
+  Specifies the username of the destination cluster, when transferring from one
+  cluster to another.
+
+-P,--password-dest <password>::
+  Specifies the password of the destination cluster, when transferring from one
+  cluster to another.
+
+-b,--bucket-source <bucket>::
+  Single named bucket from a source cluster to transfer.
+
+-B,--bucket-destination <bucket>::
+  Single named bucket on the destination cluster that receives the transfer.
+  You can transfer to a bucket with a different name than your source bucket;
+  if you do not provide a name, it defaults to the same name as the
+  bucket-source.
+
+-i,--id <vbid>::
+  Transfer only items that match a vBucket ID.
+
+-k,--key <regexp>::
+  Transfer only items with keys that match the given regular expression.
+
+--single-node::
+  Transfer from a single server node in a source cluster. This single server
+  node is a source node URL.
+
+--source-vbucket-state <active|replica>::
+  Only transfer from the source vbuckets occurs in this state, such as `active`
+  (default) or `replica`. Must be used with the Couchbase cluster as a source.
+
+--destination-vbucket-state <active|replica>::
+  Only transfer to destination vbuckets in this state, such as `active`
+  (default) or `replica`. Must be used with the Couchbase cluster as a
+  destination.
+
+--destination-operation <set|add|get>::
+  Perform this operation on transfer. Set will override an existing document;
+  add will not override; get will load all keys transferred from a source
+  cluster into the caching layer at the destination.
+
+-n,--dry-run::
+  When specified the tool will not transfer data but only validate
+  parameters, files, connectivity and configuration.
+
+-v,--verbose::
+  Verbose logging; more -v's provide more verbosity. Max is -vvv
+
+--silent::
+  Reduces the logging verbosity to only include errors.
+
+-t,--threads <num>::
+  Number of concurrent worker threads performing transfer, defaults to 1.
+
+-x,--extra <options>::
+  Provide extra, uncommon configuration parameters. Comma-separated
+  key=val pairs
+
+== EXTRAS
+
+The following are extra, specialized command options with the `cbtransfer -x` parameter.
+
+.cbtransfer -x options
+[cols="100,223"]
+|===
+| -x options | Description
+
+| `backoff_cap=10`
+| Maximum backoff time during the rebalance period.
+
+| `batch_max_bytes=400000`
+| Transfer this # of bytes per batch.
+
+| `batch_max_size=1000`
+| Transfer this # of documents per batch.
+
+| `cbb_max_mb=100000`
+| Split backup file on destination cluster if it exceeds the MB.
+
+| `conflict_resolve=1`
+| By default, disable conflict resolution.
+
+This option doesn't work in Couchbase Server versions 4.0 and 4.1 but will be
+re-implemented in version 4.1.1 and in subsequent versions.
+
+| `data_only=0`
+| For value 1, transfer only data from a backup file or cluster.
+
+| `design_doc_only=0`
+| For value 1, transfer only design documents from a backup file or cluster.
+Default: 0.
+
+Back up only design documents which include view and secondary index
+definitions from a cluster or bucket with the option `design_doc_only=1`.
+Restore only design documents with `cbrestore -x design_doc_only=1`.
+
+| `max_retry=10`
+| Max number of sequential retries if the transfer fails.
+
+| `mcd_compatible=1`
+| For value 0, display extended fields for stdout output.
+
+| `nmv_retry=1`
+| 0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message.
+Default: 1.
+
+| `recv_min_bytes=4096`
+| Amount of bytes for every TCP/IP batch transferred.
+
+| `rehash=0`
+| For value 1, rehash the partition id's of each item.
+This is required when transferring data between clusters with different number
+of partitions, such as when transferring data from an Mac OS X server to a
+non-Mac OS X cluster.
+
+| `report=5`
+| Number batches transferred before updating progress bar in console.
+
+| `report_full=2000`
+| Number batches transferred before emitting progress information in console.
+
+| `seqno=0`
+| By default, start seqno from beginning.
+
+| `try_xwm=1`
+| Transfer documents with metadata.
+Default: 1.
+Value of 0 is only used when transferring from 1.8.x to 1.8.x.
+
+| `uncompress=0`
+| For value 1, restore data in uncompressed mode.
+
+This option is unsupported.
+To create backups with compression, use `cbbackupmgr`, which is available for
+Couchbase Server Enterprise Edition only.
+See xref:backup-restore:enterprise-backup-restore.adoc[Backup].
+|===
+
+== EXAMPLES
+
+*Transferring node to node*
+
+If a node is not running but we wish to transfer the documents stored in it to
+another cluster we can do so by transferring the contents of the couchstore
+files to the destination cluster. This can be done with the command bellow:
+
+    $ cbtransfer couchstore-files:///opt/couchbase/var/lib/couchbase/data \
+      http://10.5.3.121:8091 -u Administrator -p password -b source_bucket \
+      -B dest_bucket
+
+The command above will transfer the documents in the bucket `source_bucket`
+to the bucket `dest_bucket` in the target cluster.
+
+It is also possible to transfer from a running cluster to another cluster using
+the command bellow:
+
+    $ cbtransfer http://localhost:8091 http://10.5.3.121:8091 \
+      -u Administrator -p password -U Administrator -P password
+
+This command will transfer all data from one cluster to another, is it possible
+to only select one bucket using the `-b` and `-B` flags. Although `cbtransfer`
+has the ability to transfer from one running node to another it is recommended
+to use XDCR where possible for this purpose.
+
+*Transferring to and from csv*
+
+The `cbtransfer` tool is also used to import and export csv files. Data is
+imported into Couchbase Server as documents and documents are exported from the
+server into comma-separated values. Design documents associated with vBuckets
+are not included.
+
+To export the bucket `beer-sample` from our node to csv use the command bellow:
+
+    $ cbtransfer http://127.0.0.1:8091  csv:///export/out.csv \
+      -u Administrator -p password -b beer-sample
+
+This will create a file named `out_beer-sample_127.0.0.1%38091.csv` the file
+name is a combination of the provided file name in the command, the source
+bucket and the source node.
+
+The resulting file will have the following format (Note that the value is
+stored as a Python bytes object):
+
+    id,flags,expiration,cas,value,rev,vbid,dtype
+    scotch_ale_2001,33554432,0,1561466789199544320,"b'{""abv"":11.1,""type"":""beer""}'",b'\x00\x00\x00\x01',0,1
+    1084_barleywine,33554432,0,1561466789204197376,"b'{""abv"":0.0,""type"":""beer""}'",b'\x00\x00\x00\x01',0,1
+
+
+The csv can then be imported using the following command:
+    $ cbtransfer /export/out_beer-sample_127.0.0.1%3A8091.csv http://localhost:8091 \
+      -u Administrator -p asdasd -B beer-sample
+
+`cbtransfer` can only restore files that where generated by the same version of
+`cbtransfer`, if a file that was not generated by the tool is given it will
+fail.
+
+*Transfering to stdout*
+
+For testing you can output to standard out to do so specify the destination to
+be `stdout:` as in the example bellow.
+
+    $ cbtransfer http://localhost:8091 stdout: \
+      -u Administrator -p password
+
+This will give the following output:
+
+    set b'pymc0' 0 0 62
+    {"name": "pymc0", "age": 0, "index": "0", "body":"0000000000"}
+    set b'pymc1' 0 0 62
+    {"name": "pymc1", "age": 1, "index": "1", "body":"0000000000"}
+    set b'pymc3' 0 0 62
+    {"name": "pymc3", "age": 3, "index": "3", "body":"0000000000"}
+    set b'pymc2' 0 0 62
+    {"name": "pymc2", "age": 2, "index": "2", "body":"0000000000"}
+

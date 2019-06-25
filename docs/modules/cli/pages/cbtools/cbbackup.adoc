@@ -1,0 +1,326 @@
+= cbbackup(1)
+ifndef::doctype-manpage[:doctitle: cbbackup]
+
+ifdef::doctype-manpage[]
+== NAME
+
+cbbackup -
+endif::[]
+Backups an entire running cluster, a bucket or a single node
+
+== SYNOPSIS
+[verse]
+_cbbackup_ [--username <user>] [--password <password>] [--ssl]
+           [--no-ssl-verify] [--cacert <path>] [--bucket-source <name>]
+           [--single-node] [--id <vbid>] [--key <regexp>]
+           [--mode <full|diff|accu>] [--dry-run] [--verbose] [--silent]
+           [--extra <options>] [--help] source backup_dir
+
+== DESCRIPTION
+
+This backup tools creates a copy of the `source` data onto disk in the
+specified `backup_dir`, if the directory does not exist it will be created.
+The directory should only be used by `cbbackup` and `cbrestore` as any
+alterations to the data by any other process can corrupt the backup data.
+
+The tool can be found in the following directories:
+[cols="1,5"]
+|===
+| Operating system | Location
+
+| Linux
+| `/opt/couchbase/bin/cbbackup`
+
+| Windows
+| `C:\Program Files\Couchbase\Server\bin\cbbackup`
+
+| Mac OS X
+| `/Applications/Couchbase Server.app/Contents/Resources/couchbase-core/bin/cbbackup`
+|===
+
+
+The data is stored in a unique format that will then allow
+a fast restore using `cbrestore`. This tool will not only backup the documents
+but it can backup metadata for full text indexes and aliases, design documents
+and global secondary indexes, thus on a restore there is no need to redefine them.
+Although the metadata for this other services is also backed up and restore the
+indexes will still have to be rebuilt after a restore.
+
+The first backup made is always a full backup regardless of the mode given.
+The backup directory will looks as follows after a succesfull first backup:
+
+   └── 2019-06-25T124727Z
+    └── 2019-06-25T124727Z-full
+        ├── bucket-beer-sample
+        │   ├── design.json
+        │   ├── fts_index.json
+        │   ├── index.json
+        │   └── node-127.0.0.1%3A8091
+        │       ├── data-0000.cbb
+        │       ├── failover.json
+        │       ├── meta.json
+        │       ├── seqno.json
+        │       └── snapshot_markers.json
+        └── fts_alias.json
+
+The backup directory will have as a name the timestamp of the first backup.
+Inside it there will be one or more backup folders each named with a timestamp
+of when they occurred and suffixed with the mode in this case
+`2019-06-25T124727Z-full`. Inside each backup folder we have a folder for each
+bucket that was backed up, in this case only the "beer-sample" was backed up.
+At this level we also have a JSON file that contains the full text aliases.
+Inside each bucket folder we can find the design documents, full text indexes
+and global secondary indexes definitions. There is also a folder per node in
+the cluster, which contains the documents for that bucket and cluster. In this
+case there is only one node in the cluster.
+
+== Options
+
+-u,--username <user>::
+  Specifies the username of the user executing the command. If you do not have
+  a user account with permission to execute the command then it will fail with
+  an unauthorized error.
+
+-p,--password <password>::
+  Specifies the password of the user executing the command. If you do not have
+  a user account with permission to execute the command then it will fail with
+  an unauthorized error.
+
+-s,--ssl::
+  (Deprecated) Specifies that the connection should use SSL verification. If
+  this flag is used then SSL will be used but the cluster certificate will not
+  be verified by the Certificate Authority. This flag is deprecated and not
+  recommended. If you wish to use SSL encryption it is recommended that you
+  specify the cluster host name using either _couchbases://_ or _https://_.
+  Each of these connection schemes will ensure that the connection is
+  encrypted with SSL. You may then use either --no-ssl-verify or --cacert in
+  order to customize how your SSL connection is set up.
+
+--no-ssl-verify::
+  Specifies that SSL verification should be used but that verifying that the
+  cluster certificate is valid should be skipped. Use of this flag is not
+  recommended for production environments because it does not protect the user
+  from a man-in-the-middle attack.
+
+--cacert <path>::
+  Specifies that the SSL connection should use the cacert provided when
+  connecting to the cluster. This argument takes the path the certificate
+  file as its value. This is the most secure way to connect to your cluster.
+
+-b,--bucket-source <bucket>::
+  Single named bucket from source cluster to transfer. If the backup directory
+  only contains a single bucket, then that bucket is automatically used.
+
+--single-node::
+  Transfer data only from the source data node.
+
+-i,--id <vbid>::
+  Transfer only items that match a vBucket ID.
+
+-k,--key <regexp>::
+  Transfer only items with keys that match the given regular expression.
+
+-m,--mode <full|diff|accu>::
+  Select tha backup mode, the available options are: full, diff, accu.
+  If an option is not provided it defaults to `diff`. The `full` mode will
+  perform a full backup. The `diff` mode will perform a differential
+  incremental backup which backups only the changes since the last full or
+  incremental backup. The `accu` mode performs a cumulative incremental backup,
+  which backs up all changes since the last full backup.
+
+-n,--dry-run::
+  When specified the tool will not transfer data but only validate
+  parameters, files, connectivity and configuration.
+
+-v,--verbose::
+  Verbose logging; more -v's provide more verbosity. Max is -vvv
+
+--silent::
+  Reduces the logging verbosity to only include errors.
+
+-x,--extra <options>::
+  Provide extra, uncommon configuration parameters. Comma-separated
+  key=val pairs
+
+== EXTRAS
+
+The following are extra, specialized command options with the `cbbackup -x` parameter.
+
+.cbbackup -x options
+[cols="100,223"]
+|===
+| -x options | Description
+
+| `backoff_cap=10`
+| Maximum backoff time during the rebalance period.
+
+| `batch_max_bytes=400000`
+| Transfer this # of bytes per batch.
+
+| `batch_max_size=1000`
+| Transfer this # of documents per batch.
+
+| `cbb_max_mb=100000`
+| Split backup file on destination cluster if it exceeds the MB.
+
+| `conflict_resolve=1`
+| By default, disable conflict resolution.
+
+This option doesn't work in Couchbase Server versions 4.0 and 4.1 but will be
+re-implemented in version 4.1.1 and in subsequent versions.
+
+| `data_only=0`
+| For value 1, transfer only data from a backup file or cluster.
+
+| `design_doc_only=0`
+| For value 1, transfer only design documents from a backup file or cluster.
+Default: 0.
+
+Back up only design documents which include view and secondary index
+definitions from a cluster or bucket with the option `design_doc_only=1`.
+Restore only design documents with `cbrestore -x design_doc_only=1`.
+
+| `max_retry=10`
+| Max number of sequential retries if the transfer fails.
+
+| `mcd_compatible=1`
+| For value 0, display extended fields for stdout output.
+
+| `nmv_retry=1`
+| 0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message.
+Default: 1.
+
+| `recv_min_bytes=4096`
+| Amount of bytes for every TCP/IP batch transferred.
+
+| `rehash=0`
+| For value 1, rehash the partition id's of each item.
+This is required when transferring data between clusters with different number
+of partitions, such as when transferring data from an Mac OS X server to a
+non-Mac OS X cluster.
+
+| `report=5`
+| Number batches transferred before updating progress bar in console.
+
+| `report_full=2000`
+| Number batches transferred before emitting progress information in console.
+
+| `seqno=0`
+| By default, start seqno from beginning.
+
+| `try_xwm=1`
+| Transfer documents with metadata.
+Default: 1.
+Value of 0 is only used when transferring from 1.8.x to 1.8.x.
+
+| `uncompress=0`
+| For value 1, restore data in uncompressed mode.
+
+This option is unsupported.
+To create backups with compression, use `cbbackupmgr`, which is available for
+Couchbase Server Enterprise Edition only.
+See xref:backup-restore:enterprise-backup-restore.adoc[Backup].
+|===
+
+== EXAMPLES
+
+*Basic operations*
+
+The most basic operation is to backup an entire cluster, this can be done using
+the following command:
+
+    $ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password
+
+This command will create the following directory structure:
+
+    └── backups
+        └── 2019-06-25T124727Z
+            └── 2019-06-25T124727Z-full
+                ├── bucket-beer-sample
+                │   ├── design.json
+                │   ├── fts_index.json
+                │   ├── index.json
+                │   ├── node-10.112.193.101%3A8091
+                │   ├── node-10.112.193.102%3A8091
+                │   ├── node-10.112.193.103%3A8091
+                ├── bucket-gamesim-sample
+                │   ├── design.json
+                │   ├── node-10.112.193.101%3A8091
+                │   ├── node-10.112.193.102%3A8091
+                │   └── node-10.112.193.103%3A8091
+                └── fts_alias.json
+
+Inside our requested backup directory `cbbackup` has created another folder
+named after the time when the command was run. Inside there is only one backup,
+`2019-06-25T124727Z-full` we can see by the prefix that is a full backup.
+This is expected as there where no other backups in the `~/backups` directory
+Inside out backup we can find the full text aliases in the `fts_alias.json` as
+well as another two folders. one for each bucket in the cluster. This cluster
+had buckets beer-sample and gamesim-sample. Inside the folder for each bucket
+we find the design documents, full text index adn general secondary index
+definitions. We can see that the gamesim-bucket does not have either a
+`fts_index.json` or an `index.json` this s because this bucket had no
+indexes. Inside the bucket folders we have a folder for each node in the
+cluster, this folder contains the documents stored in each node for the
+corresponding bucket.
+
+After some time data in the buckets will change and a new backup should be
+made, but instead of backing up all the data again `cbbackup` can make
+incremental backups that only contain the data that has changed since the last
+backup. The command below would create a new differential incremental backup.
+
+    $ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password \
+      -m diff
+
+After this the backup directory would look as follows (only showing beer-sample for clarity):
+
+    2019-06-25T141453Z
+    ├── 2019-06-25T141453Z-full
+    │   └── bucket-beer-sample
+    │       ├── design.json
+    │       ├── node-10.112.193.101%3A8091
+    │       ├── node-10.112.193.102%3A8091
+    │       └── node-10.112.193.103%3A8091
+    └── 2019-06-25T141553Z-diff
+        └── bucket-beer-sample
+            ├── design.json
+            ├── node-10.112.193.101%3A8091
+            ├── node-10.112.193.102%3A8091
+            └── node-10.112.193.103%3A8091
+
+*Filtering*
+
+`cbbackup` allows the user control of what data is backed up. To backup only a
+the bucket `beer-sample` use the following command:
+
+    $ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password \
+      -b beer-sample
+
+This command will backup only the data relevant to bucket `beer-sample` from
+evey node in the cluster. The user can also want only data from one node in the
+cluster this can be done as follows.
+
+    $ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password \
+      --single-node
+
+The command above will only backup the data stored in node
+`10.112.193.101:8091`. To backup only the data of one bucket in one node the
+options can be combined as follows:
+
+    $ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password \
+      --single-node -b beer-sample
+
+The data that is backed up can also be filtered y key using the `-k` flag. To
+only backup the documents which keys start with "KEY:" we can use the command:
+
+    $ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password \
+      -k '^KEY:.*'
+
+The `-k` option will take any regular expression.
+
+The user can also chose to only backup certain services for example to only
+backup the documents of the data service we can pass the `data_only=1`
+extra option as follows:
+
+    $ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password \
+      -x data_only=1

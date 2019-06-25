@@ -1,0 +1,222 @@
+= cbrecovery(1)
+ifndef::doctype-manpage[:doctitle: cbrecovery]
+
+ifdef::doctype-manpage[]
+== NAME
+
+cbrecovery -
+endif::[]
+The `cbrecovery` tool restores data to a local cluster, from a bucket on a
+remote cluster that was previously established as an XDCR remote replica.
+
+== SYNOPSIS
+[verse]
+_cbrecovery_ [--username <user>] [--password <password>] [--ssl]
+             [--no-ssl-verify] [--cacert <path>] [--username-dest <user>]
+             [--password-dest <password>] [--bucket-source <bucket>]
+             [--bucket-destination <bucket>] [--id <vbid>] [--dry-run]
+             [--verbose] [--silent] [--threads <num>] [--extra <options>]
+             [--help] source_cluster destination_cluster
+
+== DESCRIPTION
+
+The `cbrecovery` tool allows recovering missing vBuckets from a remote
+cluster. The command takes a `source_cluster` which is the cluster containing
+an XDCR remote-replica bucket which is used to recover the data. It also takes
+a `destination_cluster` which is the cluster that has suffered data loss.
+
+
+
+Couchbase Server allows one or more replicas to be created for each vBucket on
+the cluster. This helps to ensure continued data-availability in the event of
+node-failure.
+
+However, if multiple nodes within a single cluster fail simultaneously, one or
+more active vBuckets and all their replicas may be affected; meaning that lost
+data cannot be recovered locally.
+
+In such cases, provided that a bucket affected by such failure has already been
+established as a source bucket for XDCR, the lost data may be retrieved from
+the bucket defined on the remote server as the corresponding
+replication-target. This retrieval is achieved from the command-line, by means
+of cbrecovery.
+
+Before attempting to recover the lost data, restore capacity to the local
+cluster, as appropriate. However, do not rebalance added nodes into the cluster
+until after cbrecovery has been used to recover the lost data.
+
+The tool is in the following locations:
+
+[cols="100,733"]
+|===
+| Operating system | Location
+
+| Linux
+| [.path]_/opt/couchbase/bin/cbrecovery_
+
+| Windows
+| [.path]_C:\Program Files\Couchbase\Server\bin\cbrecovery_
+
+| Mac OS X
+| [.path]_/Applications/Couchbase Server.app/Contents/Resources/couchbase-core/bin/cbrecovery_
+|===
+
+== Options
+
+-u,--username <user>::
+  The username for the Full Administrator, Cluster Administrator, or XDCR
+  Administrator for the cluster from which the data is recovered.
+
+-p,--password <password>::
+  The password for the Full Administrator, Cluster Administrator, or XDCR
+  Administrator for the cluster from which the data is recovered.
+
+-s,--ssl::
+  (Deprecated) Specifies that the connection should use SSL verification. If
+  this flag is used then SSL will be used but the cluster certificate will not
+  be verified by the Certificate Authority. This flag is deprecated and not
+  recommended. If you wish to use SSL encryption it is recommended that you
+  specify the cluster host name using either _couchbases://_ or _https://_.
+  Each of these connection schemes will ensure that the connection is
+  encrypted with SSL. You may then use either --no-ssl-verify or --cacert in
+  order to customize how your SSL connection is set up.
+
+--no-ssl-verify::
+  Specifies that SSL verification should be used but that verifying that the
+  cluster certificate is valid should be skipped. Use of this flag is not
+  recommended for production environments because it does not protect the user
+  from a man-in-the-middle attack.
+
+--cacert <path>::
+  Specifies that the SSL connection should use the cacert provided when
+  connecting to the cluster. This argument takes the path the certificate
+  file as its value. This is the most secure way to connect to your cluster.
+
+-U,--username-dest <user>::
+  The username for the Full Administrator, Cluster Administrator, or XDCR
+  Administrator for the cluster onto which the recovered data is copied.
+
+-P,--password-dest <password>::
+  The password for the Full Administrator, Cluster Administrator, or XDCR
+  Administrator for the cluster onto which the recovered data is copied.
+
+-b,--bucket-source <bucket>::
+  Name of a bucket on the source cluster. This must previously have been
+  established and used as a replication target for XDCR, using the
+  source-bucket specified here as BUCKET_DESTINATION.
+
+-B,--bucket-destination <bucket>::
+  Name of a bucket on the destination cluster. This is a bucket that has
+  suffered data-loss, and was previously established and used as a source for
+  XDCR replication, using the target-bucket specified here as BUCKET_SOURCE.
+
+-i,--id <vbid>::
+  Transfer only items that match a vBucket ID.
+
+-n,--dry-run::
+  When specified the tool will not transfer data but only validate
+  parameters, files, connectivity and configuration.
+
+-v,--verbose::
+  Verbose logging; more -v's provide more verbosity. Max is -vvv
+
+--silent::
+  Reduces the logging verbosity to only include errors.
+
+-t,--threads <num>::
+  Number of concurrent worker threads performing transfer, defaults to 1.
+
+-x,--extra <options>::
+  Provide extra, uncommon configuration parameters. Comma-separated
+  key=val pairs
+
+== EXTRAS
+
+The following are extra, specialized command options with the `cbrecovery -x` parameter.
+
+.cbrecovery -x options
+[cols="100,223"]
+|===
+| -x options | Description
+
+| `backoff_cap=10`
+| Maximum backoff time during the rebalance period.
+
+| `batch_max_bytes=400000`
+| Transfer this # of bytes per batch.
+
+| `batch_max_size=1000`
+| Transfer this # of documents per batch.
+
+| `cbb_max_mb=100000`
+| Split backup file on destination cluster if it exceeds the MB.
+
+| `conflict_resolve=1`
+| By default, disable conflict resolution.
+
+This option doesn't work in Couchbase Server versions 4.0 and 4.1 but will be
+re-implemented in version 4.1.1 and in subsequent versions.
+
+| `data_only=0`
+| For value 1, transfer only data from a backup file or cluster.
+
+| `design_doc_only=0`
+| For value 1, transfer only design documents from a backup file or cluster.
+Default: 0.
+
+Back up only design documents which include view and secondary index
+definitions from a cluster or bucket with the option `design_doc_only=1`.
+Restore only design documents with `cbrestore -x design_doc_only=1`.
+
+| `max_retry=10`
+| Max number of sequential retries if the transfer fails.
+
+| `mcd_compatible=1`
+| For value 0, display extended fields for stdout output.
+
+| `nmv_retry=1`
+| 0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message.
+Default: 1.
+
+| `recv_min_bytes=4096`
+| Amount of bytes for every TCP/IP batch transferred.
+
+| `rehash=0`
+| For value 1, rehash the partition id's of each item.
+This is required when transferring data between clusters with different number
+of partitions, such as when transferring data from an Mac OS X server to a
+non-Mac OS X cluster.
+
+| `report=5`
+| Number batches transferred before updating progress bar in console.
+
+| `report_full=2000`
+| Number batches transferred before emitting progress information in console.
+
+| `seqno=0`
+| By default, start seqno from beginning.
+
+| `try_xwm=1`
+| Transfer documents with metadata.
+Default: 1.
+Value of 0 is only used when transferring from 1.8.x to 1.8.x.
+
+| `uncompress=0`
+| For value 1, restore data in uncompressed mode.
+
+This option is unsupported.
+To create backups with compression, use `cbbackupmgr`, which is available for
+Couchbase Server Enterprise Edition only.
+See xref:backup-restore:enterprise-backup-restore.adoc[Backup].
+|===
+
+== EXAMPLE
+
+If enough node fails in the custer 1 with address 10.142.180.104:8091 but
+before hand we had replicated the bucket in the cluster 3 with address
+10.142.170.103:8091 then we can recover the missing data using the command
+bellow:
+
+    $ cbrecovery http://10.142.170.103:8091 http://10.142.180.104:8091 \
+      -b replica_bucket -B original_bucket \
+      -u Administrator -p password -U Administrator -P password
