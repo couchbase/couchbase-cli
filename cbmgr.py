@@ -2717,7 +2717,7 @@ class SettingLdap(Subcommand):
         if opts.get:
             data, rv = rest.get_ldap()
             _exitIfErrors(rv)
-            print(data)
+            print(json.dumps(data))
         else:
             if opts.authentication_enabled is None or opts.authorization_enabled is None or opts.hosts is None:
                 _exitIfErrors(['the following arguments are required: --authentication-enabled, --authorization-enabled, --hosts'])
