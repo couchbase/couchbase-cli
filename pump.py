@@ -937,7 +937,12 @@ class StdOutSink(Sink):
                             stdout.write(f'{op} {key} {flg} {exp} {len(val)!s}\r\n')
                         else:
                             stdout.write(f'{op} {key} {flg} {exp} {len(val)} {seqno} {dtype} {conf_res}\r\n')
-                        stdout.write(val)
+
+                        try:
+                            stdout.write(val.decode())
+                        except TypeError:
+                            stdout.write(f'{val}')
+
                         stdout.write("\r\n")
                     elif op == 'get':
                         stdout.write(f'get {key}\r\n')
