@@ -2676,7 +2676,7 @@ class SettingLdap(Subcommand):
                            choices=["tls", "startTLS", "none"], default="none", help="Encryption used")
         group.add_argument("--disable-cert-validation", dest="disable_cert_val", default=False, action="store_true",
                            help="Disable server certificate validation.")
-        group.add_argument("--ca-cert", dest="cacert", metavar="<path>",
+        group.add_argument("--ldap-cacert", dest="cacert_ldap", metavar="<path>",
                            help="CA certificate to be used for LDAP server certificate validation, required if" +
                                 " certificate validation is not disabled")
         group.add_argument("--user-dn-mapping", metavar="<mapping>", dest="user_dn_mapping",
@@ -2737,10 +2737,11 @@ class SettingLdap(Subcommand):
         else:
             opts.authorization_enabled = 'false'
 
-        if not opts.disable_cert_val:
-            if opts.cacert is None:
-                _exitIfErrors(['--ca-cert is required when server certificate verification is active.'])
-                opts.cacert = _exit_on_file_read_failure(opts.cacert)
+        if opts.disable_cert_val and opts.cacert_ldap is not None:
+            _exitIfErrors(['--disable-cert-validation and --ldap-cert can not be used together'])
+
+        if opts.cacert_ldap is not None:
+            opts.cacert_ldap = _exit_on_file_read_failure(opts.cacert_ldap)
 
         if opts.encryption == "tls":
             opts.encryption = "TLS"
@@ -2764,7 +2765,7 @@ class SettingLdap(Subcommand):
                                        opts.encryption, opts.user_dn_mapping, opts.timeout, opts.max_parallel,
                                        opts.max_cache_size, opts.cache_value_lifetime, opts.query_dn, opts.query_pass,
                                        opts.group_query, opts.nested_groups, opts.nested_max_depth,
-                                       opts.disable_cert_val, opts.cacert)
+                                       opts.disable_cert_val, opts.cacert_ldap)
 
         _exitIfErrors(errors)
         _success("LDAP settings modified")

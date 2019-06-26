@@ -14,7 +14,7 @@ _couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>]
     [--password <password>] [--authentication-enabled <1|0>]
     [--authorization-enabled <1|0>] [--hosts <host_list>] [--port <port>]
     [--encryption <tls|startTLS|none>] [--disable-cert-validation]
-    [--ca-cert <path>] [--user-dn-mapping <mapping>][--request-timeout <ms>]
+    [--ldap-cacert <path>] [--user-dn-mapping <mapping>][--request-timeout <ms>]
     [--max-parallel <max>] [--max-cache-size <size>]
     [--cache-value-lifetime <ms>] [--query-dn <dn>] [--query-pass <pass>]
     [--group-query <query>] [--enable-nested-groups <0|1>]
@@ -48,7 +48,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --disable-cert-validation::
   Disable server certificate validation.
 
---ca-cert <path>::
+--ldap-cacert <path>::
   CA certificate to be used for server's certificate validation, required if
   certificate validation is not disabled
 

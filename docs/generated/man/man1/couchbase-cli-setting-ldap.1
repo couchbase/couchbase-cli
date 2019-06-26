@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-ldap
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.9
-.\"      Date: 2019-06-07
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2019-06-26
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-06-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-06-26" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,13 +31,12 @@
 couchbase\-cli\-setting\-ldap \- Configure LDAP
 .SH "SYNOPSIS"
 .sp
-.sp
 .nf
 \fIcouchbase\-cli setting\-ldap\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-authentication\-enabled <1|0>]
     [\-\-authorization\-enabled <1|0>] [\-\-hosts <host_list>] [\-\-port <port>]
     [\-\-encryption <tls|startTLS|none>] [\-\-disable\-cert\-validation]
-    [\-\-ca\-cert <path>] [\-\-user\-dn\-mapping <mapping>][\-\-request\-timeout <ms>]
+    [\-\-ldap\-cacert <path>] [\-\-user\-dn\-mapping <mapping>][\-\-request\-timeout <ms>]
     [\-\-max\-parallel <max>] [\-\-max\-cache\-size <size>]
     [\-\-cache\-value\-lifetime <ms>] [\-\-query\-dn <dn>] [\-\-query\-pass <pass>]
     [\-\-group\-query <query>] [\-\-enable\-nested\-groups <0|1>]
@@ -103,7 +102,7 @@ Security used to communicate with LDAP servers. Supported options
 Disable server certificate validation.
 .RE
 .sp
-\-\-ca\-cert <path>
+\-\-ldap\-cacert <path>
 .RS 4
 CA certificate to be used for server\(cqs certificate validation, required if
 certificate validation is not disabled
