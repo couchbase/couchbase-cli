@@ -1222,11 +1222,7 @@ class Failover(Subcommand):
         _exitIfErrors(errors)
 
         if not opts.force:
-            _, errors = rest.rebalance([])
-            _exitIfErrors(errors)
-
             time.sleep(1)
-
             if opts.wait:
                 bar = TopologyProgressBar(rest, 'Gracefully failing over', opts.no_bar)
                 errors = bar.show()

@@ -424,7 +424,6 @@ class TestFailover(CommandTest):
     def test_failover_simple(self):
         self.no_error_run(self.command + self.basic_args, self.server_args)
         self.assertIn('POST:/controller/startGracefulFailover', self.server.trace)
-        self.assertIn('POST:/controller/rebalance', self.server.trace)
 
     def test_failover_force(self):
         self.no_error_run(self.command + self.basic_args + ['--force'], self.server_args)
