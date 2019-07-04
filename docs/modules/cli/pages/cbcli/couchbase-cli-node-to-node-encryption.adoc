@@ -1,0 +1,71 @@
+= couchbase-cli-node-to-node-encryption(1)
+ifndef::doctype-manpage[:doctitle: node-to-node-encryption]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-node-to-node-encryption -
+endif::[]
+Changes node-to-node encryption
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli node-to-node-encryption_ [--cluster <url>] [-username <username>]
+    [--password <password>] [--get] [--enable] [--disable]
+
+== DESCRIPTION
+
+This command allows the enabling and disabling of node-to-node encryption this
+means data transferred between nodes in a cluster will be encrypted. The
+command will execute a series of instructions in each node in the cluster to
+switch them from sending and receiving over a non-encrypted connection to an
+encrypted one or vice-versa.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--get::
+  Display the node-to-node encryption settings
+
+--enable::
+  Will enable node-to-node encryption
+
+--disable::
+  Will disable node-to-node encryption
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To enable node-to-node encryption in a cluster with two host
+`[cb1.mydomain.com:8091, cb2.mydomain.com:8091]` ran the following
+commands:
+
+  $ couchbase-cli node-to-node-encryption -c cb1.mydomain.com:8091 --username Administrator \
+   --password password --enable
+
+
+To check if node-to-node encryption is on or off ran:
+
+ $ couchbase-cli node-to-node-encryption -c cb1.mydomain.com:8091 --username Administrator \
+   --password password --get
+
+To disable node-to-node encryption use the following command:
+
+   $ couchbase-cli node-to-node-encryption -c cb1.mydomain.com:8091 --username Administrator \
+   --password password --disable
+
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-setting-security[1]
+man:couchbase-ssl-manage[1]
+man:couchbase-cli-ip-family[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

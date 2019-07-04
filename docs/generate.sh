@@ -44,9 +44,9 @@ gen_docs couchbase-cli-bucket-edit.adoc 1
 gen_docs couchbase-cli-bucket-flush.adoc 1
 gen_docs couchbase-cli-bucket-list.adoc 1
 gen_docs couchbase-cli-cluster-edit.adoc 1
-gen_docs couchbase-cli-change-cluster-encryption.adoc 1
+gen_docs couchbase-cli-node-to-node-encryption.adoc 1
 gen_docs couchbase-cli-cluster-init.adoc 1
-gen_docs couchbase-cli-change-ip-family.adoc 1
+gen_docs couchbase-cli-ip-family.adoc 1
 gen_docs couchbase-cli-collect-logs-start.adoc 1
 gen_docs couchbase-cli-collect-logs-status.adoc 1
 gen_docs couchbase-cli-collect-logs-stop.adoc 1

@@ -1421,11 +1421,11 @@ class TestSettingOnDemand(CommandTest):
         self.rest_parameter_match(expected_params, False)
 
 
-class TestChangeIpFamily(CommandTest):
+class TestIpFamily(CommandTest):
     def setUp(self):
-        self.command = ['couchbase-cli', 'change-ip-family'] + cluster_connect_args
+        self.command = ['couchbase-cli', 'ip-family'] + cluster_connect_args
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
-        super(TestChangeIpFamily, self).setUp()
+        super(TestIpFamily, self).setUp()
 
     def testGetSingleNode(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet'}]}
@@ -1455,7 +1455,7 @@ class TestChangeIpFamily(CommandTest):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv4'], self.server_args)
-        self.assertIn('Switched ip family of the cluster', self.str_output)
+        self.assertIn('Switched IP family of the cluster', self.str_output)
         self.assertIn('GET:/pools/nodes', self.server.trace)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
@@ -1467,7 +1467,7 @@ class TestChangeIpFamily(CommandTest):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv6'], self.server_args)
-        self.assertIn('Switched ip family of the cluster', self.str_output)
+        self.assertIn('Switched IP family of the cluster', self.str_output)
         self.assertIn('GET:/pools/nodes', self.server.trace)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
@@ -1478,7 +1478,7 @@ class TestChangeIpFamily(CommandTest):
 
 class TestClusterEncryption(CommandTest):
     def setUp(self):
-        self.command = ['couchbase-cli', 'change-cluster-encryption'] + cluster_connect_args
+        self.command = ['couchbase-cli', 'node-to-node-encryption'] + cluster_connect_args
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestClusterEncryption, self).setUp()
 
@@ -1488,12 +1488,12 @@ class TestClusterEncryption(CommandTest):
     def testGetEncryptionFalse(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'nodeEncryption': False, 'hostname': 'host1'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
-        self.assertIn('Cluster encryption is disabled', self.str_output)
+        self.assertIn('Node-to-node encryption is disabled', self.str_output)
 
     def testGetEncryptionTrue(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'nodeEncryption': True, 'hostname': 'host1'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
-        self.assertIn('Cluster encryption is enabled', self.str_output)
+        self.assertIn('Node-to-node encryption is enabled', self.str_output)
 
     def testGetEncryptionMixedMode(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'nodeEncryption': True, 'hostname': 'host1'},

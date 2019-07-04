@@ -7,9 +7,9 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-bucket-flush.html
   generated/doc/couchbase-cli/couchbase-cli-bucket-list.html
   generated/doc/couchbase-cli/couchbase-cli-cluster-edit.html
-  generated/doc/couchbase-cli/couchbase-cli-change-cluster-encryption.html
+  generated/doc/couchbase-cli/couchbase-cli-node-to-node-encryption.html
   generated/doc/couchbase-cli/couchbase-cli-cluster-init.html
-  generated/doc/couchbase-cli/couchbase-cli-change-ip-family.html
+  generated/doc/couchbase-cli/couchbase-cli-ip-family.html
   generated/doc/couchbase-cli/couchbase-cli-collect-logs-start.html
   generated/doc/couchbase-cli/couchbase-cli-collect-logs-status.html
   generated/doc/couchbase-cli/couchbase-cli-collect-logs-stop.html

@@ -53,8 +53,8 @@ man:couchbase-cli-bucket-list[1]::
 man:couchbase-cli-cluster-edit[1]::
   Edits cluster settings.
 
-man:couchbase-cli-cluster-encryption[1]::
-  Allows enabling and disabling of cluster encryption.
+man:couchbase-cli-node-to-node-encryption[1]::
+  Allows enabling and disabling of node-to-node encryption.
 
 man:couchbase-cli-cluster-init[1]::
   Initializes a Couchbase cluster.

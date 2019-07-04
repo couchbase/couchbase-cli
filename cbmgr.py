@@ -4253,13 +4253,13 @@ class SettingQuery(Subcommand):
         return "Manage query settings"
 
 
-class ChangeIpFamily(Subcommand):
+class IpFamily(Subcommand):
     """"Command to switch between IP family for node to node communication"""
 
     def __init__(self):
-        super(ChangeIpFamily, self).__init__()
-        self.parser.prog = "couchbase-cli change-ip-family"
-        group = self.parser.add_argument_group("Change ip family options")
+        super(IpFamily, self).__init__()
+        self.parser.prog = "couchbase-cli ip-family"
+        group = self.parser.add_argument_group("IP family options")
         group.add_argument('--get', action="store_true", default=False, help='Retrieve current used IP family')
         group.add_argument('--set', action="store_true", default=False, help='Change current used IP family')
         group.add_argument('--ipv4', dest='ipv4', default=False, action="store_true",
@@ -4316,13 +4316,13 @@ class ChangeIpFamily(Subcommand):
         for h in hosts:
             _, err = rest.setup_net_config(host=h, ipfamily=ip_fam)
             _exitIfErrors(err)
-            print(f'Switched ip family for node: {h}')
+            print(f'Switched IP family for node: {h}')
 
         for h in hosts:
             _, err = rest.disable_external_listener(host=h, ipfamily=ip_fam_disable)
             _exitIfErrors(err)
 
-        _success('Switched ip family of the cluster')
+        _success('Switched IP family of the cluster')
 
     @staticmethod
     def _get(rest):
@@ -4347,24 +4347,24 @@ class ChangeIpFamily(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-change-ip-family" + ".1" if os.name != "nt" else ".html"
+        return "couchbase-cli-ip-family" + ".1" if os.name != "nt" else ".html"
 
     @staticmethod
     def get_description():
         return "Change or get the address family"
 
 
-class ChangeClusterEncryption(Subcommand):
+class NodeToNodeEncryption(Subcommand):
     """"Command to enable/disable cluster encryption"""
 
     def __init__(self):
-        super(ChangeClusterEncryption, self).__init__()
-        self.parser.prog = "couchbase-cli change-cluster-encryption"
-        group = self.parser.add_argument_group("Cluster encryption options")
-        group.add_argument('--enable', action="store_true", default=False, help='Enable cluster encryption')
-        group.add_argument('--disable', action="store_true", default=False, help='Disable cluster encryption')
+        super(NodeToNodeEncryption, self).__init__()
+        self.parser.prog = "couchbase-cli node-to-node-encryption"
+        group = self.parser.add_argument_group("Node-to-node encryption options")
+        group.add_argument('--enable', action="store_true", default=False, help='Enable node-to-node encryption')
+        group.add_argument('--disable', action="store_true", default=False, help='Disable node-to-node encryption')
         group.add_argument('--get', action="store_true", default=False,
-                           help='Retrieve current status of cluster encryption (on or off)')
+                           help='Retrieve current status of node-to-node encryption (on or off)')
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -4396,7 +4396,7 @@ class ChangeClusterEncryption(Subcommand):
             _exitIfErrors(err)
             _, err = rest.disable_external_listener(encryption=encryption_disable)
             _exitIfErrors(err)
-            _success(f'Switched cluster encryption {encryption}')
+            _success(f'Switched node-to-node encryption {encryption}')
             return
 
         _exitIfErrors(err)
@@ -4420,7 +4420,7 @@ class ChangeClusterEncryption(Subcommand):
             _, err = rest.disable_external_listener(host=h, encryption=encryption_disable)
             _exitIfErrors(err)
 
-        _success(f'Switched cluster encryption {encryption}')
+        _success(f'Switched node-to-node encryption {encryption}')
 
     @staticmethod
     def _get(rest):
@@ -4436,9 +4436,9 @@ class ChangeClusterEncryption(Subcommand):
                 unencrpyted_nodes.append(n['hostname'])
 
         if len(encrypted_nodes) == len(node_data['nodes']):
-            print('Cluster encryption is enabled')
+            print('Node-to-node encryption is enabled')
         elif len(unencrpyted_nodes) == len(node_data['nodes']):
-            print('Cluster encryption is disabled')
+            print('Node-to-node encryption is disabled')
         else:
             print('Cluster is in mixed mode')
             print(f'Nodes with encryption enabled: {encrypted_nodes}')
@@ -4446,7 +4446,7 @@ class ChangeClusterEncryption(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-change-cluster-encryption" + ".1" if os.name != "nt" else ".html"
+        return "couchbase-cli-node-to-node-encryption" + ".1" if os.name != "nt" else ".html"
 
     @staticmethod
     def get_description():

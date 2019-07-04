@@ -1,0 +1,181 @@
+'\" t
+.\"     Title: couchbase-cli-ip-family
+.\"    Author: Couchbase
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2019-07-04
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-IP\-FAMILY" "1" "2019-07-04" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+couchbase\-cli\-ip\-family \- Edits cluster IP family settings
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+\fIcouchbase\-cli ip\-family\fP [\-\-cluster <url>] [\-username <username>]
+    [\-\-password <password>] [\-\-get] [\-\-set] [\-\-ipv4] [\-\-ipv6]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+This command changes the IP family used for inter\-cluster communication.
+To do this it will execute a number of instructions in each node in the
+cluster. The clusters names must be FQDN and not IP addresses. It also
+provides an option to retrieve the current IP family being used.
+.SH "OPTIONS"
+.sp
+\-c, \-\-cluster
+.RS 4
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
+.RE
+.sp
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
+.RE
+.sp
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
+.RE
+.sp
+\-\-get
+.RS 4
+Show current IP family.
+.RE
+.sp
+\-\-set
+.RS 4
+Change the cluster IP family, specify the IP family to be used using the
+\-\-ipv4 or \-\-ipv6 flags.
+.RE
+.sp
+\-\-ipv4
+.RS 4
+When specified together with \-\-set it will change the cluster to use IP for
+communication between the nodes.
+.RE
+.sp
+\-\-ipv6
+.RS 4
+When specified together with \-\-set it will change the cluster to use IP for
+communication between the nodes.
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRcouchbase://<addr>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CR<addr>:<port>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRhttp://<addr>:<port>\fP
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
+.SH "EXAMPLES"
+.sp
+For a cluster with nodes [cb1.com, cb2.com, cb3.com] communicating via IPv4 we
+can change the IP family being used to IPv6 by using the following command.
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli ip\-family \-c http://cb1.com:8091 \-u Administrator \(rs
+  \-p password \-\-set \-\-ipv6
+.fi
+.if n .RE
+.sp
+This command will configure each node in the cluster to use IPv6. To check what
+family is being used use the command below:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli ip\-family \-c http://cb1.com:8091 \-u Administrator \(rs
+  \-p password \-\-get
+.fi
+.if n .RE
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
+.sp
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
+.SH "SEE ALSO"
+.sp
+\fBcouchbase\-setting\-security\fP(1)
+\fBcouchbase\-ssl\-manage\fP(1)
+\fBcouchbase\-cli\-node\-to\-node\-encryption\fP(1)
+.SH "COUCHBASE\-CLI"
+.sp
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase
