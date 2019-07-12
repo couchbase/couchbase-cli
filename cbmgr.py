@@ -35,6 +35,7 @@ BUCKET_TYPE_MEMCACHED = "memcached"
 
 CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
 CB_ETC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "etc", "couchbase"))
+CB_LIB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "lib"))
 
 # On MacOS the config is store in the users home directory
 if platform.system() == "Darwin":
@@ -1404,37 +1405,41 @@ class MasterPassword(LocalSubcommand):
             nodefile = os.path.join(opts.config_path, "couchbase-server.babysitter.node")
             node = _exit_on_file_read_failure(nodefile).rstrip()
 
-            self.prompt_for_master_pwd(node, cookie, opts.send_password)
+            self.prompt_for_master_pwd(node, cookie, opts.send_password, opts.config_path)
         else :
             _exitIfErrors(["No parameters set"])
 
-    def prompt_for_master_pwd(self, node, cookie, password):
+    def prompt_for_master_pwd(self, node, cookie, password, cb_cfg_path):
+        ns_server_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
+        babystr_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_babysitter", "ebin")
+        inetrc_file = os.path.join(CB_ETC_PATH, "hosts.cfg")
+        dist_cfg_file = os.path.join(cb_cfg_path, "config", "dist_cfg")
+
         if password == '':
             password = getpass.getpass("\nEnter master password:")
-        password = "\"" + password.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
-        randChars = ''.join(random.choice(string.ascii_letters) for i in range(20))
-        name = f'cb-{randChars}@127.0.0.1'
+        name = f'executioner@cb.local'
+        args = ['-pa', ns_server_ebin_path, babystr_ebin_path, '-noinput', '-name', name, \
+                '-proto_dist', 'cb', '-epmd_module', 'cb_epmd', \
+                '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"', \
+                '-setcookie', cookie, \
+                '-run', 'encryption_service', 'remote_set_password', node, password]
 
-        instr = "Res = rpc:call('" + node + "', encryption_service, set_password, [" \
-                + password + "]), io:format(\"~p~n\", [Res])."
-        args = ["-noinput", "-name", name, "-setcookie", cookie, "-eval", \
-                instr, "-run", "init", "stop"]
+        rc, out, err = self.run_process("erl", args)
 
-        res, error = self.run_process("erl", args)
-        res = res.decode().strip()
-
-        if res == "ok":
+        if rc == 0:
             print("SUCCESS: Password accepted. Node started booting.")
-        elif res == "retry":
+        elif rc == 1:
             print("Incorrect password.")
-            self.prompt_for_master_pwd(node, cookie, '')
-        elif res == "{error,not_allowed}":
+            self.prompt_for_master_pwd(node, cookie, '', cb_cfg_path)
+        elif rc == 2:
             _exitIfErrors(["Password was already supplied"])
-        elif res == "{badrpc,nodedown}":
+        elif rc == 3:
             _exitIfErrors(["The node is down"])
-        else:
+        elif rc == 4:
             _exitIfErrors(["Incorrect password. Node shuts down."])
+        else:
+            _exitIfErrors([f'Unknown error: {out}, {err}'])
 
     def run_process(self, name, args):
         try:
@@ -1447,7 +1452,7 @@ class MasterPassword(LocalSubcommand):
             error = p.stderr.read()
             p.wait()
             rc = p.returncode
-            return output, error
+            return rc, output, error
         except OSError:
             _exitIfErrors([f'Could not locate the {name} executable'])
 
