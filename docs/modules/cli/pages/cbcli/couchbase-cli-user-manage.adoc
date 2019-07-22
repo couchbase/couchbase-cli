@@ -82,9 +82,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --auth-domain <domain>::
   Specifies the auth domain to used for an RBAC user profile. This option is
   used when deleting, creating or updating an RBAC user profile and it if may
-  be set to either _local_ or _external_. Loacl users are users that are
+  be set to either _local_ or _external_. Local users are users that are
   managed directly by the Couchbase cluster. External users are users
-  managed by an external source suchas LDAP.
+  managed by an external source such as LDAP.
 
 --user-groups <groups>::
   Specifies the groups the user should be added to. This is used when creating
