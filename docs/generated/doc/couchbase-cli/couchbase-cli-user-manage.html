@@ -755,15 +755,15 @@ fts_searcher[default],fts_searcher[app].</p>
 <div class="dlist">
 <div class="title">Query Service Roles:</div>
 <dl>
-<dt class="hdlist1">manage_index[&#8230;&#8203;]</dt>
+<dt class="hdlist1">query_manage_index[&#8230;&#8203;]</dt>
 <dd>
 <p>Allows the user to create and delete indexes on the specified buckets. To
 give a user the ability to create and delete indexes on all buckets set
-their role to manage_index[*]. To give the user permission to create and
-delete indexes on a single bucket named <em>default</em> then specify their role
-as manage_index[default]. If the user needs to be create and delete indexes
-for multiple buckets, for example <em>default</em> and <em>app</em>, then set their role
-as manage_index[default],manage_index[app].</p>
+their role to query_manage_index[*]. To give the user permission to create
+and delete indexes on a single bucket named <em>default</em> then specify their
+role as query_manage_index[default]. If the user needs to be create and
+delete indexes for multiple buckets, for example <em>default</em> and <em>app</em>, then
+set their role as query_manage_index[default],query_manage_index[app].</p>
 </dd>
 <dt class="hdlist1">query_delete[&#8230;&#8203;]</dt>
 <dd>

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-07-22
+.\"      Date: 2019-07-25
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2019-07-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2019-07-25" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -365,15 +365,15 @@ fts_searcher[default],fts_searcher[app].
 .B Query Service Roles:
 .br
 .sp
-manage_index[...]
+query_manage_index[...]
 .RS 4
 Allows the user to create and delete indexes on the specified buckets. To
 give a user the ability to create and delete indexes on all buckets set
-their role to manage_index[*]. To give the user permission to create and
-delete indexes on a single bucket named \fIdefault\fP then specify their role
-as manage_index[default]. If the user needs to be create and delete indexes
-for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then set their role
-as manage_index[default],manage_index[app].
+their role to query_manage_index[*]. To give the user permission to create
+and delete indexes on a single bucket named \fIdefault\fP then specify their
+role as query_manage_index[default]. If the user needs to be create and
+delete indexes for multiple buckets, for example \fIdefault\fP and \fIapp\fP, then
+set their role as query_manage_index[default],query_manage_index[app].
 .RE
 .sp
 query_delete[...]
