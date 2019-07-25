@@ -48,8 +48,8 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 To set the alternate address and custom ports for node 192.168.1.5 we would use the
 following command
 
-  $ couchbase-cli setting-alternate-address -c 192.168.1.5:8091 --username cur_user \
-   --password cur_password --hostoname 10.10.10.10 \
+  $ couchbase-cli setting-alternate-address -c 192.168.1.5:8091 --username Administrator \
+   --password password --set --hostname 10.10.10.10 \
    --ports mgmt=1100,capi=2000,capiSSL=3000
 
 To see the current alternate address configuration we would use the --list flag as
