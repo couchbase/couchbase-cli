@@ -45,7 +45,7 @@ def request(f):
                 'certificates set up in your cluster and use the --cacert flag to specify\n' +
                 'your client certificate.']
             elif str(e).startswith('[SSL]'):
-                return None, ['Unable to connect with the given CA certificate']
+                return None, [f'Unable to connect with the given CA certificate: {str(e)}']
             return None, [f'Unable to connect to host at {cm.hostname}']
         except requests.exceptions.ReadTimeout as e:
             return None, [f'Request to host `{url}` timed out after {cm.timeout} seconds']
