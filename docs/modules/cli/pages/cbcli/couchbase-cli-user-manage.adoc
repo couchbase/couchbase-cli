@@ -184,14 +184,14 @@ fts_searcher[...]::
 
 .Query Service Roles:
 
-manage_index[...]::
+query_manage_index[...]::
   Allows the user to create and delete indexes on the specified buckets. To
   give a user the ability to create and delete indexes on all buckets set
-  their role to manage_index[*]. To give the user permission to create and
-  delete indexes on a single bucket named _default_ then specify their role
-  as manage_index[default]. If the user needs to be create and delete indexes
-  for multiple buckets, for example _default_ and _app_, then set their role
-  as manage_index[default],manage_index[app].
+  their role to query_manage_index[*]. To give the user permission to create
+  and delete indexes on a single bucket named _default_ then specify their
+  role as query_manage_index[default]. If the user needs to be create and
+  delete indexes for multiple buckets, for example _default_ and _app_, then
+  set their role as query_manage_index[default],query_manage_index[app].
 
 query_delete[...]::
   Allows the user to execute DELETE query statements on the specified buckets.
