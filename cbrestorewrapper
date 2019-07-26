@@ -288,7 +288,7 @@ if __name__ == '__main__':
             p.wait()
             if p.returncode == 1:
                 print(f'Error with backup - look in '
-                      f'{os.path.join(backupDir, "logs", processes[p])}-restore-{bucket}.err for details')
+                      f'{os.path.join(backupDir, "logs", processes[p])}.err for details')
             else:
                 successCount += 1
 
