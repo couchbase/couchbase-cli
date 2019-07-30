@@ -440,7 +440,7 @@ class Subcommand(Command):
                            help="Use ssl when connecting to Couchbase (Deprecated)")
         group.add_argument("--no-ssl-verify", dest="ssl_verify", action="store_false", default=True,
                            help="Skips SSL verification of certificates against the CA")
-        group.add_argument("--cacert", dest="cacert", default=None,
+        group.add_argument("--cacert", dest="cacert", default=True,
                            help="Verifies the cluster identity with this certificate")
         group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
                            help="Prints the short or long help message")
