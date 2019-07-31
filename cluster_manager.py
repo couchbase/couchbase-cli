@@ -46,7 +46,7 @@ def request(f):
                 'your client certificate.']
             elif str(e).startswith('[SSL]'):
                 return None, [f'Unable to connect with the given CA certificate: {str(e)}']
-            return None, [f'Unable to connect to host at {cm.hostname}']
+            return None, [f'Unable to connect to host at {cm.hostname}: {str(e)}']
         except requests.exceptions.ReadTimeout as e:
             return None, [f'Request to host `{url}` timed out after {cm.timeout} seconds']
     return g
@@ -63,12 +63,19 @@ class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
     def __init__(self, hostname, username, password, sslFlag=False, verifyCert=True,
-                 cert=None, debug=False, timeout=DEFAULT_REQUEST_TIMEOUT):
+                 caCert=True, debug=False, timeout=DEFAULT_REQUEST_TIMEOUT, cert=None):
         hostname = hostname.replace("couchbase://", "http://", 1)
         hostname = hostname.replace("couchbases://", "https://", 1)
 
         self.hostname = hostname
+        # verify argument on Request functions can take boolean or a path to a CA if
+        # a path is not provide but the cert still needs to be verified it should use
+        # the system provided CAs
         self.verifyCert = verifyCert
+        self.caCert = caCert
+        if not verifyCert:
+            self.caCert = False
+        # This is for client side certs which is currently not used.
         self.cert = cert
 
         parsed = urllib.parse.urlparse(hostname)
@@ -83,7 +90,7 @@ class ClusterManager(object):
             # Certificates and verification are not used when the ssl flag is
             # specified.
             self.verifyCert = False
-            self.cert = None
+            self.caCert = False
 
         self.username = username
         self.password = password
@@ -1853,7 +1860,7 @@ class ClusterManager(object):
     def _get(self, url):
         if self.debug:
             print(f'GET {url}')
-        response = requests.get(url, auth=(self.username, self.password), verify=self.verifyCert,
+        response = requests.get(url, auth=(self.username, self.password), verify=self.caCert,
                                 cert=self.cert, timeout=self.timeout,
                                 headers=self.headers)
         return _handle_response(response, self.debug)
@@ -1865,7 +1872,7 @@ class ClusterManager(object):
                 params = {}
             print(f'POST {url} {urllib.parse.urlencode(params)}')
         response = requests.post(url, auth=(self.username, self.password), data=params,
-                                 cert=self.cert, verify=self.verifyCert, timeout=self.timeout,
+                                 cert=self.cert, verify=self.caCert, timeout=self.timeout,
                                  headers=self.headers)
         return _handle_response(response, self.debug)
 
@@ -1876,7 +1883,7 @@ class ClusterManager(object):
                 params = {}
             print(f'POST {url} {json.dumps(params)}')
         response = requests.post(url, auth=(self.username, self.password), json=params,
-                                 cert=self.cert, verify=self.verifyCert, timeout=self.timeout,
+                                 cert=self.cert, verify=self.caCert, timeout=self.timeout,
                                  headers=self.headers)
         return _handle_response(response, self.debug)
 
@@ -1887,7 +1894,7 @@ class ClusterManager(object):
                 params = {}
             print(f'PUT {url} {urllib.parse.urlencode(params)}')
         response = requests.put(url, params, auth=(self.username, self.password),
-                                cert=None, verify=self.verifyCert, timeout=self.timeout,
+                                cert=None, verify=self.caCert, timeout=self.timeout,
                                 headers=self.headers)
         return _handle_response(response, self.debug)
 
@@ -1898,7 +1905,7 @@ class ClusterManager(object):
                 params = {}
             print(f'PUT {url} {json.dumps(params)}')
         response = requests.put(url, auth=(self.username, self.password), json=params,
-                                cert=None, verify=self.verifyCert, timeout=self.timeout,
+                                cert=None, verify=self.caCert, timeout=self.timeout,
                                 headers = self.headers)
         return _handle_response(response, self.debug)
 
@@ -1909,7 +1916,7 @@ class ClusterManager(object):
                 params = {}
             print(f'DELETE {url} {urllib.parse.urlencode(params)}')
         response = requests.delete(url, auth=(self.username, self.password), data=params,
-                                   cert=None, verify=self.verifyCert, timeout=self.timeout,
+                                   cert=None, verify=self.caCert, timeout=self.timeout,
                                    headers=self.headers)
         return _handle_response(response, self.debug)
 
