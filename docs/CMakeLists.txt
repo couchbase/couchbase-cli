@@ -69,9 +69,9 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-bucket-flush.1
     generated/man/man1/couchbase-cli-bucket-list.1
     generated/man/man1/couchbase-cli-cluster-edit.1
-    generated/man/man1/couchbase-cli-change-cluster-encryption.1
+    generated/man/man1/couchbase-cli-node-to-node-encryption.1
     generated/man/man1/couchbase-cli-cluster-init.1
-    generated/man/man1/couchbase-cli-change-ip-family.1
+    generated/man/man1/couchbase-cli-ip-family.1
     generated/man/man1/couchbase-cli-collect-logs-start.1
     generated/man/man1/couchbase-cli-collect-logs-status.1
     generated/man/man1/couchbase-cli-collect-logs-stop.1
