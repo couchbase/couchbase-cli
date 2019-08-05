@@ -14,8 +14,8 @@ Manage security policies
 _couchbase-cli setting-security_ [--cluster <url>] [--username <user>]
     [--password <password>] [--set] [--get] [--disable-http-ui <0|1>]
     [--cluster-encryption-level <all|control>]
-    [--tls-min-version <tlsv1.1|tlsv1.2>] [--tls-honor-cipher-order <1|0>]
-    [---cipher-suites <ciphers>]
+    [--tls-min-version <tlsv1|tlsv1.1|tlsv1.2>]
+    [--tls-honor-cipher-order <1|0>] [---cipher-suites <ciphers>]
 
 == DESCRIPTION
 
@@ -45,7 +45,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   be sent encrypted. By default when cluster encryption is turned on, the
   level will be "control".
 
---tls-min-version <tlsv1.1|tlsv1.2>::
+--tls-min-version <tlsv1|tlsv1.1|tlsv1.2>::
   Specify the minimum TLS protocol version to be used across all of the
   Couhbase services.
 

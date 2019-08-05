@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-security
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-05-17
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2019-08-05
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2019-05-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2019-08-05" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,12 +31,13 @@
 couchbase\-cli\-setting\-security \- Manage security policies
 .SH "SYNOPSIS"
 .sp
+.sp
 .nf
 \fIcouchbase\-cli setting\-security\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-set] [\-\-get] [\-\-disable\-http\-ui <0|1>]
     [\-\-cluster\-encryption\-level <all|control>]
-    [\-\-tls\-min\-version <tlsv1.1|tlsv1.2>] [\-\-tls\-honor\-cipher\-order <1|0>]
-    [\-\-\-cipher\-suites <ciphers>]
+    [\-\-tls\-min\-version <tlsv1|tlsv1.1|tlsv1.2>]
+    [\-\-tls\-honor\-cipher\-order <1|0>] [\-\-\-cipher\-suites <ciphers>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -95,7 +96,7 @@ be sent encrypted. By default when cluster encryption is turned on, the
 level will be "control".
 .RE
 .sp
-\-\-tls\-min\-version <tlsv1.1|tlsv1.2>
+\-\-tls\-min\-version <tlsv1|tlsv1.1|tlsv1.2>
 .RS 4
 Specify the minimum TLS protocol version to be used across all of the
 Couhbase services.
