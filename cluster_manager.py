@@ -639,6 +639,8 @@ class ClusterManager(object):
 
         return rv, None
 
+    # otpNode should only be printed out or handed back to ns_server
+    # It should never be used to create a connection to a node
     def _get_otps_names(self, eject_nodes=[], failover_nodes=[], readd_nodes=[]):
         result, errors = self.pools('default')
         if errors:
