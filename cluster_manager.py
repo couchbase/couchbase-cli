@@ -92,8 +92,8 @@ class ClusterManager(object):
             self.verifyCert = False
             self.caCert = False
 
-        self.username = username
-        self.password = password
+        self.username = username.encode('utf-8').decode('latin1')
+        self.password = password.encode('utf-8').decode('latin1')
         self.timeout = timeout
         self.ssl = self.hostname.startswith("https://")
         self.debug = debug
