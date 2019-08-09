@@ -1,0 +1,81 @@
+'\" t
+.\"     Title: couchbase-cli-reset-cipher-suites
+.\"    Author: Couchbase
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2019-08-19
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-RESET\-CIPHER\-SUITES" "1" "2019-08-19" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+couchbase\-cli\-reset\-cipher\-suites \- Resets the Couchbase Server cipher suites to the default
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+\fIcouchbase\-cli reset\-cipher\-suites\fP [\-\-force] [\-\-port <port>]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+This command is used to reset the cipher suites to the default for Couchbase
+Server. This command should only be used when the cipher have been configured
+in a way that breaks remote access. The cipher suit can be managed using the
+\fBcouchbase\-cli\-settinig\-security\fP(1) command.
+.sp
+The \f(CRreset\-cipher\-suites\fP command must be run locally on a node that is part
+of the cluster (i.e. must connect to the node the command is run on). This is
+required, as the cluster and ciphers suits could be configured in a way
+that disables remote access. \f(CRreset\-cipher\-suites\fP uses the local
+authentication token as a result the user that execute the command needs to
+have read access to the local Couchbase Server configuration files.
+.SH "OPTIONS"
+.sp
+\-\-force
+.RS 4
+It reset the cipher suites without asking for confirmation.
+.RE
+.sp
+\-\-port
+.RS 4
+Specify the REST API port of the locally running Couchbase Server. If no
+port is specified the default port 8091 is used.
+.RE
+.SH "EXAMPLES"
+.sp
+To reset the cipher suites to the default:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli reset\-cipher\-suites
+.fi
+.if n .RE
+.SH "SEE ALSO"
+.sp
+\fBcouchbase\-cli\-setting\-security.adoc\fP(1),
+.SH "COUCHBASE\-CLI"
+.sp
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase

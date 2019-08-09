@@ -26,6 +26,7 @@
  ** xref:cli:cbcli/couchbase-cli-rebalance-stop.adoc[rebalance-stop]
  ** xref:cli:cbcli/couchbase-cli-recovery.adoc[recovery]
  ** xref:cli:cbcli/couchbase-cli-reset-admin-password.adoc[reset-admin-password]
+ ** xref:cli:cbcli/couchbase-cli-reset-cipher-suites.adoc[reset-cipher-suites]
  ** xref:cli:cbcli/couchbase-cli-server-add.adoc[server-add]
 // ** xref:cli:cbcli/couchbase-cli-server-eshell.adoc[server-eshell] #tooling Patrick Varley (20Jun2019): "server-eshell is more of a internal tool. The usage on the command line does not print it, so we can leave it for now."
  ** xref:cli:cbcli/couchbase-cli-server-info.adoc[server-info]

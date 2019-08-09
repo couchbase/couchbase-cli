@@ -1856,6 +1856,10 @@ class ClusterManager(object):
                 return '', [f'Node {host} must be version 6.5 or higher']
 
         return '', [f'Could not get data for {host}']
+
+    def reset_cipher_suites(self):
+        url = f'{self.hostname}/controller/resetCipherSuites'
+        return self._post_form_encoded(url, None)
     # Low level methods for basic HTML operations
 
     @request

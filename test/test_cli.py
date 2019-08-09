@@ -1054,6 +1054,8 @@ class TestSettingXdcr(CommandTest):
 
 # TODO: TestSettingMasterPassword
 # TODO: TestSslManage
+# TODO: TestRestCipherSuites
+# TODO: TestResetAdminPassword
 
 
 class TestUserManage(CommandTest):

@@ -26,6 +26,7 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-rebalance.html
   generated/doc/couchbase-cli/couchbase-cli-recovery.html
   generated/doc/couchbase-cli/couchbase-cli-reset-admin-password.html
+  generated/doc/couchbase-cli/couchbase-cli-reset-cipher-suites.html
   generated/doc/couchbase-cli/couchbase-cli-server-add.html
   generated/doc/couchbase-cli/couchbase-cli-server-eshell.html
   generated/doc/couchbase-cli/couchbase-cli-server-info.html
@@ -88,6 +89,7 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-rebalance.1
     generated/man/man1/couchbase-cli-recovery.1
     generated/man/man1/couchbase-cli-reset-admin-password.1
+    generated/man/man1/couchbase-cli-reset-cipher-suites.1
     generated/man/man1/couchbase-cli-server-add.1
     generated/man/man1/couchbase-cli-server-eshell.1
     generated/man/man1/couchbase-cli-server-info.1

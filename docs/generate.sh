@@ -63,6 +63,7 @@ gen_docs couchbase-cli-rebalance-status.adoc 1
 gen_docs couchbase-cli-rebalance-stop.adoc 1
 gen_docs couchbase-cli-recovery.adoc 1
 gen_docs couchbase-cli-reset-admin-password.adoc 1
+gen_docs couchbase-cli-reset-cipher-suites.adoc 1
 gen_docs couchbase-cli-server-add.adoc 1
 gen_docs couchbase-cli-server-eshell.adoc 1
 gen_docs couchbase-cli-server-info.adoc 1

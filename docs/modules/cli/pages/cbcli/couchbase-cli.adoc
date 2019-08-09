@@ -101,6 +101,9 @@ man:couchbase-cli-recovery[1]::
 man:couchbase-cli-reset-admin-password[1]::
   Resets the administrator password.
 
+man:couchbase-cli-reset-cipher-suites[1]::
+  Resets the cipher suites to the default.
+
 man:couchbase-cli-server-add[1]::
   Adds a server to the cluster.
 

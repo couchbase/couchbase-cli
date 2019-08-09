@@ -1389,6 +1389,41 @@ class HostList(Subcommand):
         return "List all hosts in a cluster"
 
 
+class ResetCipherSuites(LocalSubcommand):
+    """The reset cipher suites subcommand """
+
+    def __init__(self):
+        super(ResetCipherSuites, self).__init__()
+        self.parser.prog = "couchbase-cli reset-cipher-suites"
+        group = self.parser.add_argument_group("Reset Cipher Suites")
+        group.add_argument("--force", action='store_true', default=False, help="Force resetting of the cipher suites")
+        group.add_argument("-P", "--port", metavar="<port>", default="8091",
+                           help="The REST API port, defaults to 8091")
+
+    def execute(self, opts):
+        token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
+        rest = ClusterManager("http://127.0.0.1:" + opts.port, "@localtoken", token)
+        check_cluster_initialized(rest)
+        check_versions(rest)
+
+        if not opts.force:
+            confirm = str(input("Are you sure that the cipher should be reset?: Y/[N]"))
+            if confirm != "Y":
+                _success("Cipher suites have not been reset to default")
+
+        _, errors = rest.reset_cipher_suites()
+        _exitIfErrors(errors)
+        _success("Cipher suites have been reset to the default")
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-reset-cipher-suites" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Rests cipher suites to the default"
+
+
 class MasterPassword(LocalSubcommand):
     """The master password subcommand"""
 
@@ -2931,7 +2966,6 @@ class SettingSecurity(Subcommand):
         elif opts.set:
             self._set(rest, opts.disable_http_ui, opts.cluster_encryption_level, opts.tls_min_version,
                       opts.tls_honor_cipher_order, opts.cipher_suites)
-
 
     @staticmethod
     def _set(rest, disable_http_ui, encryption_level, tls_min_version, honor_order, cipher_suites):
