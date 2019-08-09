@@ -2,6 +2,7 @@
 
 import getpass
 import inspect
+import ipaddress
 import json
 import os
 import platform
@@ -244,7 +245,16 @@ class CBHostAction(Action):
             parsed = urllib.parse.urlparse("http://" + values)
 
         if parsed.path != "" or parsed.params != "" or parsed.query != "" or parsed.fragment != "":
-            raise ArgumentError(self, "%s is not an accepted hostname" % values)
+            raise ArgumentError(self, f"{values} is not an accepted hostname")
+        if not parsed.hostname:
+            raise ArgumentError(self, f"{values} is not an accepted hostname")
+        hostname_regex = re.compile("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$");
+        if not hostname_regex.match(parsed.hostname):
+            try:
+                ipaddress.ip_address(parsed.hostname)
+            except ValueError:
+                raise ArgumentError(self, f"{values} is not an accepted hostname")
+
 
         scheme = parsed.scheme
         port = None
