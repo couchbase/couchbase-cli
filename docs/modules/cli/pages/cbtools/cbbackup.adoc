@@ -1,4 +1,5 @@
 = cbbackup(1)
+:page-aliases: cli:cbbackup-tool
 ifndef::doctype-manpage[:doctitle: cbbackup]
 
 ifdef::doctype-manpage[]

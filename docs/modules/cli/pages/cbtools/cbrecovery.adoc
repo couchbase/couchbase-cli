@@ -1,4 +1,5 @@
 = cbrecovery(1)
+:page-aliases: cli:cbrecovery
 ifndef::doctype-manpage[:doctitle: cbrecovery]
 
 ifdef::doctype-manpage[]

@@ -1,4 +1,5 @@
 = cbtransfer(1)
+:page-aliases: cli:cbtransfer-tool
 ifndef::doctype-manpage[:doctitle: cbtransfer]
 
 ifdef::doctype-manpage[]

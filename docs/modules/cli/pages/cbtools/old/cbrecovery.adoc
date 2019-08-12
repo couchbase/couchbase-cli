@@ -1,0 +1,183 @@
+= cbrecovery
+:page-topic-type: reference
+
+[abstract]
+The [.cmd]`cbrecovery` tool restores data to a local cluster, from a bucket on a remote cluster that was previously established as an XDCR remote replica.
+
+== Syntax
+
+The basic syntax is:
+
+----
+cbrecovery [options] [source-cluster] [destination-cluster]
+----
+
+Where:
+
+* `[options]`: Command options for [.cmd]`cbrecovery`.
+* `[source-cluster]`: A cluster containing an XDCR remote-replica bucket, which is used as the source for data-recovery.
+* `[destination-cluster]`: A cluster that has suffered data loss from a bucket previously replicated to a remote cluster, by means of XDCR.
+
+== Description
+
+Couchbase Server allows one or more replicas to be created for each vBucket on the cluster.
+This helps to ensure continued data-availability in the event of node-failure.
+
+However, if multiple nodes within a single cluster fail simultaneously, one or more active vBuckets and all their replicas may be affected; meaning that lost data cannot be recovered locally.
+
+In such cases, provided that a bucket affected by such failure has already been established as a source bucket for XDCR, the lost data may be retrieved from the bucket defined on the remote server as the corresponding replication-target.
+This retrieval is achieved from the command-line, by means of *cbrecovery*.
+
+Before attempting to recover the lost data, restore capacity to the local cluster, as appropriate.
+However, do not rebalance added nodes into the cluster until _after_ *cbrecovery* has been used to recover the lost data.
+
+*Tool Location*
+
+The tool is in the following locations:
+
+[cols="100,733"]
+|===
+| Operating system | Location
+
+| Linux
+| [.path]_/opt/couchbase/bin/cbrecovery_
+
+| Windows
+| [.path]_C:\Program Files\Couchbase\Server\bin\cbrecovery_
+
+| Mac OS X
+| [.path]_/Applications/Couchbase Server.app/Contents/Resources/couchbase-core/bin/cbrecovery_
+|===
+
+== Options
+
+The following are the command options:
+
+.cbrestore options
+[cols="2,3"]
+|===
+| Option | Description
+
+| `-h, --help`
+| Command line help.
+
+| `-b BUCKET_SOURCE, --bucket-source=BUCKET_SOURCE`
+| Name of a bucket on the source cluster.
+This must previously have been established and used as a replication target for XDCR, using the source-bucket specified here as BUCKET_DESTINATION.
+
+| `-B BUCKET_DESTINATION, --bucket-destination=BUCKET_DESTINATION`
+| Name of a bucket on the destination cluster.
+This is a bucket that has suffered data-loss, and was previously established and used as a source for XDCR replication, using the target-bucket specified here as BUCKET_SOURCE.
+
+| `-u USERNAME, --username=USERNAME`
+| The username for the Full Administrator, Cluster Administrator, or XDCR Administrator for the cluster from which the data is recovered.
+
+| `-p PASSWORD, --password=PASSWORD`
+| The password for the Full Administrator, Cluster Administrator, or XDCR Administrator for the cluster from which the data is recovered.
+
+| `-U USERNAME_DESTINATION, --username-destination=USERNAME_DESTINATION`
+| The username for the Full Administrator, Cluster Administrator, or XDCR Administrator for the cluster onto which the recovered data is copied.
+
+| `-P PASSWORD_DESTINATION, --password-destination=PASSWORD_DESTINATION`
+| The password for the Full Administrator, Cluster Administrator, or XDCR Administrator for the cluster onto which the recovered data is copied.
+
+| `-i ID, --id=ID`
+| Transfer only items that match a vBucket ID.
+
+| `-s, --ssl`
+| Transfer data with SSL enabled.
+
+| `-t THREADS, --threads=THREADS`
+| Number of concurrent worker-threads, performing the transfer.
+
+| `-n, --dry-run`
+| No actual transfer.
+Just validate parameters, files, connectivity, and configurations.
+
+| `-v, --verbose`
+| Verbose logging.
+More v's provide more verbosity.
+Max: -vvv.
+
+| `-x EXTRA, --extra=EXTRA`
+| Provide extra, uncommon configuration-parameters.
+Comma-separated key=val(key-val)* pairs.
+|===
+
+The following are extra, specialized command options, used by means of the `cbrecovery -x` parameter.
+
+.cbrestore -x options
+[cols="1,3"]
+|===
+| -x option | Description
+
+| `backoff_cap=10`
+| Maximum back-off time during the rebalance period.
+
+| `batch_max_bytes=400000`
+| Transfer this # of bytes per batch.
+
+| `batch_max_size=1000`
+| Transfer this # of documents per batch.
+
+| `cbb_max_mb=100000`
+| Split backup file on destination cluster if it exceeds the MB.
+
+| `conflict_resolve=1`
+| By default, enable conflict resolution.
+
+| `data_only=0`
+| For value 1, transfer only data from a backup file or cluster.
+
+| `dcp_consumer_queue_length=1000`
+| A DCP client needs a queue for incoming documents/messages.
+A large length is more efficient, but memory proportional to length*avg.
+doc size.
+Below length 150, performance degrades significantly.
+
+| `design_doc_only=0`
+| For value 1, transfer only design documents from a backup file or cluster.
+Default: 0.
+The design documents are restored from a backup file created with the `cbbackup` tool.
+
+| `max_retry=10`
+| Max number of sequential retries if the transfer fails.
+
+| `mcd_compatible=1`
+| For value 0, display extended fields for stdout output.
+
+| `nmv_retry=1`
+| 0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message.
+Default: 1.
+
+| `recv_min_bytes=4096`
+| Amount of bytes for every TCP/IP batch transferred.
+
+| `rehash=0`
+| For value 1, rehash the partition IDs of each item as it is required when transferring data between clusters with the different number of partitions; for example, when transferring data from an Mac OS X server to a non-Mac OS X cluster.
+
+| `report=5`
+| Number batches transferred before updating the progress bar in the console.
+
+| `report_full=2000`
+| Number batches transferred before emitting the progress information in the console.
+
+| `seqno=0`
+| By default, start `seqno` from beginning.
+
+| `try_xwm=1`
+| Transfer documents with metadata.
+Default: 1.
+The value of 0 is used only when transferring from 1.8.x to 1.8.x.
+|===
+
+== Example
+
+ $ cbrecovery http://10.142.180.104:8091 http://10.142.180.101:8091 \
+  > -b travelSampleBackup \
+  > -B travel-sample \
+  > -u Administrator \
+  > -p password \
+  > -U Administrator \
+  > -P password \
+  > -v

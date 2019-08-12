@@ -1,4 +1,5 @@
 = cbworkloadgen(1)
+:page-aliases: cli:cbworkloadgen-tool
 ifndef::doctype-manpage[:doctitle: cbworkloadgen]
 
 ifdef::doctype-manpage[]

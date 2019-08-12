@@ -1,0 +1,140 @@
+= Restoring with cbrestore
+:page-aliases: cli:restore-cbrestore
+
+[abstract]
+To restore bucket data that was backed up using the command [.cmd]`cbbackup`, use the command [.cmd]`cbrestore` to restore information into a bucket on a new cluster.
+
+When restoring a backup, you have to select the appropriate restore sequence based on the type of restore you are performing.
+The available methods when restoring a cluster depend on the method used to back up the cluster.
+
+If [.cmd]`cbbackup` was used to backup the bucket data, you could restore back to a cluster with the same or different configuration.
+This is because [.cmd]`cbbackup` stores information about the stored bucket data in a format that enables it to be restored back into a bucket on a new cluster.
+
+NOTE: If the information was backed up using a direct file copy, then you must restore the information back to an identical cluster.
+
+The [.cmd]`cbrestore` command takes the information that has been backed up via the [.cmd]`cbbackup`> command and streams the stored data into a cluster.
+The cluster configuration does not have to match the one used when the data was backed up.
+It can be used when transferring information to a new cluster or updated or expanded version of the existing cluster in the event of disaster recovery.
+
+Because the data can be flexibly restored, it provides for a number of different scenarios to be executed on the data that has been backed up:
+
+* Restoring data into a cluster of a different size and configuration.
+* Transferring or restoring data into a different bucket on the same or different cluster.
+* Restoring a selected portion of the data into a new or different cluster, or the same cluster but a different bucket.
+
+The basic format of the [.cmd]`cbrestore` command is as follows:
+
+----
+cbrestore [options] [source] [destination]
+----
+
+Where:
+
+[options]::
+Options specifying how the information should be restored into the cluster.
+Common options include:
+* `--bucket-source`
++
+Specify the name of the bucket data to be read from the backup data that will be restored.
+
+* `--bucket-destination`
++
+Specify the name of the bucket the data will be written to.
+If this option is not specified, the data will be written to a bucket with the same name as the source bucket.
+
+* `--add`
++
+Use `--add` instead of `--set` to avoid overwriting the existing items in the destination.
+
+[source]:: The backup directory specified to `cbbackup` where the backup data was stored.
+
+[destination]:: The REST API URL of a node within the cluster where the information will be restored.
+
+The [.cmd]`cbrestore` command restores only a single bucket of data at a time.
+If you have created a backup of an entire cluster (such as all buckets), then you must restore each bucket individually back to the cluster.
+All destination buckets must already exist since [.cmd]`cbrestore` does not create or configure destination buckets for you.
+
+For example, to restore a single bucket of data to a cluster:
+
+----
+cbrestore \
+    /backups/backup-2012-05-10 \
+    http://Administrator:password@HOST:8091 \
+    --bucket-source=XXX
+    [####################] 100.0% (231726/231726 msgs)
+    bucket: default, msgs transferred...
+    :                total |       last |    per sec
+    batch :                  232 |        232 |       33.1
+    byte  :             10247683 |   10247683 |  1462020.7
+    msg   :               231726 |     231726 |    33060.0
+    done
+----
+
+To restore the bucket data to a different bucket on the cluster:
+
+----
+cbrestore \
+    /backups/backup-2012-05-10 \
+    http://Administrator:password@HOST:8091 \
+    --bucket-source=XXX \
+    --bucket-destination=YYY
+    [####################] 100.0% (231726/231726 msgs)
+    bucket: default, msgs transferred...
+    :                total |       last |    per sec
+    batch :                  232 |        232 |       33.1
+    byte  :             10247683 |   10247683 |  1462020.7
+    msg   :               231726 |     231726 |    33060.0
+    done
+----
+
+The `msg` count in this case is the number of documents restored back to the bucket in the cluster.
+
+== Filtering keys during restore
+
+The [.cmd]`cbrestore` command includes support for filtering the keys that are restored to the database from the files that were created during backup.
+This is in addition to the filtering support available during backup).
+
+The specification is in the form of a regular expression supplied as an option to the [.cmd]`cbrestore` command.
+For example, to restore information to a bucket only where the keys have an `object` prefix:
+
+----
+cbrestore /backups/backup-20120501 http://HOST:8091 \
+    -u Administrator -p password \
+    -b default \
+    -k '^object.*'
+    2013-02-18 10:39:09,476: w0 skipping msg with key: sales_7597_3783_6
+    ...
+    2013-02-18 10:39:09,476: w0 skipping msg with key: sales_5575_3699_6
+    2013-02-18 10:39:09,476: w0 skipping msg with key: sales_7597_3840_6
+    [                    ] 0.0% (0/231726 msgs)
+    bucket: default, msgs transferred...
+    :                total |       last |    per sec
+    batch :                    1 |          1 |        0.1
+    byte  :                    0 |          0 |        0.0
+    msg   :                    0 |          0 |        0.0
+    done
+----
+
+This copies only the keys matching the specified prefix into the [.var]`default` bucket.
+For each key skipped, an information message is provided.
+The remaining output shows the records transferred and summary as normal.
+
+== Restoring using file copies
+
+To restore the information to the same cluster with the same configuration, shut down your entire cluster while you restore the data and then restart the cluster again.
+In this case, you are replacing the entire cluster data and configuration with the backed up version of the data files, and then restarting the cluster with the saved version of the cluster files.
+
+IMPORTANT: Make sure that any restoration of files also sets the proper ownership of those files to the Couchbase user.
+
+When restoring data back in the same cluster, verify the following:
+
+* Backup and restore must use the same version of Couchbase Server.
+* The cluster must contain the same number of nodes.
+* Each node must have the same IP address or hostname it was configured with when the cluster was backed up.
+* All `config.dat` configuration files as well as all database files must be restored to their original locations.
+
+The steps required to complete the restore process are:
+
+. Stop the Couchbase Server service on all nodes.
+. On each node, restore the database, `stats.json`, and configuration file `config.dat` from your backup copies for each node.
+. Restart the service on each node.

@@ -1,0 +1,258 @@
+= Backing up with cbbackup
+:page-aliases: cli:backup-cbbackup
+
+The `cbbackup` tool is a flexible backup command that enables you to backup both local data and remote nodes and clusters involving different combinations of your data:
+
+* Single bucket on a single node
+* All the buckets on a single node
+* Single bucket from an entire cluster
+* All the buckets from an entire cluster
+
+Backups can be performed either locally, by copying the files directly on a single node or remotely by connecting to the cluster and then streaming the data from the cluster to your backup location.
+Backups can be performed either on a live running node or cluster or on an offline node.
+
+The `cbbackup` command stores data in a format that enables easy restoration.
+When restoring, using `cbrestore`, you can restore back to a cluster of any configuration.
+The source and destination clusters do not need to match if you used `cbbackup` to store the information.
+
+The `cbbackup` command will copy the data in each course from the source definition to a destination backup directory.
+The backup file format is unique to Couchbase and enables you to restore, all or part of the backed up data when restoring the information to a cluster.
+
+Selection can be made on a key (by a regular expression) or all the data stored in a particular vBucket ID.
+You can also select to copy the source data from a bucket name into a bucket of a different name on the cluster on which you are restoring the data.
+
+The `cbbackup` command takes the following arguments:
+
+----
+cbbackup [options] [source] [backup_dir]
+----
+
+[NOTE]
+====
+The `cbbackup` tool is located within the standard Couchbase command-line directory.
+
+Be aware that `cbbackup` does not support external IP addresses.
+If you install Couchbase Server with the default IP address, you cannot use an external hostname to access it.
+====
+
+The following are `cbbackup [options]` arguments:
+
+The following options are used to configure `username` and `password` information for connecting to the cluster, back up type selection and bucket selection.
+
+You can use one or more options.
+The primary options select what will be backed up by `cbbackup`, including:
+
+* `--single-node`
++
+Back up only the single node identified by the source specification.
+
+* `--bucket-source` or `-b`
++
+Back up only the specified bucket name.
+
+The following are `cbbackup [source]` arguments:
+
+The source for the data, either a local data directory reference or a remote node/cluster specification:
+
+* Local Directory Reference
++
+A local directory specification is defined as a URL using the `couchstore-files` protocol.
+For example:
++
+`couchstore-files:///opt/couchbase/var/lib/couchbase/data/default`
++
+Using this method you are specifically backing up the specified bucket data on a single node only.
+To back up an entire bucket data across a cluster or all the data on a single node, you must use the cluster node specification.
+This method does not back up the design documents defined within the bucket.
+
+* Cluster Node
++
+This is a node or a node within a cluster, specified as a URL to the node or cluster service.
+For example:
++
+----
+http://HOST:8091
+
+// For distinction you can use the couchbase protocol prefix:
+    couchbase://HOST:8091
+
+
+// The administrator and password can also be combined with both forms of the URL for authentication.
+If you have named data buckets (other than the default bucket) that you want to backup,
+specify an administrative name and password for the bucket:
+
+    couchbase://Administrator:password@HOST:8091
+----
+
+The combination of additional options specifies whether the supplied URL refers to the entire cluster, a single node, or a single bucket (node or cluster).
+The node and cluster can be remote or local.
+This method also backs up the design documents used to define views and indexes.
+
+The `cbbackup [backup_dir]` argument is the directory where the backup data files will be stored on the node on which the `cbbackup` is executed.
+This must be an absolute and explicit directory, as the files will be stored directly within the specified directory; no additional directory structure is created to differentiate between the different components of the data backup.
+The directory that you specify for the backup should either not exist, or exist and be empty with no other files.
+If the directory does not exist, it will be created, but only if the parent directory already exists.
+The backup directory is always created on the local node, even if you are backing up a remote node or cluster.
+The backup files are stored locally in the specified backup directory.
+Backups can take place on a live running cluster or a node for the IP.
+
+Using this basic structure, you can back up a number of different combinations of data from your source cluster.
+Examples of the different combinations are provided below:
+
+== Back up all nodes and all buckets
+
+To back up an entire cluster consisting of all the buckets and all the node data:
+
+----
+cbbackup http://HOST:8091 /backups/backup-20120501 \
+    -u Administrator -p password
+    [####################] 100.0% (231726/231718 msgs)
+bucket: default, msgs transferred...
+          :
+               total |     last | per sec
+    batch :     5298 |     5298 | 617.1
+    byte  : 10247683 | 10247683 | 1193705.5
+    msg   :   231726 |   231726 | 26992.7
+done
+    [####################] 100.0% (11458/11458 msgs)
+bucket: loggin, msgs transferred...
+          :
+               total |     last | per sec
+    batch :     5943 |     5943 | 15731.0
+    byte  : 11474121 | 11474121 | 30371673.5
+    msg   :       84 |       84 | 643701.2
+done
+----
+
+When backing up multiple buckets, the progress and summary reports for the transferred information are listed for each backed-up bucket.
+The `msgs` count shows the number of documents backed up.
+The `byte` shows the overall size of the data document data.
+
+The source specification is the URL of one of the nodes in the cluster.
+The backup process will stream data directly from each node in order to create the backup content.
+The initial node is only used to obtain the cluster topology so that the data can be backed up.
+
+The created backup enables you to choose how you want to restore the information.
+You can restore the entire dataset, or a single bucket, or a filtered selection of that information on a cluster of any size or configuration.
+
+== Back up all nodes, single bucket
+
+To back up all the data for a single bucket containing all of the information from the entire cluster:
+
+----
+cbbackup http://HOST:8091 /backups/backup-20120501 \
+      -u Administrator -p password \
+      -b default
+      [####################] 100.0% (231726/231718 msgs)
+    bucket: default, msgs transferred...
+           :                total |       last |    per sec
+     batch :                 5294 |       5294 |      617.0
+     byte  :             10247683 |   10247683 |  1194346.7
+     msg   :               231726 |     231726 |    27007.2
+    done
+----
+
+The `-b` option specifies the name of the bucket that you want to back up.
+If the bucket is a named bucket, you must provide administrative name and password it.
+To back up an entire cluster, you must run the same operation on each bucket within the cluster.
+
+== Back up single node, all buckets
+
+To back up all of the data stored on a single node across different buckets:
+
+----
+cbbackup http://HOST:8091 /backups/backup-20120501 \
+      -u Administrator -p password \
+      --single-node
+----
+
+Using this method, the source specification must specify the node that you want backup.
+To back up an entire cluster using this method, you should back up each node individually.
+
+== Back up single node, single bucket
+
+To backup the data from a single bucket on a single node:
+
+----
+cbbackup http://HOST:8091 /backups/backup-20120501 \
+      -u Administrator -p password \
+      --single-node \
+      -b default
+----
+
+Using this method, the source specification must be the node that you want to back up.
+
+== Back up single node, single bucket; back up files stored on the same node
+
+There are two methods available to back up a single node and bucket, with the files stored on the same node as the source data.
+One uses a node specification, the other uses a file store specification.
+Using the node specification:
+
+----
+ssh USER@HOST
+    remote-> sudo su - couchbase
+    remote-> cbbackup http://127.0.0.1:8091 /mnt/backup-20120501 \
+      -u Administrator -p password \
+      --single-node \
+      -b default
+----
+
+This method backs up the cluster data of a single bucket on the local node, storing the backup data in the local filesystem.
+
+Using a file store reference (in place of a node reference) is faster, because the data files can be copied directly from the source directory to the backup directory:
+
+----
+ssh USER@HOST
+    remote-> sudo su - couchbase
+    remote-> cbbackup couchstore-files:///opt/couchbase/var/lib/couchbase/data/default /mnt/backup-20120501
+----
+
+To back up the entire cluster using this method, you will need to back up each node and each bucket individually.
+
+NOTE: Choosing the right backup solution depends on your requirements and your expected method for restoring the data to the cluster.
+
+== Filter keys during backup
+
+The `cbbackup` command includes support for filtering the keys that are backed up into the database files you create.
+This can be useful if you want to specifically back up a portion of your dataset, or you want to move part of your dataset to a different bucket.
+
+The specification is in the form of a regular expression, and is performed on the client-side within the `cbbackup` tool.
+For example, to back up information from a bucket where the keys have a prefix `object`:
+
+----
+cbbackup http://HOST:8091 /backups/backup-20120501 \
+  -u Administrator -p password \
+  -b default \
+  -k '^object.*'
+----
+
+The above copies only the keys matching the specified prefix into the backup file.
+When the data is restored, only those keys that were recorded in the backup file will be restored.
+
+IMPORTANT: The regular expression match is performed on the client side.
+This means that the entire bucket contents must be accessed by the `cbbackup` command and then discarded if the regular expression does not match.
+
+Key-based regular expressions can also be used when restoring data.
+You can back up an entire bucket and restore selected keys during the restore process using `cbrestore`.
+
+== Back up using file copies
+
+You can also back up by using either `cbbackup` and specifying the local directory where the data is stored, or by copying the data files directly using cp, tar, or similar.
+
+For example, using `cbbackup`:
+
+----
+> cbbackup \
+    couchstore-files:///opt/couchbase/var/lib/couchbase/data/default \
+    /mnt/backup-20120501
+----
+
+The same backup operation using `cp` :
+
+----
+> cp -R /opt/couchbase/var/lib/couchbase/data/default \
+      /mnt/copy-20120501
+----
+
+The limitation of backing up information in this way is that the data can only be restored to offline nodes in an identical cluster configuration where an identical vBucket map is in operation.
+You should also copy the `config.dat` configuration file from each node.
