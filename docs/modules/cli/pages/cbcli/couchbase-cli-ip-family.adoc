@@ -1,5 +1,5 @@
 = couchbase-cli-ip-family(1)
-ifndef::doctype-manpage[:doctitle: cluster-edit]
+ifndef::doctype-manpage[:doctitle: ip-family]
 
 ifdef::doctype-manpage[]
 == NAME
