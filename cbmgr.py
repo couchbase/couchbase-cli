@@ -1374,11 +1374,11 @@ class HostList(Subcommand):
         if opts.output == 'json':
             nodes_out = {'nodes': []}
             for node in result['nodes']:
-                nodes_out['nodes'].append(node['hostname'])
+                nodes_out['nodes'].append(node['configuredHostname'])
             print(json.dumps(nodes_out))
         else:
             for node in result['nodes']:
-                print(node['hostname'])
+                print(node['configuredHostname'])
 
     @staticmethod
     def get_man_page_name():

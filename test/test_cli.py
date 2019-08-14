@@ -529,13 +529,13 @@ class TestHostList(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         self.server_args['pools_default'] = {'nodes': [
             {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'unhealthy',
-             'clusterMembership': 'active'}]}
+             'clusterMembership': 'active', 'configuredHostname': '127.0.0.1:6789'}]}
         super(TestHostList, self).setUp()
 
     def test_host_list(self):
         self.no_error_run(self.command, self.server_args)
         for n in self.server_args['pools_default']['nodes']:
-            self.assertIn(n['hostname'], self.str_output)
+            self.assertIn(n['configuredHostname'], self.str_output)
 
 
 class TestNodeInit(CommandTest):
