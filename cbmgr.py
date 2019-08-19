@@ -3967,8 +3967,8 @@ class CollectionManage(Subcommand):
     def _list_scopes(self, rest, opts):
         manifest, errors = rest.get_manifest(opts.bucket)
         _exitIfErrors(errors)
-        for scope in manifest['scopes'].keys():
-            print(scope)
+        for scope in manifest['scopes']:
+            print(scope['name'])
 
     def _create_collection(self, rest, opts):
         scope, collection = self._get_scope_collection(opts.create_collection)
@@ -3985,10 +3985,13 @@ class CollectionManage(Subcommand):
     def _list_collections(self, rest, opts):
         manifest, errors = rest.get_manifest(opts.bucket)
         _exitIfErrors(errors)
-        if opts.list_collections in manifest['scopes'].keys():
-            for collection in manifest['scopes'][opts.list_collections]['collections'].keys():
-                print(collection)
-        else:
+        found_scope = False
+        for scope in manifest['scopes']:
+            if opts.list_collections == scope['name']:
+                found_scope = True
+                for collection in scope['collections']:
+                    print(collection['name'])
+        if not found_scope:
             _exitIfErrors([f"Scope {opts.list_collections} does not exist"])
 
     def _get_scope_collection(self, path):
