@@ -2798,7 +2798,7 @@ class SettingLdap(Subcommand):
         elif opts.encryption == "startTLS":
             opts.encryption = "StartTLSExtension"
         elif opts.encryption == "none":
-            opts.encryption = "false"
+            opts.encryption = "None"
 
         if opts.nested_groups == '1':
             opts.nested_groups = 'true'
