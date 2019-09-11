@@ -907,8 +907,9 @@ class TestMCSink(unittest.TestCase):
             (cbcs.CMD_DCP_MUTATION, 0, b'KEY:0', 0, 0, 0, b'', b'VAL:0', 0, 0, 0, 0),
             (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, b'', b'VAL:1', 0, 0, 0, 0)
         ]
-        err = sink.send_msgs(fake_connection, msgs, 'set', 0)
+        err, skipped = sink.send_msgs(fake_connection, msgs, 'set', 0)
         self.assertEqual(err, 0)
+        self.assertEqual(skipped, [])
         self.assertNotEqual(len(fake_connection.s.sent), 0)
 
         expected_out = b''

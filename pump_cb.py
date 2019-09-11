@@ -84,7 +84,7 @@ class CBSink(pump_mc.MCSink):
             if rv != 0:
                 return rv, None, None
             if conn is not None:
-                rv = self.send_msgs(conn, msgs, self.operation(),
+                rv, skipped = self.send_msgs(conn, msgs, self.operation(),
                                     vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None, None
@@ -101,7 +101,7 @@ class CBSink(pump_mc.MCSink):
             if rv != 0:
                 return rv, None, None
             if conn is not None:
-                rv, retry, refresh = self.recv_msgs(conn, msgs, vbucket_id=vbucket_id)
+                rv, retry, refresh = self.recv_msgs(conn, msgs, skipped, vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None, None
             if retry:
