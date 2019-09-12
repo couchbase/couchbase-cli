@@ -74,7 +74,7 @@ class MCSink(pump.Sink):
         self.lww_restore = 0
         self.init_worker(MCSink.run)
         self.uncompress = opts.extra.get("uncompress", 0)
-
+        self.txn_warning_issued = False
         if self.get_conflict_resolution_type() == "lww":
             self.lww_restore = 1
 
@@ -221,6 +221,10 @@ class MCSink(pump.Sink):
                     skip, val, cas, exp, meta, dtype = self.filter_out_txn(key, val, cas, exp, meta, dtype)
                     if skip:
                         skipped.append(i)
+                        if not self.txn_warning_issued:
+                            self.txn_warning_issued = True
+                            print(f'Mid-transaction data have being rolled backed and restored, but transactional atomicity cannot'
+                                  f' be guaranteed.')
                         continue
 
             rv, req = self.cmd_request(translated_cmd, vbucket_id_msg, key, val,  # type: ignore
@@ -304,7 +308,7 @@ class MCSink(pump.Sink):
             return False, val, cas, exp, revid, data_type
 
         if txn_xattr['op']['type'] == 'insert':
-            logging.info(f'(TXN) Skip document with key {tag_user_data(key.decode())} as it is a TXN insert')
+            logging.info(f'(TXN) Skip document with key {tag_user_data(str_key)} as it is a TXN insert')
             return True, val, cas, exp, revid, data_type
 
         # get cas, revid and expiry from the txn
