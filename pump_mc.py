@@ -424,7 +424,7 @@ class MCSink(pump.Sink):
             # some messages of the original batch where not sent as they were filter out due to been half-way
             # transaction related documents. The check bellow is to avoid waiting for responses for elements
             # that where not sent
-            if i == skipped[0]:
+            if len(skipped) > 0 and i == skipped[0]:
                 skipped = skipped[1:]
                 continue
 
