@@ -2720,12 +2720,11 @@ class SettingLdap(Subcommand):
                            choices=["1", "0"], help="Enable LDAP authorization, otherwise defaults to false")
         group.add_argument("--hosts", dest="hosts", metavar="<host_list>",
                            help="Coma separated list of LDAP servers")
-        group.add_argument("--port", dest="port", metavar="<port>", help="LDAP port. (Default 389)", type=(int),
-                           default=389)
+        group.add_argument("--port", dest="port", metavar="<port>", help="LDAP port", type=(int))
         group.add_argument("--encryption", dest="encryption", metavar="<tls|startTLS|none>",
-                           choices=["tls", "startTLS", "none"], default="none", help="Encryption used")
-        group.add_argument("--disable-cert-validation", dest="disable_cert_val", default=False, action="store_true",
-                           help="Disable server certificate validation.")
+                           choices=["tls", "startTLS", "none"], help="Encryption used")
+        group.add_argument("--server-cert-validation", dest="server_cert_val", metavar="<1|0>", choices=["0", "1"],
+                           help="Enable or disable certificate validation when connecting to LDAP server")
         group.add_argument("--ldap-cacert", dest="cacert_ldap", metavar="<path>",
                            help="CA certificate to be used for LDAP server certificate validation, required if" +
                                 " certificate validation is not disabled")
@@ -2733,7 +2732,7 @@ class SettingLdap(Subcommand):
                            help="Username to DN mapping. If not specified username is used as user's DN")
         group.add_argument("--request-timeout", metavar="<ms>", dest="timeout",
                            help="Request time out in milliseconds")
-        group.add_argument("--max-parallel", dest="max_parallel", metavar="<max>", type=(int), default=100,
+        group.add_argument("--max-parallel", dest="max_parallel", metavar="<max>", type=(int),
                            help="Maximum number of parallel connections that can be established")
         group.add_argument("--max-cache-size", dest="max_cache_size", metavar="<size>",
                            help="Maximum number of cached LDAP requests")
@@ -2765,30 +2764,26 @@ class SettingLdap(Subcommand):
             _exitIfErrors(rv)
             print(json.dumps(data))
         else:
-            if opts.authentication_enabled is None or opts.authorization_enabled is None or opts.hosts is None:
-                _exitIfErrors(['the following arguments are required: --authentication-enabled, --authorization-enabled, --hosts'])
             self._set(opts, rest)
 
     def _set(self, opts, rest):
         if opts.authentication_enabled == '1':
             opts.authentication_enabled = 'true'
-        else:
+        elif opts.authentication_enabled == '0':
             opts.authentication_enabled = 'false'
 
         if opts.authorization_enabled == '1':
-            if opts.authentication_enabled == 'false':
-                _exitIfErrors(['authentication must be enabled to use authorization'])
-            if opts.query_dn is None or opts.query_pass is None:
-                _exitIfErrors(['--query-pass and --query-dn are required with --authorization-enabled'])
-            if opts.group_query is None:
-                _exitIfErrors(['--group-query is required when authorization is enabled'])
-
             opts.authorization_enabled = 'true'
-        else:
+        elif opts.authorization_enabled == '0':
             opts.authorization_enabled = 'false'
 
-        if opts.disable_cert_val and opts.cacert_ldap is not None:
-            _exitIfErrors(['--disable-cert-validation and --ldap-cert can not be used together'])
+        if opts.server_cert_val == '1':
+            opts.server_cert_val = 'true'
+        elif opts.server_cert_val == '0':
+            opts.server_cert_val = 'false'
+
+        if opts.server_cert_val == 'false' and opts.cacert_ldap is not None:
+            _exitIfErrors(['--server-cert-validation 0 and --ldap-cert can not be used together'])
 
         if opts.cacert_ldap is not None:
             opts.cacert_ldap = _exit_on_file_read_failure(opts.cacert_ldap)
@@ -2804,18 +2799,12 @@ class SettingLdap(Subcommand):
             opts.nested_groups = 'true'
         elif opts.nested_groups == '0':
             opts.nested_groups = 'false'
-            if opts.nested_max_depth is not None:
-                _exitIfErrors('nested groups must be enabled to use --nested-group-max-depth option')
-
-        if opts.nested_max_depth is not None and (opts.nested_max_depth < 1 or
-                                                         opts.nested_max_depth > 100):
-            _exitIfErrors(['maximum nested depth must be between 1 and 100'])
 
         _, errors = rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts, opts.port,
                                        opts.encryption, opts.user_dn_mapping, opts.timeout, opts.max_parallel,
                                        opts.max_cache_size, opts.cache_value_lifetime, opts.query_dn, opts.query_pass,
                                        opts.group_query, opts.nested_groups, opts.nested_max_depth,
-                                       opts.disable_cert_val, opts.cacert_ldap)
+                                       opts.server_cert_val, opts.cacert_ldap)
 
         _exitIfErrors(errors)
         _success("LDAP settings modified")

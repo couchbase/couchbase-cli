@@ -1377,7 +1377,7 @@ class TestSettingLdap(CommandTest):
         self.authentication_args = ['--authentication-enabled', '1', '--hosts', '0.0.0.0', '--port', '369',
                                     '--encryption', 'none', '--request-timeout', '2000', '--max-parallel', '20',
                                     '--max-cache-size', '20', '--cache-value-lifetime', '2000000',
-                                    '--disable-cert-validation']
+                                    '--server-cert-validation', '0']
         self.authorization_args = ['--authorization-enabled', '1', '--query-dn', 'admin', '--query-pass', 'pass',
                                    '--enable-nested-groups', '1', '--nested-group-max-depth', '10', '--group-query',
                                    '%D?memberOf?base']

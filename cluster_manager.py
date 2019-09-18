@@ -1333,20 +1333,17 @@ class ClusterManager(object):
 
     def ldap_settings(self, authentication_enabled, authorization_enabled, hosts, port, encryption, user_dn_mapping,
                     timeout, max_parallel, max_cache, cache_lifetime, query_dn, query_pass, group_query,
-                    nested_groups, nested_groups_max_depth, disabled_ca_ver, ca):
+                    nested_groups, nested_groups_max_depth, server_ca_ver, ca):
         url = f'{self.hostname}/settings/ldap'
-        if authentication_enabled is None or authorization_enabled is None:
-            return None, ['authentication-enabled and authorization-enabled are required']
 
-        if hosts is None:
-            return None, ['hosts are required']
+        params = {}
 
-        params = {
-            "authenticationEnabled": authentication_enabled,
-            "authorizationEnabled": authorization_enabled,
-            "hosts": hosts
-        }
-
+        if authentication_enabled is not None:
+            params['authenticationEnabled'] = authentication_enabled
+        if authorization_enabled is not None:
+            params['authorizationEnabled'] = authorization_enabled
+        if hosts is not None:
+            params['hosts'] = hosts
         if port is not None:
             params['port'] = port
         if encryption is not None:
@@ -1371,12 +1368,13 @@ class ClusterManager(object):
             params['nestedGroupsEnabled'] = nested_groups
         if nested_groups_max_depth is not None:
             params['nestedGroupsMaxDepth'] = nested_groups_max_depth
-        if disabled_ca_ver:
-            params['serverCertValidation'] = 'false'
-        else:
-            params['serverCertValidation'] = 'true'
-        if ca and not disabled_ca_ver:
+        if server_ca_ver is not None:
+            params['serverCertValidation'] = server_ca_ver
+        if ca and server_ca_ver != 'false':
             params['cacert'] = ca
+
+        if len(params) == 0:
+            return None, ['Please provide at least one option to set']
 
         return self._post_form_encoded(url, params)
 
