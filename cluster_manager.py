@@ -1342,8 +1342,8 @@ class ClusterManager(object):
             return None, ['hosts are required']
 
         params = {
-            "authentication_enabled": authentication_enabled,
-            "authorization_enabled": authorization_enabled,
+            "authenticationEnabled": authentication_enabled,
+            "authorizationEnabled": authorization_enabled,
             "hosts": hosts
         }
 
@@ -1352,29 +1352,29 @@ class ClusterManager(object):
         if encryption is not None:
             params['encryption'] = encryption
         if user_dn_mapping is not None:
-            params['user_dn_mapping'] = user_dn_mapping
+            params['userDNMapping'] = user_dn_mapping
         if timeout is not None:
-            params['request_timeout'] = timeout
+            params['requestTimeout'] = timeout
         if max_parallel is not None:
-            params['max_parallel_connections'] = max_parallel
+            params['maxParallelConnections'] = max_parallel
         if max_cache is not None:
-            params['max_cache_size'] = max_cache
+            params['maxCacheSize'] = max_cache
         if cache_lifetime is not None:
-            params['cache_value_lifetime'] = cache_lifetime
+            params['cacheValueLifetime'] = cache_lifetime
         if query_dn is not None:
-            params['query_dn'] = query_dn
+            params['bindDN'] = query_dn
         if query_pass is not None:
-            params['query_pass'] = query_pass
+            params['bindPass'] = query_pass
         if group_query is not None:
-            params['groups_query'] = group_query
+            params['groupsQuery'] = group_query
         if nested_groups is not None:
-            params['nested_groups_enabled'] = nested_groups
+            params['nestedGroupsEnabled'] = nested_groups
         if nested_groups_max_depth is not None:
-            params['nested_groups_max_depth'] = nested_groups_max_depth
+            params['nestedGroupsMaxDepth'] = nested_groups_max_depth
         if disabled_ca_ver:
-            params['server_cert_validation'] = 'false'
+            params['serverCertValidation'] = 'false'
         else:
-            params['server_cert_validation'] = 'true'
+            params['serverCertValidation'] = 'true'
         if ca and not disabled_ca_ver:
             params['cacert'] = ca
 

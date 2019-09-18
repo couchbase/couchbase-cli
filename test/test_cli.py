@@ -1386,19 +1386,19 @@ class TestSettingLdap(CommandTest):
     def test_set_ldap_authentication_only(self):
         self.no_error_run(self.command + self.authentication_args + ['--authorization-enabled', '0'], self.server_args)
         self.assertIn('POST:/settings/ldap', self.server.trace)
-        expected_params = ['authentication_enabled=true', 'authorization_enabled=false', 'hosts=0.0.0.0', 'port=369',
-                           'encryption=None', 'request_timeout=2000', 'max_parallel_connections=20',
-                           'max_cache_size=20', 'cache_value_lifetime=2000000', 'server_cert_validation=false']
+        expected_params = ['authenticationEnabled=true', 'authorizationEnabled=false', 'hosts=0.0.0.0', 'port=369',
+                           'encryption=None', 'requestTimeout=2000', 'maxParallelConnections=20',
+                           'maxCacheSize=20', 'cacheValueLifetime=2000000', 'serverCertValidation=false']
         self.rest_parameter_match(expected_params)
 
     def test_set_ldap_all(self):
         self.no_error_run(self.command + self.authentication_args + self.authorization_args, self.server_args)
         self.assertIn('POST:/settings/ldap', self.server.trace)
-        expected_params = ['authentication_enabled=true', 'authorization_enabled=true', 'hosts=0.0.0.0', 'port=369',
-                           'encryption=None', 'request_timeout=2000', 'max_parallel_connections=20',
-                           'max_cache_size=20', 'cache_value_lifetime=2000000', 'query_dn=admin', 'query_pass=pass',
-                           'nested_groups_enabled=true', 'nested_groups_max_depth=10',
-                           'groups_query=%25D%3FmemberOf%3Fbase', 'server_cert_validation=false']
+        expected_params = ['authenticationEnabled=true', 'authorizationEnabled=true', 'hosts=0.0.0.0', 'port=369',
+                           'encryption=None', 'requestTimeout=2000', 'maxParallelConnections=20',
+                           'maxCacheSize=20', 'cacheValueLifetime=2000000', 'bindDN=admin', 'bindPass=pass',
+                           'nestedGroupsEnabled=true', 'nestedGroupsMaxDepth=10',
+                           'groupsQuery=%25D%3FmemberOf%3Fbase', 'serverCertValidation=false']
         self.rest_parameter_match(expected_params)
 
 
