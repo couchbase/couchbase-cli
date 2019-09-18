@@ -1538,7 +1538,7 @@ class NodeInit(Subcommand):
         # Cluster does not need to be initialized for this command
 
         if opts.data_path is None and opts.index_path is None and opts.analytics_path is None \
-            and opts.java_home is None and opts.hostname is None:
+            and opts.java_home is None and opts.hostname is None and opts.ipv6 is None and opts.ipv4 is None:
             _exitIfErrors(["No node initialization parameters specified"])
 
         if opts.data_path or opts.index_path or opts.analytics_path or opts.java_home is not None:
