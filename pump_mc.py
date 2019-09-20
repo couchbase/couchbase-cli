@@ -423,13 +423,14 @@ class MCSink(pump.Sink):
                   verify_opaque: bool = True) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[bool], Optional[bool]]:
         refresh = False
         retry = False
-
+        skipped_counter = 0
         for i, msg in enumerate(msgs):
             # some messages of the original batch where not sent as they were filter out due to been half-way
             # transaction related documents. The check bellow is to avoid waiting for responses for elements
             # that where not sent
             if len(skipped) > 0 and i == skipped[0]:
                 skipped = skipped[1:]
+                skipped_counter += 1
                 continue
 
             cmd, vbucket_id_msg, key, flg, exp, cas, meta, val = msg[:8]
@@ -442,7 +443,7 @@ class MCSink(pump.Sink):
             try:
                 r_cmd, r_status, r_ext, r_key, r_val, r_cas, r_opaque = \
                     self.read_conn(conn)  # type: ignore
-                if verify_opaque and i != r_opaque:
+                if verify_opaque and (i - skipped_counter) != r_opaque:
                     return f'error: opaque mismatch: {i} {r_opaque}', None, None
 
                 if r_status == couchbaseConstants.ERR_SUCCESS:
