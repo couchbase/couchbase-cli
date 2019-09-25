@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-eventing-function-setup
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2019-09-18
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-EVENTING\-FUNCTION\-SETUP" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-EVENTING\-FUNCTION\-SETUP" "1" "2019-09-18" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,11 +31,12 @@
 couchbase\-cli\-eventing\-function\-setup \- Manage Events
 .SH "SYNOPSIS"
 .sp
+.sp
 .nf
 \fIcouchbase\-cli eventing\-function\-setup\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>]  [\-\-import] [\-\-export] [\-\-export\-all]
-    [\-\-delete] [\-\-list] [\-\-deploy] [\-\-undeploy] [\-\-name <name>]
-    [\-\-file <file>]
+    [\-\-delete] [\-\-list] [\-\-deploy] [\-\-undeploy] [\-\-pause] [\-\-resume]
+    [\-\-name <name>] [\-\-file <file>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -103,6 +104,18 @@ Deploys the named function. This option requires \-\-name to be specified.
 \-\-undeploy
 .RS 4
 Undeploys the named function. This option requires \-\-name to be specified.
+.RE
+.sp
+\-\-pause
+.RS 4
+Pause the named function. This option requires \-\-name to be specified. See
+the PAUSE VS UNDEPLOY section for more information.
+.RE
+.sp
+\-\-resume
+.RS 4
+Resume the named function. This option requires \-\-name to be specified. See
+the PAUSE VS UNDEPLOY section for more information.
 .RE
 .sp
 \-\-name <name>
@@ -218,10 +231,35 @@ To undeploy a function called \fIalert_function\fP:
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-undeploy \-\-name alert_function
+ $ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
+\-p password \-\-undeploy \-\-name alert_function
 .fi
 .if n .RE
+.sp
+To pause a function called \fIalert_function\fP:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-pause \-\-name alert_function
+.fi
+.if n .RE
+.sp
+To resume a function called \fIalert_function\fP:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-resume name alert_function
+.fi
+.if n .RE
+.SH "UNDEPLOY VS PAUSE"
+.sp
+Once you undeploy an eventing function you will have no opportunity to resume
+from the given point in time; this is not the case for pause/resume. Pausing
+and eventing function allows you to make changes to it or its settings while
+retaining the ability to continue from the point at which the function was
+paused.
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_USERNAME

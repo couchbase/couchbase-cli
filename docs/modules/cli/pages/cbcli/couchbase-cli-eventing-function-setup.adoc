@@ -13,8 +13,8 @@ Manage Events
 [verse]
 _couchbase-cli eventing-function-setup_ [--cluster <url>] [--username <user>]
     [--password <password>]  [--import] [--export] [--export-all]
-    [--delete] [--list] [--deploy] [--undeploy] [--name <name>]
-    [--file <file>]
+    [--delete] [--list] [--deploy] [--undeploy] [--pause] [--resume]
+    [--name <name>] [--file <file>]
 
 == DESCRIPTION
 
@@ -48,6 +48,14 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --undeploy::
   Undeploys the named function. This option requires --name to be specified.
+
+--pause::
+  Pause the named function. This option requires --name to be specified. See
+  the PAUSE VS UNDEPLOY section for more information.
+
+--resume::
+  Resume the named function. This option requires --name to be specified. See
+  the PAUSE VS UNDEPLOY section for more information.
 
 --name <name>::
   The name of the function to take a action against. This is used by
@@ -95,8 +103,25 @@ To deploy a function called _alert_function_:
 
 To undeploy a function called _alert_function_:
 
-  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+    $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
    -p password --undeploy --name alert_function
+
+To pause a function called _alert_function_:
+
+    $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+     -p password --pause --name alert_function
+
+To resume a function called _alert_function_:
+
+    $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+     -p password --resume --name alert_function
+
+== UNDEPLOY VS PAUSE
+Once you undeploy an eventing function you will have no opportunity to resume
+from the point at which the function was undeployed; this is not the case for
+pause/resume. Pausing an eventing function allows you to make changes to it
+or its settings while retaining the ability to continue from the point at
+which the function was paused.
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

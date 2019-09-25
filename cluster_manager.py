@@ -1706,6 +1706,17 @@ class ClusterManager(object):
         url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}'
         return self._delete(url, None)
 
+    def pause_resume_function(self, function_name, pause):
+        hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(EVENT_SERVICE)
+
+        url = f"{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function_name)}/{'pause' if pause else 'resume'}"
+        return self._post_json(url, None)
+
     def deploy_function(self, function, deploy):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:

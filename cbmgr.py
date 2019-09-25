@@ -3750,6 +3750,8 @@ class EventingFunctionSetup(Subcommand):
                            default=False, help="The name of the function to take an action on")
         group.add_argument("--file", dest="filename", metavar="<file>",
                            default=False, help="The file to export and import function(s) to and from")
+        group.add_argument("--pause", dest="pause", action="store_true", help="Pause a function")
+        group.add_argument("--resume", dest="resume", action="store_true", help="Resume a function")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -3757,12 +3759,12 @@ class EventingFunctionSetup(Subcommand):
         check_cluster_initialized(rest)
         check_versions(rest)
 
-        actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy])
+        actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy, opts.pause, opts.resume])
         if actions == 0:
             _exitIfErrors(["Must specify one of --import, --export, --export-all, --delete, --list, --deploy,"
-                           " --undeploy"])
+                           " --undeploy, --pause, --resume"])
         elif actions > 1:
-            _exitIfErrors(["The --import, --export, --export-all, --delete, --list, --deploy, --undeploy flags may"
+            _exitIfErrors(["The --import, --export, --export-all, --delete, --list, --deploy, --undeploy, --pause, --resume flags may"
                            " not be specified at the same time"])
         elif opts._import:
             self._import(rest, opts)
@@ -3778,6 +3780,17 @@ class EventingFunctionSetup(Subcommand):
             self._deploy(rest, opts)
         elif opts.undeploy:
             self._undeploy(rest, opts)
+        elif opts.pause:
+            self._pause_resume(rest, opts, True)
+        elif opts.resume:
+            self._pause_resume(rest, opts, False)
+
+    def _pause_resume(self, rest, opts, pause):
+        if not opts.name:
+            _exitIfErrors([f"Flag --name is required with the {'--pause' if pause else '--resume'} flag"])
+        _, err = rest.pause_resume_function(opts.name, pause)
+        _exitIfErrors(err)
+        _success(f"Function was {'paused' if pause else 'resumed'}")
 
     def _import(self, rest, opts):
         if not opts.filename:
