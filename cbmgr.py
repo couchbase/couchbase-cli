@@ -3746,6 +3746,9 @@ class EventingFunctionSetup(Subcommand):
                            default=False, help="Deploy a function")
         group.add_argument("--undeploy", dest="undeploy", action="store_true",
                            default=False, help="Undeploy a function")
+        group.add_argument("--boundary", dest="boundary", metavar="<from-everything|from-now>",
+                           choices=["from-everything", "from-now"], default=False,
+                           help="Set the function deployment boundary")
         group.add_argument("--name", dest="name", metavar="<name>",
                            default=False, help="The name of the function to take an action on")
         group.add_argument("--file", dest="filename", metavar="<file>",
@@ -3777,9 +3780,9 @@ class EventingFunctionSetup(Subcommand):
         elif opts.list:
             self._list(rest)
         elif opts.deploy:
-            self._deploy(rest, opts)
+            self._deploy_undeploy(rest, opts, True)
         elif opts.undeploy:
-            self._undeploy(rest, opts)
+            self._deploy_undeploy(rest, opts, False)
         elif opts.pause:
             self._pause_resume(rest, opts, True)
         elif opts.resume:
@@ -3832,19 +3835,14 @@ class EventingFunctionSetup(Subcommand):
         _exitIfErrors(errors)
         _success("Request to delete the function was accepted")
 
-    def _deploy(self, rest, opts):
+    def _deploy_undeploy(self, rest, opts, deploy):
         if not opts.name:
-            _exitIfErrors(["--name is needed to deploy a function"])
-        _, errors = rest.deploy_function(opts.name, True)
+            _exitIfErrors([f"--name is needed to {'deploy' if deploy else 'undeploy'} a function"])
+        if deploy and not opts.boundary:
+            _exitIfErrors([f"--boundary is needed to deploy a function"])
+        _, errors = rest.deploy_undeploy_function(opts.name, deploy, opts.boundary)
         _exitIfErrors(errors)
-        _success("Request to deploy the function was accepted")
-
-    def _undeploy(self, rest, opts):
-        if not opts.name:
-            _exitIfErrors(["--name is needed to undeploy a function"])
-        _, errors = rest.deploy_function(opts.name, False)
-        _exitIfErrors(errors)
-        _success("Request to undeploy the function was accepted")
+        _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
 
     def _list(self, rest):
         functions, errors = rest.list_functions()

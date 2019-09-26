@@ -1717,7 +1717,7 @@ class ClusterManager(object):
         url = f"{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function_name)}/{'pause' if pause else 'resume'}"
         return self._post_json(url, None)
 
-    def deploy_function(self, function, deploy):
+    def deploy_undeploy_function(self, function, deploy, boundary):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
@@ -1725,16 +1725,15 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
 
-        parms = {}
+        params = {}
+        params["deployment_status"] = deploy
+        params["processing_status"] = deploy
+
         if deploy:
-            parms["deployment_status"] = True
-            parms["processing_status"] = True
-        else:
-            parms["deployment_status"] = False
-            parms["processing_status"] = False
+            params["feed-boundary"] = boundary
 
         url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}/settings'
-        return self._post_json(url, parms)
+        return self._post_json(url, params)
 
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
