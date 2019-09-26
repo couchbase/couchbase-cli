@@ -2720,7 +2720,7 @@ class SettingLdap(Subcommand):
                            choices=["1", "0"], help="Enable LDAP authorization, otherwise defaults to false")
         group.add_argument("--hosts", dest="hosts", metavar="<host_list>",
                            help="Coma separated list of LDAP servers")
-        group.add_argument("--port", dest="port", metavar="<port>", help="LDAP port", type=(int))
+        group.add_argument("--port", dest="port", metavar="<port>", help="LDAP port", type=int)
         group.add_argument("--encryption", dest="encryption", metavar="<tls|startTLS|none>",
                            choices=["tls", "startTLS", "none"], help="Encryption used")
         group.add_argument("--server-cert-validation", dest="server_cert_val", metavar="<1|0>", choices=["0", "1"],
@@ -2732,20 +2732,20 @@ class SettingLdap(Subcommand):
                            help="Username to DN mapping. If not specified username is used as user's DN")
         group.add_argument("--request-timeout", metavar="<ms>", dest="timeout",
                            help="Request time out in milliseconds")
-        group.add_argument("--max-parallel", dest="max_parallel", metavar="<max>", type=(int),
+        group.add_argument("--max-parallel", dest="max_parallel", metavar="<max>", type=int,
                            help="Maximum number of parallel connections that can be established")
         group.add_argument("--max-cache-size", dest="max_cache_size", metavar="<size>",
                            help="Maximum number of cached LDAP requests")
         group.add_argument("--cache-value-lifetime", dest="cache_value_lifetime", metavar="<ms>",
                            help="Cache value lifetime in milliseconds")
-        group.add_argument("--query-dn", dest="query_dn", metavar="<dn>",
-                           help="DN")
-        group.add_argument("--query-pass", dest="query_pass", metavar="<pass>", help="Password")
+        group.add_argument("--bind-dn", dest="bind_dn", metavar="<DN>",
+                           help="The DN of a user to bind as to performance lookups")
+        group.add_argument("--bind-password", dest="bind_password", metavar="<password>", help="The password of the bind user")
         group.add_argument("--group-query", dest="group_query", metavar="<query>",
                            help="LDAP query to get user's groups by username")
         group.add_argument("--enable-nested-groups", dest="nested_groups", metavar="<1|0>",
                            choices=["0", "1"])
-        group.add_argument("--nested-group-max-depth", dest="nested_max_depth", metavar="<max>", type=(int),
+        group.add_argument("--nested-group-max-depth", dest="nested_max_depth", metavar="<max>", type=int,
                            help="Maximum number of recursive group requests allowed. [1 - 100]")
 
     def execute(self, opts):
@@ -2802,7 +2802,7 @@ class SettingLdap(Subcommand):
 
         _, errors = rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts, opts.port,
                                        opts.encryption, opts.user_dn_mapping, opts.timeout, opts.max_parallel,
-                                       opts.max_cache_size, opts.cache_value_lifetime, opts.query_dn, opts.query_pass,
+                                       opts.max_cache_size, opts.cache_value_lifetime, opts.bind_dn, opts.bind_password,
                                        opts.group_query, opts.nested_groups, opts.nested_max_depth,
                                        opts.server_cert_val, opts.cacert_ldap)
 

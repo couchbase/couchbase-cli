@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-ldap
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-06-26
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2019-09-24
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-06-26" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-09-24" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,6 +31,7 @@
 couchbase\-cli\-setting\-ldap \- Configure LDAP
 .SH "SYNOPSIS"
 .sp
+.sp
 .nf
 \fIcouchbase\-cli setting\-ldap\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-authentication\-enabled <1|0>]
@@ -38,7 +39,7 @@ couchbase\-cli\-setting\-ldap \- Configure LDAP
     [\-\-encryption <tls|startTLS|none>] [\-\-disable\-cert\-validation]
     [\-\-ldap\-cacert <path>] [\-\-user\-dn\-mapping <mapping>][\-\-request\-timeout <ms>]
     [\-\-max\-parallel <max>] [\-\-max\-cache\-size <size>]
-    [\-\-cache\-value\-lifetime <ms>] [\-\-query\-dn <dn>] [\-\-query\-pass <pass>]
+    [\-\-cache\-value\-lifetime <ms>] [\-\-bind\-dn <dn>] [\-\-bind\-password <password>]
     [\-\-group\-query <query>] [\-\-enable\-nested\-groups <0|1>]
     [\-\-nested\-group\-max\-depth <depth>]
 .fi
@@ -135,14 +136,16 @@ Maximum number of requests that can be cached, defaults to 10000.
 Lifetime of values in cache in milliseconds. Default 300000 ms.
 .RE
 .sp
-\-\-query\-dn <dn>
+\-\-bind\-dn <dn>
 .RS 4
-DN for user search and groups synchronization
+The DN of a user to autheicate as to allow user search and groups
+synchronization. If bind details are not provided anonymous bind
+will be used instead.
 .RE
 .sp
-\-\-query\-pass <pass>
+\-\-bind\-password <password>
 .RS 4
-Password for user search and groups synchronization
+The bind user password
 .RE
 .sp
 \-\-group\-query <query>
@@ -169,6 +172,59 @@ Maximum number of recursive groups requests the server is allowed to perform.
 This option is only valid when nested groups are enabled. The depth is an
 integer between 1 and 100, default is 10.
 .RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRcouchbase://<addr>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CR<addr>:<port>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRhttp://<addr>:<port>\fP
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
+.SH "EXAMPLES"
+.sp
+To enable authentication and authorization using ldap server ldap.couchbase.com
+with encryption disabled:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-authentication\-enabled 1 \-\-authorization\-enabled 1 \(rs
+ \-\-hosts ldap.couchbase.com \-\-encryption 0
+.fi
+.if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_USERNAME

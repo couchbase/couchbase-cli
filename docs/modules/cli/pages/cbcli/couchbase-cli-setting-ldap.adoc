@@ -16,7 +16,7 @@ _couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>]
     [--encryption <tls|startTLS|none>] [--disable-cert-validation]
     [--ldap-cacert <path>] [--user-dn-mapping <mapping>][--request-timeout <ms>]
     [--max-parallel <max>] [--max-cache-size <size>]
-    [--cache-value-lifetime <ms>] [--query-dn <dn>] [--query-pass <pass>]
+    [--cache-value-lifetime <ms>] [--bind-dn <dn>] [--bind-password <password>]
     [--group-query <query>] [--enable-nested-groups <0|1>]
     [--nested-group-max-depth <depth>]
 
@@ -69,11 +69,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --cache-value-lifetime <ms>::
   Lifetime of values in cache in milliseconds. Default 300000 ms.
 
---query-dn <dn>::
-  DN for user search and groups synchronization
+--bind-dn <dn>::
+  The DN of a user to autheicate as to allow user search and groups
+  synchronization. If bind details are not provided anonymous bind
+  will be used instead.
 
---query-pass <pass>::
-  Password for user search and groups synchronization
+--bind-password <password>::
+  The bind user password
 
 --group-query <query>::
   LDAP query, to get the users' groups by username in RFC4516 format.
@@ -93,6 +95,18 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Maximum number of recursive groups requests the server is allowed to perform.
   This option is only valid when nested groups are enabled. The depth is an
   integer between 1 and 100, default is 10.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To enable authentication and authorization using ldap server ldap.couchbase.com
+with encryption disabled:
+
+
+ $ couchbase-cli setting-ldap -c 192.168.1.5 -u Administrator \
+  -p password --authentication-enabled 1 --authorization-enabled 1 \
+  --hosts ldap.couchbase.com --encryption 0
 
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES

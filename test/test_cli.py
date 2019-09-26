@@ -1378,7 +1378,7 @@ class TestSettingLdap(CommandTest):
                                     '--encryption', 'none', '--request-timeout', '2000', '--max-parallel', '20',
                                     '--max-cache-size', '20', '--cache-value-lifetime', '2000000',
                                     '--server-cert-validation', '0']
-        self.authorization_args = ['--authorization-enabled', '1', '--query-dn', 'admin', '--query-pass', 'pass',
+        self.authorization_args = ['--authorization-enabled', '1', '--bind-dn', 'admin', '--bind-password', 'pass',
                                    '--enable-nested-groups', '1', '--nested-group-max-depth', '10', '--group-query',
                                    '%D?memberOf?base']
         super(TestSettingLdap, self).setUp()
