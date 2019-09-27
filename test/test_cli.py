@@ -1402,52 +1402,6 @@ class TestSettingLdap(CommandTest):
         self.rest_parameter_match(expected_params)
 
 
-class TestSettingOnDemand(CommandTest):
-    def setUp(self):
-        self.command = ['couchbase-cli', 'setting-on-demand'] + cluster_connect_args
-        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, '/settings/license': {
-            "reporting_enabled": False, "contract_id": "0", "customer_token": "0",
-            "reporting_interval": 3600000, "reporting_endpoint": "test",
-            "reporting_timeout": 5000}}
-        self.set_args = ['--reporting-enabled', '1', '--contract-id', '1', '--customer-token', '2']
-        super(TestSettingOnDemand, self).setUp()
-
-    def test_licensing_ce(self):
-        self.server_args['enterprise'] = False
-        self.system_exit_run(self.command+['--set'], self.server_args)
-        self.assertIn('This command is ony available in enterprise edition', self.str_output)
-
-    def test_licensing_list(self):
-        self.no_error_run(self.command+['--get'], self.server_args)
-        self.assertIn('GET:/settings/license', self.server.trace)
-        self.assertIn("Reporting enabled: False\nContract id: 0\nReporting interval: 3600000 ms\n" +
-                      "Reporting time out: 5000 ms\nReporting endpoint: test", self.str_output)
-
-    def test_licensing_json(self):
-        self.no_error_run(self.command + ['--get', '-o', 'json'], self.server_args)
-        self.assertIn('GET:/settings/license', self.server.trace)
-        json_str = json.dumps(self.server_args['/settings/license'])
-        json_str = json_str.replace("{", "")
-        json_str = json_str.replace("}", "")
-        fields = json_str.split(",")
-        for f in fields:
-            self.assertIn(f.strip(), self.str_output)
-
-    def test_licensing_no_options(self):
-        self.system_exit_run(self.command, self.server_args)
-        self.assertIn('Please provide one of --set, --get or --generate-report', self.str_output)
-
-    def test_licensing_2_options(self):
-        self.system_exit_run(self.command + ['--set', '--get'], self.server_args)
-        self.assertIn('Please provide only one of --set, --get or --generate-report', self.str_output)
-
-    def test_licensing_configure(self):
-        self.no_error_run(self.command + ['--set'] + self.set_args, self.server_args)
-        self.assertIn('POST:/settings/license', self.server.trace)
-        expected_params = ['reporting_enabled=true', 'contract_id=1', 'customer_token=2']
-        self.rest_parameter_match(expected_params, False)
-
-
 class TestIpFamily(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'ip-family'] + cluster_connect_args

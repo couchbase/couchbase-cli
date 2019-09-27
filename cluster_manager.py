@@ -1789,38 +1789,6 @@ class ClusterManager(object):
                 alternate_address.append(node['alternateAddresses']['external'])
         return alternate_address, None
 
-    def get_licensing_settings(self):
-        url = f'{self.hostname}/settings/license'
-        return self._get(url)
-
-    def set_licensing_settings(self, reporting_enabled, contract_id, customer_token):
-        url = f'{self.hostname}/settings/license'
-        params = {}
-
-        if reporting_enabled:
-            params['reporting_enabled'] = reporting_enabled
-        if contract_id:
-            params['contract_id'] = contract_id
-        if customer_token:
-            params['customer_token'] = customer_token
-
-        return self._post_form_encoded(url, params)
-
-    def generate_licensing_report(self, generation_only, reporting_enabled, contract_id, customer_token):
-        url = f'{self.hostname}/settings/license/validate'
-        params = {}
-
-        if reporting_enabled:
-            params['reporting_enabled'] = reporting_enabled
-        if contract_id:
-            params['contract_id'] = contract_id
-        if customer_token:
-            params['customer_token'] = customer_token
-        if generation_only:
-            params['generation_only'] = generation_only
-
-        return self._post_form_encoded(url, params)
-
     def enable_external_listener(self, host=None, ipfamily=None, encryption=None):
         hostname = host if host else self.hostname
         url = f'{hostname}/node/controller/enableExternalListener'

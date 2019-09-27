@@ -34,7 +34,6 @@ INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-server-readd.html
   generated/doc/couchbase-cli/couchbase-cli-setting-alert.html
   generated/doc/couchbase-cli/couchbase-cli-setting-audit.html
-  generated/doc/couchbase-cli/couchbase-cli-setting-on-demand.html
   generated/doc/couchbase-cli/couchbase-cli-setting-autofailover.html
   generated/doc/couchbase-cli/couchbase-cli-setting-autoreprovision.html
   generated/doc/couchbase-cli/couchbase-cli-setting-alternate-address.html
@@ -97,7 +96,6 @@ IF (NOT WIN32)
     generated/man/man1/couchbase-cli-server-readd.1
     generated/man/man1/couchbase-cli-setting-alert.1
     generated/man/man1/couchbase-cli-setting-audit.1
-    generated/man/man1/couchbase-cli-setting-on-demand.1
     generated/man/man1/couchbase-cli-setting-autofailover.1
     generated/man/man1/couchbase-cli-setting-autoreprovision.1
     generated/man/man1/couchbase-cli-setting-alternate-address.1

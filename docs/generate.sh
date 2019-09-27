@@ -93,4 +93,3 @@ gen_docs couchbase-cli.adoc 1
 gen_docs cblogredaction.adoc 1
 gen_docs couchbase-cli-enable-developer-preview.adoc 1
 gen_docs couchbase-cli-setting-alternate-address.adoc 1
-gen_docs couchbase-cli-setting-on-demand.adoc 1
