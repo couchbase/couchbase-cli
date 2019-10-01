@@ -2728,8 +2728,10 @@ class SettingLdap(Subcommand):
         group.add_argument("--ldap-cacert", dest="cacert_ldap", metavar="<path>",
                            help="CA certificate to be used for LDAP server certificate validation, required if" +
                                 " certificate validation is not disabled")
-        group.add_argument("--user-dn-mapping", metavar="<mapping>", dest="user_dn_mapping",
-                           help="Username to DN mapping. If not specified username is used as user's DN")
+        group.add_argument("--user-dn-query", metavar="<query>", dest="user_dn_query",
+                           help="LDAP query to get user's DN. Must contains at least one instance of %%u")
+        group.add_argument("--user-dn-template", metavar="<template>", dest="user_dn_template",
+                           help="Template to construct user's DN. Must contain at least one instance of %%u")
         group.add_argument("--request-timeout", metavar="<ms>", dest="timeout",
                            help="Request time out in milliseconds")
         group.add_argument("--max-parallel", dest="max_parallel", metavar="<max>", type=int,
@@ -2800,8 +2802,18 @@ class SettingLdap(Subcommand):
         elif opts.nested_groups == '0':
             opts.nested_groups = 'false'
 
+        if opts.user_dn_query is not None and opts.user_dn_template is not None:
+            _exitIfErrors(['--user-dn-query and --user-dn-template can not be used together'])
+
+        mapping = None
+        if opts.user_dn_query is not None:
+            mapping = f'{{"query": "{opts.user_dn_query}"}}'
+
+        if opts.user_dn_template is not None:
+            mapping = f'{{"template": "{opts.user_dn_template}"}}'
+
         _, errors = rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts, opts.port,
-                                       opts.encryption, opts.user_dn_mapping, opts.timeout, opts.max_parallel,
+                                       opts.encryption, mapping, opts.timeout, opts.max_parallel,
                                        opts.max_cache_size, opts.cache_value_lifetime, opts.bind_dn, opts.bind_password,
                                        opts.group_query, opts.nested_groups, opts.nested_max_depth,
                                        opts.server_cert_val, opts.cacert_ldap)

@@ -454,7 +454,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--password &lt;password&gt;] [--authentication-enabled &lt;1|0&gt;]
     [--authorization-enabled &lt;1|0&gt;] [--hosts &lt;host_list&gt;] [--port &lt;port&gt;]
     [--encryption &lt;tls|startTLS|none&gt;] [--disable-cert-validation]
-    [--ldap-cacert &lt;path&gt;] [--user-dn-mapping &lt;mapping&gt;][--request-timeout &lt;ms&gt;]
+    [--ldap-cacert &lt;path&gt;] [--request-timeout &lt;ms&gt;]
+    [--user-dn-query &lt;query&gt; | --user-dn-template &lt;template&gt;]
     [--max-parallel &lt;max&gt;] [--max-cache-size &lt;size&gt;]
     [--cache-value-lifetime &lt;ms&gt;] [--bind-dn &lt;dn&gt;] [--bind-password &lt;password&gt;]
     [--group-query &lt;query&gt;] [--enable-nested-groups &lt;0|1&gt;]
@@ -532,10 +533,15 @@ certificate validation is not disabled</p>
 <dd>
 <p>The timeout for LDAP requests in milliseconds.</p>
 </dd>
-<dt class="hdlist1">--user-dn-mapping &lt;mapping&gt;</dt>
+<dt class="hdlist1">--user-dn-query &lt;query&gt;</dt>
 <dd>
-<p>User to distinguished name (DN), if not specified username is used as user&#8217;s
-DN.</p>
+<p>LDAP query to get user&#8217;s DN. Must contains at least one instance of %u
+Example: ou=Users,dc=example??one?(uid=%u)</p>
+</dd>
+<dt class="hdlist1">--user-dn-template &lt;template&gt;</dt>
+<dd>
+<p>Template to construct user&#8217;s DN. Must contain at least one instance of %u
+Example: uid=%u,ou=Users,dc=example</p>
 </dd>
 <dt class="hdlist1">--max-parallel-connections &lt;max&gt;</dt>
 <dd>

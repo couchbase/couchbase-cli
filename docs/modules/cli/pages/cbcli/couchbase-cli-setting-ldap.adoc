@@ -14,7 +14,8 @@ _couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>]
     [--password <password>] [--authentication-enabled <1|0>]
     [--authorization-enabled <1|0>] [--hosts <host_list>] [--port <port>]
     [--encryption <tls|startTLS|none>] [--disable-cert-validation]
-    [--ldap-cacert <path>] [--user-dn-mapping <mapping>][--request-timeout <ms>]
+    [--ldap-cacert <path>] [--request-timeout <ms>]
+    [--user-dn-query <query> | --user-dn-template <template>]
     [--max-parallel <max>] [--max-cache-size <size>]
     [--cache-value-lifetime <ms>] [--bind-dn <dn>] [--bind-password <password>]
     [--group-query <query>] [--enable-nested-groups <0|1>]
@@ -55,9 +56,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --request-timeout <ms>::
   The timeout for LDAP requests in milliseconds.
 
---user-dn-mapping <mapping>::
-  User to distinguished name (DN), if not specified username is used as user's
-  DN.
+--user-dn-query <query>::
+  LDAP query to get user's DN. Must contains at least one instance of %u
+  Example: ou=Users,dc=example??one?(uid=%u)
+
+--user-dn-template <template>::
+  Template to construct user's DN. Must contain at least one instance of %u
+  Example: uid=%u,ou=Users,dc=example
 
 --max-parallel-connections <max>::
   Maximum number of parallel connections that can be established with LDAP
