@@ -226,7 +226,7 @@ class SFDSource(pump.Source):
                         cas, exp, flg, flex_meta, dtype, conf_res = struct.unpack(SFD_REV_META_PRE_4_6, rev_meta_bytes)
                     else:
                         raise ValueError('Does not match pre- or post-4.6 format')
-                    meta = bytes([doc_info.revSequence])
+                    meta = int(doc_info.revSequence).to_bytes(8, 'big')
                     seqno = doc_info.sequence
                     nmeta = 0
                     msg = (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res)
