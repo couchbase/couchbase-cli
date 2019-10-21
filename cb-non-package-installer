@@ -1,0 +1,212 @@
+#!/usr/bin/env python2
+# -*-python-*-
+
+"""
+Couchbase non root installer tool. This tool is used to install and upgrade non root install.
+
+Copyright (c) 2019  Couchbase Inc
+"""
+
+import argparse
+import logging
+import re
+import os
+import subprocess
+
+FNULL = open(os.devnull, 'w')
+
+def error(message):
+    logging.error(message)
+    exit(1)
+
+def get_package_version(package):
+    """
+    Gets the Couchbase Version from the package name
+    """
+    package = os.path.basename(package)
+
+    # Only support RPM base distros
+    # couchbase-server-enterprise-5.5.4-MP1-centos7.x86_64.rpm
+    # couchbase-server-enterprise-6.0.1-centos8.x86_64.rpm
+    regex_package_version = re.compile('^couchbase-server-enterprise-(?P<major>\d+)\.(?P<minor>\d+)\.'
+                                       '(?P<maintenance>\d+)-[0-9a-zA-Z_\-\.]+rpm$')
+    m = regex_package_version.match(package)
+    if not m:
+        error('Could not get version from Package name {0}'.format(package))
+    return int(m.group('major')), int(m.group('minor')), int(m.group('maintenance'))
+
+
+def get_install_version(location):
+    """
+    Returns the install version of Couchbase Server
+    """
+    version_file = os.path.join(location, 'opt/couchbase/VERSION.txt')
+    with open(version_file) as f:
+        version_string = f.readline()
+        # 5.5.4-4338
+        # 6.0.2-5656
+        regex_install_version = re.compile('^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<maintenance>\d+)-\d+$')
+        m = regex_install_version.match(version_string)
+        if not m:
+            error('Could not get version from the installed Couchbase Server: {0}'.format(location))
+        return int(m.group('major')), int(m.group('minor')), int(m.group('maintenance'))
+
+
+def unpack(package, location):
+    """
+    Unpacks the rpm package
+    """
+    old_cwd = os.getcwd()
+    package = os.path.abspath(package)
+    os.chdir(location)
+    rc = subprocess.call('rpm2cpio {0} | cpio --extract --make-directories --no-absolute-filenames'.format(package),
+                            stdout=FNULL, stderr=FNULL, shell=True)
+    if rc != 0:
+        error('Problems unpacking {0} to {1}'.format(package, location))
+    os.chdir('opt/couchbase')
+    rc = subprocess.call(['./bin/install/reloc.sh', os.getcwd()])
+    if rc != 0:
+        error('Problems executing reloc.sh')
+    os.chdir(old_cwd)
+
+
+def install(package, location):
+    """
+    Does a fresh non package install of Couchbase Server
+    """
+    if os.listdir(location):
+        error('Install location "{0}" is not empty, please provide an empty directory to install to'.format(location))
+
+    unpack(package, location)
+    # TODO: Run cbupgrade
+    print('Successfully installed')
+
+
+def upgrade(package, location):
+    """
+    Upgrades a non package install of Couchbase Server
+    """
+    if not os.listdir(location):
+        error('Upgrade location "{0}" is empty, please provide the location where Couchbase Server'
+              ' is installed'.format(location))
+
+    package_version = get_package_version(package)
+    install_version = get_install_version(location)
+
+    # Check Versions
+    if package_version < install_version:
+        error('Cannot upgrade installed package {0} is newer than {1}'.format('.'.join(install_version), package))
+    if install_version not in [(5,5,4), (5,5,5)]:
+        error('Upgrade only supported from version 5.5.4 and 5.5.5')
+
+    if package_version >= (6, 1, 0):
+        error('Can only upgrade to version 6.0.X')
+
+    # Check if couchbase-server is running
+    # grep rc is 1 if no thing is found, 2 is used for error
+    rc = subprocess.call('ps auxww | grep beam | grep "\-name babysitte[r]"', shell=True, stdout=FNULL)
+    if rc == 0:
+        error('Couchbase Server is running please shutdown before upgrading')
+    elif rc == 2:
+        error('Could not check if Couchbase Server was running')
+
+    # Backup config
+    backup_config = 'couchbase-server-backup-config'
+    backup_config = os.path.abspath(backup_config)
+    try:
+        os.mkdir(backup_config)
+    except OSError:
+        error('Cannot create the directory {0} to backup the config'.format(backup_config))
+    config_files = ['opt/couchbase/var/lib/couchbase/ip', 'opt/couchbase/var/lib/couchbase/ip_start',
+                       'opt/couchbase/etc/couchdb/local.ini', 'opt/couchbase/var/lib/couchbase/config']
+    config_files = [os.path.join(location, f) for f in config_files]
+
+    rc = subprocess.call('cp -r {0} {1}'.format(' '.join(config_files), backup_config), shell=True)
+    if rc != 0:
+        error('Problem backing up config to {0}'.format(backup_config))
+
+    # TODO: Get data paths
+    # Remove old couchbase files
+    old_install = ['opt/couchbase/bin/', 'opt/couchbase/etc/', 'opt/couchbase/lib/', 'opt/couchbase/LICENSE.txt',
+                   'opt/couchbase/manifest.xml', 'opt/couchbase/README.txt', 'opt/couchbase/samples',
+                   'opt/couchbase/share', 'opt/couchbase/VARIANT.txt', 'opt/couchbase/VERSION.txt',
+                   'opt/couchbase/var/lib/couchbase/couchbase-server.node', 'opt/couchbase/var/lib/couchbase/config',
+                   'opt/couchbase/var/lib/couchbase/initargs', 'opt/couchbase/var/lib/couchbase/ip',
+                   'opt/couchbase/var/lib/couchbase/ip_start', 'opt/couchbase/var/lib/couchbase/isasl.pw',
+                   'opt/couchbase/var/lib/couchbase/localtoken']
+
+    old_install = [os.path.join(location, f) for f in old_install]
+
+    rc = subprocess.call('rm -r {0}'.format(' '.join(old_install)), shell=True)
+    if rc != 0:
+        error('Problem removing the old install')
+
+    unpack(package, location)
+    # Restore config
+    for config_file in config_files:
+        old_config = os.path.basename(config_file)
+        restore_old_config_command = None
+        if old_config == 'config':
+            restore_old_config_command = 'cp {0}/* {1}'.format(os.path.join(backup_config, old_config), config_file)
+        else:
+            restore_old_config_command = 'cp {0} {1}'.format(os.path.join(backup_config, old_config), config_file)
+        rc = subprocess.call(restore_old_config_command, shell=True)
+        if rc != 0:
+            error('Problem restoring old config')
+
+    # TODO: Run cbupgrade
+    # Remove backup config
+    rc = subprocess.call('rm -r {0}'.format(backup_config), shell=True)
+    if rc != 0:
+        error('Could not remove the backed up config directory {0}'.format(backup_config))
+    print('Upgrade has completed successfully')
+    exit(0)
+
+
+def main():
+    opts = argparse.ArgumentParser(description='A tool to help install and upgrade Couchbase Server in non root'
+                                               ' environments.')
+
+    #action_group = opts.add_mutually_exclusive_group(required=True)
+    #action_group.add_argument('--install', action='store_true', dest='install',
+    #                          help='To do a fresh install of Couchbase Server')
+    #action_group.add_argument('--upgrade', action='store_true', dest='upgrade',
+    #                        help='To upgrade an existing install of Couchbase Server')
+
+    opts.add_argument('--upgrade', action='store_true', dest='upgrade', required=True,
+                            help='To upgrade an existing install of Couchbase Server')
+    opts.add_argument('--install-location', type=str, metavar='Path', dest='location', required=True,
+                      help='Path where Couchbase Server should be installed')
+    opts.add_argument('--package', type=str, metavar='File', dest='package', required=True,
+                      help='The Couchbase Server package (rpm/dpkg) to install')
+    opts.add_argument('-v', '--verbose', action='count', help='increase output verbosity')
+    args = opts.parse_args()
+
+    log_level = None
+    if args.verbose is None:
+        log_level = logging.WARN
+    elif args.verbose >= 2:
+        log_level = logging.DEBUG
+    elif args.verbose == 1:
+        log_level = logging.INFO
+
+    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y/%m/%dT%H:%M:%S', level=log_level)
+
+    if not os.path.isfile(args.package):
+        error('Package "{0}" does not exist or is not a file'.format(args.package))
+    if not os.access(args.package, os.R_OK):
+        error('Package "{0}" is not readable, please check the permissions'.format(args.package))
+    if not os.path.isdir(args.location):
+        error('Install location "{0}" does not exist or is not a directory'.format(args.location))
+    if not os.access(args.location, os.W_OK):
+        error('Install location "{0}" is not writable, please check the permissions'.format(args.location))
+
+    #if args.install:
+    #    install(args.package, args.location)
+    if args.upgrade:
+        upgrade(args.package, args.location)
+    exit(0)
+
+
+if __name__ == '__main__':
+    main()
