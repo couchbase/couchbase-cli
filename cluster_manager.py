@@ -733,7 +733,8 @@ class ClusterManager(object):
                 params["allowedTimePeriod[abortOutside]"] = abort_outside
             if paralleldb_and_view_compact is not None:
                 params["parallelDBAndViewCompaction"] = paralleldb_and_view_compact
-            if purge_interval is not None:
+
+        if bucket_type != "memcached" and purge_interval is not None:
                 params["purgeInterval"] = purge_interval
 
         result, errors = self._post_form_encoded(url, params)

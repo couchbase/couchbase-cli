@@ -199,7 +199,7 @@ class TestBucketCreate(CommandTest):
         expected_params = [
             'bucketType=couchbase', 'databaseFragmentationThreshold%5Bpercentage%5D=25', 'name=name',
             'evictionPolicy=fullEviction', 'autoCompactionDefined=true', 'parallelDBAndViewCompaction=1',
-            'replicaNumber=0', 'purgeInterval=2', 'viewFragmentationThreshold%5Bpercentage%5D=20', 'ramQuotaMB=100'
+            'replicaNumber=0', 'purgeInterval=2.0', 'viewFragmentationThreshold%5Bpercentage%5D=20', 'ramQuotaMB=100'
         ]
 
         self.rest_parameter_match(expected_params)

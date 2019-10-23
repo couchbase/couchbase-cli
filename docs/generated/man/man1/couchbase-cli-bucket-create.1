@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-bucket-create
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-11-09
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2019-10-23
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2018-11-09" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2019-10-23" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,6 +31,7 @@
 couchbase\-cli\-bucket\-create \- Create a new bucket
 .SH "SYNOPSIS"
 .sp
+.sp
 .nf
 \fIcouchbase\-cli bucket\-create\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-bucket <name>] [\-\-bucket\-type <type>]
@@ -44,7 +45,7 @@ couchbase\-cli\-bucket\-create \- Create a new bucket
     [\-\-view\-fragmentation\-threshold\-size <megabytes>] [\-\-from\-hour <hour>]
     [\-\-from\-minute <min>] [\-\-to\-hour <hour>] [\-\-to\-minute <min>]
     [\-\-abort\-outside <0|1>] [\-\-parallel\-db\-view\-compaction <0|1>]
-    [\-\-purge\-interval <int>]
+    [\-\-purge\-interval <float>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -176,7 +177,7 @@ updated the greatest number of times since the last sync: for example, if
 one cluster has updated a document twice since the last sync, and the other
 cluster has updated the document three times, the document updated three
 times is selected; regardless of the specific times at which updates took
-  place.
+place.
 .sp
 Timestamp\-based conflict resolution selects the document with the most
 recent timestamp: this is only supported when all clocks on all
@@ -288,7 +289,7 @@ the allowed time. Options are [1, 0].
 Run index and data compaction in parallel. Global setting only.
 .RE
 .sp
-\-\-purge\-interval <int>
+\-\-purge\-interval <float>
 .RS 4
 Sets the frequency of the tombstone (metadata) purge interval. The default
 value is three days.
