@@ -77,38 +77,38 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 To import functions from a file called _functions.json_:
 
-  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
    -p password --import --file functions.json
 
 To export a function called _alert_function_ to a file called
 _functions.json_:
 
-  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
    -p password --export --name alert_function --file functions.json
 
 To export all functions to a file called _functions.json_:
 
-  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
    -p password --export-all --file functions.json
 
 To list all functions:
 
-  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
    -p password --list
 
 To delete a function called _alert_function_:
 
-  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
    -p password --delete --name alert_function
 
 To deploy a function called _alert_function_:
 
-  $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
    -p password --deploy --name alert_function
 
 To undeploy a function called _alert_function_:
 
-    $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
    -p password --undeploy --name alert_function
 
 To pause a function called _alert_function_:

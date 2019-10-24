@@ -590,7 +590,7 @@ a port other that 8091.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
  -p password --import --file functions.json</pre>
 </div>
 </div>
@@ -600,7 +600,7 @@ a port other that 8091.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
  -p password --export --name alert_function --file functions.json</pre>
 </div>
 </div>
@@ -609,7 +609,7 @@ a port other that 8091.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
  -p password --export-all --file functions.json</pre>
 </div>
 </div>
@@ -618,7 +618,7 @@ a port other that 8091.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
  -p password --list</pre>
 </div>
 </div>
@@ -627,7 +627,7 @@ a port other that 8091.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
  -p password --delete --name alert_function</pre>
 </div>
 </div>
@@ -636,7 +636,7 @@ a port other that 8091.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
  -p password --deploy --name alert_function</pre>
 </div>
 </div>
@@ -645,8 +645,8 @@ a port other that 8091.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre> $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
--p password --undeploy --name alert_function</pre>
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
+ -p password --undeploy --name alert_function</pre>
 </div>
 </div>
 <div class="paragraph">

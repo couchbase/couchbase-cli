@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-eventing-function-setup
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-09-26
+.\"      Date: 2019-10-24
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-EVENTING\-FUNCTION\-SETUP" "1" "2019-09-26" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-EVENTING\-FUNCTION\-SETUP" "1" "2019-10-24" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -183,7 +183,7 @@ To import functions from a file called \fIfunctions.json\fP:
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
+$ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-import \-\-file functions.json
 .fi
 .if n .RE
@@ -193,7 +193,7 @@ To export a function called \fIalert_function\fP to a file called
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
+$ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-export \-\-name alert_function \-\-file functions.json
 .fi
 .if n .RE
@@ -202,7 +202,7 @@ To export all functions to a file called \fIfunctions.json\fP:
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
+$ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-export\-all \-\-file functions.json
 .fi
 .if n .RE
@@ -211,7 +211,7 @@ To list all functions:
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
+$ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-list
 .fi
 .if n .RE
@@ -220,7 +220,7 @@ To delete a function called \fIalert_function\fP:
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
+$ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-delete \-\-name alert_function
 .fi
 .if n .RE
@@ -229,7 +229,7 @@ To deploy a function called \fIalert_function\fP:
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
+$ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-deploy \-\-name alert_function
 .fi
 .if n .RE
@@ -238,8 +238,8 @@ To undeploy a function called \fIalert_function\fP:
 .sp
 .if n .RS 4
 .nf
- $ couchbase\-cli eventing\-functions\-setup \-c 192.168.1.5 \-u Administrator \(rs
-\-p password \-\-undeploy \-\-name alert_function
+$ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-undeploy \-\-name alert_function
 .fi
 .if n .RE
 .sp
