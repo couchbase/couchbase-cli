@@ -3898,7 +3898,9 @@ class UserChangePassword(Subcommand):
         check_cluster_initialized(rest)
         check_versions(rest)
 
-        rest.user_change_passsword(opts.new_pass)
+        _, rv = rest.user_change_passsword(opts.new_pass)
+        _exitIfErrors(rv)
+        _success(f'Changed password for {opts.username}')
 
     @staticmethod
     def get_man_page_name():
