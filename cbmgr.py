@@ -905,8 +905,8 @@ class BucketEdit(Subcommand):
         group.add_argument("--parallel-db-view-compaction", dest="paralleldb_and_view_compact",
                            metavar="<0|1>", choices=["0", "1"], help="Set parallel DB and View Compaction")
 
-        group.add_argument("--purge-interval", dest="purge_interval", type=(int),
-                           metavar="<int>", help="Set parallel DB and View Compaction")
+        group.add_argument("--purge-interval", dest="purge_interval", type=(float),
+                           metavar="<num>", help="Set parallel DB and View Compaction")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -944,8 +944,7 @@ class BucketEdit(Subcommand):
                 and (opts.db_frag_perc is not None or opts.db_frag_size is not None or
                      opts.view_frag_perc is not None or opts.view_frag_size is not None or opts.from_hour is not None or
                      opts.from_min is not None or opts.to_hour is not None or opts.to_min is not None or
-                     opts.abort_outside is not None or opts.paralleldb_and_view_compact is not None or
-                     opts.purge_interval is not None)):
+                     opts.abort_outside is not None or opts.paralleldb_and_view_compact is not None)):
             _exitIfErrors([f'compaction settings can not be specified for a {bucket["bucketType"]} bucket'])
 
         priority = None
