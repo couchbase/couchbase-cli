@@ -104,7 +104,7 @@ To delete a function called _alert_function_:
 To deploy a function called _alert_function_:
 
   $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
-   -p password --deploy --name alert_function
+   -p password --deploy --name alert_function --boundary from-now
 
 To undeploy a function called _alert_function_:
 
