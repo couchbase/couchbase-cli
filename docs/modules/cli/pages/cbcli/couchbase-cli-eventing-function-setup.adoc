@@ -101,7 +101,13 @@ To delete a function called _alert_function_:
   $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
    -p password --delete --name alert_function
 
-To deploy a function called _alert_function_:
+To deploy a function called _alert_function_ and process both all historical data and
+new data:
+
+  $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
+   -p password --deploy --name alert_function --boundary from-everything
+
+To deploy a function called _alert_function_ and process only new data:
 
   $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
    -p password --deploy --name alert_function --boundary from-now
@@ -113,12 +119,12 @@ To undeploy a function called _alert_function_:
 
 To pause a function called _alert_function_:
 
-    $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+    $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
      -p password --pause --name alert_function
 
 To resume a function called _alert_function_:
 
-    $ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+    $ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
      -p password --resume --name alert_function
 
 == UNDEPLOY VS PAUSE

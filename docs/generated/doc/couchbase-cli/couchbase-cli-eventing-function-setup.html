@@ -632,7 +632,17 @@ a port other that 8091.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>To deploy a function called <em>alert_function</em>:</p>
+<p>To deploy a function called <em>alert_function</em> and process both all historical data and
+new data:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
+ -p password --deploy --name alert_function --boundary from-everything</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To deploy a function called <em>alert_function</em> and process only new data:</p>
 </div>
 <div class="literalblock">
 <div class="content">
@@ -654,7 +664,7 @@ a port other that 8091.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
  -p password --pause --name alert_function</pre>
 </div>
 </div>
@@ -663,7 +673,7 @@ a port other that 8091.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli eventing-functions-setup -c 192.168.1.5 -u Administrator \
+<pre>$ couchbase-cli eventing-function-setup -c 192.168.1.5 -u Administrator \
  -p password --resume --name alert_function</pre>
 </div>
 </div>
