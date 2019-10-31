@@ -96,8 +96,8 @@ def upgrade(package, location):
     # Check Versions
     if package_version < install_version:
         error('Cannot upgrade installed package {0} is newer than {1}'.format('.'.join(install_version), package))
-    if install_version not in [(5,5,4), (5,5,5)]:
-        error('Upgrade only supported from version 5.5.4 and 5.5.5')
+    if (5,5,2) >= install_version >= (5,5,5):
+        error('Upgrade only supported between versions 5.5.2 and 5.5.5')
 
     if package_version >= (6, 1, 0):
         error('Can only upgrade to version 6.0.X')
