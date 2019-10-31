@@ -1648,7 +1648,7 @@ class ClusterManager(object):
         if pipeline_batch is not None:
             params['queryPipelineBatch'] = pipeline_batch
         if pipeline_cap is not None:
-            params['queryPipelineBatch'] = pipeline_cap
+            params['queryPipelineCap'] = pipeline_cap
         if scan_cap is not None:
             params['queryScanCap'] = scan_cap
         if timeout is not None:
