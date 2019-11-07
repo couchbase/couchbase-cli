@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-settings-alternate-address
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-07-25
+.\"      Date: 2019-11-13
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2019-07-25" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2019-11-13" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -42,7 +42,7 @@ _couchbase\-cli setting\-alternate\-address [\-\-cluster <url>] [\-\-username <u
 .sp
 This command is used to set the alternate address for a node. This alternate address
 allows the node to be connected by a different address, this is useful when an external
-agent tries to connect via a NAT\(cqd environment such as cloud or kubernetes environments.
+agent tries to connect via a NAT\(cqd environment such as the cloud or kubernetes.
 .SH "OPTIONS"
 .sp
 \-c, \-\-cluster
@@ -83,6 +83,12 @@ Set alternate address for the node specified in the \-c/\-\-cluster option.
 Remove alternate address for the node specified in the \-c/\-\-cluster option.
 .RE
 .sp
+\-\-node <node>
+.RS 4
+The node in the cluster to take action on. This is required when using
+\-\-set or \-\-remove flags.
+.RE
+.sp
 \-\-hostname <host>
 .RS 4
 Alternate host address
@@ -91,7 +97,7 @@ Alternate host address
 \-\-ports <port>
 .RS 4
 Alternate port mappings. Specified as a comma separated list: e.g. \-\-ports
-kv=9000,kvSSL=9999. If not specified defaults will be used
+kv=9000,kvSSL=9999.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -137,12 +143,12 @@ a port other that 8091.
 .SH "EXAMPLES"
 .sp
 To set the alternate address and custom ports for node 192.168.1.5 we would use the
-following command
+following command:
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli setting\-alternate\-address \-c 192.168.1.5:8091 \-\-username Administrator \(rs
- \-\-password password \-\-set \-\-hostname 10.10.10.10 \(rs
+ \-\-password password \-\-set \-\-node 192.168.1.5 \-\-hostname 10.10.10.10 \(rs
  \-\-ports mgmt=1100,capi=2000,capiSSL=3000
 .fi
 .if n .RE

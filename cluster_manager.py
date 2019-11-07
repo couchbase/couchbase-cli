@@ -1780,15 +1780,10 @@ class ClusterManager(object):
 
     def get_alternate_address(self):
         url = f'{self.hostname}/pools/default/nodeServices'
-        node_services, error = self._get(url)
+        node_service, error = self._get(url)
         if error:
             return None, error
-
-        alternate_address = []
-        for node in node_services['nodesExt']:
-            if 'alternateAddresses' in node:
-                alternate_address.append(node['alternateAddresses']['external'])
-        return alternate_address, None
+        return node_service['nodesExt'], None
 
     def enable_external_listener(self, host=None, ipfamily=None, encryption=None):
         hostname = host if host else self.hostname

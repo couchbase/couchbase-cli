@@ -462,7 +462,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>This command is used to set the alternate address for a node. This alternate address
 allows the node to be connected by a different address, this is useful when an external
-agent tries to connect via a NAT&#8217;d environment such as cloud or kubernetes environments.</p>
+agent tries to connect via a NAT&#8217;d environment such as the cloud or kubernetes.</p>
 </div>
 </div>
 </div>
@@ -506,6 +506,11 @@ environment variable CB_REST_PASSWORD.</p>
 <dd>
 <p>Remove alternate address for the node specified in the -c/--cluster option.</p>
 </dd>
+<dt class="hdlist1">--node &lt;node&gt;</dt>
+<dd>
+<p>The node in the cluster to take action on. This is required when using
+--set or --remove flags.</p>
+</dd>
 <dt class="hdlist1">--hostname &lt;host&gt;</dt>
 <dd>
 <p>Alternate host address</p>
@@ -513,7 +518,7 @@ environment variable CB_REST_PASSWORD.</p>
 <dt class="hdlist1">--ports &lt;port&gt;</dt>
 <dd>
 <p>Alternate port mappings. Specified as a comma separated list: e.g. --ports
-kv=9000,kvSSL=9999. If not specified defaults will be used</p>
+kv=9000,kvSSL=9999.</p>
 </dd>
 </dl>
 </div>
@@ -551,12 +556,12 @@ a port other that 8091.</p>
 <div class="sectionbody">
 <div class="paragraph">
 <p>To set the alternate address and custom ports for node 192.168.1.5 we would use the
-following command</p>
+following command:</p>
 </div>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli setting-alternate-address -c 192.168.1.5:8091 --username Administrator \
- --password password --set --hostname 10.10.10.10 \
+ --password password --set --node 192.168.1.5 --hostname 10.10.10.10 \
  --ports mgmt=1100,capi=2000,capiSSL=3000</pre>
 </div>
 </div>

@@ -4089,23 +4089,41 @@ class SettingAlternateAddress(Subcommand):
                            help='Remove external address configuration')
         group.add_argument('--list', dest='list', required=False, action='store_true',
                            help='Retrieve current alternate address configuration for all nodes')
+        group.add_argument('--node', dest='node', metavar="<node>", help="Specify the node to update")
         group.add_argument('--hostname', dest='alternate_hostname', metavar="<host>", help='Alternate address')
         group.add_argument('--ports', dest='ports', metavar="<ports>",
                            help="A comma separated list specifying port mappings for the services")
 
     def execute(self, opts):
+        flags_used = sum([opts.set, opts.list, opts.remove])
+        if flags_used != 1:
+            _exitIfErrors(['Use exactly one of --set, --list or --remove'])
+        if opts.set or opts.remove:
+            if not opts.node:
+                _exitIfErrors(['--node has to be set when using --set or --remove'])
+            # Alternate address can only be set on the node it self. The opts.cluster
+            # is updated with the opts.node instead to allow ease of use.
+            # The node name can have a port number (./cluster_run)
+            hostname, port = self._get_host_port(opts.node)
+            url = urllib.parse.urlparse(opts.cluster)
+            if url.scheme:
+                scheme = url.scheme
+                if url.port and not port:
+                    port = url.port
+            elif not port:
+                _, old_port = self._get_host_port(opts.cluster)
+                if old_port:
+                    port = old_port
+            if scheme:
+                cluster = f'{scheme}://'
+            cluster += hostname
+            if port:
+                cluster += f':{port}'
+            opts.cluster = cluster
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
                               opts.cacert, opts.debug)
         check_versions(rest)
 
-        flags_used = sum([opts.set, opts.list, opts.remove])
-        if flags_used != 1:
-            _exitIfErrors(['Use exactly one of --set, --list or --remove'])
-
-        if opts.list:
-            add, error = rest.get_alternate_address()
-            _exitIfErrors(error)
-            print(json.dumps(add))
         if opts.set:
             ports, error = self._parse_ports(opts.ports)
             _exitIfErrors(error)
@@ -4115,6 +4133,51 @@ class SettingAlternateAddress(Subcommand):
             _, error = rest.delete_alternate_address()
             _exitIfErrors(error)
             _success('Alternate address configuration deleted')
+        if opts.list:
+            add, error = rest.get_alternate_address()
+            _exitIfErrors(error)
+            if opts.output == 'standard':
+                port_names = set()
+                for node in add:
+                    if 'alternateAddresses' in node:
+                        if 'ports' in node['alternateAddresses']['external']:
+                            for port in node['alternateAddresses']['external']['ports'].keys():
+                                port_names.add(port)
+                print('{:20}{:20}{}'.format('Hostname', 'Alternate Address', 'Ports (Primary/Alternate)'))
+                print('{:40}'.format(' '), end='')
+                port_names = sorted(port_names)
+                for port in port_names:
+                    column_size = len(port) + 1
+                    if column_size < 11:
+                        column_size = 11
+                    print(f'{port:{column_size}}', end='')
+                print()
+                for node in add:
+                    if 'alternateAddresses' in node:
+                        # For cluster_run and single node clusters there is no hostname
+                        try:
+                            print(f'{node["hostname"]:20}{node["alternateAddresses"]["external"]["hostname"]:20}', end='')
+                        except KeyError:
+                            host = 'UNKNOWN'
+                            print(f'{host:20}{node["alternateAddresses"]["external"]["hostname"]:20}', end='')
+                        for port in port_names:
+                            column_size = len(port) + 1
+                            if column_size < 11:
+                                column_size = 11
+                            ports = ' '
+                            if port in node['alternateAddresses']['external']['ports']:
+                                ports = f'{str(node["services"][port])}' \
+                                        f'/{str(node["alternateAddresses"]["external"]["ports"][port])}'
+                            print(f'{ports:{column_size}}', end='')
+                        print()
+                    else:
+                        # For cluster_run and single node clusters there is no hostanme
+                        try:
+                            print(f'{node["hostname"]}')
+                        except KeyError:
+                            print('UNKNOWN')
+            else:
+                print(json.dumps(add))
 
     @staticmethod
     def _parse_ports(ports):
@@ -4133,6 +4196,19 @@ class SettingAlternateAddress(Subcommand):
                 return None, [f'invalid port mapping: {port_value_pair}']
             map.append((p_v[0], p_v[1]))
         return map, None
+
+    @staticmethod
+    def _get_host_port(host):
+        if ']' in host:
+            host_port = host.split(']:')
+            if len(host_port) == 2:
+                return host_port[0] + ']', host_port[1]
+            return host_port[0], None
+        else:
+            host_port = host.split(':')
+            if len(host_port) == 2:
+                return host_port[0], host_port[1]
+            return host_port[0], None
 
     @staticmethod
     def get_man_page_name():
