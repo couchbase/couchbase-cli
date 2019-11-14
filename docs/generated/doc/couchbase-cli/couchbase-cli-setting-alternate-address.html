@@ -578,6 +578,81 @@ follows:</p>
 </div>
 </div>
 <div class="sect1">
+<h2 id="_discussion">DISCUSSION</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>All of the ports that can be configured:</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Alternate Ports</caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Port Name</th>
+<th class="tableblock halign-left valign-top">Encrypted Port Name</th>
+<th class="tableblock halign-left valign-top">Service</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">mgmt</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">mgmtSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cluster Manager</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The UI and REST API for managing the Cluster</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">kv</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">kvSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs and XDCR to transfer data to and from the Data Service</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">capi</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">capiSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">View Engine</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs and XDCR</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n1ql</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">n1qlSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Query</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs to query data</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">fts</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ftsSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Search</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs to do full text searches</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cbas</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">cbasSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Analytics</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs to query data managed by the Analytic service</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">eventingAdminPort</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">eventingSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Eventing</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDK to transfer dat to and from the Eventing Service</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">eventing_debug_port</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Eventing</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The Eventing debugger port, this should only be set in development environments.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_environment_and_configuration_variables">ENVIRONMENT AND CONFIGURATION VARIABLES</h2>
 <div class="sectionbody">
 <div class="dlist">

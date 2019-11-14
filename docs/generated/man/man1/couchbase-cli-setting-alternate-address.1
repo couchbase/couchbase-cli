@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-settings-alternate-address
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-11-13
+.\"      Date: 2019-11-14
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2019-11-13" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2019-11-14" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -162,6 +162,137 @@ $ couchbase\-cli setting\-alternate\-address \-c 192.168.1.5:8091 \-\-username A
  \-\-password password \-\-list
 .fi
 .if n .RE
+.SH "DISCUSSION"
+.sp
+All of the ports that can be configured:
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table 1. Alternate Ports
+.TS
+allbox tab(:);
+lt lt lt lt.
+T{
+.sp
+Port Name
+T}:T{
+.sp
+Encrypted Port Name
+T}:T{
+.sp
+Service
+T}:T{
+.sp
+Description
+T}
+T{
+.sp
+mgmt
+T}:T{
+.sp
+mgmtSSL
+T}:T{
+.sp
+Cluster Manager
+T}:T{
+.sp
+The UI and REST API for managing the Cluster
+T}
+T{
+.sp
+kv
+T}:T{
+.sp
+kvSSL
+T}:T{
+.sp
+Data
+T}:T{
+.sp
+Used by the SDKs and XDCR to transfer data to and from the Data Service
+T}
+T{
+.sp
+capi
+T}:T{
+.sp
+capiSSL
+T}:T{
+.sp
+View Engine
+T}:T{
+.sp
+Used by the SDKs and XDCR
+T}
+T{
+.sp
+n1ql
+T}:T{
+.sp
+n1qlSSL
+T}:T{
+.sp
+Query
+T}:T{
+.sp
+Used by the SDKs to query data
+T}
+T{
+.sp
+fts
+T}:T{
+.sp
+ftsSSL
+T}:T{
+.sp
+Search
+T}:T{
+.sp
+Used by the SDKs to do full text searches
+T}
+T{
+.sp
+cbas
+T}:T{
+.sp
+cbasSSL
+T}:T{
+.sp
+Analytics
+T}:T{
+.sp
+Used by the SDKs to query data managed by the Analytic service
+T}
+T{
+.sp
+eventingAdminPort
+T}:T{
+.sp
+eventingSSL
+T}:T{
+.sp
+Eventing
+T}:T{
+.sp
+Used by the SDK to transfer dat to and from the Eventing Service
+T}
+T{
+.sp
+eventing_debug_port
+T}:T{
+.sp
+N/A
+T}:T{
+.sp
+Eventing
+T}:T{
+.sp
+The Eventing debugger port, this should only be set in development environments.
+T}
+.TE
+.sp
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_USERNAME
