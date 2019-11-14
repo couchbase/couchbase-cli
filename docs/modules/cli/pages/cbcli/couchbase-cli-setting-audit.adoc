@@ -13,7 +13,7 @@ Modifies audit log settings (EE only)
 [verse]
 _couchbase-cli setting-audit_ [--cluster <url>] [--username <user>]
     [--password <password>] [--audit-enabled <num>] [--audit-log-path <path>]
-    [--audit-log-rotate-interval <seconds>]
+    [--audit-log-rotate-interval <seconds>] [--audit-log-rotate-size <bytes>]
 
 == DESCRIPTION
 
