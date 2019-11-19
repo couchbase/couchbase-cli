@@ -1832,6 +1832,21 @@ class ClusterManager(object):
     def reset_cipher_suites(self):
         url = f'{self.hostname}/controller/resetCipherSuites'
         return self._post_form_encoded(url, None)
+
+    # returns info about nodes even if cluster is not initialized yet
+    def nodes_info(self):
+        node_data, err = self.pools('nodes')
+        if err and err[0] == '"unknown pool"':
+            result, err = self.node_info()
+            if err:
+                return None, err
+            else:
+                return [result], None
+        elif err:
+            return None, err
+
+        return node_data['nodes'], None
+
     # Low level methods for basic HTML operations
 
     @request

@@ -150,14 +150,14 @@ def get_pools(rest_params=None, server_args=None, path="", endpointMatch=None):
                                            'os_mon': '2.2.14', 'stdlib': '1.19.4', 'inets': '5.9.8',
                                            'public_key': '0.21', 'ns_server': version, 'crypto': '3.2', 'asn1': '2.0.4',
                                            'lhttpc': '1.3.0', 'sasl': '2.3.4'}, 'implementationVersion': version,
-                     'isAdminCreds': is_admin, 'isIPv6': False, 'isROAdminCreds': False}
+                     'isAdminCreds': is_admin, 'isROAdminCreds': False}
 
     response_no_init = {'uuid': [], 'settings': [], 'pools': [], 'isEnterprise': enterprise,
                         'componentsVersion': {'kernel': '5.4.3.2', 'ale': version, 'ssl': '8.2.6.2', 'os_mon': '2.4.4',
                                               'stdlib': '3.4.5', 'inets': '6.5.2.4', 'public_key': '1.5.2',
                                               'ns_server': version, 'crypto': '4.2.2.2', 'asn1': '5.0.5.1',
                                               'lhttpc': '1.3.0', 'sasl': '3.1.2'}, 'implementationVersion': version,
-                        'isAdminCreds': is_admin, 'isIPv6': False, 'isROAdminCreds': False}
+                        'isAdminCreds': is_admin, 'isROAdminCreds': False}
 
     if init:
         return 200, response_init

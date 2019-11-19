@@ -4358,11 +4358,10 @@ class IpFamily(Subcommand):
 
     @staticmethod
     def _get(rest):
-        # this will start the correct listeners in all the nodes
-        node_data, err = rest.pools('nodes')
+        nodes, err = rest.nodes_info()
         _exitIfErrors(err)
         fam = {}
-        for n in node_data['nodes']:
+        for n in nodes:
             fam[n['addressFamily']] = True
 
         family = list(fam.keys())
@@ -4457,19 +4456,19 @@ class NodeToNodeEncryption(Subcommand):
     @staticmethod
     def _get(rest):
         # this will start the correct listeners in all the nodes
-        node_data, err = rest.pools('nodes')
+        nodes, err = rest.nodes_info()
         _exitIfErrors(err)
         encrypted_nodes = []
         unencrpyted_nodes = []
-        for n in node_data['nodes']:
+        for n in nodes:
             if n['nodeEncryption']:
                 encrypted_nodes.append(n['hostname'])
             else:
                 unencrpyted_nodes.append(n['hostname'])
 
-        if len(encrypted_nodes) == len(node_data['nodes']):
+        if len(encrypted_nodes) == len(nodes):
             print('Node-to-node encryption is enabled')
-        elif len(unencrpyted_nodes) == len(node_data['nodes']):
+        elif len(unencrpyted_nodes) == len(nodes):
             print('Node-to-node encryption is disabled')
         else:
             print('Cluster is in mixed mode')
