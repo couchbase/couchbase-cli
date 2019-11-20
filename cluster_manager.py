@@ -886,7 +886,7 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
-    def set_data_paths(self, data_path, index_path, cbas_path, java_home):
+    def set_data_paths(self, data_path, index_path, cbas_path, eventing_path, java_home):
         url = f'{self.hostname}/nodes/self/controller/settings'
         params = dict()
 
@@ -898,6 +898,9 @@ class ClusterManager(object):
 
         if cbas_path is not None:
             params["cbas_path"] = cbas_path
+
+        if eventing_path is not None:
+            params["eventing_path"] = eventing_path
 
         if java_home is not None:
             params["java_home"] = java_home

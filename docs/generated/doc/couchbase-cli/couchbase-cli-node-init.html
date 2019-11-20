@@ -453,8 +453,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <pre class="content"><em>couchbase-cli node-init</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--node-init-data-path &lt;path&gt;]
     [--node-init-index-path &lt;path&gt;] [--node-init-analytics-path &lt;path&gt;]
-    [--node-init-hostname &lt;hostname&gt;] [--node-init-java-home &lt;path&gt;]
-    [--ipv4] [--ipv6]</pre>
+    [--node-init-eventing-path &lt;path&gt;] [--node-init-hostname &lt;hostname&gt;]
+    [--node-init-java-home &lt;path&gt;] [--ipv4] [--ipv6]</pre>
 </div>
 </div>
 </div>
@@ -518,6 +518,11 @@ paths can be specified by setting this option multiple times.</p>
 <dt class="hdlist1">--node-init-analytics-path</dt>
 <dd>
 <p>The path to store files create by the Couchbase Analytics service. This flag
+can only be specified against a node that is not yet part of a cluster.</p>
+</dd>
+<dt class="hdlist1">--node-init-eventing-path</dt>
+<dd>
+<p>The path to store files create by the Couchbase Eventing service. This flag
 can only be specified against a node that is not yet part of a cluster.</p>
 </dd>
 <dt class="hdlist1">--node-init-hostname</dt>

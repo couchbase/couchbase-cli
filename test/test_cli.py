@@ -543,7 +543,9 @@ class TestNodeInit(CommandTest):
         self.command = ['couchbase-cli', 'node-init'] + cluster_connect_args
         self.name_args = ['--node-init-hostname', 'foo']
         self.path_args = ['--node-init-data-path', '/foo/bar/data', '--node-init-index-path', '/foo/bar/index',
-                          '--node-init-java-home', '/foo/bar/java', '--node-init-analytics-path', '/foo/bar/analytics']
+                          '--node-init-java-home', '/foo/bar/java', '--node-init-analytics-path', '/foo/bar/analytics',
+                          '--node-init-eventing-path', '/foo/bar/eventing']
+
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestNodeInit, self).setUp()
 
@@ -551,7 +553,7 @@ class TestNodeInit(CommandTest):
         self.no_error_run(self.command + self.name_args + self.path_args, self.server_args)
         expected_params = [
             'path=%2Ffoo%2Fbar%2Fdata', 'index_path=%2Ffoo%2Fbar%2Findex', 'cbas_path=%2Ffoo%2Fbar%2Fanalytics',
-            'java_home=%2Ffoo%2Fbar%2Fjava', 'hostname=foo'
+            'eventing_path=%2Ffoo%2Fbar%2Feventing', 'java_home=%2Ffoo%2Fbar%2Fjava', 'hostname=foo'
         ]
         self.rest_parameter_match(expected_params)
 
