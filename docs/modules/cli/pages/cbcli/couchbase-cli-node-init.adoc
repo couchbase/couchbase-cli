@@ -34,19 +34,19 @@ data, index and analytics paths be set to separate disks.
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --node-init-data-path::
-  The path to store data files create by the Couchbase data service. Note that
+  The path to store data files created by the Couchbase data service. Note that
   this path is also where view indexes are written on this server. This flag
   can only be specified against a node that is not yet part of a cluster.
 
 --node-init-index-path::
-  The path to store files create by the Couchbase index service. This flag can
-  only be specified against a node that is not yet part of a cluster. Multiple
-  paths can be specified by setting this option multiple times.
+  The path to store files created by the Couchbase index service. This flag can
+  only be specified against a node that is not yet part of a cluster.
 
 --node-init-analytics-path::
-  The path to store files create by the Couchbase Analytics service. This flag
+  The path to store files created by the Couchbase Analytics service. This flag
   can only be specified against a node that is not yet part of a cluster.
-
+  Multiple paths can be specified by setting this option multiple times.
+  
 --node-init-hostname::
   Specifies the hostname for this server.
 
