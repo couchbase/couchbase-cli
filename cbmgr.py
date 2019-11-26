@@ -1473,17 +1473,17 @@ class MasterPassword(LocalSubcommand):
 
         if rc == 0:
             print("SUCCESS: Password accepted. Node started booting.")
-        elif rc == 1:
+        elif rc == 101:
             print("Incorrect password.")
             self.prompt_for_master_pwd(node, cookie, '', cb_cfg_path)
-        elif rc == 2:
+        elif rc == 102:
             _exitIfErrors(["Password was already supplied"])
-        elif rc == 3:
+        elif rc == 103:
             _exitIfErrors(["The node is down"])
-        elif rc == 4:
+        elif rc == 104:
             _exitIfErrors(["Incorrect password. Node shuts down."])
         else:
-            _exitIfErrors([f'Unknown error: {out}, {err}'])
+            _exitIfErrors([f'Unknown error: {rc} {out}, {err}'])
 
     def run_process(self, name, args):
         try:
