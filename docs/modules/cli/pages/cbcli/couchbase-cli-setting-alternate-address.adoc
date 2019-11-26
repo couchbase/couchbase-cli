@@ -11,7 +11,7 @@ Modify alternate addresses
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-alternate-address [--cluster <url>] [--username <user>]
+_couchbase-cli setting-alternate-address_ [--cluster <url>] [--username <user>]
     [--password <password>] [--list] [--set] [--remove] [--hostname <host>]
     [--ports <ports>]
 
