@@ -670,7 +670,7 @@ class ClusterManager(object):
 
         return all, eject, failover, readd, hostnames, None
 
-    def create_bucket(self, name, bucket_type, memory_quota,
+    def create_bucket(self, name, bucket_type, storage_type, memory_quota,
                       eviction_policy, replicas, replica_indexes,
                       threads_number, conflict_resolution, flush_enabled,
                       max_ttl, compression_mode, sync, db_frag_perc, db_frag_size, view_frag_perc,
@@ -705,6 +705,8 @@ class ClusterManager(object):
             params["maxTTL"] = max_ttl
         if compression_mode is not None:
             params["compressionMode"] = compression_mode
+        if storage_type is not None:
+            params["storageBackend"] = storage_type
 
         if bucket_type == "couchbase":
             if (db_frag_perc is not None or db_frag_size is not None or view_frag_perc is not None or

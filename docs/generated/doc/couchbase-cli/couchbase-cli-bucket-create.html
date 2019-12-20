@@ -452,6 +452,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli bucket-create</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--bucket &lt;name&gt;] [--bucket-type &lt;type&gt;]
+    [--storage-backend &lt;storage&gt;]
     [--bucket-ramsize &lt;size&gt;] [--bucket-replica &lt;num&gt;]
     [--bucket-priority &lt;priority&gt;] [--bucket-eviction-policy &lt;policy&gt;]
     [--max-ttl &lt;seconds&gt;] [--compression-mode &lt;mode&gt;] [--enable-flush &lt;num&gt;]
@@ -521,6 +522,11 @@ Couchbase bucket; but it does not support data persistence or views. The
 Memcached bucket is a cache-only bucket that does not support persistence,
 replication, indexing, views, or N1QL querying: this bucket type provides
 the same behavior as Memcached Server.</p>
+</dd>
+<dt class="hdlist1">--storage-backend &lt;storage&gt;</dt>
+<dd>
+<p>The type of storage to use with the bucket. This is only specified for
+"couchbase" buckets.  Accepted values are "couchstore" or "magma".</p>
 </dd>
 <dt class="hdlist1">--bucket-ramsize &lt;size&gt;</dt>
 <dd>

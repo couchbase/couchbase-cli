@@ -188,7 +188,7 @@ class TestBucketCreate(CommandTest):
                           self.server_args)
         expected_params = [
             'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'maxTTL=20',
-            'compressionMode=active', 'ramQuotaMB=100'
+            'compressionMode=active', 'ramQuotaMB=100', 'storageBackend=couchstore'
         ]
         self.rest_parameter_match(expected_params)
 
@@ -199,7 +199,8 @@ class TestBucketCreate(CommandTest):
         expected_params = [
             'bucketType=couchbase', 'databaseFragmentationThreshold%5Bpercentage%5D=25', 'name=name',
             'evictionPolicy=fullEviction', 'autoCompactionDefined=true', 'parallelDBAndViewCompaction=1',
-            'replicaNumber=0', 'purgeInterval=2.0', 'viewFragmentationThreshold%5Bpercentage%5D=20', 'ramQuotaMB=100'
+            'replicaNumber=0', 'purgeInterval=2.0', 'viewFragmentationThreshold%5Bpercentage%5D=20',
+            'ramQuotaMB=100', 'storageBackend=couchstore'
         ]
 
         self.rest_parameter_match(expected_params)
@@ -211,7 +212,8 @@ class TestBucketCreate(CommandTest):
         ]
         self.no_error_run(self.command + self.command_args + args, self.server_args)
         expected_params = [
-            'bucketType=ephemeral', 'replicaNumber=0', 'evictionPolicy=noEviction', 'name=name', 'ramQuotaMB=100'
+            'bucketType=ephemeral', 'replicaNumber=0', 'evictionPolicy=noEviction', 'name=name', 'ramQuotaMB=100',
+            'storageBackend=couchstore'
         ]
         self.rest_parameter_match(expected_params)
 
@@ -221,7 +223,7 @@ class TestBucketCreate(CommandTest):
         ]
         self.no_error_run(self.command + self.command_args + args, self.server_args)
         expected_params = [
-            'bucketType=memcached', 'ramQuotaMB=100', 'name=name'
+            'bucketType=memcached', 'ramQuotaMB=100', 'name=name', 'storageBackend=couchstore'
         ]
         self.rest_parameter_match(expected_params)
 

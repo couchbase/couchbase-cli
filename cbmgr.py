@@ -688,6 +688,9 @@ class BucketCreate(Subcommand):
         group.add_argument("--bucket-type", dest="type", metavar="<type>", required=True,
                            choices=["couchbase", "ephemeral", "memcached"],
                            help="The bucket type (couchbase, ephemeral, or memcached)")
+        group.add_argument("--storage-backend", dest="storage", metavar="<storage>",
+                           choices=["couchstore", "magma"],
+                           help="Type of storage backend (only for couchbase buckets)")
         group.add_argument("--bucket-ramsize", dest="memory_quota", metavar="<quota>", type=(int),
                            required=True, help="The amount of memory to allocate the bucket")
         group.add_argument("--bucket-replica", dest="replica_count", metavar="<num>",
@@ -785,6 +788,12 @@ class BucketCreate(Subcommand):
                 opts.paralleldb_and_view_compact is not None)):
             _warning(f'ignoring compaction settings as bucket type {opts.type} does not accept it')
 
+        storage_type = "couchstore"
+        if opts.storage is not None:
+            if opts.type != "couchbase":
+                _exitIfErrors(["--storage-backend is only valid for couchbase buckets"])
+            if opts.storage == "magma":
+                storage_type = "magma"
 
         priority = None
         if opts.priority is not None:
@@ -800,7 +809,7 @@ class BucketCreate(Subcommand):
             elif opts.conflict_resolution == "timestamp":
                 conflict_resolution_type = "lww"
 
-        _, errors = rest.create_bucket(opts.bucket_name, opts.type, opts.memory_quota, opts.eviction_policy,
+        _, errors = rest.create_bucket(opts.bucket_name, opts.type, storage_type, opts.memory_quota, opts.eviction_policy,
                                        opts.replica_count, opts.replica_indexes, priority, conflict_resolution_type,
                                        opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.wait,
                                        opts.db_frag_perc, opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,

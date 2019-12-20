@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-bucket-create
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-10-23
+.\"      Date: 2019-12-19
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2019-10-23" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2019-12-19" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,6 +35,7 @@ couchbase\-cli\-bucket\-create \- Create a new bucket
 .nf
 \fIcouchbase\-cli bucket\-create\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-bucket <name>] [\-\-bucket\-type <type>]
+    [\-\-storage\-backend <storage>]
     [\-\-bucket\-ramsize <size>] [\-\-bucket\-replica <num>]
     [\-\-bucket\-priority <priority>] [\-\-bucket\-eviction\-policy <policy>]
     [\-\-max\-ttl <seconds>] [\-\-compression\-mode <mode>] [\-\-enable\-flush <num>]
@@ -96,6 +97,12 @@ Couchbase bucket; but it does not support data persistence or views. The
 Memcached bucket is a cache\-only bucket that does not support persistence,
 replication, indexing, views, or N1QL querying: this bucket type provides
 the same behavior as Memcached Server.
+.RE
+.sp
+\-\-storage\-backend <storage>
+.RS 4
+The type of storage to use with the bucket. This is only specified for
+"couchbase" buckets.  Accepted values are "couchstore" or "magma".
 .RE
 .sp
 \-\-bucket\-ramsize <size>
