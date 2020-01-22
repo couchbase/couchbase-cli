@@ -132,15 +132,15 @@ def upgrade(package, location):
         os.mkdir(backup_config)
     except OSError as e:
         error('Cannot create the directory {0} to backup the config: {1}'.format(backup_config, e))
-    config_files = ['opt/couchbase/var/lib/couchbase/ip_start',
-                    'opt/couchbase/etc/couchdb/local.ini',
+    config_files = ['opt/couchbase/etc/couchdb/local.ini',
                     'opt/couchbase/var/lib/couchbase/config']
+
     # The ip file is only on the first node in the cluster
-    ip_file = 'opt/couchbase/var/lib/couchbase/ip'
-    ip_file_exists = False
-    if os.path.exists(os.path.join(location, ip_file)):
-        ip_file_exists = True
-        config_files.append(ip_file)
+    files = {'opt/couchbase/var/lib/couchbase/ip': False, 'opt/couchbase/var/lib/couchbase/ip_start': False}
+    for file_path in files:
+        if os.path.exists(os.path.join(location, file_path)):
+            files[file_path] = True
+            config_files.append(file_path)
 
     config_files = [os.path.join(location, f) for f in config_files]
 
@@ -158,12 +158,12 @@ def upgrade(package, location):
                    'opt/couchbase/var/lib/couchbase/couchbase-server.node',
                    'opt/couchbase/var/lib/couchbase/config',
                    'opt/couchbase/var/lib/couchbase/initargs',
-                   'opt/couchbase/var/lib/couchbase/ip_start',
                    'opt/couchbase/var/lib/couchbase/isasl.pw',
                    'opt/couchbase/var/lib/couchbase/localtoken']
 
-    if ip_file_exists:
-        old_install.append(ip_file)
+    for file_path in files:
+        if files[file_path]:
+            old_install.append(file_path)
 
     old_install = [os.path.join(location, f) for f in old_install]
 
