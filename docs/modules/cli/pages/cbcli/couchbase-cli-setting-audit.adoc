@@ -12,20 +12,35 @@ Modifies audit log settings (EE only)
 
 [verse]
 _couchbase-cli setting-audit_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--audit-enabled <num>] [--audit-log-path <path>]
+    [--password <password>] [--list-filterable-events] [--get-settings]
+    [--set] [--audit-enabled <1|0>] [--audit-log-path <path>]
     [--audit-log-rotate-interval <seconds>] [--audit-log-rotate-size <bytes>]
+    [--disabled-users <user-list>] [--disable-events <event-list>]
 
 == DESCRIPTION
 
 Auditing is used to observe the action of users in the cluster. It is usually
 turned on for security purposes to ensure that those without permission to
 access information do not access it. By default auditing is disabled in
-Couchbase. The setting-audit command can be used to enable auditing, set the
-auditing log path, and change the auditing log rotation interval.
+Couchbase. The setting-audit command can be used to retrieve the current
+auditing configuration, retrieve the auditable events and descriptions, to
+enable and disable auditing, set the auditing log path, change the auditing log
+rotation interval and disable auditing for certain users and events.
 
 == OPTIONS
 
 include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--list-filterable-events::
+  Returns a table or a JSON list (if --output json used) with all the event
+  IDs with there descriptions.
+
+--get-settings::
+  Returns the current audit settings including which events are disabled and
+  which are enabled.
+
+--set::
+  Sets the cluster audit settings.
 
 --audit-enabled <num>::
   Specifies whether or not auditing is enabled. To enabled auditing set this
@@ -50,29 +65,79 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   524,288,000 (500MB). When it is set to 0 the log will not be rotated based
   on size.
 
+--disabled-users <user-list>::
+  A comma separated list of users to ignore events from.
+
+--disable-events <events-list>::
+  A comma separated list of events IDs to disable auditing for
+  (e.g 8243,8255,8257). To retrieve information of what event ID maps to
+  what event use the --list-filterable-events to retrieve a list of IDs with
+  descriptions.
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
+
+To get the current audit settings run the command below.
+
+  $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
+   --password password --get-settings
+
+If auditing is disabled the expected output will be of the form (all the
+commands can return json if `--output json` is provided):
+
+    Audit enabled: False
+    UUID: 44726500
+    Log path: /opt/couchbase/var/lib/couchbase/logs
+    Rotate interval: 86400
+    Rotate size: 20971520
+    Disabled users: []
+
+To retrieve the list of events that can be audit use the command:
+
+  $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
+   --password password --list-filterable-events
+
+    ID    | Module         | Name                                           | Description
+    -------------------------------------------------------------------------------------
+    36865 | analytics      | Service configuration change                   | A successful service configuration change was made.
+    36866 | analytics      | Node configuration change                      | A successful node configuration change was made.
+    32768 | eventing       | Create Function                                | Eventing function definition was created or updated
+    ....
+    40961 | view_engine    | Delete Design Doc                              | Design Doc is Deleted
+    40962 | view_engine    | Query DDoc Meta Data                           | Design Doc Meta Data Query Request
+    40963 | view_engine    | View Query                                     | View Query Request
+    40964 | view_engine    | Update Design Doc                              | Design Doc is Updated
+
 
 To enable auditing on a cluster and set the audit log to the default logs folder
 on a linux installation with a log rotate interval of 7 days run the command
 below.
 
   $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
-   --password password --enabled 1 --audit-log-rotate-interval 604800 \
+   --password password --set --audit-enabled 1 --audit-log-rotate-interval 604800 \
    --audit-log-path /opt/couchbase/var/lib/couchbase/logs
 
 To enable auditing on a cluster and set the audit log to the default logs folder
 on a linux installation with a log rotate size of 20MB run the command below.
 
   $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
-   --password password --enabled 1 --audit-log-rotate-size 20971520 \
+   --password password --set --audit-enabled 1 --audit-log-rotate-size 20971520 \
    --audit-log-path /opt/couchbase/var/lib/couchbase/logs
+
+To enable auditing on a cluster and set the audit log to the default logs folder
+on a linux installation with a log rotate size of 20MB run the command below and disable
+auditing for users backup and restore as well as disable auditing for event 40964 and 40963.
+
+  $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
+   --password password --set --audit-enabled 1 --audit-log-rotate-size 20971520 \
+   --audit-log-path /opt/couchbase/var/lib/couchbase/logs \
+   --disabled-users backup,restore --disable-events 40964,40963
 
 To disable auditing run the following command.
 
   $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
-   --password password --enabled 1
+   --password password --set --audit-enabled 0
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

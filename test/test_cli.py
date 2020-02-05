@@ -746,8 +746,8 @@ class TestSettingAlert(CommandTest):
 class TestSettingAudit(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'setting-audit'] + cluster_connect_args
-        self.cmd_args = ['--audit-enabled', '1', '--audit-log-path', 'path', '--audit-log-rotate-interval', '1',
-                         '--audit-log-rotate-size', '2']
+        self.cmd_args = ['--set', '--audit-enabled', '1', '--audit-log-path', 'path', '--audit-log-rotate-interval',
+                         '1', '--audit-log-rotate-size', '2']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestSettingAudit, self).setUp()
 
@@ -758,7 +758,7 @@ class TestSettingAudit(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_setting_audit_enabled_no_options(self):
-        self.system_exit_run(self.command + ['--audit-enabled', '1'], self.server_args)
+        self.system_exit_run(self.command + ['--set', '--audit-enabled', '1'], self.server_args)
         self.assertIn('The audit log path must be specified when auditing is first set up', self.str_output)
 
 

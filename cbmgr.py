@@ -15,6 +15,7 @@ import urllib.parse
 import time
 
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
+from operator import itemgetter
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
 
@@ -2151,6 +2152,12 @@ class SettingAudit(Subcommand):
         self.parser.prog = "couchbase-cli setting-audit"
         self.parser.description = "Available only in Couchbase Server Enterprise Edition"
         group = self.parser.add_argument_group("Audit settings")
+        group.add_argument("--list-filterable-events", dest="list_events", action="store_true",
+                           help="Retrieve a list of filterable event IDs and the descriptions")
+        group.add_argument("--get-settings", dest="get_settings", action="store_true",
+                           help="Retrieve current audit settings")
+        group.add_argument("--set", dest="set_settings", action="store_true",
+                           help="Set current audit settings")
         group.add_argument("--audit-enabled", dest="enabled", metavar="<1|0>", choices=["0", "1"],
                            help="Enable/disable auditing")
         group.add_argument("--audit-log-path", dest="log_path", metavar="<path>",
@@ -2159,6 +2166,10 @@ class SettingAudit(Subcommand):
                            metavar="<seconds>", help="The audit log rotate interval")
         group.add_argument("--audit-log-rotate-size", dest="rotate_size", type=(int),
                            metavar="<bytes>", help="The audit log rotate size")
+        group.add_argument("--disabled-users", dest="disabled_users", help="A comma-separated list of users to ignore"
+                                                                           " events from")
+        group.add_argument("--disable-events", dest="disable_events", help="A comma-separated list of audit-event IDs "
+                                                                           "to not audit")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -2166,19 +2177,95 @@ class SettingAudit(Subcommand):
         check_cluster_initialized(rest)
         check_versions(rest)
 
-        if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size):
-            _exitIfErrors(["No settings specified to be changed"])
+        flags = sum([opts.list_events, opts.get_settings, opts.set_settings])
+        if flags != 1:
+            _exitIfErrors(["One of the following is required: --list-filterable-events, --get-settings or --set"])
 
-        if opts.enabled == "1":
-            opts.enabled = "true"
-        elif opts.enabled == "0":
-            opts.enabled = "false"
+        if opts.list_events:
+            descriptors, errors = rest.get_id_descriptors()
+            _exitIfErrors(errors)
+            if opts.output == 'json':
+                print(json.dumps(descriptors, indent=4))
+                return
 
-        _, errors = rest.set_audit_settings(opts.enabled, opts.log_path,
-                                            opts.rotate_interval, opts.rotate_size)
-        _exitIfErrors(errors)
+            self.format_descriptors_in_table(descriptors)
+            return
+        elif opts.get_settings:
+            audit_settings, errors = rest.get_audit_settings()
+            _exitIfErrors(errors)
+            if opts.output == 'json':
+                print(json.dumps(audit_settings, indent=4))
+                return
 
-        _success("Audit settings modified")
+            descriptors, errors = rest.get_id_descriptors()
+            _exitIfErrors(errors)
+            self.format_audit_settings(audit_settings, descriptors)
+            return
+        elif opts.set_settings:
+            if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size):
+                _exitIfErrors(["No settings specified to be changed"])
+
+            if opts.enabled == "1":
+                opts.enabled = "true"
+            elif opts.enabled == "0":
+                opts.enabled = "false"
+
+            _, errors = rest.set_audit_settings(opts.enabled, opts.log_path, opts.rotate_interval, opts.rotate_size,
+                                                opts.disable_events, opts.disabled_users)
+            _exitIfErrors(errors)
+            _success("Audit settings modified")
+
+    @staticmethod
+    def format_audit_settings(audit_settings, json_descriptors):
+        print(f'Audit enabled: {audit_settings["auditdEnabled"]}')
+        print(f'UUID: {audit_settings["uid"]}')
+        print(f'Log path: {audit_settings["logPath"]}')
+        print(f'Rotate interval: {audit_settings["rotateInterval"]}')
+        print(f'Rotate size: {audit_settings["rotateSize"]}')
+        print(f'Disabled users: {audit_settings["disabledUsers"]}')
+
+        if not audit_settings["auditdEnabled"]:
+            return
+
+        # change id lists to maps to make lookup o(1)
+        disable_map = {eventID for eventID in audit_settings['disabled']}
+        json_descriptors.sort(key=itemgetter('module', 'id'))
+        all_descriptors_sets = {events["id"] for events in json_descriptors}
+
+        padding_name = 12
+        for descriptor in json_descriptors:
+            if len(descriptor['name']) > padding_name:
+                padding_name = len(descriptor['name'])
+
+        padding_name += 2
+
+        header = f'{"ID":<6}| {"Module":<15}| {"Name":<{padding_name}}| Enabled'
+        print(header)
+        print('-' * len(header))
+        for descriptor in json_descriptors:
+            print(f'{descriptor["id"]:<6}| {descriptor["module"]:<15}| {descriptor["name"]:<{padding_name}}| '
+                  f'{"False" if descriptor["id"] in disable_map else "True"}')
+
+        not_recognized = disable_map - all_descriptors_sets
+        for unrecognized in not_recognized:
+            print(f'{unrecognized:<6}| {"unknown":<15}| {"unknown":<{padding_name}}| False')
+
+    @staticmethod
+    def format_descriptors_in_table(json_descriptors):
+        sorted_descriptors = sorted(json_descriptors, key=itemgetter('module', 'id'))
+        padding_name = 15
+        for descriptor in sorted_descriptors:
+            if len(descriptor['name']) > padding_name:
+                padding_name = len(descriptor['name'])
+
+        padding_name += 2
+
+        header = f'{"ID":<6}| {"Module":<15}| {"Name":<{padding_name}}| Description'
+        print(header)
+        print('-' * len(header))
+        for descriptor in sorted_descriptors:
+            print(f'{descriptor["id"]:<6}| {descriptor["module"]:<15}| {descriptor["name"]:<{padding_name}}| '
+                  f'{descriptor["description"]}')
 
     @staticmethod
     def get_man_page_name():
