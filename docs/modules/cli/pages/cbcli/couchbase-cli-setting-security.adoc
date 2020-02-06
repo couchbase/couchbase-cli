@@ -13,6 +13,7 @@ Manage security policies
 [verse]
 _couchbase-cli setting-security_ [--cluster <url>] [--username <user>]
     [--password <password>] [--set] [--get] [--disable-http-ui <0|1>]
+    [--disable-www-authenticate <0|1>]
     [--cluster-encryption-level <all|control>]
     [--tls-min-version <tlsv1|tlsv1.1|tlsv1.2>]
     [--tls-honor-cipher-order <1|0>] [---cipher-suites <ciphers>]
@@ -36,6 +37,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   over http. To disable access set this option to "1". To enable access
   set this option to "0". By default, access to the UI over http is
   enabled.
+
+--disable-www-authenticate <0|1>::
+  Specifies whether Couchbase Server will respond with WWW-Authenticate to
+  unauthenticated requests. By default this is enabled which may result
+  in browsers prompting the user for username/password and then caching
+  the information.
 
 --cluster-encryption-level <all|control>::
   Specifies the cluster encryption level. The level is used when cluster
