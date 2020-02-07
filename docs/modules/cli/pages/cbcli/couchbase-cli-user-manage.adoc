@@ -81,11 +81,11 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   available roles in Couchbase.
 
 --auth-domain <domain>::
-  Specifies the auth domain to used for an RBAC user profile. This option is
-  used when deleting, creating or updating an RBAC user profile and it if may
-  be set to either _local_ or _external_. Local users are users that are
-  managed directly by the Couchbase cluster. External users are users
-  managed by an external source such as LDAP.
+  Specifies the auth_domain to use for a RBAC user profile. This option is
+  used when deleting, creating or updating a RBAC user profile and it may be
+  set to either _local_ or _external_. Local users are users that are managed
+  directly by the Couchbase cluster. External users are users managed by an
+  external source such as LDAP.
 
 --user-groups <groups>::
   Specifies the groups the user should be added to. This is used when creating
