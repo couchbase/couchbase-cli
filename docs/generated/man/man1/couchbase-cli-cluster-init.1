@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-cluster-init
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-02-10
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-CLUSTER\-INIT" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-CLUSTER\-INIT" "1" "2020-02-10" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 couchbase\-cli\-cluster\-init \- Initializes a Couchbase Server cluster
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 \fIcouchbase\-cli cluster\-init\fP [\-\-cluster <url>] [\-\-cluster\-username <username>]
@@ -234,8 +235,8 @@ first node.
 $ couchbase\-cli cluster\-init \-c 127.0.0.1 \-\-cluster\-username Administrator \(rs
  \-\-cluster\-password password \-\-services data,index,query,fts,analytics \(rs
  \-\-cluster\-ramsize 2048 \-\-cluster\-index\-ramsize 1024 \(rs
- \-\-cluster\-eventing\-ramsize 1024\(rs \-\-cluster\-fts\-ramsize 1024 \(rs
- \-\-cluster\-analytics\-ramsize 1024\(rs \-\-cluster\-fts\-ramsize 1024 \(rs
+ \-\-cluster\-eventing\-ramsize 1024 \-\-cluster\-fts\-ramsize 1024 \(rs
+ \-\-cluster\-analytics\-ramsize 1024 \-\-cluster\-fts\-ramsize 1024 \(rs
  \-\-index\-storage\-setting default
 .fi
 .if n .RE
