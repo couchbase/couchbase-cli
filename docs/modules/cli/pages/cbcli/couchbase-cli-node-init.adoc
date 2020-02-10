@@ -39,12 +39,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --node-init-index-path::
   The path to store files create by the Couchbase index service. This flag can
-  only be specified against a node that is not yet part of a cluster. Multiple
-  paths can be specified by setting this option multiple times.
+  only be specified against a node that is not yet part of a cluster.
 
 --node-init-analytics-path::
   The path to store files create by the Couchbase Analytics service. This flag
   can only be specified against a node that is not yet part of a cluster.
+  Multiple paths can be specified by setting this option multiple times.
 
 --node-init-hostname::
   Specifies the hostname for this server.
