@@ -888,7 +888,7 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
-    def set_data_paths(self, data_path, index_path, cbas_path, java_home):
+    def set_data_paths(self, data_path, index_path, cbas_path, eventing_path, java_home):
         url = f'{self.hostname}/nodes/self/controller/settings'
         params = dict()
 
@@ -900,6 +900,9 @@ class ClusterManager(object):
 
         if cbas_path is not None:
             params["cbas_path"] = cbas_path
+
+        if eventing_path is not None:
+            params["eventing_path"] = eventing_path
 
         if java_home is not None:
             params["java_home"] = java_home
@@ -1102,7 +1105,7 @@ class ClusterManager(object):
         return self._get(url)
 
     def set_security_settings(self, disable_http_ui, cluster_encryption_level, tls_min_version,
-                              honor_order, cipher_suites):
+                              honor_order, cipher_suites, disable_www_authenticate):
         url = f'{self.hostname}/settings/security'
         params = {}
 
@@ -1116,6 +1119,8 @@ class ClusterManager(object):
             params['honorCipherOrder'] = honor_order
         if cipher_suites:
             params['cipherSuites'] = cipher_suites
+        if disable_www_authenticate:
+            params['disableWWWAuthenticate'] = disable_www_authenticate
 
         return self._post_form_encoded(url, params)
 

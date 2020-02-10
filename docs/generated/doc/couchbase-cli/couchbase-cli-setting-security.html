@@ -452,6 +452,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli setting-security</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--set] [--get] [--disable-http-ui &lt;0|1&gt;]
+    [--disable-www-authenticate &lt;0|1&gt;]
     [--cluster-encryption-level &lt;all|control&gt;]
     [--tls-min-version &lt;tlsv1|tlsv1.1|tlsv1.2&gt;]
     [--tls-honor-cipher-order &lt;1|0&gt;] [---cipher-suites &lt;ciphers&gt;]</pre>
@@ -508,6 +509,13 @@ environment variable CB_REST_PASSWORD.</p>
 over http. To disable access set this option to "1". To enable access
 set this option to "0". By default, access to the UI over http is
 enabled.</p>
+</dd>
+<dt class="hdlist1">--disable-www-authenticate &lt;0|1&gt;</dt>
+<dd>
+<p>Specifies whether Couchbase Server will respond with WWW-Authenticate to
+unauthenticated requests. By default this is enabled which may result
+in browsers prompting the user for username/password and then caching
+the information.</p>
 </dd>
 <dt class="hdlist1">--cluster-encryption-level &lt;all|control&gt;</dt>
 <dd>

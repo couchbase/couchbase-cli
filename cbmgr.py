@@ -1531,6 +1531,8 @@ class NodeInit(Subcommand):
                            help="The path to store index files")
         group.add_argument("--node-init-analytics-path", dest="analytics_path", metavar="<path>", action="append",
                            help="The path to store analytics files (supply one parameter for each path desired)")
+        group.add_argument("--node-init-eventing-path", dest="eventing_path", metavar="<path>",
+                           help="The path to store eventing files")
         group.add_argument("--node-init-java-home", dest="java_home", metavar="<path>",
                            help="The path of the Java Runtime Environment (JRE) to use on this server")
         group.add_argument("--node-init-hostname", dest="hostname", metavar="<hostname>",
@@ -1545,12 +1547,14 @@ class NodeInit(Subcommand):
                               opts.cacert, opts.debug)
         # Cluster does not need to be initialized for this command
 
-        if opts.data_path is None and opts.index_path is None and opts.analytics_path is None \
-            and opts.java_home is None and opts.hostname is None and opts.ipv6 is None and opts.ipv4 is None:
+        if (opts.data_path is None and opts.index_path is None and opts.analytics_path is None
+            and opts.eventing_path is None and opts.java_home is None and opts.hostname is None and opts.ipv6 is None
+            and opts.ipv4 is None):
             _exitIfErrors(["No node initialization parameters specified"])
 
-        if opts.data_path or opts.index_path or opts.analytics_path or opts.java_home is not None:
-            _, errors = rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path, opts.java_home)
+        if opts.data_path or opts.index_path or opts.analytics_path or opts.eventing_path or opts.java_home is not None:
+            _, errors = rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path, opts.eventing_path,
+                                            opts.java_home)
             _exitIfErrors(errors)
 
         if opts.ipv4 and opts.ipv6:
@@ -2948,6 +2952,9 @@ class SettingSecurity(Subcommand):
         group.add_argument('--set', default=False, action='store_true', help='Set security settings.')
         group.add_argument("--disable-http-ui", dest="disable_http_ui", metavar="<0|1>", choices=['0', '1'],
                            default=None, help="Disables access to the UI over HTTP (0 or 1)")
+        group.add_argument("--disable-www-authenticate", dest="disable_www_authenticate",
+                           metavar="<0|1>", choices=['0', '1'], default=None,
+                           help="Disables use of WWW-Authenticate (0 or 1")
         group.add_argument("--cluster-encryption-level", dest="cluster_encryption_level", metavar="<all|control>",
                           choices=['all', 'control'], default=None,
                           help="Set cluster encryption level, only used when cluster encryption enabled.")
@@ -2974,12 +2981,13 @@ class SettingSecurity(Subcommand):
             print(json.dumps(val))
         elif opts.set:
             self._set(rest, opts.disable_http_ui, opts.cluster_encryption_level, opts.tls_min_version,
-                      opts.tls_honor_cipher_order, opts.cipher_suites)
+                      opts.tls_honor_cipher_order, opts.cipher_suites, opts.disable_www_authenticate)
 
     @staticmethod
-    def _set(rest, disable_http_ui, encryption_level, tls_min_version, honor_order, cipher_suites):
+    def _set(rest, disable_http_ui, encryption_level, tls_min_version, honor_order, cipher_suites,
+            disable_www_authenticate):
         if not any([True if x is not None else False for x in [disable_http_ui, encryption_level, tls_min_version,
-                                                    honor_order, cipher_suites]]):
+                                                    honor_order, cipher_suites, disable_www_authenticate]]):
             _exitIfErrors(['please provide at least one of -cluster-encryption-level,'
                           ' --disable-http-ui, --tls-min-version, --tls-honor-cipher-order or --cipher-suites'
                           ' together with --set'])
@@ -2988,6 +2996,11 @@ class SettingSecurity(Subcommand):
             disable_http_ui = 'true'
         elif disable_http_ui == '0':
             disable_http_ui = 'false'
+
+        if disable_www_authenticate == '1':
+            disable_www_authenticate = 'true'
+        elif disable_www_authenticate == '0':
+            disable_www_authenticate = 'false'
 
         if honor_order == '1':
             honor_order = 'true'
@@ -3000,7 +3013,7 @@ class SettingSecurity(Subcommand):
             cipher_suites = json.dumps(cipher_suites.split(','))
 
         _, errors = rest.set_security_settings(disable_http_ui, encryption_level, tls_min_version,
-                                               honor_order, cipher_suites)
+                                               honor_order, cipher_suites, disable_www_authenticate)
         _exitIfErrors(errors)
         _success("Security settings updated")
 
