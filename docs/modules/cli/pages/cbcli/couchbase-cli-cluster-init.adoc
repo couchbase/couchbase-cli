@@ -134,7 +134,7 @@ need to set the index storage mode for the index service, which will be set to
   $ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
    --cluster-password password --services data,index,query,fts \
    --cluster-ramsize 2048 --cluster-index-ramsize 1024 \
-   --cluster-eventing-ramsize 1024\ --cluster-fts-ramsize 1024 \
+   --cluster-eventing-ramsize 1024 --cluster-fts-ramsize 1024 \
   --index-storage-setting default
 
 If you want to set the port number you can do so with the --cluster-port
