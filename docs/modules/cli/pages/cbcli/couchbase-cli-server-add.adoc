@@ -32,7 +32,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --server-add <servers>::
   A comma separated list of servers to add to the cluster. The each server in
-  the list should be identified by a hostname or IP address.
+  the list should be identified by a hostname or IP address. If a scheme is not
+  provided it will use `https://`
 
 --server-add-username <username>::
   Adding a server to the cluster can only be done by a user with the
@@ -67,7 +68,7 @@ If we want to add a server at 192.168.1.6:8091 with the index, data and query
 service on it then we would run the command below.
 
   $ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
-   --password password --server-add 192.168.1.6:8091 \
+   --password password --server-add http://192.168.1.6:8091 \
    --server-add-username Administrator --server-add-password password
    --services data,index,query
 
@@ -83,7 +84,7 @@ the first time so we need to specify the index storage mode. If we want to index
 storage mode to be memory optimized then we would run the following command.
 
   $ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
-   --password password --server-readd 192.168.1.6:8091,192.168.1.7:8091 \
+   --password password --server-readd http://192.168.1.6:8091,http://192.168.1.7:8091 \
    --server-username Administrator --server-password password
    --services data,fts --group-name --index-storage-setting memopt
 

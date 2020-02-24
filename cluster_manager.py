@@ -1157,7 +1157,7 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def set_audit_settings(self, enabled, log_path, rotate_interval, rotate_size):
+    def set_audit_settings(self, enabled, log_path, rotate_interval, rotate_size, disabled, disabled_users):
         url = f'{self.hostname}/settings/audit'
 
         params = dict()
@@ -1169,11 +1169,21 @@ class ClusterManager(object):
             params["rotateInterval"] = rotate_interval
         if rotate_size:
             params["rotateSize"] = rotate_size
+        if disabled:
+            params["disabled"] = disabled
+        if disabled_users:
+            params["disabledUsers"] = disabled_users
 
         if "logPath" not in params and "auditdEnabled" in params and params["auditdEnabled"] == "true":
             return None, ["The audit log path must be specified when auditing is first set up"]
 
         return self._post_form_encoded(url, params)
+
+    def get_audit_settings(self):
+        return self._get(f'{self.hostname}/settings/audit')
+
+    def get_id_descriptors(self):
+        return self._get(f'{self.hostname}/settings/audit/descriptors')
 
     def set_autofailover_settings(self, enabled, timeout, failoverOfServerGroups, maxCount,
                                   failoverOnDataDiskIssuesEnabled, failoverOnDataDiskIssuesTimePeriod,

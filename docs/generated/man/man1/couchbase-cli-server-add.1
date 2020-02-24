@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-server-add
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-02-20
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SERVER\-ADD" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SERVER\-ADD" "1" "2020-02-20" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 couchbase\-cli\-server\-add \- Adds a server to the cluster
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 \fIcouchbase\-cli server\-add\fP [\-\-cluster <url>] [\-\-username <username>]
@@ -75,7 +76,8 @@ environment variable CB_REST_PASSWORD.
 \-\-server\-add <servers>
 .RS 4
 A comma separated list of servers to add to the cluster. The each server in
-the list should be identified by a hostname or IP address.
+the list should be identified by a hostname or IP address. If a scheme is not
+provided it will use \f(CRhttps://\fP
 .RE
 .sp
 \-\-server\-add\-username <username>
@@ -161,7 +163,7 @@ service on it then we would run the command below.
 .if n .RS 4
 .nf
 $ couchbase\-cli server\-add \-c 192.168.1.5:8091 \-\-username Administrator \(rs
- \-\-password password \-\-server\-add 192.168.1.6:8091 \(rs
+ \-\-password password \-\-server\-add http://192.168.1.6:8091 \(rs
  \-\-server\-add\-username Administrator \-\-server\-add\-password password
  \-\-services data,index,query
 .fi
@@ -181,7 +183,7 @@ storage mode to be memory optimized then we would run the following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli server\-add \-c 192.168.1.5:8091 \-\-username Administrator \(rs
- \-\-password password \-\-server\-readd 192.168.1.6:8091,192.168.1.7:8091 \(rs
+ \-\-password password \-\-server\-readd http://192.168.1.6:8091,http://192.168.1.7:8091 \(rs
  \-\-server\-username Administrator \-\-server\-password password
  \-\-services data,fts \-\-group\-name \-\-index\-storage\-setting memopt
 .fi
