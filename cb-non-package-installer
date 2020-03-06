@@ -202,18 +202,15 @@ def main():
     opts = argparse.ArgumentParser(description='A tool to help install and upgrade Couchbase Server'
                                                ' in non root environments.')
 
-    #action_group = opts.add_mutually_exclusive_group(required=True)
-    #action_group.add_argument('--install', action='store_true', dest='install',
-    #                          help='To do a fresh install of Couchbase Server')
-    #action_group.add_argument('--upgrade', action='store_true', dest='upgrade',
-    #                        help='To upgrade an existing install of Couchbase Server')
-
-    opts.add_argument('--upgrade', action='store_true', dest='upgrade', required=True,
-                      help='To upgrade an existing install of Couchbase Server')
+    action_group = opts.add_mutually_exclusive_group(required=True)
+    action_group.add_argument('--install', action='store_true', dest='install',
+                              help='To do a fresh install of Couchbase Server')
+    action_group.add_argument('--upgrade', action='store_true', dest='upgrade',
+                            help='To upgrade an existing install of Couchbase Server')
     opts.add_argument('--install-location', type=str, metavar='Path', dest='location',
                       required=True, help='Path where Couchbase Server should be installed')
     opts.add_argument('--package', type=str, metavar='File', dest='package', required=True,
-                      help='The Couchbase Server package (rpm/dpkg) to install')
+                      help='The Couchbase Server package (rpm) to install')
     opts.add_argument('-v', '--verbose', action='count', help='increase output verbosity')
     args = opts.parse_args()
 
@@ -238,8 +235,8 @@ def main():
         error('Install location "{0}" is not writable, please check the'
               ' permissions'.format(args.location))
 
-    #if args.install:
-    #    install(args.package, args.location)
+    if args.install:
+        install(args.package, args.location)
     if args.upgrade:
         upgrade(args.package, args.location)
     exit(0)
