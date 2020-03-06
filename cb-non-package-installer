@@ -14,6 +14,7 @@ import os
 import subprocess
 
 FNULL = open(os.devnull, 'w')
+VERSION = (6, 5)
 
 def error(message):
     """
@@ -80,6 +81,8 @@ def install(package, location):
     """
     Does a fresh non package install of Couchbase Server
     """
+    if get_package_version(package)[:2] > VERSION:
+        error('Can only install up to version {0}.{1}.X'.format(VERSION[0], VERSION[1]))
     if os.listdir(location):
         error('Install location "{0}" is not empty, please provide an empty directory to install'
               ' to'.format(location))
@@ -93,15 +96,13 @@ def check_upgrade_versions(package_version, install_version):
     """
     Checks the installed and the upgrade package versions
     """
+    if package_version[:2] > VERSION:
+        error('Can only upgrade up to version {0}.{1}.X'.format(VERSION[0], VERSION[1]))
     if package_version < install_version:
         error('Cannot upgrade installed package {0} is newer than'
               ' {1}'.format('.'.join(install_version), package_version))
-    if (5, 5, 2) >= install_version >= (5, 5, 5):
-        print install_version
-        error('Upgrade only supported between versions 5.5.2 and 5.5.5')
-
-    if package_version > (6, 1, 0):
-        error('Can only upgrade to version 6.0.X')
+    if install_version < (5, 0, 0):
+        error('Upgrade only supported between versions 5.0.0 and {0}.{1}.X'.format(VERSION[0], VERSION[1]))
 
 
 def upgrade(package, location):
