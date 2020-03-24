@@ -4075,7 +4075,6 @@ class CollectionManage(Subcommand):
         if opts.list_collections:
             self._list_collections(rest, opts)
 
-
     def _create_scope(self, rest, opts):
         _, errors = rest.create_scope(opts.bucket, opts.create_scope)
         _exitIfErrors(errors)
@@ -4117,12 +4116,18 @@ class CollectionManage(Subcommand):
             _exitIfErrors([f"Scope {opts.list_collections} does not exist"])
 
     def _get_scope_collection(self, path):
-        paths = path.split('.')
-        if len(paths) == 2:
-            if not '' in paths:
-                return paths[0], paths[1]
-        _exitIfErrors(["Path is not valid. It should be: scope.collection"])
+        scope, collection, err = self.expand_collection_shortcut(path)
+        if err is not None:
+            _exitIfErrors([err])
+        return scope, collection
 
+    @staticmethod
+    def expand_collection_shortcut(path):
+        parts = path.split('.')
+        if len(parts) != 2:
+            return None, None, f'invalid collection path {path}'
+        parts = ['_default' if x == '' else x for x in parts]
+        return parts[0], parts[1], None
 
     @staticmethod
     def get_man_page_name():

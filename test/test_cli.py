@@ -7,13 +7,38 @@ import itertools
 from io import StringIO
 import time
 import threading
-from cbmgr import CouchbaseCLI
+from cbmgr import CouchbaseCLI, CollectionManage
 from mock_server import MockRESTServer
 
 
 host = '127.0.0.1'
 port = 6789
 cluster_connect_args = ['-c', host+":"+str(port), '-u', 'Administrator', '-p', 'asdasd']
+
+
+class ExpandCollectionTest(unittest.TestCase):
+    def test_expand_collection(self):
+        test_and_result = {
+            '.': ['_default', '_default'],
+            'beer.': ['beer', '_default'],
+            '.beer': ['_default', 'beer'],
+            'scope.collection': ['scope', 'collection'],
+        }
+
+        for test_val, expected in test_and_result.items():
+            scope, collection, err = CollectionManage.expand_collection_shortcut(test_val)
+            self.assertEqual(err, None, 'Unexpected error')
+            self.assertEqual(expected[0], scope, f'incorrect scope')
+            self.assertEqual(expected[1], collection, f'incorrect collection')
+
+    def test_expand_collection_invalid_paths(self):
+        test = [
+            '..', 'beer.sampl.e', '', ' ',
+        ]
+
+        for test_val in test:
+            _, _, err = CollectionManage.expand_collection_shortcut(test_val)
+            self.assertNotEqual(err, None, 'Expected an error')
 
 
 class CommandTest(unittest.TestCase):
