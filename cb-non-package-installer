@@ -4,7 +4,23 @@
 """
 Couchbase non root installer tool. This tool is used to install and upgrade non root install.
 
-Copyright (c) 2019  Couchbase Inc
+To do an install:
+
+1. Create a folder to install into:
+  mkdir couchbase-home
+2. Execute the script providing the rpm package to install and the location to install to
+
+  cb-non-package-installer --install --install-location couchbase-home \
+  --package couchbase-server-enterprise-6.0.0-centos7.x86_64.rpm
+
+To do an upgrade:
+
+1. Execute the script providing the rpm package and the location that the previous version of Couchbase Server is
+  installed at
+   cb-non-package-installer --upgrade --install-location couchbase-home \
+  --package couchbase-server-enterprise-6.5.0-centos7.x86_64.rpm
+
+Copyright (c) 2020  Couchbase Inc
 """
 
 import argparse
@@ -88,7 +104,6 @@ def install(package, location):
               ' to'.format(location))
 
     unpack(package, location)
-    # TODO: Run cbupgrade
     print 'Successfully installed'
 
 
@@ -103,6 +118,18 @@ def check_upgrade_versions(package_version, install_version):
               ' {1}'.format('.'.join(install_version), package_version))
     if install_version < (5, 0, 0):
         error('Upgrade only supported between versions 5.0.0 and {0}.{1}.X'.format(VERSION[0], VERSION[1]))
+
+
+def cbupgrade(location):
+    """
+    Executes cbupgrade
+    """
+    print 'Running cbupgrade this could take some time'
+    cbupgrade_cmd = os.path.join(location, 'opt/couchbase/bin/cbupgrade')
+    config = os.path.join(location, 'opt/couchbase/var/lib/couchbase/config')
+    return_code = subprocess.call([cbupgrade_cmd, '-a', 'yes', '--namespace_upgrade_only', '-c', config], stdout=FNULL)
+    if return_code != 0:
+        error('There was problem running cbupgrade')
 
 
 def upgrade(package, location):
@@ -134,6 +161,7 @@ def upgrade(package, location):
     except OSError as e:
         error('Cannot create the directory {0} to backup the config: {1}'.format(backup_config, e))
     config_files = ['opt/couchbase/etc/couchdb/local.ini',
+                    'opt/couchbase/var/lib/couchbase/couchbase-server.node',
                     'opt/couchbase/var/lib/couchbase/config']
 
     # The ip file is only on the first node in the cluster
@@ -145,8 +173,7 @@ def upgrade(package, location):
 
     config_files = [os.path.join(location, f) for f in config_files]
 
-    return_code = subprocess.call('cp -r {0} {1}'.format(' '.join(config_files), backup_config),
-                                  shell=True)
+    return_code = subprocess.call(['cp',  '-r'] +  config_files + [backup_config])
     if return_code != 0:
         error('Problem backing up config to {0}'.format(backup_config))
 
@@ -168,7 +195,7 @@ def upgrade(package, location):
 
     old_install = [os.path.join(location, f) for f in old_install]
 
-    return_code = subprocess.call('rm -r {0}'.format(' '.join(old_install)), shell=True)
+    return_code = subprocess.call(['rm',  '-r'] + old_install)
     if return_code != 0:
         error('Problem removing the old install')
 
@@ -186,12 +213,12 @@ def upgrade(package, location):
         return_code = subprocess.call(restore_config_command, shell=True)
         if return_code != 0:
             error('Problem restoring old config')
-
-    # TODO: Run cbupgrade
     # Remove backup config
-    return_codec = subprocess.call('rm -r {0}'.format(backup_config), shell=True)
+    return_codec = subprocess.call(['rm', '-r', backup_config])
     if return_codec != 0:
         error('Could not remove the backed up config directory {0}'.format(backup_config))
+    if package_version[:2] == VERSION:
+        cbupgrade(location)
     print 'Upgrade has completed successfully'
     exit(0)
 
