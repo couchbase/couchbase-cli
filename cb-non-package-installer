@@ -81,12 +81,14 @@ def unpack(package, location):
     old_cwd = os.getcwd()
     package = os.path.abspath(package)
     os.chdir(location)
+    logging.debug('Unpacking {0}'.format(package))
     return_code = subprocess.call('rpm2cpio {0} | cpio --extract --make-directories'
                                   ' --no-absolute-filenames'.format(package),
                                   stdout=FNULL, stderr=FNULL, shell=True)
     if return_code != 0:
         error('Problems unpacking {0} to {1}'.format(package, location))
     os.chdir('opt/couchbase')
+    logging.debug('Executing reloc.sh')
     return_code = subprocess.call(['./bin/install/reloc.sh', os.getcwd()])
     if return_code != 0:
         error('Problems executing reloc.sh')
@@ -97,6 +99,7 @@ def install(package, location):
     """
     Does a fresh non package install of Couchbase Server
     """
+    logging.info('Installing Couchbase Server')
     if get_package_version(package)[:2] > VERSION:
         error('Can only install up to version {0}.{1}.X'.format(VERSION[0], VERSION[1]))
     if os.listdir(location):
@@ -136,6 +139,7 @@ def upgrade(package, location):
     """
     Upgrades a non package install of Couchbase Server
     """
+    logging.info('Upgrading Couchbase Server')
     if not os.listdir(location):
         error('Upgrade location "{0}" is empty, please provide the location where Couchbase Server'
               ' is installed'.format(location))
@@ -154,6 +158,7 @@ def upgrade(package, location):
         error('Could not check if Couchbase Server was running')
 
     # Backup config
+    logging.info('Backing up the config')
     backup_config = 'couchbase-server-backup-config'
     backup_config = os.path.abspath(backup_config)
     try:
@@ -179,6 +184,7 @@ def upgrade(package, location):
 
     # TODO: Get data paths
     # Remove old couchbase files
+    logging.debug('Removing the old install')
     old_install = ['opt/couchbase/bin/', 'opt/couchbase/etc/', 'opt/couchbase/lib/',
                    'opt/couchbase/LICENSE.txt', 'opt/couchbase/manifest.xml',
                    'opt/couchbase/README.txt', 'opt/couchbase/samples', 'opt/couchbase/share',
@@ -201,6 +207,7 @@ def upgrade(package, location):
 
     unpack(package, location)
     # Restore config
+    logging.info('Restoring the old config')
     for config_file in config_files:
         old_config = os.path.basename(config_file)
         restore_config_command = None
