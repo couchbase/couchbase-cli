@@ -1174,9 +1174,6 @@ class ClusterManager(object):
         if disabled_users:
             params["disabledUsers"] = disabled_users
 
-        if "logPath" not in params and "auditdEnabled" in params and params["auditdEnabled"] == "true":
-            return None, ["The audit log path must be specified when auditing is first set up"]
-
         return self._post_form_encoded(url, params)
 
     def get_audit_settings(self):

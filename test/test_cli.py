@@ -757,9 +757,23 @@ class TestSettingAudit(CommandTest):
         self.assertIn('POST:/settings/audit', self.server.trace)
         self.rest_parameter_match(expected_params)
 
-    def test_setting_audit_enabled_no_options(self):
-        self.system_exit_run(self.command + ['--set', '--audit-enabled', '1'], self.server_args)
-        self.assertIn('The audit log path must be specified when auditing is first set up', self.str_output)
+    def test_setting_audit_set_no_options(self):
+        self.system_exit_run(self.command + ['--set'], self.server_args)
+        self.assertIn('At least one of [--audit-enabled, --audit-log-path, --audit-log-rotate-interval,'
+                      ' --audit-log-rotate-size, --disabled-users, --disable-events] is required with --set',
+                      self.str_output)
+
+    def test_setting_audit_set_disabled_users(self):
+        self.no_error_run(self.command + ['--set', '--disabled-users=carlos/local'], self.server_args)
+        self.assertIn('POST:/settings/audit', self.server.trace)
+        expected_params = ['disabledUsers=carlos%2Flocal']
+        self.rest_parameter_match(expected_params)
+
+    def test_setting_audit_set_disable_events(self):
+        self.no_error_run(self.command + ['--set', '--disable-events=4000'], self.server_args)
+        self.assertIn('POST:/settings/audit', self.server.trace)
+        expected_params = ['disabled=4000']
+        self.rest_parameter_match(expected_params)
 
 
 class TestSettingAutofailover(CommandTest):

@@ -2202,8 +2202,10 @@ class SettingAudit(Subcommand):
             self.format_audit_settings(audit_settings, descriptors)
             return
         elif opts.set_settings:
-            if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size):
-                _exitIfErrors(["No settings specified to be changed"])
+            if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size or opts.disable_events
+                    or opts.disabled_users):
+                _exitIfErrors(["At least one of [--audit-enabled, --audit-log-path, --audit-log-rotate-interval,"
+                               " --audit-log-rotate-size, --disabled-users, --disable-events] is required with --set"])
 
             if opts.enabled == "1":
                 opts.enabled = "true"
