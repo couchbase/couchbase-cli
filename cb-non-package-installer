@@ -230,6 +230,37 @@ def upgrade(package, location):
     exit(0)
 
 
+def which(command):
+    logging.debug("Checking if command '{0}' is available".format(command))
+    return_code = subprocess.call(['which' , command], stdout=FNULL)
+    return return_code == 0
+
+
+def check_install_dependencies():
+    """
+    Check the dependencies needed to execute this script are available.
+    """
+    commands = ['rpm2cpio','cpio', 'rpm', 'perl']
+    for command in commands:
+        if not which(command):
+            error('Cannot start the install as command "{0}" is not available'.format(command))
+
+
+def check_package_dependencies(package):
+    """
+    Check that the dependencies of Couchbase Server are available.
+    """
+    rpm_output = subprocess.check_output(['rpm', '-qpR', package])
+    for line in rpm_output.splitlines():
+        check_command = True
+        for x  in ['shadow-utils', 'rpmfind', 'rpmlib']:
+            if line.startswith(x):
+                check_command = False
+                break
+        command = line.split(' ')[0]
+        if check_command and not which(command):
+            error('Cannot install Couchbase Server missing dependency: "{0}"'.format(command))
+
 def main():
     """
     Validates the arguments and start the install or upgrade process
@@ -269,6 +300,9 @@ def main():
     if not os.access(args.location, os.W_OK):
         error('Install location "{0}" is not writable, please check the'
               ' permissions'.format(args.location))
+
+    check_install_dependencies()
+    check_package_dependencies(args.package)
 
     if args.install:
         install(args.package, args.location)
