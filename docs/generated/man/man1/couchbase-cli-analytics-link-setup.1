@@ -1,0 +1,322 @@
+'\" t
+.\"     Title: couchbase-cli-analytics-link-setup
+.\"    Author: Couchbase
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-05-07
+.\"    Manual: Couchbase CLI Manual
+.\"    Source: Couchbase CLI 1.0.0
+.\"  Language: English
+.\"
+.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2020-05-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+couchbase\-cli\-analytics\-link\-setup \- Manage Analytics links
+.SH "SYNOPSIS"
+.sp
+.sp
+.nf
+\fIcouchbase\-cli analytics\-link\-setup\fP [\-\-cluster <cluster>] [\-\-username <username>]
+    [\-\-password <password>] [\-\-create] [\-\-delete] [\-\-edit] [\-\-list]
+    [\-\-dataverse <name>] [\-\-name <name>] [\-\-type <type>] [\-\-hostname <hostname>]
+    [\-\-link\-username <username>] [\-\-link\-password <password>]
+    [\-\-user\-certificate <path>] [\-\-user\-key <path>] [\-\-certificate <path>]
+    [\-\-encryption <type>] [\-\-access\-key\-id <id>] [\-\-secret\-access\-key <key>]
+    [\-\-region <region>] [\-\-service\-endpoint <url>]
+.fi
+.br
+.SH "DESCRIPTION"
+.sp
+This command is used to manage links used by the external dataset and remote
+cluster capabilities of the Analytics Service.
+.SH "OPTIONS"
+.SS "Common Link Options"
+.sp
+\-c, \-\-cluster
+.RS 4
+Specifies the hostname of a node in the cluster. See the HOST FORMATS
+section for more information on specifying a hostname.
+.RE
+.sp
+\-u, \-\-user <username>
+.RS 4
+Specifies the username of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error.
+.RE
+.sp
+\-p, \-\-password <password>
+.RS 4
+Specifies the password of the user executing the command. If you do not have
+a user account with permission to execute the command then it will fail with
+an unauthorized error. If this argument is specified, but no password is
+given then the command will prompt the user for a password through
+non\-echoed stdin. You may also specify your password by using the
+environment variable CB_REST_PASSWORD.
+.RE
+.sp
+\-\-create
+.RS 4
+Creates a new link.
+.RE
+.sp
+\-\-delete
+.RS 4
+Deletes a link.
+.RE
+.sp
+\-\-edit
+.RS 4
+Edits a link.
+.RE
+.sp
+\-\-list
+.RS 4
+List defined links.
+.RE
+.sp
+\-\-name <name>
+.RS 4
+The name for the link.
+.RE
+.sp
+\-\-type <type>
+.RS 4
+The type of the link, either \(aqcouchbase\(aq or \(aqs3\(aq.
+.RE
+.SS "Couchbase Link Options"
+.sp
+Following are the options specific to \fB\-\-type couchbase\fP, i.e. Couchbase
+links
+.sp
+\-\-hostname <hostname>
+.RS 4
+The hostname of the link.
+.RE
+.sp
+\-\-encryption <type>
+.RS 4
+  Specifies the type of encryption to use. This flag may either be set to
+either "half", "full", or "none". Half encryption means that passwords are
+encrypted, but data is not. This results in faster data transfer, but less
+security. Full encryption means that all data and passwords are encrypted
+which increases security, but reduces overall data transfer speed. If no
+encryption is needed then "none" can be specified.
+.RE
+.sp
+\-\-link\-username <username>
+.RS 4
+The username of the link.
+.RE
+.sp
+\-\-link\-password <password>
+.RS 4
+The password of the link.
+.RE
+.sp
+\-\-user\-certificate <path>
+.RS 4
+  The local path to the file containing the user certificate for authentication.
+This and \fB\-\-user\-key\fP are used in place of \fB\-\-link\-username\fP and
+\fB\-\-link\-password\fP when utilizing certificate\-based authentication.
+Certificate\-based auth requires \fB\-\-encryption full\fP.
+.RE
+.sp
+\-\-user\-key <path>
+.RS 4
+  The local path to the file containing the user key for authentication. This
+and \fB\-\-user\-certificate\fP are used in place of \fB\-\-link\-username\fP and
+\fB\-\-link\-password\fP when utilizing certificate\-based authentication.
+Certificate\-based auth requires \fB\-\-encryption full\fP.
+.RE
+.sp
+\-\-certificate <path>
+.RS 4
+  The local path to the file containing the certificate used for encryption.
+Required with \fB\-\-encryption full\fP.
+.RE
+.SS "S3 Link Options"
+.sp
+Following are the options specific to \fB\-\-type s3\fP, i.e. S3 links
+.sp
+\-\-access\-key\-id <id>
+.RS 4
+The access key ID of the s3 link.
+.RE
+.sp
+\-\-secret\-access\-key <key>
+.RS 4
+The secret access key of the s3 link.
+.RE
+.sp
+\-\-region <region>
+.RS 4
+The region of the s3 link.
+.RE
+.sp
+\-\-service\-endpoint <url>
+.RS 4
+The service endpoint of the link (optional).
+.RE
+.SH "HOST FORMATS"
+.sp
+When specifying a host for the couchbase\-cli command the following formats are expected:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRcouchbase://<addr>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CR<addr>:<port>\fP
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+\f(CRhttp://<addr>:<port>\fP
+.RE
+.sp
+It is recommended to use the couchbase://<addr> format for standard
+installations. The other two formats allow an option to take a port number which
+is needed for non\-default installations where the admin port has been set up on
+a port other that 8091.
+.SH "EXAMPLES"
+.sp
+To create a new link to a Couchbase cluster named "east", run the
+following command:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-dataverse Default \-\-name east \-\-type couchbase \(rs
+ \-\-hostname 192.168.1.6 \-\-link\-username Administrator \(rs
+ \-\-link\-password password \-\-encryption none
+.fi
+.if n .RE
+.sp
+If the new remote reference should be fully encrypted then make sure to enable
+encryption:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-dataverse Default \-\-name east \-\-type couchbase \(rs
+ \-\-hostname 192.168.1.6 \-\-link\-username Administrator \(rs
+ \-\-link\-password password \-\-encryption full \(rs
+ \-\-certificate /root/cluster.cert
+.fi
+.if n .RE
+.sp
+To create an S3 link named "myAwsLink" in the "test" dataverse, run the
+following command:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+\-p password \-\-create \-\-dataverse test \-\-name myAwsLink \-\-type s3 \(rs
+\-\-region us\-west\-2 \-\-access\-key\-id LOREMIPSUMDOLORSITAMET123 \(rs
+\-\-secret\-access\-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456
+.fi
+.if n .RE
+.sp
+To list all current links, run the following command:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-list
+.fi
+.if n .RE
+.sp
+To list current S3 links, run the following command:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-list \-\-type s3
+.fi
+.if n .RE
+.sp
+If you need to edit a link named "east" and change the password, run the
+following command:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-edit \-\-dataverse Default \-\-name east \-\-type couchbase \(rs
+ \-\-hostname 192.168.1.6 \-\-link\-username Administrator \(rs
+ \-\-link\-password new_password \-\-encryption half
+.fi
+.if n .RE
+.sp
+Note in the above example that you need to re\-specify all of the current
+unchanging configuration parameters in addition to changing ones, except
+\fB\-\-type\fP which cannot change.
+.sp
+If an link is no longer needed it can be deleted. The following example
+deletes the link named "east" in the "Default" dataverse:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-delete \-\-dataverse Default \-\-link east
+.fi
+.if n .RE
+.SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
+.sp
+CB_REST_USERNAME
+.RS 4
+Specifies the username to use when executing the command. This environment
+variable allows you to specify a default argument for the \-u/\-\-username
+argument on the command line.
+.RE
+.sp
+CB_REST_PASSWORD
+.RS 4
+Specifies the password of the user executing the command. This environment
+variable allows you to specify a default argument for the \-p/\-\-password
+argument on the command line. It also allows the user to ensure that their
+password are not cached in their command line history.
+.RE
+.SH "COUCHBASE\-CLI"
+.sp
+Part of the \fBcouchbase\-cli\fP(1) suite
+.SH "AUTHOR"
+.sp
+Couchbase

@@ -1,0 +1,164 @@
+= couchbase-cli-analytics-link-setup(1)
+ifndef::doctype-manpage[:doctitle: analytics-link-setup]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-analytics-link-setup -
+endif::[]
+Manage Analytics links
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli analytics-link-setup_ [--cluster <cluster>] [--username <username>]
+    [--password <password>] [--create] [--delete] [--edit] [--list]
+    [--dataverse <name>] [--name <name>] [--type <type>] [--hostname <hostname>]
+    [--link-username <username>] [--link-password <password>]
+    [--user-certificate <path>] [--user-key <path>] [--certificate <path>]
+    [--encryption <type>] [--access-key-id <id>] [--secret-access-key <key>]
+    [--region <region>] [--service-endpoint <url>]
+
+== DESCRIPTION
+
+This command is used to manage links used by the external dataset and remote
+cluster capabilities of the Analytics Service.
+
+== OPTIONS
+
+=== Common Link Options
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--create::
+  Creates a new link.
+
+--delete::
+  Deletes a link.
+
+--edit::
+  Edits a link.
+
+--list::
+  List defined links.
+
+--name <name>::
+  The name for the link.
+
+--type <type>::
+  The type of the link, either 'couchbase' or 's3'.
+
+=== Couchbase Link Options
+Following are the options specific to *--type couchbase*, i.e. Couchbase
+links
+
+--hostname <hostname>::
+  The hostname of the link.
+
+--encryption <type>::
+  Specifies the type of encryption to use. This flag may either be set to
+either "half", "full", or "none". Half encryption means that passwords are
+encrypted, but data is not. This results in faster data transfer, but less
+security. Full encryption means that all data and passwords are encrypted
+which increases security, but reduces overall data transfer speed. If no
+encryption is needed then "none" can be specified.
+
+--link-username <username>::
+  The username of the link.
+
+--link-password <password>::
+  The password of the link.
+
+--user-certificate <path>::
+  The local path to the file containing the user certificate for authentication.
+This and *--user-key* are used in place of *--link-username* and
+*--link-password* when utilizing certificate-based authentication.
+Certificate-based auth requires *--encryption full*.
+
+--user-key <path>::
+  The local path to the file containing the user key for authentication. This
+and *--user-certificate* are used in place of *--link-username* and
+*--link-password* when utilizing certificate-based authentication.
+Certificate-based auth requires *--encryption full*.
+
+--certificate <path>::
+  The local path to the file containing the certificate used for encryption.
+Required with *--encryption full*.
+
+=== S3 Link Options
+Following are the options specific to *--type s3*, i.e. S3 links
+
+--access-key-id <id>::
+  The access key ID of the s3 link.
+
+--secret-access-key <key>::
+  The secret access key of the s3 link.
+
+--region <region>::
+  The region of the s3 link.
+
+--service-endpoint <url>::
+  The service endpoint of the link (optional).
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To create a new link to a Couchbase cluster named "east", run the
+following command:
+
+  $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+   -p password --create --dataverse Default --name east --type couchbase \
+   --hostname 192.168.1.6 --link-username Administrator \
+   --link-password password --encryption none
+
+If the new remote reference should be fully encrypted then make sure to enable
+encryption:
+
+  $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+   -p password --create --dataverse Default --name east --type couchbase \
+   --hostname 192.168.1.6 --link-username Administrator \
+   --link-password password --encryption full \
+   --certificate /root/cluster.cert
+
+To create an S3 link named "myAwsLink" in the "test" dataverse, run the
+following command:
+
+  $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+  -p password --create --dataverse test --name myAwsLink --type s3 \
+  --region us-west-2 --access-key-id LOREMIPSUMDOLORSITAMET123 \
+  --secret-access-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456
+
+To list all current links, run the following command:
+
+  $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+   -p password --list
+
+To list current S3 links, run the following command:
+
+  $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+   -p password --list --type s3
+
+If you need to edit a link named "east" and change the password, run the
+following command:
+
+  $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+   -p password --edit --dataverse Default --name east --type couchbase \
+   --hostname 192.168.1.6 --link-username Administrator \
+   --link-password new_password --encryption half
+
+Note in the above example that you need to re-specify all of the current
+unchanging configuration parameters in addition to changing ones, except
+*--type* which cannot change.
+
+If an link is no longer needed it can be deleted. The following example
+deletes the link named "east" in the "Default" dataverse:
+
+  $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+   -p password --delete --dataverse Default --link east
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

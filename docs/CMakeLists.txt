@@ -1,5 +1,6 @@
 
 INSTALL(FILES
+  generated/doc/couchbase-cli/couchbase-cli-analytics-link-setup.html
   generated/doc/couchbase-cli/couchbase-cli-bucket-compact.html
   generated/doc/couchbase-cli/couchbase-cli-bucket-create.html
   generated/doc/couchbase-cli/couchbase-cli-bucket-delete.html
@@ -62,6 +63,7 @@ INSTALL(FILES
 
 IF (NOT WIN32)
   INSTALL(FILES
+    generated/man/man1/couchbase-cli-analytics-link-setup.1
     generated/man/man1/couchbase-cli-bucket-compact.1
     generated/man/man1/couchbase-cli-bucket-create.1
     generated/man/man1/couchbase-cli-bucket-delete.1

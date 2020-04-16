@@ -1,5 +1,7 @@
 """This test do not ensure correct server side behaviour they only check that the cli makes the correct requests and
 that validates input correctly"""
+import os
+import tempfile
 import unittest
 import sys
 import json
@@ -1556,6 +1558,149 @@ class TestSettingRebalance(CommandTest):
         self.system_exit_run(self.command + ['--set', '--enable', '1', '--wait-for', '1', '--max-attempts', '3'],
                           self.server_args)
         self.assertIn('--wait-for must be a value between 5 and 3600', self.str_output)
+
+
+class TestAnalyticsLinkSetup(CommandTest):
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'cbas': port,
+                                }
+                            }]}}
+        self.command = ['couchbase-cli', 'analytics-link-setup'] + cluster_connect_args
+        super(TestAnalyticsLinkSetup, self).setUp()
+
+    def testMoreThanOneActionFlag(self):
+        self.system_exit_run(self.command +['--list', '--create'], self.server_args)
+
+    def testListNoParams(self):
+        self.server_args['/analytics/link'] = []
+        self.no_error_run(self.command + ['--list'], self.server_args)
+        self.assertNotIn('query', self.server_args, 'did not expect any query arguments')
+
+    def testListDataVerse(self):
+        self.server_args['/analytics/link'] = []
+        self.no_error_run(self.command + ['--list', '--dataverse', 'Default'], self.server_args)
+        self.assertIn('query', self.server_args, 'expected query parameters to have been set')
+        self.assertEqual(self.server_args['query'], 'dataverse=Default')
+
+    def testListAllOptions(self):
+        self.server_args['/analytics/link'] = []
+        self.no_error_run(self.command + ['--list', '--dataverse', 'Default', '--name', 'name', '--type', 'couchbase'],
+                          self.server_args)
+        self.assertIn('query', self.server_args, 'expected query parameters to have been set')
+        querys = self.server_args['query'].split('&')
+        self.assertEqual(3, len(querys))
+        self.assertIn('dataverse=Default', querys)
+        self.assertIn('name=name', querys)
+        self.assertIn('type=couchbase', querys)
+
+    def testListInvalidType(self):
+        self.system_exit_run(self.command + ['--list', '--type', 'fire'], self.server_args)
+
+    def testCreateNoOptions(self):
+        self.system_exit_run(self.command + ['--create'], self.server_args)
+        self.assertIn('dataverse is required', self.str_output)
+
+    def testCreateNoType(self):
+        self.system_exit_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east'], self.server_args)
+        self.assertIn('type is required', self.str_output)
+
+    def testCreateMinimum(self):
+        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 's3'], self.server_args)
+        self.assertIn('POST:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=s3'])
+
+    def testCreateS3(self):
+        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 's3',
+                                          '--access-key-id', 'id-1', '--secret-access-key', 'my-secret', '--region',
+                                          'us-east-0', '--service-endpoint', 'my-cool-endpoint.com'], self.server_args)
+        self.assertIn('POST:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=s3', 'accessKeyId=id-1',
+                                   'secretAccessKey=my-secret', 'region=us-east-0',
+                                   'serviceEndpoint=my-cool-endpoint.com'])
+
+    def testCreateCouchbase(self):
+        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
+                                          '--link-username', 'user', '--link-password', 'secret', '--encryption',
+                                          'none'], self.server_args)
+        self.assertIn('POST:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=couchbase', 'username=user',
+                                   'password=secret', 'encryption=none'])
+
+    def testEditNoType(self):
+        self.no_error_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east'], self.server_args)
+        self.assertIn('PUT:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['dataverse=Default', 'name=east'])
+
+    def testEditCouchbase(self):
+        self.no_error_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
+                                          '--link-username', 'user', '--link-password', 'secret', '--encryption',
+                                          'none'], self.server_args)
+        self.assertIn('PUT:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=couchbase', 'username=user',
+                                   'password=secret', 'encryption=none'])
+
+    def testEditWithCerts(self):
+        # create fake cert file
+        cert_file = tempfile.NamedTemporaryFile(delete=False)
+        cert_file_name = cert_file.name
+        cert_file.write(b'this-is-the-cert-file')
+        cert_file.close()
+
+        # create fake user key file
+        user_key_file = tempfile.NamedTemporaryFile(delete=False)
+        user_key_file_name = user_key_file.name
+        user_key_file.write(b'this-is-the-user-key-file')
+        user_key_file.close()
+
+        # create fake user certificate file
+        user_cert_file = tempfile.NamedTemporaryFile(delete=False)
+        user_cert_file_name = user_cert_file.name
+        user_cert_file.write(b'this-is-the-user-cert-file')
+        user_cert_file.close()
+
+        self.no_error_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
+                                          '--link-username', 'user', '--link-password', 'secret', '--encryption',
+                                          'full', '--user-certificate', user_cert_file_name, '--certificate',
+                                          cert_file_name, '--user-key', user_key_file_name], self.server_args)
+
+        # clean up the test files
+        os.remove(cert_file_name)
+        os.remove(user_cert_file_name)
+        os.remove(user_key_file_name)
+
+        self.assertIn('PUT:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=couchbase', 'username=user',
+                                   'password=secret', 'encryption=full', 'certificate=this-is-the-cert-file',
+                                   'clientKey=this-is-the-user-key-file',
+                                   'clientCertificate=this-is-the-user-cert-file'])
+
+    def testSetWithCertsThatDontExist(self):
+        # create fake cert file and deleted immediately guaranteeing it does not exists
+        cert_file = tempfile.NamedTemporaryFile(delete=True)
+        cert_file_name = cert_file.name
+        cert_file.close()
+
+        self.system_exit_run(self.command + ['--set', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
+                                             '--link-username', 'user', '--link-password', 'secret', '--encryption',
+                                             'full', '--user-certificate', cert_file_name, '--certificate',
+                                             cert_file_name, '--user-key', cert_file_name], self.server_args)
+
+    def testDeleteNoParams(self):
+        self.system_exit_run(self.command + ['--delete'], self.server_args)
+        self.assertIn('dataverse is required', self.str_output)
+
+    def testDeleteNoName(self):
+        self.system_exit_run(self.command + ['--delete', '--dataverse', 'Default'], self.server_args)
+        self.assertIn('name is required', self.str_output)
+
+    def testDelete(self):
+        self.no_error_run(self.command + ['--delete', '--dataverse', 'Default', '--name', 'me'], self.server_args)
+        self.assertIn('DELETE:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['dataverse=Default', 'name=me'])
 
 
 if __name__ == '__main__':
