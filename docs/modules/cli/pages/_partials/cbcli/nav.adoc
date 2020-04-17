@@ -43,7 +43,6 @@
  ** xref:cli:cbcli/couchbase-cli-setting-ldap.adoc[setting-ldap]
  ** xref:cli:cbcli/couchbase-cli-setting-master-password.adoc[setting-master-password]
  ** xref:cli:cbcli/couchbase-cli-setting-notification.adoc[setting-notification]
- ** xref:cli:cbcli/couchbase-cli-setting-on-demand.adoc[setting-on-demand]
  ** xref:cli:cbcli/couchbase-cli-setting-password-policy.adoc[setting-password-policy]
  ** xref:cli:cbcli/couchbase-cli-setting-query.adoc[setting-query]
  ** xref:cli:cbcli/couchbase-cli-setting-rebalance.adoc[setting-rebalance]
