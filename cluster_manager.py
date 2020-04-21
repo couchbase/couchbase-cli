@@ -671,6 +671,7 @@ class ClusterManager(object):
         return all, eject, failover, readd, hostnames, None
 
     def create_bucket(self, name, bucket_type, storage_type, memory_quota,
+                      durability_min_level,
                       eviction_policy, replicas, replica_indexes,
                       threads_number, conflict_resolution, flush_enabled,
                       max_ttl, compression_mode, sync, db_frag_perc, db_frag_size, view_frag_perc,
@@ -707,6 +708,8 @@ class ClusterManager(object):
             params["compressionMode"] = compression_mode
         if storage_type is not None:
             params["storageBackend"] = storage_type
+        if durability_min_level is not None:
+            params["durabilityMinLevel"] = durability_min_level
 
         if bucket_type == "couchbase":
             if (db_frag_perc is not None or db_frag_size is not None or view_frag_perc is not None or
@@ -770,7 +773,7 @@ class ClusterManager(object):
 
         return result, None
 
-    def edit_bucket(self, name, memory_quota, eviction_policy,
+    def edit_bucket(self, name, memory_quota, durability_min_level, eviction_policy,
                     replicas, threads_number, flush_enabled, max_ttl,
                     compression_mode, remove_port, db_frag_perc, db_frag_size, view_frag_perc,
                     view_frag_size, from_hour, from_min, to_hour, to_min,
@@ -825,6 +828,8 @@ class ClusterManager(object):
             params["parallelDBAndViewCompaction"] = paralleldb_and_view_compact
         if purge_interval is not None:
             params["purgeInterval"] = purge_interval
+        if durability_min_level is not None:
+            params["durabilityMinLevel"] = durability_min_level
 
         return self._post_form_encoded(url, params)
 

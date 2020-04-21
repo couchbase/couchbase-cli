@@ -124,7 +124,7 @@ class TestBucketCompact(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, 'buckets':[]}
 
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
-        self.bucket_memcahed = {'name': 'name', 'bucketType': 'memcached'}
+        self.bucket_memcached = {'name': 'name', 'bucketType': 'memcached'}
         super(TestBucketCompact, self).setUp()
 
     def test_basic_bucket_compact(self):
@@ -156,8 +156,8 @@ class TestBucketCompact(CommandTest):
         self.system_exit_run(self.command + self.command_args + ['--data-only', '--view-only'], self.server_args)
         self.assertIn('Cannot compact data only and view only', self.str_output)
 
-    def test_error_compact_memcahed_bucket(self):
-        self.server_args['buckets'].append(self.bucket_memcahed)
+    def test_error_compact_memcached_bucket(self):
+        self.server_args['buckets'].append(self.bucket_memcached)
         self.system_exit_run(self.command + self.command_args, self.server_args)
         self.assertIn('Cannot compact memcached buckets', self.str_output)
 
@@ -180,7 +180,7 @@ class TestBucketCreate(CommandTest):
                             'buckets':[]}
 
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
-        self.bucket_memcahed = {'name': 'name', 'bucketType': 'memcached'}
+        self.bucket_memcached = {'name': 'name', 'bucketType': 'memcached'}
         super(TestBucketCreate, self).setUp()
 
     def test_basic_bucket_create(self):
@@ -217,7 +217,7 @@ class TestBucketCreate(CommandTest):
         ]
         self.rest_parameter_match(expected_params)
 
-    def test_bucket_create_memcahced(self):
+    def test_bucket_create_memcached(self):
         args = [
             '--bucket-type', 'memcached', '--bucket-ramsize', '100'
         ]
@@ -257,7 +257,7 @@ class TestBucketDelete(CommandTest):
                             'buckets':[]}
 
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
-        self.bucket_memcahed = {'name': 'name', 'bucketType': 'memcached'}
+        self.bucket_memcached = {'name': 'name', 'bucketType': 'memcached'}
         super(TestBucketDelete, self).setUp()
 
     def test_bucket_delete(self):
@@ -284,7 +284,7 @@ class TestBucketEdit(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
                             'buckets':[]}
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
-        self.bucket_memcahed = {'name': 'name', 'bucketType': 'memcached'}
+        self.bucket_memcached = {'name': 'name', 'bucketType': 'memcached'}
         super(TestBucketEdit, self).setUp()
 
     def test_bucket_edit(self):
@@ -327,13 +327,13 @@ class TestBucketList(CommandTest):
                             'buckets': []}
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase', 'replicaNumber': '0',
                                'quota': {'ram': '100'}, 'basicStats': {'memUsed': '100'}}
-        self.bucket_memcahed = {'name': 'name1', 'bucketType': 'memcached', 'replicaNumber': '0',
+        self.bucket_memcached = {'name': 'name1', 'bucketType': 'memcached', 'replicaNumber': '0',
                                'quota': {'ram': '100'}, 'basicStats': {'memUsed': '100'}}
         super(TestBucketList, self).setUp()
 
     def test_bucket_list(self):
         self.server_args['buckets'].append(self.bucket_membase)
-        self.server_args['buckets'].append(self.bucket_memcahed)
+        self.server_args['buckets'].append(self.bucket_memcached)
         self.no_error_run(self.command, self.server_args)
         expected_out = ['name\n bucketType: membase\n numReplicas: 0\n ramQuota: 100\n ramUsed: 100',
                         'name1\n bucketType: memcached\n numReplicas: 0\n ramQuota: 100\n ramUsed: 100']
@@ -342,7 +342,7 @@ class TestBucketList(CommandTest):
 
     def test_bucket_list_json(self):
         self.server_args['buckets'].append(self.bucket_membase)
-        self.server_args['buckets'].append(self.bucket_memcahed)
+        self.server_args['buckets'].append(self.bucket_memcached)
         self.no_error_run(self.command + ['-o', 'json'], self.server_args)
         expected_out = ['"bucketType": "membase"', '"quota": {"ram": "100"}', '"replicaNumber": "0"',
                         '"basicStats": {"memUsed": "100"}', '"name": "name"', '"name": "name1"',

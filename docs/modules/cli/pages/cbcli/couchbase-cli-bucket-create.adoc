@@ -13,7 +13,7 @@ Create a new bucket
 [verse]
 _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
     [--password <password>] [--bucket <name>] [--bucket-type <type>]
-    [--storage-backend <storage>]
+    [--storage-backend <storage>] [--durability-min-level <level>]
     [--bucket-ramsize <size>] [--bucket-replica <num>]
     [--bucket-priority <priority>] [--bucket-eviction-policy <policy>]
     [--max-ttl <seconds>] [--compression-mode <mode>] [--enable-flush <num>]
@@ -55,6 +55,22 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --storage-backend <storage>::
   The type of storage to use with the bucket. This is only specified for
   "couchbase" buckets.  Accepted values are "couchstore" or "magma".
+
+--durability-min-level <level>::
+  The minimum durability level for the bucket. Accepted values for "ephemeral"
+  buckets are "none" or "majority". Accepted values for "couchbase" buckets
+  are "none", "majority", "majorityAndPersistActive", or "persistToMajority".
++
+[normal]
+  "none" specifies mutations to the bucket are asynchronous and offer no
+  durability guarantees. "majority" specifies mutations must be replicated
+  to (that is, held in the memory allocated to the bucket on) a majority
+  of the Data Service nodes. "majorityAndPersistActive" specifies mutations
+  must be replicated to a majority of the Data Service nodes. Additionally,
+  it must be written to disk on the node hosting the active vBucket for the
+  data. "persistToMajority" specifies mutations must be persisted to a
+  majority of the Data Service nodes. Accordingly, it will be written to disk
+  on those nodes.
 
 --bucket-ramsize <size>::
   The amount of memory to allocate to the cache for this bucket, in Megabytes.

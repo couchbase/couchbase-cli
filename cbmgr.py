@@ -700,6 +700,10 @@ class BucketCreate(Subcommand):
         group.add_argument("--bucket-priority", dest="priority", metavar="<priority>",
                            choices=[BUCKET_PRIORITY_LOW_STR, BUCKET_PRIORITY_HIGH_STR],
                            help="The bucket disk io priority (low or high)")
+        group.add_argument("--durability-min-level", dest="durability_min_level", metavar="<level>",
+                           choices=["none", "majority", "majorityAndPersistActive",
+                               "persistToMajority"],
+                           help="The bucket durability minimum level")
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
                            choices=["valueOnly", "fullEviction", "noEviction", "nruEviction"],
                            help="The bucket eviction policy")
@@ -796,6 +800,12 @@ class BucketCreate(Subcommand):
             if opts.storage == "magma":
                 storage_type = "magma"
 
+        durability_min_level = None
+        if opts.durability_min_level is not None:
+            if opts.type not in ["couchbase", "ephemeral"]:
+                _exitIfErrors(["--durability-min_level is only valid for 'couchbase' or 'ephemeral' buckets"])
+            durability_min_level = opts.durability_min_level
+
         priority = None
         if opts.priority is not None:
             if opts.priority == BUCKET_PRIORITY_HIGH_STR:
@@ -810,7 +820,8 @@ class BucketCreate(Subcommand):
             elif opts.conflict_resolution == "timestamp":
                 conflict_resolution_type = "lww"
 
-        _, errors = rest.create_bucket(opts.bucket_name, opts.type, storage_type, opts.memory_quota, opts.eviction_policy,
+        _, errors = rest.create_bucket(opts.bucket_name, opts.type, storage_type, opts.memory_quota,
+                                       durability_min_level, opts.eviction_policy,
                                        opts.replica_count, opts.replica_indexes, priority, conflict_resolution_type,
                                        opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.wait,
                                        opts.db_frag_perc, opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
@@ -877,6 +888,9 @@ class BucketEdit(Subcommand):
                            help="The replica count for the bucket")
         group.add_argument("--bucket-priority", dest="priority", metavar="<priority>",
                            choices=["low", "high"], help="The bucket disk io priority (low or high)")
+        group.add_argument("--durability-min-level", dest="durability_min_level", metavar="<level>",
+                           choices=["none", "majority", "majorityAndPersistActive", "persistToMajority"],
+                           help="The bucket durability minimum level")
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
                            choices=["valueOnly", "fullEviction"],
                            help="The bucket eviction policy (valueOnly or fullEviction)")
@@ -949,6 +963,8 @@ class BucketEdit(Subcommand):
                 _exitIfErrors(["--max-ttl cannot be specified for a memcached bucket"])
             if opts.compression_mode is not None:
                 _exitIfErrors(["--compression-mode cannot be specified for a memcached bucket"])
+            if opts.durability_min_level is not None:
+                _exitIfErrors(["--durability-min-level cannot be specified for a memcached bucket"])
 
         if (("bucketType" in bucket and (bucket["bucketType"] == "memcached" or bucket["bucketType"] == "ephemeral"))
                 and (opts.db_frag_perc is not None or opts.db_frag_size is not None or
@@ -970,7 +986,8 @@ class BucketEdit(Subcommand):
             else:
                 opts.remove_port = False
 
-        _, errors = rest.edit_bucket(opts.bucket_name, opts.memory_quota, opts.eviction_policy, opts.replica_count,
+        _, errors = rest.edit_bucket(opts.bucket_name, opts.memory_quota, opts.durability_min_level,
+                                     opts.eviction_policy, opts.replica_count,
                                      priority, opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.remove_port,
                                      opts.db_frag_perc, opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
                                      opts.from_hour, opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
