@@ -786,6 +786,19 @@ class TestSettingAudit(CommandTest):
         self.system_exit_run(self.command + ['--set', '--audit-enabled', '1'], self.server_args)
         self.assertIn('The audit log path must be specified when auditing is first set up', self.str_output)
 
+    def test_setting_audit_get_no_log_path(self):
+        self.server_args['audit_settings'] = {
+            'auditdEnabled': False,
+            'uid': 'uuid',
+            'rotateInterval': 0,
+            'rotateSize': 0,
+            'disabledUsers': [],
+        }
+
+        self.server_args['/settings/audit/descriptors'] = {}
+        self.no_error_run(self.command + ['--get-settings'], self.server_args)
+        self.assertIn('Log path: N/A', self.str_output)
+
 
 class TestSettingAutofailover(CommandTest):
     def setUp(self):

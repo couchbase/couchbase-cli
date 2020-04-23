@@ -318,6 +318,12 @@ def get_by_path(rest_params=None, server_args=None, path="", endpointMatch=None)
         return 200, server_args[path]
     return 200, {}
 
+
+def get_audit_settings(rest_params=None, server_args=None, path="", endpointMatch=None):
+    if 'audit_settings' in server_args:
+        return 200, server_args['audit_settings']
+    return 200, {}
+
 endpoints = [
     ('/close$', {'GET': do_nothing}),
     ('/whoami', {'GET': get_my_roles}),
@@ -352,7 +358,8 @@ endpoints = [
     ('/settings/ldap', {'POST': do_nothing, 'GET': get_ldap_settings}),
     ('/settings/alerts$', {'POST': do_nothing}),
     ('/settings/security$', {'POST': do_nothing}),
-    ('/settings/audit$', {'POST': do_nothing}),
+    ('/settings/audit$', {'POST': do_nothing, 'GET': get_audit_settings}),
+    ('/settings/audit/descriptors$', {'GET': get_by_path}),
     ('/settings/stats$', {'POST': do_nothing}),
     ('/settings/license$', {'POST': do_nothing, 'GET': get_by_path}),
     ('/settings/license/validate$', {'POST': do_nothing, 'GET': get_by_path}),

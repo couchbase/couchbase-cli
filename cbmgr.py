@@ -2219,7 +2219,7 @@ class SettingAudit(Subcommand):
     def format_audit_settings(audit_settings, json_descriptors):
         print(f'Audit enabled: {audit_settings["auditdEnabled"]}')
         print(f'UUID: {audit_settings["uid"]}')
-        print(f'Log path: {audit_settings["logPath"]}')
+        print(f'Log path: {audit_settings["logPath"] if "logPath" in audit_settings else "N/A"}')
         print(f'Rotate interval: {audit_settings["rotateInterval"]}')
         print(f'Rotate size: {audit_settings["rotateSize"]}')
         print(f'Disabled users: {audit_settings["disabledUsers"]}')
