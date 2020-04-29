@@ -29,7 +29,7 @@ cluster management.
 
 == COMMANDS
 
-man:couchbase-cli-admin-role-manage[1]::
+man:couchbase-cli-user-manage[1]::
   Manage LDAP user roles.
 
 man:couchbase-cli-bucket-compact[1]::
