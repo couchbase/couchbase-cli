@@ -297,6 +297,14 @@ class TestGenSource(unittest.TestCase):
             self.assertTrue(b'xattr_f' in v[7])
             self.assertTrue(b'xattr_v' in v[7])
 
+    def test_provide_batch_invalid_collection_id(self):
+        self.opts.collection = '_default'
+        self.source = GenSource(self.opts, None, None, None, self.source_map, None, None, None)
+
+        rv, batch = self.source.provide_batch()
+        self.assertNotEqual(0, rv, 'expected an error to be returned')
+        self.assertEqual(batch, None, 'expected batch to be none')
+        self.assertIn('Invalid collection id', rv, 'expected invalid collection id error message')
 
 class TestBFDSource(unittest.TestCase):
     def setUp(self):

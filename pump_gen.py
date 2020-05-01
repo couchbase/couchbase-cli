@@ -164,6 +164,8 @@ class GenSource(pump.Source):
                 except StopIteration:
                     itr = iter(collections)
                     cid = int(next(itr), 16)
+                except ValueError as e:
+                    return f'Invalid collection id, collection id must be a hexadecimal number: {e}', None
 
                 encodedCid = encodeCollectionId(cid)
                 # Generate the pack format and pack the key
