@@ -1441,11 +1441,6 @@ class ClusterManager(object):
 
         return data, errors
 
-        url = f'{self.hostname}/settings/rbac/users'
-        data, errors = self._get(url)
-
-        return data, errors
-
     def retrieve_cluster_certificate(self, extended=False):
         """ Retrieves the current cluster certificate
 
