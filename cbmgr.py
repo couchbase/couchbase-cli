@@ -800,12 +800,6 @@ class BucketCreate(Subcommand):
             if opts.storage == "magma":
                 storage_type = "magma"
 
-        durability_min_level = None
-        if opts.durability_min_level is not None:
-            if opts.type not in ["couchbase", "ephemeral"]:
-                _exitIfErrors(["--durability-min_level is only valid for 'couchbase' or 'ephemeral' buckets"])
-            durability_min_level = opts.durability_min_level
-
         priority = None
         if opts.priority is not None:
             if opts.priority == BUCKET_PRIORITY_HIGH_STR:
@@ -821,7 +815,7 @@ class BucketCreate(Subcommand):
                 conflict_resolution_type = "lww"
 
         _, errors = rest.create_bucket(opts.bucket_name, opts.type, storage_type, opts.memory_quota,
-                                       durability_min_level, opts.eviction_policy,
+                                       opts.durability_min_level, opts.eviction_policy,
                                        opts.replica_count, opts.replica_indexes, priority, conflict_resolution_type,
                                        opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.wait,
                                        opts.db_frag_perc, opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
