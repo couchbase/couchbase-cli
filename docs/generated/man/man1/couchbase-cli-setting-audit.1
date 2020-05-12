@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-audit
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-02-17
+.\"      Date: 2020-05-11
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-AUDIT" "1" "2020-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-AUDIT" "1" "2020-05-11" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -45,10 +45,11 @@ couchbase\-cli\-setting\-audit \- Modifies audit log settings (EE only)
 Auditing is used to observe the action of users in the cluster. It is usually
 turned on for security purposes to ensure that those without permission to
 access information do not access it. By default auditing is disabled in
-Couchbase. The setting\-audit command can be used to retrieve the current
-auditing configuration, retrieve the auditable events and descriptions, to
-enable and disable auditing, set the auditing log path, change the auditing log
-rotation interval and disable auditing for certain users and events.
+Couchbase. The setting\-audit command can be used to enable and disable auditing,
+set the auditing log path, and change the auditing log rotation interval;
+the command can also be used to retrieve the current auditing configuration,
+retrieve the auditable events and descriptions,
+and disable auditing for certain users and events.
 .SH "OPTIONS"
 .sp
 \-c, \-\-cluster
@@ -99,7 +100,7 @@ option to "1". To disable auditing set this option to "0".
 .sp
 \-\-audit\-log\-path <path>
 .RS 4
-Specifies The auditing log path. This should be a path should be a path to a
+Specifies the auditing log path. This should be a path to a
 folder where the auditing log is kept. The folder must exist on all servers
 in the cluster.
 .RE
@@ -200,7 +201,7 @@ Disabled users: []
 .fi
 .if n .RE
 .sp
-To retrieve the list of events that can be audit use the command:
+To retrieve the list of events that can be audited use the command:
 .sp
 .if n .RS 4
 .nf
@@ -225,7 +226,7 @@ ID    | Module         | Name                                           | Descri
 .if n .RE
 .sp
 To enable auditing on a cluster and set the audit log to the default logs folder
-on a linux installation with a log rotate interval of 7 days run the command
+on a Linux installation with a log rotate interval of 7 days, run the command
 below.
 .sp
 .if n .RS 4
@@ -237,7 +238,7 @@ $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator 
 .if n .RE
 .sp
 To enable auditing on a cluster and set the audit log to the default logs folder
-on a linux installation with a log rotate size of 20MB run the command below.
+on a Linux installation with a log rotate size of 20MB, run the command below.
 .sp
 .if n .RS 4
 .nf
@@ -247,9 +248,10 @@ $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator 
 .fi
 .if n .RE
 .sp
-To enable auditing on a cluster and set the audit log to the default logs folder
-on a linux installation with a log rotate size of 20MB run the command below and disable
-auditing for users backup and restore as well as disable auditing for event 40964 and 40963.
+To enable auditing on a cluster, set the audit log to the default logs folder
+on a Linux installation with a log rotate size of 20MB, disable
+auditing for users backup and restore, and disable auditing for event 40964 and 40963,
+run the command below.
 .sp
 .if n .RS 4
 .nf
