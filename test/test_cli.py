@@ -1133,6 +1133,10 @@ class TestUserManage(CommandTest):
         for p in expected_out:
             self.assertIn(p, self.str_output)
 
+    def test_get_user_with_no_user(self):
+        self.system_exit_run(self.command + ['--get'], self.server_args)
+        self.assertIn('rbac-username is required', self.str_output)
+
     def test_get_user(self):
         self.no_error_run(self.command + ['--get', '--rbac-username', 'write'], self.server_args)
         self.assertIn('GET:/settings/rbac/users', self.server.trace)

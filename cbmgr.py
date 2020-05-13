@@ -3446,9 +3446,9 @@ class UserManage(Subcommand):
 
     def _list(self, rest, opts):
         if opts.rbac_user is not None:
-            _warning("--rbac-username is not used with the --list option")
+            _warning(["--rbac-username is not used with the --list option"])
         if opts.rbac_pass is not None:
-            _warning("--rbac-password is not used with the --list option")
+            _warning(["--rbac-password is not used with the --list option"])
         if opts.rbac_name is not None:
             _warning("--rbac-name is not used with the --list option")
         if opts.roles is not None:
@@ -3462,7 +3462,7 @@ class UserManage(Subcommand):
 
     def _get(self, rest, opts):
         if opts.rbac_user is None:
-            _warning("--rbac-username is required with the --get option")
+            _exitIfErrors(["--rbac-username is required with the --get option"])
         if opts.rbac_pass is not None:
             _warning("--rbac-password is not used with the --get option")
         if opts.rbac_name is not None:
