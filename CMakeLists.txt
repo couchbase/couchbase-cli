@@ -39,6 +39,7 @@ INSTALL (FILES
     pump_sfd.py
     pump_transfer.py
     pump_dcp.py
+    cb-non-package-installer
     ${CMAKE_CURRENT_BINARY_DIR}/cb_version.py
     ${CMAKE_CURRENT_BINARY_DIR}/couchstore.py
     DESTINATION lib/python)

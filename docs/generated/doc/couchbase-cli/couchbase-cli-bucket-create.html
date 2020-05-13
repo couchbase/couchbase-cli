@@ -452,7 +452,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli bucket-create</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--bucket &lt;name&gt;] [--bucket-type &lt;type&gt;]
-    [--storage-backend &lt;storage&gt;]
+    [--storage-backend &lt;storage&gt;] [--durability-min-level &lt;level&gt;]
     [--bucket-ramsize &lt;size&gt;] [--bucket-replica &lt;num&gt;]
     [--bucket-priority &lt;priority&gt;] [--bucket-eviction-policy &lt;policy&gt;]
     [--max-ttl &lt;seconds&gt;] [--compression-mode &lt;mode&gt;] [--enable-flush &lt;num&gt;]
@@ -527,6 +527,23 @@ the same behavior as Memcached Server.</p>
 <dd>
 <p>The type of storage to use with the bucket. This is only specified for
 "couchbase" buckets.  Accepted values are "couchstore" or "magma".</p>
+</dd>
+<dt class="hdlist1">--durability-min-level &lt;level&gt;</dt>
+<dd>
+<p>The minimum durability level for the bucket. Accepted values for "ephemeral"
+buckets are "none" or "majority". Accepted values for "couchbase" buckets
+are "none", "majority", "majorityAndPersistActive", or "persistToMajority".</p>
+<div class="paragraph">
+<p>"none" specifies mutations to the bucket are asynchronous and offer no
+durability guarantees. "majority" specifies mutations must be replicated
+to (that is, held in the memory allocated to the bucket on) a majority
+of the Data Service nodes. "majorityAndPersistActive" specifies mutations
+must be replicated to a majority of the Data Service nodes. Additionally,
+it must be written to disk on the node hosting the active vBucket for the
+data. "persistToMajority" specifies mutations must be persisted to a
+majority of the Data Service nodes. Accordingly, it will be written to disk
+on those nodes.</p>
+</div>
 </dd>
 <dt class="hdlist1">--bucket-ramsize &lt;size&gt;</dt>
 <dd>

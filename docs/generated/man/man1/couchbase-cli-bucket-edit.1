@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-bucket-edit
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-10-29
+.\"      Date: 2020-05-05
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-EDIT" "1" "2019-10-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-EDIT" "1" "2020-05-05" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -45,7 +45,7 @@ couchbase\-cli\-bucket\-edit \- Edit a bucket
     [\-\-view\-fragmentation\-threshold\-size <megabytes>] [\-\-from\-hour <hour>]
     [\-\-from\-minute <min>] [\-\-to\-hour <hour>] [\-\-to\-minute <min>]
     [\-\-abort\-outside <0|1>] [\-\-parallel\-db\-view\-compaction <0|1>]
-    [\-\-purge\-interval <num>]
+    [\-\-purge\-interval <num>] [\-\-durability\-min\-level <level>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -269,6 +269,23 @@ Run index and data compaction in parallel. Global setting only.
 .RS 4
 Sets the frequency of the tombstone (metadata) purge interval. The default
 value is three days.
+.RE
+.sp
+\-\-durability\-min\-level <level>
+.RS 4
+The minimum durability level for the bucket. Accepted values for "ephemeral"
+buckets are "none" or "majority". Accepted values for "couchbase" buckets
+are "none", "majority", "majorityAndPersistActive", or "persistToMajority".
+.sp
+"none" specifies mutations to the bucket are asynchronous and offer no
+durability guarantees. "majority" specifies mutations must be replicated
+to (that is, held in the memory allocated to the bucket on) a majority
+of the Data Service nodes. "majorityAndPersistActive" specifies mutations
+must be replicated to a majority of the Data Service nodes. Additionally,
+it must be written to disk on the node hosting the active vBucket for the
+data. "persistToMajority" specifies mutations must be persisted to a
+majority of the Data Service nodes. Accordingly, it will be written to disk
+on those nodes.
 .RE
 .SH "HOST FORMATS"
 .sp

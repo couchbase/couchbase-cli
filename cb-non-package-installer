@@ -4,7 +4,23 @@
 """
 Couchbase non root installer tool. This tool is used to install and upgrade non root install.
 
-Copyright (c) 2019  Couchbase Inc
+To do an install:
+
+1. Create a folder to install into:
+  mkdir couchbase-home
+2. Execute the script providing the rpm package to install and the location to install to
+
+  cb-non-package-installer --install --install-location couchbase-home \
+  --package couchbase-server-enterprise-6.0.0-centos7.x86_64.rpm
+
+To do an upgrade:
+
+1. Execute the script providing the rpm package and the location that the previous version of Couchbase Server is
+  installed at
+   cb-non-package-installer --upgrade --install-location couchbase-home \
+  --package couchbase-server-enterprise-6.5.0-centos7.x86_64.rpm
+
+Copyright (c) 2020  Couchbase Inc
 """
 
 import argparse
@@ -14,6 +30,7 @@ import os
 import subprocess
 
 FNULL = open(os.devnull, 'w')
+VERSION = (6, 5)
 
 def error(message):
     """
@@ -64,12 +81,14 @@ def unpack(package, location):
     old_cwd = os.getcwd()
     package = os.path.abspath(package)
     os.chdir(location)
+    logging.debug('Unpacking {0}'.format(package))
     return_code = subprocess.call('rpm2cpio {0} | cpio --extract --make-directories'
                                   ' --no-absolute-filenames'.format(package),
                                   stdout=FNULL, stderr=FNULL, shell=True)
     if return_code != 0:
         error('Problems unpacking {0} to {1}'.format(package, location))
     os.chdir('opt/couchbase')
+    logging.debug('Executing reloc.sh')
     return_code = subprocess.call(['./bin/install/reloc.sh', os.getcwd()])
     if return_code != 0:
         error('Problems executing reloc.sh')
@@ -80,12 +99,14 @@ def install(package, location):
     """
     Does a fresh non package install of Couchbase Server
     """
+    logging.info('Installing Couchbase Server')
+    if get_package_version(package)[:2] > VERSION:
+        error('Can only install up to version {0}.{1}.X'.format(VERSION[0], VERSION[1]))
     if os.listdir(location):
         error('Install location "{0}" is not empty, please provide an empty directory to install'
               ' to'.format(location))
 
     unpack(package, location)
-    # TODO: Run cbupgrade
     print 'Successfully installed'
 
 
@@ -93,21 +114,32 @@ def check_upgrade_versions(package_version, install_version):
     """
     Checks the installed and the upgrade package versions
     """
+    if package_version[:2] > VERSION:
+        error('Can only upgrade up to version {0}.{1}.X'.format(VERSION[0], VERSION[1]))
     if package_version < install_version:
         error('Cannot upgrade installed package {0} is newer than'
               ' {1}'.format('.'.join(install_version), package_version))
-    if (5, 5, 2) >= install_version >= (5, 5, 5):
-        print install_version
-        error('Upgrade only supported between versions 5.5.2 and 5.5.5')
+    if install_version < (5, 0, 0):
+        error('Upgrade only supported between versions 5.0.0 and {0}.{1}.X'.format(VERSION[0], VERSION[1]))
 
-    if package_version > (6, 1, 0):
-        error('Can only upgrade to version 6.0.X')
+
+def cbupgrade(location):
+    """
+    Executes cbupgrade
+    """
+    print 'Running cbupgrade this could take some time'
+    cbupgrade_cmd = os.path.join(location, 'opt/couchbase/bin/cbupgrade')
+    config = os.path.join(location, 'opt/couchbase/var/lib/couchbase/config')
+    return_code = subprocess.call([cbupgrade_cmd, '-a', 'yes', '--namespace_upgrade_only', '-c', config], stdout=FNULL)
+    if return_code != 0:
+        error('There was problem running cbupgrade')
 
 
 def upgrade(package, location):
     """
     Upgrades a non package install of Couchbase Server
     """
+    logging.info('Upgrading Couchbase Server')
     if not os.listdir(location):
         error('Upgrade location "{0}" is empty, please provide the location where Couchbase Server'
               ' is installed'.format(location))
@@ -126,6 +158,7 @@ def upgrade(package, location):
         error('Could not check if Couchbase Server was running')
 
     # Backup config
+    logging.info('Backing up the config')
     backup_config = 'couchbase-server-backup-config'
     backup_config = os.path.abspath(backup_config)
     try:
@@ -133,6 +166,7 @@ def upgrade(package, location):
     except OSError as e:
         error('Cannot create the directory {0} to backup the config: {1}'.format(backup_config, e))
     config_files = ['opt/couchbase/etc/couchdb/local.ini',
+                    'opt/couchbase/var/lib/couchbase/couchbase-server.node',
                     'opt/couchbase/var/lib/couchbase/config']
 
     # The ip file is only on the first node in the cluster
@@ -144,13 +178,13 @@ def upgrade(package, location):
 
     config_files = [os.path.join(location, f) for f in config_files]
 
-    return_code = subprocess.call('cp -r {0} {1}'.format(' '.join(config_files), backup_config),
-                                  shell=True)
+    return_code = subprocess.call(['cp',  '-r'] +  config_files + [backup_config])
     if return_code != 0:
         error('Problem backing up config to {0}'.format(backup_config))
 
     # TODO: Get data paths
     # Remove old couchbase files
+    logging.debug('Removing the old install')
     old_install = ['opt/couchbase/bin/', 'opt/couchbase/etc/', 'opt/couchbase/lib/',
                    'opt/couchbase/LICENSE.txt', 'opt/couchbase/manifest.xml',
                    'opt/couchbase/README.txt', 'opt/couchbase/samples', 'opt/couchbase/share',
@@ -167,12 +201,13 @@ def upgrade(package, location):
 
     old_install = [os.path.join(location, f) for f in old_install]
 
-    return_code = subprocess.call('rm -r {0}'.format(' '.join(old_install)), shell=True)
+    return_code = subprocess.call(['rm',  '-r'] + old_install)
     if return_code != 0:
         error('Problem removing the old install')
 
     unpack(package, location)
     # Restore config
+    logging.info('Restoring the old config')
     for config_file in config_files:
         old_config = os.path.basename(config_file)
         restore_config_command = None
@@ -185,15 +220,46 @@ def upgrade(package, location):
         return_code = subprocess.call(restore_config_command, shell=True)
         if return_code != 0:
             error('Problem restoring old config')
-
-    # TODO: Run cbupgrade
     # Remove backup config
-    return_codec = subprocess.call('rm -r {0}'.format(backup_config), shell=True)
+    return_codec = subprocess.call(['rm', '-r', backup_config])
     if return_codec != 0:
         error('Could not remove the backed up config directory {0}'.format(backup_config))
+    if package_version[:2] == VERSION:
+        cbupgrade(location)
     print 'Upgrade has completed successfully'
     exit(0)
 
+
+def which(command):
+    logging.debug("Checking if command '{0}' is available".format(command))
+    return_code = subprocess.call(['which' , command], stdout=FNULL)
+    return return_code == 0
+
+
+def check_install_dependencies():
+    """
+    Check the dependencies needed to execute this script are available.
+    """
+    commands = ['rpm2cpio','cpio', 'rpm', 'perl']
+    for command in commands:
+        if not which(command):
+            error('Cannot start the install as command "{0}" is not available'.format(command))
+
+
+def check_package_dependencies(package):
+    """
+    Check that the dependencies of Couchbase Server are available.
+    """
+    rpm_output = subprocess.check_output(['rpm', '-qpR', package])
+    for line in rpm_output.splitlines():
+        check_command = True
+        for x  in ['shadow-utils', 'rpmfind', 'rpmlib']:
+            if line.startswith(x):
+                check_command = False
+                break
+        command = line.split(' ')[0]
+        if check_command and not which(command):
+            error('Cannot install Couchbase Server missing dependency: "{0}"'.format(command))
 
 def main():
     """
@@ -202,18 +268,15 @@ def main():
     opts = argparse.ArgumentParser(description='A tool to help install and upgrade Couchbase Server'
                                                ' in non root environments.')
 
-    #action_group = opts.add_mutually_exclusive_group(required=True)
-    #action_group.add_argument('--install', action='store_true', dest='install',
-    #                          help='To do a fresh install of Couchbase Server')
-    #action_group.add_argument('--upgrade', action='store_true', dest='upgrade',
-    #                        help='To upgrade an existing install of Couchbase Server')
-
-    opts.add_argument('--upgrade', action='store_true', dest='upgrade', required=True,
-                      help='To upgrade an existing install of Couchbase Server')
+    action_group = opts.add_mutually_exclusive_group(required=True)
+    action_group.add_argument('--install', action='store_true', dest='install',
+                              help='To do a fresh install of Couchbase Server')
+    action_group.add_argument('--upgrade', action='store_true', dest='upgrade',
+                            help='To upgrade an existing install of Couchbase Server')
     opts.add_argument('--install-location', type=str, metavar='Path', dest='location',
                       required=True, help='Path where Couchbase Server should be installed')
     opts.add_argument('--package', type=str, metavar='File', dest='package', required=True,
-                      help='The Couchbase Server package (rpm/dpkg) to install')
+                      help='The Couchbase Server package (rpm) to install')
     opts.add_argument('-v', '--verbose', action='count', help='increase output verbosity')
     args = opts.parse_args()
 
@@ -238,8 +301,11 @@ def main():
         error('Install location "{0}" is not writable, please check the'
               ' permissions'.format(args.location))
 
-    #if args.install:
-    #    install(args.package, args.location)
+    check_install_dependencies()
+    check_package_dependencies(args.package)
+
+    if args.install:
+        install(args.package, args.location)
     if args.upgrade:
         upgrade(args.package, args.location)
     exit(0)

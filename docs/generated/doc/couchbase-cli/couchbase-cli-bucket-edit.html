@@ -462,7 +462,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--view-fragmentation-threshold-size &lt;megabytes&gt;] [--from-hour &lt;hour&gt;]
     [--from-minute &lt;min&gt;] [--to-hour &lt;hour&gt;] [--to-minute &lt;min&gt;]
     [--abort-outside &lt;0|1&gt;] [--parallel-db-view-compaction &lt;0|1&gt;]
-    [--purge-interval &lt;num&gt;]</pre>
+    [--purge-interval &lt;num&gt;] [--durability-min-level &lt;level&gt;]</pre>
 </div>
 </div>
 </div>
@@ -679,6 +679,23 @@ the allowed time. Options are [1, 0].</p>
 <dd>
 <p>Sets the frequency of the tombstone (metadata) purge interval. The default
 value is three days.</p>
+</dd>
+<dt class="hdlist1">--durability-min-level &lt;level&gt;</dt>
+<dd>
+<p>The minimum durability level for the bucket. Accepted values for "ephemeral"
+buckets are "none" or "majority". Accepted values for "couchbase" buckets
+are "none", "majority", "majorityAndPersistActive", or "persistToMajority".</p>
+<div class="paragraph">
+<p>"none" specifies mutations to the bucket are asynchronous and offer no
+durability guarantees. "majority" specifies mutations must be replicated
+to (that is, held in the memory allocated to the bucket on) a majority
+of the Data Service nodes. "majorityAndPersistActive" specifies mutations
+must be replicated to a majority of the Data Service nodes. Additionally,
+it must be written to disk on the node hosting the active vBucket for the
+data. "persistToMajority" specifies mutations must be persisted to a
+majority of the Data Service nodes. Accordingly, it will be written to disk
+on those nodes.</p>
+</div>
 </dd>
 </dl>
 </div>

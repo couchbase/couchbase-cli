@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-bucket-create
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-12-19
+.\"      Date: 2020-05-05
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2019-12-19" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2020-05-05" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,7 +35,7 @@ couchbase\-cli\-bucket\-create \- Create a new bucket
 .nf
 \fIcouchbase\-cli bucket\-create\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-bucket <name>] [\-\-bucket\-type <type>]
-    [\-\-storage\-backend <storage>]
+    [\-\-storage\-backend <storage>] [\-\-durability\-min\-level <level>]
     [\-\-bucket\-ramsize <size>] [\-\-bucket\-replica <num>]
     [\-\-bucket\-priority <priority>] [\-\-bucket\-eviction\-policy <policy>]
     [\-\-max\-ttl <seconds>] [\-\-compression\-mode <mode>] [\-\-enable\-flush <num>]
@@ -103,6 +103,23 @@ the same behavior as Memcached Server.
 .RS 4
 The type of storage to use with the bucket. This is only specified for
 "couchbase" buckets.  Accepted values are "couchstore" or "magma".
+.RE
+.sp
+\-\-durability\-min\-level <level>
+.RS 4
+The minimum durability level for the bucket. Accepted values for "ephemeral"
+buckets are "none" or "majority". Accepted values for "couchbase" buckets
+are "none", "majority", "majorityAndPersistActive", or "persistToMajority".
+.sp
+"none" specifies mutations to the bucket are asynchronous and offer no
+durability guarantees. "majority" specifies mutations must be replicated
+to (that is, held in the memory allocated to the bucket on) a majority
+of the Data Service nodes. "majorityAndPersistActive" specifies mutations
+must be replicated to a majority of the Data Service nodes. Additionally,
+it must be written to disk on the node hosting the active vBucket for the
+data. "persistToMajority" specifies mutations must be persisted to a
+majority of the Data Service nodes. Accordingly, it will be written to disk
+on those nodes.
 .RE
 .sp
 \-\-bucket\-ramsize <size>
