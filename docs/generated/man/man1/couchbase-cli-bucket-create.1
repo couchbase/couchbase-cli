@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-bucket-create
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-05-05
+.\"      Date: 2020-05-18
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2020-05-05" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-CREATE" "1" "2020-05-18" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -96,7 +96,8 @@ and N1QL queries. The Ephemeral bucket is an in\-memory bucket similar to the
 Couchbase bucket; but it does not support data persistence or views. The
 Memcached bucket is a cache\-only bucket that does not support persistence,
 replication, indexing, views, or N1QL querying: this bucket type provides
-the same behavior as Memcached Server.
+the same behavior as Memcached Server. Memcached buckets are deprecated
+and Ephemeral buckets should be used instead.
 .RE
 .sp
 \-\-storage\-backend <storage>
