@@ -387,7 +387,10 @@ endpoints = [
     ('/controller/setAutoCompaction$', {'POST': do_nothing}),
     ('/controller/startLogsCollection$', {'POST': start_log_collection}),
 
-    # other services api
+    # index api
     ('/getIndexMetadata$', {'GET': get_by_path}),
-    ('/api/index', {'GET': get_by_path})
+    ('/api/index', {'GET': get_by_path}),
+
+    # analytics api
+    ('/analytics/link', {'GET': get_by_path, 'POST': do_nothing, 'PUT': do_nothing, 'DELETE': do_nothing})
 ]

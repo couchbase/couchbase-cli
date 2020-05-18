@@ -3446,9 +3446,9 @@ class UserManage(Subcommand):
 
     def _list(self, rest, opts):
         if opts.rbac_user is not None:
-            _warning("--rbac-username is not used with the --list option")
+            _warning(["--rbac-username is not used with the --list option"])
         if opts.rbac_pass is not None:
-            _warning("--rbac-password is not used with the --list option")
+            _warning(["--rbac-password is not used with the --list option"])
         if opts.rbac_name is not None:
             _warning("--rbac-name is not used with the --list option")
         if opts.roles is not None:
@@ -3462,7 +3462,7 @@ class UserManage(Subcommand):
 
     def _get(self, rest, opts):
         if opts.rbac_user is None:
-            _warning("--rbac-username is required with the --get option")
+            _exitIfErrors(["--rbac-username is required with the --get option"])
         if opts.rbac_pass is not None:
             _warning("--rbac-password is not used with the --get option")
         if opts.rbac_name is not None:
@@ -3999,6 +3999,127 @@ class EventingFunctionSetup(Subcommand):
     @staticmethod
     def get_description():
         return "Manage Eventing Service Functions"
+
+
+class AnalyticsLinkSetup(Subcommand):
+    """The analytics link setup subcommand"""
+
+    def __init__(self):
+        super(AnalyticsLinkSetup, self).__init__()
+        self.parser.prog = "couchbase-cli analytics-link-setup"
+        group = self.parser.add_argument_group("Analytics Service link setup options")
+        group.add_argument("--create", dest="create", action="store_true",
+                           default=False, help="Create a link")
+        group.add_argument("--delete", dest="delete", action="store_true",
+                           default=False, help="Delete a link")
+        group.add_argument("--edit", dest="edit", action="store_true",
+                           default=False, help="Modify a link")
+        group.add_argument("--list", dest="list", action="store_true",
+                           default=False, help="List all links")
+        group.add_argument("--dataverse", dest="dataverse", metavar="<name>",
+                           help="The dataverse of the link")
+        group.add_argument("--name", dest="name", metavar="<name>",
+                           help="The name of the link")
+        group.add_argument("--type", dest="type", metavar="<type>", choices=["couchbase", "s3"],
+                           help="The type of the link ('couchbase' or 's3')")
+
+        group = self.parser.add_argument_group("Analytics Service Couchbase link setup options")
+        group.add_argument("--hostname", dest="hostname", metavar="<hostname>",
+                           help="The hostname of the link")
+        group.add_argument("--link-username", dest="link_username", metavar="<username>",
+                           help="The username of the link")
+        group.add_argument("--link-password", dest="link_password", metavar="<password>",
+                           help="The password of the link")
+        group.add_argument("--user-certificate", dest="user_certificate", metavar="<path>",
+                           help="The user certificate for authentication")
+        group.add_argument("--user-key", dest="user_key", metavar="<path>",
+                           help="The user key for authentication")
+        group.add_argument("--certificate", dest="certificate", metavar="<path>",
+                           help="The certificate used for encryption")
+        group.add_argument("--encryption", dest="encryption", choices=["none", "full", "half"],
+                           metavar="<type>",
+                           help="The link encryption type ('none', 'full' or 'half')")
+
+        group = self.parser.add_argument_group("Analytics Service S3 link setup options")
+        group.add_argument("--access-key-id", dest="access_key_id", metavar="<id>",
+                           help="The access key ID of the link")
+        group.add_argument("--secret-access-key", dest="secret_access_key", metavar="<key>",
+                           help="The secret access key of the link")
+        group.add_argument("--region", dest="region", metavar="<region>",
+                           help="The region of the link")
+        group.add_argument("--service-endpoint", dest="service_endpoint", metavar="<url>",
+                           help="The service endpoint of the link (optional)")
+
+    def execute(self, opts):
+        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                              opts.cacert, opts.debug)
+        check_cluster_initialized(rest)
+        check_versions(rest)
+
+        actions = sum([opts.create, opts.delete, opts.edit, opts.list])
+        if actions == 0:
+            _exitIfErrors(["Must specify one of --create, --delete, --edit, --list"])
+        elif actions > 1:
+            _exitIfErrors(["The --create, --delete, --edit, --list flags may not " +
+                           "be specified at the same time"])
+        elif opts.create or opts.edit:
+            self._set(rest, opts)
+        elif opts.delete:
+            self._delete(rest, opts)
+        elif opts.list:
+            self._list(rest, opts)
+
+    def _set(self, rest, opts):
+        cmd = "create"
+        if opts.edit:
+            cmd = "edit"
+
+        if opts.dataverse is None:
+            _exitIfErrors([f'--dataverse is required to {cmd} a link'])
+        if opts.name is None:
+            _exitIfErrors([f'--name is required to {cmd} a link'])
+        if opts.create and opts.type is None:
+            _exitIfErrors([f'--type is required to {cmd} a link'])
+
+        if opts.certificate:
+            opts.certificate = _exit_on_file_read_failure(opts.certificate)
+        if opts.user_key:
+            opts.user_key = _exit_on_file_read_failure(opts.user_key)
+        if opts.user_certificate:
+            opts.user_certificate = _exit_on_file_read_failure(opts.user_certificate)
+
+        if opts.create:
+            _, errors = rest.create_analytics_link(opts)
+            _exitIfErrors(errors)
+            _success("Link created")
+        else:
+            _, errors = rest.edit_analytics_link(opts)
+            _exitIfErrors(errors)
+            _success("Link edited")
+
+    def _delete(self, rest, opts):
+        if opts.dataverse is None:
+            _exitIfErrors([f'--dataverse is required to delete a link'])
+        if opts.name is None:
+            _exitIfErrors([f'--name is required to delete a link'])
+
+        _, errors = rest.delete_analytics_link(opts.dataverse, opts.name)
+        _exitIfErrors(errors)
+        _success("Link deleted")
+
+    def _list(self, rest, opts):
+        clusters, errors = rest.list_analytics_links(opts.dataverse, opts.name, opts.type)
+        _exitIfErrors(errors)
+        print(json.dumps(clusters, sort_keys=True, indent=2))
+
+    @staticmethod
+    def get_man_page_name():
+        return "couchbase-cli-analytics-link-setup" + ".1" if os.name != "nt" else ".html"
+
+    @staticmethod
+    def get_description():
+        return "Manage Analytics Links"
+
 
 class UserChangePassword(Subcommand):
     """The change password subcommand"""

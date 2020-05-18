@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="author" content="Couchbase">
-<title>couchbase-cli-setting-audit(1)</title>
+<title>couchbase-cli-analytics-link-setup(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -439,10 +439,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>couchbase-cli-setting-audit(1) Manual Page</h1>
+<h1>couchbase-cli-analytics-link-setup(1) Manual Page</h1>
 <h2 id="_name">NAME</h2>
 <div class="sectionbody">
-<p>couchbase-cli-setting-audit - Modifies audit log settings (EE only)</p>
+<p>couchbase-cli-analytics-link-setup - Manage Analytics links</p>
 </div>
 </div>
 <div id="content">
@@ -450,15 +450,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<pre class="content"><em>couchbase-cli setting-audit</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-    [--password &lt;password&gt;] [--list-filterable-events] [--get-settings]
-    [--set] [--audit-enabled &lt;1|0&gt;] [--audit-log-path &lt;path&gt;]
-    [--audit-log-rotate-interval &lt;seconds&gt;] [--audit-log-rotate-size &lt;bytes&gt;]
-    [--disabled-users &lt;user-list&gt;] [--disable-events &lt;event-list&gt;]</pre>
-</div>
-<div class="paragraph">
-<p>Some of these options are only available in Couchbase Server 6.5.1 and later.
-Refer to <a href="#_options">OPTIONS</a> for details.</p>
+<pre class="content"><em>couchbase-cli analytics-link-setup</em> [--cluster &lt;cluster&gt;] [--username &lt;username&gt;]
+    [--password &lt;password&gt;] [--create] [--delete] [--edit] [--list]
+    [--dataverse &lt;name&gt;] [--name &lt;name&gt;] [--type &lt;type&gt;] [--hostname &lt;hostname&gt;]
+    [--link-username &lt;username&gt;] [--link-password &lt;password&gt;]
+    [--user-certificate &lt;path&gt;] [--user-key &lt;path&gt;] [--certificate &lt;path&gt;]
+    [--encryption &lt;type&gt;] [--access-key-id &lt;id&gt;] [--secret-access-key &lt;key&gt;]
+    [--region &lt;region&gt;] [--service-endpoint &lt;url&gt;]</pre>
 </div>
 </div>
 </div>
@@ -466,21 +464,16 @@ Refer to <a href="#_options">OPTIONS</a> for details.</p>
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Auditing is used to observe the action of users in the cluster. It is usually
-turned on for security purposes to ensure that those without permission to
-access information do not access it. By default auditing is disabled in
-Couchbase. The setting-audit command can be used to enable and disable auditing,
-set the auditing log path, and change the auditing log rotation interval;
-in Couchbase Server 6.5.1 and later,
-the command can also be used to retrieve the current auditing configuration,
-retrieve the auditable events and descriptions,
-and disable auditing for certain users and events.</p>
+<p>This command is used to manage links used by the external dataset and remote
+cluster capabilities of the Analytics Service.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_options">OPTIONS</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_common_link_options">Common Link Options</h3>
 <div class="dlist">
 <dl>
 <dt class="hdlist1">-c</dt>
@@ -506,64 +499,109 @@ given then the command will prompt the user for a password through
 non-echoed stdin. You may also specify your password by using the
 environment variable CB_REST_PASSWORD.</p>
 </dd>
-<dt class="hdlist1">--list-filterable-events</dt>
+<dt class="hdlist1">--create</dt>
 <dd>
-<p>(Couchbase Server 6.5.1 and later.)
-  Returns a table or a JSON list (if --output json used) with all the event
-  IDs with there descriptions.</p>
+<p>Creates a new link.</p>
 </dd>
-<dt class="hdlist1">--get-settings</dt>
+<dt class="hdlist1">--delete</dt>
 <dd>
-<p>(Couchbase Server 6.5.1 and later.)
-  Returns the current audit settings including which events are disabled and
-  which are enabled.</p>
+<p>Deletes a link.</p>
 </dd>
-<dt class="hdlist1">--set</dt>
+<dt class="hdlist1">--edit</dt>
 <dd>
-<p>(Couchbase Server 6.5.1 and later.)
-  Sets the cluster audit settings.</p>
+<p>Edits a link.</p>
 </dd>
-<dt class="hdlist1">--audit-enabled &lt;num&gt;</dt>
+<dt class="hdlist1">--list</dt>
 <dd>
-<p>Specifies whether or not auditing is enabled. To enabled auditing set this
-option to "1". To disable auditing set this option to "0".</p>
+<p>List defined links.</p>
 </dd>
-<dt class="hdlist1">--audit-log-path &lt;path&gt;</dt>
+<dt class="hdlist1">--name &lt;name&gt;</dt>
 <dd>
-<p>Specifies the auditing log path. This should be a path to a
-folder where the auditing log is kept. The folder must exist on all servers
-in the cluster.</p>
+<p>The name for the link.</p>
 </dd>
-<dt class="hdlist1">--audit-log-rotate-interval &lt;seconds&gt;</dt>
+<dt class="hdlist1">--type &lt;type&gt;</dt>
 <dd>
-<p>Specifies the audit log rotate interval. This is the interval in which the
-current audit log will be replaced with a new empty audit log file. The log
-file is rotated to ensure that the audit log does not consume too much disk
-space. The minimum audit log rotate interval is 15 minutes (900 seconds).</p>
-</dd>
-<dt class="hdlist1">--audit-log-rotate-size &lt;bytes&gt;</dt>
-<dd>
-<p>Specifies the audit log rotate size. This is the size at which the current
-audit log will be replaced with a new empty audit log file. The log
-file is rotated to ensure that the audit log does not consume too much disk
-space. The minimum audit log rotate size is 0 bytes and maximum is
-524,288,000 (500MB). When it is set to 0 the log will not be rotated based
-on size.</p>
-</dd>
-<dt class="hdlist1">--disabled-users &lt;user-list&gt;</dt>
-<dd>
-<p>(Couchbase Server 6.5.1 and later.)
-  A comma separated list of users to ignore events from.</p>
-</dd>
-<dt class="hdlist1">--disable-events &lt;events-list&gt;</dt>
-<dd>
-<p>(Couchbase Server 6.5.1 and later.)
-  A comma separated list of events IDs to disable auditing for
-  (e.g 8243,8255,8257). To retrieve information of what event ID maps to
-  what event use the --list-filterable-events to retrieve a list of IDs with
-  descriptions.</p>
+<p>The type of the link, either 'couchbase' or 's3'.</p>
 </dd>
 </dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_couchbase_link_options">Couchbase Link Options</h3>
+<div class="paragraph">
+<p>Following are the options specific to <strong>--type couchbase</strong>, i.e. Couchbase
+links</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--hostname &lt;hostname&gt;</dt>
+<dd>
+<p>The hostname of the link.</p>
+</dd>
+<dt class="hdlist1">--encryption &lt;type&gt;</dt>
+<dd>
+<p>  Specifies the type of encryption to use. This flag may either be set to
+either "half", "full", or "none". Half encryption means that passwords are
+encrypted, but data is not. This results in faster data transfer, but less
+security. Full encryption means that all data and passwords are encrypted
+which increases security, but reduces overall data transfer speed. If no
+encryption is needed then "none" can be specified.</p>
+</dd>
+<dt class="hdlist1">--link-username &lt;username&gt;</dt>
+<dd>
+<p>The username of the link.</p>
+</dd>
+<dt class="hdlist1">--link-password &lt;password&gt;</dt>
+<dd>
+<p>The password of the link.</p>
+</dd>
+<dt class="hdlist1">--user-certificate &lt;path&gt;</dt>
+<dd>
+<p>  The local path to the file containing the user certificate for authentication.
+This and <strong>--user-key</strong> are used in place of <strong>--link-username</strong> and
+<strong>--link-password</strong> when utilizing certificate-based authentication.
+Certificate-based auth requires <strong>--encryption full</strong>.</p>
+</dd>
+<dt class="hdlist1">--user-key &lt;path&gt;</dt>
+<dd>
+<p>  The local path to the file containing the user key for authentication. This
+and <strong>--user-certificate</strong> are used in place of <strong>--link-username</strong> and
+<strong>--link-password</strong> when utilizing certificate-based authentication.
+Certificate-based auth requires <strong>--encryption full</strong>.</p>
+</dd>
+<dt class="hdlist1">--certificate &lt;path&gt;</dt>
+<dd>
+<p>  The local path to the file containing the certificate used for encryption.
+Required with <strong>--encryption full</strong>.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_s3_link_options">S3 Link Options</h3>
+<div class="paragraph">
+<p>Following are the options specific to <strong>--type s3</strong>, i.e. S3 links</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--access-key-id &lt;id&gt;</dt>
+<dd>
+<p>The access key ID of the s3 link.</p>
+</dd>
+<dt class="hdlist1">--secret-access-key &lt;key&gt;</dt>
+<dd>
+<p>The secret access key of the s3 link.</p>
+</dd>
+<dt class="hdlist1">--region &lt;region&gt;</dt>
+<dd>
+<p>The region of the s3 link.</p>
+</dd>
+<dt class="hdlist1">--service-endpoint &lt;url&gt;</dt>
+<dd>
+<p>The service endpoint of the link (optional).</p>
+</dd>
+</dl>
+</div>
 </div>
 </div>
 </div>
@@ -598,137 +636,85 @@ a port other that 8091.</p>
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>(Unless otherwise specified, the examples below are only applicable to Couchbase
-Server 6.5.1 and later.)</p>
-</div>
-<div class="paragraph">
-<p>To get the current audit settings run the command below.</p>
+<p>To create a new link to a Couchbase cluster named "east", run the
+following command:</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
- --password password --get-settings</pre>
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --dataverse Default --name east --type couchbase \
+ --hostname 192.168.1.6 --link-username Administrator \
+ --link-password password --encryption none</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>If auditing is disabled the expected output will be of the form (all the
-commands can return json if <code>--output json</code> is provided):</p>
+<p>If the new remote reference should be fully encrypted then make sure to enable
+encryption:</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>Audit enabled: False
-UUID: 44726500
-Log path: /opt/couchbase/var/lib/couchbase/logs
-Rotate interval: 86400
-Rotate size: 20971520
-Disabled users: []</pre>
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --dataverse Default --name east --type couchbase \
+ --hostname 192.168.1.6 --link-username Administrator \
+ --link-password password --encryption full \
+ --certificate /root/cluster.cert</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To retrieve the list of events that can be audited use the command:</p>
+<p>To create an S3 link named "myAwsLink" in the "test" dataverse, run the
+following command:</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
- --password password --list-filterable-events</pre>
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+-p password --create --dataverse test --name myAwsLink --type s3 \
+--region us-west-2 --access-key-id LOREMIPSUMDOLORSITAMET123 \
+--secret-access-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456</pre>
 </div>
+</div>
+<div class="paragraph">
+<p>To list all current links, run the following command:</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>ID    | Module         | Name                                           | Description
--------------------------------------------------------------------------------------
-36865 | analytics      | Service configuration change                   | A successful service configuration change was made.
-36866 | analytics      | Node configuration change                      | A successful node configuration change was made.
-32768 | eventing       | Create Function                                | Eventing function definition was created or updated
-....
-40961 | view_engine    | Delete Design Doc                              | Design Doc is Deleted
-40962 | view_engine    | Query DDoc Meta Data                           | Design Doc Meta Data Query Request
-40963 | view_engine    | View Query                                     | View Query Request
-40964 | view_engine    | Update Design Doc                              | Design Doc is Updated</pre>
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --list</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To enable auditing on a cluster and set the audit log to the default logs folder
-on a Linux installation with a log rotate interval of 7 days, run the command
-below.</p>
-</div>
-<div class="paragraph">
-<p><em>Couchbase Server 6.5:</em></p>
+<p>To list current S3 links, run the following command:</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
- --password password --audit-enabled 1 --audit-log-rotate-interval 604800 \
- --audit-log-path /opt/couchbase/var/lib/couchbase/logs</pre>
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --list --type s3</pre>
 </div>
 </div>
 <div class="paragraph">
-<p><em>Couchbase Server 6.5.1 and later:</em></p>
+<p>If you need to edit a link named "east" and change the password, run the
+following command:</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
- --password password --set --audit-enabled 1 --audit-log-rotate-interval 604800 \
- --audit-log-path /opt/couchbase/var/lib/couchbase/logs</pre>
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --edit --dataverse Default --name east --type couchbase \
+ --hostname 192.168.1.6 --link-username Administrator \
+ --link-password new_password --encryption half</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To enable auditing on a cluster and set the audit log to the default logs folder
-on a Linux installation with a log rotate size of 20MB, run the command below.</p>
+<p>Note in the above example that you need to re-specify all of the current
+unchanging configuration parameters in addition to changing ones, except
+<strong>--type</strong> which cannot change.</p>
 </div>
 <div class="paragraph">
-<p><em>Couchbase Server 6.5:</em></p>
+<p>If an link is no longer needed it can be deleted. The following example
+deletes the link named "east" in the "Default" dataverse:</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
- --password password --audit-enabled 1 --audit-log-rotate-size 20971520 \
- --audit-log-path /opt/couchbase/var/lib/couchbase/logs</pre>
-</div>
-</div>
-<div class="paragraph">
-<p><em>Couchbase Server 6.5.1 and later:</em></p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
- --password password --set --audit-enabled 1 --audit-log-rotate-size 20971520 \
- --audit-log-path /opt/couchbase/var/lib/couchbase/logs</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To enable auditing on a cluster, set the audit log to the default logs folder
-on a Linux installation with a log rotate size of 20MB, disable
-auditing for users backup and restore, and disable auditing for event 40964 and 40963,
-run the command below.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
- --password password --set --audit-enabled 1 --audit-log-rotate-size 20971520 \
- --audit-log-path /opt/couchbase/var/lib/couchbase/logs \
- --disabled-users backup,restore --disable-events 40964,40963</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To disable auditing run the following command.</p>
-</div>
-<div class="paragraph">
-<p><em>Couchbase Server 6.5:</em></p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
- --password password --audit-enabled 0</pre>
-</div>
-</div>
-<div class="paragraph">
-<p><em>Couchbase Server 6.5.1 and later:</em></p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
- --password password --set --audit-enabled 0</pre>
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --delete --dataverse Default --link east</pre>
 </div>
 </div>
 </div>
@@ -752,15 +738,6 @@ argument on the command line. It also allows the user to ensure that their
 password are not cached in their command line history.</p>
 </dd>
 </dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_see_also">SEE ALSO</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p><a href="couchbase-cli-admin-role-manage.html">couchbase-cli-admin-role-manage(1)</a>,
-<a href="couchbase-cli-ssl-manage.html">couchbase-cli-ssl-manage(1)</a></p>
 </div>
 </div>
 </div>

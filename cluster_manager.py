@@ -15,6 +15,7 @@ INDEX_SERVICE = 'index'
 MGMT_SERVICE = 'mgmt'
 FTS_SERVICE = 'fts'
 EVENT_SERVICE = 'eventing'
+CBAS_SERVICE = 'cbas'
 
 ERR_AUTH = 'unable to access the REST API - please check your username (-u) and password (-p)'
 ERR_INTERNAL = 'Internal server error, please retry your request'
@@ -269,6 +270,7 @@ class ClusterManager(object):
             mgmt_port_name = 'mgmt'
             index_port_name = 'indexHttp'
             event_port_name = 'eventingAdminPort'
+            cbas_port_name = 'cbas'
 
             if self.ssl:
                 http_prefix = 'https://'
@@ -277,6 +279,7 @@ class ClusterManager(object):
                 event_port_name = 'eventingSSL'
                 index_port_name = 'indexHttps'
                 fts_port_name = 'ftsSSL'
+                cbas_port_name = 'cbasSSL'
 
             services = node['services']
 
@@ -305,6 +308,9 @@ class ClusterManager(object):
 
             if service_name == EVENT_SERVICE and event_port_name in services:
                 hosts.append(http_prefix + node_host + ':' + str(services[event_port_name]))
+
+            if service_name == CBAS_SERVICE and cbas_port_name in services:
+                hosts.append(http_prefix + node_host + ':' + str(services[cbas_port_name]))
 
         return hosts, None
 
@@ -1750,6 +1756,85 @@ class ClusterManager(object):
         url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}/settings'
         return self._post_json(url, params)
 
+    def create_analytics_link(self, opts):
+        return self._set_analytics_link(False, self._get_analytics_link_params(opts))
+
+    def edit_analytics_link(self, opts):
+        return self._set_analytics_link(True, self._get_analytics_link_params(opts))
+
+    @staticmethod
+    def _get_analytics_link_params(opts):
+        params = {"dataverse": opts.dataverse, "name": opts.name}
+        if opts.type:
+            params["type"] = opts.type
+        if opts.hostname:
+            params["hostname"] = opts.hostname
+        if opts.encryption:
+            params["encryption"] = opts.encryption
+        if opts.certificate:
+            params["certificate"] = opts.certificate
+        if opts.user_key:
+            params['clientKey'] = opts.user_key
+        if opts.user_certificate:
+            params['clientCertificate'] = opts.user_certificate
+        if opts.link_username:
+            params["username"] = opts.link_username
+        if opts.link_password:
+            params["password"] = opts.link_password
+        if opts.access_key_id:
+            params['accessKeyId'] = opts.access_key_id
+        if opts.secret_access_key:
+            params['secretAccessKey'] = opts.secret_access_key
+        if opts.region:
+            params['region'] = opts.region
+        if opts.service_endpoint:
+            params['serviceEndpoint'] = opts.service_endpoint
+
+        return params
+
+    def _set_analytics_link(self, edit, params):
+        hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(CBAS_SERVICE)
+
+        url = f'{hosts[0]}/analytics/link'
+
+        return self._put(url, params) if edit else self._post_form_encoded(url, params)
+
+    def delete_analytics_link(self, dataverse, name):
+        hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(CBAS_SERVICE)
+
+        url = f'{hosts[0]}/analytics/link'
+        return self._delete(url, {"dataverse": dataverse, "name": name})
+
+    def list_analytics_links(self, dataverse, name, type):
+        hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(CBAS_SERVICE)
+
+        url = f'{hosts[0]}/analytics/link'
+
+        params = {}
+        if dataverse:
+            params["dataverse"] = dataverse
+        if name:
+            params["name"] = name
+        if type:
+            params["type"] = type
+
+        return self._get(url, params)
+
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
         params = {"name": scope}
@@ -1864,10 +1949,13 @@ class ClusterManager(object):
     # Low level methods for basic HTML operations
 
     @request
-    def _get(self, url):
+    def _get(self, url, params=None):
         if self.debug:
-            print(f'GET {url}')
-        response = requests.get(url, auth=(self.username, self.password), verify=self.caCert,
+            if params is None:
+                params = {}
+            print(f'GET {url} {urllib.parse.urlencode(params)}')
+
+        response = requests.get(url, params, auth=(self.username, self.password), verify=self.caCert,
                                 cert=self.cert, timeout=self.timeout,
                                 headers=self.headers)
         return _handle_response(response, self.debug)
