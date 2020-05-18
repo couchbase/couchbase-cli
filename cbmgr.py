@@ -761,6 +761,7 @@ class BucketCreate(Subcommand):
             _exitIfErrors(["Compression mode can only be configured on enterprise edition"])
 
         if opts.type == "memcached":
+            _deprecated("Memcached buckets are deprecated, please use ephemeral buckets instead")
             if opts.replica_count is not None:
                 _exitIfErrors(["--bucket-replica cannot be specified for a memcached bucket"])
             if opts.conflict_resolution is not None:
@@ -937,6 +938,7 @@ class BucketEdit(Subcommand):
         _exitIfErrors(errors)
 
         if "bucketType" in bucket and bucket["bucketType"] == "memcached":
+            _deprecated("Memcached buckets are deprecated, please use ephemeral buckets instead")
             if opts.memory_quota is not None:
                 _exitIfErrors(["--bucket-ramsize cannot be specified for a memcached bucket"])
             if opts.replica_count is not None:
