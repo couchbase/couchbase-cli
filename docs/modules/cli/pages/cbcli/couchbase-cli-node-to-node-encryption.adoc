@@ -64,8 +64,8 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 
 == SEE ALSO
 
-man:couchbase-setting-security[1]
-man:couchbase-ssl-manage[1]
+man:couchbase-cli-setting-security[1]
+man:couchbase-cli-ssl-manage[1]
 man:couchbase-cli-ip-family[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]
