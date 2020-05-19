@@ -18,7 +18,7 @@ _couchbase-cli reset-cipher-suites_ [--force] [--port <port>]
 This command is used to reset the cipher suites to the default for Couchbase
 Server. This command should only be used when the cipher have been configured
 in a way that breaks remote access. The cipher suit can be managed using the
-man:couchbase-cli-settinig-security[1] command.
+man:couchbase-cli-setting-security[1] command.
 
 The `reset-cipher-suites` command must be run locally on a node that is part
 of the cluster (i.e. must connect to the node the command is run on). This is
@@ -45,6 +45,6 @@ To reset the cipher suites to the default:
 
 == SEE ALSO
 
-man:couchbase-cli-setting-security.adoc[1],
+man:couchbase-cli-setting-security[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]
