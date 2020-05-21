@@ -1180,9 +1180,9 @@ class ClusterManager(object):
             params["rotateInterval"] = rotate_interval
         if rotate_size:
             params["rotateSize"] = rotate_size
-        if disabled:
+        if disabled is not None:
             params["disabled"] = disabled
-        if disabled_users:
+        if disabled_users is not None:
             params["disabledUsers"] = disabled_users
 
         return self._post_form_encoded(url, params)

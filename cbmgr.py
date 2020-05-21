@@ -2179,10 +2179,10 @@ class SettingAudit(Subcommand):
                            metavar="<seconds>", help="The audit log rotate interval")
         group.add_argument("--audit-log-rotate-size", dest="rotate_size", type=(int),
                            metavar="<bytes>", help="The audit log rotate size")
-        group.add_argument("--disabled-users", dest="disabled_users", help="A comma-separated list of users to ignore"
-                                                                           " events from")
-        group.add_argument("--disable-events", dest="disable_events", help="A comma-separated list of audit-event IDs "
-                                                                           "to not audit")
+        group.add_argument("--disabled-users", dest="disabled_users", default=None,
+                           help="A comma-separated list of users to ignore events from")
+        group.add_argument("--disable-events", dest="disable_events", default= None,
+                           help="A comma-separated list of audit-event IDs to not audit")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -2215,8 +2215,8 @@ class SettingAudit(Subcommand):
             self.format_audit_settings(audit_settings, descriptors)
             return
         elif opts.set_settings:
-            if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size or opts.disable_events
-                    or opts.disabled_users):
+            if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size
+                    or opts.disable_events is not None or opts.disabled_users is not None):
                 _exitIfErrors(["At least one of [--audit-enabled, --audit-log-path, --audit-log-rotate-interval,"
                                " --audit-log-rotate-size, --disabled-users, --disable-events] is required with --set"])
 

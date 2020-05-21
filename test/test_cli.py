@@ -828,6 +828,12 @@ class TestSettingAudit(CommandTest):
         self.no_error_run(self.command + ['--get-settings'], self.server_args)
         self.assertIn('Log path: N/A', self.str_output)
 
+    def test_setting_audit_clear_events_and_users(self):
+        self.no_error_run(self.command + ['--set', '--disabled-users', '', '--disable-events', ''], self.server_args)
+        self.assertIn('POST:/settings/audit', self.server.trace)
+        expected_params = ['disabled=', 'disabledUsers=']
+        self.rest_parameter_match(expected_params)
+
 
 class TestSettingAutofailover(CommandTest):
     def setUp(self):
