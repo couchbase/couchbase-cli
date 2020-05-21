@@ -91,6 +91,6 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 == SEE ALSO
 
 man:couchbase-cli[1]
-man:couchbase-cli-cluster-encryption[1]
+man:couchbase-cli-node-to-node-encryption[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]

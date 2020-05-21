@@ -90,6 +90,9 @@ class CommandTest(unittest.TestCase):
         for parameter in expected_params:
             self.assertIn(parameter, self.server.rest_params)
 
+    def deprecated_output(self):
+        self.assertIn('DEPRECATED:', self.str_output)
+
 
 class TestClusterInit(CommandTest):
     def setUp(self):
@@ -253,6 +256,7 @@ class TestBucketCreate(CommandTest):
             'bucketType=memcached', 'ramQuotaMB=100', 'name=name', 'storageBackend=couchstore'
         ]
         self.rest_parameter_match(expected_params)
+        self.deprecated_output()
 
     def test_bucket_create_EE_options_in_CE(self):
         self.server_args['enterprise'] = False
@@ -323,6 +327,15 @@ class TestBucketEdit(CommandTest):
             'compressionMode=active', 'ramQuotaMB=100'
         ]
         self.rest_parameter_match(expected_params)
+
+    def test_memcached_bucket_edit(self):
+        self.server_args['buckets'].append(self.bucket_memcached)
+        self.memcahced_args = ['--enable-flush', '1']
+        self.no_error_run(self.command + self.command_args + self.memcahced_args,
+                          self.server_args)
+        expected_params = ['flushEnabled=1']
+        self.rest_parameter_match(expected_params)
+        self.deprecated_output()
 
     def test_error_bucket_does_not_exist(self):
         self.system_exit_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args,
