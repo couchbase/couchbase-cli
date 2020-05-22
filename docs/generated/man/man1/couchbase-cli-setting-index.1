@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-index
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-05-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-INDEX" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-INDEX" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 couchbase\-cli\-setting\-index \- Modifies index settings
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 \fIcouchbase\-cli setting\-index\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -97,7 +98,7 @@ Sets the index storage mode for all indexes in this cluster. This parameter
 may only be changed if there are no nodes running the index service. To
 specify the disk based forestdb index backend set this parameter to
 "default". To set the storage mode to use memory optimized indexes set this
-parameter to "memopt".
+parameter to \f(CRmemopt\fP.
 .RE
 .sp
 \-\-index\-threads <num>

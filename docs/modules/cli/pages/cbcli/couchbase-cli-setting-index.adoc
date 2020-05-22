@@ -48,7 +48,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   may only be changed if there are no nodes running the index service. To
   specify the disk based forestdb index backend set this parameter to
   "default". To set the storage mode to use memory optimized indexes set this
-  parameter to "memopt".
+  parameter to `memopt`.
 
 --index-threads <num>::
   Sets the number of CPUs that can be used by the indexer. The value of this

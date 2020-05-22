@@ -68,30 +68,31 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
 
-To initialize a node and set the index path to /mnt1/indexes and the data path
-to /mnt2/data run the following command. Note that this command must be run
+To initialize a node and set the index path to `/mnt1/indexes` and the data path
+to `/mnt2/data` run the following command. Note that this command must be run
 before the node becomes part of a cluster.
-
-  $ couchbase-cli node-init -c 192.168.1.5 \
+----
+$ couchbase-cli node-init -c 192.168.1.5 \
    --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes
-
+----
 In the command above, the cluster username and password have not yet been set so
 you can skip adding these to the command line. If you later initialize the cluster
 and want to set the hostname for the cluster, then run the command
 below. Note that this time the cluster is initialized, so you must include the
 username and password.
-
-  $ couchbase-cli node-init -c 192.168.1.5 -u Administrator -p password \
+----
+$ couchbase-cli node-init -c 192.168.1.5 -u Administrator -p password \
    --node-init-hostname cb1.mydomain.com
-
+----
 You could have alternatively set all five of these options below before
 initializing the cluster. This can be done with the following command.
 
-  $ couchbase-cli node-init -c 192.168.1.5 --node-init-hostname cb1.mydomain.com \
+----
+$ couchbase-cli node-init -c 192.168.1.5 --node-init-hostname cb1.mydomain.com \
    --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes \
    --node-init-analytics-path /mnt3/analytics \
    --node-init-java-home /usr/lib/java/
-
+----
 Again, note that you don't need the username and password because in this example
 the cluster has not yet been initialized.
 

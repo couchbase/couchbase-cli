@@ -61,8 +61,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The name of the cluster reference to replicate to.
 
 --xdcr-replication-mode <mode>::
-  The XDCR replication protocol to use. This can be set to either "capi" or
-  "xmem".
+  The XDCR replication protocol to use. This can be set to either `capi` or
+  `xmem`.
 
 --filter-expression <regex>::
   A regular expression used to filter the replication stream.
@@ -144,58 +144,58 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 == EXAMPLES
 
 To create a new XDCR replication from the "default" bucket to the "apps" bucket
-on a remote cluster called "east" using the xmem replication protocol. You can
+on a remote cluster called "east" using the `xmem` replication protocol. You can
 run the following command below. Note that if you have not setup a remote
 cluster reference then you need to do this first by running the
 man:couchbase-cli-xdcr-setup[1].
-
-  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+----
+$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --create --xdcr-cluster-name east --xdcr-from-bucket apps \
    --xdcr-to-bucket apps --xdcr-replication-mode xmem
-
+----
 To list all of the current XDCR replication you can run the following command.
-
-  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+----
+$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --list
-
+----
 To delete an XDCR replication you first need to use the --list flag to get the
 replicator id. Once you get the replicator id (in this case we will assume it is
-f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below
+`f4eb540d74c43fd3ac6d4b7910c8c92f/default/default`) you can run the command below
 to delete the replication.
-
-  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+----
+$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --delete \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
-
+----
 To pause an XDCR replication you first need to use the --list flag to get the
 replicator id. Once you get the replicator id (in this case we will assume it is
-f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below
+`f4eb540d74c43fd3ac6d4b7910c8c92f/default/default`) you can run the command below
 to pause the replication.
-
-  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+----
+$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --pause \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
-
+----
 To resume an XDCR replication you first need to use the --list flag to get the
 replicator id. Once you get the replicator id (in this case we will assume it is
-f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run the command below
+`f4eb540d74c43fd3ac6d4b7910c8c92f/default/default`) you can run the command below
 to resume the replication.
-
-  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+----
+$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --resume \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default
-
+----
 To modify the settings of an XDCR replication you first need to use the --list
 flag to get the replicator id. Once you get the replicator id (in this case we
-will assume it is f4eb540d74c43fd3ac6d4b7910c8c92f/default/default) you can run
+will assume it is `f4eb540d74c43fd3ac6d4b7910c8c92f/default/default`) you can run
 the command if for example you wanted to change the document batch size to 2048
 and failure restart interval to 60 seconds.
-
-  $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+----
+$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --settings --failure-restart-interval=60 \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
      --doc-batch-size=2048
-
+----
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
 include::{partialsdir}/cbcli/part-common-env.adoc[]

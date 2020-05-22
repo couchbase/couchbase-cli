@@ -639,7 +639,7 @@ a port other that 8091.</p>
 <p>To create a new link to a Couchbase cluster named "east", run the
 following command:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --create --dataverse Default --name east --type couchbase \
@@ -651,7 +651,7 @@ following command:</p>
 <p>If the new remote reference should be fully encrypted then make sure to enable
 encryption:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --create --dataverse Default --name east --type couchbase \
@@ -661,21 +661,21 @@ encryption:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>To create an S3 link named "myAwsLink" in the "test" dataverse, run the
+<p>To create an S3 link named <code>myAwsLink</code> in the "test" dataverse, run the
 following command:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
--p password --create --dataverse test --name myAwsLink --type s3 \
---region us-west-2 --access-key-id LOREMIPSUMDOLORSITAMET123 \
---secret-access-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456</pre>
+ -p password --create --dataverse test --name myAwsLink --type s3 \
+ --region us-west-2 --access-key-id LOREMIPSUMDOLORSITAMET123 \
+ --secret-access-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456</pre>
 </div>
 </div>
 <div class="paragraph">
 <p>To list all current links, run the following command:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --list</pre>
@@ -684,7 +684,7 @@ following command:</p>
 <div class="paragraph">
 <p>To list current S3 links, run the following command:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --list --type s3</pre>
@@ -694,7 +694,7 @@ following command:</p>
 <p>If you need to edit a link named "east" and change the password, run the
 following command:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --edit --dataverse Default --name east --type couchbase \
@@ -711,7 +711,7 @@ unchanging configuration parameters in addition to changing ones, except
 <p>If an link is no longer needed it can be deleted. The following example
 deletes the link named "east" in the "Default" dataverse:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --delete --dataverse Default --link east</pre>

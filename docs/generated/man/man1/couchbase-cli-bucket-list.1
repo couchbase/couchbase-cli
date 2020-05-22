@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-bucket-list
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-05-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-LIST" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-LIST" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,6 +31,7 @@
 couchbase\-cli\-bucket\-list \- List all buckets
 .SH "SYNOPSIS"
 .sp
+.sp
 .nf
 \fIcouchbase\-cli bucket\-list\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>]
@@ -39,7 +40,7 @@ couchbase\-cli\-bucket\-list \- List all buckets
 .SH "DESCRIPTION"
 .sp
 Lists all buckets in the cluster. For each bucket, the following are printed
-to stdout: bucketType, authType, numReplicas, ramQuota, ramUsed.
+to stdout: \f(CRbucketType\fP, \f(CRauthType\fP, \f(CRnumReplicas\fP, \f(CRramQuota\fP, \f(CRramUsed\fP.
 .SH "OPTIONS"
 .sp
 \-c, \-\-cluster
@@ -113,29 +114,25 @@ To list all buckets in the cluster, run the following command.
 .nf
 $ couchbase\-cli bucket\-list \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password
-.fi
-.if n .RE
-.sp
-.if n .RS 4
-.nf
-travel\-data
- bucketType: membase
- authType: sasl
- numReplicas: 1
- ramQuota: 104857600
- ramUsed: 45302840
-airline\-data
- bucketType: ephemeral
- authType: sasl
- numReplicas: 1
- ramQuota: 268435456
- ramUsed: 1134432
-flight\-data
- bucketType: memcached
- authType: sasl
- numReplicas: 0
- ramQuota: 104857600
- ramUsed: 0
+
+ travel\-data
+   bucketType: membase
+   authType: sasl
+   numReplicas: 1
+   ramQuota: 104857600
+   ramUsed: 45302840
+ airline\-data
+   bucketType: ephemeral
+   authType: sasl
+   numReplicas: 1
+   ramQuota: 268435456
+   ramUsed: 1134432
+ flight\-data
+   bucketType: memcached
+   authType: sasl
+   numReplicas: 0
+   ramQuota: 104857600
+   ramUsed: 0
 .fi
 .if n .RE
 .SH "DISCUSSION"

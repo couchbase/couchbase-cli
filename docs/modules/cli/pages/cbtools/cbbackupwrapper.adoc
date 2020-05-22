@@ -21,7 +21,7 @@ _cbbackupwrapper_ [--username <user>] [--password <password>] [--ssl]
 
 == DESCRIPTION
 
-`cbbackupwrapper` devides the vBuckets between various `cbbackup` processes to
+`cbbackupwrapper` divides the vBuckets between various `cbbackup` processes to
 improve performance.
 
 The directory structure is not compatible with `cbbackup` or `cbrestore` thus
@@ -89,7 +89,7 @@ folder.
   Transfer data only from the source data node.
 
 -m,--mode <full|diff|accu>::
-  Select tha backup mode, the available options are: full, diff, accu.
+  Select the backup mode, the available options are: `full`, `diff`, `accu`.
   If an option is not provided it defaults to `diff`. The `full` mode will
   perform a full backup. The `diff` mode will perform a differential
   incremental backup which backups only the changes since the last full or

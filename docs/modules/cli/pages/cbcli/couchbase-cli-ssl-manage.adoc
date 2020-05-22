@@ -33,7 +33,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --regenerate-cert <file>::
   Regenerates the cluster certificate and saves it to the file specified in
-  the value fo this option.
+  the value of this option.
 
 --set-node-certificate::
   Sets the node certificate. Before running this command you must copy the
@@ -57,7 +57,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
     and validate it. If the validation fails or no certificate is presented we
     fall back to the existing authentication methods
   * mandatory: the client has to present valid SSL certificate in order to
-    access successfully authorise the connection.
+    access successfully authorize the connection.
 
 [normal]
   The prefixes section should contain one or more prefixes and each prefix
@@ -65,16 +65,16 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   sub-fields is below:
 
   * path: The field which will be used to extract the username from the
-    certificate. Currently only subject.cn, san.uri, san.email and san.dnsname
-    are allowed
+    certificate. Currently only `subject.cn`, `san.uri`, `san.email` and
+    `san.dnsname` are allowed
   * prefix: Optional. Prefix to be ignored from the field value
   * delimiter: Optional. The delimiter can either be a string or a character,
-    the parsing of the username ends when the delimter value is found.
+    the parsing of the username ends when the delimiter value is found.
 
 [normal]
-  Below is an example of what a client auth configuraiton file might look
+  Below is an example of what a client auth configuration file might look
   like:
-
+----
   {
     "state": "enable",
     "prefixes": [
@@ -85,6 +85,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
       }
     ]
   }
+----
 --
 
 --client-auth::

@@ -517,8 +517,8 @@ environment variable CB_REST_PASSWORD.</p>
 </dd>
 <dt class="hdlist1">--ports &lt;port&gt;</dt>
 <dd>
-<p>Alternate port mappings. Specified as a comma separated list: e.g. --ports
-kv=9000,kvSSL=9999.</p>
+<p> Alternate port mappings. Specified as a comma separated list:
+e.g. <code>--ports kv=9000,kvSSL=9999.</code></p>
 </dd>
 </dl>
 </div>
@@ -558,21 +558,21 @@ a port other that 8091.</p>
 <p>To set the alternate address and custom ports for node 192.168.1.5 we would use the
 following command:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli setting-alternate-address -c 192.168.1.5:8091 --username Administrator \
- --password password --set --node 192.168.1.5 --hostname 10.10.10.10 \
- --ports mgmt=1100,capi=2000,capiSSL=3000</pre>
+   --password password --set --node 192.168.1.5 --hostname 10.10.10.10 \
+   --ports mgmt=1100,capi=2000,capiSSL=3000</pre>
 </div>
 </div>
 <div class="paragraph">
 <p>To see the current alternate address configuration we would use the --list flag as
 follows:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli setting-alternate-address -c 192.168.1.5:8091 --username Administrator \
- --password password --list</pre>
+   --password password --list</pre>
 </div>
 </div>
 </div>
@@ -601,49 +601,49 @@ follows:</p>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">mgmt</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">mgmtSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mgmt</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>mgmtSSL</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Cluster Manager</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The UI and REST API for managing the Cluster</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">kv</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">kvSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>kv</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>kvSSL</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs and XDCR to transfer data to and from the Data Service</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">capi</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">capiSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>capi</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>capiSSL</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">View Engine</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs and XDCR</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">n1ql</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">n1qlSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>n1ql</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>n1qlSSL</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Query</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs to query data</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">fts</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ftsSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>fts</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ftsSSL</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Search</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs to do full text searches</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cbas</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cbasSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cbas</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>cbasSSL</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Analytics</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDKs to query data managed by the Analytic service</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">eventingAdminPort</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">eventingSSL</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>eventingAdminPort</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>eventingSSL</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Eventing</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDK to transfer dat to and from the Eventing Service</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used by the SDK to transfer data to and from the Eventing Service</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">eventing_debug_port</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>eventing_debug_port</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">N/A</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Eventing</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The Eventing debugger port, this should only be set in development environments.</p></td>

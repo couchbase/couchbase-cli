@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-ssl-manage
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-10-03
+.\"      Date: 2020-05-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SSL\-MANAGE" "1" "2019-10-03" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SSL\-MANAGE" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -81,7 +81,7 @@ Retrieves the node certificate and prints it to stdout.
 \-\-regenerate\-cert <file>
 .RS 4
 Regenerates the cluster certificate and saves it to the file specified in
-the value fo this option.
+the value of this option.
 .RE
 .sp
 \-\-set\-node\-certificate
@@ -138,7 +138,7 @@ fall back to the existing authentication methods
 .  IP \(bu 2.3
 .\}
 mandatory: the client has to present valid SSL certificate in order to
-access successfully authorise the connection.
+access successfully authorize the connection.
 .RE
 .sp
 The prefixes section should contain one or more prefixes and each prefix
@@ -154,8 +154,8 @@ sub\-fields is below:
 .  IP \(bu 2.3
 .\}
 path: The field which will be used to extract the username from the
-certificate. Currently only subject.cn, san.uri, san.email and san.dnsname
-are allowed
+certificate. Currently only \f(CRsubject.cn\fP, \f(CRsan.uri\fP, \f(CRsan.email\fP and
+\f(CRsan.dnsname\fP are allowed
 .RE
 .sp
 .RS 4
@@ -178,24 +178,24 @@ prefix: Optional. Prefix to be ignored from the field value
 .  IP \(bu 2.3
 .\}
 delimiter: Optional. The delimiter can either be a string or a character,
-the parsing of the username ends when the delimter value is found.
+the parsing of the username ends when the delimiter value is found.
 .RE
 .sp
-Below is an example of what a client auth configuraiton file might look
+Below is an example of what a client auth configuration file might look
 like:
 .sp
 .if n .RS 4
 .nf
-{
-  "state": "enable",
-  "prefixes": [
-    {
-      "path": "subject.cn",
-      "prefix": "www.cb\-",
-      "delimiter": "."
-    }
-  ]
-}
+  {
+    "state": "enable",
+    "prefixes": [
+      {
+        "path": "subject.cn",
+        "prefix": "www.cb\-",
+        "delimiter": "."
+      }
+    ]
+  }
 .fi
 .if n .RE
 .RE
