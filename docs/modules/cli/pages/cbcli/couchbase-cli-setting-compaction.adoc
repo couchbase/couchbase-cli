@@ -54,7 +54,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   could for example specify that compaction should only run between midnight
   and 5AM each day by setting the compaction from period to "00:00" and the
   compaction to period to "5:00". When setting the value for this option you
-  must use the format HH:MM when HH corresponds to the hour and MM corresponds
+  must use the format `HH:MM` when `HH` corresponds to the hour and `MM` corresponds
   to the minute. If this option is not specified then the compaction will run
   at any time of the day. This option only affects view and database file
   compaction.
@@ -65,7 +65,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   could for example specify that compaction should only run between midnight
   and 5AM each day by setting the compaction from period to "00:00" and the
   compaction to period to "5:00". When setting the value for this option you
-  must use the format HH:MM when HH corresponds to the hour and MM corresponds
+  must use the format `HH:MM` when `HH` corresponds to the hour and `MM` corresponds
   to the minute. If this option is not specified then the compaction will run
   at any time of the day. This option only affects view and database file
   compaction.
@@ -128,8 +128,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   to run. You could for example specify that GSI compaction should only run
   between midnight and 5AM each day by setting the GSI compaction from period
   to "00:00" and the GSI compaction to period to "5:00". When setting the
-  value for this option you must use the format HH:MM when HH corresponds to
-  the hour and MM corresponds to the minute. If this option is not specified
+  value for this option you must use the format `HH:MM` when `HH` corresponds to
+  the hour and `MM` corresponds to the minute. If this option is not specified
   then compaction will run at any time of the day. This parameter only
   applies if circular compaction mode is used.
 
@@ -139,8 +139,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   to run. You could for example specify that GSI compaction should only run
   between midnight and 5AM each day by setting the GSI compaction from period
   to "00:00" and the GSI compaction to period to "5:00". When setting the
-  value for this option you must use the format HH:MM when HH corresponds to
-  the hour and MM corresponds to the minute. If this option is not specified
+  value for this option you must use the format `HH:MM` when `HH` corresponds to
+  the hour and `MM` corresponds to the minute. If this option is not specified
   then GSI compaction will run at any time of the day. This parameter only
   applies if circular compaction mode is used.
 

@@ -505,7 +505,7 @@ environment variable CB_REST_PASSWORD.</p>
 <dt class="hdlist1">--regenerate-cert &lt;file&gt;</dt>
 <dd>
 <p>Regenerates the cluster certificate and saves it to the file specified in
-the value fo this option.</p>
+the value of this option.</p>
 </dd>
 <dt class="hdlist1">--set-node-certificate</dt>
 <dd>
@@ -539,7 +539,7 @@ fall back to the existing authentication methods</p>
 </li>
 <li>
 <p>mandatory: the client has to present valid SSL certificate in order to
-access successfully authorise the connection.</p>
+access successfully authorize the connection.</p>
 </li>
 </ul>
 </div>
@@ -552,34 +552,34 @@ sub-fields is below:</p>
 <ul>
 <li>
 <p>path: The field which will be used to extract the username from the
-certificate. Currently only subject.cn, san.uri, san.email and san.dnsname
-are allowed</p>
+certificate. Currently only <code>subject.cn</code>, <code>san.uri</code>, <code>san.email</code> and
+<code>san.dnsname</code> are allowed</p>
 </li>
 <li>
 <p>prefix: Optional. Prefix to be ignored from the field value</p>
 </li>
 <li>
 <p>delimiter: Optional. The delimiter can either be a string or a character,
-the parsing of the username ends when the delimter value is found.</p>
+the parsing of the username ends when the delimiter value is found.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>Below is an example of what a client auth configuraiton file might look
+<p>Below is an example of what a client auth configuration file might look
 like:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
-<pre>{
-  "state": "enable",
-  "prefixes": [
-    {
-      "path": "subject.cn",
-      "prefix": "www.cb-",
-      "delimiter": "."
-    }
-  ]
-}</pre>
+<pre>  {
+    "state": "enable",
+    "prefixes": [
+      {
+        "path": "subject.cn",
+        "prefix": "www.cb-",
+        "delimiter": "."
+      }
+    ]
+  }</pre>
 </div>
 </div>
 </div>

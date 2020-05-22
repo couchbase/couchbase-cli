@@ -49,7 +49,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --no-wait::
   Specifies that this command should not wait for the completion of rebalance
   before exiting. Note that a rebalance only occurs for graceful failovers
-  (eg. non-forced failovers).
+  (e.g. non-forced failovers).
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

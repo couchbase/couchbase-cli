@@ -72,7 +72,7 @@ restore the directory `backup_dir` to the target cluster.
   Specifies the bucket port. Defaults to 11210
 
 -v,--verbose::
-  Verbose logging; more -v's provide more verbosity. Max is -vvv
+  Verbose logging; more `-v's` provide more verbosity. Max is `-vvv`
 
 -x,--extra <options>::
   Provide extra, uncommon configuration parameters. Comma-separated
@@ -142,7 +142,7 @@ non-Mac OS X cluster.
 | Number batches transferred before emitting progress information in console.
 
 | `seqno=0`
-| By default, start seqno from beginning.
+| By default, start at sequence number 0.
 
 | `try_xwm=1`
 | Transfer documents with metadata.

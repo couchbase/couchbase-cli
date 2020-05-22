@@ -75,7 +75,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Lifetime of values in cache in milliseconds. Default 300000 ms.
 
 --bind-dn <dn>::
-  The DN of a user to autheicate as to allow user search and groups
+  The DN of a user to authenticate as to allow user search and groups
   synchronization. If bind details are not provided anonymous bind
   will be used instead.
 

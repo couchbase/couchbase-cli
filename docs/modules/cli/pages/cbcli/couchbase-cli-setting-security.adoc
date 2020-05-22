@@ -54,7 +54,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --tls-min-version <tlsv1|tlsv1.1|tlsv1.2>::
   Specify the minimum TLS protocol version to be used across all of the
-  Couhbase services.
+  Couchbase services.
 
 --tls-honor-cipher-order <1|0>::
   Specifies whether the cipher-order must be followed across all of the
@@ -65,9 +65,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --cipher-suites <cipher>::
   Specify the cipher suite to be used across all of the couchbase services.
   The ciphers have to be a comma separated list such as:
-  "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA",
-  "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA". If an empty string is given ("")
-  then the cipher list will be reset to its default.
+  `TLS_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA`.
+  If an empty string is given ("") then the cipher list will be reset to its default.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

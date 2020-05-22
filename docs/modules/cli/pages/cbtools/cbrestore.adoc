@@ -32,7 +32,7 @@ the buckets must exist in the target cluster.
 
 By default, when restoring from a backup using `cbrestore`, Couchbase Server will
 perform conflict resolution on all documents to be restored. The conflict
-resolution behavior is the same as cross datacenter replication (XDCR), which
+resolution behavior is the same as cross data center replication (XDCR), which
 is detailed in Availability. This is so that documents which have been updated
 after the backup are not incorrectly overwritten by the restore process.
 As a result, after running the restore process, some documents may not match
@@ -199,7 +199,7 @@ non-Mac OS X cluster.
 | Number batches transferred before emitting progress information in console.
 
 | `seqno=0`
-| By default, start seqno from beginning.
+| By default, start from sequence number 0.
 
 | `try_xwm=1`
 | Transfer documents with metadata.
@@ -232,7 +232,7 @@ the buckets in the target cluster so in this case our cluster already has
 a bucket named `beer-sample`.
 
     $ cbrestore ~/backups http://10.112.193.101:8091 -u Administrator \
-      -p passsword
+      -p password
 
 When executed the command will restore all the data in the `~/backups`
 directory into the target cluster, if any of the buckets in the backup do not
@@ -240,7 +240,7 @@ exist in the target cluster `cbrestore` will return an error. We can restore
 one bucket to a different bucket using the `-b` and `-B` flags as follows.
 
     $ cbrestore ~/backups http://10.112.193.101:8091 -u Administrator \
-      -p passsword -b beer-sample -B new-bucket
+      -p password -b beer-sample -B new-bucket
 
 This will restore the backed up data for beer-sample into the bucket
 `new-bucket` in the target cluster. If the backup contains multiple buckets
@@ -261,15 +261,16 @@ restored. If the backup directory contained 4 backup such as:
             └── bucket-beer-sample
 
 Then we can restore only the first two by using the following command:
-    $ cbrestore ~/backups http://10.112.193.101:8091 -u Administrator \
-      -p passsword -b beer-sample --from-date 2019-06-25 --to-date 2019-06-27
 
-The tool also gices the capability of filtering documents based on keys, giving
+    $ cbrestore ~/backups http://10.112.193.101:8091 -u Administrator \
+      -p password -b beer-sample --from-date 2019-06-25 --to-date 2019-06-27
+
+The tool also gives the capability of filtering documents based on keys, giving
 a regular expression to the `-k` flag will result in only documents that have
  keys that match the expression being restored. An example can be sen bellow
 
      $ cbrestore ~/backups http://10.112.193.101:8091 -u Administrator \
-      -p passsword -b default --k '^user:.*'
+      -p password -b default --k '^user:.*'
 
 The command above will only restore documents with keys that have the prefix
 'user:'.

@@ -550,7 +550,7 @@ port 8091.</p>
 <dt class="hdlist1">--index-storage-setting</dt>
 <dd>
 <p>Specifies the index storage mode for the index service. Accepted storage
-modes are "default" for the standard index backend or "memopt" for memory
+modes are "default" for the standard index backend or <code>memopt</code> for memory
 optimized indexes. If the index service is specified to be started with the
 --services command then this parameter defaults to "default". If the index
 service is not specified to be started then the index storage mode will not
@@ -607,7 +607,7 @@ a port other that 8091.</p>
 <p>To create a Couchbase Server cluster with only the data service on the first node
 and a memory quota of 4096MB run the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
  --cluster-password password --services data --cluster-ramsize 4096</pre>
@@ -623,7 +623,7 @@ mode since you are starting the index service.</p>
 quota of 2048MB and a memory optimized index storage mode run the following
 command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
  --cluster-password password --services data,index --cluster-ramsize 2048 \
@@ -639,7 +639,7 @@ a memory quota. You also need to set the index storage mode for the index
 service, which will be set to "default" since the service is started on the
 first node.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
  --cluster-password password --services data,index,query,fts,analytics \
@@ -654,7 +654,7 @@ first node.</p>
 option. In the example below, a cluster is setup on port 5000 and starts
 only the data service. The memory quota of the data service is set to 2048MB.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
  --cluster-password password --services data --cluster-ramsize 2048 \
