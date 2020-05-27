@@ -512,11 +512,10 @@ class ClusterManager(object):
         url = f'{self.hostname}/controller/cancelLogsCollection'
         return self._post_form_encoded(url, dict())
 
-    def failover(self, servers_to_failover, force):
+    def failover(self, servers_to_failover, hard, force):
         _, _, failover, _, _, errors = self._get_otps_names(failover_nodes=servers_to_failover)
         if errors:
             return None, errors
-
 
         if len(failover) != len(servers_to_failover):
             if len(servers_to_failover) == 1:
@@ -525,16 +524,17 @@ class ClusterManager(object):
 
         params = {"otpNode": [server for server, _ in failover]}
 
-        if force:
-            params["allowUnsafe"] = "true"
+        if hard:
+            if force:
+                params["allowUnsafe"] = "true"
             url = f'{self.hostname}/controller/failOver'
             return self._post_form_encoded(url, params)
-        else:
-            for server, server_status in failover:
-                if server_status != 'healthy':
-                    return None, ["% can't be gracefully failed over because it is not healthy", server]
-            url = f'{self.hostname}/controller/startGracefulFailover'
-            return self._post_form_encoded(url, params)
+
+        for server, server_status in failover:
+            if server_status != 'healthy':
+                return None, ["% can't be gracefully failed over because it is not healthy", server]
+        url = f'{self.hostname}/controller/startGracefulFailover'
+        return self._post_form_encoded(url, params)
 
     def recovery(self, server, recovery_type):
         _, _, _, readd, _, errors = self._get_otps_names(readd_nodes=[server])

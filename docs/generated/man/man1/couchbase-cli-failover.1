@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-failover
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-05-22
+.\"      Date: 2020-05-27
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-FAILOVER" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-FAILOVER" "1" "2020-05-27" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -34,8 +34,8 @@ couchbase\-cli\-failover \- Failover a node in the cluster
 .sp
 .nf
 \fIcouchbase\-cli failover\fP [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>][\-\-server\-failover <server_list>] [\-\-force]
-    [\-\-no\-progress\-bar] [\-\-no\-wait]
+    [\-\-password <password>][\-\-server\-failover <server_list>] [\-\-hard]
+    [\-\-force] [\-\-no\-progress\-bar] [\-\-no\-wait]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -76,14 +76,23 @@ environment variable CB_REST_PASSWORD.
 A comma separated list of nodes to failover.
 .RE
 .sp
-\-\-force
+\-\-hard
 .RS 4
 Specifying this flag signifies that the nodes to be failed over should be
 hard failed over. A hard failover means that the failover is immediate, but
-you risk potential data loss. If this flag is not specified then the
-failover will occur only once replication is up to date. This means there
-will be no data loss, but the failover is not immediate. Note that if a
-server is already down you must hard fail it over.
+you risk potential data loss. If this flag is not specified then a graceful
+failover will occur which ensures that the replication is up to date. This
+means there will be no data loss, but the failover is not immediate. Note
+that if a server is already down you must hard fail it over.
+.RE
+.sp
+\-\-force
+.RS 4
+Specifying this flag forces a hard failover. This option should should only
+be used when needed. To be able to do a failover the cluster need a quorum
+of nodes. There are case where the majority of nodes are unavailable and it
+will be impossible to get a quorum. In those case this flag can be used to
+force a hard failover. This flag has to be used with \(aq\-\-hard\(aq flag.
 .RE
 .sp
 \-\-no\-progress\-bar
@@ -150,7 +159,7 @@ To hard fail over two nodes run the following command:
 .nf
 $ couchbase\-cli failover \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \(rs
- \-\-server\-failover 192.168.1.6:8091,192.168.1.7:8091 \-\-force
+ \-\-server\-failover 192.168.1.6:8091,192.168.1.7:8091
 .fi
 .if n .RE
 .sp

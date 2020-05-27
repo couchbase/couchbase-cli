@@ -1237,8 +1237,10 @@ class Failover(Subcommand):
         group = self.parser.add_argument_group("Failover options")
         group.add_argument("--server-failover", dest="servers_to_failover", metavar="<server_list>",
                            required=True, help="A list of servers to fail over")
-        group.add_argument("--force", dest="force", action="store_true",
+        group.add_argument("--hard", dest="hard", action="store_true",
                            help="Hard failover the server")
+        group.add_argument("--force", dest="force", action="store_true",
+                           help="Force a hard failover")
         group.add_argument("--no-progress-bar", dest="no_bar", action="store_true",
                            default=False, help="Disables the progress bar")
         group.add_argument("--no-wait", dest="wait", action="store_false",
@@ -1250,11 +1252,14 @@ class Failover(Subcommand):
         check_cluster_initialized(rest)
         check_versions(rest)
 
+        if opts.force and not opts.hard:
+            _exitIfErrors(["--hard is required with --force flag"])
+
         opts.servers_to_failover = apply_default_port(opts.servers_to_failover)
-        _, errors = rest.failover(opts.servers_to_failover, opts.force)
+        _, errors = rest.failover(opts.servers_to_failover, opts.hard, opts.force)
         _exitIfErrors(errors)
 
-        if not opts.force:
+        if not opts.hard:
             time.sleep(1)
             if opts.wait:
                 bar = TopologyProgressBar(rest, 'Gracefully failing over', opts.no_bar)

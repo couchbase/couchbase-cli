@@ -442,14 +442,14 @@ class TestFailover(CommandTest):
         self.no_error_run(self.command + self.basic_args, self.server_args)
         self.assertIn('POST:/controller/startGracefulFailover', self.server.trace)
 
-    def test_failover_force(self):
-        self.no_error_run(self.command + self.basic_args + ['--force'], self.server_args)
+    def test_failover_hard(self):
+        self.no_error_run(self.command + self.basic_args + ['--hard'], self.server_args)
         self.assertIn('POST:/controller/failOver', self.server.trace)
-        self.assertIn('allowUnsafe=true', self.server.rest_params)
+        self.assertNotIn('allowUnsafe=true', self.server.rest_params)
 
-    def test_failover_force_non_existent_node(self):
+    def test_failover_hard_non_existent_node(self):
         self.basic_args[1] = 'random-node:6789'
-        self.system_exit_run(self.command + self.basic_args + ['--force'], self.server_args)
+        self.system_exit_run(self.command + self.basic_args + ['--hard'], self.server_args)
         self.assertIn('Server can\'t be failed over because it\'s not part of the cluster', self.str_output)
 
     def test_failover_force_unhealthy_node(self):
@@ -458,6 +458,15 @@ class TestFailover(CommandTest):
              'clusterMembership': 'active'}]}
         self.system_exit_run(self.command + self.basic_args, self.server_args)
         self.assertIn('can\'t be gracefully failed over because it is not healthy', self.str_output)
+
+    def test_failover_hard_force(self):
+        self.no_error_run(self.command + self.basic_args + ['--hard', '--force'], self.server_args)
+        self.assertIn('POST:/controller/failOver', self.server.trace)
+        self.assertIn('allowUnsafe=true', self.server.rest_params)
+
+    def test_failover_force(self):
+        self.system_exit_run(self.command + self.basic_args + ['--force'], self.server_args)
+        self.assertIn('--hard is required with --force flag', self.str_output)
 
 
 class TestGroupManage(CommandTest):
