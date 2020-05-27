@@ -254,6 +254,13 @@ class TestBucketCreate(CommandTest):
         self.system_exit_run(self.command + self.command_args + args, self.server_args)
         self.assertIn('--bucket-replica cannot be specified for a memcached bucket', self.str_output)
 
+    def test_bucket_create_memcached_with_durability_min_level(self):
+        args = [
+            '--bucket-type', 'memcached', '--bucket-ramsize', '100',
+            '--durability-min-level', 'majorityAndPersistActive',
+        ]
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn('--durability-min-level cannot be specified for a memcached bucket', self.str_output)
 
 class TestBucketDelete(CommandTest):
     def setUp(self):

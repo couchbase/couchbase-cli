@@ -780,6 +780,8 @@ class BucketCreate(Subcommand):
                 _exitIfErrors(["--max-ttl cannot be specified for a memcached bucket"])
             if opts.compression_mode is not None:
                 _exitIfErrors(["--compression-mode cannot be specified for a memcached bucket"])
+            if opts.durability_min_level is not None:
+                _exitIfErrors(["--durability-min-level cannot be specified for a memcached bucket"])
         elif opts.type == "ephemeral":
             if opts.eviction_policy in ["valueOnly", "fullEviction"]:
                 _exitIfErrors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
