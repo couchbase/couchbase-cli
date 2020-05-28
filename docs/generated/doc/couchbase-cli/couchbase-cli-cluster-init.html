@@ -456,7 +456,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--cluster-index-ramsize &lt;megabytes&gt;] [--cluster-fts-ramsize &lt;megabytes&gt;]
     [--cluster-eventing-ramsize &lt;megabytes&gt;]
     [--cluster-analytics-ramsize &lt;megabytes&gt;]
-    [--index-storage-setting &lt;setting&gt;] [--services &lt;services&gt;]</pre>
+    [--index-storage-setting &lt;setting&gt;] [--services &lt;services&gt;]
+    [--update-notifications &lt;1|0&gt;]</pre>
 </div>
 </div>
 </div>
@@ -568,6 +569,23 @@ services running on this node once the cluster has been initialized. This
 options takes a comma separated list of services. Accepted services are
 "data", "index", "query", "fts", "eventing" and "analytics" specified as a
 comma-separated list. This parameter defaults to "data".</p>
+</dd>
+<dt class="hdlist1">--update-notifications</dt>
+<dd>
+<p>Specifies whether or not software update notifications should be enabled.
+To enable notifications set this flag to "1". To disable notifications set
+this flag to "0". By default it&#8217;s enabled and notifications will be
+displayed in the Couchbase web console when a new version of Couchbase
+Server is available. This system also collects information about use and
+experience with the product every time an administrator interacts with the
+administrator user interface. It collects configuration, usage and
+performance data, including cluster information (such as settings and
+configuration, software version, cluster ID, load levels, and resource
+quotas), and browser and network information (such as IP address, inferred
+geolocation only at the city level, and browser type). This does not allow
+Couchbase to track your specific interactions or usage of the Couchbase
+Server. It never accesses or collects any data stored within Couchbase
+Server.</p>
 </dd>
 </dl>
 </div>

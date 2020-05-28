@@ -412,7 +412,7 @@ class ClusterManager(object):
 
     def enable_notifications(self, enable):
         url = f'{self.hostname}/settings/stats'
-        params = { "sendStats": "false"}
+        params = {"sendStats": "false"}
 
         if enable:
             params["sendStats"] = "true"

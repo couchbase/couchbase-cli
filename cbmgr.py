@@ -568,6 +568,8 @@ class ClusterInit(Subcommand):
                            help="The index storage backend (Defaults to \"default)\"")
         group.add_argument("--services", dest="services", default="data", metavar="<service_list>",
                            help="The services to run on this server")
+        group.add_argument("--update-notifications", dest="notifications", metavar="<1|0>", choices=["0", "1"],
+                           help="Enables/disable software update notifications")
 
     def execute(self, opts):
         # We need to ensure that creating the REST username/password is the
@@ -618,8 +620,12 @@ class ClusterInit(Subcommand):
         _exitIfErrors(errors)
 
         # Enable notifications
-        _, errors = rest.enable_notifications(True)
-        _exitIfErrors(errors)
+        if opts.notifications is not None:
+            if opts.notifications == "1":
+                _, errors = rest.enable_notifications(True)
+            else:
+                _, errors = rest.enable_notifications(False)
+            _exitIfErrors(errors)
 
         # Setup Administrator credentials and Admin Console port
         _, errors = rest.set_admin_credentials(opts.username, opts.password,
@@ -2959,7 +2965,7 @@ class SettingNotification(Subcommand):
         self.parser.prog = "couchbase-cli setting-notification"
         group = self.parser.add_argument_group("Notification Settings")
         group.add_argument("--enable-notifications", dest="enabled", metavar="<1|0>", required=True,
-                           choices=["0", "1"], help="Enables/disable notifications")
+                           choices=["0", "1"], help="Enables/disable software notifications")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -2975,7 +2981,7 @@ class SettingNotification(Subcommand):
         _, errors = rest.enable_notifications(enabled)
         _exitIfErrors(errors)
 
-        _success("Notification settings updated")
+        _success("Software notification settings updated")
 
     @staticmethod
     def get_man_page_name():
@@ -2983,7 +2989,7 @@ class SettingNotification(Subcommand):
 
     @staticmethod
     def get_description():
-        return "Modify email notification settings"
+        return "Modify software notification settings"
 
 
 class SettingPasswordPolicy(Subcommand):
