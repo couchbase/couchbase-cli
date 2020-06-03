@@ -458,6 +458,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--user-dn-query &lt;query&gt; | --user-dn-template &lt;template&gt;]
     [--max-parallel &lt;max&gt;] [--max-cache-size &lt;size&gt;]
     [--cache-value-lifetime &lt;ms&gt;] [--bind-dn &lt;dn&gt;] [--bind-password &lt;password&gt;]
+    [--client-cert &lt;path&gt;] [--client-key &lt;path&gt;]
     [--group-query &lt;query&gt;] [--enable-nested-groups &lt;0|1&gt;]
     [--nested-group-max-depth &lt;depth&gt;]</pre>
 </div>
@@ -559,12 +560,24 @@ servers.</p>
 <dt class="hdlist1">--bind-dn &lt;dn&gt;</dt>
 <dd>
 <p>The DN of a user to authenticate as to allow user search and groups
-synchronization. If bind details are not provided anonymous bind
-will be used instead.</p>
+synchronization. If bind details or client TLS certificate are not provided
+anonymous bind will be used instead.</p>
 </dd>
 <dt class="hdlist1">--bind-password &lt;password&gt;</dt>
 <dd>
 <p>The bind user password</p>
+</dd>
+<dt class="hdlist1">--client-cert &lt;path&gt;</dt>
+<dd>
+<p>The client TLS certificate to be used to bind against the LDAP Server to
+allow user and groups synchronization. If bind details or client TLS
+certificate are not provided anonymous bind will be used instead.
+'--client-cert' and '--client-key' need to be set together.</p>
+</dd>
+<dt class="hdlist1">--client-key &lt;path&gt;</dt>
+<dd>
+<p>The client TLS key. This is used with '--client-cert' flag for certificate
+authentication. '--client-cert' and '--client-key' need to be set together.</p>
 </dd>
 <dt class="hdlist1">--group-query &lt;query&gt;</dt>
 <dd>

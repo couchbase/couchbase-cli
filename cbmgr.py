@@ -2859,6 +2859,10 @@ class SettingLdap(Subcommand):
                            help="LDAP query to get user's DN. Must contains at least one instance of %%u")
         group.add_argument("--user-dn-template", metavar="<template>", dest="user_dn_template",
                            help="Template to construct user's DN. Must contain at least one instance of %%u")
+        group.add_argument("--client-cert", metavar="<path>", dest="client_cert",
+                           help="The client TLS certificate for authentication")
+        group.add_argument("--client-key", metavar="<path>", dest="client_key",
+                           help="The client TLS key for authentication")
         group.add_argument("--request-timeout", metavar="<ms>", dest="timeout",
                            help="Request time out in milliseconds")
         group.add_argument("--max-parallel", dest="max_parallel", metavar="<max>", type=int,
@@ -2939,11 +2943,20 @@ class SettingLdap(Subcommand):
         if opts.user_dn_template is not None:
             mapping = f'{{"template": "{opts.user_dn_template}"}}'
 
+        if (opts.client_cert and not opts.client_key) or (not opts.client_cert and opts.client_key):
+            _exitIfErrors(['--client-cert and --client--key have to be used together'])
+
+        if opts.client_cert is not None:
+            opts.client_cert = _exit_on_file_read_failure(opts.client_cert)
+
+        if opts.client_key is not None:
+            opts.client_key = _exit_on_file_read_failure(opts.client_key)
+
         _, errors = rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts, opts.port,
                                        opts.encryption, mapping, opts.timeout, opts.max_parallel,
                                        opts.max_cache_size, opts.cache_value_lifetime, opts.bind_dn, opts.bind_password,
-                                       opts.group_query, opts.nested_groups, opts.nested_max_depth,
-                                       opts.server_cert_val, opts.cacert_ldap)
+                                       opts.client_cert, opts.client_key, opts.group_query, opts.nested_groups,
+                                       opts.nested_max_depth, opts.server_cert_val, opts.cacert_ldap)
 
         _exitIfErrors(errors)
         _success("LDAP settings modified")

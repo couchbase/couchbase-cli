@@ -1358,7 +1358,7 @@ class ClusterManager(object):
         return self._get(url)
 
     def ldap_settings(self, authentication_enabled, authorization_enabled, hosts, port, encryption, user_dn_mapping,
-                    timeout, max_parallel, max_cache, cache_lifetime, query_dn, query_pass, group_query,
+                    timeout, max_parallel, max_cache, cache_lifetime, query_dn, query_pass, cert, key, group_query,
                     nested_groups, nested_groups_max_depth, server_ca_ver, ca):
         url = f'{self.hostname}/settings/ldap'
 
@@ -1388,6 +1388,10 @@ class ClusterManager(object):
             params['bindDN'] = query_dn
         if query_pass is not None:
             params['bindPass'] = query_pass
+        if cert:
+            params['clientTLSCert'] = cert
+        if key:
+            params['clientTLSKey'] = key
         if group_query is not None:
             params['groupsQuery'] = group_query
         if nested_groups is not None:

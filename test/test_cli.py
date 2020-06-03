@@ -1446,13 +1446,33 @@ class TestSettingLdap(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_set_ldap_all(self):
-        self.no_error_run(self.command + self.authentication_args + self.authorization_args, self.server_args)
+        # create fake user certificate file
+        user_cert_file = tempfile.NamedTemporaryFile(delete=False)
+        user_cert_file_name = user_cert_file.name
+        user_cert_file.write(b'this-is-the-user-cert-file')
+        user_cert_file.close()
+        # create fake user key file
+        user_key_file = tempfile.NamedTemporaryFile(delete=False)
+        user_key_file_name = user_key_file.name
+        user_key_file.write(b'this-is-the-user-key-file')
+        user_key_file.close()
+        cert_args =['--client-cert', user_cert_file_name,  '--client-key', user_key_file_name]
+
+        self.no_error_run(self.command + self.authentication_args + self.authorization_args + cert_args,
+                          self.server_args)
+
+        # clean up the test files
+        os.remove(user_cert_file_name)
+        os.remove(user_key_file_name)
+
         self.assertIn('POST:/settings/ldap', self.server.trace)
         expected_params = ['authenticationEnabled=true', 'authorizationEnabled=true', 'hosts=0.0.0.0', 'port=369',
                            'encryption=None', 'requestTimeout=2000', 'maxParallelConnections=20',
                            'maxCacheSize=20', 'cacheValueLifetime=2000000', 'bindDN=admin', 'bindPass=pass',
                            'nestedGroupsEnabled=true', 'nestedGroupsMaxDepth=10',
-                           'groupsQuery=%25D%3FmemberOf%3Fbase', 'serverCertValidation=false']
+                           'groupsQuery=%25D%3FmemberOf%3Fbase', 'serverCertValidation=false',
+                           'clientTLSCert=this-is-the-user-cert-file',
+                           'clientTLSKey=this-is-the-user-key-file' ]
         self.rest_parameter_match(expected_params)
 
 
