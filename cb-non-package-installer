@@ -30,7 +30,7 @@ import os
 import subprocess
 
 FNULL = open(os.devnull, 'w')
-VERSION = (6, 5)
+VERSION = (6, 6)
 
 
 def error(message):
