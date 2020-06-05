@@ -50,9 +50,9 @@ def get_package_version(package):
     # Only support RPM base distros
     # couchbase-server-enterprise-5.5.4-MP1-centos7.x86_64.rpm
     # couchbase-server-enterprise-6.0.1-centos8.x86_64.rpm
-    regex_package_version = re.compile(r'^couchbase-server-enterprise-'
+    regex_package_version = re.compile(r'^couchbase-server-enterprise(-|_)'
                                        r'(?P<major>\d+)\.(?P<minor>\d+)\.(?P<maintenance>\d+)'
-                                       r'-[0-9a-zA-Z_\-\.]+rpm$')
+                                       r'-[0-9a-zA-Z_\-\.]+(rpm|deb)$')
     match = regex_package_version.match(package)
     if not match:
         error(f'Could not get version from Package name {package}')
@@ -76,16 +76,20 @@ def get_install_version(location):
         return int(match.group('major')), int(match.group('minor')), int(match.group('maintenance'))
 
 
-def unpack(package, location):
+def unpack(package, location, package_type):
     """
     Unpacks the rpm package
     """
     old_cwd = os.getcwd()
     package = os.path.abspath(package)
-    os.chdir(location)
     logging.debug(f'Unpacking {package}')
-    return_code = subprocess.call(f'rpm2cpio {package} | cpio --extract --make-directories --no-absolute-filenames',
-                                  stdout=FNULL, stderr=FNULL, shell=True)
+    os.chdir(location)
+    if package_type =='rpm':
+        return_code = subprocess.call(f'rpm2cpio {package} | cpio --extract --make-directories --no-absolute-filenames',
+                                      stdout=FNULL, stderr=FNULL, shell=True)
+    else:
+        return_code = subprocess.call(['dpkg', '-x', package, '.'])
+
     if return_code != 0:
         error(f'Problems unpacking {package} to {location}')
     os.chdir('opt/couchbase')
@@ -96,7 +100,7 @@ def unpack(package, location):
     os.chdir(old_cwd)
 
 
-def install(package, location):
+def install(package, location, package_type):
     """
     Does a fresh non package install of Couchbase Server
     """
@@ -106,7 +110,7 @@ def install(package, location):
     if os.listdir(location):
         error(f'Install location "{location}" is not empty, please provide an empty directory to install to')
 
-    unpack(package, location)
+    unpack(package, location, package_type)
     print('Successfully installed')
 
 
@@ -134,7 +138,7 @@ def cbupgrade(location):
         error('There was problem running cbupgrade')
 
 
-def upgrade(package, location):
+def upgrade(package, location, package_type):
     """
     Upgrades a non package install of Couchbase Server
     """
@@ -204,7 +208,7 @@ def upgrade(package, location):
     if return_code != 0:
         error('Problem removing the old install')
 
-    unpack(package, location)
+    unpack(package, location, package_type)
     # Restore config
     logging.info('Restoring the old config')
     for config_file in config_files:
@@ -232,21 +236,34 @@ def which(command):
     return return_code == 0
 
 
-def check_install_dependencies():
+def check_install_dependencies(package_type):
     """
     Check the dependencies needed to execute this script are available.
     """
-    commands = ['rpm2cpio', 'cpio', 'rpm', 'perl']
+    if package_type == 'rpm':
+        commands = ['rpm2cpio', 'cpio', 'rpm', 'perl']
+    else:
+        commands = ['dpkg', 'perl']
+
     for command in commands:
         if not which(command):
             error(f'Cannot start the install as command "{command}" is not available')
 
 
-def check_package_dependencies(package):
+def check_package_dependencies(package, package_type):
     """
     Check that the dependencies of Couchbase Server are available.
     """
-    rpm_output = subprocess.check_output(['rpm', '-qpR', package])
+    if package_type == 'rpm':
+        check_rpm_dependencies(package)
+    else:
+        check_deb_dependencies(package)
+
+def check_rpm_dependencies(package):
+    """
+    Check that the dependencies of Couchbase Server are available from a rpm package.
+    """
+    rpm_output = subprocess.check_output(['rpm', '-qpR', package], encoding='UTF-8')
     for line in rpm_output.splitlines():
         check_command = True
         for x in ['shadow-utils', 'rpmfind', 'rpmlib']:
@@ -256,6 +273,24 @@ def check_package_dependencies(package):
         command = line.split(' ')[0]
         if check_command and not which(command):
             error(f'Cannot install Couchbase Server missing dependency: "{command}"')
+
+
+def check_deb_dependencies(package):
+    """
+    Check that the dependencies of Couchbase Server are available from a deb package.
+    """
+    dpkg_output = subprocess.check_output(['dpkg', '--info', package], encoding='UTF-8')
+    for line in dpkg_output.splitlines():
+        if line.startswith(' Depends:'):
+            line = line[9:]
+            for command in line.split(','):
+                check_command = True
+                for x in ["libc", "libtinfo5", "init-system-helpers", "lsb-base"]:
+                    if command.startswith(x):
+                        check_command = False
+                        break
+                if check_command and not which(command.strip()):
+                    error(f'Cannot install Couchbase Server missing dependency: "{command}"')
 
 
 def main():
@@ -297,13 +332,17 @@ def main():
     if not os.access(args.location, os.W_OK):
         error(f'Install location "{args.location}" is not writable, please check the permissions')
 
-    check_install_dependencies()
-    check_package_dependencies(args.package)
+    package_type = args.package.split('.')[-1]
+    if package_type not in ['rpm', 'deb']:
+        error(f'Package "{args.package}" not supported')
+
+    check_install_dependencies(package_type)
+    check_package_dependencies(args.package, package_type)
 
     if args.install:
-        install(args.package, args.location)
+        install(args.package, args.location, package_type)
     if args.upgrade:
-        upgrade(args.package, args.location)
+        upgrade(args.package, args.location, package_type)
     exit(0)
 
 
