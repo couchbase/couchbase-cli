@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*-python-*-
 
 """
@@ -32,12 +32,14 @@ import subprocess
 FNULL = open(os.devnull, 'w')
 VERSION = (6, 5)
 
+
 def error(message):
     """
     Logs the error and exits
     """
     logging.error(message)
     exit(1)
+
 
 def get_package_version(package):
     """
@@ -53,7 +55,7 @@ def get_package_version(package):
                                        r'-[0-9a-zA-Z_\-\.]+rpm$')
     match = regex_package_version.match(package)
     if not match:
-        error('Could not get version from Package name {0}'.format(package))
+        error(f'Could not get version from Package name {package}')
     return int(match.group('major')), int(match.group('minor')), int(match.group('maintenance'))
 
 
@@ -70,7 +72,7 @@ def get_install_version(location):
                                            r'(?P<maintenance>\d+)-\d+$')
         match = regex_install_version.match(version_string)
         if not match:
-            error('Could not get version from the installed Couchbase Server: {0}'.format(location))
+            error(f'Could not get version from the installed Couchbase Server: {location}')
         return int(match.group('major')), int(match.group('minor')), int(match.group('maintenance'))
 
 
@@ -81,12 +83,11 @@ def unpack(package, location):
     old_cwd = os.getcwd()
     package = os.path.abspath(package)
     os.chdir(location)
-    logging.debug('Unpacking {0}'.format(package))
-    return_code = subprocess.call('rpm2cpio {0} | cpio --extract --make-directories'
-                                  ' --no-absolute-filenames'.format(package),
+    logging.debug(f'Unpacking {package}')
+    return_code = subprocess.call(f'rpm2cpio {package} | cpio --extract --make-directories --no-absolute-filenames',
                                   stdout=FNULL, stderr=FNULL, shell=True)
     if return_code != 0:
-        error('Problems unpacking {0} to {1}'.format(package, location))
+        error(f'Problems unpacking {package} to {location}')
     os.chdir('opt/couchbase')
     logging.debug('Executing reloc.sh')
     return_code = subprocess.call(['./bin/install/reloc.sh', os.getcwd()])
@@ -101,13 +102,12 @@ def install(package, location):
     """
     logging.info('Installing Couchbase Server')
     if get_package_version(package)[:2] > VERSION:
-        error('Can only install up to version {0}.{1}.X'.format(VERSION[0], VERSION[1]))
+        error(f'Can only install up to version {VERSION[0]}.{VERSION[1]}.X')
     if os.listdir(location):
-        error('Install location "{0}" is not empty, please provide an empty directory to install'
-              ' to'.format(location))
+        error(f'Install location "{location}" is not empty, please provide an empty directory to install to')
 
     unpack(package, location)
-    print 'Successfully installed'
+    print('Successfully installed')
 
 
 def check_upgrade_versions(package_version, install_version):
@@ -115,19 +115,18 @@ def check_upgrade_versions(package_version, install_version):
     Checks the installed and the upgrade package versions
     """
     if package_version[:2] > VERSION:
-        error('Can only upgrade up to version {0}.{1}.X'.format(VERSION[0], VERSION[1]))
+        error(f'Can only upgrade up to version {VERSION[0]}.{VERSION[1]}.X')
     if package_version < install_version:
-        error('Cannot upgrade installed package {0} is newer than'
-              ' {1}'.format('.'.join(install_version), package_version))
+        error(f'Cannot upgrade installed package {".".join(install_version)} is newer than {package_version}')
     if install_version < (5, 0, 0):
-        error('Upgrade only supported between versions 5.0.0 and {0}.{1}.X'.format(VERSION[0], VERSION[1]))
+        error(f'Upgrade only supported between versions 5.0.0 and {VERSION[0]},{VERSION[1]}.X')
 
 
 def cbupgrade(location):
     """
     Executes cbupgrade
     """
-    print 'Running cbupgrade this could take some time'
+    print('Running cbupgrade this could take some time')
     cbupgrade_cmd = os.path.join(location, 'opt/couchbase/bin/cbupgrade')
     config = os.path.join(location, 'opt/couchbase/var/lib/couchbase/config')
     return_code = subprocess.call([cbupgrade_cmd, '-a', 'yes', '--namespace_upgrade_only', '-c', config], stdout=FNULL)
@@ -141,8 +140,8 @@ def upgrade(package, location):
     """
     logging.info('Upgrading Couchbase Server')
     if not os.listdir(location):
-        error('Upgrade location "{0}" is empty, please provide the location where Couchbase Server'
-              ' is installed'.format(location))
+        error(f'Upgrade location "{location}" is empty, please provide the location where Couchbase Server is '
+              'installed')
 
     package_version = get_package_version(package)
     install_version = get_install_version(location)
@@ -164,7 +163,7 @@ def upgrade(package, location):
     try:
         os.mkdir(backup_config)
     except OSError as e:
-        error('Cannot create the directory {0} to backup the config: {1}'.format(backup_config, e))
+        error(f'Cannot create the directory {backup_config} to backup the config: {e}')
     config_files = ['opt/couchbase/etc/couchdb/local.ini',
                     'opt/couchbase/var/lib/couchbase/couchbase-server.node',
                     'opt/couchbase/var/lib/couchbase/config']
@@ -178,9 +177,9 @@ def upgrade(package, location):
 
     config_files = [os.path.join(location, f) for f in config_files]
 
-    return_code = subprocess.call(['cp',  '-r'] +  config_files + [backup_config])
+    return_code = subprocess.call(['cp', '-r'] + config_files + [backup_config])
     if return_code != 0:
-        error('Problem backing up config to {0}'.format(backup_config))
+        error(f'Problem backing up config to {backup_config}')
 
     # TODO: Get data paths
     # Remove old couchbase files
@@ -201,7 +200,7 @@ def upgrade(package, location):
 
     old_install = [os.path.join(location, f) for f in old_install]
 
-    return_code = subprocess.call(['rm',  '-r'] + old_install)
+    return_code = subprocess.call(['rm', '-r'] + old_install)
     if return_code != 0:
         error('Problem removing the old install')
 
@@ -210,29 +209,26 @@ def upgrade(package, location):
     logging.info('Restoring the old config')
     for config_file in config_files:
         old_config = os.path.basename(config_file)
-        restore_config_command = None
         if old_config == 'config':
-            restore_config_command = 'cp {0}/* {1}'.format(os.path.join(backup_config, old_config),
-                                                           config_file)
+            restore_config_command = f'cp {os.path.join(backup_config, old_config)}/* {old_config}'
         else:
-            restore_config_command = 'cp {0} {1}'.format(os.path.join(backup_config, old_config),
-                                                         config_file)
+            restore_config_command = f'cp {os.path.join(backup_config, old_config)} {config_file})'
         return_code = subprocess.call(restore_config_command, shell=True)
         if return_code != 0:
             error('Problem restoring old config')
     # Remove backup config
     return_codec = subprocess.call(['rm', '-r', backup_config])
     if return_codec != 0:
-        error('Could not remove the backed up config directory {0}'.format(backup_config))
+        error(f'Could not remove the backed up config directory {backup_config}')
     if package_version[:2] == VERSION:
         cbupgrade(location)
-    print 'Upgrade has completed successfully'
+    print('Upgrade has completed successfully')
     exit(0)
 
 
 def which(command):
-    logging.debug("Checking if command '{0}' is available".format(command))
-    return_code = subprocess.call(['which' , command], stdout=FNULL)
+    logging.debug(f"Checking if command '{command}' is available")
+    return_code = subprocess.call(['which', command], stdout=FNULL)
     return return_code == 0
 
 
@@ -240,10 +236,10 @@ def check_install_dependencies():
     """
     Check the dependencies needed to execute this script are available.
     """
-    commands = ['rpm2cpio','cpio', 'rpm', 'perl']
+    commands = ['rpm2cpio', 'cpio', 'rpm', 'perl']
     for command in commands:
         if not which(command):
-            error('Cannot start the install as command "{0}" is not available'.format(command))
+            error(f'Cannot start the install as command "{command}" is not available')
 
 
 def check_package_dependencies(package):
@@ -253,13 +249,14 @@ def check_package_dependencies(package):
     rpm_output = subprocess.check_output(['rpm', '-qpR', package])
     for line in rpm_output.splitlines():
         check_command = True
-        for x  in ['shadow-utils', 'rpmfind', 'rpmlib']:
+        for x in ['shadow-utils', 'rpmfind', 'rpmlib']:
             if line.startswith(x):
                 check_command = False
                 break
         command = line.split(' ')[0]
         if check_command and not which(command):
-            error('Cannot install Couchbase Server missing dependency: "{0}"'.format(command))
+            error(f'Cannot install Couchbase Server missing dependency: "{command}"')
+
 
 def main():
     """
@@ -272,7 +269,7 @@ def main():
     action_group.add_argument('--install', action='store_true', dest='install',
                               help='To do a fresh install of Couchbase Server')
     action_group.add_argument('--upgrade', action='store_true', dest='upgrade',
-                            help='To upgrade an existing install of Couchbase Server')
+                              help='To upgrade an existing install of Couchbase Server')
     opts.add_argument('--install-location', type=str, metavar='Path', dest='location',
                       required=True, help='Path where Couchbase Server should be installed')
     opts.add_argument('--package', type=str, metavar='File', dest='package', required=True,
@@ -292,14 +289,13 @@ def main():
                         datefmt='%Y/%m/%dT%H:%M:%S', level=log_level)
 
     if not os.path.isfile(args.package):
-        error('Package "{0}" does not exist or is not a file'.format(args.package))
+        error(f'Package "{args.package}" does not exist or is not a file')
     if not os.access(args.package, os.R_OK):
-        error('Package "{0}" is not readable, please check the permissions'.format(args.package))
+        error(f'Package "{args.package}" is not readable, please check the permissions')
     if not os.path.isdir(args.location):
-        error('Install location "{0}" does not exist or is not a directory'.format(args.location))
+        error(f'Install location "{args.location}" does not exist or is not a directory')
     if not os.access(args.location, os.W_OK):
-        error('Install location "{0}" is not writable, please check the'
-              ' permissions'.format(args.location))
+        error(f'Install location "{args.location}" is not writable, please check the permissions')
 
     check_install_dependencies()
     check_package_dependencies(args.package)
