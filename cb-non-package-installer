@@ -266,7 +266,7 @@ def check_rpm_dependencies(package):
     rpm_output = subprocess.check_output(['rpm', '-qpR', package], encoding='UTF-8')
     for line in rpm_output.splitlines():
         check_command = True
-        for x in ['shadow-utils', 'rpmfind', 'rpmlib']:
+        for x in ['shadow-utils', 'rpmfind', 'rpmlib', 'pwdutils']:
             if line.startswith(x):
                 check_command = False
                 break
