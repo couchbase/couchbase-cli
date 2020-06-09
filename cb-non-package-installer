@@ -216,7 +216,7 @@ def upgrade(package, location, package_type):
         if old_config == 'config':
             restore_config_command = f'cp {os.path.join(backup_config, old_config)}/* {old_config}'
         else:
-            restore_config_command = f'cp {os.path.join(backup_config, old_config)} {config_file})'
+            restore_config_command = f'cp {os.path.join(backup_config, old_config)} {config_file}'
         return_code = subprocess.call(restore_config_command, shell=True)
         if return_code != 0:
             error('Problem restoring old config')
