@@ -102,6 +102,23 @@ class TestClusterInit(CommandTest):
                           'sendStats=false']
         self.rest_parameter_match(expected_params, False)
 
+    def test_init_cluster_notification_default(self):
+        self.server_args['init'] = False
+        full_options = cluster_connect_args[:2] + self.command_args + [
+            '--cluster-ramsize', '512', '--services', 'data,query,fts,eventing,analytics',
+            '--cluster-index-ramsize', '512', '--cluster-fts-ramsize', '512',
+            '--cluster-eventing-ramsize', '512', '--cluster-name', 'name',
+            '--index-storage-setting', 'memopt',
+        ]
+
+        self.no_error_run(self.command + full_options, self.server_args)
+        self.assertIn('SUCCESS', self.str_output)
+        expected_params = ['memoryQuota=512', 'eventingMemoryQuota=512', 'ftsMemoryQuota=512', 'clusterName=name',
+                           'indexMemoryQuota=512', 'storageMode=memory_optimized',
+                           'username=Administrator', 'password=asdasd', 'port=6789',
+                           'sendStats=true']
+        self.rest_parameter_match(expected_params, False)
+
     def test_error_when_cluster_already_init(self):
         self.system_exit_run(self.command + cluster_connect_args[:2] + self.command_args, self.server_args)
         self.assertIn('Cluster is already initialized', self.str_output)

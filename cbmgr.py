@@ -569,7 +569,7 @@ class ClusterInit(Subcommand):
         group.add_argument("--services", dest="services", default="data", metavar="<service_list>",
                            help="The services to run on this server")
         group.add_argument("--update-notifications", dest="notifications", metavar="<1|0>", choices=["0", "1"],
-                           help="Enables/disable software update notifications")
+                           default="1", help="Enables/disable software update notifications")
 
     def execute(self, opts):
         # We need to ensure that creating the REST username/password is the
@@ -620,12 +620,11 @@ class ClusterInit(Subcommand):
         _exitIfErrors(errors)
 
         # Enable notifications
-        if opts.notifications is not None:
-            if opts.notifications == "1":
-                _, errors = rest.enable_notifications(True)
-            else:
-                _, errors = rest.enable_notifications(False)
-            _exitIfErrors(errors)
+        if opts.notifications == "1":
+            _, errors = rest.enable_notifications(True)
+        else:
+            _, errors = rest.enable_notifications(False)
+        _exitIfErrors(errors)
 
         # Setup Administrator credentials and Admin Console port
         _, errors = rest.set_admin_credentials(opts.username, opts.password,
