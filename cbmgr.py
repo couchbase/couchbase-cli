@@ -52,13 +52,64 @@ if os.name == "nt":
 else:
     CB_MAN_PATH = os.path.join(CB_MAN_PATH, "man", "man1")
 
+
+def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_check=None):
+    """rest_initialiser is a decorator that does common subcommand tasks.
+
+    The decorator will always creates a cluster manager and assign it to the subcommand variable rest
+    :param cluster_init_check: if true it will check if the cluster is initialized before executing the subcommand
+    :param version_check: if true it will check if the cluster and CLI version match if they do not it prints a warning
+    :param enterprise_check: if true it will check if the cluster is enterprise and fail if not. If it is false it does
+        the check but it does not fail if not enterprise. If none it does not perform the check. The result of the check
+        is stored on the instance parameter enterprise
+    """
+    def inner(fn):
+        def decorator(self, opts):
+            self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify, opts.cacert,
+                                       opts.debug)
+            if cluster_init_check:
+                check_cluster_initialized(self.rest)
+            if version_check:
+                check_versions(self.rest)
+            if enterprise_check is not None:
+                enterprise, errors = self.rest.is_enterprise()
+                _exitIfErrors(errors)
+
+                if enterprise_check and not enterprise:
+                    _exitIfErrors(['Command only available in enterprise edition'])
+
+                self.enterprise = enterprise
+
+            return fn(self, opts)
+        return decorator
+    return inner
+
+
 def check_cluster_initialized(rest):
-    """Checks to see if the cluster is initialized"""
     initialized, errors = rest.is_cluster_initialized()
     if errors:
         _exitIfErrors(errors)
     if not initialized:
         _exitIfErrors(["Cluster is not initialized, use cluster-init to initialize the cluster"])
+
+
+def check_versions(rest):
+    result, errors = rest.pools()
+    if errors:
+        return
+
+    server_version = result['implementationVersion']
+    if server_version is None or VERSION is None:
+        return
+
+    major_couch = server_version[: server_version.index('.')]
+    minor_couch = server_version[server_version.index('.') + 1: server_version.index('.', len(major_couch) + 1)]
+    major_cli = VERSION[: VERSION.index('.')]
+    minor_cli = VERSION[VERSION.index('.') + 1: VERSION.index('.', len(major_cli) + 1)]
+
+    if major_cli != major_couch or minor_cli != minor_couch:
+        _warning(f'couchbase-cli version {VERSION} does not match couchbase server version {server_version}')
+
 
 def index_storage_mode_to_param(value, default="plasma"):
     """Converts the index storage mode to what Couchbase understands"""
@@ -160,23 +211,6 @@ def apply_default_port(nodes):
         return f'{node}:8091'
     return [append_port(x) for x in nodes]
 
-
-def check_versions(rest):
-    result, errors = rest.pools()
-    if errors:
-        return
-
-    server_version = result['implementationVersion']
-    if server_version is None or VERSION is None:
-        return
-
-    major_couch = server_version[: server_version.index('.')]
-    minor_couch = server_version[server_version.index('.') + 1: server_version.index('.', len(major_couch) + 1)]
-    major_cli = VERSION[: VERSION.index('.')]
-    minor_cli = VERSION[VERSION.index('.') + 1: VERSION.index('.', len(major_cli) + 1)]
-
-    if major_cli != major_couch or minor_cli != minor_couch:
-        _warning(f'couchbase-cli version {VERSION} does not match couchbase server version {server_version}')
 
 class CLIHelpFormatter(HelpFormatter):
     """Format help with indented section bodies"""
@@ -450,6 +484,10 @@ class Subcommand(Command):
 
     def __init__(self, deprecate_username=False, deprecate_password=False, cluster_default=None):
         super(Subcommand, self).__init__()
+        # Filled by the decorators
+        self.rest = None
+        self.enterprise = None
+
         self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False, allow_abbrev=False)
         group = self.parser.add_argument_group("Cluster options")
         group.add_argument("-c", "--cluster", dest="cluster", required=(cluster_default==None),
@@ -569,26 +607,21 @@ class ClusterInit(Subcommand):
         group.add_argument("--services", dest="services", default="data", metavar="<service_list>",
                            help="The services to run on this server")
 
+    @rest_initialiser(enterprise_check=False)
     def execute(self, opts):
         # We need to ensure that creating the REST username/password is the
         # last REST API that is called because once that API succeeds the
         # cluster is initialized and cluster-init cannot be run again.
 
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-
-        initialized, errors = rest.is_cluster_initialized()
+        initialized, errors = self.rest.is_cluster_initialized()
         _exitIfErrors(errors)
         if initialized:
             _exitIfErrors(["Cluster is already initialized, use setting-cluster to change settings"])
 
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-
-        if not enterprise and opts.index_storage_mode == 'memopt':
+        if not self.enterprise and opts.index_storage_mode == 'memopt':
             _exitIfErrors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
 
-        services, errors = process_services(opts.services, enterprise)
+        services, errors = process_services(opts.services, self.enterprise)
         _exitIfErrors(errors)
 
         if 'kv' not in services.split(','):
@@ -596,7 +629,7 @@ class ClusterInit(Subcommand):
 
         if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota \
                 or opts.eventing_mem_quota or opts.name is not None:
-            _, errors = rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
+            _, errors = self.rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
                                                opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
         _exitIfErrors(errors)
 
@@ -605,24 +638,24 @@ class ClusterInit(Subcommand):
             opts.index_storage_mode = "default"
 
         default = "plasma"
-        if not enterprise:
+        if not self.enterprise:
             default = "forestdb"
 
         if opts.index_storage_mode:
             param = index_storage_mode_to_param(opts.index_storage_mode, default)
-            _, errors = rest.set_index_settings(param, None, None, None, None, None)
+            _, errors = self.rest.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
         # Setup services
-        _, errors = rest.setup_services(services)
+        _, errors = self.rest.setup_services(services)
         _exitIfErrors(errors)
 
         # Enable notifications
-        _, errors = rest.enable_notifications(True)
+        _, errors = self.rest.enable_notifications(True)
         _exitIfErrors(errors)
 
         # Setup Administrator credentials and Admin Console port
-        _, errors = rest.set_admin_credentials(opts.username, opts.password,
+        _, errors = self.rest.set_admin_credentials(opts.username, opts.password,
                                                opts.port)
         _exitIfErrors(errors)
 
@@ -651,19 +684,15 @@ class BucketCompact(Subcommand):
         group.add_argument("--view-only", dest="view_only", action="store_true",
                            help="Only compact the view files")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        bucket, errors = rest.get_bucket(opts.bucket_name)
+        bucket, errors = self.rest.get_bucket(opts.bucket_name)
         _exitIfErrors(errors)
 
         if bucket["bucketType"] != BUCKET_TYPE_COUCHBASE:
             _exitIfErrors(["Cannot compact memcached buckets"])
 
-        _, errors = rest.compact_bucket(opts.bucket_name, opts.data_only, opts.view_only)
+        _, errors = self.rest.compact_bucket(opts.bucket_name, opts.data_only, opts.view_only)
         _exitIfErrors(errors)
 
         _success("Bucket compaction started")
@@ -750,18 +779,11 @@ class BucketCreate(Subcommand):
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
                            metavar="<float>", help="Set parallel DB and View Compaction")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-
-        if opts.max_ttl and not enterprise:
+        if opts.max_ttl and not self.enterprise:
             _exitIfErrors(["Maximum TTL can only be configured on enterprise edition"])
-        if opts.compression_mode and not enterprise:
+        if opts.compression_mode and not self.enterprise:
             _exitIfErrors(["Compression mode can only be configured on enterprise edition"])
 
         if opts.type == "memcached":
@@ -815,7 +837,7 @@ class BucketCreate(Subcommand):
             elif opts.conflict_resolution == "timestamp":
                 conflict_resolution_type = "lww"
 
-        _, errors = rest.create_bucket(opts.bucket_name, opts.type, storage_type, opts.memory_quota,
+        _, errors = self.rest.create_bucket(opts.bucket_name, opts.type, storage_type, opts.memory_quota,
                                        opts.durability_min_level, opts.eviction_policy,
                                        opts.replica_count, opts.replica_indexes, priority, conflict_resolution_type,
                                        opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.wait,
@@ -844,16 +866,12 @@ class BucketDelete(Subcommand):
         group.add_argument("--bucket", dest="bucket_name", metavar="<name>", required=True,
                            help="The name of bucket to delete")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        _, errors = rest.get_bucket(opts.bucket_name)
+        _, errors = self.rest.get_bucket(opts.bucket_name)
         _exitIfErrors(errors)
 
-        _, errors = rest.delete_bucket(opts.bucket_name)
+        _, errors = self.rest.delete_bucket(opts.bucket_name)
         _exitIfErrors(errors)
 
         _success("Bucket deleted")
@@ -927,22 +945,15 @@ class BucketEdit(Subcommand):
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
                            metavar="<num>", help="Set parallel DB and View Compaction")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-
-        if opts.max_ttl and not enterprise:
+        if opts.max_ttl and not self.enterprise:
             _exitIfErrors(["Maximum TTL can only be configured on enterprise edition"])
 
-        if opts.compression_mode and not enterprise:
+        if opts.compression_mode and not self.enterprise:
             _exitIfErrors(["Compression mode can only be configured on enterprise edition"])
 
-        bucket, errors = rest.get_bucket(opts.bucket_name)
+        bucket, errors = self.rest.get_bucket(opts.bucket_name)
         _exitIfErrors(errors)
 
         if "bucketType" in bucket and bucket["bucketType"] == "memcached":
@@ -982,7 +993,7 @@ class BucketEdit(Subcommand):
             else:
                 opts.remove_port = False
 
-        _, errors = rest.edit_bucket(opts.bucket_name, opts.memory_quota, opts.durability_min_level,
+        _, errors = self.rest.edit_bucket(opts.bucket_name, opts.memory_quota, opts.durability_min_level,
                                      opts.eviction_policy, opts.replica_count,
                                      priority, opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.remove_port,
                                      opts.db_frag_perc, opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
@@ -1013,13 +1024,9 @@ class BucketFlush(Subcommand):
         group.add_argument("--force", dest="force", action="store_true",
                            help="Execute the command without asking to confirm")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        _, errors = rest.get_bucket(opts.bucket_name)
+        _, errors = self.rest.get_bucket(opts.bucket_name)
         _exitIfErrors(errors)
 
         if not opts.force:
@@ -1029,7 +1036,7 @@ class BucketFlush(Subcommand):
             if confirm not in ('y', 'Y', 'yes', 'Yes'):
                 return
 
-        _, errors = rest.flush_bucket(opts.bucket_name)
+        _, errors = self.rest.flush_bucket(opts.bucket_name)
         _exitIfErrors(errors)
 
         _success("Bucket flushed")
@@ -1050,12 +1057,9 @@ class BucketList(Subcommand):
         super(BucketList, self).__init__()
         self.parser.prog = "couchbase-cli bucket-list"
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-
-        result, errors = rest.list_buckets(extended=True)
+        result, errors = self.rest.list_buckets(extended=True)
         _exitIfErrors(errors)
 
         if opts.output == 'json':
@@ -1107,12 +1111,8 @@ class CollectLogsStart(Subcommand):
         group.add_argument("--ticket", dest="upload_ticket", metavar="<num>",
                            help="The ticket number the logs correspond to")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         if not opts.nodes and not opts.all_nodes:
             _exitIfErrors(["Must specify either --all-nodes or --nodes"])
 
@@ -1141,7 +1141,7 @@ class CollectLogsStart(Subcommand):
             if opts.upload_proxy:
                 _warning("--upload_proxy has no effect with specifying --upload")
 
-        _, errors = rest.collect_logs_start(servers, opts.redaction_level, opts.salt, opts.output_dir, opts.tmp_dir,
+        _, errors = self.rest.collect_logs_start(servers, opts.redaction_level, opts.salt, opts.output_dir, opts.tmp_dir,
                                             opts.upload, opts.upload_host, opts.upload_proxy, opts.upload_customer,
                                             opts.upload_ticket)
         _exitIfErrors(errors)
@@ -1163,13 +1163,9 @@ class CollectLogsStatus(Subcommand):
         super(CollectLogsStatus, self).__init__()
         self.parser.prog = "couchbase-cli collect-logs-status"
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        tasks, errors = rest.get_tasks()
+        tasks, errors = self.rest.get_tasks()
         _exitIfErrors(errors)
 
         found = False
@@ -1209,12 +1205,9 @@ class CollectLogsStop(Subcommand):
         super(CollectLogsStop, self).__init__()
         self.parser.prog = "couchbase-cli collect-logs-stop"
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-
-        _, errors = rest.collect_logs_stop()
+        _, errors = self.rest.collect_logs_stop()
         _exitIfErrors(errors)
 
         _success("Log collection stopped")
@@ -1244,20 +1237,16 @@ class Failover(Subcommand):
         group.add_argument("--no-wait", dest="wait", action="store_false",
                            default=True, help="Don't wait for rebalance completion")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         opts.servers_to_failover = apply_default_port(opts.servers_to_failover)
-        _, errors = rest.failover(opts.servers_to_failover, opts.force)
+        _, errors = self.rest.failover(opts.servers_to_failover, opts.force)
         _exitIfErrors(errors)
 
         if not opts.force:
             time.sleep(1)
             if opts.wait:
-                bar = TopologyProgressBar(rest, 'Gracefully failing over', opts.no_bar)
+                bar = TopologyProgressBar(self.rest, 'Gracefully failing over', opts.no_bar)
                 errors = bar.show()
                 _exitIfErrors(errors)
                 _success("Server failed over")
@@ -1299,12 +1288,8 @@ class GroupManage(Subcommand):
         group.add_argument("--to-group", dest="to_group", metavar="<group>",
                            help="The group to move servers to")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
         if sum(cmd is not None for cmd in cmds) == 0:
             _exitIfErrors(["Must specify one of the following: --create, " +
@@ -1314,32 +1299,32 @@ class GroupManage(Subcommand):
                            ", --delete, --list, --move-servers, or --rename"])
 
         if opts.create:
-            self._create(rest, opts)
+            self._create(opts)
         elif opts.delete:
-            self._delete(rest, opts)
+            self._delete(opts)
         elif opts.list:
-            self._list(rest, opts)
+            self._list(opts)
         elif opts.rename:
-            self._rename(rest, opts)
+            self._rename( opts)
         elif opts.move_servers is not None:
-            self._move(rest, opts)
+            self._move(opts)
 
-    def _create(self, rest, opts):
+    def _create(self, opts):
         if opts.name is None:
             _exitIfErrors(["--group-name is required with --create flag"])
-        _, errors = rest.create_server_group(opts.name)
+        _, errors = self.rest.create_server_group(opts.name)
         _exitIfErrors(errors)
         _success("Server group created")
 
-    def _delete(self, rest, opts):
+    def _delete(self, opts):
         if opts.name is None:
             _exitIfErrors(["--group-name is required with --delete flag"])
-        _, errors = rest.delete_server_group(opts.name)
+        _, errors = self.rest.delete_server_group(opts.name)
         _exitIfErrors(errors)
         _success("Server group deleted")
 
-    def _list(self, rest, opts):
-        groups, errors = rest.get_server_groups()
+    def _list(self, opts):
+        groups, errors = self.rest.get_server_groups()
         _exitIfErrors(errors)
 
         found = False
@@ -1352,21 +1337,21 @@ class GroupManage(Subcommand):
         if not found and opts.name:
             _exitIfErrors([f'Invalid group name: {opts.name}'])
 
-    def _move(self, rest, opts):
+    def _move(self, opts):
         if opts.from_group is None:
             _exitIfErrors(["--from-group is required with --move-servers"])
         if opts.to_group is None:
             _exitIfErrors(["--to-group is required with --move-servers"])
 
         servers = apply_default_port(opts.move_servers)
-        _, errors = rest.move_servers_between_groups(servers, opts.from_group, opts.to_group)
+        _, errors = self.rest.move_servers_between_groups(servers, opts.from_group, opts.to_group)
         _exitIfErrors(errors)
         _success("Servers moved between groups")
 
-    def _rename(self, rest, opts):
+    def _rename(self, opts):
         if opts.name is None:
             _exitIfErrors(["--group-name is required with --rename option"])
-        _, errors = rest.rename_server_group(opts.name, opts.rename)
+        _, errors = self.rest.rename_server_group(opts.name, opts.rename)
         _exitIfErrors(errors)
         _success("Server group renamed")
 
@@ -1386,11 +1371,9 @@ class HostList(Subcommand):
         super(HostList, self).__init__()
         self.parser.prog = "couchbase-cli host-list"
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
-        result, errors = rest.pools('default')
+        result, errors = self.rest.pools('default')
         _exitIfErrors(errors)
 
         if opts.output == 'json':
@@ -1556,9 +1539,8 @@ class NodeInit(Subcommand):
         group.add_argument("--ipv4", dest="ipv4", action="store_true", default=False,
                            help="Configure the node to communicate via ipv4")
 
+    @rest_initialiser()
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
         # Cluster does not need to be initialized for this command
 
         if (opts.data_path is None and opts.index_path is None and opts.analytics_path is None
@@ -1567,7 +1549,7 @@ class NodeInit(Subcommand):
             _exitIfErrors(["No node initialization parameters specified"])
 
         if opts.data_path or opts.index_path or opts.analytics_path or opts.eventing_path or opts.java_home is not None:
-            _, errors = rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path, opts.eventing_path,
+            _, errors = self.rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path, opts.eventing_path,
                                             opts.java_home)
             _exitIfErrors(errors)
 
@@ -1575,22 +1557,22 @@ class NodeInit(Subcommand):
             _exitIfErrors(["Use either --ipv4 or --ipv6"])
 
         if opts.ipv6:
-            self._set_ipv(rest, "ipv6", "ipv4")
+            self._set_ipv("ipv6", "ipv4")
         elif opts.ipv4:
-            self._set_ipv(rest, "ipv4", "ipv6")
+            self._set_ipv("ipv4", "ipv6")
 
         if opts.hostname:
-            _, errors = rest.set_hostname(opts.hostname)
+            _, errors = self.rest.set_hostname(opts.hostname)
             _exitIfErrors(errors)
 
         _success("Node initialized")
 
-    def _set_ipv(self, rest, ip_enable, ip_disable):
-        _, err = rest.enable_external_listener(ipfamily=ip_enable)
+    def _set_ipv(self, ip_enable, ip_disable):
+        _, err = self.rest.enable_external_listener(ipfamily=ip_enable)
         _exitIfErrors(err)
-        _, err = rest.setup_net_config(ipfamily=ip_enable)
+        _, err = self.rest.setup_net_config(ipfamily=ip_enable)
         _exitIfErrors(err)
-        _, err = rest.disable_external_listener(ipfamily=ip_disable)
+        _, err = self.rest.disable_external_listener(ipfamily=ip_disable)
         _exitIfErrors(err)
 
     @staticmethod
@@ -1616,23 +1598,19 @@ class Rebalance(Subcommand):
         group.add_argument("--no-wait", dest="wait", action="store_false",
                            default=True, help="Don't wait for rebalance completion")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         eject_nodes = []
         if opts.server_remove:
             eject_nodes = apply_default_port(opts.server_remove)
 
-        _, errors = rest.rebalance(eject_nodes)
+        _, errors = self.rest.rebalance(eject_nodes)
         _exitIfErrors(errors)
 
         time.sleep(1)
 
         if opts.wait:
-            bar = TopologyProgressBar(rest, 'Rebalancing', opts.no_bar)
+            bar = TopologyProgressBar(self.rest, 'Rebalancing', opts.no_bar)
             errors = bar.show()
             _exitIfErrors(errors)
             _success("Rebalance complete")
@@ -1655,13 +1633,9 @@ class RebalanceStatus(Subcommand):
         super(RebalanceStatus, self).__init__()
         self.parser.prog = "couchbase-cli rebalance-status"
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        status, errors = rest.rebalance_status()
+        status, errors = self.rest.rebalance_status()
         _exitIfErrors(errors)
 
         print(json.dumps(status, indent=2))
@@ -1682,13 +1656,9 @@ class RebalanceStop(Subcommand):
         super(RebalanceStop, self).__init__()
         self.parser.prog = "couchbase-cli rebalance-stop"
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        _, errors = rest.stop_rebalance()
+        _, errors = self.rest.stop_rebalance()
         _exitIfErrors(errors)
 
         _success("Rebalance stopped")
@@ -1715,15 +1685,11 @@ class Recovery(Subcommand):
                            choices=["delta", "full"], default="delta",
                            help="The recovery type (delta or full)")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         servers = apply_default_port(opts.servers)
         for server in servers:
-            _, errors = rest.recovery(server, opts.recovery_type)
+            _, errors = self.rest.recovery(server, opts.recovery_type)
             _exitIfErrors(errors)
 
         _success("Servers recovered")
@@ -1802,22 +1768,15 @@ class ServerAdd(Subcommand):
         group.add_argument("--index-storage-setting", dest="index_storage_mode", metavar="<mode>",
                            choices=["default", "memopt"], help="The index storage mode")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-
-        if not enterprise and opts.index_storage_mode == 'memopt':
+        if not self.enterprise and opts.index_storage_mode == 'memopt':
             _exitIfErrors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
 
-        opts.services, errors = process_services(opts.services, enterprise)
+        opts.services, errors = process_services(opts.services, self.enterprise)
         _exitIfErrors(errors)
 
-        settings, errors = rest.index_settings()
+        settings, errors = self.rest.index_settings()
         _exitIfErrors(errors)
 
         if opts.index_storage_mode is None and settings['storageMode'] == "" and "index" in opts.services:
@@ -1825,17 +1784,17 @@ class ServerAdd(Subcommand):
 
         # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
         default = "plasma"
-        if opts.index_storage_mode == "default" and settings['storageMode'] == "forestdb" or not enterprise:
+        if opts.index_storage_mode == "default" and settings['storageMode'] == "forestdb" or not self.enterprise:
             default = "forestdb"
 
         if opts.index_storage_mode:
             param = index_storage_mode_to_param(opts.index_storage_mode, default)
-            _, errors = rest.set_index_settings(param, None, None, None, None, None)
+            _, errors = self.rest.set_index_settings(param, None, None, None, None, None)
             _exitIfErrors(errors)
 
         servers = opts.servers.split(',')
         for server in servers:
-            _, errors = rest.add_server(server, opts.group_name, opts.server_username,
+            _, errors = self.rest.add_server(server, opts.group_name, opts.server_username,
                                         opts.server_password, opts.services)
             _exitIfErrors(errors)
 
@@ -1862,20 +1821,17 @@ class ServerEshell(Subcommand):
         group.add_argument("--erl-path", dest="erl_path", metavar="<path>", default=CB_BIN_PATH,
                            help="Override the path to the erl executable")
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
         # Cluster does not need to be initialized for this command
-        check_versions(rest)
-
-        result, errors = rest.node_info()
+        result, errors = self.rest.node_info()
         _exitIfErrors(errors)
 
         node = result['otpNode']
         cookie = result['otpCookie']
 
         if opts.vm != 'ns_server':
-            cookie, errors = rest.get_babysitter_cookie()
+            cookie, errors = self.rest.get_babysitter_cookie()
             _exitIfErrors(errors)
 
             [short, _] = node.split('@')
@@ -1931,13 +1887,10 @@ class ServerInfo(Subcommand):
         super(ServerInfo, self).__init__()
         self.parser.prog = "couchbase-cli server-info"
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
         # Cluster does not need to be initialized for this command
-        check_versions(rest)
-
-        result, errors = rest.node_info()
+        result, errors = self.rest.node_info()
         _exitIfErrors(errors)
 
         print(json.dumps(result, sort_keys=True, indent=2))
@@ -1958,12 +1911,9 @@ class ServerList(Subcommand):
         super(ServerList, self).__init__()
         self.parser.prog = "couchbase-cli server-list"
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
-
-        result, errors = rest.pools('default')
+        result, errors = self.rest.pools('default')
         _exitIfErrors(errors)
 
         for node in result['nodes']:
@@ -1998,16 +1948,13 @@ class ServerReadd(Subcommand):
         group.add_argument("--group-name", dest="name", metavar="<name>",
                            help="The name of the server group")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         _deprecated("Please use the recovery command instead")
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
 
         servers = apply_default_port(opts.servers)
         for server in servers:
-            _, errors = rest.readd_server(server)
+            _, errors = self.rest.readd_server(server)
             _exitIfErrors(errors)
 
         _success("Servers recovered")
@@ -2085,12 +2032,8 @@ class SettingAlert(Subcommand):
         group.add_argument("--alert-communication-issue", dest="alert_communication_issue",
                            action="store_true", help="Alert when nodes are experiencing communication issues")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         if opts.enabled == "1":
             if opts.email_recipients is None:
                 _exitIfErrors(["--email-recipient must be set when email alerts are enabled"])
@@ -2139,7 +2082,7 @@ class SettingAlert(Subcommand):
         if opts.email_encrypt == "1":
             email_encrypt = "true"
 
-        _, errors = rest.set_alert_settings(enabled, opts.email_recipients,
+        _, errors = self.rest.set_alert_settings(enabled, opts.email_recipients,
                                             opts.email_sender, opts.email_username,
                                             opts.email_password, opts.email_host,
                                             opts.email_port, email_encrypt,
@@ -2184,18 +2127,14 @@ class SettingAudit(Subcommand):
         group.add_argument("--disable-events", dest="disable_events", default= None,
                            help="A comma-separated list of audit-event IDs to not audit")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         flags = sum([opts.list_events, opts.get_settings, opts.set_settings])
         if flags != 1:
             _exitIfErrors(["One of the following is required: --list-filterable-events, --get-settings or --set"])
 
         if opts.list_events:
-            descriptors, errors = rest.get_id_descriptors()
+            descriptors, errors = self.rest.get_id_descriptors()
             _exitIfErrors(errors)
             if opts.output == 'json':
                 print(json.dumps(descriptors, indent=4))
@@ -2204,13 +2143,13 @@ class SettingAudit(Subcommand):
             self.format_descriptors_in_table(descriptors)
             return
         elif opts.get_settings:
-            audit_settings, errors = rest.get_audit_settings()
+            audit_settings, errors = self.rest.get_audit_settings()
             _exitIfErrors(errors)
             if opts.output == 'json':
                 print(json.dumps(audit_settings, indent=4))
                 return
 
-            descriptors, errors = rest.get_id_descriptors()
+            descriptors, errors = self.rest.get_id_descriptors()
             _exitIfErrors(errors)
             self.format_audit_settings(audit_settings, descriptors)
             return
@@ -2225,7 +2164,7 @@ class SettingAudit(Subcommand):
             elif opts.enabled == "0":
                 opts.enabled = "false"
 
-            _, errors = rest.set_audit_settings(opts.enabled, opts.log_path, opts.rotate_interval, opts.rotate_size,
+            _, errors = self.rest.set_audit_settings(opts.enabled, opts.log_path, opts.rotate_interval, opts.rotate_size,
                                                 opts.disable_events, opts.disabled_users)
             _exitIfErrors(errors)
             _success("Audit settings modified")
@@ -2317,12 +2256,8 @@ class SettingAutofailover(Subcommand):
         group.add_argument("--can-abort-rebalance", metavar="<1|0>", choices=["1", "0"], dest="canAbortRebalance",
                            help="Enables auto-failover to abort rebalance and perform the failover. (EE only)")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         if opts.enabled == "1":
             opts.enabled = "true"
         elif opts.enabled == "0":
@@ -2338,10 +2273,7 @@ class SettingAutofailover(Subcommand):
         elif opts.enableFailoverOfServerGroups == "0":
             opts.enableFailoverOfServerGroups = "false"
 
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-
-        if not enterprise:
+        if not self.enterprise:
             if opts.enableFailoverOfServerGroups:
                 _exitIfErrors(["--enable-failover-of-server-groups can only be configured on enterprise edition"])
             if opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod:
@@ -2378,7 +2310,7 @@ class SettingAutofailover(Subcommand):
         elif opts.canAbortRebalance == '0':
             opts.canAbortRebalance ='false'
 
-        _, errors = rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.enableFailoverOfServerGroups,
+        _, errors = self.rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.enableFailoverOfServerGroups,
                                                    opts.maxFailovers, opts.enableFailoverOnDataDiskIssues,
                                                    opts.failoverOnDataDiskPeriod, opts.canAbortRebalance)
         _exitIfErrors(errors)
@@ -2406,12 +2338,8 @@ class SettingAutoreprovision(Subcommand):
         group.add_argument("--max-nodes", dest="max_nodes", metavar="<num>", type=(int),
                            help="The numbers of server that can be auto-reprovisioned before a rebalance")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         if opts.enabled == "1":
             opts.enabled = "true"
         elif opts.enabled == "0":
@@ -2426,7 +2354,7 @@ class SettingAutoreprovision(Subcommand):
         if (opts.enabled is None or opts.enabled == "false") and opts.max_nodes:
             _warning("--max-servers will not take affect because auto-reprovision is being disabled")
 
-        _, errors = rest.set_autoreprovision_settings(opts.enabled, opts.max_nodes)
+        _, errors = self.rest.set_autoreprovision_settings(opts.enabled, opts.max_nodes)
         _exitIfErrors(errors)
 
         _success("Auto-reprovision settings modified")
@@ -2465,15 +2393,11 @@ class SettingCluster(Subcommand):
                            type=(int), help="The analytics service memory quota in megabytes")
         group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota \
                 or opts.eventing_mem_quota or opts.name:
-            _, errors = rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
+            _, errors = self.rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
                                                opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
             _exitIfErrors(errors)
 
@@ -2486,7 +2410,7 @@ class SettingCluster(Subcommand):
             if opts.new_password:
                 password = opts.new_password
 
-            _, errors = rest.set_admin_credentials(username, password, opts.port)
+            _, errors = self.rest.set_admin_credentials(username, password, opts.port)
             _exitIfErrors(errors)
 
         _success("Cluster settings modified")
@@ -2565,12 +2489,8 @@ class SettingCompaction(Subcommand):
                           choices=["0", "1"],
                           help="Abort gsi compaction if when run outside of the accepted interaval (Circular mode only)")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         if opts.db_perc is not None and (opts.db_perc < 2 or opts.db_perc > 100):
             _exitIfErrors(["--compaction-db-percentage must be between 2 and 100"])
 
@@ -2653,7 +2573,7 @@ class SettingCompaction(Subcommand):
             else:
                 opts.enable_gsi_abort = "false"
 
-        _, errors = rest.set_compaction_settings(opts.db_perc, opts.db_size, opts.view_perc,
+        _, errors = self.rest.set_compaction_settings(opts.db_perc, opts.db_size, opts.view_perc,
                                                  opts.view_size, from_hour, from_min, to_hour,
                                                  to_min, opts.enable_abort, opts.enable_parallel,
                                                  opts.purge_interval, opts.gsi_mode,
@@ -2717,30 +2637,23 @@ class SettingIndex(Subcommand):
                                     "timing", "trace"],
                            help="The indexer log level")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-
         if opts.max_rollback is None and opts.stable_snap is None \
             and opts.mem_snap is None and opts.storage_mode is None \
             and opts.threads is None and opts.log_level is None:
             _exitIfErrors(["No settings specified to be changed"])
 
-        settings, errors = rest.index_settings()
+        settings, errors = self.rest.index_settings()
         _exitIfErrors(errors)
 
         # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
         default = "plasma"
-        if opts.storage_mode == "default" and settings['storageMode'] == "forestdb" or not enterprise:
+        if opts.storage_mode == "default" and settings['storageMode'] == "forestdb" or not self.enterprise:
             default = "forestdb"
 
         opts.storage_mode = index_storage_mode_to_param(opts.storage_mode, default)
-        _, errors = rest.set_index_settings(opts.storage_mode, opts.max_rollback,
+        _, errors = self.rest.set_index_settings(opts.storage_mode, opts.max_rollback,
                                             opts.stable_snap, opts.mem_snap,
                                             opts.threads, opts.log_level)
         _exitIfErrors(errors)
@@ -2773,12 +2686,8 @@ class SettingSaslauthd(Subcommand):
                            choices=["admins", "roadmins", "none"], metavar="<default>",
                            help="Default roles for saslauthd users")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         admins = ""
         if opts.admins:
             admins = opts.admins.replace(",", "\n")
@@ -2792,19 +2701,19 @@ class SettingSaslauthd(Subcommand):
             if opts.default == 'admins':
                 if ro_admins:
                     _warning("--ro-admins option ignored since default is read only admins")
-                _, errors = rest.sasl_settings('true', ro_admins, None)
+                _, errors = self.rest.sasl_settings('true', ro_admins, None)
             elif opts.default == 'roadmins':
                 if admins:
                     _warning("--admins option ignored since default is admins")
-                _, errors = rest.sasl_settings('true', None, admins)
+                _, errors = self.rest.sasl_settings('true', None, admins)
             else:
-                _, errors = rest.sasl_settings('true', ro_admins, admins)
+                _, errors = self.rest.sasl_settings('true', ro_admins, admins)
         else:
             if admins:
                 _warning("--admins option ignored since saslauthd is being disabled")
             if ro_admins:
                 _warning("--roadmins option ignored since saslauthd is being disabled")
-            _, errors = rest.sasl_settings('false', "", "")
+            _, errors = self.rest.sasl_settings('false', "", "")
 
         _exitIfErrors(errors)
 
@@ -2864,25 +2773,16 @@ class SettingLdap(Subcommand):
         group.add_argument("--nested-group-max-depth", dest="nested_max_depth", metavar="<max>", type=int,
                            help="Maximum number of recursive group requests allowed. [1 - 100]")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-
-        if not enterprise:
-            _exitIfErrors(["LDAP settings are only available in enterprise edition"])
-
         if opts.get:
-            data, rv = rest.get_ldap()
+            data, rv = self.rest.get_ldap()
             _exitIfErrors(rv)
             print(json.dumps(data))
         else:
-            self._set(opts, rest)
+            self._set(opts)
 
-    def _set(self, opts, rest):
+    def _set(self, opts):
         if opts.authentication_enabled == '1':
             opts.authentication_enabled = 'true'
         elif opts.authentication_enabled == '0':
@@ -2926,7 +2826,7 @@ class SettingLdap(Subcommand):
         if opts.user_dn_template is not None:
             mapping = f'{{"template": "{opts.user_dn_template}"}}'
 
-        _, errors = rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts, opts.port,
+        _, errors = self.rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts, opts.port,
                                        opts.encryption, mapping, opts.timeout, opts.max_parallel,
                                        opts.max_cache_size, opts.cache_value_lifetime, opts.bind_dn, opts.bind_password,
                                        opts.group_query, opts.nested_groups, opts.nested_max_depth,
@@ -2954,18 +2854,15 @@ class SettingNotification(Subcommand):
         group.add_argument("--enable-notifications", dest="enabled", metavar="<1|0>", required=True,
                            choices=["0", "1"], help="Enables/disable notifications")
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
-
         enabled = None
         if opts.enabled == "1":
             enabled = True
         elif opts.enabled == "0":
             enabled = False
 
-        _, errors = rest.enable_notifications(enabled)
+        _, errors = self.rest.enable_notifications(enabled)
         _exitIfErrors(errors)
 
         _success("Notification settings updated")
@@ -3001,11 +2898,8 @@ class SettingPasswordPolicy(Subcommand):
         group.add_argument("--special-char", dest="special_char", metavar="<0|1>", choices=["0", "1"],
                            help="Specifies new passwords must at least one special character")
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
-
         actions = sum([opts.get, opts.set])
         if actions == 0:
             _exitIfErrors(["Must specify either --get or --set"])
@@ -3015,21 +2909,21 @@ class SettingPasswordPolicy(Subcommand):
         elif opts.get:
             if opts.min_length is not None or any([opts.upper_case, opts.lower_case, opts.digit, opts.special_char]):
                 _exitIfErrors(["The --get flag must be used without any other arguments"])
-            self._get(rest)
+            self._get()
         elif opts.set:
             if opts.min_length is None:
                 _exitIfErrors(["--min-length is required when using --set flag"])
             if opts.min_length <= 0:
                     _exitIfErrors(["--min-length has to be greater than 0"])
-            self._set(rest, opts)
+            self._set(opts)
 
-    def _get(self, rest):
-        policy, errors = rest.get_password_policy()
+    def _get(self):
+        policy, errors = self.rest.get_password_policy()
         _exitIfErrors(errors)
         print(json.dumps(policy, sort_keys=True, indent=2))
 
-    def _set(self, rest, opts):
-        _, errors = rest.set_password_policy(opts.min_length, opts.upper_case, opts.lower_case,
+    def _set(self, opts):
+        _, errors = self.rest.set_password_policy(opts.min_length, opts.upper_case, opts.lower_case,
                                              opts.digit, opts.special_char)
         _exitIfErrors(errors)
         _success("Password policy updated")
@@ -3069,20 +2963,17 @@ class SettingSecurity(Subcommand):
                            help='Comma separated list of ciphers to use.If an empty string (e.g "") given it will'
                                 ' reset ciphers to default.')
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
-
         if sum([opts.get, opts.set]) != 1:
             _exitIfErrors(['Provided either --set or --get.'])
 
         if opts.get:
-            val, err = rest.get_security_settings()
+            val, err = self.rest.get_security_settings()
             _exitIfErrors(err)
             print(json.dumps(val))
         elif opts.set:
-            self._set(rest, opts.disable_http_ui, opts.cluster_encryption_level, opts.tls_min_version,
+            self._set(self.rest, opts.disable_http_ui, opts.cluster_encryption_level, opts.tls_min_version,
                       opts.tls_honor_cipher_order, opts.cipher_suites, opts.disable_www_authenticate)
 
     @staticmethod
@@ -3166,15 +3057,9 @@ class SettingXdcr(Subcommand):
         group.add_argument('--max-processes', dest='max_proc', metavar="<num>", type=int,
                            help='Number of processes to be allocated to XDCR. The default is 4.')
 
+    @rest_initialiser(version_check=True, cluster_init_check=True, enterprise_check=False)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-        if not enterprise and opts.compression:
+        if not self.enterprise and opts.compression:
             _exitIfErrors(["--enable-compression can only be configured on enterprise edition"])
 
         if opts.compression == "0":
@@ -3182,7 +3067,7 @@ class SettingXdcr(Subcommand):
         elif opts.compression =="1":
             opts.compression = "Auto"
 
-        _, errors = rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size,
+        _, errors = self.rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size,
                                               opts.doc_batch_size, opts.fail_interval,
                                               opts.rep_thresh, opts.src_nozzles,
                                               opts.dst_nozzles, opts.usage_limit,
@@ -3200,6 +3085,7 @@ class SettingXdcr(Subcommand):
     def get_description():
         return "Modify XDCR related settings"
 
+
 class SettingMasterPassword(Subcommand):
     """The setting master password subcommand"""
 
@@ -3215,17 +3101,14 @@ class SettingMasterPassword(Subcommand):
         group.add_argument("--rotate-data-key", dest="rotate_data_key", action="store_true",
                            help="Rotates the master password data key")
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
-
         if opts.new_password is not None:
-            _, errors = rest.set_master_pwd(opts.new_password)
+            _, errors = self.rest.set_master_pwd(opts.new_password)
             _exitIfErrors(errors)
             _success("New master password set")
         elif opts.rotate_data_key == True:
-            _, errors = rest.rotate_master_pwd()
+            _, errors = self.rest.rotate_master_pwd()
             _exitIfErrors(errors)
             _success("Data key rotated")
         else:
@@ -3264,23 +3147,19 @@ class SslManage(Subcommand):
         group.add_argument("--extended", dest="extended", action="store_true",
                            default=False, help="Print extended certificate information")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         if opts.regenerate is not None:
             try:
                 open(opts.regenerate, 'a').close()
             except IOError:
                 _exitIfErrors([f'Unable to create file at `{opts.regenerate}`'])
-            certificate, errors = rest.regenerate_cluster_certificate()
+            certificate, errors = self.rest.regenerate_cluster_certificate()
             _exitIfErrors(errors)
             _exit_on_file_write_failure(opts.regenerate, certificate)
             _success(f'Certificate regenerate and copied to `{opts.regenerate}`')
         elif opts.cluster_cert:
-            certificate, errors = rest.retrieve_cluster_certificate(opts.extended)
+            certificate, errors = self.rest.retrieve_cluster_certificate(opts.extended)
             _exitIfErrors(errors)
             if isinstance(certificate, dict):
                 print(json.dumps(certificate, sort_keys=True, indent=2))
@@ -3288,16 +3167,16 @@ class SslManage(Subcommand):
                 print(certificate)
         elif opts.node_cert:
             host = urllib.parse.urlparse(opts.cluster).netloc
-            certificate, errors = rest.retrieve_node_certificate(host)
+            certificate, errors = self.rest.retrieve_node_certificate(host)
             _exitIfErrors(errors)
             print(json.dumps(certificate, sort_keys=True, indent=2))
         elif opts.upload_cert:
             certificate = _exit_on_file_read_failure(opts.upload_cert)
-            _, errors = rest.upload_cluster_certificate(certificate)
+            _, errors = self.rest.upload_cluster_certificate(certificate)
             _exitIfErrors(errors)
             _success(f'Uploaded cluster certificate to {opts.cluster}')
         elif opts.set_cert:
-            _, errors = rest.set_node_certificate()
+            _, errors = self.rest.set_node_certificate()
             _exitIfErrors(errors)
             _success("Node certificate set")
         elif opts.client_auth_path:
@@ -3306,11 +3185,11 @@ class SslManage(Subcommand):
                 config = json.loads(data)
             except ValueError as e:
                 _exitIfErrors([f'Client auth config does not contain valid json: {e}'])
-            _, errors = rest.set_client_cert_auth(config)
+            _, errors = self.rest.set_client_cert_auth(config)
             _exitIfErrors(errors)
             _success("SSL client auth updated")
         elif opts.show_client_auth:
-            result, errors = rest.retrieve_client_cert_auth()
+            result, errors = self.rest.retrieve_client_cert_auth()
             _exitIfErrors(errors)
             print(json.dumps(result, sort_keys=True, indent=2))
         else:
@@ -3367,12 +3246,8 @@ class UserManage(Subcommand):
         group.add_argument("--group-description", dest="description", metavar="<text>", help="Group description")
         group.add_argument("--ldap-ref", dest="ldap_ref", metavar="<ref>", help="LDAP group's distinguished name")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get, opts.get_group,
                              opts.list_group, opts.delete_group, opts.set_group])
         if num_selectors == 0:
@@ -3383,54 +3258,54 @@ class UserManage(Subcommand):
                            " --get-group, --set-group, --list-groups or --delete-group"])
 
         if opts.delete:
-            self._delete(rest, opts)
+            self._delete(opts)
         elif opts.list:
-            self._list(rest, opts)
+            self._list(opts)
         elif opts.my_roles:
-            self._my_roles(rest, opts)
+            self._my_roles(opts)
         elif opts.set:
-            self._set(rest, opts)
+            self._set(opts)
         elif opts.get:
-            self._get(rest, opts)
+            self._get(opts)
         elif opts.get_group:
-            self._get_group(rest, opts)
+            self._get_group(opts)
         elif opts.set_group:
-            self._set_group(rest, opts)
+            self._set_group(opts)
         elif opts.list_group:
-            self._list_groups(rest)
+            self._list_groups()
         elif opts.delete_group:
-            self._delete_group(rest, opts)
+            self._delete_group(opts)
 
-    def _delete_group(self, rest, opts):
+    def _delete_group(self, opts):
         if opts.group is None:
             _exitIfErrors(['--group-name is required with the --delete-group option'])
 
-        _, errors = rest.delete_user_group(opts.group)
+        _, errors = self.rest.delete_user_group(opts.group)
         _exitIfErrors(errors)
         _success(f"Group '{opts.group}' was deleted")
 
-    def _get_group(self, rest, opts):
+    def _get_group(self, opts):
         if opts.group is None:
             _exitIfErrors(['--group-name is required with the --get-group option'])
 
-        group, errors = rest.get_user_group(opts.group)
+        group, errors = self.rest.get_user_group(opts.group)
         _exitIfErrors(errors)
         print(json.dumps(group, indent=2))
 
-    def _set_group(self, rest, opts):
+    def _set_group(self, opts):
         if opts.group is None:
             _exitIfErrors(['--group-name is required with --set-group'])
 
-        _, errors = rest.set_user_group(opts.group, opts.roles, opts.description, opts.ldap_ref)
+        _, errors = self.rest.set_user_group(opts.group, opts.roles, opts.description, opts.ldap_ref)
         _exitIfErrors(errors)
         _success(f"Group '{opts.group}' set")
 
-    def _list_groups(self, rest):
-        groups, errors = rest.list_user_groups()
+    def _list_groups(self):
+        groups, errors = self.rest.list_user_groups()
         _exitIfErrors(errors)
         print(json.dumps(groups, indent=2))
 
-    def _delete(self, rest, opts):
+    def _delete(self, opts):
         if opts.rbac_user is None:
             _exitIfErrors(["--rbac-username is required with the --delete option"])
         if opts.rbac_pass is not None:
@@ -3442,11 +3317,11 @@ class UserManage(Subcommand):
         if opts.auth_domain is None:
             _exitIfErrors(["--auth-domain is required with the --delete option"])
 
-        _, errors = rest.delete_rbac_user(opts.rbac_user, opts.auth_domain)
+        _, errors = self.rest.delete_rbac_user(opts.rbac_user, opts.auth_domain)
         _exitIfErrors(errors)
         _success(f"User '{opts.rbac_user}' was removed")
 
-    def _list(self, rest, opts):
+    def _list(self, opts):
         if opts.rbac_user is not None:
             _warning(["--rbac-username is not used with the --list option"])
         if opts.rbac_pass is not None:
@@ -3458,11 +3333,11 @@ class UserManage(Subcommand):
         if opts.auth_domain is not None:
             _warning("--auth-domain is not used with the --list option")
 
-        result, errors = rest.list_rbac_users()
+        result, errors = self.rest.list_rbac_users()
         _exitIfErrors(errors)
         print(json.dumps(result, indent=2))
 
-    def _get(self, rest, opts):
+    def _get(self, opts):
         if opts.rbac_user is None:
             _exitIfErrors(["--rbac-username is required with the --get option"])
         if opts.rbac_pass is not None:
@@ -3474,7 +3349,7 @@ class UserManage(Subcommand):
         if opts.auth_domain is not None:
             _warning("--auth-domain is not used with the --get option")
 
-        result, errors = rest.list_rbac_users()
+        result, errors = self.rest.list_rbac_users()
         _exitIfErrors(errors)
         user = [u for u in result if u['id'] == opts.rbac_user]
 
@@ -3483,7 +3358,7 @@ class UserManage(Subcommand):
         else:
             _exitIfErrors([f'no user {opts.rbac_user}'])
 
-    def _my_roles(self, rest, opts):
+    def _my_roles(self, opts):
         if opts.rbac_user is not None:
             _warning("--rbac-username is not used with the --my-roles option")
         if opts.rbac_pass is not None:
@@ -3495,11 +3370,11 @@ class UserManage(Subcommand):
         if opts.auth_domain is not None:
             _warning("--auth-domain is not used with the --my-roles option")
 
-        result, errors = rest.my_roles()
+        result, errors = self.rest.my_roles()
         _exitIfErrors(errors)
         print(json.dumps(result, indent=2))
 
-    def _set(self, rest, opts):
+    def _set(self, opts):
         if opts.rbac_user is None:
             _exitIfErrors(["--rbac-username is required with the --set option"])
         if opts.rbac_pass is not None and opts.auth_domain == "external":
@@ -3508,7 +3383,7 @@ class UserManage(Subcommand):
         if opts.auth_domain is None:
             _exitIfErrors(["--auth-domain is required with the --set option"])
 
-        _, errors = rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, \
+        _, errors = self.rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, \
                                        opts.rbac_name, opts.roles, \
                                        opts.auth_domain, opts.groups)
         _exitIfErrors(errors)
@@ -3602,16 +3477,9 @@ class XdcrReplicate(Subcommand):
                            help='When set to true expiry mutations will be filter out and not sent to the target '
                                 'cluster')
 
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-
-        if not enterprise and opts.compression:
+        if not self.enterprise and opts.compression:
             _exitIfErrors(["--enable-compression can only be configured on enterprise edition"])
 
         if opts.compression == "0":
@@ -3628,38 +3496,38 @@ class XdcrReplicate(Subcommand):
             _exitIfErrors(["The --create, --delete, --pause, --list, --resume, --settings" +
                            " flags may not be specified at the same time"])
         elif opts.create:
-            self._create(rest, opts)
+            self._create(opts)
         elif opts.delete:
-            self._delete(rest, opts)
+            self._delete(opts)
         elif opts.pause or opts.resume:
-            self._pause_resume(rest, opts)
+            self._pause_resume(opts)
         elif opts.list:
-            self._list(rest, opts)
+            self._list()
         elif opts.settings:
-            self._settings(rest, opts)
+            self._settings(opts)
 
-    def _create(self, rest, opts):
-        _, errors = rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.filter,
+    def _create(self, opts):
+        _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.filter,
                                                  opts.rep_mode, opts.compression, opts.reset_expiry, opts.filter_del,
                                                  opts.filter_exp)
         _exitIfErrors(errors)
 
         _success("XDCR replication created")
 
-    def _delete(self, rest, opts):
+    def _delete(self, opts):
         if opts.replicator_id is None:
             _exitIfErrors(["--xdcr-replicator is needed to delete a replication"])
 
-        _, errors = rest.delete_xdcr_replicator(opts.replicator_id)
+        _, errors = self.rest.delete_xdcr_replicator(opts.replicator_id)
         _exitIfErrors(errors)
 
         _success("XDCR replication deleted")
 
-    def _pause_resume(self, rest, opts):
+    def _pause_resume(self, opts):
         if opts.replicator_id is None:
             _exitIfErrors(["--xdcr-replicator is needed to pause or resume a replication"])
 
-        tasks, errors = rest.get_tasks()
+        tasks, errors = self.rest.get_tasks()
         _exitIfErrors(errors)
         for task in tasks:
             if task["type"] == "xdcr" and task["id"] == opts.replicator_id:
@@ -3670,16 +3538,16 @@ class XdcrReplicate(Subcommand):
                 break
 
         if opts.pause:
-            _, errors = rest.pause_xdcr_replication(opts.replicator_id)
+            _, errors = self.rest.pause_xdcr_replication(opts.replicator_id)
             _exitIfErrors(errors)
             _success("XDCR replication paused")
         elif opts.resume:
-            _, errors = rest.resume_xdcr_replication(opts.replicator_id)
+            _, errors = self.rest.resume_xdcr_replication(opts.replicator_id)
             _exitIfErrors(errors)
             _success("XDCR replication resume")
 
-    def _list(self, rest, opts):
-        tasks, errors = rest.get_tasks()
+    def _list(self):
+        tasks, errors = self.rest.get_tasks()
         _exitIfErrors(errors)
         for task in tasks:
             if task["type"] == "xdcr":
@@ -3690,12 +3558,12 @@ class XdcrReplicate(Subcommand):
                 if "filterExpression" in task and task["filterExpression"] != "":
                     print(f'   filter: {task["filterExpression"]}')
 
-    def _settings(self, rest, opts):
+    def _settings(self, opts):
         if opts.replicator_id is None:
             _exitIfErrors(["--xdcr-replicator is needed to change a replicators settings"])
         if opts.filter_skip and opts.filter is None:
             _exitIfErrors(["--filter-expersion is needed with the --filter-skip-restream option"])
-        _, errors = rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size,
+        _, errors = self.rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size,
                                                   opts.doc_batch_size, opts.fail_interval,
                                                   opts.rep_thresh, opts.src_nozzles,
                                                   opts.dst_nozzles, opts.usage_limit,
@@ -3752,12 +3620,8 @@ class XdcrSetup(Subcommand):
         group.add_argument("--xdcr-secure-connection", dest="secure_connection", choices=["none", "full", "half"],
                            metavar="<type>", help="The XDCR secure connection type")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         actions = sum([opts.create, opts.delete, opts.edit, opts.list])
         if actions == 0:
             _exitIfErrors(["Must specify one of --create, --delete, --edit, --list"])
@@ -3765,13 +3629,13 @@ class XdcrSetup(Subcommand):
             _exitIfErrors(["The --create, --delete, --edit, --list flags may not " +
                            "be specified at the same time"])
         elif opts.create or opts.edit:
-            self._set(rest, opts)
+            self._set(opts)
         elif opts.delete:
-            self._delete(rest, opts)
+            self._delete(opts)
         elif opts.list:
-            self._list(rest, opts)
+            self._list()
 
-    def _set(self, rest, opts):
+    def _set(self, opts):
         cmd = "create"
         if opts.edit:
             cmd = "edit"
@@ -3819,29 +3683,29 @@ class XdcrSetup(Subcommand):
             raw_user_cert = _exit_on_file_read_failure(opts.r_certificate)
 
         if opts.create:
-            _, errors = rest.create_xdcr_reference(opts.name, opts.hostname, opts.r_username,
+            _, errors = self.rest.create_xdcr_reference(opts.name, opts.hostname, opts.r_username,
                                                    opts.r_password, opts.encrypt, opts.encryption_type,
                                                    raw_cert, raw_user_cert, raw_user_key)
             _exitIfErrors(errors)
             _success("Cluster reference created")
         else:
-            _, errors = rest.edit_xdcr_reference(opts.name, opts.hostname, opts.r_username,
+            _, errors = self.rest.edit_xdcr_reference(opts.name, opts.hostname, opts.r_username,
                                                  opts.r_password, opts.encrypt, opts.encryption_type,
                                                  raw_cert, raw_user_cert, raw_user_key)
             _exitIfErrors(errors)
             _success("Cluster reference edited")
 
-    def _delete(self, rest, opts):
+    def _delete(self, opts):
         if opts.name is None:
             _exitIfErrors(["--xdcr-cluster-name is required to deleta a cluster connection"])
 
-        _, errors = rest.delete_xdcr_reference(opts.name)
+        _, errors = self.rest.delete_xdcr_reference(opts.name)
         _exitIfErrors(errors)
 
         _success("Cluster reference deleted")
 
-    def _list(self, rest, opts):
-        clusters, errors = rest.list_xdcr_references()
+    def _list(self):
+        clusters, errors = self.rest.list_xdcr_references()
         _exitIfErrors(errors)
 
         for cluster in clusters:
@@ -3859,6 +3723,7 @@ class XdcrSetup(Subcommand):
     @staticmethod
     def get_description():
         return "Manage XDCR replications"
+
 
 class EventingFunctionSetup(Subcommand):
     """The Eventing Service Function setup subcommand"""
@@ -3891,12 +3756,8 @@ class EventingFunctionSetup(Subcommand):
         group.add_argument("--pause", dest="pause", action="store_true", help="Pause a function")
         group.add_argument("--resume", dest="resume", action="store_true", help="Resume a function")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy, opts.pause, opts.resume])
         if actions == 0:
             _exitIfErrors(["Must specify one of --import, --export, --export-all, --delete, --list, --deploy,"
@@ -3905,46 +3766,46 @@ class EventingFunctionSetup(Subcommand):
             _exitIfErrors(["The --import, --export, --export-all, --delete, --list, --deploy, --undeploy, --pause, --resume flags may"
                            " not be specified at the same time"])
         elif opts._import:
-            self._import(rest, opts)
+            self._import(opts)
         elif opts.export:
-            self._export(rest, opts)
+            self._export(opts)
         elif opts.export_all:
-            self._export_all(rest, opts)
+            self._export_all(opts)
         elif opts.delete:
-            self._delete(rest, opts)
+            self._delete(opts)
         elif opts.list:
-            self._list(rest)
+            self._list()
         elif opts.deploy:
-            self._deploy_undeploy(rest, opts, True)
+            self._deploy_undeploy(opts, True)
         elif opts.undeploy:
-            self._deploy_undeploy(rest, opts, False)
+            self._deploy_undeploy(opts, False)
         elif opts.pause:
-            self._pause_resume(rest, opts, True)
+            self._pause_resume(opts, True)
         elif opts.resume:
-            self._pause_resume(rest, opts, False)
+            self._pause_resume(opts, False)
 
-    def _pause_resume(self, rest, opts, pause):
+    def _pause_resume(self, opts, pause):
         if not opts.name:
             _exitIfErrors([f"Flag --name is required with the {'--pause' if pause else '--resume'} flag"])
-        _, err = rest.pause_resume_function(opts.name, pause)
+        _, err = self.rest.pause_resume_function(opts.name, pause)
         _exitIfErrors(err)
         _success(f"Function was {'paused' if pause else 'resumed'}")
 
-    def _import(self, rest, opts):
+    def _import(self, opts):
         if not opts.filename:
             _exitIfErrors(["--file is needed to import functions"])
         import_functions = _exit_on_file_read_failure(opts.filename)
         import_functions = json.loads(import_functions)
-        _, errors = rest.import_functions(import_functions)
+        _, errors = self.rest.import_functions(import_functions)
         _exitIfErrors(errors)
         _success("Events imported")
 
-    def _export(self, rest, opts):
+    def _export(self, opts):
         if not opts.filename:
             _exitIfErrors(["--file is needed to export a function"])
         if not opts.name:
             _exitIfErrors(["--name is needed to export a function"])
-        functions, errors = rest.export_functions()
+        functions, errors = self.rest.export_functions()
         _exitIfErrors(errors)
         exported_function = None
         for function in functions:
@@ -3955,32 +3816,32 @@ class EventingFunctionSetup(Subcommand):
         _exit_on_file_write_failure(opts.filename, json.dumps(exported_function, separators=(',',':')))
         _success("Function exported to: " + opts.filename)
 
-    def _export_all(self, rest, opts):
+    def _export_all(self, opts):
         if not opts.filename:
             _exitIfErrors(["--file is needed to export all functions"])
-        exported_functions, errors = rest.export_functions()
+        exported_functions, errors = self.rest.export_functions()
         _exitIfErrors(errors)
         _exit_on_file_write_failure(opts.filename, json.dumps(exported_functions, separators=(',',':')))
         _success(f'All functions exported to: {opts.filename}')
 
-    def _delete(self, rest, opts):
+    def _delete(self, opts):
         if not opts.name:
             _exitIfErrors(["--name is needed to delete a function"])
-        _, errors = rest.delete_function(opts.name)
+        _, errors = self.rest.delete_function(opts.name)
         _exitIfErrors(errors)
         _success("Request to delete the function was accepted")
 
-    def _deploy_undeploy(self, rest, opts, deploy):
+    def _deploy_undeploy(self, opts, deploy):
         if not opts.name:
             _exitIfErrors([f"--name is needed to {'deploy' if deploy else 'undeploy'} a function"])
         if deploy and not opts.boundary:
             _exitIfErrors([f"--boundary is needed to deploy a function"])
-        _, errors = rest.deploy_undeploy_function(opts.name, deploy, opts.boundary)
+        _, errors = self.rest.deploy_undeploy_function(opts.name, deploy, opts.boundary)
         _exitIfErrors(errors)
         _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
 
-    def _list(self, rest):
-        functions, errors = rest.list_functions()
+    def _list(self):
+        functions, errors = self.rest.list_functions()
         _exitIfErrors(errors)
 
         for function in functions:
@@ -4052,12 +3913,8 @@ class AnalyticsLinkSetup(Subcommand):
         group.add_argument("--service-endpoint", dest="service_endpoint", metavar="<url>",
                            help="The service endpoint of the link (optional)")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         actions = sum([opts.create, opts.delete, opts.edit, opts.list])
         if actions == 0:
             _exitIfErrors(["Must specify one of --create, --delete, --edit, --list"])
@@ -4065,13 +3922,13 @@ class AnalyticsLinkSetup(Subcommand):
             _exitIfErrors(["The --create, --delete, --edit, --list flags may not " +
                            "be specified at the same time"])
         elif opts.create or opts.edit:
-            self._set(rest, opts)
+            self._set(opts)
         elif opts.delete:
-            self._delete(rest, opts)
+            self._delete(opts)
         elif opts.list:
-            self._list(rest, opts)
+            self._list(opts)
 
-    def _set(self, rest, opts):
+    def _set(self, opts):
         cmd = "create"
         if opts.edit:
             cmd = "edit"
@@ -4091,26 +3948,26 @@ class AnalyticsLinkSetup(Subcommand):
             opts.user_certificate = _exit_on_file_read_failure(opts.user_certificate)
 
         if opts.create:
-            _, errors = rest.create_analytics_link(opts)
+            _, errors = self.rest.create_analytics_link(opts)
             _exitIfErrors(errors)
             _success("Link created")
         else:
-            _, errors = rest.edit_analytics_link(opts)
+            _, errors = self.rest.edit_analytics_link(opts)
             _exitIfErrors(errors)
             _success("Link edited")
 
-    def _delete(self, rest, opts):
+    def _delete(self, opts):
         if opts.dataverse is None:
             _exitIfErrors([f'--dataverse is required to delete a link'])
         if opts.name is None:
             _exitIfErrors([f'--name is required to delete a link'])
 
-        _, errors = rest.delete_analytics_link(opts.dataverse, opts.name)
+        _, errors = self.rest.delete_analytics_link(opts.dataverse, opts.name)
         _exitIfErrors(errors)
         _success("Link deleted")
 
-    def _list(self, rest, opts):
-        clusters, errors = rest.list_analytics_links(opts.dataverse, opts.name, opts.type)
+    def _list(self, opts):
+        clusters, errors = self.rest.list_analytics_links(opts.dataverse, opts.name, opts.type)
         _exitIfErrors(errors)
         print(json.dumps(clusters, sort_keys=True, indent=2))
 
@@ -4133,16 +3990,12 @@ class UserChangePassword(Subcommand):
         group.add_argument("--new-password", dest="new_pass", metavar="<password>", required=True,
                            help="The new password")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         if opts.new_pass is None:
             _exitIfErrors(["--new-password is required"])
 
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        _, rv = rest.user_change_passsword(opts.new_pass)
+        _, rv = self.rest.user_change_passsword(opts.new_pass)
         _exitIfErrors(rv)
         _success(f'Changed password for {opts.username}')
 
@@ -4178,6 +4031,7 @@ class CollectionManage(Subcommand):
         group.add_argument("--max-ttl", dest="max_ttl", metavar="<seconds>", type=int,
                            help="Set the maximum TTL the collection will accept")
 
+    @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         cmds = [opts.create_scope, opts.drop_scope, opts.list_scopes, opts.create_collection, opts.drop_collection,
                 opts.list_collections]
@@ -4193,54 +4047,49 @@ class CollectionManage(Subcommand):
         if opts.max_ttl is not None and opts.create_collection is None:
             _exitIfErrors(["--max-ttl can only be set with --create-collection"])
 
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
         if opts.create_scope:
-            self._create_scope(rest, opts)
+            self._create_scope(opts)
         if opts.drop_scope:
-            self._drop_scope(rest, opts)
+            self._drop_scope(opts)
         if opts.list_scopes:
-            self._list_scopes(rest, opts)
+            self._list_scopes(opts)
         if opts.create_collection:
-            self._create_collection(rest, opts)
+            self._create_collection(opts)
         if opts.drop_collection:
-            self._drop_collection(rest, opts)
+            self._drop_collection(opts)
         if opts.list_collections:
-            self._list_collections(rest, opts)
+            self._list_collections(opts)
 
-    def _create_scope(self, rest, opts):
-        _, errors = rest.create_scope(opts.bucket, opts.create_scope)
+    def _create_scope(self, opts):
+        _, errors = self.rest.create_scope(opts.bucket, opts.create_scope)
         _exitIfErrors(errors)
         _success("Scope created")
 
-    def _drop_scope(self, rest, opts):
-        _, errors = rest.drop_scope(opts.bucket, opts.drop_scope)
+    def _drop_scope(self, opts):
+        _, errors = self.rest.drop_scope(opts.bucket, opts.drop_scope)
         _exitIfErrors(errors)
         _success("Scope deleted")
 
-    def _list_scopes(self, rest, opts):
-        manifest, errors = rest.get_manifest(opts.bucket)
+    def _list_scopes(self, opts):
+        manifest, errors = self.rest.get_manifest(opts.bucket)
         _exitIfErrors(errors)
         for scope in manifest['scopes']:
             print(scope['name'])
 
-    def _create_collection(self, rest, opts):
+    def _create_collection(self, opts):
         scope, collection = self._get_scope_collection(opts.create_collection)
-        _, errors = rest.create_collection(opts.bucket, scope, collection, opts.max_ttl)
+        _, errors = self.rest.create_collection(opts.bucket, scope, collection, opts.max_ttl)
         _exitIfErrors(errors)
         _success("Collection created")
 
-    def _drop_collection(self, rest, opts):
+    def _drop_collection(self, opts):
         scope, collection = self._get_scope_collection(opts.drop_collection)
-        _, errors = rest.drop_collection(opts.bucket, scope, collection)
+        _, errors = self.rest.drop_collection(opts.bucket, scope, collection)
         _exitIfErrors(errors)
         _success("Collection deleted")
 
-    def _list_collections(self, rest, opts):
-        manifest, errors = rest.get_manifest(opts.bucket)
+    def _list_collections(self, opts):
+        manifest, errors = self.rest.get_manifest(opts.bucket)
         _exitIfErrors(errors)
         found_scope = False
         for scope in manifest['scopes']:
@@ -4286,11 +4135,8 @@ class EnableDeveloperPreview(Subcommand):
         group.add_argument('--list', dest='list', required=False, action="store_true",
                            help='Check if cluster is in developer preview mode')
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
-
         if not (opts.enable or opts.list):
             _exitIfErrors(['--enable or --list must be provided'])
         if opts.enable and opts.list:
@@ -4301,7 +4147,7 @@ class EnableDeveloperPreview(Subcommand):
                             'If you enter developer preview mode you will not be able to ' +
                             'upgrade. DO NOT USE IN PRODUCTION.\nAre you sure [y/n]: ')
             if confirm == 'y':
-                _, errors = rest.set_dp_mode()
+                _, errors = self.rest.set_dp_mode()
                 _exitIfErrors(errors)
                 _success("Cluster is in developer preview mode")
             elif confirm == 'n':
@@ -4310,7 +4156,7 @@ class EnableDeveloperPreview(Subcommand):
                 _exitIfErrors(["Unknown option provided"])
 
         if opts.list:
-            pools, rv = rest.pools()
+            pools, rv = self.rest.pools()
             _exitIfErrors(rv)
             if 'isDeveloperPreview' in pools and pools['isDeveloperPreview']:
                 print('Cluster is in developer preview mode')
@@ -4344,6 +4190,7 @@ class SettingAlternateAddress(Subcommand):
         group.add_argument('--ports', dest='ports', metavar="<ports>",
                            help="A comma separated list specifying port mappings for the services")
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
         flags_used = sum([opts.set, opts.list, opts.remove])
         if flags_used != 1:
@@ -4370,21 +4217,18 @@ class SettingAlternateAddress(Subcommand):
             if port:
                 cluster += f':{port}'
             opts.cluster = cluster
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
 
         if opts.set:
             ports, error = self._parse_ports(opts.ports)
             _exitIfErrors(error)
-            _, error = rest.set_alternate_address(opts.alternate_hostname, ports)
+            _, error = self.rest.set_alternate_address(opts.alternate_hostname, ports)
             _exitIfErrors(error)
         if opts.remove:
-            _, error = rest.delete_alternate_address()
+            _, error = self.rest.delete_alternate_address()
             _exitIfErrors(error)
             _success('Alternate address configuration deleted')
         if opts.list:
-            add, error = rest.get_alternate_address()
+            add, error = self.rest.get_alternate_address()
             _exitIfErrors(error)
             if opts.output == 'standard':
                 port_names = set()
@@ -4502,15 +4346,13 @@ class SettingQuery(Subcommand):
         group.add_argument('--n1ql-feature-control', metavar='<num>', type=int, default=None,
                            help='N1QL Feature Controls')
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
         if sum([opts.get, opts.set]) != 1:
             _exitIfErrors(['Please provide --set or --get, both can not be provided at the same time'])
 
         if opts.get:
-            settings, err = rest.get_query_settings()
+            settings, err = self.rest.get_query_settings()
             _exitIfErrors(err)
             print(json.dumps(settings))
         if opts.set:
@@ -4519,7 +4361,7 @@ class SettingQuery(Subcommand):
                                        opts.log_level, opts.max_parallelism, opts.n1ql_feature_control]):
                 _exitIfErrors(['Please provide at least one other option with --set'])
 
-            _, err = rest.post_query_settings(opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
+            _, err = self.rest.post_query_settings(opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
                                               opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
                                               opts.log_level, opts.max_parallelism, opts.n1ql_feature_control)
             _exitIfErrors(err)
@@ -4549,11 +4391,8 @@ class IpFamily(Subcommand):
         group.add_argument('--ipv6', dest='ipv6', default=False, action="store_true",
                            help='Set IP family to IPv6')
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
-
         flags_used = sum([opts.set, opts.get])
         if flags_used == 0:
             _exitIfErrors(['Please provide one of --set, or --get'])
@@ -4561,12 +4400,12 @@ class IpFamily(Subcommand):
             _exitIfErrors(['Please provide only one of --set, or --get'])
 
         if opts.get:
-            self._get(rest)
+            self._get(self.rest)
         if opts.set:
             if sum([opts.ipv6, opts.ipv4]) != 1:
                 _exitIfErrors(['Provided exactly one of --ipv4 or --ipv6 together with the --set option'])
 
-            self._set(rest, opts.ipv6, opts.ssl)
+            self._set(self.rest, opts.ipv6, opts.ssl)
 
     @staticmethod
     def _set(rest, ipv6, ssl):
@@ -4647,11 +4486,8 @@ class NodeToNodeEncryption(Subcommand):
         group.add_argument('--get', action="store_true", default=False,
                            help='Retrieve current status of node-to-node encryption (on or off)')
 
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_versions(rest)
-
         flags_used = sum([opts.enable, opts.disable, opts.get])
         if flags_used == 0:
             _exitIfErrors(['Please provide one of --enable, --disable or --get'])
@@ -4659,11 +4495,11 @@ class NodeToNodeEncryption(Subcommand):
             _exitIfErrors(['Please provide only one of --enable, --disable or --get'])
 
         if opts.get:
-            self._get(rest)
+            self._get(self.rest)
         elif opts.enable:
-            self._change_encryption(rest, 'on', opts.ssl)
+            self._change_encryption(self.rest, 'on', opts.ssl)
         elif opts.disable:
-            self._change_encryption(rest, 'off', opts.ssl)
+            self._change_encryption(self.rest, 'off', opts.ssl)
 
     @staticmethod
     def _change_encryption(rest, encryption, ssl):
@@ -4758,23 +4594,13 @@ class SettingRebalance(Subcommand):
         group.add_argument('--rebalance-id', metavar='<id>',
                            help='Specify the id of the failed rebalance to cancel the retry.')
 
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=True)
     def execute(self, opts):
-        rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                              opts.cacert, opts.debug)
-        check_cluster_initialized(rest)
-        check_versions(rest)
-
-        enterprise, errors = rest.is_enterprise()
-        _exitIfErrors(errors)
-
-        if not enterprise:
-            _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
-
         if sum([opts.set, opts.get, opts.cancel, opts.pending_info]) != 1:
             _exitIfErrors(['Provide either --set, --get, --cancel or --pending-info'])
 
         if opts.get:
-            settings, err = rest.get_settings_rebalance_retry()
+            settings, err = self.rest.get_settings_rebalance_retry()
             _exitIfErrors(err)
             if opts.output == 'json':
                 print(json.dumps(settings))
@@ -4793,17 +4619,17 @@ class SettingRebalance(Subcommand):
             if opts.max_attempts is not None and (opts.max_attempts < 1 or opts.max_attempts > 3):
                 _exitIfErrors(['--max-attempts must be a value between 1 and 3'])
 
-            _, err = rest.set_settings_rebalance_retry(opts.enable, opts.wait_for, opts.max_attempts)
+            _, err = self.rest.set_settings_rebalance_retry(opts.enable, opts.wait_for, opts.max_attempts)
             _exitIfErrors(err)
             _success('Automatic rebalance retry settings updated')
         elif opts.cancel:
             if opts.rebalance_id is None:
                 _exitIfErrors(['Provide the failed rebalance id using --rebalance-id <id>'])
-            _, err = rest.cancel_rebalance_retry(opts.rebalance_id)
+            _, err = self.rest.cancel_rebalance_retry(opts.rebalance_id)
             _exitIfErrors(err)
             _success('Rebalance retry canceled')
         else:
-            rebalance_info, err = rest.get_rebalance_info()
+            rebalance_info, err = self.rest.get_rebalance_info()
             _exitIfErrors(err)
             print(json.dumps(rebalance_info))
 

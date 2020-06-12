@@ -1591,7 +1591,7 @@ class TestSettingRebalance(CommandTest):
     def testCEInvalid(self):
         self.server_args['enterprise'] = False
         self.system_exit_run(self.command + ['--get'], self.server_args)
-        self.assertIn('Automatic rebalance retry configuration is an Enterprise Edition only feature', self.str_output)
+        self.assertIn('Command only available in enterprise edition', self.str_output)
 
     def testMoreThanOneAction(self):
         self.system_exit_run(self.command + ['--get', '--set'], self.server_args)
