@@ -452,7 +452,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content">_couchbase-cli setting-rebalance [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--set] [--get] [--cancel] [--pending-info] [--enable &lt;1|0&gt;]
-    [--wait-for &lt;sec&gt;] [--max-attempts &lt;num&gt;] [--rebalance-id &lt;id&gt;]</pre>
+    [--wait-for &lt;sec&gt;] [--moves-per-node &lt;num&gt;] [--max-attempts &lt;num&gt;]
+    [--rebalance-id &lt;id&gt;]</pre>
 </div>
 </div>
 </div>
@@ -526,6 +527,19 @@ Time must be a value between 5 and 3600 seconds. By default the wait time is
 <dd>
 <p>Specify the number of times a failed rebalance will be retried. The value
 provided must be between 1 and 3, the default is 1.</p>
+</dd>
+<dt class="hdlist1">--moves-per-node &lt;num&gt;</dt>
+<dd>
+<p>Specify the number ofconcurrent vBucket to move per a node during a rebalance.
+The value provided must be between 1 and 64, the default is 4. A higher
+setting may improve rebalance performance, at the cost of higher resource
+consumption; in terms of CPU, memory, disk, and bandwidth. Conversely, a lower
+setting may degrade rebalance performance, while freeing up such resources.
+Note, however, that rebalance performance can be affected by many additional
+factors; and that in consequence, changing this parameter may not always have
+the expected effects. Note also that a higher setting, due to its additional
+consumption of resources, may degrade the performance of other systems,
+including the Data Service.</p>
 </dd>
 <dt class="hdlist1">--rebalance-id &lt;id&gt;</dt>
 <dd>

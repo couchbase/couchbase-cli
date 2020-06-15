@@ -1600,8 +1600,15 @@ class TestSettingRebalance(CommandTest):
 
     def testCEInvalid(self):
         self.server_args['enterprise'] = False
-        self.system_exit_run(self.command + ['--get'], self.server_args)
+        self.system_exit_run(self.command + ['--set', '--enable', '1'], self.server_args)
         self.assertIn('Automatic rebalance retry configuration is an Enterprise Edition only feature', self.str_output)
+
+    def testCEValid(self):
+        self.server_args['enterprise'] = False
+        self.no_error_run(self.command + ['--set', '--moves-per-node', '10'], self.server_args)
+        self.assertIn('Rebalance settings updated', self.str_output)
+        expected_params = ['rebalanceMovesPerNode=10']
+        self.rest_parameter_match(expected_params)
 
     def testMoreThanOneAction(self):
         self.system_exit_run(self.command + ['--get', '--set'], self.server_args)
@@ -1609,20 +1616,25 @@ class TestSettingRebalance(CommandTest):
 
     def testGetHumanFriendly(self):
         self.server_args['/settings/retryRebalance'] = {"enabled": False, "afterTimePeriod": 300, "maxAttempts": 1}
+        self.server_args['/settings/rebalance'] = {"rebalanceMovesPerNode": 4,}
         self.no_error_run(self.command + ['--get'], self.server_args)
-        expected_output = ['Automatic rebalance retry disabled', 'Retry wait time: 300', 'Maximum number of retries: 1']
+        expected_output = ['Automatic rebalance retry disabled', 'Retry wait time: 300', 'Maximum number of retries: 1',
+                           'Maximum number of vBucket move per node: 4']
         for e in expected_output:
             self.assertIn(e, self.str_output)
 
     def testGetJson(self):
         self.server_args['/settings/retryRebalance'] = {"enabled": False, "afterTimePeriod": 300, "maxAttempts": 1}
+        self.server_args['/settings/rebalance'] = {"rebalanceMovesPerNode": 4,}
         self.no_error_run(self.command + ['--get', '--output', 'json'], self.server_args)
-        self.assertIn('{"enabled": false, "afterTimePeriod": 300, "maxAttempts": 1}', self.str_output)
+        self.assertIn('{"rebalanceMovesPerNode": 4, "enabled": false, "afterTimePeriod": 300, "maxAttempts": 1}',
+                      self.str_output)
 
     def testSet(self):
-        self.no_error_run(self.command + ['--set', '--enable', '1', '--wait-for', '5', '--max-attempts', '3'],
+        self.no_error_run(self.command + ['--set', '--enable', '1', '--wait-for', '5', '--max-attempts', '3',
+                                          '--moves-per-node', '10'],
                           self.server_args)
-        expected_params = ['enabled=true', 'afterTimePeriod=5', 'maxAttempts=3']
+        expected_params = ['enabled=true', 'afterTimePeriod=5', 'maxAttempts=3', 'rebalanceMovesPerNode=10']
         self.rest_parameter_match(expected_params)
 
     def testSetWaitForOutOfRange(self):
@@ -1630,6 +1642,15 @@ class TestSettingRebalance(CommandTest):
                           self.server_args)
         self.assertIn('--wait-for must be a value between 5 and 3600', self.str_output)
 
+    def testSetRebalanceMovesPerNodeAbove64(self):
+        self.system_exit_run(self.command + ['--set', '--enable', '1', '--moves-per-node', '65'],
+                             self.server_args)
+        self.assertIn('--moves-per-node must be a value between 1 and 64', self.str_output)
+
+    def testSetRebalanceMovesPerNodeBelow1(self):
+        self.system_exit_run(self.command + ['--set', '--enable', '1', '--moves-per-node', '0'],
+                             self.server_args)
+        self.assertIn('--moves-per-node must be a value between 1 and 64', self.str_output)
 
 class TestAnalyticsLinkSetup(CommandTest):
     def setUp(self):

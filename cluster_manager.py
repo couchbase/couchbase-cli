@@ -564,6 +564,15 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def get_settings_rebalance(self):
+        url = f'{self.hostname}/settings/rebalance'
+        return self._get(url)
+
+    def set_settings_rebalance(self, rebalance_moves_per_node):
+        url = f'{self.hostname}/settings/rebalance'
+        params = {'rebalanceMovesPerNode': rebalance_moves_per_node}
+        return self._post_form_encoded(url, params)
+
     def set_settings_rebalance_retry(self, enabled, wait_for, max_attempts):
         url = f'{self.hostname}/settings/retryRebalance'
 

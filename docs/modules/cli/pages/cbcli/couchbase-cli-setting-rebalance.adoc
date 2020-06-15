@@ -13,7 +13,8 @@ Modifies rebalance retry settings
 [verse]
 _couchbase-cli setting-rebalance [--cluster <url>] [--username <user>]
     [--set] [--get] [--cancel] [--pending-info] [--enable <1|0>]
-    [--wait-for <sec>] [--max-attempts <num>] [--rebalance-id <id>]
+    [--wait-for <sec>] [--moves-per-node <num>] [--max-attempts <num>]
+    [--rebalance-id <id>]
 
 == DESCRIPTION
 
@@ -50,6 +51,18 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --max-attempts <num>::
   Specify the number of times a failed rebalance will be retried. The value
   provided must be between 1 and 3, the default is 1.
+
+--moves-per-node <num>::
+  Specify the number ofconcurrent vBucket to move per a node during a rebalance.
+  The value provided must be between 1 and 64, the default is 4. A higher
+  setting may improve rebalance performance, at the cost of higher resource
+  consumption; in terms of CPU, memory, disk, and bandwidth. Conversely, a lower
+  setting may degrade rebalance performance, while freeing up such resources.
+  Note, however, that rebalance performance can be affected by many additional
+  factors; and that in consequence, changing this parameter may not always have
+  the expected effects. Note also that a higher setting, due to its additional
+  consumption of resources, may degrade the performance of other systems,
+  including the Data Service.
 
 --rebalance-id <id>::
   Specify the rebalance id of a failed rebalance. Use together with --cancel,

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-rebalance
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-05-22
+.\"      Date: 2020-06-15
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-REBALANCE" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-REBALANCE" "1" "2020-06-15" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,7 +35,8 @@ couchbase\-cli\-setting\-rebalance \- Modifies rebalance retry settings
 .nf
 _couchbase\-cli setting\-rebalance [\-\-cluster <url>] [\-\-username <user>]
     [\-\-set] [\-\-get] [\-\-cancel] [\-\-pending\-info] [\-\-enable <1|0>]
-    [\-\-wait\-for <sec>] [\-\-max\-attempts <num>] [\-\-rebalance\-id <id>]
+    [\-\-wait\-for <sec>] [\-\-moves\-per\-node <num>] [\-\-max\-attempts <num>]
+    [\-\-rebalance\-id <id>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -106,6 +107,20 @@ Time must be a value between 5 and 3600 seconds. By default the wait time is
 .RS 4
 Specify the number of times a failed rebalance will be retried. The value
 provided must be between 1 and 3, the default is 1.
+.RE
+.sp
+\-\-moves\-per\-node <num>
+.RS 4
+Specify the number ofconcurrent vBucket to move per a node during a rebalance.
+The value provided must be between 1 and 64, the default is 4. A higher
+setting may improve rebalance performance, at the cost of higher resource
+consumption; in terms of CPU, memory, disk, and bandwidth. Conversely, a lower
+setting may degrade rebalance performance, while freeing up such resources.
+Note, however, that rebalance performance can be affected by many additional
+factors; and that in consequence, changing this parameter may not always have
+the expected effects. Note also that a higher setting, due to its additional
+consumption of resources, may degrade the performance of other systems,
+including the Data Service.
 .RE
 .sp
 \-\-rebalance\-id <id>

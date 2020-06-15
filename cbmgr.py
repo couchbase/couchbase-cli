@@ -4767,6 +4767,8 @@ class SettingRebalance(Subcommand):
                            help='Get the automatic rebalance retry settings.')
         group.add_argument('--cancel', default=False, action='store_true',
                            help='Cancel pending rebalance retry.')
+        group.add_argument('--moves-per-node', type=int, metavar='<num>',
+                           help='Specify the number of [1-64] vBuckets to move concurrently')
         group.add_argument('--pending-info', default=False, action='store_true',
                            help='Get info for pending rebalance retry.')
         group.add_argument("--enable", metavar="<1|0>", choices=["1", "0"],
@@ -4787,22 +4789,28 @@ class SettingRebalance(Subcommand):
         enterprise, errors = rest.is_enterprise()
         _exitIfErrors(errors)
 
-        if not enterprise:
-            _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
-
         if sum([opts.set, opts.get, opts.cancel, opts.pending_info]) != 1:
             _exitIfErrors(['Provide either --set, --get, --cancel or --pending-info'])
 
         if opts.get:
-            settings, err = rest.get_settings_rebalance_retry()
+            settings, err = rest.get_settings_rebalance()
             _exitIfErrors(err)
+            if enterprise:
+                retry_settings, err = rest.get_settings_rebalance_retry()
+                _exitIfErrors(err)
+                settings.update(retry_settings)
             if opts.output == 'json':
                 print(json.dumps(settings))
             else:
-                print(f'Automatic rebalance retry {"enabled" if settings["enabled"] else "disabled"}')
-                print(f'Retry wait time: {settings["afterTimePeriod"]}')
-                print(f'Maximum number of retries: {settings["maxAttempts"]}')
+                if enterprise:
+                    print(f'Automatic rebalance retry {"enabled" if settings["enabled"] else "disabled"}')
+                    print(f'Retry wait time: {settings["afterTimePeriod"]}')
+                    print(f'Maximum number of retries: {settings["maxAttempts"]}')
+                print(f'Maximum number of vBucket move per node: {settings["rebalanceMovesPerNode"]}')
         elif opts.set:
+            if not enterprise:
+                if opts.enable is not None or opts.wait_for is not None or opts.max_attempts is not None:
+                    _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
             if opts.enable == '1':
                 opts.enable = 'true'
             else:
@@ -4813,16 +4821,29 @@ class SettingRebalance(Subcommand):
             if opts.max_attempts is not None and (opts.max_attempts < 1 or opts.max_attempts > 3):
                 _exitIfErrors(['--max-attempts must be a value between 1 and 3'])
 
-            _, err = rest.set_settings_rebalance_retry(opts.enable, opts.wait_for, opts.max_attempts)
-            _exitIfErrors(err)
-            _success('Automatic rebalance retry settings updated')
+            if enterprise:
+                _, err = rest.set_settings_rebalance_retry(opts.enable, opts.wait_for, opts.max_attempts)
+                _exitIfErrors(err)
+
+            if opts.moves_per_node is not None:
+                if not (1 <= opts.moves_per_node <= 64):
+                    _exitIfErrors(['--moves-per-node must be a value between 1 and 64'])
+                _, err = rest.set_settings_rebalance(opts.moves_per_node)
+                _exitIfErrors(err)
+
+            _success('Rebalance settings updated')
         elif opts.cancel:
+            if not enterprise:
+                _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
+
             if opts.rebalance_id is None:
                 _exitIfErrors(['Provide the failed rebalance id using --rebalance-id <id>'])
             _, err = rest.cancel_rebalance_retry(opts.rebalance_id)
             _exitIfErrors(err)
             _success('Rebalance retry canceled')
         else:
+            if not enterprise:
+                _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
             rebalance_info, err = rest.get_rebalance_info()
             _exitIfErrors(err)
             print(json.dumps(rebalance_info))
