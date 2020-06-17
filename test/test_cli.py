@@ -1283,6 +1283,27 @@ class TestUserManage(CommandTest):
         self.assertIn('--group-name is required with the --get-group option', self.str_output)
 
 
+class TestMasterPassword(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'master-password']
+        self.cmd_args = ['--config-path', '.', '--send-password', 'password']
+        self.server_args = {}
+        super(TestMasterPassword, self).setUp()
+
+    def test_missing_cookie(self):
+        self.system_exit_run(self.command + self.cmd_args, self.server_args)
+        self.assertIn('The node is down', self.str_output)
+
+    def test_cannot_read_cookie(self):
+        cookie = open("couchbase-server.babysitter.cookie", "x")
+        cookie.write("cookie-monster")
+        cookie.close()
+        os.chmod(cookie.name, 0000)
+        self.system_exit_run(self.command + self.cmd_args, self.server_args)
+        os.remove(cookie.name)
+        self.assertIn('ERROR: Insufficient privileges', self.str_output)
+
+
 class TestXdcrReplicate(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'xdcr-replicate'] + cluster_connect_args

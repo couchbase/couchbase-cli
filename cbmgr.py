@@ -1479,7 +1479,12 @@ class MasterPassword(LocalSubcommand):
                 os.environ['PATH'] = ';'.join(path)
 
             cookiefile = os.path.join(opts.config_path, "couchbase-server.babysitter.cookie")
-            cookie = _exit_on_file_read_failure(cookiefile, "The node is down").rstrip()
+            if not os.path.isfile(cookiefile):
+                _exitIfErrors(["The node is down"])
+            cookie = _exit_on_file_read_failure(cookiefile, "Insufficient privileges to send master password - Please"
+                                                            " execute this command as a operating system user who has"
+                                                            " file system read permission on the Couchbase Server "
+                                                            " configuration").rstrip()
 
             nodefile = os.path.join(opts.config_path, "couchbase-server.babysitter.node")
             node = _exit_on_file_read_failure(nodefile).rstrip()
