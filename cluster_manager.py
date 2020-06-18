@@ -9,6 +9,7 @@ import io
 import sys
 import time
 import urllib.request, urllib.parse, urllib.error
+import urllib3
 
 N1QL_SERVICE = 'n1ql'
 INDEX_SERVICE = 'index'
@@ -28,7 +29,7 @@ except ImportError:
     VERSION = '0.0.0-0000'
 
 # Remove this once we can verify SSL certificates
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 def request(f):
     def g(*args, **kwargs):
