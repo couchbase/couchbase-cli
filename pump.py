@@ -1209,7 +1209,8 @@ def get_mcd_conn(host: str, port: int, username: str, password: str, bucket: Opt
     except socket.error as e:
         return f'error: SASL auth socket error: {host}:{port}, {e}', None
 
-    features = [couchbaseConstants.HELO_XATTR, couchbaseConstants.HELO_XERROR]
+    features = [couchbaseConstants.HELO_XATTR, couchbaseConstants.HELO_XERROR,
+                couchbaseConstants.HELO_DATATYPE_COMPRESSED, couchbaseConstants.HELO_DATATYPE_JSON]
     if collections:
         features.append(couchbaseConstants.HELO_COLLECTIONS)
 
