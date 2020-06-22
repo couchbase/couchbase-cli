@@ -200,10 +200,11 @@ class MCSink(pump.Sink):
             rv, translated_cmd = self.translate_cmd(cmd, operation, meta)
             if translated_cmd is None:
                 return rv, skipped
-            if dtype > 2:
+            if dtype & couchbaseConstants.DATATYPE_COMPRESSED:
                 if self.uncompress and val:
                     try:
                         val = snappy.uncompress(val)
+                        dtype = dtype ^ couchbaseConstants.DATATYPE_COMPRESSED
                     except Exception as err:
                         pass
             if translated_cmd == couchbaseConstants.CMD_GET:
@@ -626,10 +627,6 @@ class MCSink(pump.Sink):
             ext = b''
         else:
             return f'error: MCSink - unknown cmd for request: {cmd!s}', empty_tuple
-
-        # Couchase currently allows only the xattr datatype to be set so we need
-        # to strip out all of the other datatype flags
-        dtype = dtype & couchbaseConstants.DATATYPE_HAS_XATTR
 
         hdr = self.cmd_header(cmd, vbucket_id, key, val, ext, 0, opaque, dtype)
         return 0, (hdr, ext, key, val, ext_meta)
