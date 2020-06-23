@@ -107,8 +107,8 @@ which will determine how the global secondary indexes (GSI) are stored.
   Specifies the services to start on this cluster. You may not change the
   services running on this node once the cluster has been initialized. This
   options takes a comma separated list of services. Accepted services are
-  "data", "index", "query", "fts", "eventing" and "analytics" specified as a
-  comma-separated list. This parameter defaults to "data".
+  "data", "index", "query", "fts", "eventing", "analytics" and "backup"
+  specified as a comma-separated list. This parameter defaults to "data".
 
 --update-notifications::
   Specifies whether or not software update notifications and sharing of system

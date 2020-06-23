@@ -127,11 +127,11 @@ def process_services(services, enterprise):
         #backward compatible when using ";" as separator
         sep = ";"
     svc_set = set([w.strip() for w in services.split(sep)])
-    svc_candidate = ["data", "index", "query", "fts", "eventing", "analytics"]
+    svc_candidate = ["data", "index", "query", "fts", "eventing", "analytics", "backup"]
     for svc in svc_set:
         if svc not in svc_candidate:
             return None, [f'`{svc}` is not a valid service']
-        if not enterprise and svc in ["eventing", "analytics"]:
+        if not enterprise and svc in ["eventing", "analytics", "backup"]:
             return None, [f'{svc} service is only available on Enterprise Edition']
 
     if not enterprise:

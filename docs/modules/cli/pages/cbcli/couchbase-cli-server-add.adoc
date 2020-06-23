@@ -51,8 +51,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --services <services>::
   A comma separated list of services that this server should be running.
-  Accepted services are "data", "index", "query", "fts", "eventing" and
-  "analytics".
+  Accepted services are "data", "index", "query", "fts", "eventing",
+  "analytics" and "backup".
 
 --index-storage-setting <mode>::
   Specifies the index storage mode. This parameter must be set if the servers

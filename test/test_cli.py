@@ -113,7 +113,7 @@ class TestClusterInit(CommandTest):
     def test_init_cluster_all_options(self):
         self.server_args['init'] = False
         full_options = cluster_connect_args[:2] + self.command_args + [
-            '--cluster-ramsize', '512', '--services', 'data,query,fts,eventing,analytics',
+            '--cluster-ramsize', '512', '--services', 'data,query,fts,eventing,analytics,backup',
             '--cluster-index-ramsize', '512', '--cluster-fts-ramsize', '512',
             '--cluster-eventing-ramsize', '512', '--cluster-name', 'name',
             '--index-storage-setting', 'memopt', '--update-notifications', '0'
@@ -717,11 +717,11 @@ class TestServerAdd(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_server_add_services(self):
-        self.no_error_run(self.command + self.cmd_args + ['--services', 'data,analytics,eventing,query,fts'],
+        self.no_error_run(self.command + self.cmd_args + ['--services', 'data,analytics,eventing,query,fts,backup'],
                           self.server_args)
         self.assertIn('POST:/pools/default/serverGroups/0/addNode', self.server.trace)
         expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd',
-                           ['services=kv%2Cfts%2Ccbas%2Cn1ql%2Ceventing']]
+                           ['services=kv%2Cfts%2Ccbas%2Cn1ql%2Ceventing%2Cbackup']]
         self.assertEquals(len(expected_params), len(self.server.rest_params))
         for p in expected_params:
             if len(p) == 1:
