@@ -37,6 +37,8 @@ function gen_docs {
     modules/cli/pages/cbcli/${infile}
 }
 
+gen_docs couchbase-cli-backup-service.adoc 1
+gen_docs couchbase-cli-backup-service-settings.adoc 1
 gen_docs couchbase-cli-bucket-compact.adoc 1
 gen_docs couchbase-cli-bucket-create.adoc 1
 gen_docs couchbase-cli-bucket-delete.adoc 1

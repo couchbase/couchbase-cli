@@ -4694,3 +4694,97 @@ class SettingRebalance(Subcommand):
     @staticmethod
     def get_description():
         return "Configure automatic rebalance settings"
+
+
+class BackupService(Subcommand):
+    """BackupService class is a subcommand that will contain other commands to configure the service as well as manage
+    it. This approach attempts to make the interface more intuitive by keeping a hierarchical structure where the
+    service can have all its options under one command instead of having multiple completely separate commands (e.g
+    settings-backups, manage-backups and instance-setup-backup.)
+
+    The idea is that the interface will look like:
+    couchbase-cli backup-service [settings | profiles | instances | cloud-credentials] where each element in [] is a
+    subcommand to manage those options for that part of the backup service. As such if the user is not sure of what they
+    want to do they can always do couchbase-cli backup-service -h to get a top level details and then move down the
+    hierarchy to a more concrete option.
+    """
+
+    def __init__(self):
+        super(BackupService, self).__init__()
+        self.parser.prog = "couchbase-cli backup-service"
+        self.settings_cmd = BackupServiceSettings(self.parser)
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        if opts.sub_cmd is None or opts.sub_cmd not in ['settings']:
+            _exit_if_errors(['<subcommand> must settings'])
+
+        if opts.sub_cmd == 'settings':
+            self.settings_cmd.execute(opts)
+
+    @staticmethod
+    def get_man_page_name():
+        return 'couchbase-cli-backup-service' + '.1' if os.name != 'nt' else '.html'
+
+    @staticmethod
+    def get_description():
+        return "Manage the backup service"
+
+
+class BackupServiceSettings:
+    """Backup service settings is a nested command and manages the backup service settings"""
+
+    def __init__(self, parser):
+        self.rest = None
+        subparser = parser.add_subparsers(help='Sub command help', dest='sub_cmd', metavar='<subcommand>')
+        setting_parser = subparser.add_parser('settings', help='Manage backup service settings', add_help=False,
+                                              allow_abbrev=False)
+        group = setting_parser.add_argument_group('Backup service settings options')
+        group.add_argument('--get', action='store_true', help='Get current backup service configuration')
+        group.add_argument('--set', action='store_true', help='Change the service configuration')
+        group.add_argument('--history-rotation-period', dest='rotation_period', type=int, metavar='<days>',
+                           help='The number of days after which the task history should be rotated')
+        group.add_argument('--history-rotation-size', dest='rotation_size', type=int, metavar='<megabytes>',
+                           help='The size in MB at which to rotate the task history')
+        group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
+                           help="Prints the short or long help message")
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        if sum([opts.get, opts.set]) != 1:
+            _exit_if_errors(['Must use one and only one of [--get, --set]'])
+
+        if opts.get:
+            self._get(opts)
+        if opts.set:
+            self._set(opts)
+
+    def _get(self, opts):
+        config, err = self.rest.get_backup_service_settings()
+        _exit_if_errors(err)
+
+        if opts.output == 'json':
+            print(json.dumps(config, indent=4))
+        else:
+            print('-- Backup service configuration --')
+            size = config['history_rotation_size'] if 'history_rotation_size' in config else 'N/A'
+            period = config['history_rotation_period'] if 'history_rotation_period' in config else 'N/A'
+            print(f'History rotation size: {size} MB')
+            print(
+                f'History rotation period: {period} days')
+
+    def _set(self, opts):
+        if opts.rotation_period is None and opts.rotation_size is None:
+            _exit_if_errors(['At least one of --history-rotation-period or --history-rotation-size is required'])
+
+        _, err = self.rest.patch_backup_service_settings(opts.rotation_period, opts.rotation_size)
+        _exit_if_errors(err)
+        _success('Backup service settings patched')
+
+    @staticmethod
+    def get_man_page_name():
+        return 'couchbase-cli-backup-service-settings' + '.1' if os.name != 'nt' else '.html'
+
+    @staticmethod
+    def get_description():
+        return 'Manage backup service settings'

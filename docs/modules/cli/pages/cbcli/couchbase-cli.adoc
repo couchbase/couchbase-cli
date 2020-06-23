@@ -32,6 +32,9 @@ cluster management.
 man:couchbase-cli-admin-role-manage[1]::
   Manage LDAP user roles.
 
+man:couchbase-cli-bucket-service[1]::
+  Manage the backup service.
+
 man:couchbase-cli-bucket-compact[1]::
   Compact a Couchbase data bucket.
 

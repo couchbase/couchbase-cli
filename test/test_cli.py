@@ -1863,5 +1863,45 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.rest_parameter_match(['dataverse=Default', 'name=me'])
 
 
+class TestBackupServiceSettings(CommandTest):
+    """Test the backup-service settings subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                }
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['settings']
+        super(TestBackupServiceSettings, self).setUp()
+
+    def test_no_action_flag_given(self):
+        """Test that the command fails and returns an error if no action flag is given"""
+        self.system_exit_run(self.command, self.server_args)
+        self.assertIn('ERROR: Must use one and only one of [--get, --set]', self.str_output)
+
+    def test_get(self):
+        """Test that the --get action flag will retrieve the backups service configuration and print it out"""
+        self.server_args['/api/v1/config'] = {'history_rotation_size': 10, 'history_rotation_period': 50}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('History rotation size: 10 MB', self.str_output)
+        self.assertIn('History rotation period: 50 days', self.str_output)
+
+    def test_set_no_options(self):
+        """Test that if no options are given to --set it will fail and print an error asking for other options"""
+        self.system_exit_run(self.command + ['--set'], self.server_args)
+        self.assertIn('At least one of', self.str_output)
+
+    def test_set_all(self):
+        """Test that set with all options will send the correct request to the correct endpoint"""
+        self.no_error_run(self.command + ['--set', '--history-rotation-size', '10', '--history-rotation-period', '30'],
+                          self.server_args)
+        self.assertIn('PATCH:/api/v1/config', self.server.trace)
+        self.rest_parameter_match([json.dumps({'history_rotation_size': 10, 'history_rotation_period': 30},
+                                  sort_keys=True)])
+
+
 if __name__ == '__main__':
     unittest.main()

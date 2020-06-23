@@ -1,0 +1,36 @@
+= couchbase-cli-backup-service(1)
+ifndef::doctype-manpage[:doctitle: backup-serivce]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service -
+endif::[]
+Manages the Couchbase backup service
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service [--cluster <url>] [--username <user>]
+    [--password <password>] <subcommand>
+
+== DESCRIPTION
+
+Manage the backup service settings
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+== SUBCOMMANDS
+
+man:couchbase-cli-backup-service-settings[1]::
+  Manage backup service configuration.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

@@ -17,6 +17,7 @@ MGMT_SERVICE = 'mgmt'
 FTS_SERVICE = 'fts'
 EVENT_SERVICE = 'eventing'
 CBAS_SERVICE = 'cbas'
+BACKUP_SERVICE = 'backup'
 
 ERR_AUTH = 'unable to access the REST API - please check your username (-u) and password (-p)'
 ERR_INTERNAL = 'Internal server error, please retry your request'
@@ -270,6 +271,7 @@ class ClusterManager(object):
             index_port_name = 'indexHttp'
             event_port_name = 'eventingAdminPort'
             cbas_port_name = 'cbas'
+            backup_port_name = 'backupAPI'
 
             if self.ssl:
                 http_prefix = 'https://'
@@ -279,6 +281,7 @@ class ClusterManager(object):
                 index_port_name = 'indexHttps'
                 fts_port_name = 'ftsSSL'
                 cbas_port_name = 'cbasSSL'
+                backup_port_name = 'backupAPIHTTPS'
 
             services = node['services']
 
@@ -310,6 +313,9 @@ class ClusterManager(object):
 
             if service_name == CBAS_SERVICE and cbas_port_name in services:
                 hosts.append(http_prefix + node_host + ':' + str(services[cbas_port_name]))
+
+            if service_name == BACKUP_SERVICE and backup_port_name in services:
+                hosts.append(f'{http_prefix}{node_host}:{services[backup_port_name]}')
 
         return hosts, None
 
@@ -1800,6 +1806,32 @@ class ClusterManager(object):
 
         return self._get(url, params)
 
+    def get_backup_service_settings(self):
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._get(f'{hosts[0]}/api/v1/config')
+
+    def patch_backup_service_settings(self, rotation_period=None, rotation_size=None):
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        params = {}
+        if rotation_period is not None:
+            params['history_rotation_period'] = rotation_period
+        if rotation_size is not None:
+            params['history_rotation_size'] = rotation_size
+
+        return self._patch_json(f'{hosts[0]}/api/v1/config', params)
+
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
         params = {"name": scope}
@@ -1944,6 +1976,16 @@ class ClusterManager(object):
         response = requests.post(url, auth=(self.username, self.password), json=params,
                                  cert=self.cert, verify=self.ca_cert, timeout=self.timeout,
                                  headers=self.headers)
+        return _handle_response(response, self.debug)
+
+    @request
+    def _patch_json(self, url, params):
+        if self.debug:
+            if params is None:
+                params = {}
+            print(f'PATCH {url} {json.dumps(params)}')
+        response = requests.patch(url, auth=(self.username, self.password), json=params, cert=self.cert,
+                                  verify=self.ca_cert, timeout=self.timeout, headers=self.headers)
         return _handle_response(response, self.debug)
 
     @request

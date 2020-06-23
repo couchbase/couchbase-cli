@@ -28,6 +28,15 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         self.not_found()
 
+    def do_PATCH(self):
+        parsed = urlparse(self.path)
+        self.server.rest_server.trace.append(f'PATCH:{parsed.path}')
+        for (endpoint, fns) in endpoints:
+            if re.search(endpoint, parsed.path) is not None and 'PATCH' in fns:
+                return self.handle_fn(fns['PATCH'], parsed.path)
+
+        self.not_found()
+
     def do_PUT(self):
         parsed = urlparse(self.path)
         self.server.rest_server.trace.append(f'PUT:{parsed.path}')
@@ -52,11 +61,18 @@ class RequestHandler(BaseHTTPRequestHandler):
     def handle_fn(self, fn, path, params=None):
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len).decode('utf-8')
-        post_body = post_body.split('&')
-        for e in post_body:
-            if e == "":
-                continue
-            self.server.rest_server.rest_params.append(e)
+
+        if self.headers.get('Content-Type', 'application/x-www-form-urlencoded') == 'application/json':
+            # to help with verifying later on we are going to load this json and then dump it again but with sorted keys
+            # to ensure stable serializing so then we can do string comparison on the results
+            self.server.rest_server.rest_params.append(json.dumps(json.loads(post_body), sort_keys=True))
+        else:
+            post_body = post_body.split('&')
+            for e in post_body:
+                if e == "":
+                    continue
+                self.server.rest_server.rest_params.append(e)
+
         code, response = fn(post_body, self.server.rest_server.args, path, params)
         self.send_response(code)
 
@@ -393,5 +409,8 @@ endpoints = [
     (r'/api/index', {'GET': get_by_path}),
 
     # analytics api
-    (r'/analytics/link', {'GET': get_by_path, 'POST': do_nothing, 'PUT': do_nothing, 'DELETE': do_nothing})
+    (r'/analytics/link', {'GET': get_by_path, 'POST': do_nothing, 'PUT': do_nothing, 'DELETE': do_nothing}),
+
+    # backup server API
+    (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing})
 ]

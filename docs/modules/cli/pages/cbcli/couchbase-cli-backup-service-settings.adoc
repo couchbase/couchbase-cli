@@ -1,0 +1,66 @@
+= couchbase-cli-setting-query(1)
+ifndef::doctype-manpage[:doctitle: backup-serivce-settings]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-settings -
+endif::[]
+Manage the backup service settings
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service [--cluster <url>] [--username <user>]
+    [--password <password>] settings [--get] [--set] [--history-rotation-period <days>]
+    [--history-rotation-size <megabytes>]
+
+== DESCRIPTION
+
+Manage the backup service settings
+
+== OPTIONS
+
+--get::
+  Retrieve current backup service settings.
+
+--set::
+  Set backup service settings.
+
+--history-rotation-size <megabytes>::
+  The history size in megabytes at which it should be rotated. Valid values are between 5
+  and 200.
+
+--history-rotation-period <days>::
+  The period in days at which the history should be rotated. Valid values are between 1
+  and 365.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To retrieve the backup service settings:
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  settings --get
+-- Backup service configuration --
+History rotation size: 70 MB
+History rotation period: 28 days
+----
+
+To set the backup service configuration use the `--set` flag and any of the configuration flags for example:
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  settings --set --history-rotation-size 70 --history-rotation-period 365
+SUCCESS: Backup service settings set
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
