@@ -178,7 +178,7 @@ class GenSource(pump.Source):
                 docKey = prefix.encode() + key.encode()
 
             datatype = 0x00
-            if json_body:
+            if json_body and cmd != couchbaseConstants.CMD_GET:
                 datatype = 0x01
 
             msg: couchbaseConstants.BATCH_MSG = (cmd, vbucket_id, docKey, flg, exp, cas, b'', value_bytes, 0, datatype,
