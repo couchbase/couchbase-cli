@@ -111,7 +111,7 @@ with encryption disabled:
 
  $ couchbase-cli setting-ldap -c 192.168.1.5 -u Administrator \
   -p password --authentication-enabled 1 --authorization-enabled 1 \
-  --hosts ldap.couchbase.com --encryption 0
+  --hosts ldap.couchbase.com --encryption none
 
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
