@@ -19,6 +19,7 @@ import urllib.request, urllib.error, urllib.parse
 from typing import Any, List
 
 from cluster_manager import ClusterManager
+from couchbaseConstants import parse_host_port
 
 """Written by Daniel Owen owend@couchbase.com on 27 June 2014
 Version 1.4    Last updated 10 July 2014
@@ -162,7 +163,7 @@ def findAllVbucketsForBucket(node: str, bucket: str, restport: str, username: st
         thisNode = None
         for node in result["nodes"]:
             if "thisNode" in node and node["thisNode"]:
-                thisNode = node["hostname"].split(":")[0]
+                thisNode, _ = parse_host_port(node["hostname"])
                 break
 
         if thisNode == None:
@@ -171,7 +172,8 @@ def findAllVbucketsForBucket(node: str, bucket: str, restport: str, username: st
         serverIdx = None
         serverList = result['vBucketServerMap']['serverList']
         for index in range(len(serverList)):
-            if serverList[index].split(":")[0] == thisNode:
+            host, _ = parse_host_port(serverList[index])
+            if host == thisNode:
                 serverIdx = index
                 break
 

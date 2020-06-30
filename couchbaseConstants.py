@@ -328,3 +328,22 @@ ERR_EBUSY = 0x85
 ERR_ETMPFAIL = 0x86
 
 META_REVID = 0x01
+
+
+def parse_host_port(host: str) -> Tuple[str, int]:
+    """parse_host_port giving a host with ot without port will attempt to split the port
+       and the host and return them."""
+    # literal IPv6 host without port
+    if host[-1] == ']':
+        return host, 0
+
+    split = host.rsplit(':', 1)
+    if len(split) == 1:
+        # no port
+        return split[0], 0
+
+    try:
+        return split[0], int(split[1])
+    except ValueError:
+        # invalid port number
+        return split[0], 0
