@@ -17,11 +17,6 @@ _couchbase-cli setting-audit_ [--cluster <url>] [--username <user>]
     [--audit-log-rotate-interval <seconds>] [--audit-log-rotate-size <bytes>]
     [--disabled-users <user-list>] [--disable-events <event-list>]
 
-ifdef::site-gen-antora,backend-html5[]
-Some of these options are only available in Couchbase Server 6.5.1 and later.
-Refer to <<OPTIONS>> for details.
-endif::[]
-
 == DESCRIPTION
 
 Auditing is used to observe the action of users in the cluster. It is usually
@@ -29,7 +24,6 @@ turned on for security purposes to ensure that those without permission to
 access information do not access it. By default auditing is disabled in
 Couchbase. The setting-audit command can be used to enable and disable auditing,
 set the auditing log path, and change the auditing log rotation interval;
-ifdef::site-gen-antora,backend-html5[in Couchbase Server 6.5.1 and later,]
 the command can also be used to retrieve the current auditing configuration,
 retrieve the auditable events and descriptions,
 and disable auditing for certain users and events.
@@ -39,17 +33,14 @@ and disable auditing for certain users and events.
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --list-filterable-events::
-ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   Returns a table or a JSON list (if --output json used) with all the event
   IDs with there descriptions.
 
 --get-settings::
-ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   Returns the current audit settings including which events are disabled and
   which are enabled.
 
 --set::
-ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   Sets the cluster audit settings.
 
 --audit-enabled <num>::
@@ -76,11 +67,9 @@ ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   on size.
 
 --disabled-users <user-list>::
-ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   A comma separated list of users to ignore events from.
 
 --disable-events <events-list>::
-ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   A comma separated list of events IDs to disable auditing for
   (e.g 8243,8255,8257). To retrieve information of what event ID maps to
   what event use the --list-filterable-events to retrieve a list of IDs with
@@ -89,11 +78,6 @@ ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
-
-ifdef::site-gen-antora,backend-html5[]
-(Unless otherwise specified, the examples below are only applicable to Couchbase
-Server 6.5.1 and later.)
-endif::[]
 
 To get the current audit settings run the command below.
 
@@ -131,32 +115,12 @@ To enable auditing on a cluster and set the audit log to the default logs folder
 on a Linux installation with a log rotate interval of 7 days, run the command
 below.
 
-ifdef::site-gen-antora,backend-html5[]
-_Couchbase Server 6.5:_
-
-  $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
-   --password password --audit-enabled 1 --audit-log-rotate-interval 604800 \
-   --audit-log-path /opt/couchbase/var/lib/couchbase/logs
-
-_Couchbase Server 6.5.1 and later:_
-endif::[]
-
   $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
    --password password --set --audit-enabled 1 --audit-log-rotate-interval 604800 \
    --audit-log-path /opt/couchbase/var/lib/couchbase/logs
 
 To enable auditing on a cluster and set the audit log to the default logs folder
 on a Linux installation with a log rotate size of 20MB, run the command below.
-
-ifdef::site-gen-antora,backend-html5[]
-_Couchbase Server 6.5:_
-
-  $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
-   --password password --audit-enabled 1 --audit-log-rotate-size 20971520 \
-   --audit-log-path /opt/couchbase/var/lib/couchbase/logs
-
-_Couchbase Server 6.5.1 and later:_
-endif::[]
 
   $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
    --password password --set --audit-enabled 1 --audit-log-rotate-size 20971520 \
@@ -173,15 +137,6 @@ run the command below.
    --disabled-users backup,restore --disable-events 40964,40963
 
 To disable auditing run the following command.
-
-ifdef::site-gen-antora,backend-html5[]
-_Couchbase Server 6.5:_
-
-  $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
-   --password password --audit-enabled 0
-
-_Couchbase Server 6.5.1 and later:_
-endif::[]
 
   $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
    --password password --set --audit-enabled 0

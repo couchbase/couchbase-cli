@@ -533,7 +533,7 @@ Accepted services are "data", "index", "query", "fts", "eventing" and
 <p>Specifies the index storage mode. This parameter must be set if the servers
 being added contain the index service and this is the first time the index
 service is being added in this cluster. You may specify "default" for disk
-based indexes or "memopt" for memory optimized indexes.</p>
+based indexes or <code>memopt</code> for memory optimized indexes.</p>
 </dd>
 </dl>
 </div>
@@ -573,7 +573,7 @@ a port other that 8091.</p>
 <p>If we want to add a server at 192.168.1.6:8091 with the index, data and query
 service on it then we would run the command below.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
  --password password --server-add http://192.168.1.6:8091 \
@@ -594,7 +594,7 @@ services. In this example we will also assume that the index is being added for
 the first time so we need to specify the index storage mode. If we want to index
 storage mode to be memory optimized then we would run the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
  --password password --server-readd http://192.168.1.6:8091,http://192.168.1.7:8091 \

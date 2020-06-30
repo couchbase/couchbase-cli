@@ -23,20 +23,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
-== EXAMPLES
-
-TBD
-
-== DISCUSSION
-
-TBD
-
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
 include::{partialsdir}/cbcli/part-common-env.adoc[]
-
-== SEE ALSO
-
-TBD
 
 include::{partialsdir}/cbcli/part-footer.adoc[]

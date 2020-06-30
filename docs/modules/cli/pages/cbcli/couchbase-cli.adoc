@@ -156,7 +156,7 @@ man:couchbase-cli-setting-security[1]::
   Modifies security policies.
 
 man:couchbase-cli-setting-xdcr[1]::
-  Modifies cross datacenter replication (XDCR) settings.
+  Modifies cross data center replication (XDCR) settings.
 
 man:couchbase-cli-ssl-manage[1]::
   Manage SSL certificates.

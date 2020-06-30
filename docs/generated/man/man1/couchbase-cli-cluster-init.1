@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-cluster-init
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-02-10
+.\"      Date: 2020-06-11
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-CLUSTER\-INIT" "1" "2020-02-10" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-CLUSTER\-INIT" "1" "2020-06-11" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -40,6 +40,7 @@ couchbase\-cli\-cluster\-init \- Initializes a Couchbase Server cluster
     [\-\-cluster\-eventing\-ramsize <megabytes>]
     [\-\-cluster\-analytics\-ramsize <megabytes>]
     [\-\-index\-storage\-setting <setting>] [\-\-services <services>]
+    [\-\-update\-notifications <1|0>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -133,7 +134,7 @@ port 8091.
 \-\-index\-storage\-setting
 .RS 4
 Specifies the index storage mode for the index service. Accepted storage
-modes are "default" for the standard index backend or "memopt" for memory
+modes are "default" for the standard index backend or \f(CRmemopt\fP for memory
 optimized indexes. If the index service is specified to be started with the
 \-\-services command then this parameter defaults to "default". If the index
 service is not specified to be started then the index storage mode will not
@@ -152,6 +153,28 @@ services running on this node once the cluster has been initialized. This
 options takes a comma separated list of services. Accepted services are
 "data", "index", "query", "fts", "eventing" and "analytics" specified as a
 comma\-separated list. This parameter defaults to "data".
+.RE
+.sp
+\-\-update\-notifications
+.RS 4
+Specifies whether or not software update notifications and sharing of system
+performance information should be enabled. To enable notifications set this
+flag to "1". To disable notifications set this flag to "0". By default it\(cqs
+enabled and notifications will be displayed in the Couchbase web console
+when a new version of Couchbase Server is available. This system also
+collects information about use and experience with the product every time an
+administrator interacts with the administrator user interface. It collects
+configuration, usage and performance data, including cluster information
+(such as settings and configuration, software version, cluster ID, load
+levels, and resource quotas), and browser and network information (such as
+IP address, inferred geolocation only at the city level, and browser type).
+This does not allow Couchbase to track your specific interactions or usage
+of Couchbase Server. Couchbase, Inc never accesses or collects any data
+stored within Couchbase Server. This feature can be disabled at any time by
+using \(aqcouchbase\-cli\-setting\-notification.\(aq For more information on this
+feature, please see the “Couchbase Server Privacy FAQ” in the product
+documentation, which supplements the Couchbase Privacy Policy available
+online.
 .RE
 .SH "HOST FORMATS"
 .sp

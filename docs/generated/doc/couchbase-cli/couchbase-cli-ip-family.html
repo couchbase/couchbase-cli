@@ -548,10 +548,10 @@ a port other that 8091.</p>
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>For a cluster with nodes [cb1.com, cb2.com, cb3.com] communicating via IPv4 we
+<p>For a cluster with nodes [<code>cb1.com</code>, <code>cb2.com</code>, <code>cb3.com</code>] communicating via IPv4 we
 can change the IP family being used to IPv6 by using the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli ip-family -c http://cb1.com:8091 -u Administrator \
   -p password --set --ipv6</pre>
@@ -561,7 +561,7 @@ can change the IP family being used to IPv6 by using the following command.</p>
 <p>This command will configure each node in the cluster to use IPv6. To check what
 family is being used use the command below:</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli ip-family -c http://cb1.com:8091 -u Administrator \
   -p password --get</pre>

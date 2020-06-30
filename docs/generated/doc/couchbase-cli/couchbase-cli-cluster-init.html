@@ -456,7 +456,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--cluster-index-ramsize &lt;megabytes&gt;] [--cluster-fts-ramsize &lt;megabytes&gt;]
     [--cluster-eventing-ramsize &lt;megabytes&gt;]
     [--cluster-analytics-ramsize &lt;megabytes&gt;]
-    [--index-storage-setting &lt;setting&gt;] [--services &lt;services&gt;]</pre>
+    [--index-storage-setting &lt;setting&gt;] [--services &lt;services&gt;]
+    [--update-notifications &lt;1|0&gt;]</pre>
 </div>
 </div>
 </div>
@@ -550,7 +551,7 @@ port 8091.</p>
 <dt class="hdlist1">--index-storage-setting</dt>
 <dd>
 <p>Specifies the index storage mode for the index service. Accepted storage
-modes are "default" for the standard index backend or "memopt" for memory
+modes are "default" for the standard index backend or <code>memopt</code> for memory
 optimized indexes. If the index service is specified to be started with the
 --services command then this parameter defaults to "default". If the index
 service is not specified to be started then the index storage mode will not
@@ -568,6 +569,27 @@ services running on this node once the cluster has been initialized. This
 options takes a comma separated list of services. Accepted services are
 "data", "index", "query", "fts", "eventing" and "analytics" specified as a
 comma-separated list. This parameter defaults to "data".</p>
+</dd>
+<dt class="hdlist1">--update-notifications</dt>
+<dd>
+<p>Specifies whether or not software update notifications and sharing of system
+performance information should be enabled. To enable notifications set this
+flag to "1". To disable notifications set this flag to "0". By default it&#8217;s
+enabled and notifications will be displayed in the Couchbase web console
+when a new version of Couchbase Server is available. This system also
+collects information about use and experience with the product every time an
+administrator interacts with the administrator user interface. It collects
+configuration, usage and performance data, including cluster information
+(such as settings and configuration, software version, cluster ID, load
+levels, and resource quotas), and browser and network information (such as
+IP address, inferred geolocation only at the city level, and browser type).
+This does not allow Couchbase to track your specific interactions or usage
+of Couchbase Server. Couchbase, Inc never accesses or collects any data
+stored within Couchbase Server. This feature can be disabled at any time by
+using 'couchbase-cli-setting-notification.' For more information on this
+feature, please see the “Couchbase Server Privacy FAQ” in the product
+documentation, which supplements the Couchbase Privacy Policy available
+online.</p>
 </dd>
 </dl>
 </div>
@@ -607,7 +629,7 @@ a port other that 8091.</p>
 <p>To create a Couchbase Server cluster with only the data service on the first node
 and a memory quota of 4096MB run the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
  --cluster-password password --services data --cluster-ramsize 4096</pre>
@@ -623,7 +645,7 @@ mode since you are starting the index service.</p>
 quota of 2048MB and a memory optimized index storage mode run the following
 command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
  --cluster-password password --services data,index --cluster-ramsize 2048 \
@@ -639,7 +661,7 @@ a memory quota. You also need to set the index storage mode for the index
 service, which will be set to "default" since the service is started on the
 first node.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
  --cluster-password password --services data,index,query,fts,analytics \
@@ -654,7 +676,7 @@ first node.</p>
 option. In the example below, a cluster is setup on port 5000 and starts
 only the data service. The memory quota of the data service is set to 2048MB.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
  --cluster-password password --services data --cluster-ramsize 2048 \

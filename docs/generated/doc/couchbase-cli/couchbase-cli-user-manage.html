@@ -551,7 +551,7 @@ does not store password for <em>external</em> RBAC roles.</p>
 <dt class="hdlist1">--rbac-name &lt;name&gt;</dt>
 <dd>
 <p>Specifies the name to be used for an RBAC user profile. This option is used
-when creating or updating an RBAC user profile and it is recommanded that
+when creating or updating an RBAC user profile and it is recommended that
 this option be set to the users full name.</p>
 </dd>
 <dt class="hdlist1">--roles &lt;roles_list&gt;</dt>
@@ -676,7 +676,7 @@ views_admin[default],views_admin[app].</p>
 <dl>
 <dt class="hdlist1">data_reader[&#8230;&#8203;]</dt>
 <dd>
-<p>Gives the user permission to read data through Couchbases key-value APIs.
+<p>Gives the user permission to read data through the Couchbase key-value APIs.
 To give a user read-only access for all buckets set their role to
 data_reader[*]. To give the user read-only access to data on a single
 bucket named <em>default</em> then specify their role as data_reader[default].
@@ -686,7 +686,7 @@ data_reader[default],data_reader[app].</p>
 </dd>
 <dt class="hdlist1">data_writer[&#8230;&#8203;]</dt>
 <dd>
-<p>Gives the user permission to read and write data through Couchbases
+<p>Gives the user permission to read and write data through the Couchbase
 key-value APIs. The user cannot however modify the settings of a bucket.
 To give a user read-write access for all buckets set their role to
 data_writer[*]. To give the user read-write access to data on a single
@@ -826,10 +826,10 @@ system_catalog[default],system_catalog[app].</p>
 <div class="sectionbody">
 <div class="paragraph">
 <p>To create an local RBAC user profile for a user named "John Doe" with username
-jdoe and password cbpass with roles to manage the <em>default</em> bucket and all
+<code>jdoe</code> and password <code>cbpass</code> with roles to manage the <em>default</em> bucket and all
 XDCR replication run the following command</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
  -p password --set --rbac-username jdoe --rbac-password cbpass \
@@ -839,10 +839,10 @@ XDCR replication run the following command</p>
 </div>
 <div class="paragraph">
 <p>If you have external user source setup in your cluster and you want to add a
-user "John Doe" with username jdoe who should have the ability to manage only
+user "John Doe" with username <code>jdoe</code> who should have the ability to manage only
 views for all bucket run the following command</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
  -p password --set --rbac-username jdoe --rbac-name "John Doe" \
@@ -852,76 +852,76 @@ views for all bucket run the following command</p>
 <div class="paragraph">
 <p>To list the current RBAC user profiles run the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
  -p password --list</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To delete an external user named jdoe run the following command.</p>
+<p>To delete an external user named <code>jdoe</code> run the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
  -p password --delete --rbac-username jdoe --auth-domain external</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To delete a local user named jdoe run the following command.</p>
+<p>To delete a local user named <code>jdoe</code> run the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
  -p password --delete --rbac-username jdoe --auth-domain local</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To see the user profile for a user with the username jdoe and password cbpass
+<p>To see the user profile for a user with the username <code>jdoe</code> and password <code>cbpass</code>
 run the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u jdoe -p cbpass \
  --my-roles</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To create a user group with name admins and roles admin and reference to and
-LDAP group reference admins run the following command.</p>
+<p>To create a user group with name <code>admins</code> and roles <code>admin</code> and reference to and
+LDAP group reference <code>admins</code> run the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
--p password --set-group --group-name admins --roles admin \
---group-description "CB admins" --ldap-ref admins</pre>
+ -p password --set-group --group-name admins --roles admin \
+ --group-description "CB admins" --ldap-ref admins</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To delete a user group "admins" you have to run the following command.</p>
+<p>To delete a user group <code>admins</code> you have to run the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --delete-group --group-name admins</pre>
+  -p password --delete-group --group-name admins</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To get a user group "admins" you have to run the following command. This
+<p>To get a user group <code>admins</code> you have to run the following command. This
 will show the associated roles.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
- -p password --get-group --group-name admins</pre>
+  -p password --get-group --group-name admins</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To add or remove roles a user group "admins" you have to first get the current
+<p>To add or remove roles a user group <code>admins</code> you have to first get the current
 roles using the previous command and then use the set command bellow giving it
 an amended version of the roles.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
  -p password --set-group --group-name admins --roles admin \

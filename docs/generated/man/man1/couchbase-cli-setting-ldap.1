@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-ldap
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-10-10
+.\"      Date: 2020-06-03
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2019-10-10" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2020-06-03" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -41,6 +41,7 @@ couchbase\-cli\-setting\-ldap \- Configure LDAP
     [\-\-user\-dn\-query <query> | \-\-user\-dn\-template <template>]
     [\-\-max\-parallel <max>] [\-\-max\-cache\-size <size>]
     [\-\-cache\-value\-lifetime <ms>] [\-\-bind\-dn <dn>] [\-\-bind\-password <password>]
+    [\-\-client\-cert <path>] [\-\-client\-key <path>]
     [\-\-group\-query <query>] [\-\-enable\-nested\-groups <0|1>]
     [\-\-nested\-group\-max\-depth <depth>]
 .fi
@@ -145,14 +146,28 @@ Lifetime of values in cache in milliseconds. Default 300000 ms.
 .sp
 \-\-bind\-dn <dn>
 .RS 4
-The DN of a user to autheicate as to allow user search and groups
-synchronization. If bind details are not provided anonymous bind
-will be used instead.
+The DN of a user to authenticate as to allow user search and groups
+synchronization. If bind details or client TLS certificate are not provided
+anonymous bind will be used instead.
 .RE
 .sp
 \-\-bind\-password <password>
 .RS 4
 The bind user password
+.RE
+.sp
+\-\-client\-cert <path>
+.RS 4
+The client TLS certificate to be used to bind against the LDAP Server to
+allow user and groups synchronization. If bind details or client TLS
+certificate are not provided anonymous bind will be used instead.
+\(aq\-\-client\-cert\(aq and \(aq\-\-client\-key\(aq need to be set together.
+.RE
+.sp
+\-\-client\-key <path>
+.RS 4
+The client TLS key. This is used with \(aq\-\-client\-cert\(aq flag for certificate
+authentication. \(aq\-\-client\-cert\(aq and \(aq\-\-client\-key\(aq need to be set together.
 .RE
 .sp
 \-\-group\-query <query>

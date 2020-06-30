@@ -606,6 +606,8 @@ class ClusterInit(Subcommand):
                            help="The index storage backend (Defaults to \"default)\"")
         group.add_argument("--services", dest="services", default="data", metavar="<service_list>",
                            help="The services to run on this server")
+        group.add_argument("--update-notifications", dest="notifications", metavar="<1|0>", choices=["0", "1"],
+                           default="1", help="Enables/disable software update notifications")
 
     @rest_initialiser(enterprise_check=False)
     def execute(self, opts):
@@ -651,7 +653,10 @@ class ClusterInit(Subcommand):
         _exitIfErrors(errors)
 
         # Enable notifications
-        _, errors = self.rest.enable_notifications(True)
+        if opts.notifications == "1":
+            _, errors = self.rest.enable_notifications(True)
+        else:
+            _, errors = self.rest.enable_notifications(False)
         _exitIfErrors(errors)
 
         # Setup Administrator credentials and Admin Console port
@@ -802,6 +807,8 @@ class BucketCreate(Subcommand):
                 _exitIfErrors(["--max-ttl cannot be specified for a memcached bucket"])
             if opts.compression_mode is not None:
                 _exitIfErrors(["--compression-mode cannot be specified for a memcached bucket"])
+            if opts.durability_min_level is not None:
+                _exitIfErrors(["--durability-min-level cannot be specified for a memcached bucket"])
         elif opts.type == "ephemeral":
             if opts.eviction_policy in ["valueOnly", "fullEviction"]:
                 _exitIfErrors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
@@ -1230,8 +1237,10 @@ class Failover(Subcommand):
         group = self.parser.add_argument_group("Failover options")
         group.add_argument("--server-failover", dest="servers_to_failover", metavar="<server_list>",
                            required=True, help="A list of servers to fail over")
-        group.add_argument("--force", dest="force", action="store_true",
+        group.add_argument("--hard", dest="hard", action="store_true",
                            help="Hard failover the server")
+        group.add_argument("--force", dest="force", action="store_true",
+                           help="Force a hard failover")
         group.add_argument("--no-progress-bar", dest="no_bar", action="store_true",
                            default=False, help="Disables the progress bar")
         group.add_argument("--no-wait", dest="wait", action="store_false",
@@ -1239,11 +1248,13 @@ class Failover(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
+        if opts.force and not opts.hard:
+            _exitIfErrors(["--hard is required with --force flag"])
         opts.servers_to_failover = apply_default_port(opts.servers_to_failover)
-        _, errors = self.rest.failover(opts.servers_to_failover, opts.force)
+        _, errors = self.rest.failover(opts.servers_to_failover, opts.hard, opts.force)
         _exitIfErrors(errors)
 
-        if not opts.force:
+        if not opts.hard:
             time.sleep(1)
             if opts.wait:
                 bar = TopologyProgressBar(self.rest, 'Gracefully failing over', opts.no_bar)
@@ -1450,7 +1461,12 @@ class MasterPassword(LocalSubcommand):
                 os.environ['PATH'] = ';'.join(path)
 
             cookiefile = os.path.join(opts.config_path, "couchbase-server.babysitter.cookie")
-            cookie = _exit_on_file_read_failure(cookiefile, "The node is down").rstrip()
+            if not os.path.isfile(cookiefile):
+                _exitIfErrors(["The node is down"])
+            cookie = _exit_on_file_read_failure(cookiefile, "Insufficient privileges to send master password - Please"
+                                                            " execute this command as a operating system user who has"
+                                                            " file system read permission on the Couchbase Server "
+                                                            " configuration").rstrip()
 
             nodefile = os.path.join(opts.config_path, "couchbase-server.babysitter.node")
             node = _exit_on_file_read_failure(nodefile).rstrip()
@@ -2755,6 +2771,10 @@ class SettingLdap(Subcommand):
                            help="LDAP query to get user's DN. Must contains at least one instance of %%u")
         group.add_argument("--user-dn-template", metavar="<template>", dest="user_dn_template",
                            help="Template to construct user's DN. Must contain at least one instance of %%u")
+        group.add_argument("--client-cert", metavar="<path>", dest="client_cert",
+                           help="The client TLS certificate for authentication")
+        group.add_argument("--client-key", metavar="<path>", dest="client_key",
+                           help="The client TLS key for authentication")
         group.add_argument("--request-timeout", metavar="<ms>", dest="timeout",
                            help="Request time out in milliseconds")
         group.add_argument("--max-parallel", dest="max_parallel", metavar="<max>", type=int,
@@ -2826,11 +2846,21 @@ class SettingLdap(Subcommand):
         if opts.user_dn_template is not None:
             mapping = f'{{"template": "{opts.user_dn_template}"}}'
 
-        _, errors = self.rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts, opts.port,
-                                       opts.encryption, mapping, opts.timeout, opts.max_parallel,
-                                       opts.max_cache_size, opts.cache_value_lifetime, opts.bind_dn, opts.bind_password,
-                                       opts.group_query, opts.nested_groups, opts.nested_max_depth,
-                                       opts.server_cert_val, opts.cacert_ldap)
+        if (opts.client_cert and not opts.client_key) or (not opts.client_cert and opts.client_key):
+            _exitIfErrors(['--client-cert and --client--key have to be used together'])
+
+        if opts.client_cert is not None:
+            opts.client_cert = _exit_on_file_read_failure(opts.client_cert)
+
+        if opts.client_key is not None:
+            opts.client_key = _exit_on_file_read_failure(opts.client_key)
+
+        _, errors = self.rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts,
+                                            opts.port, opts.encryption, mapping, opts.timeout, opts.max_parallel,
+                                            opts.max_cache_size, opts.cache_value_lifetime, opts.bind_dn,
+                                            opts.bind_password, opts.client_cert, opts.client_key, opts.group_query,
+                                            opts.nested_groups, opts.nested_max_depth, opts.server_cert_val,
+                                            opts.cacert_ldap)
 
         _exitIfErrors(errors)
         _success("LDAP settings modified")
@@ -2852,7 +2882,7 @@ class SettingNotification(Subcommand):
         self.parser.prog = "couchbase-cli setting-notification"
         group = self.parser.add_argument_group("Notification Settings")
         group.add_argument("--enable-notifications", dest="enabled", metavar="<1|0>", required=True,
-                           choices=["0", "1"], help="Enables/disable notifications")
+                           choices=["0", "1"], help="Enables/disable software notifications")
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
@@ -2865,7 +2895,7 @@ class SettingNotification(Subcommand):
         _, errors = self.rest.enable_notifications(enabled)
         _exitIfErrors(errors)
 
-        _success("Notification settings updated")
+        _success("Software notification settings updated")
 
     @staticmethod
     def get_man_page_name():
@@ -2873,7 +2903,7 @@ class SettingNotification(Subcommand):
 
     @staticmethod
     def get_description():
-        return "Modify email notification settings"
+        return "Modify software notification settings"
 
 
 class SettingPasswordPolicy(Subcommand):
@@ -4583,6 +4613,8 @@ class SettingRebalance(Subcommand):
                            help='Get the automatic rebalance retry settings.')
         group.add_argument('--cancel', default=False, action='store_true',
                            help='Cancel pending rebalance retry.')
+        group.add_argument('--moves-per-node', type=int, metavar='<num>',
+                           help='Specify the number of [1-64] vBuckets to move concurrently')
         group.add_argument('--pending-info', default=False, action='store_true',
                            help='Get info for pending rebalance retry.')
         group.add_argument("--enable", metavar="<1|0>", choices=["1", "0"],
@@ -4594,21 +4626,30 @@ class SettingRebalance(Subcommand):
         group.add_argument('--rebalance-id', metavar='<id>',
                            help='Specify the id of the failed rebalance to cancel the retry.')
 
-    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=True)
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if sum([opts.set, opts.get, opts.cancel, opts.pending_info]) != 1:
             _exitIfErrors(['Provide either --set, --get, --cancel or --pending-info'])
 
         if opts.get:
-            settings, err = self.rest.get_settings_rebalance_retry()
+            settings, err = self.rest.get_settings_rebalance()
             _exitIfErrors(err)
+            if self.enterprise:
+                retry_settings, err = self.rest.get_settings_rebalance_retry()
+                _exitIfErrors(err)
+                settings.update(retry_settings)
             if opts.output == 'json':
                 print(json.dumps(settings))
             else:
-                print(f'Automatic rebalance retry {"enabled" if settings["enabled"] else "disabled"}')
-                print(f'Retry wait time: {settings["afterTimePeriod"]}')
-                print(f'Maximum number of retries: {settings["maxAttempts"]}')
+                if self.enterprise:
+                    print(f'Automatic rebalance retry {"enabled" if settings["enabled"] else "disabled"}')
+                    print(f'Retry wait time: {settings["afterTimePeriod"]}')
+                    print(f'Maximum number of retries: {settings["maxAttempts"]}')
+                print(f'Maximum number of vBucket move per node: {settings["rebalanceMovesPerNode"]}')
         elif opts.set:
+            if not self.enterprise:
+                if opts.enable is not None or opts.wait_for is not None or opts.max_attempts is not None:
+                    _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
             if opts.enable == '1':
                 opts.enable = 'true'
             else:
@@ -4619,16 +4660,29 @@ class SettingRebalance(Subcommand):
             if opts.max_attempts is not None and (opts.max_attempts < 1 or opts.max_attempts > 3):
                 _exitIfErrors(['--max-attempts must be a value between 1 and 3'])
 
-            _, err = self.rest.set_settings_rebalance_retry(opts.enable, opts.wait_for, opts.max_attempts)
-            _exitIfErrors(err)
-            _success('Automatic rebalance retry settings updated')
+            if self.enterprise:
+                _, err = self.rest.set_settings_rebalance_retry(opts.enable, opts.wait_for, opts.max_attempts)
+                _exitIfErrors(err)
+
+            if opts.moves_per_node is not None:
+                if not (1 <= opts.moves_per_node <= 64):
+                    _exitIfErrors(['--moves-per-node must be a value between 1 and 64'])
+                _, err = self.rest.set_settings_rebalance(opts.moves_per_node)
+                _exitIfErrors(err)
+
+            _success('Rebalance settings updated')
         elif opts.cancel:
+            if not self.enterprise:
+                _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
+
             if opts.rebalance_id is None:
                 _exitIfErrors(['Provide the failed rebalance id using --rebalance-id <id>'])
             _, err = self.rest.cancel_rebalance_retry(opts.rebalance_id)
             _exitIfErrors(err)
             _success('Rebalance retry canceled')
         else:
+            if not self.enterprise:
+                _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
             rebalance_info, err = self.rest.get_rebalance_info()
             _exitIfErrors(err)
             print(json.dumps(rebalance_info))

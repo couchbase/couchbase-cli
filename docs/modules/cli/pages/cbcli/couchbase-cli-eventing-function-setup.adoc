@@ -38,7 +38,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --delete::
   Deletes a named function. Functions can only be deleted when in the
-  un-deployed state. This option requires --name to be specified.
+  undeployed state. This option requires --name to be specified.
 
 --list::
   List all functions.
@@ -59,7 +59,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --name <name>::
   The name of the function to take a action against. This is used by
-  --export, --delete, --deploy and --undeply options only.
+  --export, --delete, --deploy and --undeploy options only.
 
 --boundary <from-everything|from-now>::
   The place to start at when deploying a new function. Accepts 'from-now' or

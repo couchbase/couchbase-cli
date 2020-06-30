@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-node-init
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-02-10
+.\"      Date: 2020-05-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-NODE\-INIT" "1" "2020-02-10" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-NODE\-INIT" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -165,14 +165,14 @@ is needed for non\-default installations where the admin port has been set up on
 a port other that 8091.
 .SH "EXAMPLES"
 .sp
-To initialize a node and set the index path to /mnt1/indexes and the data path
-to /mnt2/data run the following command. Note that this command must be run
+To initialize a node and set the index path to \f(CR/mnt1/indexes\fP and the data path
+to \f(CR/mnt2/data\fP run the following command. Note that this command must be run
 before the node becomes part of a cluster.
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli node\-init \-c 192.168.1.5 \(rs
- \-\-node\-init\-data\-path /mnt2/data \-\-node\-init\-index\-path /mnt1/indexes
+   \-\-node\-init\-data\-path /mnt2/data \-\-node\-init\-index\-path /mnt1/indexes
 .fi
 .if n .RE
 .sp
@@ -185,7 +185,7 @@ username and password.
 .if n .RS 4
 .nf
 $ couchbase\-cli node\-init \-c 192.168.1.5 \-u Administrator \-p password \(rs
- \-\-node\-init\-hostname cb1.mydomain.com
+   \-\-node\-init\-hostname cb1.mydomain.com
 .fi
 .if n .RE
 .sp
@@ -195,9 +195,9 @@ initializing the cluster. This can be done with the following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli node\-init \-c 192.168.1.5 \-\-node\-init\-hostname cb1.mydomain.com \(rs
- \-\-node\-init\-data\-path /mnt2/data \-\-node\-init\-index\-path /mnt1/indexes \(rs
- \-\-node\-init\-analytics\-path /mnt3/analytics \(rs
- \-\-node\-init\-java\-home /usr/lib/java/
+   \-\-node\-init\-data\-path /mnt2/data \-\-node\-init\-index\-path /mnt1/indexes \(rs
+   \-\-node\-init\-analytics\-path /mnt3/analytics \(rs
+   \-\-node\-init\-java\-home /usr/lib/java/
 .fi
 .if n .RE
 .sp

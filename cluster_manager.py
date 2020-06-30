@@ -413,7 +413,7 @@ class ClusterManager(object):
 
     def enable_notifications(self, enable):
         url = f'{self.hostname}/settings/stats'
-        params = { "sendStats": "false"}
+        params = {"sendStats": "false"}
 
         if enable:
             params["sendStats"] = "true"
@@ -513,11 +513,10 @@ class ClusterManager(object):
         url = f'{self.hostname}/controller/cancelLogsCollection'
         return self._post_form_encoded(url, dict())
 
-    def failover(self, servers_to_failover, force):
+    def failover(self, servers_to_failover, hard, force):
         _, _, failover, _, _, errors = self._get_otps_names(failover_nodes=servers_to_failover)
         if errors:
             return None, errors
-
 
         if len(failover) != len(servers_to_failover):
             if len(servers_to_failover) == 1:
@@ -526,16 +525,17 @@ class ClusterManager(object):
 
         params = {"otpNode": [server for server, _ in failover]}
 
-        if force:
-            params["allowUnsafe"] = "true"
+        if hard:
+            if force:
+                params["allowUnsafe"] = "true"
             url = f'{self.hostname}/controller/failOver'
             return self._post_form_encoded(url, params)
-        else:
-            for server, server_status in failover:
-                if server_status != 'healthy':
-                    return None, ["% can't be gracefully failed over because it is not healthy", server]
-            url = f'{self.hostname}/controller/startGracefulFailover'
-            return self._post_form_encoded(url, params)
+
+        for server, server_status in failover:
+            if server_status != 'healthy':
+                return None, ["% can't be gracefully failed over because it is not healthy", server]
+        url = f'{self.hostname}/controller/startGracefulFailover'
+        return self._post_form_encoded(url, params)
 
     def recovery(self, server, recovery_type):
         _, _, _, readd, _, errors = self._get_otps_names(readd_nodes=[server])
@@ -563,6 +563,15 @@ class ClusterManager(object):
         params = { "knownNodes": ','.join(all),
                    "ejectedNodes": ','.join(eject) }
 
+        return self._post_form_encoded(url, params)
+
+    def get_settings_rebalance(self):
+        url = f'{self.hostname}/settings/rebalance'
+        return self._get(url)
+
+    def set_settings_rebalance(self, rebalance_moves_per_node):
+        url = f'{self.hostname}/settings/rebalance'
+        params = {'rebalanceMovesPerNode': rebalance_moves_per_node}
         return self._post_form_encoded(url, params)
 
     def set_settings_rebalance_retry(self, enabled, wait_for, max_attempts):
@@ -1359,7 +1368,7 @@ class ClusterManager(object):
         return self._get(url)
 
     def ldap_settings(self, authentication_enabled, authorization_enabled, hosts, port, encryption, user_dn_mapping,
-                    timeout, max_parallel, max_cache, cache_lifetime, query_dn, query_pass, group_query,
+                    timeout, max_parallel, max_cache, cache_lifetime, query_dn, query_pass, cert, key, group_query,
                     nested_groups, nested_groups_max_depth, server_ca_ver, ca):
         url = f'{self.hostname}/settings/ldap'
 
@@ -1389,6 +1398,10 @@ class ClusterManager(object):
             params['bindDN'] = query_dn
         if query_pass is not None:
             params['bindPass'] = query_pass
+        if cert:
+            params['clientTLSCert'] = cert
+        if key:
+            params['clientTLSKey'] = key
         if group_query is not None:
             params['groupsQuery'] = group_query
         if nested_groups is not None:

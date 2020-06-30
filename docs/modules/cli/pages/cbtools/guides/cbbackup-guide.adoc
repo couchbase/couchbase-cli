@@ -197,7 +197,7 @@ ssh USER@HOST
       -b default
 ----
 
-This method backs up the cluster data of a single bucket on the local node, storing the backup data in the local filesystem.
+This method backs up the cluster data of a single bucket on the local node, storing the backup data in the local file system.
 
 Using a file store reference (in place of a node reference) is faster, because the data files can be copied directly from the source directory to the backup directory:
 
@@ -237,7 +237,7 @@ You can back up an entire bucket and restore selected keys during the restore pr
 
 == Back up using file copies
 
-You can also back up by using either `cbbackup` and specifying the local directory where the data is stored, or by copying the data files directly using cp, tar, or similar.
+You can also back up by using either `cbbackup` and specifying the local directory where the data is stored, or by copying the data files directly using `cp`, tar, or similar.
 
 For example, using `cbbackup`:
 

@@ -596,8 +596,8 @@ class TestDCPSource(unittest.TestCase):
         # extras is formed by seqno, rev_seqno, flg, exp, loctime, metalen, nru
         extra1 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 1, 1, 0, 0, 0, 0, 0)
         extra2 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 2, 1, 0, 0, 0, 0, 0)
-        # Test MB-33810: Setting a large Rev
-        extra3 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 3, 258, 0, 0, 0, 0, 0)
+        # Test MB-38683: MAX rev minus one
+        extra3 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 3, (2**64-1), 0, 0, 0, 0, 0)
         data1 = extra1 + b'KEY:1' + b'{"field1":"value1"}'
         data2 = extra2 + b'KEY:2' + b'{"field2":"value2"}'
         data3 = extra3 + b'KEY:3' + b'{"field3":"value3"}'
@@ -624,9 +624,9 @@ class TestDCPSource(unittest.TestCase):
         self.assertEqual(batch.size(), 3)
 
         expected_out = [
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0,0,0,1]), b'{"field1":"value1"}', 1, 0, 0, 0),
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:2', 0, 0, 0, bytes([0,0,0,1]), b'{"field2":"value2"}', 2, 0, 0, 0),
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:3', 0, 0, 0, bytes([0,0,1,2]), b'{"field3":"value3"}', 3, 0, 0, 0)
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field1":"value1"}', 1, 0, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:2', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field2":"value2"}', 2, 0, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:3', 0, 0, 0, bytes([255,255,255,255,255,255,255,254]), b'{"field3":"value3"}', 3, 0, 0, 0)
         ]
 
         for m in batch.msgs:
@@ -673,10 +673,10 @@ class TestDCPSource(unittest.TestCase):
         self.assertEqual(batch.size(), 4)
 
         expected_out = [
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:0', 0, 0, 0, bytes([0,0,0,1]), b'{"field":"value"}', 1, 0, 0, 0),
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0,0,0,1]), b'{"field1":"value1"}', 2, 0, 0, 0),
-            (cbcs.CMD_DCP_MUTATION, 1, b'KEY:2', 0, 0, 0, bytes([0,0,0,1]), b'{"field":"value"}', 1, 0, 0, 0),
-            (cbcs.CMD_DCP_DELETE, 1, b'KEY:2', 0, 0, 0, bytes([0,0,0,1]), b'', 2, 0, 0, 0)
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:0', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field":"value"}', 1, 0, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field1":"value1"}', 2, 0, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 1, b'KEY:2', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field":"value"}', 1, 0, 0, 0),
+            (cbcs.CMD_DCP_DELETE, 1, b'KEY:2', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'', 2, 0, 0, 0)
         ]
 
         for m in batch.msgs:

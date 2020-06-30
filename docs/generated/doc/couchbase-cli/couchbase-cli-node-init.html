@@ -577,14 +577,14 @@ a port other that 8091.</p>
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>To initialize a node and set the index path to /mnt1/indexes and the data path
-to /mnt2/data run the following command. Note that this command must be run
+<p>To initialize a node and set the index path to <code>/mnt1/indexes</code> and the data path
+to <code>/mnt2/data</code> run the following command. Note that this command must be run
 before the node becomes part of a cluster.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli node-init -c 192.168.1.5 \
- --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes</pre>
+   --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -594,22 +594,22 @@ and want to set the hostname for the cluster, then run the command
 below. Note that this time the cluster is initialized, so you must include the
 username and password.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli node-init -c 192.168.1.5 -u Administrator -p password \
- --node-init-hostname cb1.mydomain.com</pre>
+   --node-init-hostname cb1.mydomain.com</pre>
 </div>
 </div>
 <div class="paragraph">
 <p>You could have alternatively set all five of these options below before
 initializing the cluster. This can be done with the following command.</p>
 </div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli node-init -c 192.168.1.5 --node-init-hostname cb1.mydomain.com \
- --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes \
- --node-init-analytics-path /mnt3/analytics \
- --node-init-java-home /usr/lib/java/</pre>
+   --node-init-data-path /mnt2/data --node-init-index-path /mnt1/indexes \
+   --node-init-analytics-path /mnt3/analytics \
+   --node-init-java-home /usr/lib/java/</pre>
 </div>
 </div>
 <div class="paragraph">

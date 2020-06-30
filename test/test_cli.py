@@ -116,14 +116,32 @@ class TestClusterInit(CommandTest):
             '--cluster-ramsize', '512', '--services', 'data,query,fts,eventing,analytics',
             '--cluster-index-ramsize', '512', '--cluster-fts-ramsize', '512',
             '--cluster-eventing-ramsize', '512', '--cluster-name', 'name',
-            '--index-storage-setting', 'memopt'
+            '--index-storage-setting', 'memopt', '--update-notifications', '0'
         ]
 
         self.no_error_run(self.command + full_options, self.server_args)
         self.assertIn('SUCCESS', self.str_output)
         expected_params = ['memoryQuota=512', 'eventingMemoryQuota=512', 'ftsMemoryQuota=512', 'clusterName=name',
                           'indexMemoryQuota=512', 'storageMode=memory_optimized',
-                          'username=Administrator', 'password=asdasd', 'port=6789']
+                          'username=Administrator', 'password=asdasd', 'port=6789',
+                          'sendStats=false']
+        self.rest_parameter_match(expected_params, False)
+
+    def test_init_cluster_notification_default(self):
+        self.server_args['init'] = False
+        full_options = cluster_connect_args[:2] + self.command_args + [
+            '--cluster-ramsize', '512', '--services', 'data,query,fts,eventing,analytics',
+            '--cluster-index-ramsize', '512', '--cluster-fts-ramsize', '512',
+            '--cluster-eventing-ramsize', '512', '--cluster-name', 'name',
+            '--index-storage-setting', 'memopt',
+        ]
+
+        self.no_error_run(self.command + full_options, self.server_args)
+        self.assertIn('SUCCESS', self.str_output)
+        expected_params = ['memoryQuota=512', 'eventingMemoryQuota=512', 'ftsMemoryQuota=512', 'clusterName=name',
+                           'indexMemoryQuota=512', 'storageMode=memory_optimized',
+                           'username=Administrator', 'password=asdasd', 'port=6789',
+                           'sendStats=true']
         self.rest_parameter_match(expected_params, False)
 
     def test_error_when_cluster_already_init(self):
@@ -279,6 +297,13 @@ class TestBucketCreate(CommandTest):
         self.system_exit_run(self.command + self.command_args + args, self.server_args)
         self.assertIn('--bucket-replica cannot be specified for a memcached bucket', self.str_output)
 
+    def test_bucket_create_memcached_with_durability_min_level(self):
+        args = [
+            '--bucket-type', 'memcached', '--bucket-ramsize', '100',
+            '--durability-min-level', 'majorityAndPersistActive',
+        ]
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn('--durability-min-level cannot be specified for a memcached bucket', self.str_output)
 
 class TestBucketDelete(CommandTest):
     def setUp(self):
@@ -467,14 +492,14 @@ class TestFailover(CommandTest):
         self.no_error_run(self.command + self.basic_args, self.server_args)
         self.assertIn('POST:/controller/startGracefulFailover', self.server.trace)
 
-    def test_failover_force(self):
-        self.no_error_run(self.command + self.basic_args + ['--force'], self.server_args)
+    def test_failover_hard(self):
+        self.no_error_run(self.command + self.basic_args + ['--hard'], self.server_args)
         self.assertIn('POST:/controller/failOver', self.server.trace)
-        self.assertIn('allowUnsafe=true', self.server.rest_params)
+        self.assertNotIn('allowUnsafe=true', self.server.rest_params)
 
-    def test_failover_force_non_existent_node(self):
+    def test_failover_hard_non_existent_node(self):
         self.basic_args[1] = 'random-node:6789'
-        self.system_exit_run(self.command + self.basic_args + ['--force'], self.server_args)
+        self.system_exit_run(self.command + self.basic_args + ['--hard'], self.server_args)
         self.assertIn('Server can\'t be failed over because it\'s not part of the cluster', self.str_output)
 
     def test_failover_force_unhealthy_node(self):
@@ -483,6 +508,15 @@ class TestFailover(CommandTest):
              'clusterMembership': 'active'}]}
         self.system_exit_run(self.command + self.basic_args, self.server_args)
         self.assertIn('can\'t be gracefully failed over because it is not healthy', self.str_output)
+
+    def test_failover_hard_force(self):
+        self.no_error_run(self.command + self.basic_args + ['--hard', '--force'], self.server_args)
+        self.assertIn('POST:/controller/failOver', self.server.trace)
+        self.assertIn('allowUnsafe=true', self.server.rest_params)
+
+    def test_failover_force(self):
+        self.system_exit_run(self.command + self.basic_args + ['--force'], self.server_args)
+        self.assertIn('--hard is required with --force flag', self.str_output)
 
 
 class TestGroupManage(CommandTest):
@@ -1293,6 +1327,27 @@ class TestUserManage(CommandTest):
         self.assertIn('--group-name is required with the --get-group option', self.str_output)
 
 
+class TestMasterPassword(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'master-password']
+        self.cmd_args = ['--config-path', '.', '--send-password', 'password']
+        self.server_args = {}
+        super(TestMasterPassword, self).setUp()
+
+    def test_missing_cookie(self):
+        self.system_exit_run(self.command + self.cmd_args, self.server_args)
+        self.assertIn('The node is down', self.str_output)
+
+    def test_cannot_read_cookie(self):
+        cookie = open("couchbase-server.babysitter.cookie", "x")
+        cookie.write("cookie-monster")
+        cookie.close()
+        os.chmod(cookie.name, 0000)
+        self.system_exit_run(self.command + self.cmd_args, self.server_args)
+        os.remove(cookie.name)
+        self.assertIn('ERROR: Insufficient privileges', self.str_output)
+
+
 class TestXdcrReplicate(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'xdcr-replicate'] + cluster_connect_args
@@ -1473,13 +1528,33 @@ class TestSettingLdap(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_set_ldap_all(self):
-        self.no_error_run(self.command + self.authentication_args + self.authorization_args, self.server_args)
+        # create fake user certificate file
+        user_cert_file = tempfile.NamedTemporaryFile(delete=False)
+        user_cert_file_name = user_cert_file.name
+        user_cert_file.write(b'this-is-the-user-cert-file')
+        user_cert_file.close()
+        # create fake user key file
+        user_key_file = tempfile.NamedTemporaryFile(delete=False)
+        user_key_file_name = user_key_file.name
+        user_key_file.write(b'this-is-the-user-key-file')
+        user_key_file.close()
+        cert_args =['--client-cert', user_cert_file_name,  '--client-key', user_key_file_name]
+
+        self.no_error_run(self.command + self.authentication_args + self.authorization_args + cert_args,
+                          self.server_args)
+
+        # clean up the test files
+        os.remove(user_cert_file_name)
+        os.remove(user_key_file_name)
+
         self.assertIn('POST:/settings/ldap', self.server.trace)
         expected_params = ['authenticationEnabled=true', 'authorizationEnabled=true', 'hosts=0.0.0.0', 'port=369',
                            'encryption=None', 'requestTimeout=2000', 'maxParallelConnections=20',
                            'maxCacheSize=20', 'cacheValueLifetime=2000000', 'bindDN=admin', 'bindPass=pass',
                            'nestedGroupsEnabled=true', 'nestedGroupsMaxDepth=10',
-                           'groupsQuery=%25D%3FmemberOf%3Fbase', 'serverCertValidation=false']
+                           'groupsQuery=%25D%3FmemberOf%3Fbase', 'serverCertValidation=false',
+                           'clientTLSCert=this-is-the-user-cert-file',
+                           'clientTLSKey=this-is-the-user-key-file' ]
         self.rest_parameter_match(expected_params)
 
 
@@ -1590,8 +1665,15 @@ class TestSettingRebalance(CommandTest):
 
     def testCEInvalid(self):
         self.server_args['enterprise'] = False
-        self.system_exit_run(self.command + ['--get'], self.server_args)
-        self.assertIn('Command only available in enterprise edition', self.str_output)
+        self.system_exit_run(self.command + ['--set', '--enable', '1'], self.server_args)
+        self.assertIn('Automatic rebalance retry configuration is an Enterprise Edition only feature', self.str_output)
+
+    def testCEValid(self):
+        self.server_args['enterprise'] = False
+        self.no_error_run(self.command + ['--set', '--moves-per-node', '10'], self.server_args)
+        self.assertIn('Rebalance settings updated', self.str_output)
+        expected_params = ['rebalanceMovesPerNode=10']
+        self.rest_parameter_match(expected_params)
 
     def testMoreThanOneAction(self):
         self.system_exit_run(self.command + ['--get', '--set'], self.server_args)
@@ -1599,20 +1681,25 @@ class TestSettingRebalance(CommandTest):
 
     def testGetHumanFriendly(self):
         self.server_args['/settings/retryRebalance'] = {"enabled": False, "afterTimePeriod": 300, "maxAttempts": 1}
+        self.server_args['/settings/rebalance'] = {"rebalanceMovesPerNode": 4,}
         self.no_error_run(self.command + ['--get'], self.server_args)
-        expected_output = ['Automatic rebalance retry disabled', 'Retry wait time: 300', 'Maximum number of retries: 1']
+        expected_output = ['Automatic rebalance retry disabled', 'Retry wait time: 300', 'Maximum number of retries: 1',
+                           'Maximum number of vBucket move per node: 4']
         for e in expected_output:
             self.assertIn(e, self.str_output)
 
     def testGetJson(self):
         self.server_args['/settings/retryRebalance'] = {"enabled": False, "afterTimePeriod": 300, "maxAttempts": 1}
+        self.server_args['/settings/rebalance'] = {"rebalanceMovesPerNode": 4,}
         self.no_error_run(self.command + ['--get', '--output', 'json'], self.server_args)
-        self.assertIn('{"enabled": false, "afterTimePeriod": 300, "maxAttempts": 1}', self.str_output)
+        self.assertIn('{"rebalanceMovesPerNode": 4, "enabled": false, "afterTimePeriod": 300, "maxAttempts": 1}',
+                      self.str_output)
 
     def testSet(self):
-        self.no_error_run(self.command + ['--set', '--enable', '1', '--wait-for', '5', '--max-attempts', '3'],
+        self.no_error_run(self.command + ['--set', '--enable', '1', '--wait-for', '5', '--max-attempts', '3',
+                                          '--moves-per-node', '10'],
                           self.server_args)
-        expected_params = ['enabled=true', 'afterTimePeriod=5', 'maxAttempts=3']
+        expected_params = ['enabled=true', 'afterTimePeriod=5', 'maxAttempts=3', 'rebalanceMovesPerNode=10']
         self.rest_parameter_match(expected_params)
 
     def testSetWaitForOutOfRange(self):
@@ -1620,6 +1707,15 @@ class TestSettingRebalance(CommandTest):
                           self.server_args)
         self.assertIn('--wait-for must be a value between 5 and 3600', self.str_output)
 
+    def testSetRebalanceMovesPerNodeAbove64(self):
+        self.system_exit_run(self.command + ['--set', '--enable', '1', '--moves-per-node', '65'],
+                             self.server_args)
+        self.assertIn('--moves-per-node must be a value between 1 and 64', self.str_output)
+
+    def testSetRebalanceMovesPerNodeBelow1(self):
+        self.system_exit_run(self.command + ['--set', '--enable', '1', '--moves-per-node', '0'],
+                             self.server_args)
+        self.assertIn('--moves-per-node must be a value between 1 and 64', self.str_output)
 
 class TestAnalyticsLinkSetup(CommandTest):
     def setUp(self):
