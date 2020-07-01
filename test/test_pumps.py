@@ -9,6 +9,7 @@ import tempfile
 import time
 import unittest
 import zipfile
+import snappy
 
 import couchbaseConstants as cbcs
 from pump_csv import CSVSource, CSVSink
@@ -587,6 +588,58 @@ class TestDCPSource(unittest.TestCase):
         self.assertEqual(batch, None)
         self.assertTrue(self.source.dcp_done)
 
+    def test_provide_batch_uncompress(self):
+        helper_class = DCPHelperClass()
+        self.opts = Ditto({'extra': {'batch_max_size': 100, 'batch_max_bytes': 40000,  'uncompress': 1.0}, 'process_name': 'test'})
+        self.source = DCPStreamSource(self.opts, 'http://localhost:9112', None, {'version': '0.0.0-0000-enterprise'},
+                                      None, None, None, None)
+
+        # extras is formed by seqno, rev_seqno, flg, exp, loctime, metalen, nru
+        extra1 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 1, 1, 0, 0, 0, 0, 0)
+        extra2 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 2, 1, 0, 0, 0, 0, 0)
+        # Test MB-33810: Setting a large Rev
+        extra3 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 3, 258, 0, 0, 0, 0, 0)
+        data1 = extra1 + b'KEY:1' + snappy.compress(b'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+        data2 = extra2 + b'KEY:2' + snappy.compress(b'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb')
+        data3 = extra3 + b'KEY:3' + b'{"field3":"value3"}'
+        # cmd, errcode, opaque, cas, keylen, extlen, data, datalen, dtype, bytes_read
+        data = [
+            (cbcs.CMD_DCP_MUTATION, 0, 0, 0, len(b'KEY:1'), len(extra1), data1, len(data1), cbcs.DATATYPE_COMPRESSED,
+             1000),
+            (cbcs.CMD_DCP_MUTATION, 0, 0, 0, len(b'KEY:2'), len(extra2), data2, len(data2), cbcs.DATATYPE_COMPRESSED,
+             1000),
+            (cbcs.CMD_DCP_MUTATION, 0, 0, 0, len(b'KEY:3'), len(extra3), data3, len(data3), 0, 1000),
+            (cbcs.CMD_DCP_END_STREAM, 0, 0, 0, 0, 0, b'', 0, 0, 100)
+        ]
+
+        helper_class._set_response(data)
+
+        self.source.stream_list = ['stream_1']
+        self.source.response = helper_class
+        self.source.dcp_conn = helper_class
+        error, batch = self.source.provide_dcp_batch_actual()
+        self.assertEqual(error, 0)
+        self.assertTrue(self.source.dcp_done)
+        self.assertNotEqual(batch, None)
+        # should receive a buffer ack message when finish consuming the data
+        self.assertEqual(len(helper_class.msgs), 1)
+        self.assertEqual(helper_class.msgs[0][0], cbcs.CMD_DCP_BUFFER_ACK)
+        # Batch should contain 3 mutations
+        self.assertEqual(batch.size(), 3)
+
+        expected_out = [
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]),
+             b'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 1, 0, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:2', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]),
+             b'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 2, 0, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:3', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 1, 2]), b'{"field3":"value3"}', 3, 0,
+             0, 0)
+        ]
+
+        for m in batch.msgs:
+            self.assertIn(m, expected_out)
+
+
     def test_provide_dcp_batch_actual_mutations(self):
         helper_class = DCPHelperClass()
         self.source = DCPStreamSource(self.opts, 'http://localhost:9112', None, {'version': '0.0.0-0000-enterprise'},
@@ -1124,6 +1177,7 @@ class TestMemcachedClient(unittest.TestCase):
         self.server.start()
         client = MemcachedClient(self.host, self.port)
         client._sendMsg(cbcs.CMD_DCP_MUTATION, b'KEY', b'', 1, b'', 0, 0, 0, b'')
+        time.sleep(1)
         client.close()
         self.server.stop()
         expected_data = struct.pack(cbcs.REQ_PKT_FMT, cbcs.REQ_MAGIC_BYTE,

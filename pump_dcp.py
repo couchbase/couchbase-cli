@@ -10,6 +10,7 @@ import struct
 import time
 import threading
 import select
+import snappy
 
 from typing import Dict, List, Any, Optional, Tuple, Union
 
@@ -63,6 +64,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
         self.stream_list: Dict[Any, Any] = {}
         self.unack_size = 0
         self.node_vbucket_map: Optional[List[int]] = None
+
+        self.uncompress = opts.extra.get("uncompress", False)
 
     @staticmethod
     def can_handle(opts, spec: str) -> bool:
@@ -410,8 +413,17 @@ class DCPStreamSource(pump.Source, threading.Thread):
                             extra_index += extlen
 
                     if not self.skip(key, vbucket_id):
+                        if self.uncompress and dtype & couchbaseConstants.DATATYPE_COMPRESSED > 0:
+                            # If the document is compressed and the flag -x uncompress provided inflate the mutation
+                            try:
+                                val = snappy.uncompress(val)
+                                dtype = dtype ^ couchbaseConstants.DATATYPE_COMPRESSED
+                            except Exception as e:
+                                logging.warning(f'Uncompressing the document failed: {e}')
+
                         msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno.to_bytes(8, 'big'), val, seqno, dtype, metalen,
                                conf_res)
+
                         batch.append(msg, len(val))
                         self.num_msg += 1
                 elif cmd == couchbaseConstants.CMD_DCP_DELETE or cmd == couchbaseConstants.CMD_DCP_EXPIRATION:
