@@ -56,6 +56,11 @@ pipeline {
                     sh "pip3 install --user urllib3 pylint requests mypy==0.730"
                 }
 
+                // preventively delete the cli path to avoid issues with cloning
+                dir ('${PROJECTPATH}') {
+                    deleteDir()
+                }
+
                 sh "git clone git@github.com:couchbase/couchbase-cli.git"
 
                 // Fetch the commit we are testing
