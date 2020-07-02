@@ -15,12 +15,12 @@ pipeline {
     agent { label "ubuntu-1604&&master" }
 
     environment {
-        PROJECTPATH=${WORKSPACE}/couchbase-cli
-        CMAKE_CURRENT_BINARY_DIR=${PROJECTPATH}/install
-        CMAKE_CURRENT_SOURCE_DIR=${PROJECTPATH}
-        PATH=${PATH}:${WORKSPACE}/snappy-build/usr/local/include:/home/couchbase/.local/bin
-        LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WORKSPACE}/snappy-build/usr/local/lib
-        DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${WORKSPACE}/snappy-build/usr/local/include
+        PROJECTPATH="${WORKSPACE}/couchbase-cli"
+        CMAKE_CURRENT_BINARY_DIR="${PROJECTPATH}/install"
+        CMAKE_CURRENT_SOURCE_DIR="${PROJECTPATH}"
+        PATH="${PATH}:${WORKSPACE}/snappy-build/usr/local/include:/home/couchbase/.local/bin"
+        LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${WORKSPACE}/snappy-build/usr/local/lib"
+        DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${WORKSPACE}/snappy-build/usr/local/include"
     }
 
     stages {
