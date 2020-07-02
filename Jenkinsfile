@@ -77,11 +77,18 @@ pipeline {
             steps {
                 timeout(time: 10, unit: "MINUTES") {
                     sh "mkdir snappy-build"
-                    sh "git clone -b 1.1.7 https://github.com/google/snappy.git"
+
+                    // paranoid cleanup
                     dir("${WORKSPACE}/snappy") {
-                        sh "mkdir build"
-                        sh "cd build"
-                        sh "cmake .. -DBUILD_SHARED_LIBS=ON"
+                        deleteDir()
+                    }
+
+                    dir("${WORKSPACE}") {
+                        sh "git clone -b 1.1.7 https://github.com/google/snappy.git"
+                    }
+
+                    dir("${WORKSPACE}/snappy/build") {
+                        sh "cmake ../ -DBUILD_SHARED_LIBS=ON"
                         sh "DESTDIR=${WORKSPACE}/snappy-build make install"
                         sh "CXXFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CPPFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" pip3 install --user python-snappy"
                     }
