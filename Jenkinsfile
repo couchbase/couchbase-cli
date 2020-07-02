@@ -57,11 +57,13 @@ pipeline {
                 }
 
                 // preventively delete the cli path to avoid issues with cloning
-                dir ('${PROJECTPATH}') {
+                dir("${PROJECTPATH}") {
                     deleteDir()
                 }
 
-                sh "git clone git@github.com:couchbase/couchbase-cli.git"
+                dir("${WORKSPACE}") {
+                    sh "git clone git@github.com:couchbase/couchbase-cli.git"
+                }
 
                 // Fetch the commit we are testing
                 dir("${PROJECTPATH}") {
