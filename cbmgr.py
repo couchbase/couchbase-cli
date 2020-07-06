@@ -120,6 +120,7 @@ def index_storage_mode_to_param(value, default="plasma"):
     else:
         return value
 
+
 def process_services(services, enterprise):
     """Converts services to a format Couchbase understands"""
     sep = ","
@@ -149,6 +150,7 @@ def process_services(services, enterprise):
         services = services.replace(old, new)
     return services, None
 
+
 def find_subcommands():
     """Finds all subcommand classes"""
     clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
@@ -160,20 +162,25 @@ def find_subcommands():
         subcommands.append((name, subclass[1]))
     return subcommands
 
+
 def _success(msg):
     print(f'SUCCESS: {msg}')
+
 
 def _deprecated(msg):
     print(f'DEPRECATED: {msg}')
 
+
 def _warning(msg):
     print(f'WARNING: {msg}')
+
 
 def _exitIfErrors(errors):
     if errors:
         for error in errors:
             print(f'ERROR: {error}')
         sys.exit(1)
+
 
 def _exit_on_file_write_failure(fname, to_write):
     try:
@@ -182,6 +189,7 @@ def _exit_on_file_write_failure(fname, to_write):
         wfile.close()
     except IOError as error:
         _exitIfErrors([error])
+
 
 def _exit_on_file_read_failure(fname, toReport = None):
     try:
@@ -195,6 +203,7 @@ def _exit_on_file_read_failure(fname, toReport = None):
         else:
             _exitIfErrors([toReport])
 
+
 def apply_default_port(nodes):
     """
     Adds the default port if the port is missing.
@@ -205,8 +214,9 @@ def apply_default_port(nodes):
     @return:      The nodes with the port postfixed on each one
     """
     nodes = nodes.split(',')
+
     def append_port(node):
-        if re.match('.*:\d+$', node):
+        if re.match(r'.*:\d+$', node):
             return node
         return f'{node}:8091'
     return [append_port(x) for x in nodes]
@@ -250,7 +260,7 @@ class CLIHelpFormatter(HelpFormatter):
                 args_string = self._format_args(action, default)
                 for option_string in action.option_strings:
                     parts.append(option_string)
-                return ','.join(parts) + ' ' +  args_string
+                return ','.join(parts) + ' ' + args_string
 
 
 class CBDeprecatedAction(Action):
@@ -283,13 +293,12 @@ class CBHostAction(Action):
             raise ArgumentError(self, f"{values} is not an accepted hostname")
         if not parsed.hostname:
             raise ArgumentError(self, f"{values} is not an accepted hostname")
-        hostname_regex = re.compile("^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$");
+        hostname_regex = re.compile(r'^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$')
         if not hostname_regex.match(parsed.hostname):
             try:
                 ipaddress.ip_address(parsed.hostname)
             except ValueError:
                 raise ArgumentError(self, f"{values} is not an accepted hostname")
-
 
         scheme = parsed.scheme
         port = None
@@ -340,7 +349,7 @@ class CBNonEchoedAction(CBEnvAction):
                                                 nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        if values == None:
+        if values is None:
             values = getpass.getpass(self.prompt_text)
             if self.confirm_text is not None:
                 confirm = getpass.getpass(self.prompt_text)
@@ -352,9 +361,9 @@ class CBNonEchoedAction(CBEnvAction):
 class CBHelpAction(Action):
     """Allows the custom handling of the help command line argument"""
 
-    def __init__(self, option_strings, klass, dest=SUPPRESS, default=SUPPRESS, help=None):
+    def __init__(self, option_strings, klass, dest=SUPPRESS, default=SUPPRESS, help=None):  # pylint: disable=redefined-builtin
         super(CBHelpAction, self).__init__(option_strings=option_strings, dest=dest,
-                                           default=default, nargs=0, help=help)
+                                           default=default, nargs=0, help=help)  # pylint: disable=redefined-builtin
         self.klass = klass
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -366,9 +375,6 @@ class CBHelpAction(Action):
 
     @staticmethod
     def _show_man_page(page):
-        exe_path = os.path.abspath(sys.argv[0])
-        base_path = os.path.dirname(exe_path)
-
         if os.name == "nt":
             try:
                 subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
@@ -378,8 +384,7 @@ class CBHelpAction(Action):
             try:
                 subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
             except OSError:
-                _exitIfErrors(["Unable to open man page using the 'man' command, ensure it " +
-                               "is on your path or install a manual reader"])
+                _exitIfErrors(["Unable to open man page using the 'man' command, ensure it is on your path or install a manual reader"])
 
 
 class CliParser(ArgumentParser):
@@ -458,7 +463,6 @@ class CouchbaseCLI(Command):
                            f" 'bucket-list' or 'rebalance', please see couchbase-cli -h for the full list of commands"
                            f" and options"])
 
-
         l1_args = self.parser.parse_args(args[1:2])
         l2_args = l1_args.klass().parse(args[2:])
         setattr(l2_args, 'klass', l1_args.klass)
@@ -490,7 +494,7 @@ class Subcommand(Command):
 
         self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False, allow_abbrev=False)
         group = self.parser.add_argument_group("Cluster options")
-        group.add_argument("-c", "--cluster", dest="cluster", required=(cluster_default==None),
+        group.add_argument("-c", "--cluster", dest="cluster", required=(cluster_default is None),
                            metavar="<cluster>", action=CBHostAction, default=cluster_default,
                            help="The hostname of the Couchbase cluster")
 
@@ -524,8 +528,7 @@ class Subcommand(Command):
         group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
                            help="Prints the short or long help message")
 
-
-    def execute(self, opts):
+    def execute(self, opts):  # pylint: disable=useless-super-delegation
         super(Subcommand, self).execute(opts)
 
     @staticmethod
@@ -540,6 +543,7 @@ class Subcommand(Command):
     def is_hidden():
         """Whether or not the subcommand should be hidden from the help message"""
         return False
+
 
 class LocalSubcommand(Command):
     """
@@ -558,7 +562,7 @@ class LocalSubcommand(Command):
         group.add_argument("--config-path", dest="config_path", metavar="<path>",
                            default=CB_CFG_PATH, help=SUPPRESS)
 
-    def execute(self, opts):
+    def execute(self, opts):  # pylint: disable=useless-super-delegation
         super(LocalSubcommand, self).execute(opts)
 
     @staticmethod
@@ -573,6 +577,7 @@ class LocalSubcommand(Command):
     def is_hidden():
         """Whether or not the subcommand should be hidden from the help message"""
         return False
+
 
 class ClusterInit(Subcommand):
     """The cluster initialization subcommand"""
@@ -2944,7 +2949,7 @@ class SettingPasswordPolicy(Subcommand):
             if opts.min_length is None:
                 _exitIfErrors(["--min-length is required when using --set flag"])
             if opts.min_length <= 0:
-                    _exitIfErrors(["--min-length has to be greater than 0"])
+                _exitIfErrors(["--min-length has to be greater than 0"])
             self._set(opts)
 
     def _get(self):
@@ -2953,8 +2958,8 @@ class SettingPasswordPolicy(Subcommand):
         print(json.dumps(policy, sort_keys=True, indent=2))
 
     def _set(self, opts):
-        _, errors = self.rest.set_password_policy(opts.min_length, opts.upper_case, opts.lower_case,
-                                             opts.digit, opts.special_char)
+        _, errors = self.rest.set_password_policy(opts.min_length, opts.upper_case, opts.lower_case, opts.digit,
+                                                    opts.special_char)
         _exitIfErrors(errors)
         _success("Password policy updated")
 
@@ -3788,14 +3793,14 @@ class EventingFunctionSetup(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy, opts.pause, opts.resume])
+        actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy, opts.pause, opts.resume])  # pylint: disable=protected-access
         if actions == 0:
             _exitIfErrors(["Must specify one of --import, --export, --export-all, --delete, --list, --deploy,"
                            " --undeploy, --pause, --resume"])
         elif actions > 1:
             _exitIfErrors(["The --import, --export, --export-all, --delete, --list, --deploy, --undeploy, --pause, --resume flags may"
                            " not be specified at the same time"])
-        elif opts._import:
+        elif opts._import:  # pylint: disable=protected-access
             self._import(opts)
         elif opts.export:
             self._export(opts)
@@ -4309,7 +4314,7 @@ class SettingAlternateAddress(Subcommand):
             return None, None
 
         port_mappings = ports.split(',')
-        map = []
+        port_tuple_list = []
         for port_value_pair in port_mappings:
             p_v = port_value_pair.split('=')
             if len(p_v) != 2:
@@ -4318,8 +4323,8 @@ class SettingAlternateAddress(Subcommand):
                 int(p_v[1])
             except ValueError:
                 return None, [f'invalid port mapping: {port_value_pair}']
-            map.append((p_v[0], p_v[1]))
-        return map, None
+            port_tuple_list.append((p_v[0], p_v[1]))
+        return port_tuple_list, None
 
     @staticmethod
     def _get_host_port(host):

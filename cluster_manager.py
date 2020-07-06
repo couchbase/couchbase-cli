@@ -82,7 +82,6 @@ class ClusterManager(object):
 
         parsed = urllib.parse.urlparse(hostname)
         if sslFlag:
-            hostport = parsed.hostname.split(':')
             if parsed.scheme == 'http://':
                 if parsed.port == 8091:
                     self.hostname = f'https://{parsed.hostname}:18091'
@@ -140,7 +139,7 @@ class ClusterManager(object):
             url = f'{hosts[0]}/api/index/{index_def["name"]}?prevIndexUUID=*'
             if "sourceUUID" in index_def:
                 del index_def["sourceUUID"]
-            result, errors = self._put_json(url, index_def)
+            _, errors = self._put_json(url, index_def)
             if errors:
                 return None, errors
 
@@ -479,7 +478,7 @@ class ClusterManager(object):
             params["nodes"] = servers
         else:
             nodes = servers.split(",")
-            known, _, _, readd, _, errors = self._get_otps_names(readd_nodes=nodes)
+            _, _, _, readd, _, errors = self._get_otps_names(readd_nodes=nodes)
             if errors:
                 return None, errors
 
@@ -553,14 +552,14 @@ class ClusterManager(object):
 
     def rebalance(self, remove_nodes):
         url = f'{self.hostname}/controller/rebalance'
-        all, eject, _, _, _, errors = self._get_otps_names(eject_nodes=remove_nodes)
+        all_nodes, eject, _, _, _, errors = self._get_otps_names(eject_nodes=remove_nodes)
         if errors:
             return None, errors
 
         if len(eject) != len(remove_nodes):
             return None, ["Some nodes specified to be removed are not part of the cluster"]
 
-        params = { "knownNodes": ','.join(all),
+        params = { "knownNodes": ','.join(all_nodes),
                    "ejectedNodes": ','.join(eject) }
 
         return self._post_form_encoded(url, params)
@@ -612,7 +611,6 @@ class ClusterManager(object):
             if task["type"] != "rebalance":
                 continue
 
-            err_msg = None
             if "errorMessage" in task:
                 rv["status"] = "errored"
                 rv["msg"] = task['errorMessage']
@@ -657,12 +655,12 @@ class ClusterManager(object):
 
     # otpNode should only be printed out or handed back to ns_server
     # It should never be used to create a connection to a node
-    def _get_otps_names(self, eject_nodes=[], failover_nodes=[], readd_nodes=[]):
+    def _get_otps_names(self, eject_nodes=[], failover_nodes=[], readd_nodes=[]):  # pylint: disable=dangerous-default-value
         result, errors = self.pools('default')
         if errors:
             return None, None, None, None, None, errors
 
-        all = list()
+        all_list = list()
         eject = list()
         failover = list()
         readd = list()
@@ -670,7 +668,7 @@ class ClusterManager(object):
         for node in result["nodes"]:
             if "otpNode" not in node:
                 return [], [], [], [], [], ["Unable to get otp names"]
-            all.append(node['otpNode'])
+            all_list.append(node['otpNode'])
             hostnames.append(node['hostname'])
             if node['hostname'] in eject_nodes:
                 eject.append(node['otpNode'])
@@ -684,7 +682,7 @@ class ClusterManager(object):
             if node['hostname'] in readd_nodes or hostport in readd_nodes:
                 readd.append(node['otpNode'])
 
-        return all, eject, failover, readd, hostnames, None
+        return all_list, eject, failover, readd, hostnames, None
 
     def create_bucket(self, name, bucket_type, storage_type, memory_quota,
                       durability_min_level,
@@ -756,7 +754,7 @@ class ClusterManager(object):
                 params["parallelDBAndViewCompaction"] = paralleldb_and_view_compact
 
         if bucket_type != "memcached" and purge_interval is not None:
-                params["purgeInterval"] = purge_interval
+            params["purgeInterval"] = purge_interval
 
         result, errors = self._post_form_encoded(url, params)
         if errors:
@@ -1012,7 +1010,6 @@ class ClusterManager(object):
         url = self.hostname + groups["uri"]
         return self._put_json(url, groups)
 
-
     def _get_server_group_uri(self, name):
         groups, errors = self.get_server_groups()
         if errors:
@@ -1058,7 +1055,7 @@ class ClusterManager(object):
         if password is not None:
             params['password'] = password
         if roles is not None:
-            params['roles'] = roles;
+            params['roles'] = roles
         elif 'roles' in defaults:
             params['roles'] = self._format_user_roles(defaults['roles'])
         if groups is not None:
@@ -1566,7 +1563,7 @@ class ClusterManager(object):
     def xdcr_replicator_settings(self, chk_interval, worker_batch_size,
                                  doc_batch_size, fail_interval, replication_thresh,
                                  src_nozzles, dst_nozzles, usage_limit, compression,
-                                 log_level, stats_interval, replicator_id, filter, filter_skip, priority,
+                                 log_level, stats_interval, replicator_id, filter_expression, filter_skip, priority,
                                  reset_expiry, filter_del, filter_exp):
 
         url = f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}'
@@ -1575,7 +1572,7 @@ class ClusterManager(object):
                                        dst_nozzles, usage_limit, compression, log_level,
                                        stats_interval)
         if filter is not None:
-            params['filterExpression'] = filter
+            params['filterExpression'] = filter_expression
             filter_numeric = "0"
             if filter_skip:
                 filter_numeric = "1"
@@ -1631,7 +1628,7 @@ class ClusterManager(object):
             params["statsInterval"] = stats_interval
         return params
 
-    def  create_xdcr_replication(self, name, to_bucket, from_bucket, filter, rep_mode, compression,
+    def  create_xdcr_replication(self, name, to_bucket, from_bucket, filter_expression, rep_mode, compression,
                                  reset_expiry, filter_del, filter_exp):
         url = f'{self.hostname}/controller/createReplication'
         params = { "replicationType": "continuous" }
@@ -1645,7 +1642,7 @@ class ClusterManager(object):
         if rep_mode is not None:
             params["type"] = rep_mode
         if filter is not None:
-            params["filterExpression"] = filter
+            params["filterExpression"] = filter_expression
         if compression is not None:
             params["compressionType"] = compression
         if reset_expiry:
@@ -1829,7 +1826,7 @@ class ClusterManager(object):
         url = f'{hosts[0]}/analytics/link'
         return self._delete(url, {"dataverse": dataverse, "name": name})
 
-    def list_analytics_links(self, dataverse, name, type):
+    def list_analytics_links(self, dataverse, name, link_type):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -1844,8 +1841,8 @@ class ClusterManager(object):
             params["dataverse"] = dataverse
         if name:
             params["name"] = name
-        if type:
-            params["type"] = type
+        if link_type:
+            params["type"] = link_type
 
         return self._get(url, params)
 

@@ -100,7 +100,8 @@ pipeline {
             steps {
                 timeout(time: 10, unit: "MINUTES") {
                     dir("${PROJECTPATH}") {
-                        sh "python3 -m pylint -E --disable=import-error cbbackup cbbackupwrapper cblogredaction cbrecovery cbrestore cbrestorewrapper cbtransfer cbworkloadgen couchbase-cli *.py"
+                        sh "python3 -m pylint -E --disable=import-error cbbackup cbbackupwrapper cblogredaction cbrecovery cbrestore cbrestorewrapper cbtransfer cbworkloadgen couchbase-cli pump*.py"
+                        sh "python3 -m pylint --disable=import-error,unused-import --disable C,R cbmgr.py cluster_manager.py"
                     }
                 }
             }
