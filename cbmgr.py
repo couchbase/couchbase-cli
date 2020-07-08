@@ -65,8 +65,8 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
     """
     def inner(fn):
         def decorator(self, opts):
-            self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify, opts.cacert,
-                                       opts.debug)
+            self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                                       opts.cacert, opts.debug)
             if cluster_init_check:
                 check_cluster_initialized(self.rest)
             if version_check:
@@ -125,7 +125,7 @@ def process_services(services, enterprise):
     """Converts services to a format Couchbase understands"""
     sep = ","
     if services.find(sep) < 0:
-        #backward compatible when using ";" as separator
+        # backward compatible when using ";" as separator
         sep = ";"
     svc_set = set([w.strip() for w in services.split(sep)])
     svc_candidate = ["data", "index", "query", "fts", "eventing", "analytics", "backup"]
@@ -154,7 +154,8 @@ def process_services(services, enterprise):
 def find_subcommands():
     """Finds all subcommand classes"""
     clsmembers = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-    subclasses = [cls for cls in clsmembers if issubclass(cls[1], (Subcommand, LocalSubcommand)) and cls[1] not in [Subcommand, LocalSubcommand]]
+    subclasses = [cls for cls in clsmembers if issubclass(cls[1], (Subcommand, LocalSubcommand))
+                  and cls[1] not in [Subcommand, LocalSubcommand]]
 
     subcommands = []
     for subclass in subclasses:
@@ -191,7 +192,7 @@ def _exit_on_file_write_failure(fname, to_write):
         _exitIfErrors([error])
 
 
-def _exit_on_file_read_failure(fname, toReport = None):
+def _exit_on_file_read_failure(fname, toReport=None):
     try:
         rfile = open(fname, 'r')
         read_bytes = rfile.read()
@@ -293,7 +294,8 @@ class CBHostAction(Action):
             raise ArgumentError(self, f"{values} is not an accepted hostname")
         if not parsed.hostname:
             raise ArgumentError(self, f"{values} is not an accepted hostname")
-        hostname_regex = re.compile(r'^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$')
+        hostname_regex = re.compile(r'^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*'
+                                    + r'([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$')
         if not hostname_regex.match(parsed.hostname):
             try:
                 ipaddress.ip_address(parsed.hostname)
@@ -361,7 +363,8 @@ class CBNonEchoedAction(CBEnvAction):
 class CBHelpAction(Action):
     """Allows the custom handling of the help command line argument"""
 
-    def __init__(self, option_strings, klass, dest=SUPPRESS, default=SUPPRESS, help=None):  # pylint: disable=redefined-builtin
+    # pylint: disable=redefined-builtin
+    def __init__(self, option_strings, klass, dest=SUPPRESS, default=SUPPRESS, help=None):
         super(CBHelpAction, self).__init__(option_strings=option_strings, dest=dest,
                                            default=default, nargs=0, help=help)  # pylint: disable=redefined-builtin
         self.klass = klass
@@ -384,7 +387,8 @@ class CBHelpAction(Action):
             try:
                 subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
             except OSError:
-                _exitIfErrors(["Unable to open man page using the 'man' command, ensure it is on your path or install a manual reader"])
+                _exitIfErrors(["Unable to open man page using the 'man' command, ensure it is on your path or"
+                               + "install a manual reader"])
 
 
 class CliParser(ArgumentParser):
@@ -455,10 +459,10 @@ class CouchbaseCLI(Command):
             self.parser.exit(1)
 
         if args[1] == "--version":
-            print (VERSION)
+            print(VERSION)
             sys.exit(0)
 
-        if not args[1] in ["-h", "--help", "--version"] and  args[1].startswith("-"):
+        if not args[1] in ["-h", "--help", "--version"] and args[1].startswith("-"):
             _exitIfErrors([f"Unknown subcommand: '{args[1]}'. The first argument has to be a subcommand like"
                            f" 'bucket-list' or 'rebalance', please see couchbase-cli -h for the full list of commands"
                            f" and options"])
@@ -555,8 +559,8 @@ class LocalSubcommand(Command):
         super(LocalSubcommand, self).__init__()
         self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False, allow_abbrev=False)
         group = self.parser.add_argument_group(title="Local command options",
-                                               description="This command has to be execute on the locally running" +
-                                                           " Couchbase Server.")
+                                               description="This command has to be execute on the locally running"
+                                               + " Couchbase Server.")
         group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
                            help="Prints the short or long help message")
         group.add_argument("--config-path", dest="config_path", metavar="<path>",
@@ -637,7 +641,7 @@ class ClusterInit(Subcommand):
         if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota \
                 or opts.eventing_mem_quota or opts.name is not None:
             _, errors = self.rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
-                                               opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
+                                                    opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
         _exitIfErrors(errors)
 
         # Set the index storage mode
@@ -666,7 +670,7 @@ class ClusterInit(Subcommand):
 
         # Setup Administrator credentials and Admin Console port
         _, errors = self.rest.set_admin_credentials(opts.username, opts.password,
-                                               opts.port)
+                                                    opts.port)
         _exitIfErrors(errors)
 
         _success("Cluster initialized")
@@ -741,7 +745,7 @@ class BucketCreate(Subcommand):
                            help="The bucket disk io priority (low or high)")
         group.add_argument("--durability-min-level", dest="durability_min_level", metavar="<level>",
                            choices=["none", "majority", "majorityAndPersistActive",
-                               "persistToMajority"],
+                                    "persistToMajority"],
                            help="The bucket durability minimum level")
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
                            choices=["valueOnly", "fullEviction", "noEviction", "nruEviction"],
@@ -821,11 +825,12 @@ class BucketCreate(Subcommand):
             if opts.eviction_policy in ["noEviction", "nruEviction"]:
                 _exitIfErrors(["--bucket-eviction-policy must either be valueOnly or fullEviction"])
 
-        if ((opts.type == "memcached" or opts.type == "ephemeral") and (opts.db_frag_perc is not None or
-                opts.db_frag_size is not None or opts.view_frag_perc is not None or
-                opts.view_frag_size is not None or opts.from_hour is not None or opts.from_min is not None or
-                opts.to_hour is not None or opts.to_min is not None or opts.abort_outside is not None or
-                opts.paralleldb_and_view_compact is not None)):
+        if ((opts.type == "memcached" or opts.type == "ephemeral")
+                and (opts.db_frag_perc is not None
+                or opts.db_frag_size is not None or opts.view_frag_perc is not None
+                or opts.view_frag_size is not None or opts.from_hour is not None or opts.from_min is not None
+                or opts.to_hour is not None or opts.to_min is not None or opts.abort_outside is not None
+                or opts.paralleldb_and_view_compact is not None)):
             _warning(f'ignoring compaction settings as bucket type {opts.type} does not accept it')
 
         storage_type = "couchstore"
@@ -850,12 +855,12 @@ class BucketCreate(Subcommand):
                 conflict_resolution_type = "lww"
 
         _, errors = self.rest.create_bucket(opts.bucket_name, opts.type, storage_type, opts.memory_quota,
-                                       opts.durability_min_level, opts.eviction_policy,
-                                       opts.replica_count, opts.replica_indexes, priority, conflict_resolution_type,
-                                       opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.wait,
-                                       opts.db_frag_perc, opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
-                                       opts.from_hour, opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
-                                       opts.paralleldb_and_view_compact, opts.purge_interval)
+                                            opts.durability_min_level, opts.eviction_policy, opts.replica_count,
+                                            opts.replica_indexes, priority, conflict_resolution_type, opts.enable_flush,
+                                            opts.max_ttl, opts.compression_mode, opts.wait, opts.db_frag_perc,
+                                            opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
+                                            opts.from_hour, opts.from_min, opts.to_hour, opts.to_min,
+                                            opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval)
         _exitIfErrors(errors)
         _success("Bucket created")
 
@@ -986,10 +991,10 @@ class BucketEdit(Subcommand):
                 _exitIfErrors(["--durability-min-level cannot be specified for a memcached bucket"])
 
         if (("bucketType" in bucket and (bucket["bucketType"] == "memcached" or bucket["bucketType"] == "ephemeral"))
-                and (opts.db_frag_perc is not None or opts.db_frag_size is not None or
-                     opts.view_frag_perc is not None or opts.view_frag_size is not None or opts.from_hour is not None or
-                     opts.from_min is not None or opts.to_hour is not None or opts.to_min is not None or
-                     opts.abort_outside is not None or opts.paralleldb_and_view_compact is not None)):
+                and (opts.db_frag_perc is not None or opts.db_frag_size is not None
+                     or opts.view_frag_perc is not None or opts.view_frag_size is not None or opts.from_hour is not None
+                     or opts.from_min is not None or opts.to_hour is not None or opts.to_min is not None
+                     or opts.abort_outside is not None or opts.paralleldb_and_view_compact is not None)):
             _exitIfErrors([f'compaction settings can not be specified for a {bucket["bucketType"]} bucket'])
 
         priority = None
@@ -1006,11 +1011,11 @@ class BucketEdit(Subcommand):
                 opts.remove_port = False
 
         _, errors = self.rest.edit_bucket(opts.bucket_name, opts.memory_quota, opts.durability_min_level,
-                                     opts.eviction_policy, opts.replica_count,
-                                     priority, opts.enable_flush, opts.max_ttl, opts.compression_mode, opts.remove_port,
-                                     opts.db_frag_perc, opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
-                                     opts.from_hour, opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
-                                     opts.paralleldb_and_view_compact, opts.purge_interval)
+                                          opts.eviction_policy, opts.replica_count, priority, opts.enable_flush,
+                                          opts.max_ttl, opts.compression_mode, opts.remove_port, opts.db_frag_perc,
+                                          opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size, opts.from_hour,
+                                          opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
+                                          opts.paralleldb_and_view_compact, opts.purge_interval)
         _exitIfErrors(errors)
 
         _success("Bucket edited")
@@ -1153,9 +1158,9 @@ class CollectLogsStart(Subcommand):
             if opts.upload_proxy:
                 _warning("--upload_proxy has no effect with specifying --upload")
 
-        _, errors = self.rest.collect_logs_start(servers, opts.redaction_level, opts.salt, opts.output_dir, opts.tmp_dir,
-                                            opts.upload, opts.upload_host, opts.upload_proxy, opts.upload_customer,
-                                            opts.upload_ticket)
+        _, errors = self.rest.collect_logs_start(servers, opts.redaction_level, opts.salt, opts.output_dir,
+                                                 opts.tmp_dir, opts.upload, opts.upload_host, opts.upload_proxy,
+                                                 opts.upload_customer, opts.upload_ticket)
         _exitIfErrors(errors)
         _success("Log collection started")
 
@@ -1308,11 +1313,11 @@ class GroupManage(Subcommand):
     def execute(self, opts):
         cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
         if sum(cmd is not None for cmd in cmds) == 0:
-            _exitIfErrors(["Must specify one of the following: --create, " +
-                           "--delete, --list, --move-servers, or --rename"])
+            _exitIfErrors(["Must specify one of the following: --create, "
+                           + "--delete, --list, --move-servers, or --rename"])
         elif sum(cmd is not None for cmd in cmds) != 1:
-            _exitIfErrors(["Only one of the following may be specified: --create" +
-                           ", --delete, --list, --move-servers, or --rename"])
+            _exitIfErrors(["Only one of the following may be specified: --create"
+                           + ", --delete, --list, --move-servers, or --rename"])
 
         if opts.create:
             self._create(opts)
@@ -1321,7 +1326,7 @@ class GroupManage(Subcommand):
         elif opts.list:
             self._list(opts)
         elif opts.rename:
-            self._rename( opts)
+            self._rename(opts)
         elif opts.move_servers is not None:
             self._move(opts)
 
@@ -1477,7 +1482,7 @@ class MasterPassword(LocalSubcommand):
             node = _exit_on_file_read_failure(nodefile).rstrip()
 
             self.prompt_for_master_pwd(node, cookie, opts.send_password, opts.config_path)
-        else :
+        else:
             _exitIfErrors(["No parameters set"])
 
     def prompt_for_master_pwd(self, node, cookie, password, cb_cfg_path):
@@ -1489,11 +1494,11 @@ class MasterPassword(LocalSubcommand):
         if password == '':
             password = getpass.getpass("\nEnter master password:")
 
-        name = f'executioner@cb.local'
-        args = ['-pa', ns_server_ebin_path, babystr_ebin_path, '-noinput', '-name', name, \
-                '-proto_dist', 'cb', '-epmd_module', 'cb_epmd', \
-                '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"', \
-                '-setcookie', cookie, \
+        name = 'executioner@cb.local'
+        args = ['-pa', ns_server_ebin_path, babystr_ebin_path, '-noinput', '-name', name,
+                '-proto_dist', 'cb', '-epmd_module', 'cb_epmd',
+                '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"',
+                '-setcookie', cookie,
                 '-run', 'encryption_service', 'remote_set_password', node, password]
 
         rc, out, err = self.run_process("erl", args)
@@ -1518,7 +1523,7 @@ class MasterPassword(LocalSubcommand):
                 name = name + ".exe"
 
             args.insert(0, name)
-            p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output = p.stdout.read()
             error = p.stderr.read()
             p.wait()
@@ -1565,13 +1570,13 @@ class NodeInit(Subcommand):
         # Cluster does not need to be initialized for this command
 
         if (opts.data_path is None and opts.index_path is None and opts.analytics_path is None
-            and opts.eventing_path is None and opts.java_home is None and opts.hostname is None and opts.ipv6 is None
-            and opts.ipv4 is None):
+                and opts.eventing_path is None and opts.java_home is None and opts.hostname is None
+                and opts.ipv6 is None and opts.ipv4 is None):
             _exitIfErrors(["No node initialization parameters specified"])
 
         if opts.data_path or opts.index_path or opts.analytics_path or opts.eventing_path or opts.java_home is not None:
-            _, errors = self.rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path, opts.eventing_path,
-                                            opts.java_home)
+            _, errors = self.rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path,
+                                                 opts.eventing_path, opts.java_home)
             _exitIfErrors(errors)
 
         if opts.ipv4 and opts.ipv6:
@@ -1747,7 +1752,7 @@ class ResetAdminPassword(LocalSubcommand):
         check_cluster_initialized(rest)
         check_versions(rest)
 
-        if opts.new_password is not None and opts.regenerate == True:
+        if opts.new_password is not None and opts.regenerate:
             _exitIfErrors(["Cannot specify both --new-password and --regenerate at the same time"])
         elif opts.new_password is not None:
             _, errors = rest.set_admin_password(opts.new_password)
@@ -1815,8 +1820,8 @@ class ServerAdd(Subcommand):
 
         servers = opts.servers.split(',')
         for server in servers:
-            _, errors = self.rest.add_server(server, opts.group_name, opts.server_username,
-                                        opts.server_password, opts.services)
+            _, errors = self.rest.add_server(server, opts.group_name, opts.server_username, opts.server_password,
+                                             opts.services)
             _exitIfErrors(errors)
 
         _success("Server added")
@@ -1883,7 +1888,8 @@ class ServerEshell(Subcommand):
         proto_dist = result['addressFamily'] + "_tcp"
 
         try:
-            subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist', proto_dist] + inetrc_opt)
+            subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist',
+                             proto_dist] + inetrc_opt)
         except OSError:
             _exitIfErrors(["Unable to find the erl executable"])
 
@@ -2024,16 +2030,16 @@ class SettingAlert(Subcommand):
                            help="Alert when the max number of auto-failover nodes was reached")
         group.add_argument("--alert-auto-failover-node-down", dest="alert_af_node_down",
                            action="store_true",
-                           help="Alert when a node wasn't auto-failed over because other nodes " +
-                           "were down")
+                           help="Alert when a node wasn't auto-failed over because other nodes "
+                           + "were down")
         group.add_argument("--alert-auto-failover-cluster-small", dest="alert_af_small",
                            action="store_true",
-                           help="Alert when a node wasn't auto-failed over because cluster was" +
-                           " too small")
+                           help="Alert when a node wasn't auto-failed over because cluster was"
+                           + " too small")
         group.add_argument("--alert-auto-failover-disable", dest="alert_af_disable",
                            action="store_true",
-                           help="Alert when a node wasn't auto-failed over because auto-failover" +
-                           " is disabled")
+                           help="Alert when a node wasn't auto-failed over because auto-failover"
+                           + " is disabled")
         group.add_argument("--alert-ip-changed", dest="alert_ip_changed", action="store_true",
                            help="Alert when a nodes IP address changed")
         group.add_argument("--alert-disk-space", dest="alert_disk_space", action="store_true",
@@ -2049,7 +2055,8 @@ class SettingAlert(Subcommand):
         group.add_argument("--alert-indexer-max-ram", dest="alert_indexer_max_ram",
                            action="store_true", help="Alert when indexer is using all of its allocated memory")
         group.add_argument("--alert-timestamp-drift-exceeded", dest="alert_cas_drift",
-                           action="store_true", help="Alert when clocks on two servers are more than five seconds apart")
+                           action="store_true", help="Alert when clocks on two servers are more than five seconds"
+                           + "apart")
         group.add_argument("--alert-communication-issue", dest="alert_communication_issue",
                            action="store_true", help="Alert when nodes are experiencing communication issues")
 
@@ -2103,11 +2110,9 @@ class SettingAlert(Subcommand):
         if opts.email_encrypt == "1":
             email_encrypt = "true"
 
-        _, errors = self.rest.set_alert_settings(enabled, opts.email_recipients,
-                                            opts.email_sender, opts.email_username,
-                                            opts.email_password, opts.email_host,
-                                            opts.email_port, email_encrypt,
-                                            ",".join(alerts))
+        _, errors = self.rest.set_alert_settings(enabled, opts.email_recipients, opts.email_sender, opts.email_username,
+                                                 opts.email_password, opts.email_host, opts.email_port, email_encrypt,
+                                                 ",".join(alerts))
         _exitIfErrors(errors)
 
         _success("Email alert settings modified")
@@ -2145,7 +2150,7 @@ class SettingAudit(Subcommand):
                            metavar="<bytes>", help="The audit log rotate size")
         group.add_argument("--disabled-users", dest="disabled_users", default=None,
                            help="A comma-separated list of users to ignore events from")
-        group.add_argument("--disable-events", dest="disable_events", default= None,
+        group.add_argument("--disable-events", dest="disable_events", default=None,
                            help="A comma-separated list of audit-event IDs to not audit")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
@@ -2185,8 +2190,8 @@ class SettingAudit(Subcommand):
             elif opts.enabled == "0":
                 opts.enabled = "false"
 
-            _, errors = self.rest.set_audit_settings(opts.enabled, opts.log_path, opts.rotate_interval, opts.rotate_size,
-                                                opts.disable_events, opts.disabled_users)
+            _, errors = self.rest.set_audit_settings(opts.enabled, opts.log_path, opts.rotate_interval,
+                                                     opts.rotate_size, opts.disable_events, opts.disabled_users)
             _exitIfErrors(errors)
             _success("Audit settings modified")
 
@@ -2268,8 +2273,8 @@ class SettingAutofailover(Subcommand):
                            help="Maximum number of times an auto-failover event can happen")
         group.add_argument("--enable-failover-on-data-disk-issues", dest="enableFailoverOnDataDiskIssues",
                            metavar="<1|0>", choices=["0", "1"],
-                           help="Enable/disable auto-failover when the Data Service reports disk issues. " +
-                                "Couchbase Server Enterprise Edition only.")
+                           help="Enable/disable auto-failover when the Data Service reports disk issues. "
+                           + "Couchbase Server Enterprise Edition only.")
         group.add_argument("--failover-data-disk-period", dest="failoverOnDataDiskPeriod",
                            metavar="<seconds>", type=(int),
                            help="The amount of time the Data Serivce disk failures has to be happening for to trigger"
@@ -2298,7 +2303,8 @@ class SettingAutofailover(Subcommand):
             if opts.enableFailoverOfServerGroups:
                 _exitIfErrors(["--enable-failover-of-server-groups can only be configured on enterprise edition"])
             if opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod:
-                _exitIfErrors(["Auto failover on Data Service disk issues can only be configured on enterprise edition"])
+                _exitIfErrors(["Auto failover on Data Service disk issues can only be configured on enterprise"
+                               + "edition"])
             if opts.maxFailovers:
                 _exitIfErrors(["--max-count can only be configured on enterprise edition"])
             if opts.canAbortRebalance:
@@ -2309,7 +2315,7 @@ class SettingAutofailover(Subcommand):
             _exitIfErrors(["No settings specified to be changed"])
 
         if ((opts.enableFailoverOnDataDiskIssues is None or opts.enableFailoverOnDataDiskIssues == "false")
-            and opts.failoverOnDataDiskPeriod):
+                and opts.failoverOnDataDiskPeriod):
             _exitIfErrors(["--enable-failover-on-data-disk-issues must be set to 1 when auto-failover Data"
                            " Service disk period has been set"])
 
@@ -2329,11 +2335,11 @@ class SettingAutofailover(Subcommand):
         if opts.canAbortRebalance == '1':
             opts.canAbortRebalance = 'true'
         elif opts.canAbortRebalance == '0':
-            opts.canAbortRebalance ='false'
+            opts.canAbortRebalance = 'false'
 
         _, errors = self.rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.enableFailoverOfServerGroups,
-                                                   opts.maxFailovers, opts.enableFailoverOnDataDiskIssues,
-                                                   opts.failoverOnDataDiskPeriod, opts.canAbortRebalance)
+                                                        opts.maxFailovers, opts.enableFailoverOnDataDiskIssues,
+                                                        opts.failoverOnDataDiskPeriod, opts.canAbortRebalance)
         _exitIfErrors(errors)
 
         _success("Auto-failover settings modified")
@@ -2419,7 +2425,7 @@ class SettingCluster(Subcommand):
         if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota \
                 or opts.eventing_mem_quota or opts.name:
             _, errors = self.rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
-                                               opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
+                                                    opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
             _exitIfErrors(errors)
 
         if opts.new_username or opts.new_password or opts.port:
@@ -2495,20 +2501,21 @@ class SettingCompaction(Subcommand):
                            choices=["0", "1"], help="Allow parallel compactions")
         group.add_argument("--metadata-purge-interval", dest="purge_interval", metavar="<float>",
                            type=(float), help="The metadata purge interval")
-        group.add_argument("--gsi-compaction-mode", dest="gsi_mode",
-                          choices=["append", "circular"],
-                          help="Sets the gsi compaction mode (append or circular)")
+        group.add_argument("--gsi-compaction-mode", dest="gsi_mode", choices=["append", "circular"],
+                           help="Sets the gsi compaction mode (append or circular)")
         group.add_argument("--compaction-gsi-percentage", dest="gsi_perc", type=(int), metavar="<perc>",
-                          help="Starts compaction once gsi file fragmentation has reached this percentage (Append mode only)")
+                           help="Starts compaction once gsi file fragmentation has reached this percentage"
+                           + "(Append mode only)")
         group.add_argument("--compaction-gsi-interval", dest="gsi_interval", metavar="<days>",
-                          help="A comma separated list of days compaction can run (Circular mode only)")
+                           help="A comma separated list of days compaction can run (Circular mode only)")
         group.add_argument("--compaction-gsi-period-from", dest="gsi_from_period", metavar="<HH:MM>",
-                          help="Allow gsi compaction to run after this time (Circular mode only)")
+                           help="Allow gsi compaction to run after this time (Circular mode only)")
         group.add_argument("--compaction-gsi-period-to", dest="gsi_to_period", metavar="<HH:MM>",
-                          help="Allow gsi compaction to run before this time (Circular mode only)")
+                           help="Allow gsi compaction to run before this time (Circular mode only)")
         group.add_argument("--enable-gsi-compaction-abort", dest="enable_gsi_abort", metavar="<1|0>",
-                          choices=["0", "1"],
-                          help="Abort gsi compaction if when run outside of the accepted interaval (Circular mode only)")
+                           choices=["0", "1"],
+                           help="Abort gsi compaction if when run outside of the accepted interaval"
+                           + "(Circular mode only)")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -2566,7 +2573,7 @@ class SettingCompaction(Subcommand):
         else:
             opts.enable_parallel = "false"
 
-        if opts.purge_interval is not None and (opts.purge_interval < 0.04 or opts.purge_interval > 60.0):\
+        if opts.purge_interval is not None and (opts.purge_interval < 0.04 or opts.purge_interval > 60.0):
             _exitIfErrors(["--metadata-purge-interval must be between 0.04 and 60.0"])
 
         g_from_hour = None
@@ -2576,31 +2583,27 @@ class SettingCompaction(Subcommand):
         if opts.gsi_mode == "append":
             opts.gsi_mode = "full"
             if opts.gsi_perc is None:
-                _exitIfErrors(["--compaction-gsi-percentage must be specified when" +
-                               " --gsi-compaction-mode is set to append"])
+                _exitIfErrors(['--compaction-gsi-percentage must be specified when --gsi-compaction-mode is set '
+                               'to append'])
         elif opts.gsi_mode == "circular":
             if opts.gsi_from_period is not None and opts.gsi_to_period is None:
                 _exitIfErrors(["--compaction-gsi-period-to is required with --compaction-gsi-period-from"])
             if opts.gsi_to_period is not None and opts.gsi_from_period is None:
                 _exitIfErrors(["--compaction-gsi-period-from is required with --compaction-gsi-period-to"])
 
-            g_from_hour, g_from_min = self._handle_timevalue(opts.gsi_from_period,
-                                                             "--compaction-gsi-period-from")
-            g_to_hour, g_to_min = self._handle_timevalue(opts.gsi_to_period,
-                                                            "--compaction-gsi-period-to")
+            g_from_hour, g_from_min = self._handle_timevalue(opts.gsi_from_period, "--compaction-gsi-period-from")
+            g_to_hour, g_to_min = self._handle_timevalue(opts.gsi_to_period, "--compaction-gsi-period-to")
 
             if opts.enable_gsi_abort == "1":
                 opts.enable_gsi_abort = "true"
             else:
                 opts.enable_gsi_abort = "false"
 
-        _, errors = self.rest.set_compaction_settings(opts.db_perc, opts.db_size, opts.view_perc,
-                                                 opts.view_size, from_hour, from_min, to_hour,
-                                                 to_min, opts.enable_abort, opts.enable_parallel,
-                                                 opts.purge_interval, opts.gsi_mode,
-                                                 opts.gsi_perc, opts.gsi_interval, g_from_hour,
-                                                 g_from_min, g_to_hour, g_to_min,
-                                                 opts.enable_gsi_abort)
+        _, errors = self.rest.set_compaction_settings(opts.db_perc, opts.db_size, opts.view_perc, opts.view_size,
+                                                      from_hour, from_min, to_hour, to_min, opts.enable_abort,
+                                                      opts.enable_parallel, opts.purge_interval, opts.gsi_mode,
+                                                      opts.gsi_perc, opts.gsi_interval, g_from_hour, g_from_min,
+                                                      g_to_hour, g_to_min, opts.enable_gsi_abort)
         _exitIfErrors(errors)
 
         _success("Compaction settings modified")
@@ -2660,9 +2663,9 @@ class SettingIndex(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
-        if opts.max_rollback is None and opts.stable_snap is None \
-            and opts.mem_snap is None and opts.storage_mode is None \
-            and opts.threads is None and opts.log_level is None:
+        if (opts.max_rollback is None and opts.stable_snap is None
+                and opts.mem_snap is None and opts.storage_mode is None
+                and opts.threads is None and opts.log_level is None):
             _exitIfErrors(["No settings specified to be changed"])
 
         settings, errors = self.rest.index_settings()
@@ -2674,9 +2677,8 @@ class SettingIndex(Subcommand):
             default = "forestdb"
 
         opts.storage_mode = index_storage_mode_to_param(opts.storage_mode, default)
-        _, errors = self.rest.set_index_settings(opts.storage_mode, opts.max_rollback,
-                                            opts.stable_snap, opts.mem_snap,
-                                            opts.threads, opts.log_level)
+        _, errors = self.rest.set_index_settings(opts.storage_mode, opts.max_rollback, opts.stable_snap, opts.mem_snap,
+                                                 opts.threads, opts.log_level)
         _exitIfErrors(errors)
 
         _success("Indexer settings modified")
@@ -2770,8 +2772,8 @@ class SettingLdap(Subcommand):
         group.add_argument("--server-cert-validation", dest="server_cert_val", metavar="<1|0>", choices=["0", "1"],
                            help="Enable or disable certificate validation when connecting to LDAP server")
         group.add_argument("--ldap-cacert", dest="cacert_ldap", metavar="<path>",
-                           help="CA certificate to be used for LDAP server certificate validation, required if" +
-                                " certificate validation is not disabled")
+                           help="CA certificate to be used for LDAP server certificate validation, required if"
+                           + " certificate validation is not disabled")
         group.add_argument("--user-dn-query", metavar="<query>", dest="user_dn_query",
                            help="LDAP query to get user's DN. Must contains at least one instance of %%u")
         group.add_argument("--user-dn-template", metavar="<template>", dest="user_dn_template",
@@ -2790,7 +2792,8 @@ class SettingLdap(Subcommand):
                            help="Cache value lifetime in milliseconds")
         group.add_argument("--bind-dn", dest="bind_dn", metavar="<DN>",
                            help="The DN of a user to bind as to performance lookups")
-        group.add_argument("--bind-password", dest="bind_password", metavar="<password>", help="The password of the bind user")
+        group.add_argument("--bind-password", dest="bind_password", metavar="<password>",
+                           help="The password of the bind user")
         group.add_argument("--group-query", dest="group_query", metavar="<query>",
                            help="LDAP query to get user's groups by username")
         group.add_argument("--enable-nested-groups", dest="nested_groups", metavar="<1|0>",
@@ -2939,8 +2942,7 @@ class SettingPasswordPolicy(Subcommand):
         if actions == 0:
             _exitIfErrors(["Must specify either --get or --set"])
         elif actions > 1:
-            _exitIfErrors(["The --get and --set flags may not be specified at " +
-                           "the same time"])
+            _exitIfErrors(["The --get and --set flags may not be specified at the same time"])
         elif opts.get:
             if opts.min_length is not None or any([opts.upper_case, opts.lower_case, opts.digit, opts.special_char]):
                 _exitIfErrors(["The --get flag must be used without any other arguments"])
@@ -2959,7 +2961,7 @@ class SettingPasswordPolicy(Subcommand):
 
     def _set(self, opts):
         _, errors = self.rest.set_password_policy(opts.min_length, opts.upper_case, opts.lower_case, opts.digit,
-                                                    opts.special_char)
+                                                  opts.special_char)
         _exitIfErrors(errors)
         _success("Password policy updated")
 
@@ -2987,13 +2989,12 @@ class SettingSecurity(Subcommand):
                            metavar="<0|1>", choices=['0', '1'], default=None,
                            help="Disables use of WWW-Authenticate (0 or 1")
         group.add_argument("--cluster-encryption-level", dest="cluster_encryption_level", metavar="<all|control>",
-                          choices=['all', 'control'], default=None,
-                          help="Set cluster encryption level, only used when cluster encryption enabled.")
+                           choices=['all', 'control'], default=None,
+                           help="Set cluster encryption level, only used when cluster encryption enabled.")
         group.add_argument('--tls-min-version', dest='tls_min_version', metavar='<tlsv1|tlsv1.1|tlsv1.2>',
-                           choices=['tlsv1','tlsv1.1', 'tlsv1.2'],
-                           default=None, help='Set the minimum TLS version')
-        group.add_argument('--tls-honor-cipher-order', dest='tls_honor_cipher_order', metavar='<1|0>', choices=['1', '0'],
-                           help='Specify or not the cipher order has to be followed.', default=None)
+                           choices=['tlsv1', 'tlsv1.1', 'tlsv1.2'], default=None, help='Set the minimum TLS version')
+        group.add_argument('--tls-honor-cipher-order', dest='tls_honor_cipher_order', metavar='<1|0>',
+                           choices=['1', '0'], help='Specify or not the cipher order has to be followed.', default=None)
         group.add_argument('--cipher-suites', metavar='<ciphers>', default=None,
                            help='Comma separated list of ciphers to use.If an empty string (e.g "") given it will'
                                 ' reset ciphers to default.')
@@ -3013,12 +3014,11 @@ class SettingSecurity(Subcommand):
 
     @staticmethod
     def _set(rest, disable_http_ui, encryption_level, tls_min_version, honor_order, cipher_suites,
-            disable_www_authenticate):
+             disable_www_authenticate):
         if not any([True if x is not None else False for x in [disable_http_ui, encryption_level, tls_min_version,
-                                                    honor_order, cipher_suites, disable_www_authenticate]]):
-            _exitIfErrors(['please provide at least one of -cluster-encryption-level,'
-                          ' --disable-http-ui, --tls-min-version, --tls-honor-cipher-order or --cipher-suites'
-                          ' together with --set'])
+                                                               honor_order, cipher_suites, disable_www_authenticate]]):
+            _exitIfErrors(['please provide at least one of --cluster-encryption-level, --disable-http-ui,'
+                           ' --tls-min-version, --tls-honor-cipher-order or --cipher-suites together with --set'])
 
         if disable_http_ui == '1':
             disable_http_ui = 'true'
@@ -3072,8 +3072,8 @@ class SettingXdcr(Subcommand):
                            help="Interval for restarting failed xdcr in seconds (1 to 300)")
         group.add_argument("--optimistic-replication-threshold", dest="rep_thresh", type=(int),
                            metavar="<bytes>",
-                           help="Document body size threshold (bytes) to trigger optimistic " +
-                           "replication")
+                           help="Document body size threshold (bytes) to trigger optimistic "
+                           + "replication")
         group.add_argument("--source-nozzle-per-node", dest="src_nozzles", metavar="<num>",
                            type=(int),
                            help="The number of source nozzles per source node (1 to 10)")
@@ -3099,15 +3099,13 @@ class SettingXdcr(Subcommand):
 
         if opts.compression == "0":
             opts.compression = "None"
-        elif opts.compression =="1":
+        elif opts.compression == "1":
             opts.compression = "Auto"
 
-        _, errors = self.rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size,
-                                              opts.doc_batch_size, opts.fail_interval,
-                                              opts.rep_thresh, opts.src_nozzles,
-                                              opts.dst_nozzles, opts.usage_limit,
-                                              opts.compression, opts.log_level,
-                                              opts.stats_interval, opts.max_proc)
+        _, errors = self.rest.xdcr_global_settings(opts.chk_int, opts.worker_batch_size, opts.doc_batch_size,
+                                                   opts.fail_interval, opts.rep_thresh, opts.src_nozzles,
+                                                   opts.dst_nozzles, opts.usage_limit, opts.compression, opts.log_level,
+                                                   opts.stats_interval, opts.max_proc)
         _exitIfErrors(errors)
 
         _success("Global XDCR settings updated")
@@ -3142,7 +3140,7 @@ class SettingMasterPassword(Subcommand):
             _, errors = self.rest.set_master_pwd(opts.new_password)
             _exitIfErrors(errors)
             _success("New master password set")
-        elif opts.rotate_data_key == True:
+        elif opts.rotate_data_key:
             _, errors = self.rest.rotate_master_pwd()
             _exitIfErrors(errors)
             _success("Data key rotated")
@@ -3286,11 +3284,11 @@ class UserManage(Subcommand):
         num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get, opts.get_group,
                              opts.list_group, opts.delete_group, opts.set_group])
         if num_selectors == 0:
-            _exitIfErrors(["Must specify --delete, --list, --my_roles, --set, --get, --get-group, --set-group, " +
-                           "--list-groups or --delete-group"])
+            _exitIfErrors(['Must specify --delete, --list, --my_roles, --set, --get, --get-group, --set-group, '
+                           '--list-groups or --delete-group'])
         elif num_selectors != 1:
-            _exitIfErrors(["Only one of the following can be specified:--delete, --list, --my_roles, --set, --get," +
-                           " --get-group, --set-group, --list-groups or --delete-group"])
+            _exitIfErrors(['Only one of the following can be specified:--delete, --list, --my_roles, --set, --get,'
+                           ' --get-group, --set-group, --list-groups or --delete-group'])
 
         if opts.delete:
             self._delete(opts)
@@ -3418,15 +3416,14 @@ class UserManage(Subcommand):
         if opts.auth_domain is None:
             _exitIfErrors(["--auth-domain is required with the --set option"])
 
-        _, errors = self.rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, \
-                                       opts.rbac_name, opts.roles, \
-                                       opts.auth_domain, opts.groups)
+        _, errors = self.rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.rbac_name, opts.roles,
+                                            opts.auth_domain, opts.groups)
         _exitIfErrors(errors)
 
         if opts.roles is not None and "query_external_access" in opts.roles:
-            _warning("Granting the query_external_access role permits execution of the N1QL " +
-                "function CURL() and may allow access to other network endpoints in the local " +
-                "network and the Internet.")
+            _warning('Granting the query_external_access role permits execution of the N1QL '
+                     'function CURL() and may allow access to other network endpoints in the local network and'
+                     'the Internet.')
 
         _success(f"User {opts.rbac_user} set")
 
@@ -3484,8 +3481,8 @@ class XdcrReplicate(Subcommand):
                            help="Interval for restarting failed xdcr in seconds (1 to 300)")
         group.add_argument("--optimistic-replication-threshold", dest="rep_thresh", type=(int),
                            metavar="<bytes>",
-                           help="Document body size threshold to trigger optimistic replication" +
-                           " (bytes)")
+                           help="Document body size threshold to trigger optimistic replication"
+                           + " (bytes)")
         group.add_argument("--source-nozzle-per-node", dest="src_nozzles", type=(int),
                            metavar="<num>",
                            help="The number of source nozzles per source node (1 to 10)")
@@ -3519,17 +3516,16 @@ class XdcrReplicate(Subcommand):
 
         if opts.compression == "0":
             opts.compression = "None"
-        elif opts.compression =="1":
+        elif opts.compression == "1":
             opts.compression = "Auto"
 
         actions = sum([opts.create, opts.delete, opts.pause, opts.list, opts.resume,
                        opts.settings])
         if actions == 0:
-            _exitIfErrors(["Must specify one of --create, --delete, --pause, --list," +
-                           " --resume, --settings"])
+            _exitIfErrors(['Must specify one of --create, --delete, --pause, --list, --resume, --settings'])
         elif actions > 1:
-            _exitIfErrors(["The --create, --delete, --pause, --list, --resume, --settings" +
-                           " flags may not be specified at the same time"])
+            _exitIfErrors(['The --create, --delete, --pause, --list, --resume, --settings flags may not be '
+                           'specified at the same time'])
         elif opts.create:
             self._create(opts)
         elif opts.delete:
@@ -3543,8 +3539,8 @@ class XdcrReplicate(Subcommand):
 
     def _create(self, opts):
         _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.filter,
-                                                 opts.rep_mode, opts.compression, opts.reset_expiry, opts.filter_del,
-                                                 opts.filter_exp)
+                                                      opts.rep_mode, opts.compression, opts.reset_expiry,
+                                                      opts.filter_del, opts.filter_exp)
         _exitIfErrors(errors)
 
         _success("XDCR replication created")
@@ -3598,14 +3594,12 @@ class XdcrReplicate(Subcommand):
             _exitIfErrors(["--xdcr-replicator is needed to change a replicators settings"])
         if opts.filter_skip and opts.filter is None:
             _exitIfErrors(["--filter-expersion is needed with the --filter-skip-restream option"])
-        _, errors = self.rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size,
-                                                  opts.doc_batch_size, opts.fail_interval,
-                                                  opts.rep_thresh, opts.src_nozzles,
-                                                  opts.dst_nozzles, opts.usage_limit,
-                                                  opts.compression, opts.log_level,
-                                                  opts.stats_interval, opts.replicator_id, opts.filter,
-                                                  opts.filter_skip, opts.priority, opts.reset_expiry,
-                                                  opts.filter_del, opts.filter_exp)
+        _, errors = self.rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size, opts.doc_batch_size,
+                                                       opts.fail_interval, opts.rep_thresh, opts.src_nozzles,
+                                                       opts.dst_nozzles, opts.usage_limit, opts.compression,
+                                                       opts.log_level, opts.stats_interval, opts.replicator_id,
+                                                       opts.filter, opts.filter_skip, opts.priority, opts.reset_expiry,
+                                                       opts.filter_del, opts.filter_exp)
         _exitIfErrors(errors)
 
         _success("XDCR replicator settings updated")
@@ -3661,8 +3655,7 @@ class XdcrSetup(Subcommand):
         if actions == 0:
             _exitIfErrors(["Must specify one of --create, --delete, --edit, --list"])
         elif actions > 1:
-            _exitIfErrors(["The --create, --delete, --edit, --list flags may not " +
-                           "be specified at the same time"])
+            _exitIfErrors(["The --create, --delete, --edit, --list flags may not be specified at the same time"])
         elif opts.create or opts.edit:
             self._set(opts)
         elif opts.delete:
@@ -3702,7 +3695,7 @@ class XdcrSetup(Subcommand):
 
         raw_cert = None
         if opts.encrypt == "1":
-            if opts.encryption_type == None:
+            if opts.encryption_type is None:
                 opts.encryption_type = "full"
 
             if opts.encryption_type == "full":
@@ -3718,15 +3711,15 @@ class XdcrSetup(Subcommand):
             raw_user_cert = _exit_on_file_read_failure(opts.r_certificate)
 
         if opts.create:
-            _, errors = self.rest.create_xdcr_reference(opts.name, opts.hostname, opts.r_username,
-                                                   opts.r_password, opts.encrypt, opts.encryption_type,
-                                                   raw_cert, raw_user_cert, raw_user_key)
+            _, errors = self.rest.create_xdcr_reference(opts.name, opts.hostname, opts.r_username, opts.r_password,
+                                                        opts.encrypt, opts.encryption_type, raw_cert, raw_user_cert,
+                                                        raw_user_key)
             _exitIfErrors(errors)
             _success("Cluster reference created")
         else:
-            _, errors = self.rest.edit_xdcr_reference(opts.name, opts.hostname, opts.r_username,
-                                                 opts.r_password, opts.encrypt, opts.encryption_type,
-                                                 raw_cert, raw_user_cert, raw_user_key)
+            _, errors = self.rest.edit_xdcr_reference(opts.name, opts.hostname, opts.r_username, opts.r_password,
+                                                      opts.encrypt, opts.encryption_type, raw_cert, raw_user_cert,
+                                                      raw_user_key)
             _exitIfErrors(errors)
             _success("Cluster reference edited")
 
@@ -3793,13 +3786,15 @@ class EventingFunctionSetup(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy, opts.pause, opts.resume])  # pylint: disable=protected-access
+        # pylint: disable=protected-access
+        actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy,
+                       opts.pause, opts.resume])
         if actions == 0:
             _exitIfErrors(["Must specify one of --import, --export, --export-all, --delete, --list, --deploy,"
                            " --undeploy, --pause, --resume"])
         elif actions > 1:
-            _exitIfErrors(["The --import, --export, --export-all, --delete, --list, --deploy, --undeploy, --pause, --resume flags may"
-                           " not be specified at the same time"])
+            _exitIfErrors(['The --import, --export, --export-all, --delete, --list, --deploy, --undeploy, --pause, '
+                           '--resume flags may not be specified at the same time'])
         elif opts._import:  # pylint: disable=protected-access
             self._import(opts)
         elif opts.export:
@@ -3848,7 +3843,7 @@ class EventingFunctionSetup(Subcommand):
                 exported_function = [function]
         if not exported_function:
             _exitIfErrors([f'Function {opts.name} does not exist'])
-        _exit_on_file_write_failure(opts.filename, json.dumps(exported_function, separators=(',',':')))
+        _exit_on_file_write_failure(opts.filename, json.dumps(exported_function, separators=(',', ':')))
         _success("Function exported to: " + opts.filename)
 
     def _export_all(self, opts):
@@ -3856,7 +3851,7 @@ class EventingFunctionSetup(Subcommand):
             _exitIfErrors(["--file is needed to export all functions"])
         exported_functions, errors = self.rest.export_functions()
         _exitIfErrors(errors)
-        _exit_on_file_write_failure(opts.filename, json.dumps(exported_functions, separators=(',',':')))
+        _exit_on_file_write_failure(opts.filename, json.dumps(exported_functions, separators=(',', ':')))
         _success(f'All functions exported to: {opts.filename}')
 
     def _delete(self, opts):
@@ -3870,7 +3865,7 @@ class EventingFunctionSetup(Subcommand):
         if not opts.name:
             _exitIfErrors([f"--name is needed to {'deploy' if deploy else 'undeploy'} a function"])
         if deploy and not opts.boundary:
-            _exitIfErrors([f"--boundary is needed to deploy a function"])
+            _exitIfErrors(["--boundary is needed to deploy a function"])
         _, errors = self.rest.deploy_undeploy_function(opts.name, deploy, opts.boundary)
         _exitIfErrors(errors)
         _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
@@ -3954,8 +3949,7 @@ class AnalyticsLinkSetup(Subcommand):
         if actions == 0:
             _exitIfErrors(["Must specify one of --create, --delete, --edit, --list"])
         elif actions > 1:
-            _exitIfErrors(["The --create, --delete, --edit, --list flags may not " +
-                           "be specified at the same time"])
+            _exitIfErrors(["The --create, --delete, --edit, --list flags may not be specified at the same time"])
         elif opts.create or opts.edit:
             self._set(opts)
         elif opts.delete:
@@ -3993,9 +3987,9 @@ class AnalyticsLinkSetup(Subcommand):
 
     def _delete(self, opts):
         if opts.dataverse is None:
-            _exitIfErrors([f'--dataverse is required to delete a link'])
+            _exitIfErrors(['--dataverse is required to delete a link'])
         if opts.name is None:
-            _exitIfErrors([f'--name is required to delete a link'])
+            _exitIfErrors(['--name is required to delete a link'])
 
         _, errors = self.rest.delete_analytics_link(opts.dataverse, opts.name)
         _exitIfErrors(errors)
@@ -4178,8 +4172,8 @@ class EnableDeveloperPreview(Subcommand):
             _exitIfErrors(['cannot provide both --enable and --list'])
 
         if opts.enable:
-            confirm = input('Developer preview cannot be disabled once it is enabled. ' +
-                            'If you enter developer preview mode you will not be able to ' +
+            confirm = input('Developer preview cannot be disabled once it is enabled. '
+                            'If you enter developer preview mode you will not be able to '
                             'upgrade. DO NOT USE IN PRODUCTION.\nAre you sure [y/n]: ')
             if confirm == 'y':
                 _, errors = self.rest.set_dp_mode()
@@ -4285,7 +4279,8 @@ class SettingAlternateAddress(Subcommand):
                     if 'alternateAddresses' in node:
                         # For cluster_run and single node clusters there is no hostname
                         try:
-                            print(f'{node["hostname"]:20}{node["alternateAddresses"]["external"]["hostname"]:20}', end='')
+                            print(f'{node["hostname"]:20}{node["alternateAddresses"]["external"]["hostname"]:20}',
+                                  end='')
                         except KeyError:
                             host = 'UNKNOWN'
                             print(f'{host:20}{node["alternateAddresses"]["external"]["hostname"]:20}', end='')
@@ -4397,11 +4392,10 @@ class SettingQuery(Subcommand):
                 _exitIfErrors(['Please provide at least one other option with --set'])
 
             _, err = self.rest.post_query_settings(opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
-                                              opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
-                                              opts.log_level, opts.max_parallelism, opts.n1ql_feature_control)
+                                                   opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
+                                                   opts.log_level, opts.max_parallelism, opts.n1ql_feature_control)
             _exitIfErrors(err)
             _success('Updated the query settings')
-
 
     @staticmethod
     def get_man_page_name():
@@ -4498,7 +4492,7 @@ class IpFamily(Subcommand):
 
             print(f'Cluster using {ipvFam}')
         else:
-            print(f'Cluster is in mixed mode')
+            print('Cluster is in mixed mode')
 
     @staticmethod
     def get_man_page_name():
@@ -4670,7 +4664,7 @@ class SettingRebalance(Subcommand):
                 _exitIfErrors(err)
 
             if opts.moves_per_node is not None:
-                if not (1 <= opts.moves_per_node <= 64):
+                if not 1 <= opts.moves_per_node <= 64:
                     _exitIfErrors(['--moves-per-node must be a value between 1 and 64'])
                 _, err = self.rest.set_settings_rebalance(opts.moves_per_node)
                 _exitIfErrors(err)
