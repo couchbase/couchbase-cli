@@ -722,7 +722,7 @@ class TestServerAdd(CommandTest):
         self.assertIn('POST:/pools/default/serverGroups/0/addNode', self.server.trace)
         expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd',
                            ['services=kv%2Cfts%2Ccbas%2Cn1ql%2Ceventing%2Cbackup']]
-        self.assertEquals(len(expected_params), len(self.server.rest_params))
+        self.assertEqual(len(expected_params), len(self.server.rest_params))
         for p in expected_params:
             if len(p) == 1:
                 a = ''.join(sorted(p[0]))

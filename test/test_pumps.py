@@ -2,13 +2,13 @@ import ast
 import csv
 import json
 import os
-import socket
 import sqlite3
 import struct
 import tempfile
 import time
 import unittest
 import zipfile
+from collections import defaultdict
 import snappy
 
 import couchbaseConstants as cbcs
@@ -16,7 +16,7 @@ from pump_csv import CSVSource, CSVSink
 from pump_dcp import DCPStreamSource
 from pump_json import JSONSource
 from pump_gen import GenSource
-from pump_bfd import BFDSource, BFDSink, DDOC_FILE_NAME, INDEX_FILE_NAME, FTS_FILE_NAME, CBB_VERSION, BFD
+from pump_bfd import BFDSource, DDOC_FILE_NAME, INDEX_FILE_NAME, FTS_FILE_NAME, CBB_VERSION, BFD
 from pump_bfd2 import BFDSinkEx
 from pump_mc import MCSink
 from cb_bin_client import MemcachedClient
@@ -877,6 +877,7 @@ class TestBFDSinkEx(unittest.TestCase):
                 file_path = BFD.get_file_path(tmpdirname, b'default', fname)
                 f = open(file_path, 'r')
                 data = f.read()
+                f.close()
                 self.assertEqual(defs, data)
 
     def test_consume_batch(self):
@@ -958,7 +959,8 @@ class TestMCSink(unittest.TestCase):
 
     def test_append_req(self):
         opts = Ditto({'extra': {}})
-        sink = MCSink(opts, 'localhost:9878', None, None, None, {'buckets':['default']}, None, None)
+        sink = MCSink(opts, 'localhost:9878', None, None, None, {'buckets':['default']}, {'stop': False},
+                      defaultdict(int))
         m = []
         requests = [
             (b'header-0',  b'', b'key-0', b'val-0', b''),
@@ -984,7 +986,8 @@ class TestMCSink(unittest.TestCase):
     def test_snd_msg_sets(self):
         opts = Ditto({'extra': {}})
         fake_connection = Ditto({'s': FakeSocket()})
-        sink = MCSink(opts, 'localhost:9878', None, None, None, {'buckets': ['default']}, None, None)
+        sink = MCSink(opts, 'localhost:9878', None, None, None, {'buckets': ['default']}, {'stop': False},
+                      defaultdict(int))
 
         msgs = [
             (cbcs.CMD_DCP_MUTATION, 0, b'KEY:0', 0, 0, 0, b'', b'VAL:0', 0, 0, 0, 0),
