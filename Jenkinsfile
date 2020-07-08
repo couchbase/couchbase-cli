@@ -53,7 +53,7 @@ pipeline {
                 )
 
                 timeout(time: 10, unit: "MINUTES") {
-                    sh "pip3 install --user urllib3 pylint requests mypy==0.730"
+                    sh "pip3 install --user urllib3 pylint requests mypy==0.730 coverage==5.2 pytest==5.4.3"
                 }
 
                 // preventively delete the cli path to avoid issues with cloning
@@ -153,21 +153,18 @@ pipeline {
 
         stage("Test") {
             steps {
+                // Make reports directory if it does not exist
+                sh "mkdir -p ${WORKSPACE}/reports"
+
                 dir("${PROJECTPATH}"){
-                    echo "----------------------------------------------------------------"
-                    echo "Unit test CLI"
-                    echo "----------------------------------------------------------------"
-                    sh "python3 -m unittest discover -s ./test -p test_cli.py"
+                    // Use pytest to run the test as it is nicer and also can produce junit xml reports
+                    sh "coverage run --source . -m pytest test/test_*.py --cache-clear --junitxml=${WORKSPACE}/test-cli.xml -v"
 
-                    echo "----------------------------------------------------------------"
-                    echo "Unit test pumps"
-                    echo "----------------------------------------------------------------"
-                    sh "python3 -m unittest discover -s ./test -p test_pumps.py"
+                    // Post the test results
+                    junit allowEmptyResults: true, testResults: "reports/test-*.xml"
 
-                    echo "----------------------------------------------------------------"
-                    echo "Unit test TXN"
-                    echo "----------------------------------------------------------------"
-                    sh "python3 -m unittest discover -s ./test -p test_txn.py"
+                    // Post the test coverage
+                    cobertura autoUpdateStability: false, autoUpdateHealth: false, onlyStable: false, coberturaReportFile: "reports/coverage-*.xml", conditionalCoverageTargets: "70, 10, 30", failNoReports: false, failUnhealthy: true, failUnstable: true, lineCoverageTargets: "70, 10, 30", methodCoverageTargets: "70, 10, 30", maxNumberOfBuilds: 0, sourceEncoding: "ASCII", zoomCoverageChart: false
                 }
              }
          }
