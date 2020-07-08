@@ -169,6 +169,12 @@ def do_nothing(rest_params=None, server_args=None, path="", endpointMatch=None):
     return 200, None
 
 
+def set_analytics_link (rest_params=None, server_args=None, path="", endpointMatch=None):
+    if 'fail' in server_args and server_args['fail']:
+        return 409, "CBAS0054: Operation cannot be performed while the link is connected"
+    return 200, None
+
+
 def get_buckets(rest_params=None, server_args=None, path="", endpointMatch=None):
     if server_args is not None and 'buckets' in server_args:
         return 200, server_args['buckets']
@@ -386,5 +392,5 @@ endpoints = [
     ('/api/index', {'GET': get_by_path}),
 
     # analytics api
-    ('/analytics/link', {'GET': get_by_path, 'POST': do_nothing, 'PUT': do_nothing, 'DELETE': do_nothing})
+    ('/analytics/link', {'GET': get_by_path, 'POST': set_analytics_link, 'PUT': set_analytics_link, 'DELETE': do_nothing})
 ]

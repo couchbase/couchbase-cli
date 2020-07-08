@@ -1774,6 +1774,14 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=couchbase', 'username=user',
                                    'password=secret', 'encryption=none'])
 
+    def testFailEditCouchbase(self):
+        self.server_args['fail'] = True
+        self.system_exit_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
+                                             '--link-username', 'user', '--link-password', 'secret', '--encryption',
+                                              'none'], self.server_args)
+        self.assertIn('ERROR: "CBAS0054: Operation cannot be performed while the link is connected"', self.str_output)
+
+
     def testEditWithCerts(self):
         # create fake cert file
         cert_file = tempfile.NamedTemporaryFile(delete=False)
