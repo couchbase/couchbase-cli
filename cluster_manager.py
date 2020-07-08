@@ -1447,19 +1447,6 @@ class ClusterManager(object):
 
         return data, errors
 
-    def deleteRoles(self,userList):
-        # need a separate REST call for each user in the comma-delimited user list
-        userF = io.StringIO(userList)
-        reader = csv.reader(userF, delimiter=',')
-        for users in reader:
-            for user in users:
-                url = f'{self.hostname}/settings/rbac/users/{user}'
-                data, errors = self._delete(url, None)
-                if errors:
-                    return data, errors
-
-        return data, errors
-
     def retrieve_cluster_certificate(self, extended=False):
         """ Retrieves the current cluster certificate
 
