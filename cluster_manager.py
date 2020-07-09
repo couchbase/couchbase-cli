@@ -64,8 +64,8 @@ class ServiceNotAvailableException(Exception):
 class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
-    def __init__(self, hostname, username, password, sslFlag=False, verifyCert=True,
-                 caCert=True, debug=False, timeout=DEFAULT_REQUEST_TIMEOUT, cert=None):
+    def __init__(self, hostname, username, password, ssl_flag=False, verify_cert=True,
+                 ca_cert=True, debug=False, timeout=DEFAULT_REQUEST_TIMEOUT, cert=None):
         hostname = hostname.replace("couchbase://", "http://", 1)
         hostname = hostname.replace("couchbases://", "https://", 1)
 
@@ -73,15 +73,15 @@ class ClusterManager(object):
         # verify argument on Request functions can take boolean or a path to a CA if
         # a path is not provide but the cert still needs to be verified it should use
         # the system provided CAs
-        self.verifyCert = verifyCert
-        self.caCert = caCert
-        if not verifyCert:
-            self.caCert = False
+        self.verify_cert = verify_cert
+        self.ca_cert = ca_cert
+        if not verify_cert:
+            self.ca_cert = False
         # This is for client side certs which is currently not used.
         self.cert = cert
 
         parsed = urllib.parse.urlparse(hostname)
-        if sslFlag:
+        if ssl_flag:
             if parsed.scheme == 'http://':
                 if parsed.port == 8091:
                     self.hostname = f'https://{parsed.hostname}:18091'
@@ -90,8 +90,8 @@ class ClusterManager(object):
 
             # Certificates and verification are not used when the ssl flag is
             # specified.
-            self.verifyCert = False
-            self.caCert = False
+            self.verify_cert = False
+            self.ca_cert = False
 
         self.username = username.encode('utf-8').decode('latin1')
         self.password = password.encode('utf-8').decode('latin1')
@@ -179,7 +179,6 @@ class ClusterManager(object):
         if errors:
             return None, errors
 
-
         bucket_index_defs = []
         if "indexDefs" in result and result["indexDefs"] is not None:
             for _, index_def in result["indexDefs"]["indexDefs"].items():
@@ -241,17 +240,17 @@ class ClusterManager(object):
         # this block of code will check if we are using internal or external address
         # first get the host being used to get the node services info
         used_host = urllib.parse.urlparse(self.hostname).hostname
-        useAlt = False
+        use_alt = False
         # next check if its external or internal
         for node in data['nodesExt']:
-            if not 'hostname' in node and (used_host == '127.0.0.1' or used_host == 'localhost'):
-                useAlt = False
+            if 'hostname' not in node and used_host in ['127.0.0.1', 'localhost']:
+                use_alt = False
                 break
             if 'hostname' in node and used_host == node['hostname']:
-                useAlt = False
+                use_alt = False
                 break
             if 'alternateAddresses' in node and node['alternateAddresses']['external']['hostname'] == used_host:
-                useAlt = True
+                use_alt = True
                 break
 
         hosts = []
@@ -283,10 +282,10 @@ class ClusterManager(object):
 
             services = node['services']
 
-            if useAlt and 'alternateAddresses' not in node:
+            if use_alt and 'alternateAddresses' not in node:
                 continue
 
-            if 'alternateAddresses' in node and useAlt:
+            if 'alternateAddresses' in node and use_alt:
                 alt_node_host = node['alternateAddresses']['external']['hostname']
                 # Check for Raw IPv6 address
                 if ':' in alt_node_host:
@@ -325,7 +324,7 @@ class ClusterManager(object):
 
     def set_admin_password(self, password):
         url = f'{self.hostname}/controller/resetAdminPassword'
-        params = { "password": password }
+        params = {"password": password}
 
         return self._post_form_encoded(url, params)
 
@@ -340,7 +339,7 @@ class ClusterManager(object):
 
     def set_master_pwd(self, password):
         url = f'{self.hostname}/node/controller/changeMasterPassword'
-        params = { "newPassword": password }
+        params = {"newPassword": password}
         return self._post_form_encoded(url, params)
 
     def user_change_passsword(self, new_password):
@@ -383,7 +382,7 @@ class ClusterManager(object):
         services - A string containing a comma separated list of services
         """
         url = f'{self.hostname}/node/controller/setupServices'
-        params = { "services": services }
+        params = {"services": services}
 
         return self._post_form_encoded(url, params)
 
@@ -445,10 +444,10 @@ class ClusterManager(object):
             return None, errors
 
         url = f'{self.hostname}{group["addNodeURI"]}'
-        params = { "hostname": add_server,
-                   "user": username,
-                   "password": password,
-                   "services": services }
+        params = {"hostname": add_server,
+                  "user": username,
+                  "password": password,
+                  "services": services}
 
         return self._post_form_encoded(url, params)
 
@@ -461,7 +460,7 @@ class ClusterManager(object):
             return None, ["Server not found %s" % server]
 
         url = f'{self.hostname}/controller/reAddNode'
-        params = { "otpNode": readd[0] }
+        params = {"otpNode": readd[0]}
 
         return self._post_form_encoded(url, params)
 
@@ -545,8 +544,8 @@ class ClusterManager(object):
             return None, [f'Server not found {server}']
 
         url = f'{self.hostname}/controller/setRecoveryType'
-        params = { "otpNode": readd[0],
-                   "recoveryType": recovery_type }
+        params = {"otpNode": readd[0],
+                  "recoveryType": recovery_type}
 
         return self._post_form_encoded(url, params)
 
@@ -559,8 +558,8 @@ class ClusterManager(object):
         if len(eject) != len(remove_nodes):
             return None, ["Some nodes specified to be removed are not part of the cluster"]
 
-        params = { "knownNodes": ','.join(all_nodes),
-                   "ejectedNodes": ','.join(eject) }
+        params = {"knownNodes": ','.join(all_nodes),
+                  "ejectedNodes": ','.join(eject)}
 
         return self._post_form_encoded(url, params)
 
@@ -675,8 +674,8 @@ class ClusterManager(object):
             if node['hostname'] in failover_nodes:
                 if node['clusterMembership'] != 'active':
                     return [], [], [], [], [], ["Can't failover a node that isn't in the cluster"]
-                else:
-                    failover.append((node['otpNode'], node['status']))
+                failover.append((node['otpNode'], node['status']))
+
             _, host = node['otpNode'].split('@')
             hostport = f'{host}:8091'
             if node['hostname'] in readd_nodes or hostport in readd_nodes:
@@ -862,7 +861,7 @@ class ClusterManager(object):
         if data_only and not view_only:
             url = f'{self.hostname}/pools/default/buckets/{name}/controller/compactDatabases'
             return self._post_form_encoded(url, None)
-        elif view_only and not data_only:
+        if view_only and not data_only:
             url = f'{self.hostname}/pools/default/buckets/{name}/ddocs'
             ddocs, errors = self._get(url)
             if errors:
@@ -874,11 +873,11 @@ class ClusterManager(object):
                 if errors:
                     return None, errors
             return None, None
-        elif not data_only and not view_only:
+        if not data_only and not view_only:
             url = f'{self.hostname}/pools/default/buckets/{name}/controller/compactBucket'
             return self._post_form_encoded(url, None)
-        else:
-            return None, ["Cannot compact data only and view only, pick one or neither"]
+
+        return None, ["Cannot compact data only and view only, pick one or neither"]
 
     def list_buckets(self, extended=False):
         url = f'{self.hostname}/pools/default/buckets'
@@ -940,7 +939,7 @@ class ClusterManager(object):
 
     def set_hostname(self, hostname):
         url = f'{self.hostname}/node/controller/rename'
-        params = { "hostname": hostname }
+        params = {"hostname": hostname}
         return self._post_form_encoded(url, params)
 
     def stop_rebalance(self):
@@ -950,7 +949,7 @@ class ClusterManager(object):
 
     def create_server_group(self, name):
         url = f'{self.hostname}/pools/default/serverGroups'
-        params = { "name": name }
+        params = {"name": name}
         return self._post_form_encoded(url, params)
 
     def delete_server_group(self, name):
@@ -959,7 +958,7 @@ class ClusterManager(object):
             return None, errors
 
         url = self.hostname + uri
-        params = { "name": name }
+        params = {"name": name}
         return self._delete(url, params)
 
     def rename_server_group(self, name, new_name):
@@ -968,7 +967,7 @@ class ClusterManager(object):
             return None, errors
 
         url = self.hostname + uri
-        params = { "name": new_name }
+        params = {"name": new_name}
         return self._put(url, params)
 
     def move_servers_between_groups(self, servers, from_group, to_group):
@@ -1156,12 +1155,12 @@ class ClusterManager(object):
             if upper_case == "1":
                 params["enforceUppercase"] = "true"
             else:
-                params["enforceUppercase"] ="false"
+                params["enforceUppercase"] = "false"
         if lower_case:
             if lower_case == "1":
                 params["enforceLowercase"] = "true"
             else:
-                params["enforceLowercase"] ="false"
+                params["enforceLowercase"] = "false"
         if digit:
             if digit == "1":
                 params["enforceDigits"] = "true"
@@ -1171,7 +1170,7 @@ class ClusterManager(object):
             if special_char == "1":
                 params["enforceSpecialChars"] = "true"
             else:
-                params["enforceSpecialChars"] ="false"
+                params["enforceSpecialChars"] = "false"
 
         return self._post_form_encoded(url, params)
 
@@ -1351,7 +1350,7 @@ class ClusterManager(object):
         """
 
         url = f'{self.hostname}/settings/saslauthdAuth'
-        params = { "enabled": enabled }
+        params = {"enabled": enabled}
 
         if read_only_admins is not None:
             params["roAdmins"] = read_only_admins
@@ -1415,38 +1414,6 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def setRoles(self, userList, roleList, userNameList):
-        # we take a comma-delimited list of roles that needs to go into a dictionary
-        paramDict = {"roles" : roleList}
-        userIds = []
-        userNames = []
-        userF = io.StringIO(userList)
-        for idList in csv.reader(userF, delimiter=','):
-            userIds.extend(idList)
-
-        # did they specify user names?
-        if userNameList != None:
-            userNameF = io.StringIO(userNameList)
-            for nameList in csv.reader(userNameF, delimiter=','):
-                userNames.extend(nameList)
-            if len(userNames) != len(userIds):
-                return None, [f'Error: specified {len(userIds)} user ids and {len(userNames)} user names, must'
-                              f' have the same number of each.']
-
-        # did they specify user names?
-        # but we need a separate REST call for each user in the comma-delimited user list
-        for index in range(len(userIds)):
-            user = userIds[index]
-            paramDict["id"] = user
-            if len(userNames) > 0:
-                paramDict["name"] = userNames[index]
-            url = f'{self.hostname}/settings/rbac/users/{user}'
-            data, errors = self._put(url,paramDict)
-            if errors:
-                return data, errors
-
-        return data, errors
-
     def retrieve_cluster_certificate(self, extended=False):
         """ Retrieves the current cluster certificate
 
@@ -1499,19 +1466,19 @@ class ClusterManager(object):
         return self._get(url)
 
     def create_xdcr_reference(self, name, hostname, username, password, encrypted,
-                              encryptionType, certificate, clientCertificate, clientKey):
+                              encryption_type, certificate, client_certificate, client_key):
         return self._set_xdcr_reference(False, name, hostname, username,
-                                        password, encrypted, encryptionType,
-                                        certificate, clientCertificate, clientKey)
+                                        password, encrypted, encryption_type,
+                                        certificate, client_certificate, client_key)
 
     def edit_xdcr_reference(self, name, hostname, username, password, encrypted,
-                            encryptionType, certificate, clientCertificate, clientKey):
+                            encryption_type, certificate, client_certificate, client_key):
         return self._set_xdcr_reference(True, name, hostname, username,
-                                        password, encrypted, encryptionType,
-                                        certificate, clientCertificate, clientKey)
+                                        password, encrypted, encryption_type,
+                                        certificate, client_certificate, client_key)
 
     def _set_xdcr_reference(self, edit, name, hostname, username, password,
-                            encrypted, encryptionType, certificate, clientCertificate, clientKey):
+                            encrypted, encryption_type, certificate, client_certificate, client_key):
         url = f'{self.hostname}/pools/default/remoteClusters'
         params = {}
 
@@ -1528,14 +1495,14 @@ class ClusterManager(object):
             params["password"] = password
         if encrypted is not None:
             params["demandEncryption"] = encrypted
-        if encryptionType is not None:
-            params["encryptionType"] = encryptionType
+        if encryption_type is not None:
+            params["encryptionType"] = encryption_type
         if certificate is not None:
             params["certificate"] = certificate
-        if clientCertificate:
-            params['clientCertificate'] = clientCertificate
-        if clientKey:
-            params['clientKey'] = clientKey
+        if client_certificate:
+            params['clientCertificate'] = client_certificate
+        if client_key:
+            params['clientKey'] = client_key
 
         return self._post_form_encoded(url, params)
 
@@ -1618,7 +1585,7 @@ class ClusterManager(object):
     def  create_xdcr_replication(self, name, to_bucket, from_bucket, filter_expression, rep_mode, compression,
                                  reset_expiry, filter_del, filter_exp):
         url = f'{self.hostname}/controller/createReplication'
-        params = { "replicationType": "continuous" }
+        params = {"replicationType": "continuous"}
 
         if to_bucket is not None:
             params["toBucket"] = to_bucket
@@ -1642,17 +1609,17 @@ class ClusterManager(object):
         return self._post_form_encoded(url, params)
 
     def delete_xdcr_replicator(self, replicator_id):
-        url =f'{self.hostname}/controller/cancelXDCR/{urllib.parse.quote_plus(replicator_id)}'
+        url = f'{self.hostname}/controller/cancelXDCR/{urllib.parse.quote_plus(replicator_id)}'
         return self._delete(url, None)
 
     def pause_xdcr_replication(self, replicator_id):
         url = f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}'
-        params = { "pauseRequested": "true" }
+        params = {"pauseRequested": "true"}
         return self._post_form_encoded(url, params)
 
     def resume_xdcr_replication(self, replicator_id):
         url = f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}'
-        params = { "pauseRequested": "false" }
+        params = {"pauseRequested": "false"}
         return self._post_form_encoded(url, params)
 
     def get_query_settings(self):
@@ -1937,9 +1904,8 @@ class ClusterManager(object):
             result, err = self.node_info()
             if err:
                 return None, err
-            else:
-                return [result], None
-        elif err:
+            return [result], None
+        if err:
             return None, err
 
         return node_data['nodes'], None
@@ -1953,7 +1919,7 @@ class ClusterManager(object):
                 params = {}
             print(f'GET {url} {urllib.parse.urlencode(params)}')
 
-        response = requests.get(url, params, auth=(self.username, self.password), verify=self.caCert,
+        response = requests.get(url, params, auth=(self.username, self.password), verify=self.ca_cert,
                                 cert=self.cert, timeout=self.timeout,
                                 headers=self.headers)
         return _handle_response(response, self.debug)
@@ -1965,7 +1931,7 @@ class ClusterManager(object):
                 params = {}
             print(f'POST {url} {urllib.parse.urlencode(params)}')
         response = requests.post(url, auth=(self.username, self.password), data=params,
-                                 cert=self.cert, verify=self.caCert, timeout=self.timeout,
+                                 cert=self.cert, verify=self.ca_cert, timeout=self.timeout,
                                  headers=self.headers)
         return _handle_response(response, self.debug)
 
@@ -1976,7 +1942,7 @@ class ClusterManager(object):
                 params = {}
             print(f'POST {url} {json.dumps(params)}')
         response = requests.post(url, auth=(self.username, self.password), json=params,
-                                 cert=self.cert, verify=self.caCert, timeout=self.timeout,
+                                 cert=self.cert, verify=self.ca_cert, timeout=self.timeout,
                                  headers=self.headers)
         return _handle_response(response, self.debug)
 
@@ -1987,7 +1953,7 @@ class ClusterManager(object):
                 params = {}
             print(f'PUT {url} {urllib.parse.urlencode(params)}')
         response = requests.put(url, params, auth=(self.username, self.password),
-                                cert=None, verify=self.caCert, timeout=self.timeout,
+                                cert=None, verify=self.ca_cert, timeout=self.timeout,
                                 headers=self.headers)
         return _handle_response(response, self.debug)
 
@@ -1998,8 +1964,8 @@ class ClusterManager(object):
                 params = {}
             print(f'PUT {url} {json.dumps(params)}')
         response = requests.put(url, auth=(self.username, self.password), json=params,
-                                cert=None, verify=self.caCert, timeout=self.timeout,
-                                headers = self.headers)
+                                cert=None, verify=self.ca_cert, timeout=self.timeout,
+                                headers=self.headers)
         return _handle_response(response, self.debug)
 
     @request
@@ -2009,7 +1975,7 @@ class ClusterManager(object):
                 params = {}
             print(f'DELETE {url} {urllib.parse.urlencode(params)}')
         response = requests.delete(url, auth=(self.username, self.password), data=params,
-                                   cert=None, verify=self.caCert, timeout=self.timeout,
+                                   cert=None, verify=self.ca_cert, timeout=self.timeout,
                                    headers=self.headers)
         return _handle_response(response, self.debug)
 

@@ -1,12 +1,12 @@
 """Mock server only emulates CB rest endpoints but has no functionality"""
 import socket
 import threading
-import requests
 import re
 import json
 import sys
 from urllib.parse import urlparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import requests
 
 
 class RequestHandler(BaseHTTPRequestHandler):
@@ -128,9 +128,9 @@ class MockRESTServer(object):
 # ------------ Below functions that mock a superficial level of the couchbase server
 
 
-def get_pools(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_pools(rest_params=None, server_args=None, path="", endpoint_match=None):
     is_admin = True
-    enterprise = True,
+    enterprise = True
     version = '0.0.0-0000-enterprise'
     init = True
     if 'init' in server_args:
@@ -165,22 +165,22 @@ def get_pools(rest_params=None, server_args=None, path="", endpointMatch=None):
     return 200, response_no_init
 
 
-def do_nothing(rest_params=None, server_args=None, path="", endpointMatch=None):
+def do_nothing(rest_params=None, server_args=None, path="", endpoint_match=None):
     return 200, None
 
 
-def get_buckets(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_buckets(rest_params=None, server_args=None, path="", endpoint_match=None):
     if server_args is not None and 'buckets' in server_args:
         return 200, server_args['buckets']
 
     return 200, []
 
 
-def get_ddocs(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_ddocs(rest_params=None, server_args=None, path="", endpoint_match=None):
     return 200, {'rows': []}
 
 
-def delete_bucket(rest_params=None, server_args=None, path="", endpointMatch=None):
+def delete_bucket(rest_params=None, server_args=None, path="", endpoint_match=None):
     bucket = path[path.rfind('/')+1:]
     if 'buckets' not in server_args:
         return 404, ['Bucket not found']
@@ -193,19 +193,19 @@ def delete_bucket(rest_params=None, server_args=None, path="", endpointMatch=Non
         return 404, ['Bucket not found']
 
 
-def start_log_collection(rest_params=None, server_args=None, path="", endpointMatch=None):
+def start_log_collection(rest_params=None, server_args=None, path="", endpoint_match=None):
     server_args['log-collection-started'] = True
     return 200, None
 
 
-def get_tasks(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_tasks(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'tasks' in server_args:
         return 200, server_args['tasks']
 
     return 200, []
 
 
-def get_default_pool(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_default_pool(rest_params=None, server_args=None, path="", endpoint_match=None):
     response = {}
     if 'pools_default' in server_args:
         response = server_args['pools_default']
@@ -213,74 +213,74 @@ def get_default_pool(rest_params=None, server_args=None, path="", endpointMatch=
     return 200, response
 
 
-def get_server_groups(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_server_groups(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'server-group' in server_args:
         return 200, server_args['server-group']
     return 200, []
 
 
-def server_group_action(rest_params=None, server_args=None, path="", endpointMatch=None):
+def server_group_action(rest_params=None, server_args=None, path="", endpoint_match=None):
     return 200, None
 
 
-def get_indexes_settings(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_indexes_settings(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'indexes-settings' in server_args:
         return 200, server_args['indexes-settings']
 
     return 200, {}
 
 
-def get_node_info(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_node_info(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'node-info' in server_args:
         return 200, server_args['node-info']
     return 200, {}
 
 
-def get_password_policy(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_password_policy(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'password-policy' in server_args:
         return 200, server_args['password-policy']
     return 200, {}
 
 
-def get_remote_cluster(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_remote_cluster(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'remote-clusters' in server_args:
         return 200, server_args['remote-clusters']
     return 200, []
 
 
-def get_rbac_user(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_rbac_user(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'rbac-users' in server_args:
         return 200, server_args['rbac-users']
     return 200, []
 
 
-def get_my_roles(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_my_roles(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'whoami' in server_args:
         return 200, server_args['whoami']
     return 200, []
 
 
-def get_collection_manifest(rest_params=None, server_args=None, path="", endpointMatch=None):
-    if 'collection_manifest'in server_args:
+def get_collection_manifest(rest_params=None, server_args=None, path="", endpoint_match=None):
+    if 'collection_manifest' in server_args:
         return 200, server_args['collection_manifest']
     return 200, []
 
 
-def get_groups(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_groups(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'rbac-groups' in server_args:
         return 200, server_args['rbac-groups']
     return 200, {}
 
 
-def get_user_groups(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_user_groups(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'user-group' in server_args:
         return 200, server_args['user-group']
     return 200, {}
 
 
-def get_user(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_user(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'rbac-users' in server_args:
-        res = re.search('/settings/rbac/users/([^/]+)/([^/]+)$', path)
+        res = re.search(r'/settings/rbac/users/([^/]+)/([^/]+)$', path)
         if res is None:
             return 404, 'Unknown user.'
         domain = res.groups()[0]
@@ -292,9 +292,9 @@ def get_user(rest_params=None, server_args=None, path="", endpointMatch=None):
     return 200, {}
 
 
-def get_group(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_group(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'rbac-groups' in server_args:
-        res = re.search('/settings/rbac/groups/([^/]+)$', path)
+        res = re.search(r'/settings/rbac/groups/([^/]+)$', path)
         if res is None:
             return 404, 'Unknown group.'
         group = res.groups()[0]
@@ -305,93 +305,93 @@ def get_group(rest_params=None, server_args=None, path="", endpointMatch=None):
     return 200, {}
 
 
-def get_ldap_settings(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_ldap_settings(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'ldap' in server_args:
         return 200, server_args['ldap']
     return 200, {}
 
 
-def get_by_path(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_by_path(rest_params=None, server_args=None, path="", endpoint_match=None):
     if path in server_args:
-        if endpointMatch:
-            server_args['query'] = endpointMatch
+        if endpoint_match:
+            server_args['query'] = endpoint_match
         return 200, server_args[path]
     return 200, {}
 
 
-def get_audit_settings(rest_params=None, server_args=None, path="", endpointMatch=None):
+def get_audit_settings(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'audit_settings' in server_args:
         return 200, server_args['audit_settings']
     return 200, {}
 
 endpoints = [
-    ('/close$', {'GET': do_nothing}),
-    ('/whoami', {'GET': get_my_roles}),
-    ('/pools$', {'GET': get_pools}),
-    ('/pools/default$', {'POST': do_nothing, 'GET': get_default_pool}),
-    ('/pools/default/remoteClusters(/)?$', {'POST': do_nothing, 'GET': get_remote_cluster}),
-    ('/pools/default/remoteClusters/\w+$', {'DELETE': do_nothing, 'POST': do_nothing}),
-    ('/pools/default/tasks$', {'GET': get_tasks}),
-    ('/pools/default/nodeServices$', {'GET': get_by_path}),
-    ('/pools/default/serverGroups$', {'POST': do_nothing, 'GET': get_server_groups}),
-    ('/pools/default/serverGroups/\d+$', {'DELETE': do_nothing, 'PUT': do_nothing}),
-    ('/pools/default/serverGroups/\d+/addNode$', {'POST': do_nothing}),
-    ('/pools/default/serverGroups/rev=\d+$', {'PUT': do_nothing}),
-    ('/pools/default/buckets$', {'GET': get_buckets, 'POST': do_nothing}),
-    ('/pools/default/buckets/\w+$', {'DELETE': delete_bucket, 'POST': do_nothing}),
-    ('/pools/default/buckets/\w+/controller/doFlush$', {'POST': do_nothing}),
-    ('/pools/default/buckets/\w+/controller/compactDatabases$', {'POST': do_nothing}),
-    ('/pools/default/buckets/\w+/ddocs$', {'GET': get_ddocs}),
-    ('/pools/default/buckets/\w+/controller/compactBucket$', {'POST': do_nothing}),
-    ('/pools/default/buckets/\w+/collections$', {'GET': get_collection_manifest, 'POST': do_nothing}),
-    ('/pools/default/buckets/\w+/collections/\w+$', {'POST': do_nothing, 'DELETE': do_nothing}),
-    ('/pools/default/buckets/\w+/collections/\w+/\w+$', {'DELETE': do_nothing}),
-    ('/pools/nodes', {'GET': get_by_path}),
-    ('/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
-    ('/settings/passwordPolicy$', {'POST': do_nothing, 'GET': get_password_policy}),
-    ('/settings/rbac/users$', {'POST': do_nothing, 'GET': get_rbac_user}),
-    ('/settings/rbac/users/\w+$', {'PUT': do_nothing, 'GET': get_user_groups}),
-    ('/settings/rbac/groups/(\w|-)+', {'PUT': do_nothing, 'DELETE': do_nothing, 'GET': get_group}),
-    ('/settings/rbac/groups', {'GET': get_groups}),
-    ('/settings/rbac/users/\w+/\w+$', {'DELETE': do_nothing, 'PUT': do_nothing, 'GET': get_user}),
-    ('/settings/saslauthdAuth$', {'POST': do_nothing}),
-    ('/settings/ldap', {'POST': do_nothing, 'GET': get_ldap_settings}),
-    ('/settings/alerts$', {'POST': do_nothing}),
-    ('/settings/security$', {'POST': do_nothing}),
-    ('/settings/audit$', {'POST': do_nothing, 'GET': get_audit_settings}),
-    ('/settings/audit/descriptors$', {'GET': get_by_path}),
-    ('/settings/stats$', {'POST': do_nothing}),
-    ('/settings/license$', {'POST': do_nothing, 'GET': get_by_path}),
-    ('/settings/license/validate$', {'POST': do_nothing, 'GET': get_by_path}),
-    ('/settings/web$', {'POST': do_nothing}),
-    ('/settings/autoFailover', {'POST': do_nothing}),
-    ('/settings/autoReprovision', {'POST': do_nothing}),
-    ('/settings/replications$', {'POST': do_nothing}),
-    ('/settings/rebalance$', {'GET': get_by_path, 'POST': do_nothing}),
-    ('/settings/retryRebalance$', {'GET': get_by_path, 'POST': do_nothing}),
-    ('/settings/replications/(\d|\w)+$', {'POST': do_nothing}),
-    ('/node/controller/setupServices$', {'POST': do_nothing}),
-    ('/nodes/self/controller/settings$', {'POST': do_nothing}),
-    ('/nodes/self$', {'GET': get_node_info}),
-    ('/node/controller/rename', {'POST': do_nothing}),
-    ('/node/controller/enableExternalListener', {'POST': do_nothing}),
-    ('/node/controller/disableExternalListener', {'POST': do_nothing}),
-    ('/node/controller/setupNetConfig', {'POST': do_nothing}),
-    ('/controller/failOver$', {'POST': do_nothing}),
-    ('/controller/rebalance$', {'POST': do_nothing}),
-    ('/controller/changePassword', {'POST': do_nothing}),
-    ('/controller/reAddNode$', {'POST': do_nothing}),
-    ('/controller/startGracefulFailover$', {'POST': do_nothing}),
-    ('/controller/cancelLogsCollection$', {'POST': do_nothing}),
-    ('/controller/createReplication$', {'POST': do_nothing}),
-    ('/controller/cancelXDCR/(\d|\w)+$', {'DELETE': do_nothing}),
-    ('/controller/setAutoCompaction$', {'POST': do_nothing}),
-    ('/controller/startLogsCollection$', {'POST': start_log_collection}),
+    (r'/close$', {'GET': do_nothing}),
+    (r'/whoami', {'GET': get_my_roles}),
+    (r'/pools$', {'GET': get_pools}),
+    (r'/pools/default$', {'POST': do_nothing, 'GET': get_default_pool}),
+    (r'/pools/default/remoteClusters(/)?$', {'POST': do_nothing, 'GET': get_remote_cluster}),
+    (r'/pools/default/remoteClusters/\w+$', {'DELETE': do_nothing, 'POST': do_nothing}),
+    (r'/pools/default/tasks$', {'GET': get_tasks}),
+    (r'/pools/default/nodeServices$', {'GET': get_by_path}),
+    (r'/pools/default/serverGroups$', {'POST': do_nothing, 'GET': get_server_groups}),
+    (r'/pools/default/serverGroups/\d+$', {'DELETE': do_nothing, 'PUT': do_nothing}),
+    (r'/pools/default/serverGroups/\d+/addNode$', {'POST': do_nothing}),
+    (r'/pools/default/serverGroups/rev=\d+$', {'PUT': do_nothing}),
+    (r'/pools/default/buckets$', {'GET': get_buckets, 'POST': do_nothing}),
+    (r'/pools/default/buckets/\w+$', {'DELETE': delete_bucket, 'POST': do_nothing}),
+    (r'/pools/default/buckets/\w+/controller/doFlush$', {'POST': do_nothing}),
+    (r'/pools/default/buckets/\w+/controller/compactDatabases$', {'POST': do_nothing}),
+    (r'/pools/default/buckets/\w+/ddocs$', {'GET': get_ddocs}),
+    (r'/pools/default/buckets/\w+/controller/compactBucket$', {'POST': do_nothing}),
+    (r'/pools/default/buckets/\w+/collections$', {'GET': get_collection_manifest, 'POST': do_nothing}),
+    (r'/pools/default/buckets/\w+/collections/\w+$', {'POST': do_nothing, 'DELETE': do_nothing}),
+    (r'/pools/default/buckets/\w+/collections/\w+/\w+$', {'DELETE': do_nothing}),
+    (r'/pools/nodes', {'GET': get_by_path}),
+    (r'/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
+    (r'/settings/passwordPolicy$', {'POST': do_nothing, 'GET': get_password_policy}),
+    (r'/settings/rbac/users$', {'POST': do_nothing, 'GET': get_rbac_user}),
+    (r'/settings/rbac/users/\w+$', {'PUT': do_nothing, 'GET': get_user_groups}),
+    (r'/settings/rbac/groups/(\w|-)+', {'PUT': do_nothing, 'DELETE': do_nothing, 'GET': get_group}),
+    (r'/settings/rbac/groups', {'GET': get_groups}),
+    (r'/settings/rbac/users/\w+/\w+$', {'DELETE': do_nothing, 'PUT': do_nothing, 'GET': get_user}),
+    (r'/settings/saslauthdAuth$', {'POST': do_nothing}),
+    (r'/settings/ldap', {'POST': do_nothing, 'GET': get_ldap_settings}),
+    (r'/settings/alerts$', {'POST': do_nothing}),
+    (r'/settings/security$', {'POST': do_nothing}),
+    (r'/settings/audit$', {'POST': do_nothing, 'GET': get_audit_settings}),
+    (r'/settings/audit/descriptors$', {'GET': get_by_path}),
+    (r'/settings/stats$', {'POST': do_nothing}),
+    (r'/settings/license$', {'POST': do_nothing, 'GET': get_by_path}),
+    (r'/settings/license/validate$', {'POST': do_nothing, 'GET': get_by_path}),
+    (r'/settings/web$', {'POST': do_nothing}),
+    (r'/settings/autoFailover', {'POST': do_nothing}),
+    (r'/settings/autoReprovision', {'POST': do_nothing}),
+    (r'/settings/replications$', {'POST': do_nothing}),
+    (r'/settings/rebalance$', {'GET': get_by_path, 'POST': do_nothing}),
+    (r'/settings/retryRebalance$', {'GET': get_by_path, 'POST': do_nothing}),
+    (r'/settings/replications/(\d|\w)+$', {'POST': do_nothing}),
+    (r'/node/controller/setupServices$', {'POST': do_nothing}),
+    (r'/nodes/self/controller/settings$', {'POST': do_nothing}),
+    (r'/nodes/self$', {'GET': get_node_info}),
+    (r'/node/controller/rename', {'POST': do_nothing}),
+    (r'/node/controller/enableExternalListener', {'POST': do_nothing}),
+    (r'/node/controller/disableExternalListener', {'POST': do_nothing}),
+    (r'/node/controller/setupNetConfig', {'POST': do_nothing}),
+    (r'/controller/failOver$', {'POST': do_nothing}),
+    (r'/controller/rebalance$', {'POST': do_nothing}),
+    (r'/controller/changePassword', {'POST': do_nothing}),
+    (r'/controller/reAddNode$', {'POST': do_nothing}),
+    (r'/controller/startGracefulFailover$', {'POST': do_nothing}),
+    (r'/controller/cancelLogsCollection$', {'POST': do_nothing}),
+    (r'/controller/createReplication$', {'POST': do_nothing}),
+    (r'/controller/cancelXDCR/(\d|\w)+$', {'DELETE': do_nothing}),
+    (r'/controller/setAutoCompaction$', {'POST': do_nothing}),
+    (r'/controller/startLogsCollection$', {'POST': start_log_collection}),
 
     # index api
-    ('/getIndexMetadata$', {'GET': get_by_path}),
-    ('/api/index', {'GET': get_by_path}),
+    (r'/getIndexMetadata$', {'GET': get_by_path}),
+    (r'/api/index', {'GET': get_by_path}),
 
     # analytics api
-    ('/analytics/link', {'GET': get_by_path, 'POST': do_nothing, 'PUT': do_nothing, 'DELETE': do_nothing})
+    (r'/analytics/link', {'GET': get_by_path, 'POST': do_nothing, 'PUT': do_nothing, 'DELETE': do_nothing})
 ]

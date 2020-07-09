@@ -10,16 +10,16 @@ import struct
 import threading
 from typing import Tuple, Any, List, Dict, Optional
 
-import couchstore # pylint: disable=import-error
+import couchstore  # pylint: disable=import-error
 import couchbaseConstants
 import pump
-from cb_bin_client import decodeCollectionID, encodeCollectionId
+from cb_bin_client import decode_collection_id, encode_collection_id
 from collections import defaultdict
 
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024
-SFD_REV_META = ">QIIBB" # cas, exp, flg, flex_meta, dtype
-SFD_REV_META_PRE_4_6 = ">QIIBBB" # cas, exp, flg, flex_meta, dtype, conf_res
+SFD_REV_META = ">QIIBB"  # cas, exp, flg, flex_meta, dtype
+SFD_REV_META_PRE_4_6 = ">QIIBBB"  # cas, exp, flg, flex_meta, dtype, conf_res
 SFD_REV_SEQ = ">Q"
 SFD_DB_SEQ = ">Q"
 SFD_RE = "^([0-9]+)\\.couch\\.([0-9]+)$"
@@ -186,7 +186,7 @@ class SFDSource(pump.Source):
             return
 
         vbuckets = vbucket_states.get(source_vbucket_state, None)
-        if vbuckets is None: # Empty dict is valid.
+        if vbuckets is None:  # Empty dict is valid.
             self.queue.put((f'error: missing vbuckets in source_bucket: {self.source_bucket["name"]}', None))
             return
 
@@ -202,7 +202,7 @@ class SFDSource(pump.Source):
         def change_callback(doc_info):
             if doc_info:
                 # Handle the new key name spacing for collections and co
-                cid, key = decodeCollectionID(doc_info.id.encode())
+                cid, key = decode_collection_id(doc_info.id.encode())
                 # Only support keys in the _default collection
                 if cid != 0:
                     logging.debug('Skipping as not default collection')
@@ -243,7 +243,7 @@ class SFDSource(pump.Source):
 
         for f in latest_couch_files(f'{d}/{self.source_bucket["name"]}'):
             vbucket_id = int(re.match(SFD_RE, os.path.basename(f)).group(1))
-            if not vbucket_id in vbuckets:
+            if vbucket_id not in vbuckets:
                 continue
 
             try:
@@ -299,7 +299,7 @@ class SFDSink(pump.Sink):
                         continue
 
                     # TODO: add default collection to all keys in CC this should change to have the correct collection
-                    key = encodeCollectionId(0) + key
+                    key = encode_collection_id(0) + key
                     d = couchstore.DocumentInfo(key.decode())
                     flex_meta = 1
                     d.revMeta = struct.pack(SFD_REV_META, cas, exp, flg, flex_meta, dtype)
@@ -314,7 +314,7 @@ class SFDSink(pump.Sink):
 
                     if seqno:
                         d.sequence = int(seqno)
-                    if cmd == couchbaseConstants.CMD_TAP_MUTATION or cmd == couchbaseConstants.CMD_DCP_MUTATION:
+                    if cmd in [couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_DCP_MUTATION]:
                         try:
                             v = val
                             if dtype & 0x01:
@@ -323,8 +323,8 @@ class SFDSink(pump.Sink):
                             # if re.match('^\\s*{', v) and json.loads(v) is not None:
                             #     d.contentType = couchstore.DocumentInfo.IS_JSON
                         except ValueError:
-                            pass # NON_JSON is already the default contentType.
-                    elif cmd == couchbaseConstants.CMD_TAP_DELETE or cmd == couchbaseConstants.CMD_DCP_DELETE:
+                            pass  # NON_JSON is already the default contentType.
+                    elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_DCP_DELETE]:
                         v = None
                     else:
                         self.future_done(future, f'error: SFDSink bad cmd: {cmd!s}')
@@ -364,7 +364,7 @@ class SFDSink(pump.Sink):
                                              f'store_path: {store_path}; exception: {e}')
                     return
 
-            self.future_done(future, 0) # No return to keep looping.
+            self.future_done(future, 0)  # No return to keep looping.
 
     def save_vbucket_state(self, store, vbucket_id,
                            state, checkpoint_id, max_deleted_seqno):
@@ -501,6 +501,7 @@ def open_latest_store(bucket_dir: str, glob_pattern: str, filter_re: str, defaul
     except Exception as e:
         return f'error: could not open couchstore file: {store_paths[0]}; exception: {e}', None, ''
 
+
 def latest_couch_files(bucket_dir: str, glob_pattern: str = '*.couch.*', filter_re: str = SFD_RE) -> List[str]:
     """Given directory of *.couch.VER files, returns files with largest VER suffixes."""
     files = glob.glob(f'{bucket_dir}/{glob_pattern}')
@@ -521,5 +522,5 @@ def data_dir(spec: str) -> Tuple[couchbaseConstants.PUMP_ERROR, str]:
     dir = spec[len(SFD_SCHEME):]
     if dir:
         return 0, os.path.normpath(dir)
-    else:
-        return f'error: missing dir in spec: {spec}', ''
+
+    return f'error: missing dir in spec: {spec}', ''

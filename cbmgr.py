@@ -73,10 +73,10 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
                 check_versions(self.rest)
             if enterprise_check is not None:
                 enterprise, errors = self.rest.is_enterprise()
-                _exitIfErrors(errors)
+                _exit_if_errors(errors)
 
                 if enterprise_check and not enterprise:
-                    _exitIfErrors(['Command only available in enterprise edition'])
+                    _exit_if_errors(['Command only available in enterprise edition'])
 
                 self.enterprise = enterprise
 
@@ -88,9 +88,9 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
 def check_cluster_initialized(rest):
     initialized, errors = rest.is_cluster_initialized()
     if errors:
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
     if not initialized:
-        _exitIfErrors(["Cluster is not initialized, use cluster-init to initialize the cluster"])
+        _exit_if_errors(["Cluster is not initialized, use cluster-init to initialize the cluster"])
 
 
 def check_versions(rest):
@@ -115,10 +115,11 @@ def index_storage_mode_to_param(value, default="plasma"):
     """Converts the index storage mode to what Couchbase understands"""
     if value == "default":
         return default
-    elif value == "memopt":
+
+    if value == "memopt":
         return "memory_optimized"
-    else:
-        return value
+
+    return value
 
 
 def process_services(services, enterprise):
@@ -176,7 +177,7 @@ def _warning(msg):
     print(f'WARNING: {msg}')
 
 
-def _exitIfErrors(errors):
+def _exit_if_errors(errors):
     if errors:
         for error in errors:
             print(f'ERROR: {error}')
@@ -189,20 +190,20 @@ def _exit_on_file_write_failure(fname, to_write):
         wfile.write(to_write)
         wfile.close()
     except IOError as error:
-        _exitIfErrors([error])
+        _exit_if_errors([error])
 
 
-def _exit_on_file_read_failure(fname, toReport=None):
+def _exit_on_file_read_failure(fname, to_report=None):
     try:
         rfile = open(fname, 'r')
         read_bytes = rfile.read()
         rfile.close()
         return read_bytes
     except IOError as error:
-        if toReport is None:
-            _exitIfErrors([f'{error.strerror} `{fname}`'])
+        if to_report is None:
+            _exit_if_errors([f'{error.strerror} `{fname}`'])
         else:
-            _exitIfErrors([toReport])
+            _exit_if_errors([to_report])
 
 
 def apply_default_port(nodes):
@@ -382,12 +383,12 @@ class CBHelpAction(Action):
             try:
                 subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
             except OSError as e:
-                _exitIfErrors(["Unable to open man page using your browser, %s" % e])
+                _exit_if_errors(["Unable to open man page using your browser, %s" % e])
         else:
             try:
                 subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
             except OSError:
-                _exitIfErrors(["Unable to open man page using the 'man' command, ensure it is on your path or"
+                _exit_if_errors(["Unable to open man page using the 'man' command, ensure it is on your path or"
                                + "install a manual reader"])
 
 
@@ -463,7 +464,7 @@ class CouchbaseCLI(Command):
             sys.exit(0)
 
         if not args[1] in ["-h", "--help", "--version"] and args[1].startswith("-"):
-            _exitIfErrors([f"Unknown subcommand: '{args[1]}'. The first argument has to be a subcommand like"
+            _exit_if_errors([f"Unknown subcommand: '{args[1]}'. The first argument has to be a subcommand like"
                            f" 'bucket-list' or 'rebalance', please see couchbase-cli -h for the full list of commands"
                            f" and options"])
 
@@ -625,24 +626,24 @@ class ClusterInit(Subcommand):
         # cluster is initialized and cluster-init cannot be run again.
 
         initialized, errors = self.rest.is_cluster_initialized()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         if initialized:
-            _exitIfErrors(["Cluster is already initialized, use setting-cluster to change settings"])
+            _exit_if_errors(["Cluster is already initialized, use setting-cluster to change settings"])
 
         if not self.enterprise and opts.index_storage_mode == 'memopt':
-            _exitIfErrors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
+            _exit_if_errors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
 
         services, errors = process_services(opts.services, self.enterprise)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         if 'kv' not in services.split(','):
-            _exitIfErrors(["Cannot set up first cluster node without the data service"])
+            _exit_if_errors(["Cannot set up first cluster node without the data service"])
 
         if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota \
                 or opts.eventing_mem_quota or opts.name is not None:
             _, errors = self.rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
                                                     opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         # Set the index storage mode
         if not opts.index_storage_mode and 'index' in services.split(','):
@@ -655,23 +656,23 @@ class ClusterInit(Subcommand):
         if opts.index_storage_mode:
             param = index_storage_mode_to_param(opts.index_storage_mode, default)
             _, errors = self.rest.set_index_settings(param, None, None, None, None, None)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         # Setup services
         _, errors = self.rest.setup_services(services)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         # Enable notifications
         if opts.notifications == "1":
             _, errors = self.rest.enable_notifications(True)
         else:
             _, errors = self.rest.enable_notifications(False)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         # Setup Administrator credentials and Admin Console port
         _, errors = self.rest.set_admin_credentials(opts.username, opts.password,
                                                     opts.port)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Cluster initialized")
 
@@ -701,13 +702,13 @@ class BucketCompact(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         bucket, errors = self.rest.get_bucket(opts.bucket_name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         if bucket["bucketType"] != BUCKET_TYPE_COUCHBASE:
-            _exitIfErrors(["Cannot compact memcached buckets"])
+            _exit_if_errors(["Cannot compact memcached buckets"])
 
         _, errors = self.rest.compact_bucket(opts.bucket_name, opts.data_only, opts.view_only)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Bucket compaction started")
 
@@ -796,34 +797,34 @@ class BucketCreate(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
-            _exitIfErrors(["Maximum TTL can only be configured on enterprise edition"])
+            _exit_if_errors(["Maximum TTL can only be configured on enterprise edition"])
         if opts.compression_mode and not self.enterprise:
-            _exitIfErrors(["Compression mode can only be configured on enterprise edition"])
+            _exit_if_errors(["Compression mode can only be configured on enterprise edition"])
 
         if opts.type == "memcached":
             _deprecated("Memcached buckets are deprecated, please use ephemeral buckets instead")
             if opts.replica_count is not None:
-                _exitIfErrors(["--bucket-replica cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--bucket-replica cannot be specified for a memcached bucket"])
             if opts.conflict_resolution is not None:
-                _exitIfErrors(["--conflict-resolution cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--conflict-resolution cannot be specified for a memcached bucket"])
             if opts.replica_indexes is not None:
-                _exitIfErrors(["--enable-index-replica cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--enable-index-replica cannot be specified for a memcached bucket"])
             if opts.priority is not None:
-                _exitIfErrors(["--bucket-priority cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--bucket-priority cannot be specified for a memcached bucket"])
             if opts.eviction_policy is not None:
-                _exitIfErrors(["--bucket-eviction-policy cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--bucket-eviction-policy cannot be specified for a memcached bucket"])
             if opts.max_ttl is not None:
-                _exitIfErrors(["--max-ttl cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--max-ttl cannot be specified for a memcached bucket"])
             if opts.compression_mode is not None:
-                _exitIfErrors(["--compression-mode cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--compression-mode cannot be specified for a memcached bucket"])
             if opts.durability_min_level is not None:
-                _exitIfErrors(["--durability-min-level cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--durability-min-level cannot be specified for a memcached bucket"])
         elif opts.type == "ephemeral":
             if opts.eviction_policy in ["valueOnly", "fullEviction"]:
-                _exitIfErrors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
+                _exit_if_errors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
         elif opts.type == "couchbase":
             if opts.eviction_policy in ["noEviction", "nruEviction"]:
-                _exitIfErrors(["--bucket-eviction-policy must either be valueOnly or fullEviction"])
+                _exit_if_errors(["--bucket-eviction-policy must either be valueOnly or fullEviction"])
 
         if ((opts.type == "memcached" or opts.type == "ephemeral")
                 and (opts.db_frag_perc is not None
@@ -836,7 +837,7 @@ class BucketCreate(Subcommand):
         storage_type = "couchstore"
         if opts.storage is not None:
             if opts.type != "couchbase":
-                _exitIfErrors(["--storage-backend is only valid for couchbase buckets"])
+                _exit_if_errors(["--storage-backend is only valid for couchbase buckets"])
             if opts.storage == "magma":
                 storage_type = "magma"
 
@@ -861,7 +862,7 @@ class BucketCreate(Subcommand):
                                             opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
                                             opts.from_hour, opts.from_min, opts.to_hour, opts.to_min,
                                             opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Bucket created")
 
     @staticmethod
@@ -886,10 +887,10 @@ class BucketDelete(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         _, errors = self.rest.get_bucket(opts.bucket_name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _, errors = self.rest.delete_bucket(opts.bucket_name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Bucket deleted")
 
@@ -965,37 +966,37 @@ class BucketEdit(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
-            _exitIfErrors(["Maximum TTL can only be configured on enterprise edition"])
+            _exit_if_errors(["Maximum TTL can only be configured on enterprise edition"])
 
         if opts.compression_mode and not self.enterprise:
-            _exitIfErrors(["Compression mode can only be configured on enterprise edition"])
+            _exit_if_errors(["Compression mode can only be configured on enterprise edition"])
 
         bucket, errors = self.rest.get_bucket(opts.bucket_name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         if "bucketType" in bucket and bucket["bucketType"] == "memcached":
             _deprecated("Memcached buckets are deprecated, please use ephemeral buckets instead")
             if opts.memory_quota is not None:
-                _exitIfErrors(["--bucket-ramsize cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--bucket-ramsize cannot be specified for a memcached bucket"])
             if opts.replica_count is not None:
-                _exitIfErrors(["--bucket-replica cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--bucket-replica cannot be specified for a memcached bucket"])
             if opts.priority is not None:
-                _exitIfErrors(["--bucket-priority cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--bucket-priority cannot be specified for a memcached bucket"])
             if opts.eviction_policy is not None:
-                _exitIfErrors(["--bucket-eviction-policy cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--bucket-eviction-policy cannot be specified for a memcached bucket"])
             if opts.max_ttl is not None:
-                _exitIfErrors(["--max-ttl cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--max-ttl cannot be specified for a memcached bucket"])
             if opts.compression_mode is not None:
-                _exitIfErrors(["--compression-mode cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--compression-mode cannot be specified for a memcached bucket"])
             if opts.durability_min_level is not None:
-                _exitIfErrors(["--durability-min-level cannot be specified for a memcached bucket"])
+                _exit_if_errors(["--durability-min-level cannot be specified for a memcached bucket"])
 
         if (("bucketType" in bucket and (bucket["bucketType"] == "memcached" or bucket["bucketType"] == "ephemeral"))
                 and (opts.db_frag_perc is not None or opts.db_frag_size is not None
                      or opts.view_frag_perc is not None or opts.view_frag_size is not None or opts.from_hour is not None
                      or opts.from_min is not None or opts.to_hour is not None or opts.to_min is not None
                      or opts.abort_outside is not None or opts.paralleldb_and_view_compact is not None)):
-            _exitIfErrors([f'compaction settings can not be specified for a {bucket["bucketType"]} bucket'])
+            _exit_if_errors([f'compaction settings can not be specified for a {bucket["bucketType"]} bucket'])
 
         priority = None
         if opts.priority is not None:
@@ -1016,7 +1017,7 @@ class BucketEdit(Subcommand):
                                           opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size, opts.from_hour,
                                           opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
                                           opts.paralleldb_and_view_compact, opts.purge_interval)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Bucket edited")
 
@@ -1044,7 +1045,7 @@ class BucketFlush(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         _, errors = self.rest.get_bucket(opts.bucket_name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         if not opts.force:
             question = "Running this command will totally PURGE database data from disk. " + \
@@ -1054,7 +1055,7 @@ class BucketFlush(Subcommand):
                 return
 
         _, errors = self.rest.flush_bucket(opts.bucket_name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Bucket flushed")
 
@@ -1077,7 +1078,7 @@ class BucketList(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         result, errors = self.rest.list_buckets(extended=True)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         if opts.output == 'json':
             print(json.dumps(result))
@@ -1131,13 +1132,13 @@ class CollectLogsStart(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         if not opts.nodes and not opts.all_nodes:
-            _exitIfErrors(["Must specify either --all-nodes or --nodes"])
+            _exit_if_errors(["Must specify either --all-nodes or --nodes"])
 
         if opts.nodes and opts.all_nodes:
-            _exitIfErrors(["Cannot specify both --all-nodes and --nodes"])
+            _exit_if_errors(["Cannot specify both --all-nodes and --nodes"])
 
         if opts.salt and opts.redaction_level != "partial":
-            _exitIfErrors(["--redaction-level has to be set to 'partial' when --salt is specified"])
+            _exit_if_errors(["--redaction-level has to be set to 'partial' when --salt is specified"])
 
         servers = opts.nodes
         if opts.all_nodes:
@@ -1145,9 +1146,9 @@ class CollectLogsStart(Subcommand):
 
         if opts.upload:
             if not opts.upload_host:
-                _exitIfErrors(["--upload-host is required when --upload is specified"])
+                _exit_if_errors(["--upload-host is required when --upload is specified"])
             if not opts.upload_customer:
-                _exitIfErrors(["--upload-customer is required when --upload is specified"])
+                _exit_if_errors(["--upload-customer is required when --upload is specified"])
         else:
             if opts.upload_host:
                 _warning("--upload-host has no effect with specifying --upload")
@@ -1161,7 +1162,7 @@ class CollectLogsStart(Subcommand):
         _, errors = self.rest.collect_logs_start(servers, opts.redaction_level, opts.salt, opts.output_dir,
                                                  opts.tmp_dir, opts.upload, opts.upload_host, opts.upload_proxy,
                                                  opts.upload_customer, opts.upload_ticket)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Log collection started")
 
     @staticmethod
@@ -1183,7 +1184,7 @@ class CollectLogsStatus(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         tasks, errors = self.rest.get_tasks()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         found = False
         for task in tasks:
@@ -1225,7 +1226,7 @@ class CollectLogsStop(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         _, errors = self.rest.collect_logs_stop()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Log collection stopped")
 
@@ -1259,17 +1260,17 @@ class Failover(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         if opts.force and not opts.hard:
-            _exitIfErrors(["--hard is required with --force flag"])
+            _exit_if_errors(["--hard is required with --force flag"])
         opts.servers_to_failover = apply_default_port(opts.servers_to_failover)
         _, errors = self.rest.failover(opts.servers_to_failover, opts.hard, opts.force)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         if not opts.hard:
             time.sleep(1)
             if opts.wait:
                 bar = TopologyProgressBar(self.rest, 'Gracefully failing over', opts.no_bar)
                 errors = bar.show()
-                _exitIfErrors(errors)
+                _exit_if_errors(errors)
                 _success("Server failed over")
             else:
                 _success("Server failed over started")
@@ -1313,10 +1314,10 @@ class GroupManage(Subcommand):
     def execute(self, opts):
         cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
         if sum(cmd is not None for cmd in cmds) == 0:
-            _exitIfErrors(["Must specify one of the following: --create, "
+            _exit_if_errors(["Must specify one of the following: --create, "
                            + "--delete, --list, --move-servers, or --rename"])
         elif sum(cmd is not None for cmd in cmds) != 1:
-            _exitIfErrors(["Only one of the following may be specified: --create"
+            _exit_if_errors(["Only one of the following may be specified: --create"
                            + ", --delete, --list, --move-servers, or --rename"])
 
         if opts.create:
@@ -1332,21 +1333,21 @@ class GroupManage(Subcommand):
 
     def _create(self, opts):
         if opts.name is None:
-            _exitIfErrors(["--group-name is required with --create flag"])
+            _exit_if_errors(["--group-name is required with --create flag"])
         _, errors = self.rest.create_server_group(opts.name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Server group created")
 
     def _delete(self, opts):
         if opts.name is None:
-            _exitIfErrors(["--group-name is required with --delete flag"])
+            _exit_if_errors(["--group-name is required with --delete flag"])
         _, errors = self.rest.delete_server_group(opts.name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Server group deleted")
 
     def _list(self, opts):
         groups, errors = self.rest.get_server_groups()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         found = False
         for group in groups["groups"]:
@@ -1356,24 +1357,24 @@ class GroupManage(Subcommand):
                 for node in group['nodes']:
                     print(f' server: {node["hostname"]}')
         if not found and opts.name:
-            _exitIfErrors([f'Invalid group name: {opts.name}'])
+            _exit_if_errors([f'Invalid group name: {opts.name}'])
 
     def _move(self, opts):
         if opts.from_group is None:
-            _exitIfErrors(["--from-group is required with --move-servers"])
+            _exit_if_errors(["--from-group is required with --move-servers"])
         if opts.to_group is None:
-            _exitIfErrors(["--to-group is required with --move-servers"])
+            _exit_if_errors(["--to-group is required with --move-servers"])
 
         servers = apply_default_port(opts.move_servers)
         _, errors = self.rest.move_servers_between_groups(servers, opts.from_group, opts.to_group)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Servers moved between groups")
 
     def _rename(self, opts):
         if opts.name is None:
-            _exitIfErrors(["--group-name is required with --rename option"])
+            _exit_if_errors(["--group-name is required with --rename option"])
         _, errors = self.rest.rename_server_group(opts.name, opts.rename)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Server group renamed")
 
     @staticmethod
@@ -1395,7 +1396,7 @@ class HostList(Subcommand):
     @rest_initialiser(version_check=True)
     def execute(self, opts):
         result, errors = self.rest.pools('default')
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         if opts.output == 'json':
             nodes_out = {'nodes': []}
@@ -1438,7 +1439,7 @@ class ResetCipherSuites(LocalSubcommand):
                 _success("Cipher suites have not been reset to default")
 
         _, errors = rest.reset_cipher_suites()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Cipher suites have been reset to the default")
 
     @staticmethod
@@ -1472,7 +1473,7 @@ class MasterPassword(LocalSubcommand):
 
             cookiefile = os.path.join(opts.config_path, "couchbase-server.babysitter.cookie")
             if not os.path.isfile(cookiefile):
-                _exitIfErrors(["The node is down"])
+                _exit_if_errors(["The node is down"])
             cookie = _exit_on_file_read_failure(cookiefile, "Insufficient privileges to send master password - Please"
                                                             " execute this command as a operating system user who has"
                                                             " file system read permission on the Couchbase Server "
@@ -1483,7 +1484,7 @@ class MasterPassword(LocalSubcommand):
 
             self.prompt_for_master_pwd(node, cookie, opts.send_password, opts.config_path)
         else:
-            _exitIfErrors(["No parameters set"])
+            _exit_if_errors(["No parameters set"])
 
     def prompt_for_master_pwd(self, node, cookie, password, cb_cfg_path):
         ns_server_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
@@ -1509,13 +1510,13 @@ class MasterPassword(LocalSubcommand):
             print("Incorrect password.")
             self.prompt_for_master_pwd(node, cookie, '', cb_cfg_path)
         elif rc == 102:
-            _exitIfErrors(["Password was already supplied"])
+            _exit_if_errors(["Password was already supplied"])
         elif rc == 103:
-            _exitIfErrors(["The node is down"])
+            _exit_if_errors(["The node is down"])
         elif rc == 104:
-            _exitIfErrors(["Incorrect password. Node shuts down."])
+            _exit_if_errors(["Incorrect password. Node shuts down."])
         else:
-            _exitIfErrors([f'Unknown error: {rc} {out}, {err}'])
+            _exit_if_errors([f'Unknown error: {rc} {out}, {err}'])
 
     def run_process(self, name, args):
         try:
@@ -1530,7 +1531,7 @@ class MasterPassword(LocalSubcommand):
             rc = p.returncode
             return rc, output, error
         except OSError:
-            _exitIfErrors([f'Could not locate the {name} executable'])
+            _exit_if_errors([f'Could not locate the {name} executable'])
 
     @staticmethod
     def get_man_page_name():
@@ -1572,15 +1573,15 @@ class NodeInit(Subcommand):
         if (opts.data_path is None and opts.index_path is None and opts.analytics_path is None
                 and opts.eventing_path is None and opts.java_home is None and opts.hostname is None
                 and opts.ipv6 is None and opts.ipv4 is None):
-            _exitIfErrors(["No node initialization parameters specified"])
+            _exit_if_errors(["No node initialization parameters specified"])
 
         if opts.data_path or opts.index_path or opts.analytics_path or opts.eventing_path or opts.java_home is not None:
             _, errors = self.rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path,
                                                  opts.eventing_path, opts.java_home)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         if opts.ipv4 and opts.ipv6:
-            _exitIfErrors(["Use either --ipv4 or --ipv6"])
+            _exit_if_errors(["Use either --ipv4 or --ipv6"])
 
         if opts.ipv6:
             self._set_ipv("ipv6", "ipv4")
@@ -1589,17 +1590,17 @@ class NodeInit(Subcommand):
 
         if opts.hostname:
             _, errors = self.rest.set_hostname(opts.hostname)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         _success("Node initialized")
 
     def _set_ipv(self, ip_enable, ip_disable):
         _, err = self.rest.enable_external_listener(ipfamily=ip_enable)
-        _exitIfErrors(err)
+        _exit_if_errors(err)
         _, err = self.rest.setup_net_config(ipfamily=ip_enable)
-        _exitIfErrors(err)
+        _exit_if_errors(err)
         _, err = self.rest.disable_external_listener(ipfamily=ip_disable)
-        _exitIfErrors(err)
+        _exit_if_errors(err)
 
     @staticmethod
     def get_man_page_name():
@@ -1631,14 +1632,14 @@ class Rebalance(Subcommand):
             eject_nodes = apply_default_port(opts.server_remove)
 
         _, errors = self.rest.rebalance(eject_nodes)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         time.sleep(1)
 
         if opts.wait:
             bar = TopologyProgressBar(self.rest, 'Rebalancing', opts.no_bar)
             errors = bar.show()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("Rebalance complete")
         else:
             _success("Rebalance started")
@@ -1662,7 +1663,7 @@ class RebalanceStatus(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         status, errors = self.rest.rebalance_status()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         print(json.dumps(status, indent=2))
 
@@ -1685,7 +1686,7 @@ class RebalanceStop(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         _, errors = self.rest.stop_rebalance()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Rebalance stopped")
 
@@ -1716,7 +1717,7 @@ class Recovery(Subcommand):
         servers = apply_default_port(opts.servers)
         for server in servers:
             _, errors = self.rest.recovery(server, opts.recovery_type)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         _success("Servers recovered")
 
@@ -1753,17 +1754,17 @@ class ResetAdminPassword(LocalSubcommand):
         check_versions(rest)
 
         if opts.new_password is not None and opts.regenerate:
-            _exitIfErrors(["Cannot specify both --new-password and --regenerate at the same time"])
+            _exit_if_errors(["Cannot specify both --new-password and --regenerate at the same time"])
         elif opts.new_password is not None:
             _, errors = rest.set_admin_password(opts.new_password)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("Administrator password changed")
         elif opts.regenerate:
             result, errors = rest.regenerate_admin_password()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             print(result["password"])
         else:
-            _exitIfErrors(["No parameters specified"])
+            _exit_if_errors(["No parameters specified"])
 
     @staticmethod
     def get_man_page_name():
@@ -1797,13 +1798,13 @@ class ServerAdd(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if not self.enterprise and opts.index_storage_mode == 'memopt':
-            _exitIfErrors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
+            _exit_if_errors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
 
         opts.services, errors = process_services(opts.services, self.enterprise)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         settings, errors = self.rest.index_settings()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         if opts.index_storage_mode is None and settings['storageMode'] == "" and "index" in opts.services:
             opts.index_storage_mode = "default"
@@ -1816,13 +1817,13 @@ class ServerAdd(Subcommand):
         if opts.index_storage_mode:
             param = index_storage_mode_to_param(opts.index_storage_mode, default)
             _, errors = self.rest.set_index_settings(param, None, None, None, None, None)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         servers = opts.servers.split(',')
         for server in servers:
             _, errors = self.rest.add_server(server, opts.group_name, opts.server_username, opts.server_password,
                                              opts.services)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         _success("Server added")
 
@@ -1851,14 +1852,14 @@ class ServerEshell(Subcommand):
     def execute(self, opts):
         # Cluster does not need to be initialized for this command
         result, errors = self.rest.node_info()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         node = result['otpNode']
         cookie = result['otpCookie']
 
         if opts.vm != 'ns_server':
             cookie, errors = self.rest.get_babysitter_cookie()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
             [short, _] = node.split('@')
 
@@ -1867,7 +1868,7 @@ class ServerEshell(Subcommand):
             elif opts.vm == 'couchdb':
                 node = f'couchdb_{short}@127.0.0.1'
             else:
-                _exitIfErrors([f'Unknown vm type `{opts.vm}`'])
+                _exit_if_errors([f'Unknown vm type `{opts.vm}`'])
 
         rand_chars = ''.join(random.choice(string.ascii_letters) for i in range(20))
         name = f'ctl-{rand_chars}@127.0.0.1'
@@ -1891,7 +1892,7 @@ class ServerEshell(Subcommand):
             subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist',
                              proto_dist] + inetrc_opt)
         except OSError:
-            _exitIfErrors(["Unable to find the erl executable"])
+            _exit_if_errors(["Unable to find the erl executable"])
 
     @staticmethod
     def get_man_page_name():
@@ -1918,7 +1919,7 @@ class ServerInfo(Subcommand):
     def execute(self, opts):
         # Cluster does not need to be initialized for this command
         result, errors = self.rest.node_info()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         print(json.dumps(result, sort_keys=True, indent=2))
 
@@ -1941,7 +1942,7 @@ class ServerList(Subcommand):
     @rest_initialiser(version_check=True)
     def execute(self, opts):
         result, errors = self.rest.pools('default')
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         for node in result['nodes']:
             if node.get('otpNode') is None:
@@ -1982,7 +1983,7 @@ class ServerReadd(Subcommand):
         servers = apply_default_port(opts.servers)
         for server in servers:
             _, errors = self.rest.readd_server(server)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         _success("Servers recovered")
 
@@ -2064,13 +2065,13 @@ class SettingAlert(Subcommand):
     def execute(self, opts):
         if opts.enabled == "1":
             if opts.email_recipients is None:
-                _exitIfErrors(["--email-recipient must be set when email alerts are enabled"])
+                _exit_if_errors(["--email-recipient must be set when email alerts are enabled"])
             if opts.email_sender is None:
-                _exitIfErrors(["--email-sender must be set when email alerts are enabled"])
+                _exit_if_errors(["--email-sender must be set when email alerts are enabled"])
             if opts.email_host is None:
-                _exitIfErrors(["--email-host must be set when email alerts are enabled"])
+                _exit_if_errors(["--email-host must be set when email alerts are enabled"])
             if opts.email_port is None:
-                _exitIfErrors(["--email-port must be set when email alerts are enabled"])
+                _exit_if_errors(["--email-port must be set when email alerts are enabled"])
 
         alerts = list()
         if opts.alert_af_node:
@@ -2113,7 +2114,7 @@ class SettingAlert(Subcommand):
         _, errors = self.rest.set_alert_settings(enabled, opts.email_recipients, opts.email_sender, opts.email_username,
                                                  opts.email_password, opts.email_host, opts.email_port, email_encrypt,
                                                  ",".join(alerts))
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Email alert settings modified")
 
@@ -2157,11 +2158,11 @@ class SettingAudit(Subcommand):
     def execute(self, opts):
         flags = sum([opts.list_events, opts.get_settings, opts.set_settings])
         if flags != 1:
-            _exitIfErrors(["One of the following is required: --list-filterable-events, --get-settings or --set"])
+            _exit_if_errors(["One of the following is required: --list-filterable-events, --get-settings or --set"])
 
         if opts.list_events:
             descriptors, errors = self.rest.get_id_descriptors()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             if opts.output == 'json':
                 print(json.dumps(descriptors, indent=4))
                 return
@@ -2170,19 +2171,19 @@ class SettingAudit(Subcommand):
             return
         elif opts.get_settings:
             audit_settings, errors = self.rest.get_audit_settings()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             if opts.output == 'json':
                 print(json.dumps(audit_settings, indent=4))
                 return
 
             descriptors, errors = self.rest.get_id_descriptors()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             self.format_audit_settings(audit_settings, descriptors)
             return
         elif opts.set_settings:
             if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size
                     or opts.disable_events is not None or opts.disabled_users is not None):
-                _exitIfErrors(["At least one of [--audit-enabled, --audit-log-path, --audit-log-rotate-interval,"
+                _exit_if_errors(["At least one of [--audit-enabled, --audit-log-path, --audit-log-rotate-interval,"
                                " --audit-log-rotate-size, --disabled-users, --disable-events] is required with --set"])
 
             if opts.enabled == "1":
@@ -2192,7 +2193,7 @@ class SettingAudit(Subcommand):
 
             _, errors = self.rest.set_audit_settings(opts.enabled, opts.log_path, opts.rotate_interval,
                                                      opts.rotate_size, opts.disable_events, opts.disabled_users)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("Audit settings modified")
 
     @staticmethod
@@ -2301,34 +2302,34 @@ class SettingAutofailover(Subcommand):
 
         if not self.enterprise:
             if opts.enableFailoverOfServerGroups:
-                _exitIfErrors(["--enable-failover-of-server-groups can only be configured on enterprise edition"])
+                _exit_if_errors(["--enable-failover-of-server-groups can only be configured on enterprise edition"])
             if opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod:
-                _exitIfErrors(["Auto failover on Data Service disk issues can only be configured on enterprise"
+                _exit_if_errors(["Auto failover on Data Service disk issues can only be configured on enterprise"
                                + "edition"])
             if opts.maxFailovers:
-                _exitIfErrors(["--max-count can only be configured on enterprise edition"])
+                _exit_if_errors(["--max-count can only be configured on enterprise edition"])
             if opts.canAbortRebalance:
-                _exitIfErrors(["--can-abort-rebalance can only be configured on enterprise edition"])
+                _exit_if_errors(["--can-abort-rebalance can only be configured on enterprise edition"])
 
         if not any([opts.enabled, opts.timeout, opts.enableFailoverOnDataDiskIssues, opts.failoverOnDataDiskPeriod,
                     opts.enableFailoverOfServerGroups, opts.maxFailovers]):
-            _exitIfErrors(["No settings specified to be changed"])
+            _exit_if_errors(["No settings specified to be changed"])
 
         if ((opts.enableFailoverOnDataDiskIssues is None or opts.enableFailoverOnDataDiskIssues == "false")
                 and opts.failoverOnDataDiskPeriod):
-            _exitIfErrors(["--enable-failover-on-data-disk-issues must be set to 1 when auto-failover Data"
+            _exit_if_errors(["--enable-failover-on-data-disk-issues must be set to 1 when auto-failover Data"
                            " Service disk period has been set"])
 
         if opts.enableFailoverOnDataDiskIssues and opts.failoverOnDataDiskPeriod is None:
-            _exitIfErrors(["--failover-data-disk-period must be set when auto-failover on Data Service disk"
+            _exit_if_errors(["--failover-data-disk-period must be set when auto-failover on Data Service disk"
                            " is enabled"])
 
         if opts.enabled == "false" or opts.enabled is None:
             if opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod:
-                _exitIfErrors(["--enable-auto-failover must be set to 1 when auto-failover on Data Service disk issues"
+                _exit_if_errors(["--enable-auto-failover must be set to 1 when auto-failover on Data Service disk issues"
                                " settings are being configured"])
             if opts.enableFailoverOfServerGroups:
-                _exitIfErrors(["--enable-auto-failover must be set to 1 when enabling auto-failover of Server Groups"])
+                _exit_if_errors(["--enable-auto-failover must be set to 1 when enabling auto-failover of Server Groups"])
             if opts.timeout:
                 _warning("Timeout specified will not take affect because auto-failover is being disabled")
 
@@ -2340,7 +2341,7 @@ class SettingAutofailover(Subcommand):
         _, errors = self.rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.enableFailoverOfServerGroups,
                                                         opts.maxFailovers, opts.enableFailoverOnDataDiskIssues,
                                                         opts.failoverOnDataDiskPeriod, opts.canAbortRebalance)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Auto-failover settings modified")
 
@@ -2373,16 +2374,16 @@ class SettingAutoreprovision(Subcommand):
             opts.enabled = "false"
 
         if opts.enabled == "true" and opts.max_nodes is None:
-            _exitIfErrors(["--max-nodes must be specified if auto-reprovision is enabled"])
+            _exit_if_errors(["--max-nodes must be specified if auto-reprovision is enabled"])
 
         if not (opts.enabled or opts.max_nodes):
-            _exitIfErrors(["No settings specified to be changed"])
+            _exit_if_errors(["No settings specified to be changed"])
 
         if (opts.enabled is None or opts.enabled == "false") and opts.max_nodes:
             _warning("--max-servers will not take affect because auto-reprovision is being disabled")
 
         _, errors = self.rest.set_autoreprovision_settings(opts.enabled, opts.max_nodes)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Auto-reprovision settings modified")
 
@@ -2422,11 +2423,11 @@ class SettingCluster(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota \
-                or opts.eventing_mem_quota or opts.name:
+        if (opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota
+                or opts.eventing_mem_quota or opts.name):
             _, errors = self.rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
                                                     opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         if opts.new_username or opts.new_password or opts.port:
             username = opts.username
@@ -2438,7 +2439,7 @@ class SettingCluster(Subcommand):
                 password = opts.new_password
 
             _, errors = self.rest.set_admin_credentials(username, password, opts.port)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         _success("Cluster settings modified")
 
@@ -2520,19 +2521,19 @@ class SettingCompaction(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         if opts.db_perc is not None and (opts.db_perc < 2 or opts.db_perc > 100):
-            _exitIfErrors(["--compaction-db-percentage must be between 2 and 100"])
+            _exit_if_errors(["--compaction-db-percentage must be between 2 and 100"])
 
         if opts.view_perc is not None and (opts.view_perc < 2 or opts.view_perc > 100):
-            _exitIfErrors(["--compaction-view-percentage must be between 2 and 100"])
+            _exit_if_errors(["--compaction-view-percentage must be between 2 and 100"])
 
         if opts.db_size is not None:
             if int(opts.db_size) < 1:
-                _exitIfErrors(["--compaction-db-size must be between greater than 1 or infinity"])
+                _exit_if_errors(["--compaction-db-size must be between greater than 1 or infinity"])
             opts.db_size = int(opts.db_size) * 1024**2
 
         if opts.view_size is not None:
             if int(opts.view_size) < 1:
-                _exitIfErrors(["--compaction-view-size must be between greater than 1 or infinity"])
+                _exit_if_errors(["--compaction-view-size must be between greater than 1 or infinity"])
             opts.view_size = int(opts.view_size) * 1024**2
 
         if opts.from_period and not (opts.to_period and opts.enable_abort):
@@ -2541,7 +2542,7 @@ class SettingCompaction(Subcommand):
                 errors.append("--compaction-period-to is required when using --compaction-period-from")
             if opts.enable_abort is None:
                 errors.append("--enable-compaction-abort is required when using --compaction-period-from")
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         if opts.to_period and not (opts.from_period and opts.enable_abort):
             errors = []
@@ -2549,7 +2550,7 @@ class SettingCompaction(Subcommand):
                 errors.append("--compaction-period-from is required when using --compaction-period-to")
             if opts.enable_abort is None:
                 errors.append("--enable-compaction-abort is required when using --compaction-period-to")
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         if opts.enable_abort and not (opts.from_period and opts.to_period):
             errors = []
@@ -2557,7 +2558,7 @@ class SettingCompaction(Subcommand):
                 errors.append("--compaction-period-from is required when using --enable-compaction-abort")
             if opts.to_period is None:
                 errors.append("--compaction-period-to is required when using --enable-compaction-abort")
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
 
         from_hour, from_min = self._handle_timevalue(opts.from_period,
                                                      "--compaction-period-from")
@@ -2574,7 +2575,7 @@ class SettingCompaction(Subcommand):
             opts.enable_parallel = "false"
 
         if opts.purge_interval is not None and (opts.purge_interval < 0.04 or opts.purge_interval > 60.0):
-            _exitIfErrors(["--metadata-purge-interval must be between 0.04 and 60.0"])
+            _exit_if_errors(["--metadata-purge-interval must be between 0.04 and 60.0"])
 
         g_from_hour = None
         g_from_min = None
@@ -2583,13 +2584,13 @@ class SettingCompaction(Subcommand):
         if opts.gsi_mode == "append":
             opts.gsi_mode = "full"
             if opts.gsi_perc is None:
-                _exitIfErrors(['--compaction-gsi-percentage must be specified when --gsi-compaction-mode is set '
+                _exit_if_errors(['--compaction-gsi-percentage must be specified when --gsi-compaction-mode is set '
                                'to append'])
         elif opts.gsi_mode == "circular":
             if opts.gsi_from_period is not None and opts.gsi_to_period is None:
-                _exitIfErrors(["--compaction-gsi-period-to is required with --compaction-gsi-period-from"])
+                _exit_if_errors(["--compaction-gsi-period-to is required with --compaction-gsi-period-from"])
             if opts.gsi_to_period is not None and opts.gsi_from_period is None:
-                _exitIfErrors(["--compaction-gsi-period-from is required with --compaction-gsi-period-to"])
+                _exit_if_errors(["--compaction-gsi-period-from is required with --compaction-gsi-period-to"])
 
             g_from_hour, g_from_min = self._handle_timevalue(opts.gsi_from_period, "--compaction-gsi-period-from")
             g_to_hour, g_to_min = self._handle_timevalue(opts.gsi_to_period, "--compaction-gsi-period-to")
@@ -2604,7 +2605,7 @@ class SettingCompaction(Subcommand):
                                                       opts.enable_parallel, opts.purge_interval, opts.gsi_mode,
                                                       opts.gsi_perc, opts.gsi_interval, g_from_hour, g_from_min,
                                                       g_to_hour, g_to_min, opts.enable_gsi_abort)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Compaction settings modified")
 
@@ -2613,21 +2614,21 @@ class SettingCompaction(Subcommand):
         minute = None
         if opt_value:
             if opt_value.find(':') == -1:
-                _exitIfErrors([f'Invalid value for {opt_name}, must be in form XX:XX'])
+                _exit_if_errors([f'Invalid value for {opt_name}, must be in form XX:XX'])
             hour, minute = opt_value.split(':', 1)
             try:
                 hour = int(hour)
             except ValueError:
-                _exitIfErrors([f'Invalid hour value for {opt_name}, must be an integer'])
+                _exit_if_errors([f'Invalid hour value for {opt_name}, must be an integer'])
             if hour not in range(24):
-                _exitIfErrors([f'Invalid hour value for {opt_name}, must be 0-23'])
+                _exit_if_errors([f'Invalid hour value for {opt_name}, must be 0-23'])
 
             try:
                 minute = int(minute)
             except ValueError:
-                _exitIfErrors([f'Invalid minute value for {opt_name}, must be an integer'])
+                _exit_if_errors([f'Invalid minute value for {opt_name}, must be an integer'])
             if minute not in range(60):
-                _exitIfErrors([f'Invalid minute value for {opt_name}, must be 0-59'])
+                _exit_if_errors([f'Invalid minute value for {opt_name}, must be 0-59'])
         return hour, minute
 
     @staticmethod
@@ -2666,10 +2667,10 @@ class SettingIndex(Subcommand):
         if (opts.max_rollback is None and opts.stable_snap is None
                 and opts.mem_snap is None and opts.storage_mode is None
                 and opts.threads is None and opts.log_level is None):
-            _exitIfErrors(["No settings specified to be changed"])
+            _exit_if_errors(["No settings specified to be changed"])
 
         settings, errors = self.rest.index_settings()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
         default = "plasma"
@@ -2679,7 +2680,7 @@ class SettingIndex(Subcommand):
         opts.storage_mode = index_storage_mode_to_param(opts.storage_mode, default)
         _, errors = self.rest.set_index_settings(opts.storage_mode, opts.max_rollback, opts.stable_snap, opts.mem_snap,
                                                  opts.threads, opts.log_level)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Indexer settings modified")
 
@@ -2738,7 +2739,7 @@ class SettingSaslauthd(Subcommand):
                 _warning("--roadmins option ignored since saslauthd is being disabled")
             _, errors = self.rest.sasl_settings('false', "", "")
 
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("saslauthd settings modified")
 
@@ -2805,7 +2806,7 @@ class SettingLdap(Subcommand):
     def execute(self, opts):
         if opts.get:
             data, rv = self.rest.get_ldap()
-            _exitIfErrors(rv)
+            _exit_if_errors(rv)
             print(json.dumps(data))
         else:
             self._set(opts)
@@ -2827,7 +2828,7 @@ class SettingLdap(Subcommand):
             opts.server_cert_val = 'false'
 
         if opts.server_cert_val == 'false' and opts.cacert_ldap is not None:
-            _exitIfErrors(['--server-cert-validation 0 and --ldap-cert can not be used together'])
+            _exit_if_errors(['--server-cert-validation 0 and --ldap-cert can not be used together'])
 
         if opts.cacert_ldap is not None:
             opts.cacert_ldap = _exit_on_file_read_failure(opts.cacert_ldap)
@@ -2845,7 +2846,7 @@ class SettingLdap(Subcommand):
             opts.nested_groups = 'false'
 
         if opts.user_dn_query is not None and opts.user_dn_template is not None:
-            _exitIfErrors(['--user-dn-query and --user-dn-template can not be used together'])
+            _exit_if_errors(['--user-dn-query and --user-dn-template can not be used together'])
 
         mapping = None
         if opts.user_dn_query is not None:
@@ -2855,7 +2856,7 @@ class SettingLdap(Subcommand):
             mapping = f'{{"template": "{opts.user_dn_template}"}}'
 
         if (opts.client_cert and not opts.client_key) or (not opts.client_cert and opts.client_key):
-            _exitIfErrors(['--client-cert and --client--key have to be used together'])
+            _exit_if_errors(['--client-cert and --client--key have to be used together'])
 
         if opts.client_cert is not None:
             opts.client_cert = _exit_on_file_read_failure(opts.client_cert)
@@ -2870,7 +2871,7 @@ class SettingLdap(Subcommand):
                                             opts.nested_groups, opts.nested_max_depth, opts.server_cert_val,
                                             opts.cacert_ldap)
 
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("LDAP settings modified")
 
     @staticmethod
@@ -2901,7 +2902,7 @@ class SettingNotification(Subcommand):
             enabled = False
 
         _, errors = self.rest.enable_notifications(enabled)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Software notification settings updated")
 
@@ -2940,29 +2941,29 @@ class SettingPasswordPolicy(Subcommand):
     def execute(self, opts):
         actions = sum([opts.get, opts.set])
         if actions == 0:
-            _exitIfErrors(["Must specify either --get or --set"])
+            _exit_if_errors(["Must specify either --get or --set"])
         elif actions > 1:
-            _exitIfErrors(["The --get and --set flags may not be specified at the same time"])
+            _exit_if_errors(["The --get and --set flags may not be specified at the same time"])
         elif opts.get:
             if opts.min_length is not None or any([opts.upper_case, opts.lower_case, opts.digit, opts.special_char]):
-                _exitIfErrors(["The --get flag must be used without any other arguments"])
+                _exit_if_errors(["The --get flag must be used without any other arguments"])
             self._get()
         elif opts.set:
             if opts.min_length is None:
-                _exitIfErrors(["--min-length is required when using --set flag"])
+                _exit_if_errors(["--min-length is required when using --set flag"])
             if opts.min_length <= 0:
-                _exitIfErrors(["--min-length has to be greater than 0"])
+                _exit_if_errors(["--min-length has to be greater than 0"])
             self._set(opts)
 
     def _get(self):
         policy, errors = self.rest.get_password_policy()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         print(json.dumps(policy, sort_keys=True, indent=2))
 
     def _set(self, opts):
         _, errors = self.rest.set_password_policy(opts.min_length, opts.upper_case, opts.lower_case, opts.digit,
                                                   opts.special_char)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Password policy updated")
 
     @staticmethod
@@ -3002,11 +3003,11 @@ class SettingSecurity(Subcommand):
     @rest_initialiser(version_check=True)
     def execute(self, opts):
         if sum([opts.get, opts.set]) != 1:
-            _exitIfErrors(['Provided either --set or --get.'])
+            _exit_if_errors(['Provided either --set or --get.'])
 
         if opts.get:
             val, err = self.rest.get_security_settings()
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             print(json.dumps(val))
         elif opts.set:
             self._set(self.rest, opts.disable_http_ui, opts.cluster_encryption_level, opts.tls_min_version,
@@ -3017,7 +3018,7 @@ class SettingSecurity(Subcommand):
              disable_www_authenticate):
         if not any([True if x is not None else False for x in [disable_http_ui, encryption_level, tls_min_version,
                                                                honor_order, cipher_suites, disable_www_authenticate]]):
-            _exitIfErrors(['please provide at least one of --cluster-encryption-level, --disable-http-ui,'
+            _exit_if_errors(['please provide at least one of --cluster-encryption-level, --disable-http-ui,'
                            ' --tls-min-version, --tls-honor-cipher-order or --cipher-suites together with --set'])
 
         if disable_http_ui == '1':
@@ -3042,7 +3043,7 @@ class SettingSecurity(Subcommand):
 
         _, errors = rest.set_security_settings(disable_http_ui, encryption_level, tls_min_version,
                                                honor_order, cipher_suites, disable_www_authenticate)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Security settings updated")
 
     @staticmethod
@@ -3095,7 +3096,7 @@ class SettingXdcr(Subcommand):
     @rest_initialiser(version_check=True, cluster_init_check=True, enterprise_check=False)
     def execute(self, opts):
         if not self.enterprise and opts.compression:
-            _exitIfErrors(["--enable-compression can only be configured on enterprise edition"])
+            _exit_if_errors(["--enable-compression can only be configured on enterprise edition"])
 
         if opts.compression == "0":
             opts.compression = "None"
@@ -3106,7 +3107,7 @@ class SettingXdcr(Subcommand):
                                                    opts.fail_interval, opts.rep_thresh, opts.src_nozzles,
                                                    opts.dst_nozzles, opts.usage_limit, opts.compression, opts.log_level,
                                                    opts.stats_interval, opts.max_proc)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Global XDCR settings updated")
 
@@ -3138,14 +3139,14 @@ class SettingMasterPassword(Subcommand):
     def execute(self, opts):
         if opts.new_password is not None:
             _, errors = self.rest.set_master_pwd(opts.new_password)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("New master password set")
         elif opts.rotate_data_key:
             _, errors = self.rest.rotate_master_pwd()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("Data key rotated")
         else:
-            _exitIfErrors(["No parameters set"])
+            _exit_if_errors(["No parameters set"])
 
     @staticmethod
     def get_man_page_name():
@@ -3186,14 +3187,14 @@ class SslManage(Subcommand):
             try:
                 open(opts.regenerate, 'a').close()
             except IOError:
-                _exitIfErrors([f'Unable to create file at `{opts.regenerate}`'])
+                _exit_if_errors([f'Unable to create file at `{opts.regenerate}`'])
             certificate, errors = self.rest.regenerate_cluster_certificate()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _exit_on_file_write_failure(opts.regenerate, certificate)
             _success(f'Certificate regenerate and copied to `{opts.regenerate}`')
         elif opts.cluster_cert:
             certificate, errors = self.rest.retrieve_cluster_certificate(opts.extended)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             if isinstance(certificate, dict):
                 print(json.dumps(certificate, sort_keys=True, indent=2))
             else:
@@ -3201,32 +3202,32 @@ class SslManage(Subcommand):
         elif opts.node_cert:
             host = urllib.parse.urlparse(opts.cluster).netloc
             certificate, errors = self.rest.retrieve_node_certificate(host)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             print(json.dumps(certificate, sort_keys=True, indent=2))
         elif opts.upload_cert:
             certificate = _exit_on_file_read_failure(opts.upload_cert)
             _, errors = self.rest.upload_cluster_certificate(certificate)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success(f'Uploaded cluster certificate to {opts.cluster}')
         elif opts.set_cert:
             _, errors = self.rest.set_node_certificate()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("Node certificate set")
         elif opts.client_auth_path:
             data = _exit_on_file_read_failure(opts.client_auth_path)
             try:
                 config = json.loads(data)
             except ValueError as e:
-                _exitIfErrors([f'Client auth config does not contain valid json: {e}'])
+                _exit_if_errors([f'Client auth config does not contain valid json: {e}'])
             _, errors = self.rest.set_client_cert_auth(config)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("SSL client auth updated")
         elif opts.show_client_auth:
             result, errors = self.rest.retrieve_client_cert_auth()
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             print(json.dumps(result, sort_keys=True, indent=2))
         else:
-            _exitIfErrors(["No options specified"])
+            _exit_if_errors(["No options specified"])
 
     @staticmethod
     def get_man_page_name():
@@ -3284,10 +3285,10 @@ class UserManage(Subcommand):
         num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get, opts.get_group,
                              opts.list_group, opts.delete_group, opts.set_group])
         if num_selectors == 0:
-            _exitIfErrors(['Must specify --delete, --list, --my_roles, --set, --get, --get-group, --set-group, '
+            _exit_if_errors(['Must specify --delete, --list, --my_roles, --set, --get, --get-group, --set-group, '
                            '--list-groups or --delete-group'])
         elif num_selectors != 1:
-            _exitIfErrors(['Only one of the following can be specified:--delete, --list, --my_roles, --set, --get,'
+            _exit_if_errors(['Only one of the following can be specified:--delete, --list, --my_roles, --set, --get,'
                            ' --get-group, --set-group, --list-groups or --delete-group'])
 
         if opts.delete:
@@ -3311,36 +3312,36 @@ class UserManage(Subcommand):
 
     def _delete_group(self, opts):
         if opts.group is None:
-            _exitIfErrors(['--group-name is required with the --delete-group option'])
+            _exit_if_errors(['--group-name is required with the --delete-group option'])
 
         _, errors = self.rest.delete_user_group(opts.group)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success(f"Group '{opts.group}' was deleted")
 
     def _get_group(self, opts):
         if opts.group is None:
-            _exitIfErrors(['--group-name is required with the --get-group option'])
+            _exit_if_errors(['--group-name is required with the --get-group option'])
 
         group, errors = self.rest.get_user_group(opts.group)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         print(json.dumps(group, indent=2))
 
     def _set_group(self, opts):
         if opts.group is None:
-            _exitIfErrors(['--group-name is required with --set-group'])
+            _exit_if_errors(['--group-name is required with --set-group'])
 
         _, errors = self.rest.set_user_group(opts.group, opts.roles, opts.description, opts.ldap_ref)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success(f"Group '{opts.group}' set")
 
     def _list_groups(self):
         groups, errors = self.rest.list_user_groups()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         print(json.dumps(groups, indent=2))
 
     def _delete(self, opts):
         if opts.rbac_user is None:
-            _exitIfErrors(["--rbac-username is required with the --delete option"])
+            _exit_if_errors(["--rbac-username is required with the --delete option"])
         if opts.rbac_pass is not None:
             _warning("--rbac-password is not used with the --delete option")
         if opts.rbac_name is not None:
@@ -3348,10 +3349,10 @@ class UserManage(Subcommand):
         if opts.roles is not None:
             _warning("--roles is not used with the --delete option")
         if opts.auth_domain is None:
-            _exitIfErrors(["--auth-domain is required with the --delete option"])
+            _exit_if_errors(["--auth-domain is required with the --delete option"])
 
         _, errors = self.rest.delete_rbac_user(opts.rbac_user, opts.auth_domain)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success(f"User '{opts.rbac_user}' was removed")
 
     def _list(self, opts):
@@ -3367,12 +3368,12 @@ class UserManage(Subcommand):
             _warning("--auth-domain is not used with the --list option")
 
         result, errors = self.rest.list_rbac_users()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         print(json.dumps(result, indent=2))
 
     def _get(self, opts):
         if opts.rbac_user is None:
-            _exitIfErrors(["--rbac-username is required with the --get option"])
+            _exit_if_errors(["--rbac-username is required with the --get option"])
         if opts.rbac_pass is not None:
             _warning("--rbac-password is not used with the --get option")
         if opts.rbac_name is not None:
@@ -3383,13 +3384,13 @@ class UserManage(Subcommand):
             _warning("--auth-domain is not used with the --get option")
 
         result, errors = self.rest.list_rbac_users()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         user = [u for u in result if u['id'] == opts.rbac_user]
 
         if len(user) != 0:
             print(json.dumps(user, indent=2))
         else:
-            _exitIfErrors([f'no user {opts.rbac_user}'])
+            _exit_if_errors([f'no user {opts.rbac_user}'])
 
     def _my_roles(self, opts):
         if opts.rbac_user is not None:
@@ -3404,21 +3405,21 @@ class UserManage(Subcommand):
             _warning("--auth-domain is not used with the --my-roles option")
 
         result, errors = self.rest.my_roles()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         print(json.dumps(result, indent=2))
 
     def _set(self, opts):
         if opts.rbac_user is None:
-            _exitIfErrors(["--rbac-username is required with the --set option"])
+            _exit_if_errors(["--rbac-username is required with the --set option"])
         if opts.rbac_pass is not None and opts.auth_domain == "external":
             _warning("--rbac-password cannot be used with the external auth domain")
             opts.rbac_pass = None
         if opts.auth_domain is None:
-            _exitIfErrors(["--auth-domain is required with the --set option"])
+            _exit_if_errors(["--auth-domain is required with the --set option"])
 
         _, errors = self.rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.rbac_name, opts.roles,
                                             opts.auth_domain, opts.groups)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         if opts.roles is not None and "query_external_access" in opts.roles:
             _warning('Granting the query_external_access role permits execution of the N1QL '
@@ -3512,7 +3513,7 @@ class XdcrReplicate(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if not self.enterprise and opts.compression:
-            _exitIfErrors(["--enable-compression can only be configured on enterprise edition"])
+            _exit_if_errors(["--enable-compression can only be configured on enterprise edition"])
 
         if opts.compression == "0":
             opts.compression = "None"
@@ -3522,9 +3523,9 @@ class XdcrReplicate(Subcommand):
         actions = sum([opts.create, opts.delete, opts.pause, opts.list, opts.resume,
                        opts.settings])
         if actions == 0:
-            _exitIfErrors(['Must specify one of --create, --delete, --pause, --list, --resume, --settings'])
+            _exit_if_errors(['Must specify one of --create, --delete, --pause, --list, --resume, --settings'])
         elif actions > 1:
-            _exitIfErrors(['The --create, --delete, --pause, --list, --resume, --settings flags may not be '
+            _exit_if_errors(['The --create, --delete, --pause, --list, --resume, --settings flags may not be '
                            'specified at the same time'])
         elif opts.create:
             self._create(opts)
@@ -3541,45 +3542,45 @@ class XdcrReplicate(Subcommand):
         _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.filter,
                                                       opts.rep_mode, opts.compression, opts.reset_expiry,
                                                       opts.filter_del, opts.filter_exp)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("XDCR replication created")
 
     def _delete(self, opts):
         if opts.replicator_id is None:
-            _exitIfErrors(["--xdcr-replicator is needed to delete a replication"])
+            _exit_if_errors(["--xdcr-replicator is needed to delete a replication"])
 
         _, errors = self.rest.delete_xdcr_replicator(opts.replicator_id)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("XDCR replication deleted")
 
     def _pause_resume(self, opts):
         if opts.replicator_id is None:
-            _exitIfErrors(["--xdcr-replicator is needed to pause or resume a replication"])
+            _exit_if_errors(["--xdcr-replicator is needed to pause or resume a replication"])
 
         tasks, errors = self.rest.get_tasks()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         for task in tasks:
             if task["type"] == "xdcr" and task["id"] == opts.replicator_id:
                 if opts.pause and task["status"] == "notRunning":
-                    _exitIfErrors(["The replication is not running yet. Pause is not needed"])
+                    _exit_if_errors(["The replication is not running yet. Pause is not needed"])
                 if opts.resume and task["status"] == "running":
-                    _exitIfErrors(["The replication is running already. Resume is not needed"])
+                    _exit_if_errors(["The replication is running already. Resume is not needed"])
                 break
 
         if opts.pause:
             _, errors = self.rest.pause_xdcr_replication(opts.replicator_id)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("XDCR replication paused")
         elif opts.resume:
             _, errors = self.rest.resume_xdcr_replication(opts.replicator_id)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("XDCR replication resume")
 
     def _list(self):
         tasks, errors = self.rest.get_tasks()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         for task in tasks:
             if task["type"] == "xdcr":
                 print(f'stream id: {task["id"]}')
@@ -3591,16 +3592,16 @@ class XdcrReplicate(Subcommand):
 
     def _settings(self, opts):
         if opts.replicator_id is None:
-            _exitIfErrors(["--xdcr-replicator is needed to change a replicators settings"])
+            _exit_if_errors(["--xdcr-replicator is needed to change a replicators settings"])
         if opts.filter_skip and opts.filter is None:
-            _exitIfErrors(["--filter-expersion is needed with the --filter-skip-restream option"])
+            _exit_if_errors(["--filter-expersion is needed with the --filter-skip-restream option"])
         _, errors = self.rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size, opts.doc_batch_size,
                                                        opts.fail_interval, opts.rep_thresh, opts.src_nozzles,
                                                        opts.dst_nozzles, opts.usage_limit, opts.compression,
                                                        opts.log_level, opts.stats_interval, opts.replicator_id,
                                                        opts.filter, opts.filter_skip, opts.priority, opts.reset_expiry,
                                                        opts.filter_del, opts.filter_exp)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("XDCR replicator settings updated")
 
@@ -3653,9 +3654,9 @@ class XdcrSetup(Subcommand):
     def execute(self, opts):
         actions = sum([opts.create, opts.delete, opts.edit, opts.list])
         if actions == 0:
-            _exitIfErrors(["Must specify one of --create, --delete, --edit, --list"])
+            _exit_if_errors(["Must specify one of --create, --delete, --edit, --list"])
         elif actions > 1:
-            _exitIfErrors(["The --create, --delete, --edit, --list flags may not be specified at the same time"])
+            _exit_if_errors(["The --create, --delete, --edit, --list flags may not be specified at the same time"])
         elif opts.create or opts.edit:
             self._set(opts)
         elif opts.delete:
@@ -3669,15 +3670,15 @@ class XdcrSetup(Subcommand):
             cmd = "edit"
 
         if opts.name is None:
-            _exitIfErrors([f'--xdcr-cluster-name is required to {cmd} a cluster connection'])
+            _exit_if_errors([f'--xdcr-cluster-name is required to {cmd} a cluster connection'])
         if opts.hostname is None:
-            _exitIfErrors([f'--xdcr-hostname is required to {cmd} a cluster connections'])
+            _exit_if_errors([f'--xdcr-hostname is required to {cmd} a cluster connections'])
         if opts.username is None:
-            _exitIfErrors([f'--xdcr-username is required to {cmd} a cluster connections'])
+            _exit_if_errors([f'--xdcr-username is required to {cmd} a cluster connections'])
         if opts.password is None:
-            _exitIfErrors([f'--xdcr-password is required to {cmd} a cluster connections'])
+            _exit_if_errors([f'--xdcr-password is required to {cmd} a cluster connections'])
         if (opts.encrypt is not None or opts.encryption_type is not None) and opts.secure_connection is not None:
-            _exitIfErrors(["Cannot use deprecated flags --xdcr-demand-encryption or --xdcr-encryption-type with"
+            _exit_if_errors(["Cannot use deprecated flags --xdcr-demand-encryption or --xdcr-encryption-type with"
                            " --xdcr-secure-connection"])
 
         if opts.secure_connection == "none":
@@ -3700,7 +3701,7 @@ class XdcrSetup(Subcommand):
 
             if opts.encryption_type == "full":
                 if opts.certificate is None:
-                    _exitIfErrors(["certificate required if encryption is demanded"])
+                    _exit_if_errors(["certificate required if encryption is demanded"])
                 raw_cert = _exit_on_file_read_failure(opts.certificate)
 
         raw_user_key = None
@@ -3714,27 +3715,27 @@ class XdcrSetup(Subcommand):
             _, errors = self.rest.create_xdcr_reference(opts.name, opts.hostname, opts.r_username, opts.r_password,
                                                         opts.encrypt, opts.encryption_type, raw_cert, raw_user_cert,
                                                         raw_user_key)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("Cluster reference created")
         else:
             _, errors = self.rest.edit_xdcr_reference(opts.name, opts.hostname, opts.r_username, opts.r_password,
                                                       opts.encrypt, opts.encryption_type, raw_cert, raw_user_cert,
                                                       raw_user_key)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("Cluster reference edited")
 
     def _delete(self, opts):
         if opts.name is None:
-            _exitIfErrors(["--xdcr-cluster-name is required to deleta a cluster connection"])
+            _exit_if_errors(["--xdcr-cluster-name is required to deleta a cluster connection"])
 
         _, errors = self.rest.delete_xdcr_reference(opts.name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         _success("Cluster reference deleted")
 
     def _list(self):
         clusters, errors = self.rest.list_xdcr_references()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         for cluster in clusters:
             if not cluster["deleted"]:
@@ -3790,10 +3791,10 @@ class EventingFunctionSetup(Subcommand):
         actions = sum([opts._import, opts.export, opts.export_all, opts.delete, opts.list, opts.deploy, opts.undeploy,
                        opts.pause, opts.resume])
         if actions == 0:
-            _exitIfErrors(["Must specify one of --import, --export, --export-all, --delete, --list, --deploy,"
+            _exit_if_errors(["Must specify one of --import, --export, --export-all, --delete, --list, --deploy,"
                            " --undeploy, --pause, --resume"])
         elif actions > 1:
-            _exitIfErrors(['The --import, --export, --export-all, --delete, --list, --deploy, --undeploy, --pause, '
+            _exit_if_errors(['The --import, --export, --export-all, --delete, --list, --deploy, --undeploy, --pause, '
                            '--resume flags may not be specified at the same time'])
         elif opts._import:  # pylint: disable=protected-access
             self._import(opts)
@@ -3816,63 +3817,63 @@ class EventingFunctionSetup(Subcommand):
 
     def _pause_resume(self, opts, pause):
         if not opts.name:
-            _exitIfErrors([f"Flag --name is required with the {'--pause' if pause else '--resume'} flag"])
+            _exit_if_errors([f"Flag --name is required with the {'--pause' if pause else '--resume'} flag"])
         _, err = self.rest.pause_resume_function(opts.name, pause)
-        _exitIfErrors(err)
+        _exit_if_errors(err)
         _success(f"Function was {'paused' if pause else 'resumed'}")
 
     def _import(self, opts):
         if not opts.filename:
-            _exitIfErrors(["--file is needed to import functions"])
+            _exit_if_errors(["--file is needed to import functions"])
         import_functions = _exit_on_file_read_failure(opts.filename)
         import_functions = json.loads(import_functions)
         _, errors = self.rest.import_functions(import_functions)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Events imported")
 
     def _export(self, opts):
         if not opts.filename:
-            _exitIfErrors(["--file is needed to export a function"])
+            _exit_if_errors(["--file is needed to export a function"])
         if not opts.name:
-            _exitIfErrors(["--name is needed to export a function"])
+            _exit_if_errors(["--name is needed to export a function"])
         functions, errors = self.rest.export_functions()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         exported_function = None
         for function in functions:
             if function["appname"] == opts.name:
                 exported_function = [function]
         if not exported_function:
-            _exitIfErrors([f'Function {opts.name} does not exist'])
+            _exit_if_errors([f'Function {opts.name} does not exist'])
         _exit_on_file_write_failure(opts.filename, json.dumps(exported_function, separators=(',', ':')))
         _success("Function exported to: " + opts.filename)
 
     def _export_all(self, opts):
         if not opts.filename:
-            _exitIfErrors(["--file is needed to export all functions"])
+            _exit_if_errors(["--file is needed to export all functions"])
         exported_functions, errors = self.rest.export_functions()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _exit_on_file_write_failure(opts.filename, json.dumps(exported_functions, separators=(',', ':')))
         _success(f'All functions exported to: {opts.filename}')
 
     def _delete(self, opts):
         if not opts.name:
-            _exitIfErrors(["--name is needed to delete a function"])
+            _exit_if_errors(["--name is needed to delete a function"])
         _, errors = self.rest.delete_function(opts.name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Request to delete the function was accepted")
 
     def _deploy_undeploy(self, opts, deploy):
         if not opts.name:
-            _exitIfErrors([f"--name is needed to {'deploy' if deploy else 'undeploy'} a function"])
+            _exit_if_errors([f"--name is needed to {'deploy' if deploy else 'undeploy'} a function"])
         if deploy and not opts.boundary:
-            _exitIfErrors(["--boundary is needed to deploy a function"])
+            _exit_if_errors(["--boundary is needed to deploy a function"])
         _, errors = self.rest.deploy_undeploy_function(opts.name, deploy, opts.boundary)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
 
     def _list(self):
         functions, errors = self.rest.list_functions()
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
 
         for function in functions:
             print(function['appname'])
@@ -3947,9 +3948,9 @@ class AnalyticsLinkSetup(Subcommand):
     def execute(self, opts):
         actions = sum([opts.create, opts.delete, opts.edit, opts.list])
         if actions == 0:
-            _exitIfErrors(["Must specify one of --create, --delete, --edit, --list"])
+            _exit_if_errors(["Must specify one of --create, --delete, --edit, --list"])
         elif actions > 1:
-            _exitIfErrors(["The --create, --delete, --edit, --list flags may not be specified at the same time"])
+            _exit_if_errors(["The --create, --delete, --edit, --list flags may not be specified at the same time"])
         elif opts.create or opts.edit:
             self._set(opts)
         elif opts.delete:
@@ -3963,11 +3964,11 @@ class AnalyticsLinkSetup(Subcommand):
             cmd = "edit"
 
         if opts.dataverse is None:
-            _exitIfErrors([f'--dataverse is required to {cmd} a link'])
+            _exit_if_errors([f'--dataverse is required to {cmd} a link'])
         if opts.name is None:
-            _exitIfErrors([f'--name is required to {cmd} a link'])
+            _exit_if_errors([f'--name is required to {cmd} a link'])
         if opts.create and opts.type is None:
-            _exitIfErrors([f'--type is required to {cmd} a link'])
+            _exit_if_errors([f'--type is required to {cmd} a link'])
 
         if opts.certificate:
             opts.certificate = _exit_on_file_read_failure(opts.certificate)
@@ -3978,26 +3979,26 @@ class AnalyticsLinkSetup(Subcommand):
 
         if opts.create:
             _, errors = self.rest.create_analytics_link(opts)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("Link created")
         else:
             _, errors = self.rest.edit_analytics_link(opts)
-            _exitIfErrors(errors)
+            _exit_if_errors(errors)
             _success("Link edited")
 
     def _delete(self, opts):
         if opts.dataverse is None:
-            _exitIfErrors(['--dataverse is required to delete a link'])
+            _exit_if_errors(['--dataverse is required to delete a link'])
         if opts.name is None:
-            _exitIfErrors(['--name is required to delete a link'])
+            _exit_if_errors(['--name is required to delete a link'])
 
         _, errors = self.rest.delete_analytics_link(opts.dataverse, opts.name)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Link deleted")
 
     def _list(self, opts):
         clusters, errors = self.rest.list_analytics_links(opts.dataverse, opts.name, opts.type)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         print(json.dumps(clusters, sort_keys=True, indent=2))
 
     @staticmethod
@@ -4022,10 +4023,10 @@ class UserChangePassword(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         if opts.new_pass is None:
-            _exitIfErrors(["--new-password is required"])
+            _exit_if_errors(["--new-password is required"])
 
         _, rv = self.rest.user_change_passsword(opts.new_pass)
-        _exitIfErrors(rv)
+        _exit_if_errors(rv)
         _success(f'Changed password for {opts.username}')
 
     @staticmethod
@@ -4069,12 +4070,12 @@ class CollectionManage(Subcommand):
         args = "--create-scope, --drop-scope, --list-scopes, --create-collection, --drop-collection, or " \
                "--list-collections"
         if cmd_total == 0:
-            _exitIfErrors([f'Must specify one of the following: {args}'])
+            _exit_if_errors([f'Must specify one of the following: {args}'])
         elif cmd_total != 1:
-            _exitIfErrors([f'Only one of the following may be specified: {args}'])
+            _exit_if_errors([f'Only one of the following may be specified: {args}'])
 
         if opts.max_ttl is not None and opts.create_collection is None:
-            _exitIfErrors(["--max-ttl can only be set with --create-collection"])
+            _exit_if_errors(["--max-ttl can only be set with --create-collection"])
 
         if opts.create_scope:
             self._create_scope(opts)
@@ -4091,35 +4092,35 @@ class CollectionManage(Subcommand):
 
     def _create_scope(self, opts):
         _, errors = self.rest.create_scope(opts.bucket, opts.create_scope)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Scope created")
 
     def _drop_scope(self, opts):
         _, errors = self.rest.drop_scope(opts.bucket, opts.drop_scope)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Scope deleted")
 
     def _list_scopes(self, opts):
         manifest, errors = self.rest.get_manifest(opts.bucket)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         for scope in manifest['scopes']:
             print(scope['name'])
 
     def _create_collection(self, opts):
         scope, collection = self._get_scope_collection(opts.create_collection)
         _, errors = self.rest.create_collection(opts.bucket, scope, collection, opts.max_ttl)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Collection created")
 
     def _drop_collection(self, opts):
         scope, collection = self._get_scope_collection(opts.drop_collection)
         _, errors = self.rest.drop_collection(opts.bucket, scope, collection)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         _success("Collection deleted")
 
     def _list_collections(self, opts):
         manifest, errors = self.rest.get_manifest(opts.bucket)
-        _exitIfErrors(errors)
+        _exit_if_errors(errors)
         found_scope = False
         for scope in manifest['scopes']:
             if opts.list_collections == scope['name']:
@@ -4127,12 +4128,12 @@ class CollectionManage(Subcommand):
                 for collection in scope['collections']:
                     print(collection['name'])
         if not found_scope:
-            _exitIfErrors([f"Scope {opts.list_collections} does not exist"])
+            _exit_if_errors([f"Scope {opts.list_collections} does not exist"])
 
     def _get_scope_collection(self, path):
         scope, collection, err = self.expand_collection_shortcut(path)
         if err is not None:
-            _exitIfErrors([err])
+            _exit_if_errors([err])
         return scope, collection
 
     @staticmethod
@@ -4167,9 +4168,9 @@ class EnableDeveloperPreview(Subcommand):
     @rest_initialiser(version_check=True)
     def execute(self, opts):
         if not (opts.enable or opts.list):
-            _exitIfErrors(['--enable or --list must be provided'])
+            _exit_if_errors(['--enable or --list must be provided'])
         if opts.enable and opts.list:
-            _exitIfErrors(['cannot provide both --enable and --list'])
+            _exit_if_errors(['cannot provide both --enable and --list'])
 
         if opts.enable:
             confirm = input('Developer preview cannot be disabled once it is enabled. '
@@ -4177,16 +4178,16 @@ class EnableDeveloperPreview(Subcommand):
                             'upgrade. DO NOT USE IN PRODUCTION.\nAre you sure [y/n]: ')
             if confirm == 'y':
                 _, errors = self.rest.set_dp_mode()
-                _exitIfErrors(errors)
+                _exit_if_errors(errors)
                 _success("Cluster is in developer preview mode")
             elif confirm == 'n':
                 _success("Developer preview mode has NOT been enabled")
             else:
-                _exitIfErrors(["Unknown option provided"])
+                _exit_if_errors(["Unknown option provided"])
 
         if opts.list:
             pools, rv = self.rest.pools()
-            _exitIfErrors(rv)
+            _exit_if_errors(rv)
             if 'isDeveloperPreview' in pools and pools['isDeveloperPreview']:
                 print('Cluster is in developer preview mode')
             else:
@@ -4223,10 +4224,10 @@ class SettingAlternateAddress(Subcommand):
     def execute(self, opts):
         flags_used = sum([opts.set, opts.list, opts.remove])
         if flags_used != 1:
-            _exitIfErrors(['Use exactly one of --set, --list or --remove'])
+            _exit_if_errors(['Use exactly one of --set, --list or --remove'])
         if opts.set or opts.remove:
             if not opts.node:
-                _exitIfErrors(['--node has to be set when using --set or --remove'])
+                _exit_if_errors(['--node has to be set when using --set or --remove'])
             # Alternate address can only be set on the node it self. The opts.cluster
             # is updated with the opts.node instead to allow ease of use.
             # The node name can have a port number (./cluster_run)
@@ -4249,16 +4250,16 @@ class SettingAlternateAddress(Subcommand):
 
         if opts.set:
             ports, error = self._parse_ports(opts.ports)
-            _exitIfErrors(error)
+            _exit_if_errors(error)
             _, error = self.rest.set_alternate_address(opts.alternate_hostname, ports)
-            _exitIfErrors(error)
+            _exit_if_errors(error)
         if opts.remove:
             _, error = self.rest.delete_alternate_address()
-            _exitIfErrors(error)
+            _exit_if_errors(error)
             _success('Alternate address configuration deleted')
         if opts.list:
             add, error = self.rest.get_alternate_address()
-            _exitIfErrors(error)
+            _exit_if_errors(error)
             if opts.output == 'standard':
                 port_names = set()
                 for node in add:
@@ -4379,22 +4380,22 @@ class SettingQuery(Subcommand):
     @rest_initialiser(version_check=True)
     def execute(self, opts):
         if sum([opts.get, opts.set]) != 1:
-            _exitIfErrors(['Please provide --set or --get, both can not be provided at the same time'])
+            _exit_if_errors(['Please provide --set or --get, both can not be provided at the same time'])
 
         if opts.get:
             settings, err = self.rest.get_query_settings()
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             print(json.dumps(settings))
         if opts.set:
             if all(v is None for v in [opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
                                        opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
                                        opts.log_level, opts.max_parallelism, opts.n1ql_feature_control]):
-                _exitIfErrors(['Please provide at least one other option with --set'])
+                _exit_if_errors(['Please provide at least one other option with --set'])
 
             _, err = self.rest.post_query_settings(opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
                                                    opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
                                                    opts.log_level, opts.max_parallelism, opts.n1ql_feature_control)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             _success('Updated the query settings')
 
     @staticmethod
@@ -4424,15 +4425,15 @@ class IpFamily(Subcommand):
     def execute(self, opts):
         flags_used = sum([opts.set, opts.get])
         if flags_used == 0:
-            _exitIfErrors(['Please provide one of --set, or --get'])
+            _exit_if_errors(['Please provide one of --set, or --get'])
         elif flags_used > 1:
-            _exitIfErrors(['Please provide only one of --set, or --get'])
+            _exit_if_errors(['Please provide only one of --set, or --get'])
 
         if opts.get:
             self._get(self.rest)
         if opts.set:
             if sum([opts.ipv6, opts.ipv4]) != 1:
-                _exitIfErrors(['Provided exactly one of --ipv4 or --ipv6 together with the --set option'])
+                _exit_if_errors(['Provided exactly one of --ipv4 or --ipv6 together with the --set option'])
 
             self._set(self.rest, opts.ipv6, opts.ssl)
 
@@ -4443,15 +4444,15 @@ class IpFamily(Subcommand):
 
         if err and err[0] == '"unknown pool"':
             _, err = rest.enable_external_listener(ipfamily=ip_fam)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             _, err = rest.setup_net_config(ipfamily=ip_fam)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             _, err = rest.disable_external_listener(ipfamily=ip_fam_disable)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             _success('Switched IP family of the cluster')
             return
 
-        _exitIfErrors(err)
+        _exit_if_errors(err)
 
         hosts = []
         for n in node_data['nodes']:
@@ -4460,37 +4461,37 @@ class IpFamily(Subcommand):
                 addr = host.rsplit(":", 1)[0]
                 host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
             _, err = rest.enable_external_listener(host=host, ipfamily=ip_fam)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             hosts.append(host)
 
         for h in hosts:
             _, err = rest.setup_net_config(host=h, ipfamily=ip_fam)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             print(f'Switched IP family for node: {h}')
 
         for h in hosts:
             _, err = rest.disable_external_listener(host=h, ipfamily=ip_fam_disable)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
 
         _success('Switched IP family of the cluster')
 
     @staticmethod
     def _get(rest):
         nodes, err = rest.nodes_info()
-        _exitIfErrors(err)
+        _exit_if_errors(err)
         fam = {}
         for n in nodes:
             fam[n['addressFamily']] = True
 
         family = list(fam.keys())
         if len(family) == 1:
-            ipvFam = 'UNKNOWN'
+            ipv_fam = 'UNKNOWN'
             if family[0] == 'inet' or family[0] == 'inet_tls':
-                ipvFam = 'ipv4'
+                ipv_fam = 'ipv4'
             elif family[0] == 'inet6' or family[0] == 'inet6_tls':
-                ipvFam = 'ipv6'
+                ipv_fam = 'ipv6'
 
-            print(f'Cluster using {ipvFam}')
+            print(f'Cluster using {ipv_fam}')
         else:
             print('Cluster is in mixed mode')
 
@@ -4519,9 +4520,9 @@ class NodeToNodeEncryption(Subcommand):
     def execute(self, opts):
         flags_used = sum([opts.enable, opts.disable, opts.get])
         if flags_used == 0:
-            _exitIfErrors(['Please provide one of --enable, --disable or --get'])
+            _exit_if_errors(['Please provide one of --enable, --disable or --get'])
         elif flags_used > 1:
-            _exitIfErrors(['Please provide only one of --enable, --disable or --get'])
+            _exit_if_errors(['Please provide only one of --enable, --disable or --get'])
 
         if opts.get:
             self._get(self.rest)
@@ -4537,15 +4538,15 @@ class NodeToNodeEncryption(Subcommand):
 
         if err and err[0] == '"unknown pool"':
             _, err = rest.enable_external_listener(encryption=encryption)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             _, err = rest.setup_net_config(encryption=encryption)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             _, err = rest.disable_external_listener(encryption=encryption_disable)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             _success(f'Switched node-to-node encryption {encryption}')
             return
 
-        _exitIfErrors(err)
+        _exit_if_errors(err)
 
         hosts = []
         for n in node_data['nodes']:
@@ -4554,17 +4555,17 @@ class NodeToNodeEncryption(Subcommand):
                 addr = host.rsplit(":", 1)[0]
                 host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
             _, err = rest.enable_external_listener(host=host, encryption=encryption)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             hosts.append(host)
 
         for h in hosts:
             _, err = rest.setup_net_config(host=h, encryption=encryption)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             print(f'Turned {encryption} encryption for node: {h}')
 
         for h in hosts:
             _, err = rest.disable_external_listener(host=h, encryption=encryption_disable)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
 
         _success(f'Switched node-to-node encryption {encryption}')
 
@@ -4572,7 +4573,7 @@ class NodeToNodeEncryption(Subcommand):
     def _get(rest):
         # this will start the correct listeners in all the nodes
         nodes, err = rest.nodes_info()
-        _exitIfErrors(err)
+        _exit_if_errors(err)
         encrypted_nodes = []
         unencrpyted_nodes = []
         for n in nodes:
@@ -4628,14 +4629,14 @@ class SettingRebalance(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if sum([opts.set, opts.get, opts.cancel, opts.pending_info]) != 1:
-            _exitIfErrors(['Provide either --set, --get, --cancel or --pending-info'])
+            _exit_if_errors(['Provide either --set, --get, --cancel or --pending-info'])
 
         if opts.get:
             settings, err = self.rest.get_settings_rebalance()
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             if self.enterprise:
                 retry_settings, err = self.rest.get_settings_rebalance_retry()
-                _exitIfErrors(err)
+                _exit_if_errors(err)
                 settings.update(retry_settings)
             if opts.output == 'json':
                 print(json.dumps(settings))
@@ -4648,42 +4649,42 @@ class SettingRebalance(Subcommand):
         elif opts.set:
             if not self.enterprise:
                 if opts.enable is not None or opts.wait_for is not None or opts.max_attempts is not None:
-                    _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
+                    _exit_if_errors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
             if opts.enable == '1':
                 opts.enable = 'true'
             else:
                 opts.enable = 'false'
 
             if opts.wait_for is not None and (opts.wait_for < 5 or opts.wait_for > 3600):
-                _exitIfErrors(['--wait-for must be a value between 5 and 3600'])
+                _exit_if_errors(['--wait-for must be a value between 5 and 3600'])
             if opts.max_attempts is not None and (opts.max_attempts < 1 or opts.max_attempts > 3):
-                _exitIfErrors(['--max-attempts must be a value between 1 and 3'])
+                _exit_if_errors(['--max-attempts must be a value between 1 and 3'])
 
             if self.enterprise:
                 _, err = self.rest.set_settings_rebalance_retry(opts.enable, opts.wait_for, opts.max_attempts)
-                _exitIfErrors(err)
+                _exit_if_errors(err)
 
             if opts.moves_per_node is not None:
                 if not 1 <= opts.moves_per_node <= 64:
-                    _exitIfErrors(['--moves-per-node must be a value between 1 and 64'])
+                    _exit_if_errors(['--moves-per-node must be a value between 1 and 64'])
                 _, err = self.rest.set_settings_rebalance(opts.moves_per_node)
-                _exitIfErrors(err)
+                _exit_if_errors(err)
 
             _success('Rebalance settings updated')
         elif opts.cancel:
             if not self.enterprise:
-                _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
+                _exit_if_errors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
 
             if opts.rebalance_id is None:
-                _exitIfErrors(['Provide the failed rebalance id using --rebalance-id <id>'])
+                _exit_if_errors(['Provide the failed rebalance id using --rebalance-id <id>'])
             _, err = self.rest.cancel_rebalance_retry(opts.rebalance_id)
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             _success('Rebalance retry canceled')
         else:
             if not self.enterprise:
-                _exitIfErrors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
+                _exit_if_errors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
             rebalance_info, err = self.rest.get_rebalance_info()
-            _exitIfErrors(err)
+            _exit_if_errors(err)
             print(json.dumps(rebalance_info))
 
     @staticmethod

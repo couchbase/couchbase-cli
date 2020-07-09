@@ -8,7 +8,7 @@ import time
 if platform.system() == "Windows":
     import ctypes
     from ctypes import c_long, c_ulong
-    gHandle = ctypes.windll.kernel32.GetStdHandle(c_long(-11))
+    g_handle = ctypes.windll.kernel32.GetStdHandle(c_long(-11))
 
     def get_terminal_width():
         """Get windows terminal size on standard windows terminal"""
@@ -44,7 +44,7 @@ if platform.system() == "Windows":
             coord_y = cur_y - rows
 
         coord = (cur_x + (coord_y << 16))
-        ctypes.windll.kernel32.SetConsoleCursorPosition(gHandle, c_ulong(coord))
+        ctypes.windll.kernel32.SetConsoleCursorPosition(g_handle, c_ulong(coord))
 
     def move_cursor_absolute_x(cols):
         """Moves the terminal cursor absolute column position"""
@@ -53,7 +53,7 @@ if platform.system() == "Windows":
             return
 
         coord = (cols + (cur_y << 16))
-        ctypes.windll.kernel32.SetConsoleCursorPosition(gHandle, c_ulong(coord))
+        ctypes.windll.kernel32.SetConsoleCursorPosition(g_handle, c_ulong(coord))
 
 elif platform.system() in ['Linux', 'Darwin'] or platform.system().startswith('CYGWIN'):
     import fcntl
@@ -88,7 +88,7 @@ elif platform.system() in ['Linux', 'Darwin'] or platform.system().startswith('C
         """Moves the terminal cursor the specified number of rows"""
         if rows == 0:
             return
-        elif rows > 0:
+        if rows > 0:
             sys.stdout.write(("\033[%dA" % rows))
         else:
             sys.stdout.write(("\033[%dA" % (rows*-1)))
@@ -116,6 +116,7 @@ else:
         """Moves the terminal cursor absolute column position"""
         pass
 
+
 class TopologyProgressBar(object):
     """Generates a progress bar for topology change progress such as failover and rebalances"""
 
@@ -134,8 +135,8 @@ class TopologyProgressBar(object):
                 sys.stdout.write("Unable to display progress bar on this os\n")
             elif self.term_width < 80:
                 self.hidden = True
-                sys.stdout.write("Unable to display progress bar, terminal with must be at " +
-                                 "least 80 columns\n")
+                sys.stdout.write("Unable to display progress bar, terminal with must be at "
+                                 + "least 80 columns\n")
 
         status, errors = self.rest_client.rebalance_status()
         if errors:
@@ -151,7 +152,7 @@ class TopologyProgressBar(object):
         if not self.hidden:
             self._report_progress(0, cur_bucket, total_buckets, cur_bucket_name, 0)
 
-        while status["status"] in['running', 'unknown']:
+        while status["status"] in ['running', 'unknown']:
             if status["status"] == 'unknown' or self.hidden:
                 time.sleep(1)
             else:

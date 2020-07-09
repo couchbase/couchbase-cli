@@ -8,25 +8,23 @@ import logging
 import re
 import queue
 import json
-import string
 import sys
 import threading
 import time
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
 import urllib.parse
+import urllib.error
 import zlib
-import platform
-import subprocess
 import socket
 import ssl
 from typing import List, Dict, Optional, Any, Tuple, Union, Sequence
+from collections import defaultdict
 
+import snappy  # pylint: disable=import-error
 import couchbaseConstants
 import cb_bin_client
 from cb_util import tag_user_data
 from cluster_manager import ClusterManager
-from collections import defaultdict
-import snappy # pylint: disable=import-error
 
 # TODO: (1) optionally log into backup directory
 
@@ -63,7 +61,7 @@ class Batch(object):
                 if self.source.opts.collection:
                     # Collections embeds the ID into the key field, but does not
                     # hash the ID as part of VB hashing
-                    key = cb_bin_client.skipCollectionID(key)
+                    key = cb_bin_client.skip_collection_id(key)
 
                 if isinstance(key, str):
                     key = key.encode()
@@ -176,8 +174,7 @@ class PumpingStation(ProgressReporter):
             bucket_source = getattr(self.opts, "bucket_source", None)
             if bucket_source:
                 return f'error: there is no bucket: {bucket_source} at source: {self.source_spec}'
-            else:
-                return f'error: no transferable buckets at source: {self.source_spec}'
+            return f'error: no transferable buckets at source: {self.source_spec}'
 
         for source_bucket in sorted(source_buckets,
                                     key=lambda b: b['name']):
@@ -236,15 +233,15 @@ class PumpingStation(ProgressReporter):
     def filter_source_buckets(self, source_map: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Filter the source_buckets if a bucket_source was specified."""
         source_buckets = source_map['buckets']
-        logging.debug(f'source_buckets: {",".join([returnString(n["name"]) for n in source_buckets])}')
+        logging.debug(f'source_buckets: {",".join([return_string(n["name"]) for n in source_buckets])}')
 
         bucket_source = getattr(self.opts, "bucket_source", None)
-        bucket_source = returnString(bucket_source)
+        bucket_source = return_string(bucket_source)
         if bucket_source:
             logging.debug(f'bucket_source: {bucket_source}')
             source_buckets = [b for b in source_buckets
-                              if returnString(b['name']) == bucket_source]
-            logging.debug(f'source_buckets filtered: {",".join([returnString(n["name"]) for n in source_buckets])}')
+                              if return_string(b['name']) == bucket_source]
+            logging.debug(f'source_buckets filtered: {",".join([return_string(n["name"]) for n in source_buckets])}')
         return source_buckets
 
     def filter_source_nodes(self, source_bucket: Dict[str, Any], source_map):
@@ -257,7 +254,7 @@ class PumpingStation(ProgressReporter):
                                                source_map.get('spec_parts'))
         else:
             source_nodes = source_bucket['nodes']
-        logging.debug(f' source_nodes: {",".join([returnString(n.get("hostname", NA)) for n in source_nodes])}')
+        logging.debug(f' source_nodes: {",".join([return_string(n.get("hostname", NA)) for n in source_nodes])}')
         return source_nodes
 
     def transfer_bucket_msgs(self, source_bucket: Dict[str, Any], source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
@@ -311,7 +308,7 @@ class PumpingStation(ProgressReporter):
                     break
 
         for source_node in sorted(source_nodes,
-                                  key=lambda n: returnString(n.get('hostname', NA))):
+                                  key=lambda n: return_string(n.get('hostname', NA))):
             logging.debug(f' enqueueing node: {source_node.get("hostname", NA)}')
             self.queue.put((source_bucket, source_node, source_map, sink_map, alt_add))
 
@@ -606,7 +603,7 @@ class EndPoint(object):
         pass
 
     def skip(self, key: Union[str, bytes], vbucket_id: int) -> bool:
-        if self.only_key_re and not re.search(self.only_key_re, returnString(key)):
+        if self.only_key_re and not re.search(self.only_key_re, return_string(key)):
             logging.warning(f'skipping msg with key: {tag_user_data(key)}')
             return True
 
@@ -825,7 +822,7 @@ class StdInSource(Source):
             parts = line.split(' ')
             if not parts:
                 return "error: read empty line", None
-            elif parts[0] == 'set' or parts[0] == 'add':
+            if parts[0] == 'set' or parts[0] == 'add':
                 if len(parts) != 5:
                     return f'error: length of set/add line: {line}', None
                 cmd = couchbaseConstants.CMD_TAP_MUTATION
@@ -839,7 +836,7 @@ class StdInSource(Source):
                         return f'error: value read failed at: {line}', None
                 else:
                     val = ''
-                end = self.f.read(2) # Read '\r\n'.
+                end = self.f.read(2)  # Read '\r\n'.
                 if len(end) != 2:
                     return f'error: value end read failed at: {line}', None
 
@@ -869,7 +866,7 @@ class StdOutSink(Sink):
     @staticmethod
     def can_handle(opts, spec):
         if spec.startswith("stdout:") or spec == "-":
-            opts.threads = 1 # Force 1 thread to not overlap stdout.
+            opts.threads = 1  # Force 1 thread to not overlap stdout.
             return True
         return False
 
@@ -929,8 +926,7 @@ class StdOutSink(Sink):
                 except Exception as err:
                     pass
             try:
-                if cmd == couchbaseConstants.CMD_TAP_MUTATION or \
-                   cmd == couchbaseConstants.CMD_DCP_MUTATION:
+                if cmd in [couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_DCP_MUTATION]:
                     if op_mutate:
                         # <op> <key> <flags> <exptime> <bytes> [noreply]\r\n
                         if mcd_compatible:
@@ -946,8 +942,7 @@ class StdOutSink(Sink):
                         stdout.write("\r\n")
                     elif op == 'get':
                         stdout.write(f'get {key}\r\n')
-                elif cmd == couchbaseConstants.CMD_TAP_DELETE or \
-                     cmd == couchbaseConstants.CMD_DCP_DELETE:
+                elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_DCP_DELETE]:
                     if op_mutate:
                         stdout.write(f'delete {key}\r\n')
                 elif cmd == couchbaseConstants.CMD_GET:
@@ -996,17 +991,17 @@ def parse_spec(opts, spec: str, port: int) -> Tuple[str, int, str, str, Any]:
     # ParseResult tuple(scheme, netloc, path, params, query, fragment)
     netloc = p[1]
 
-    if not netloc: # When urlparse() can't parse non-http URI's.
+    if not netloc:  # When urlparse() can't parse non-http URI's.
         netloc = spec.split('://')[-1].split('/')[0]
 
-    pair = netloc.split('@') # [ "user:pwsd", "host:port" ].
+    pair = netloc.split('@')  # [ "user:pwsd", "host:port" ].
     host = p.hostname
     port = p.port
     try:
-       val = int(port)
+        _ = int(port)
     except ValueError:
-       logging.warning(f'"{port}" is not int, reset it to default port number')
-       port = 8091
+        logging.warning(f'"{port}" is not int, reset it to default port number')
+        port = 8091
 
     username = get_username(opts.username)
     password = get_password(opts.password)
@@ -1089,7 +1084,6 @@ def rest_request_json(host: str, port: int, user: Optional[str], pswd: Optional[
 def rest_couchbase(opts, spec: str, check_sink_credential: bool =False) -> Tuple[couchbaseConstants.PUMP_ERROR,
                                                                                  Optional[Dict[str, Any]]]:
     spec = spec.replace('couchbase://', 'http://')
-    spec_parts = parse_spec(opts, spec, 8091)
 
     username = opts.username
     password = opts.password
@@ -1215,9 +1209,9 @@ def get_mcd_conn(host: str, port: int, username: str, password: str, bucket: Opt
         features.append(couchbaseConstants.HELO_COLLECTIONS)
 
     try:
-        _, _, enabledFeatures = conn.helo(features)
+        _, _, enabled_features = conn.helo(features)
         for feature in features:
-            if feature not in enabledFeatures:
+            if feature not in enabled_features:
                 return f'error: HELO denied feature:{feature} {host}:{port}', None
     except EOFError as e:
         return f'error: HELO error: {host}:{port}, {e}', None
@@ -1239,7 +1233,7 @@ def get_mcd_conn(host: str, port: int, username: str, password: str, bucket: Opt
     return 0, conn
 
 
-def returnString(byte_or_str: Union[str, bytes, int]) -> str:
+def return_string(byte_or_str: Union[str, bytes, int]) -> str:
     if byte_or_str is None:
         return None
     if isinstance(byte_or_str, bytes):

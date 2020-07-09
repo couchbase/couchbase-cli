@@ -130,8 +130,8 @@ def _main():
 
     if args.generate_salt:
         logging.warn('Automatically generating salt. This will make it difficult to cross reference logs')
-        ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        args.salt = ''.join(random.choice(ALPHABET) for _ in range(16))
+        alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        args.salt = ''.join(random.choice(alphabet) for _ in range(16))
 
     if not 1 <= args.threads <= 64:
         opts.error('--threads has to be between 1 and 64')

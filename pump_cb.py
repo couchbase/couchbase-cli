@@ -3,9 +3,11 @@
 import logging
 import json
 import time
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 
-from typing import Optional, Tuple, List, Dict, Union, Any
+from typing import Optional, Tuple, Dict, Union, Any
 
 import couchbaseConstants
 import cb_bin_client
@@ -38,12 +40,12 @@ class CBSink(pump_mc.MCSink):
         sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
-                                 "user": pump.returnString(sasl_user),
+                                 "user": pump.return_string(sasl_user),
                                 },
                  "mode": getattr(self.opts, "mode", "diff"),
-                 "source_bucket": pump.returnString(self.source_bucket['name']),
-                 "source_node": pump.returnString(self.source_node['hostname']),
-                 "target_bucket": pump.returnString(self.sink_map['buckets'][0]['name'])
+                 "source_bucket": pump.return_string(self.source_bucket['name']),
+                 "source_node": pump.return_string(self.source_node['hostname']),
+                 "target_bucket": pump.return_string(self.sink_map['buckets'][0]['name'])
                 }
         if conn:
             try:
@@ -56,11 +58,11 @@ class CBSink(pump_mc.MCSink):
         sasl_user = str(self.source_bucket.get("name", pump.get_username(self.opts.username)))
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
-                                 "user": pump.returnString(sasl_user)
+                                 "user": pump.return_string(sasl_user)
                                 },
-                 "source_bucket": pump.returnString(self.source_bucket['name']),
-                 "source_node": pump.returnString(self.source_node['hostname']),
-                 "target_bucket": pump.returnString(self.sink_map['buckets'][0]['name'])
+                 "source_bucket": pump.return_string(self.source_bucket['name']),
+                 "source_node": pump.return_string(self.source_node['hostname']),
+                 "target_bucket": pump.return_string(self.sink_map['buckets'][0]['name'])
                 }
         if conn:
             try:
@@ -135,11 +137,11 @@ class CBSink(pump_mc.MCSink):
             for node in bucket_info["nodes"]:
                 if "direct" not in node["ports"]:
                     continue
-                otpNode = _to_string(node["otpNode"])
-                mcdHost = otpNode.split("@")[1] + ":" + str(node["ports"]["direct"])
+                otp_node = _to_string(node["otpNode"])
+                mcd_host = otp_node.split("@")[1] + ":" + str(node["ports"]["direct"])
                 for remap_node, remap_vbs in vbucket_list_dict.items():
-                    if _to_string(remap_node) == otpNode and mcdHost in server_vb_map["serverList"]:  # type: ignore
-                        idx = server_vb_map["serverList"].index(mcdHost)  # type: ignore
+                    if _to_string(remap_node) == otp_node and mcd_host in server_vb_map["serverList"]:  # type: ignore
+                        idx = server_vb_map["serverList"].index(mcd_host)  # type: ignore
                         for vb in remap_vbs:  # type: ignore
                             server_vb_map["vBucketMap"][vb][0] = idx  # type: ignore
 
@@ -178,7 +180,7 @@ class CBSink(pump_mc.MCSink):
 
         # Adjust sink_map['buckets'] to have only our sink_bucket.
         sink_buckets = [bucket for bucket in sink_map['buckets']
-                        if pump.returnString(bucket['name']) == pump.returnString(sink_bucket_name)]
+                        if pump.return_string(bucket['name']) == pump.return_string(sink_bucket_name)]
         if not sink_buckets:
             return f'error: missing bucket-destination: {sink_bucket_name} at destination: {spec};' \
                 f' perhaps your username/password is missing or incorrect', None
@@ -260,7 +262,7 @@ class CBSink(pump_mc.MCSink):
         try:
             sd = json.loads(source_design)
             if not sd:
-               return 0
+                return 0
         except ValueError as e:
             return f'error: could not parse source design; exception: {e!s}'
 
@@ -310,14 +312,13 @@ class CBSink(pump_mc.MCSink):
         host, port, user, pswd, path = \
             pump.parse_spec(opts, couch_api_base, 8092)
         if user is None:
-            user = spec_parts[2] # Default to the main REST user/pwsd.
+            user = spec_parts[2]  # Default to the main REST user/pwsd.
             pswd = spec_parts[3]
 
         if opts.username_dest is not None and opts.password_dest is not None:
             user = opts.username_dest
             user = opts.password_dest
         if type(sd) is dict:
-
             id = sd.get('_id', None)
             if id:
                 str_source = _to_string(source_design)
@@ -353,9 +354,9 @@ class CBSink(pump_mc.MCSink):
                     stmt = row.get('statement', None)
                     if not stmt:
                         return f'error: missing design doc or index statement in row: {row}'
-                    else:
-                        #publish index
-                        return 0
+
+                    # publish index
+                    return 0
 
                 if 'json' in doc and 'meta' in doc:
                     js = doc['json']
@@ -468,7 +469,7 @@ class CBSink(pump_mc.MCSink):
                 password = self.opts.password_dest
             rv, conn = CBSink.connect_mc(host, port, username, password, bucket, self.opts.ssl,
                                          self.opts.no_ssl_verify, self.opts.cacert,
-                                         collections=self.opts.collection!=None)
+                                         collections=self.opts.collection is not None)
             if rv != 0:
                 logging.error(f'error: CBSink.connect() for send: {rv}')
                 return rv, None

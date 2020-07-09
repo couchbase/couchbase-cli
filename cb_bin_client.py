@@ -21,7 +21,7 @@ import couchbaseConstants
 # Collections on the wire uses a varint encoding for the collection-ID
 # A simple unsigned_leb128 encoded is used https://en.wikipedia.org/wiki/LEB128
 # return a string with the binary encoding
-def encodeCollectionId(cid: int) -> bytes:
+def encode_collection_id(cid: int) -> bytes:
     output = array.array('B', [0])
     while cid > 0:
         byte = cid & 0xFF
@@ -37,7 +37,7 @@ def encodeCollectionId(cid: int) -> bytes:
     return output.tobytes()
 
 
-def decodeCollectionID(key: bytes) -> Tuple[int, bytes]:
+def decode_collection_id(key: bytes) -> Tuple[int, bytes]:
     # A leb128 varint encodes the CID
     data = array.array('B')
     data.frombytes(key)
@@ -58,8 +58,8 @@ def decodeCollectionID(key: bytes) -> Tuple[int, bytes]:
     return cid, key[end:]
 
 
-def skipCollectionID(key: bytes) -> bytes:
-    _, k = decodeCollectionID(key)
+def skip_collection_id(key: bytes) -> bytes:
+    _, k = decode_collection_id(key)
     return k
 
 
@@ -82,7 +82,7 @@ class MemcachedError(Exception):
 class MemcachedClient(object):
     """Simple memcached client."""
 
-    vbucketId = 0
+    vbucket_id = 0
 
     def __init__(self, host='127.0.0.1', port=11211, family=socket.AF_UNSPEC, use_ssl=False, verify=True, cacert=None):
         self.host = host
@@ -119,19 +119,19 @@ class MemcachedClient(object):
     def __del__(self):
         self.close()
 
-    def _sendCmd(self, cmd: int, key: bytes, val: bytes, opaque: int, extraHeader: bytes = b'', cas: int = 0,
-                 extraMeta: bytes = b''):
-        self._sendMsg(cmd, key, val, opaque, extraHeader=extraHeader, cas=cas,
-                      vbucketId=self.vbucketId, extraMeta=extraMeta)
+    def _send_cmd(self, cmd: int, key: bytes, val: bytes, opaque: int, extra_header: bytes = b'', cas: int = 0,
+                 extra_meta: bytes = b''):
+        self._send_msg(cmd, key, val, opaque, extra_header=extra_header, cas=cas,
+                      vbucket_id=self.vbucket_id, extra_meta=extra_meta)
 
-    def _sendMsg(self, cmd: int, key: bytes, val: bytes, opaque: int, extraHeader: bytes = b'', cas: int = 0,
-                 dtype: int = 0, vbucketId: int =0, extraMeta: bytes = b'',
+    def _send_msg(self, cmd: int, key: bytes, val: bytes, opaque: int, extra_header: bytes = b'', cas: int = 0,
+                 dtype: int = 0, vbucket_id: int =0, extra_meta: bytes = b'',
                  fmt: str = REQ_PKT_FMT, magic: int = REQ_MAGIC_BYTE):
-        msg: bytes = struct.pack(fmt, magic, cmd, len(key), len(extraHeader), dtype, vbucketId,
-                                 len(key) + len(extraHeader) + len(val) + len(extraMeta), opaque, cas)
-        self.s.sendall(msg + extraHeader + key + val + extraMeta)
+        msg: bytes = struct.pack(fmt, magic, cmd, len(key), len(extra_header), dtype, vbucket_id,
+                                 len(key) + len(extra_header) + len(val) + len(extra_meta), opaque, cas)
+        self.s.sendall(msg + extra_header + key + val + extra_meta)
 
-    def _recvMsg(self) -> Tuple[int, int, int, int, int, int, bytes]:
+    def _recv_msg(self) -> Tuple[int, int, int, int, int, int, bytes]:
         response = b''
         while len(response) < MIN_RECV_PACKET:
             data = self.s.recv(MIN_RECV_PACKET - len(response))
@@ -153,29 +153,29 @@ class MemcachedClient(object):
         assert (magic in (RES_MAGIC_BYTE, REQ_MAGIC_BYTE)), f'Got magic: {magic}'
         return cmd, errcode, opaque, cas, keylen, extralen, rv
 
-    def _handleKeyedResponse(self, myopaque: Union[int, None]) -> Tuple[int, int, int, int, int, bytes]:
-        cmd, errcode, opaque, cas, keylen, extralen, rv = self._recvMsg()
+    def _handle_keyed_response(self, myopaque: Union[int, None]) -> Tuple[int, int, int, int, int, bytes]:
+        cmd, errcode, opaque, cas, keylen, extralen, rv = self._recv_msg()
         assert myopaque is None or opaque == myopaque, f'expected opaque {myopaque:x}, got {opaque:x}'
         if errcode != 0:
             raise MemcachedError(errcode,  str(rv))
         return cmd, opaque, cas, keylen, extralen, rv
 
-    def _handleSingleResponse(self, myopaque: Union[int, None]) -> Tuple[int, int, bytes]:
-        cmd, opaque, cas, keylen, extralen, data = self._handleKeyedResponse(myopaque)
+    def _handle_single_response(self, myopaque: Union[int, None]) -> Tuple[int, int, bytes]:
+        cmd, opaque, cas, keylen, extralen, data = self._handle_keyed_response(myopaque)
         return opaque, cas, data
 
-    def _doCmd(self, cmd: int, key: bytes, val: bytes, extraHeader: bytes = b'', cas: int = 0) -> Tuple[int, int, bytes]:
+    def _do_cmd(self, cmd: int, key: bytes, val: bytes, extra_header: bytes = b'', cas: int = 0) -> Tuple[int, int, bytes]:
         """Send a command and await its response."""
         opaque=self.r.randint(0, 2**32)
-        self._sendCmd(cmd, key, val, opaque, extraHeader, cas)
-        return self._handleSingleResponse(opaque)
+        self._send_cmd(cmd, key, val, opaque, extra_header, cas)
+        return self._handle_single_response(opaque)
 
     def _mutate(self, cmd: int, key: bytes, exp: int, flags: int, cas: int, val: bytes) -> Tuple[int, int, bytes]:
-        return self._doCmd(cmd, key, val, struct.pack(SET_PKT_FMT, flags, exp),
+        return self._do_cmd(cmd, key, val, struct.pack(SET_PKT_FMT, flags, exp),
             cas)
 
     def _cat(self, cmd: int, key: bytes, cas: int, val: bytes) -> Tuple[int, int, bytes]:
-        return self._doCmd(cmd, key, val, b'', cas)
+        return self._do_cmd(cmd, key, val, b'', cas)
 
     def append(self, key: bytes, value: bytes, cas: int = 0) -> Tuple[int, int, bytes]:
         return self._cat(couchbaseConstants.CMD_APPEND, key, cas, value)
@@ -184,7 +184,7 @@ class MemcachedClient(object):
         return self._cat(couchbaseConstants.CMD_PREPEND, key, cas, value)
 
     def __incrdecr(self, cmd, key, amt, init, exp):
-        something, cas, val=self._doCmd(cmd, key, b'',
+        something, cas, val=self._do_cmd(cmd, key, b'',
             struct.pack(couchbaseConstants.INCRDECR_PKT_FMT, amt, init, exp))
         return struct.unpack(INCRDECR_RES_FMT, val)[0], cas
 
@@ -196,7 +196,7 @@ class MemcachedClient(object):
         """Decrement or create the named counter."""
         return self.__incrdecr(couchbaseConstants.CMD_DECR, key, amt, init, exp)
 
-    def _doMetaCmd(self, cmd: int, key: bytes, value: bytes, cas: int, exp: int, flags: int, seqno: int,
+    def _do_meta_cmd(self, cmd: int, key: bytes, value: bytes, cas: int, exp: int, flags: int, seqno: int,
                    remote_cas: int, options: Optional[int] = None, meta_len: Optional[int] = None) -> Tuple[int, int,
                                                                                                             bytes]:
         extra = b''
@@ -208,26 +208,26 @@ class MemcachedClient(object):
             extra = struct.pack('>IIQQI', flags, exp, seqno, remote_cas, options)
         if options is None and meta_len is not None:
             extra = struct.pack('>IIQQH', flags, exp, seqno, remote_cas, meta_len)
-        return self._doCmd(cmd, key, value, extra, cas)
+        return self._do_cmd(cmd, key, value, extra, cas)
 
     def _doRevCmd(self, cmd: int, key: bytes, exp: int, flags: int, value: bytes, rev: Tuple[int, bytes], cas: int = 0):
         seqno, revid = rev
         meta_data = struct.pack('>I', seqno) + revid
         meta_type = couchbaseConstants.META_REVID
         meta = (meta_type, meta_data)
-        return self._doMetaCmd(cmd, key, value, cas, exp, flags, seqno, 0)  # pylint: disable=no-value-for-parameter
+        return self._do_meta_cmd(cmd, key, value, cas, exp, flags, seqno, 0)  # pylint: disable=no-value-for-parameter
 
     def set(self, key: bytes, exp: int, flags: int, val: bytes) -> Tuple[int, int, bytes]:
         """Set a value in the memcached server."""
         return self._mutate(couchbaseConstants.CMD_SET, key, exp, flags, 0, val)
 
-    def setWithMeta(self, key: bytes, value: bytes, exp: int, flags: int, seqno: int, remote_cas: int,
+    def set_with_meta(self, key: bytes, value: bytes, exp: int, flags: int, seqno: int, remote_cas: int,
                     options: Optional[int] = None, meta_len: Optional[int] = None) -> Tuple[int, int, bytes]:
         """Set a value and its meta data in the memcached server."""
-        return self._doMetaCmd(couchbaseConstants.CMD_SET_WITH_META,
+        return self._do_meta_cmd(couchbaseConstants.CMD_SET_WITH_META,
                                key, value, 0, exp, flags, seqno, remote_cas, options, meta_len)
 
-    def setWithRev(self, key: bytes, exp: int, flags: int, value: bytes, rev: Tuple[int, bytes]):
+    def set_with_rev(self, key: bytes, exp: int, flags: int, value: bytes, rev: Tuple[int, bytes]):
         """Set a value and its revision in the memcached server."""
         return self._doRevCmd(couchbaseConstants.CMD_SET_WITH_META,
                               key, exp, flags, value, rev)
@@ -236,11 +236,11 @@ class MemcachedClient(object):
         """Add a value in the memcached server iff it doesn't already exist."""
         return self._mutate(couchbaseConstants.CMD_ADD, key, exp, flags, 0, val)
 
-    def addWithMeta(self, key: bytes, value: bytes, exp: int, flags: int, seqno: int, remote_cas: int):
-        return self._doMetaCmd(couchbaseConstants.CMD_ADD_WITH_META,
+    def add_with_meta(self, key: bytes, value: bytes, exp: int, flags: int, seqno: int, remote_cas: int):
+        return self._do_meta_cmd(couchbaseConstants.CMD_ADD_WITH_META,
                                key, value, 0, exp, flags, seqno, remote_cas)
 
-    def addWithRev(self, key: bytes, exp: int, flags: int, value: bytes, rev: Tuple[int, bytes]):
+    def add_with_rev(self, key: bytes, exp: int, flags: int, value: bytes, rev: Tuple[int, bytes]):
         return self._doRevCmd(couchbaseConstants.CMD_ADD_WITH_META,
                               key, exp, flags, value, rev)
 
@@ -252,24 +252,24 @@ class MemcachedClient(object):
     def observe(self, key: bytes, vbucket: int) -> Tuple[int, int, int, bytes]:
         """Observe a key for persistence and replication."""
         value = struct.pack('>HH', vbucket, len(key)) + key
-        opaque, cas, data = self._doCmd(couchbaseConstants.CMD_OBSERVE, b'', value)
+        opaque, cas, data = self._do_cmd(couchbaseConstants.CMD_OBSERVE, b'', value)
         rep_time = (cas & 0xFFFFFFFF)
         persist_time = (cas >> 32) & 0xFFFFFFFF
         persisted = struct.unpack('>B', bytes(data[4+len(key)]))[0]
         return opaque, rep_time, persist_time, persisted
 
-    def __parseGet(self, data: bytes, klen: int = 0) -> Tuple[int, int, bytes]:
+    def __parse_get(self, data: bytes, klen: int = 0) -> Tuple[int, int, bytes]:
         flags = struct.unpack(couchbaseConstants.GET_RES_FMT, data[:4])[0]
         return flags, data[1], data[4 + klen:]
 
     def get(self, key: bytes) -> Tuple[int, int, bytes]:
         """Get the value for a given key within the memcached server."""
-        _, _, data = self._doCmd(couchbaseConstants.CMD_GET, key, b'')
-        return self.__parseGet(data)
+        _, _, data = self._do_cmd(couchbaseConstants.CMD_GET, key, b'')
+        return self.__parse_get(data)
 
-    def getMeta(self, key: bytes) -> Tuple[int, int, int, int, int]:
+    def get_meta(self, key: bytes) -> Tuple[int, int, int, int, int]:
         """Get the metadata for a given key within the memcached server."""
-        opaque, cas, data = self._doCmd(couchbaseConstants.CMD_GET_META, key, b'')
+        opaque, cas, data = self._do_cmd(couchbaseConstants.CMD_GET_META, key, b'')
         deleted = struct.unpack('>I', data[0:4])[0]
         flags = struct.unpack('>I', data[4:8])[0]
         exp = struct.unpack('>I', data[8:12])[0]
@@ -278,9 +278,9 @@ class MemcachedClient(object):
 
     def getl(self, key: bytes, exp: int = 15):
         """Get the value for a given key within the memcached server."""
-        _, _, data = self._doCmd(couchbaseConstants.CMD_GET_LOCKED, key, b'',
+        _, _, data = self._do_cmd(couchbaseConstants.CMD_GET_LOCKED, key, b'',
                                  struct.pack(couchbaseConstants.GETL_PKT_FMT, exp))
-        return self.__parseGet(data)
+        return self.__parse_get(data)
 
     def cas(self, key: bytes, exp: int, flags: int, oldVal: int, val: bytes):
         """CAS in a new value for the given key and comparison value."""
@@ -288,72 +288,72 @@ class MemcachedClient(object):
 
     def touch(self, key: bytes, exp: int):
         """Touch a key in the memcached server."""
-        return self._doCmd(couchbaseConstants.CMD_TOUCH, key, b'', struct.pack(couchbaseConstants.TOUCH_PKT_FMT, exp))
+        return self._do_cmd(couchbaseConstants.CMD_TOUCH, key, b'', struct.pack(couchbaseConstants.TOUCH_PKT_FMT, exp))
 
     def gat(self, key: bytes, exp: int):
         """Get the value for a given key and touch it within the memcached server."""
-        _, _, data = self._doCmd(couchbaseConstants.CMD_GAT, key, b'',
+        _, _, data = self._do_cmd(couchbaseConstants.CMD_GAT, key, b'',
                                  struct.pack(couchbaseConstants.GAT_PKT_FMT, exp))
-        return self.__parseGet(data)
+        return self.__parse_get(data)
 
     def getr(self, key: bytes):
         """Get the value for a given key in a replica vbucket within the memcached server."""
-        _, _, data = self._doCmd(couchbaseConstants.CMD_GET_REPLICA, key, b'')
-        return self.__parseGet(data, len(key))
+        _, _, data = self._do_cmd(couchbaseConstants.CMD_GET_REPLICA, key, b'')
+        return self.__parse_get(data, len(key))
 
     def version(self):
         """Get the value for a given key within the memcached server."""
-        return self._doCmd(couchbaseConstants.CMD_VERSION, b'', b'')
+        return self._do_cmd(couchbaseConstants.CMD_VERSION, b'', b'')
 
     def verbose(self, level: int):
         """Set the verbosity level."""
-        return self._doCmd(couchbaseConstants.CMD_VERBOSE, b'', b'',
-                           extraHeader=struct.pack(">I", level))
+        return self._do_cmd(couchbaseConstants.CMD_VERBOSE, b'', b'',
+                           extra_header=struct.pack(">I", level))
 
     def sasl_mechanisms(self):
         """Get the supported SASL methods."""
-        return set(self._doCmd(couchbaseConstants.CMD_SASL_LIST_MECHS, b'', b'')[2].split(b' '))
+        return set(self._do_cmd(couchbaseConstants.CMD_SASL_LIST_MECHS, b'', b'')[2].split(b' '))
 
     def sasl_auth_start(self, mech: bytes, data: bytes) -> Tuple[int, int, bytes]:
         """Start a sasl auth session."""
-        return self._doCmd(couchbaseConstants.CMD_SASL_AUTH, mech, data)
+        return self._do_cmd(couchbaseConstants.CMD_SASL_AUTH, mech, data)
 
     def sasl_auth_plain(self, user: str, password: str, foruser: str = '') -> Tuple[int, int, bytes]:
         """Perform plain auth."""
         return self.sasl_auth_start(b'PLAIN', b'\0'.join([foruser.encode(), user.encode(), password.encode()]))
 
     def stop_persistence(self) -> Tuple[int, int, bytes]:
-        return self._doCmd(couchbaseConstants.CMD_STOP_PERSISTENCE, b'', b'')
+        return self._do_cmd(couchbaseConstants.CMD_STOP_PERSISTENCE, b'', b'')
 
     def start_persistence(self) -> Tuple[int, int, bytes]:
-        return self._doCmd(couchbaseConstants.CMD_START_PERSISTENCE, b'', b'')
+        return self._do_cmd(couchbaseConstants.CMD_START_PERSISTENCE, b'', b'')
 
     def set_param(self, key: bytes, val: bytes, type: int) -> Tuple[int, int, bytes]:
         print("setting param:", key, val)
         type_bytes: bytes = struct.pack(couchbaseConstants.SET_PARAM_FMT, type)
-        return self._doCmd(couchbaseConstants.CMD_SET_PARAM, key, val, type_bytes)
+        return self._do_cmd(couchbaseConstants.CMD_SET_PARAM, key, val, type_bytes)
 
     def set_vbucket_state(self, vbucket: int, stateName: str):
         assert isinstance(vbucket, int)
-        self.vbucketId = vbucket
+        self.vbucket_id = vbucket
         state = struct.pack(couchbaseConstants.VB_SET_PKT_FMT,
                             couchbaseConstants.VB_STATE_NAMES[stateName])
-        return self._doCmd(couchbaseConstants.CMD_SET_VBUCKET_STATE, b'', b'', state)
+        return self._do_cmd(couchbaseConstants.CMD_SET_VBUCKET_STATE, b'', b'', state)
 
     def get_vbucket_state(self, vbucket: int):
         assert isinstance(vbucket, int)
-        self.vbucketId = vbucket
-        return self._doCmd(couchbaseConstants.CMD_GET_VBUCKET_STATE, b'', b'')
+        self.vbucket_id = vbucket
+        return self._do_cmd(couchbaseConstants.CMD_GET_VBUCKET_STATE, b'', b'')
 
     def delete_vbucket(self, vbucket: int):
         assert isinstance(vbucket, int)
-        self.vbucketId = vbucket
-        return self._doCmd(couchbaseConstants.CMD_DELETE_VBUCKET, b'', b'')
+        self.vbucket_id = vbucket
+        return self._do_cmd(couchbaseConstants.CMD_DELETE_VBUCKET, b'', b'')
 
     def evict_key(self, key: bytes):
-        return self._doCmd(couchbaseConstants.CMD_EVICT_KEY, key, b'')
+        return self._do_cmd(couchbaseConstants.CMD_EVICT_KEY, key, b'')
 
-    def getMulti(self, keys: Iterable[bytes]):
+    def get_multi(self, keys: Iterable[bytes]):
         """Get values for any available keys in the given iterable.
 
         Returns a dict of matched keys to their values."""
@@ -361,23 +361,23 @@ class MemcachedClient(object):
         terminal=len(opaqued)+10
         # Send all of the keys in quiet
         for k,v in opaqued.items():
-            self._sendCmd(couchbaseConstants.CMD_GETQ, v, b'', k)
+            self._send_cmd(couchbaseConstants.CMD_GETQ, v, b'', k)
 
-        self._sendCmd(couchbaseConstants.CMD_NOOP, b'', b'', terminal)
+        self._send_cmd(couchbaseConstants.CMD_NOOP, b'', b'', terminal)
 
         # Handle the response
         rv={}
         done=False
         while not done:
-            opaque, cas, data=self._handleSingleResponse(None)  # type: ignore
+            opaque, cas, data=self._handle_single_response(None)  # type: ignore
             if opaque != terminal:
-                rv[opaqued[opaque]]=self.__parseGet((opaque, cas, data))  # type: ignore
+                rv[opaqued[opaque]]=self.__parse_get((opaque, cas, data))  # type: ignore
             else:
                 done=True
 
         return rv
 
-    def setMulti(self, exp: int, flags: int, items):
+    def set_multi(self, exp: int, flags: int, items):
         """Multi-set (using setq).
 
         Give me (key, value) pairs."""
@@ -392,23 +392,23 @@ class MemcachedClient(object):
 
         # Send all of the keys in quiet
         for opaque,kv in opaqued.items():
-            self._sendCmd(couchbaseConstants.CMD_SETQ, kv[0], kv[1], opaque, extra)
+            self._send_cmd(couchbaseConstants.CMD_SETQ, kv[0], kv[1], opaque, extra)
 
-        self._sendCmd(couchbaseConstants.CMD_NOOP, b'', b'', terminal)
+        self._send_cmd(couchbaseConstants.CMD_NOOP, b'', b'', terminal)
 
         # Handle the response
         failed = []
         done=False
         while not done:
             try:
-                opaque, cas, data = self._handleSingleResponse(None)  # type: ignore
+                opaque, cas, data = self._handle_single_response(None)  # type: ignore
                 done = opaque == terminal
             except MemcachedError as e:
                 failed.append(e)
 
         return failed
 
-    def delMulti(self, items):
+    def del_multi(self, items):
         """Multi-delete (using delq).
 
         Give me a collection of keys."""
@@ -419,16 +419,16 @@ class MemcachedClient(object):
 
         # Send all of the keys in quiet
         for opaque, k in opaqued.items():
-            self._sendCmd(couchbaseConstants.CMD_DELETEQ, k, b'', opaque, extra)
+            self._send_cmd(couchbaseConstants.CMD_DELETEQ, k, b'', opaque, extra)
 
-        self._sendCmd(couchbaseConstants.CMD_NOOP, b'', b'', terminal)
+        self._send_cmd(couchbaseConstants.CMD_NOOP, b'', b'', terminal)
 
         # Handle the response
         failed = []
         done=False
         while not done:
             try:
-                opaque, cas, data = self._handleSingleResponse(None)
+                opaque, cas, data = self._handle_single_response(None)
                 done = opaque == terminal
             except MemcachedError as e:
                 failed.append(e)
@@ -438,11 +438,11 @@ class MemcachedClient(object):
     def stats(self, sub: bytes = b''):
         """Get stats."""
         opaque=self.r.randint(0, 2**32)
-        self._sendCmd(couchbaseConstants.CMD_STAT, sub, b'', opaque)
+        self._send_cmd(couchbaseConstants.CMD_STAT, sub, b'', opaque)
         done = False
         rv = {}
         while not done:
-            cmd, opaque, cas, klen, extralen, data = self._handleKeyedResponse(None)
+            cmd, opaque, cas, klen, extralen, data = self._handle_keyed_response(None)
             if klen:
                 rv[data[0:klen]] = data[klen:]
             else:
@@ -451,45 +451,45 @@ class MemcachedClient(object):
 
     def noop(self) -> Tuple[int, int, bytes]:
         """Send a noop command."""
-        return self._doCmd(couchbaseConstants.CMD_NOOP, b'', b'')
+        return self._do_cmd(couchbaseConstants.CMD_NOOP, b'', b'')
 
     def helo(self, features: List[int]) -> Tuple[int, int, Tuple[int, ...]]:
         """Send a hello command for feature checking"""
-        r1, r2, value = self._doCmd(couchbaseConstants.CMD_HELLO, b'', struct.pack('>' + ('H' * len(features)), *features))
+        r1, r2, value = self._do_cmd(couchbaseConstants.CMD_HELLO, b'', struct.pack('>' + ('H' * len(features)), *features))
         # divide length of value by 2 to find out how many 2-byte elements exist
         return r1, r2, struct.unpack('>' + ('H' * int(len(value)/2)) , value)
 
     def delete(self, key: bytes, cas: int = 0) -> Tuple[int, int, bytes]:
         """Delete the value for a given key within the memcached server."""
-        return self._doCmd(couchbaseConstants.CMD_DELETE, key, b'', b'', cas)
+        return self._do_cmd(couchbaseConstants.CMD_DELETE, key, b'', b'', cas)
 
     def flush(self, timebomb: int = 0) -> Tuple[int, int, bytes]:
         """Flush all storage in a memcached instance."""
-        return self._doCmd(couchbaseConstants.CMD_FLUSH, b'', b'',
+        return self._do_cmd(couchbaseConstants.CMD_FLUSH, b'', b'',
                            struct.pack(couchbaseConstants.FLUSH_PKT_FMT, timebomb))
 
     def bucket_select(self, name: bytes) -> Tuple[int, int, bytes]:
-        return self._doCmd(couchbaseConstants.CMD_SELECT_BUCKET, name, b'')
+        return self._do_cmd(couchbaseConstants.CMD_SELECT_BUCKET, name, b'')
 
     def restore_file(self, filename):
         """Initiate restore of a given file."""
-        return self._doCmd(couchbaseConstants.CMD_RESTORE_FILE, filename, b'', b'', 0)
+        return self._do_cmd(couchbaseConstants.CMD_RESTORE_FILE, filename, b'', b'', 0)
 
     def restore_complete(self):
         """Notify the server that we're done restoring."""
-        return self._doCmd(couchbaseConstants.CMD_RESTORE_COMPLETE, b'', b'', b'', 0)
+        return self._do_cmd(couchbaseConstants.CMD_RESTORE_COMPLETE, b'', b'', b'', 0)
 
     def deregister_tap_client(self, tap_name):
         """Deregister the TAP client with a given name."""
-        return self._doCmd(couchbaseConstants.CMD_DEREGISTER_TAP_CLIENT, tap_name, b'', b'', 0)
+        return self._do_cmd(couchbaseConstants.CMD_DEREGISTER_TAP_CLIENT, tap_name, b'', b'', 0)
 
     def reset_replication_chain(self):
         """Reset the replication chain."""
-        return self._doCmd(couchbaseConstants.CMD_RESET_REPLICATION_CHAIN, b'', b'', b'', 0)
+        return self._do_cmd(couchbaseConstants.CMD_RESET_REPLICATION_CHAIN, b'', b'', b'', 0)
 
     def audit(self, auditid, event):
         #print couchbaseConstants.CMD_AUDIT_PUT, auditid, event
 
-        #return self._doCmd(couchbaseConstants.CMD_AUDIT_PUT, '', event, \
+        #return self._do_cmd(couchbaseConstants.CMD_AUDIT_PUT, '', event, \
         #                   struct.pack(AUDIT_PKT_FMT, auditid))
         return 0

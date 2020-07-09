@@ -99,11 +99,10 @@ def fake_conn():
             s = sock
             s.connect_ex(sockaddr)
             return s
-        except socket.error as sock_error:
+        except socket.error:
             # If we get here socket objects will be close()d via
             # garbage collection.
             pass
     else:
         # Didn't break from the loop, re-raise the last error
         raise sock_error
-

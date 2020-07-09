@@ -45,8 +45,8 @@ Run python cbbackupwrapper -h for more information.
 
 See the cbrestorewrapper.py script for restoring backups made with this script."""
 
-bucketList = []
-vbucketList = []
+bucket_list = []
+vbucket_list = []
 backup_complete = False
 process_queue = queue.Queue()
 lock = threading.Lock()
@@ -99,7 +99,7 @@ def opt_parse_extra(extra, extra_defaults):
     return dict([(k, float(extra_in.get(k, extra_defaults[k][0])))
                  for k in extra_defaults.keys()])
 
-def argumentParsing():
+def argument_parsing():
     usage = "usage: %prog CLUSTER BACKUPDIR OPTIONS"
     parser = optparse.OptionParser(usage)
     opt_extra_help(parser, opt_extra_defaults())
@@ -148,7 +148,7 @@ def argumentParsing():
     return options, rest[0], rest[1]
 
 
-def findAllVbucketsForBucket(node: str, bucket: str, restport: str, username: str, password: str,
+def find_all_vbuckets_for_bucket(node: str, bucket: str, restport: str, username: str, password: str,
                              single_node: bool) -> List[Any]:
     cluster = "http://" + node + ":" + restport
     rest = ClusterManager(cluster, username, password, False, False, None, False)
@@ -158,33 +158,33 @@ def findAllVbucketsForBucket(node: str, bucket: str, restport: str, username: st
 
     if not single_node:
         return list(range(len(result['vBucketServerMap']['vBucketMap'])))
-    else:
-        thisNode = None
-        for node in result["nodes"]:
-            if "thisNode" in node and node["thisNode"]:
-                thisNode = node["hostname"].split(":")[0]
-                break
 
-        if thisNode == None:
-            _exit_if_errors(["Unable to find vbuckets for %s, could not locate thisNode" % cluster])
+    this_node = None
+    for node in result["nodes"]:
+        if "thisNode" in node and node["thisNode"]:
+            this_node = node["hostname"].split(":")[0]
+            break
 
-        serverIdx = None
-        serverList = result['vBucketServerMap']['serverList']
-        for index in range(len(serverList)):
-            if serverList[index].split(":")[0] == thisNode:
-                serverIdx = index
-                break
+    if this_node is None:
+        _exit_if_errors(["Unable to find vbuckets for %s, could not locate thisNode" % cluster])
 
-        if serverIdx == None:
-            _exit_if_errors(["Unable to find vbuckets for %s, thisNode not in serverList" % cluster])
+    server_idx = None
+    server_list = result['vBucketServerMap']['serverList']
+    for index in range(len(server_list)):
+        if server_list[index].split(":")[0] == this_node:
+            server_idx = index
+            break
 
-        vbucketList = []
-        vbucketMap = result['vBucketServerMap']['vBucketMap']
-        for vbid in range(len(vbucketMap)):
-            if vbucketMap[vbid][0] == serverIdx:
-                vbucketList.append(vbid)
+    if server_idx is None:
+        _exit_if_errors(["Unable to find vbuckets for %s, thisNode not in serverList" % cluster])
 
-        return vbucketList
+    vbucket_list = []
+    vbucket_map = result['vBucketServerMap']['vBucketMap']
+    for vbid in range(len(vbucket_map)):
+        if vbucket_map[vbid][0] == server_idx:
+            vbucket_list.append(vbid)
+
+    return vbucket_list
 
 
 # Get the buckets that exist on the cluster
@@ -198,15 +198,16 @@ def getBuckets(node: str, rest_port: str, username: str, password: str) -> List[
     except:
         print('Authorization failed.  Please check username and password.')
         sys.exit(1)
-    bucketsOnCluster = []
+
+    buckets_on_cluster = []
     data = json.loads(response.read())
     for item in data:
         if item['bucketType'] == 'memcached':
             print(f'skipping bucket that is not a couchbase-bucket: {item["name"]}')
         else:
             bucket = item['name']
-            bucketsOnCluster.append(bucket)
-    return bucketsOnCluster
+            buckets_on_cluster.append(bucket)
+    return buckets_on_cluster
 
 
 def consumer(id: int, verbose: bool):
@@ -233,26 +234,26 @@ def consumer(id: int, verbose: bool):
 
 if __name__ == '__main__':
     # Parse the arguments given.
-    args, cluster, backupDir = argumentParsing()
+    args, cluster, backup_dir = argument_parsing()
 
     backup_exe = 'cbbackup'
     if platform.system() == "Windows":
         backup_exe = 'cbbackup.exe'
 
     # Remove any white-spaces from start and end of strings
-    backupDir = backupDir.strip()
+    backup_dir = backup_dir.strip()
     path = args.path.strip()
     if path == ".":
         path = os.path.abspath(path)
-    if backupDir == ".":
-        backupDir = os.path.abspath(backupDir)
+    if backup_dir == ".":
+        backup_dir = os.path.abspath(backup_dir)
 
     # Check to see if root backup directory exists
-    if not os.path.isdir(backupDir):
+    if not os.path.isdir(backup_dir):
         try:
-            os.makedirs(backupDir)
+            os.makedirs(backup_dir)
         except:
-            sys.exit(f'Cannot create backup root directory: {backupDir}')
+            sys.exit(f'Cannot create backup root directory: {backup_dir}')
 
     # Check to see if path is correct
     if not os.path.isdir(path):
@@ -264,7 +265,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # Check to see if log directory exists if not create it
-    dir = os.path.join(backupDir, 'logs')
+    dir = os.path.join(backup_dir, 'logs')
     try:
         os.stat(dir)
     except:
@@ -286,31 +287,31 @@ if __name__ == '__main__':
 
     # Check to see if backing-up all buckets or just a specified bucket
     if args.bucket_source == '':
-        bucketList = getBuckets(
+        bucket_list = getBuckets(
             node, rest, args.username, args.password)
     else:
         # Check that the bucket exists
         for item in getBuckets(node, rest, args.username, args.password):
             if item == args.bucket_source:
-                bucketList.append(args.bucket_source)
+                bucket_list.append(args.bucket_source)
 
-        if len(bucketList) == 0:
+        if len(bucket_list) == 0:
             print(f'Bucket {args.bucket_source} does not exist')
             print('Please enter a different bucket')
             sys.exit(1)
 
     # For each bucket
-    for item in bucketList:
-        perbucketvbucketlist = findAllVbucketsForBucket(
+    for item in bucket_list:
+        perbucketvbucketlist = find_all_vbuckets_for_bucket(
             node, item, rest, args.username, args.password, args.single_node)
         for item in perbucketvbucketlist:
-            if item not in vbucketList:
-                vbucketList.append(item)
+            if item not in vbucket_list:
+                vbucket_list.append(item)
 
     # If a bucket was specfified then set-up the string to pass to cbbackup.
     specific_bucket = ''
-    if len(bucketList) == 1:
-        specific_bucket = ' -b ' + bucketList[0]
+    if len(bucket_list) == 1:
+        specific_bucket = ' -b ' + bucket_list[0]
 
     extra_options = ''
     if args.extra:
@@ -334,14 +335,14 @@ if __name__ == '__main__':
     # Group the number of vbuckets per process
     print('Waiting for the backup to complete...')
     processes = []
-    for i in range(0, len(vbucketList), int(args.number)):
-        chunk = vbucketList[i:i + int(args.number)]
+    for i in range(0, len(vbucket_list), int(args.number)):
+        chunk = vbucket_list[i:i + int(args.number)]
         vbucketsname = str(chunk[0]) + '-' + str(chunk[-1])
         command_line = '"' + os.path.join(path, backup_exe) + '"' + ' -v -t 1 --vbucket-list=' \
             + ''.join(str(chunk).split()) + ' http://' + node + ':' + rest + ' ' \
-            + '"' + os.path.join(backupDir, vbucketsname) + '"' + ' -u ' + args.username \
+            + '"' + os.path.join(backup_dir, vbucketsname) + '"' + ' -u ' + args.username \
             + ' -p ' + args.password + extra_options + mode_options + ssl_option + specific_bucket \
-            + ' 2> ' + '"' + os.path.join(backupDir, 'logs', vbucketsname) + '.err' + '"'
+            + ' 2> ' + '"' + os.path.join(backup_dir, 'logs', vbucketsname) + '.err' + '"'
         process_queue.put(command_line)
 
     process_queue.join()

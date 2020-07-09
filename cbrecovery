@@ -10,10 +10,11 @@ import logging
 import os
 import platform
 import re
-import string
 import sys
 import time
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 
 import json
 
@@ -22,6 +23,7 @@ import pump_transfer
 import pump
 import pump_dcp
 import pump_cb
+
 
 class Recovery(pump_transfer.Transfer):
     """Entry point for 2.0 cbrecovery."""
@@ -67,7 +69,7 @@ class Recovery(pump_transfer.Transfer):
         self.sink_bucket = getattr(opts, "bucket_destination", "default")
         self.source_bucket = getattr(opts, "bucket_source", "default")
 
-        #communicate with destination before data transferring
+        # communicate with destination before data transferring
         err, cmd = self.pre_transfer(opts, source, sink)
         if err:
             return self.explain_error(err, cmd)
@@ -81,14 +83,14 @@ class Recovery(pump_transfer.Transfer):
             err, cmd = self.post_transfer(opts, source, sink, None)
             return self.explain_error(err, cmd)
 
-        #only care about data recovery
+        # only care about data recovery
         argv.append("--extra")
         argv.append("data_only=1,conflict_resolve=0,allow_recovery_vb_remap=1")
 
-        for i, node in enumerate(self.recovery_map):
+        for _, node in enumerate(self.recovery_map):
             for vbucket in node["vbuckets"]:
                 if opts.id is None or int(opts.id) == int(vbucket):
-                    node_map = { node["node"]: [vbucket] }
+                    node_map = {node["node"]: [vbucket]}
                     temp_argv = copy.deepcopy(argv)
                     temp_argv.append("--vbucket-list")
                     temp_argv.append(json.dumps(node_map))
@@ -126,23 +128,21 @@ class Recovery(pump_transfer.Transfer):
 
     def pre_transfer(self, opts, source, sink):
 
-        host, port, user, pwd, path = \
-            pump.parse_spec(opts, sink, 8091)
+        host, port, user, pwd, path = pump.parse_spec(opts, sink, 8091)
 
-        #retrieve a list of missing vbucket
+        # retrieve a list of missing vbucket
         cmd = "startRecovery"
         url = f'/pools/default/buckets/{self.sink_bucket}/controller/{cmd}'
-        err, conn, response = \
-            pump.rest_request(host, int(port), user, pwd, opts.ssl,
-                              url, method='POST', reason='start_recovery')
+        err, conn, response = pump.rest_request(host, int(port), user, pwd, opts.ssl, url, method='POST',
+                                                reason='start_recovery')
         if err:
             return err, cmd
         response = json.loads(response)
-        recoveryMap = response.get('recoveryMap', None)
-        if not recoveryMap:
+        recovery_map = response.get('recoveryMap', None)
+        if not recovery_map:
             return "Missing recovery map from response", None
         else:
-            self.recovery_map = recoveryMap
+            self.recovery_map = recovery_map
         self.recovery_uuid = response.get('uuid', None)
 
         return None, None
@@ -151,8 +151,7 @@ class Recovery(pump_transfer.Transfer):
         if not self.sink_bucket:
             return "Should specify destionation bucket for restore"
 
-        host, port, user, pwd, path = \
-            pump.parse_spec(opts, sink, 8091)
+        host, port, user, pwd, path = pump.parse_spec(opts, sink, 8091)
         if opts.dry_run:
             cmd = "stopRecovery"
             reason_msg = "Stop recovery"
@@ -165,17 +164,14 @@ class Recovery(pump_transfer.Transfer):
             params = None
         url = f'/pools/default/buckets/{self.sink_bucket}/controller/{cmd}?recovery_uuid={self.recovery_uuid}'
         post_headers = {"Content-type": "application/x-www-form-urlencoded"}
-        err, conn, response = \
-            pump.rest_request(host, int(port), user, pwd, False,
-                              url, method='POST', body=params,
-                              reason=reason_msg,
-                              headers=post_headers)
+        err, _, _ = pump.rest_request(host, int(port), user, pwd, False, url, method='POST', body=params,
+                                                reason=reason_msg,
+                                                headers=post_headers)
         if err:
             return err, cmd
-        elif vbucket:
+        if vbucket:
             logging.debug(f'Recover and activate vbucket: {vbucket}')
         return None, None
-
 
     def opt_parser_options(self, p):
 
@@ -198,7 +194,7 @@ class Recovery(pump_transfer.Transfer):
         if cmd not in self.err_map:
             logging.error(err)
             return
-        pattern = ';\sresponse:\s(.+);\sreason'
+        pattern = r';\sresponse:\s(.+);\sreason'
         m = re.search(pattern, err)
         if m:
             errcode = m.groups()[0]
@@ -208,6 +204,7 @@ class Recovery(pump_transfer.Transfer):
                 logging.error(f'Error: unknown error code:{errcode}')
         else:
             logging.error(err)
+
 
 if __name__ == '__main__':
     if platform.system() == "Windows":

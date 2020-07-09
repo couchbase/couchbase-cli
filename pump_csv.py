@@ -6,14 +6,16 @@ import os
 import json
 import sys
 import struct
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
+import snappy  # pylint: disable=import-error
 
-from typing import Tuple, Union, Any, Dict, List, Optional
+from typing import Tuple, Any, Dict, Optional
 from ast import literal_eval
 
 import couchbaseConstants
 import pump
-import snappy # pylint: disable=import-error
 
 # Our max document size is 20MB, but let's make this extra large in case the
 # are spaces and such that can be removed before sending to Couchbase.
@@ -40,7 +42,7 @@ class CSVSource(pump.Source):
         super(CSVSource, self).__init__(opts, spec, source_bucket, source_node,
                                         source_map, sink_map, ctl, cur)
         self.done = False
-        self.r = None # An iterator of csv.reader()
+        self.r = None  # An iterator of csv.reader()
 
     @staticmethod
     def can_handle(opts, spec: str) -> bool:
@@ -65,7 +67,7 @@ class CSVSource(pump.Source):
             try:
                 self.r = csv.reader(open(self.spec, 'r', encoding='utf-8'))
                 self.fields = next(self.r)
-                if not 'id' in self.fields:
+                if 'id' not in self.fields:
                     return f'error: no \'id\' field in 1st line of csv: {self.spec}', None
             except StopIteration:
                 return f'error: could not read 1st line of csv: {self.spec}', None
@@ -80,9 +82,9 @@ class CSVSource(pump.Source):
         cmd = couchbaseConstants.CMD_TAP_MUTATION
         vbucket_id = 0x0000ffff
 
-        while (self.r and
-               batch.size() < batch_max_size and
-               batch.bytes < batch_max_bytes):
+        while (self.r
+               and batch.size() < batch_max_size
+               and batch.bytes < batch_max_bytes):
             try:
                 vals = next(self.r)
                 doc = {}
@@ -125,14 +127,12 @@ class CSVSink(pump.Sink):
     def bucket_name(self) -> str:
         if 'name' in self.source_bucket:
             return self.source_bucket['name']
-        else:
-            return ""
+        return ""
 
     def node_name(self) -> str:
         if 'hostname' in self.source_node:
             return self.source_node['hostname']
-        else:
-            return ""
+        return ""
 
     @staticmethod
     def can_handle(opts, spec: str) -> bool:
@@ -189,7 +189,7 @@ class CSVSink(pump.Sink):
                 if self.spec.endswith(".csv"):
                     filename = self.get_csvfile(self.spec[len(CSVSink.CSV_SCHEME):])
                     try:
-                        self.csvfile = open(filename, "w",  encoding='utf-8')
+                        self.csvfile = open(filename, "w", encoding='utf-8')
                     except IOError as e:
                         return f'error: could not write csv to file: {filename}', None
                 self.writer = csv.writer(self.csvfile)
@@ -220,15 +220,15 @@ class CSVSink(pump.Sink):
                                 if type(doc) == dict:
                                     for field in self.fields:
                                         if field == 'id':
-                                            row.append(pump.returnString(key))
+                                            row.append(pump.return_string(key))
                                         else:
                                             row.append(doc[field])
                                     self.writer.writerow(row)
                             except ValueError:
                                 pass
                     else:
-                        #rev = self.convert_meta(meta)
-                        self.writer.writerow([pump.returnString(key), flg, exp, cas, val_bytes, meta, vbucket_id, dtype])
+                        self.writer.writerow([pump.return_string(key), flg, exp, cas,
+                                             val_bytes, meta, vbucket_id, dtype])
                 elif cmd in [couchbaseConstants.CMD_TAP_DELETE, couchbaseConstants.CMD_DCP_DELETE]:
                     pass
                 elif cmd == couchbaseConstants.CMD_GET:

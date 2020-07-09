@@ -7,11 +7,11 @@ import socket
 import struct
 import time
 import sys
-from typing import Tuple, Any, Optional, Dict, List, Union
+from typing import Tuple, Any, Optional, Dict, List
+import snappy # pylint: disable=import-error
 import cb_bin_client
 import couchbaseConstants
 import pump
-import snappy # pylint: disable=import-error
 from cb_util import tag_user_data
 
 try:
@@ -42,6 +42,7 @@ OP_MAP_WITH_META = {
     }
 
 ATR_EXP = re.compile(r'_txn:atr-\d+-#([a-f1-9]+)$')
+
 
 def to_bytes(bytes_or_str):
     if isinstance(bytes_or_str, str):
@@ -87,7 +88,7 @@ class MCSink(pump.Sink):
             return f'error: only --destination-vbucket-state=active is supported by this destination: {spec}'
 
         op = getattr(opts, "destination_operation", None)
-        if not op in [None, 'set', 'add', 'get']:
+        if op not in [None, 'set', 'add', 'get']:
             return f'error: --destination-operation unsupported value: {op}; use set, add, get'
         # Skip immediate superclass Sink.check_base(),
         # since MCSink can handle different destination operations.
@@ -106,7 +107,7 @@ class MCSink(pump.Sink):
                 self.close_mconns(mconns)
                 return
 
-            backoff = 0.1 # Reset backoff after a good batch.
+            backoff = 0.1  # Reset backoff after a good batch.
 
             while batch:  # Loop in case retry is required.
                 rv, batch, need_backoff = self.scatter_gather(mconns, batch)
@@ -335,7 +336,7 @@ class MCSink(pump.Sink):
             val = val[xattr_len_int+4:]
             data_type = 0x00  # Raw bytes
             try:
-                valid_json = json.loads(val.decode())
+                _ = json.loads(val.decode())
                 data_type = 0x01  # Raw json
             except Exception as e:
                 data_type = 0x00
@@ -350,7 +351,7 @@ class MCSink(pump.Sink):
         return False, new_val, cas, exp, revid, data_type
 
     @staticmethod
-    def format_multipath_mutation(key: bytes, value: bytes, vbucketId: int, cas: int = 0, opaque: int = 0) -> \
+    def format_multipath_mutation(key: bytes, value: bytes, vbucket_id: int, cas: int = 0, opaque: int = 0) -> \
             Tuple[couchbaseConstants.PUMP_ERROR, couchbaseConstants.REQUEST]:
         empty_tuple = (b'', None, None, None, None)
         try:
@@ -380,13 +381,13 @@ class MCSink(pump.Sink):
 
         msg_head = struct.pack(couchbaseConstants.REQ_PKT_FMT, couchbaseConstants.REQ_MAGIC_BYTE,
                                couchbaseConstants.CMD_SUBDOC_MULTIPATH_MUTATION, len(key),
-                               1, 0, vbucketId, total_body_len, opaque, cas)
+                               1, 0, vbucket_id, total_body_len, opaque, cas)
         extras = struct.pack(">B", couchbaseConstants.SUBDOC_FLAG_MKDOC)
 
         return 0, (msg_head+extras+key+subcmd_msg0+subcmd_msg1, None, None, None, None)
 
     @staticmethod
-    def format_multipath_lookup(key: bytes, value: bytes, vbucketId: int, cas: int = 0, opaque: int = 0) -> \
+    def format_multipath_lookup(key: bytes, value: bytes, vbucket_id: int, cas: int = 0, opaque: int = 0) -> \
             Tuple[couchbaseConstants.PUMP_ERROR, couchbaseConstants.REQUEST]:
         empty_tuple = (b'', None, None, None, None)
         try:
@@ -408,7 +409,7 @@ class MCSink(pump.Sink):
         total_body_len = len(subcmd_msg0) + len(subcmd_msg1) + len(key)
         msg_head = struct.pack(couchbaseConstants.REQ_PKT_FMT, couchbaseConstants.REQ_MAGIC_BYTE,
                                couchbaseConstants.CMD_SUBDOC_MULTIPATH_LOOKUP, len(key),
-                               0, 0, vbucketId, total_body_len, opaque, cas)
+                               0, 0, vbucket_id, total_body_len, opaque, cas)
 
         return 0, (msg_head+key+subcmd_msg0+subcmd_msg1, None, None, None, None)
 
@@ -450,8 +451,6 @@ class MCSink(pump.Sink):
                 if r_status == couchbaseConstants.ERR_SUCCESS:
                     continue
                 elif r_status == couchbaseConstants.ERR_KEY_EEXISTS:
-                    #logging.warn("item exists: %s, key: %s" %
-                    #             (self.spec, tag_user_data(key)))
                     continue
                 elif r_status == couchbaseConstants.ERR_KEY_ENOENT:
                     if (cmd != couchbaseConstants.CMD_TAP_DELETE and
@@ -461,8 +460,8 @@ class MCSink(pump.Sink):
                 elif (r_status == couchbaseConstants.ERR_ETMPFAIL or
                       r_status == couchbaseConstants.ERR_EBUSY or
                       r_status == couchbaseConstants.ERR_ENOMEM):
-                    retry = True # Retry the whole batch again next time.
-                    continue     # But, finish recv'ing current batch.
+                    retry = True  # Retry the whole batch again next time.
+                    continue      # But, finish recv'ing current batch.
                 elif r_status == couchbaseConstants.ERR_NOT_MY_VBUCKET:
                     str_msg = f'received NOT_MY_VBUCKET; perhaps the cluster is/was rebalancing;' \
                         f' vbucket_id: {vbucket_id_msg}, key: {tag_user_data(key)}, spec: {self.spec},' \
@@ -481,7 +480,7 @@ class MCSink(pump.Sink):
                             return f'error: unknown command: {r_cmd}', None, None
                     else:
                         if not retry:
-                            logging.warn("destination does not take XXX-WITH-META"
+                            logging.warning("destination does not take XXX-WITH-META"
                                          " commands; will use META-less commands")
                         self.op_map = OP_MAP
                         retry = True
@@ -500,7 +499,7 @@ class MCSink(pump.Sink):
             # The source gave no meta, so use regular commands.
             self.op_map = OP_MAP
 
-        if cmd in[couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_DCP_MUTATION]:
+        if cmd in [couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_DCP_MUTATION]:
             m = self.op_map.get(op, None)
             if m:
                 return 0, m
@@ -535,7 +534,7 @@ class MCSink(pump.Sink):
 
     @staticmethod
     def check(opts, spec: str, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[Dict[str, Any]]]:
-        host, port, user, pswd, path = pump.parse_spec(opts, spec, int(getattr(opts, "port", 11211)))
+        host, port, user, pswd, _ = pump.parse_spec(opts, spec, int(getattr(opts, "port", 11211)))
         if opts.ssl:
             ports = couchbaseConstants.SSL_PORT
         rv, conn = MCSink.connect_mc(host, port, user, pswd, None, opts.ssl, opts.no_ssl_verify, opts.cacert)

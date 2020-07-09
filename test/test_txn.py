@@ -158,4 +158,3 @@ class TestFilterOutTXN(unittest.TestCase):
         data_set.extend(self.generate_test_set(DataSetType.ATR, 10))
         data_set.extend(self.generate_test_set(DataSetType.TXN_CLIENT_RECORD, 1))
         self.run_data_set(data_set)
-

@@ -5,12 +5,11 @@ import logging
 import optparse
 import os
 import random
-import sqlite3
 import string
 import sys
 import threading
 
-from typing import Optional, Union, Tuple, List, Dict
+from typing import Optional
 
 import pump
 import pump_bfd

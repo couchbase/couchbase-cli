@@ -5,10 +5,7 @@ import tempfile
 import unittest
 import sys
 import json
-import itertools
 from io import StringIO
-import time
-import threading
 from cbmgr import CouchbaseCLI, CollectionManage
 from mock_server import MockRESTServer
 
@@ -30,8 +27,8 @@ class ExpandCollectionTest(unittest.TestCase):
         for test_val, expected in test_and_result.items():
             scope, collection, err = CollectionManage.expand_collection_shortcut(test_val)
             self.assertEqual(err, None, 'Unexpected error')
-            self.assertEqual(expected[0], scope, f'incorrect scope')
-            self.assertEqual(expected[1], collection, f'incorrect collection')
+            self.assertEqual(expected[0], scope, 'incorrect scope')
+            self.assertEqual(expected[1], collection, 'incorrect collection')
 
     def test_expand_collection_invalid_paths(self):
         test = [
@@ -225,7 +222,7 @@ class TestBucketCreate(CommandTest):
                                              '--parallel-db-view-compaction', '1', '--purge-interval', '2']
 
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
-                            'buckets':[]}
+                            'buckets': []}
 
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
         self.bucket_memcached = {'name': 'name', 'bucketType': 'memcached'}
@@ -305,12 +302,13 @@ class TestBucketCreate(CommandTest):
         self.system_exit_run(self.command + self.command_args + args, self.server_args)
         self.assertIn('--durability-min-level cannot be specified for a memcached bucket', self.str_output)
 
+
 class TestBucketDelete(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'bucket-delete'] + cluster_connect_args
         self.command_args = ['--bucket', 'name']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
-                            'buckets':[]}
+                            'buckets': []}
 
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
         self.bucket_memcached = {'name': 'name', 'bucketType': 'memcached'}
@@ -338,7 +336,7 @@ class TestBucketEdit(CommandTest):
                                              '--view-fragmentation-threshold-percentage', '20',
                                              '--parallel-db-view-compaction', '1', '--purge-interval', '2']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
-                            'buckets':[]}
+                            'buckets': []}
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
         self.bucket_memcached = {'name': 'name', 'bucketType': 'memcached'}
         super(TestBucketEdit, self).setUp()
@@ -482,7 +480,7 @@ class TestFailover(CommandTest):
         self.server_args['pools_default'] = {'nodes': [
             {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'healthy',
              'clusterMembership': 'active'},
-            {'otpNode': 'ns1@some-host','hostname': 'some-host:6789', 'status': 'healthy',
+            {'otpNode': 'ns1@some-host', 'hostname': 'some-host:6789', 'status': 'healthy',
              'clusterMembership': 'active'}
         ]}
         self.server_args['tasks'] = [{'type': 'rebalance', 'status': 'notRunning'}]
@@ -577,7 +575,8 @@ class TestGroupManage(CommandTest):
         json_arr = json.loads(self.server.rest_params[0])
         expected_out = [
             {"nodes": [], "name": "name", "uri": "/pools/default/serverGroups/0"},
-            {"nodes": [{"hostname": "n1:8091"}, {"hostname": "n2:8091"}], "name": "name1", "uri": "/pools/default/serverGroups/1"}
+            {"nodes": [{"hostname": "n1:8091"}, {"hostname": "n2:8091"}], "name": "name1",
+             "uri": "/pools/default/serverGroups/1"}
         ]
         self.assertEqual(len(json_arr['groups']), len(expected_out))
         for e in expected_out:
@@ -647,7 +646,7 @@ class TestNodeInit(CommandTest):
         ]
         self.rest_parameter_match(expected_params)
 
-    def test_node_init_ipv6(self):
+    def test_node_init_ipv4(self):
         self.no_error_run(self.command + self.name_args + ['--ipv4'], self.server_args)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
@@ -667,7 +666,7 @@ class TestRebalance(CommandTest):
         self.server_args['pools_default'] = {'nodes': [
             {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'healthy',
              'clusterMembership': 'active'},
-            {'otpNode': 'ns1@some-host','hostname': 'some-host:6789', 'status': 'healthy',
+            {'otpNode': 'ns1@some-host', 'hostname': 'some-host:6789', 'status': 'healthy',
              'clusterMembership': 'active'}
         ]}
         self.server_args['tasks'] = [{'type': 'rebalance', 'status': 'notRunning'}]
@@ -697,7 +696,7 @@ class TestServerAdd(CommandTest):
              'addNodeURI': '/pools/default/serverGroups/0/addNode',
              'nodes': [{'hostname': 'n1:8091'}, {'hostname': 'n2:8091'}]},
             {'name': 'name1', 'uri': '/pools/default/serverGroups/1',
-             'addNodeURI': '/pools/default/serverGroups/1/addNode','nodes': []}
+             'addNodeURI': '/pools/default/serverGroups/1/addNode', 'nodes': []}
         ], 'uri': '/pools/default/serverGroups/rev=1'}
         self.server_args['indexes-settings'] = {'logLevel': 'info', 'indexerThreads': 0, 'storageMode': 'plasma',
                                 'stableSnapshotInterval': 5000, 'maxRollbackPoints': 2, 'memorySnapshotInterval': 200}
@@ -974,7 +973,7 @@ class TestSettingCompaction(CommandTest):
 
     def test_all_settings_circular(self):
         self.no_error_run(self.command + self.basic_args+ self.circular_args, self.server_args)
-        expected_params =['allowedTimePeriod%5BtoMinute%5D=0', 'databaseFragmentationThreshold%5Bpercentage%5D=10',
+        expected_params = ['allowedTimePeriod%5BtoMinute%5D=0', 'databaseFragmentationThreshold%5Bpercentage%5D=10',
          'allowedTimePeriod%5BtoHour%5D=15', 'indexCircularCompaction%5Binterval%5D%5BabortOutside%5D=true',
          'indexCompactionMode=circular', 'allowedTimePeriod%5BfromMinute%5D=0',
          'viewFragmentationThreshold%5Bsize%5D=31457280', 'indexCircularCompaction%5Binterval%5D%5BfromMinute%5D=0',
@@ -1253,7 +1252,8 @@ class TestUserManage(CommandTest):
 
     def test_set_local_user(self):
         self.no_error_run(self.command + ['--set', '--rbac-username', 'username', '--rbac-password', 'pwd',
-                                          '--auth-domain', 'local', '--roles', 'admin', '--rbac-name', 'name', '--user-groups', ''],
+                                          '--auth-domain', 'local', '--roles', 'admin', '--rbac-name', 'name',
+                                          '--user-groups', ''],
                           self.server_args)
         self.assertIn('PUT:/settings/rbac/users/local/username', self.server.trace)
         expected_params = ['name=name', 'password=pwd', 'roles=admin', 'groups=']
@@ -1269,7 +1269,8 @@ class TestUserManage(CommandTest):
 
     def test_set_external_user(self):
         self.no_error_run(self.command + ['--set', '--rbac-username', 'username', '--auth-domain',
-                                         'external', '--roles', 'admin', '--rbac-name', 'name', '--user-groups', ''], self.server_args)
+                                         'external', '--roles', 'admin', '--rbac-name', 'name', '--user-groups', ''],
+                                         self.server_args)
         self.assertIn('PUT:/settings/rbac/users/external/username', self.server.trace)
         expected_params = ['name=name', 'roles=admin', 'groups=']
         self.rest_parameter_match(expected_params)
@@ -1479,7 +1480,7 @@ class TestCollectionManage(CommandTest):
         self.assertIn('DELETE:/pools/default/buckets/name/collections/scope_1', self.server.trace)
 
     def list_scopes(self):
-        self.server_args['collection_manifest'] = {"scope_1":{"collection_1":{}}, "scope_2":{"collection_2":{}}}
+        self.server_args['collection_manifest'] = {"scope_1": {"collection_1": {}}, "scope_2": {"collection_2": {}}}
         self.no_error_run(self.command + ['--list-scopes'], self.server_args)
         self.assertIn('GET:/pools/default/buckets/name/collections', self.server.trace)
         expected_out = ['scope_1', 'scope_2']
@@ -1498,7 +1499,7 @@ class TestCollectionManage(CommandTest):
         self.assertIn('DELETE:/pools/default/buckets/name/collections/scope_1/collection_1', self.server.trace)
 
     def list_collections(self):
-        self.server_args['collection_manifest'] = {"scope_1":{"collection_1":{}, "collection_2":{}}}
+        self.server_args['collection_manifest'] = {"scope_1": {"collection_1": {}, "collection_2": {}}}
         self.no_error_run(self.command + ['--list-collections', 'scope_1'], self.server_args)
         self.assertIn('GET:/pools/default/buckets/name/collections', self.server.trace)
         expected_out = ['collection_1', 'collection_2']
@@ -1538,7 +1539,7 @@ class TestSettingLdap(CommandTest):
         user_key_file_name = user_key_file.name
         user_key_file.write(b'this-is-the-user-key-file')
         user_key_file.close()
-        cert_args =['--client-cert', user_cert_file_name,  '--client-key', user_key_file_name]
+        cert_args = ['--client-cert', user_cert_file_name, '--client-key', user_key_file_name]
 
         self.no_error_run(self.command + self.authentication_args + self.authorization_args + cert_args,
                           self.server_args)
@@ -1554,7 +1555,7 @@ class TestSettingLdap(CommandTest):
                            'nestedGroupsEnabled=true', 'nestedGroupsMaxDepth=10',
                            'groupsQuery=%25D%3FmemberOf%3Fbase', 'serverCertValidation=false',
                            'clientTLSCert=this-is-the-user-cert-file',
-                           'clientTLSKey=this-is-the-user-key-file' ]
+                           'clientTLSKey=this-is-the-user-key-file']
         self.rest_parameter_match(expected_params)
 
 
@@ -1564,31 +1565,31 @@ class TestIpFamily(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestIpFamily, self).setUp()
 
-    def testGetSingleNode(self):
+    def test_get_single_node(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Cluster using ipv4', self.str_output)
         self.assertIn('GET:/pools/nodes', self.server.trace)
 
-    def testGetMultipleNode(self):
+    def test_get_multiple_nodes(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet6'}, {'addressFamily': 'inet6'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Cluster using ipv6', self.str_output)
         self.assertIn('GET:/pools/nodes', self.server.trace)
 
-    def testGetMultipleNodeTLS(self):
+    def test_get_multiple_node_TLS(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet6_tls'}, {'addressFamily': 'inet6_tls'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Cluster using ipv6', self.str_output)
         self.assertIn('GET:/pools/nodes', self.server.trace)
 
-    def testGetMultipleNodeMixed(self):
+    def test_get_multiple_node_mixed(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet'}, {'addressFamily': 'inet6_tls'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Cluster is in mixed mode', self.str_output)
         self.assertIn('GET:/pools/nodes', self.server.trace)
 
-    def testSetIPv4(self):
+    def test_set_ipv4(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv4'], self.server_args)
@@ -1600,7 +1601,7 @@ class TestIpFamily(CommandTest):
         expected_params = ['afamily=ipv4', 'afamily=ipv4', 'afamily=ipv6']
         self.rest_parameter_match(expected_params, True)
 
-    def testSetIPv6(self):
+    def test_set_ipv6(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv6'], self.server_args)
@@ -1619,26 +1620,26 @@ class TestClusterEncryption(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestClusterEncryption, self).setUp()
 
-    def testErrorDisableAndEnable(self):
+    def test_error_disable_and_enable(self):
         self.system_exit_run(self.command + ['--enable', '--disable'], self.server_args)
 
-    def testGetEncryptionFalse(self):
+    def test_get_encryption_false(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'nodeEncryption': False, 'hostname': 'host1'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Node-to-node encryption is disabled', self.str_output)
 
-    def testGetEncryptionTrue(self):
+    def test_get_encryption_true(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'nodeEncryption': True, 'hostname': 'host1'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Node-to-node encryption is enabled', self.str_output)
 
-    def testGetEncryptionMixedMode(self):
+    def test_get_encryption_mixed_mode(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'nodeEncryption': True, 'hostname': 'host1'},
                                                       {'nodeEncryption': False, 'hostname': 'host2'}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
         self.assertIn('Cluster is in mixed mode', self.str_output)
 
-    def testEnableClusterEncryptionIPv4(self):
+    def test_enable_cluster_encryption_ipv4(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--enable'], self.server_args)
@@ -1647,7 +1648,7 @@ class TestClusterEncryption(CommandTest):
         self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
         self.rest_parameter_match(['nodeEncryption=on', 'nodeEncryption=on', 'nodeEncryption=off'])
 
-    def testDisableClusterEncryptionIPv4(self):
+    def test_disable_cluster_encryption_ipv4(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--disable'], self.server_args)
@@ -1663,59 +1664,60 @@ class TestSettingRebalance(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestSettingRebalance, self).setUp()
 
-    def testCEInvalid(self):
+    def test_ce_invalid(self):
         self.server_args['enterprise'] = False
         self.system_exit_run(self.command + ['--set', '--enable', '1'], self.server_args)
         self.assertIn('Automatic rebalance retry configuration is an Enterprise Edition only feature', self.str_output)
 
-    def testCEValid(self):
+    def test_ce_valid(self):
         self.server_args['enterprise'] = False
         self.no_error_run(self.command + ['--set', '--moves-per-node', '10'], self.server_args)
         self.assertIn('Rebalance settings updated', self.str_output)
         expected_params = ['rebalanceMovesPerNode=10']
         self.rest_parameter_match(expected_params)
 
-    def testMoreThanOneAction(self):
+    def test_more_than_one_action(self):
         self.system_exit_run(self.command + ['--get', '--set'], self.server_args)
         self.assertIn('Provide either --set, --get, --cancel or --pending-info', self.str_output)
 
-    def testGetHumanFriendly(self):
+    def test_get_human_friendly(self):
         self.server_args['/settings/retryRebalance'] = {"enabled": False, "afterTimePeriod": 300, "maxAttempts": 1}
-        self.server_args['/settings/rebalance'] = {"rebalanceMovesPerNode": 4,}
+        self.server_args['/settings/rebalance'] = {"rebalanceMovesPerNode": 4}
         self.no_error_run(self.command + ['--get'], self.server_args)
         expected_output = ['Automatic rebalance retry disabled', 'Retry wait time: 300', 'Maximum number of retries: 1',
                            'Maximum number of vBucket move per node: 4']
         for e in expected_output:
             self.assertIn(e, self.str_output)
 
-    def testGetJson(self):
+    def test_get_json(self):
         self.server_args['/settings/retryRebalance'] = {"enabled": False, "afterTimePeriod": 300, "maxAttempts": 1}
-        self.server_args['/settings/rebalance'] = {"rebalanceMovesPerNode": 4,}
+        self.server_args['/settings/rebalance'] = {"rebalanceMovesPerNode": 4}
         self.no_error_run(self.command + ['--get', '--output', 'json'], self.server_args)
         self.assertIn('{"rebalanceMovesPerNode": 4, "enabled": false, "afterTimePeriod": 300, "maxAttempts": 1}',
                       self.str_output)
 
-    def testSet(self):
+    def test_set(self):
         self.no_error_run(self.command + ['--set', '--enable', '1', '--wait-for', '5', '--max-attempts', '3',
                                           '--moves-per-node', '10'],
                           self.server_args)
         expected_params = ['enabled=true', 'afterTimePeriod=5', 'maxAttempts=3', 'rebalanceMovesPerNode=10']
         self.rest_parameter_match(expected_params)
 
-    def testSetWaitForOutOfRange(self):
+    def test_set_wait_for_out_of_range(self):
         self.system_exit_run(self.command + ['--set', '--enable', '1', '--wait-for', '1', '--max-attempts', '3'],
                           self.server_args)
         self.assertIn('--wait-for must be a value between 5 and 3600', self.str_output)
 
-    def testSetRebalanceMovesPerNodeAbove64(self):
+    def test_set_rebalance_moves_per_node_above_64(self):
         self.system_exit_run(self.command + ['--set', '--enable', '1', '--moves-per-node', '65'],
                              self.server_args)
         self.assertIn('--moves-per-node must be a value between 1 and 64', self.str_output)
 
-    def testSetRebalanceMovesPerNodeBelow1(self):
+    def test_set_rebalance_moves_per_node_below_1(self):
         self.system_exit_run(self.command + ['--set', '--enable', '1', '--moves-per-node', '0'],
                              self.server_args)
         self.assertIn('--moves-per-node must be a value between 1 and 64', self.str_output)
+
 
 class TestAnalyticsLinkSetup(CommandTest):
     def setUp(self):
@@ -1729,21 +1731,21 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.command = ['couchbase-cli', 'analytics-link-setup'] + cluster_connect_args
         super(TestAnalyticsLinkSetup, self).setUp()
 
-    def testMoreThanOneActionFlag(self):
-        self.system_exit_run(self.command +['--list', '--create'], self.server_args)
+    def test_more_than_one_action_flag(self):
+        self.system_exit_run(self.command + ['--list', '--create'], self.server_args)
 
-    def testListNoParams(self):
+    def test_list_no_params(self):
         self.server_args['/analytics/link'] = []
         self.no_error_run(self.command + ['--list'], self.server_args)
         self.assertNotIn('query', self.server_args, 'did not expect any query arguments')
 
-    def testListDataVerse(self):
+    def test_list_data_verse(self):
         self.server_args['/analytics/link'] = []
         self.no_error_run(self.command + ['--list', '--dataverse', 'Default'], self.server_args)
         self.assertIn('query', self.server_args, 'expected query parameters to have been set')
         self.assertEqual(self.server_args['query'], 'dataverse=Default')
 
-    def testListAllOptions(self):
+    def test_list_all_options(self):
         self.server_args['/analytics/link'] = []
         self.no_error_run(self.command + ['--list', '--dataverse', 'Default', '--name', 'name', '--type', 'couchbase'],
                           self.server_args)
@@ -1754,23 +1756,24 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.assertIn('name=name', querys)
         self.assertIn('type=couchbase', querys)
 
-    def testListInvalidType(self):
+    def test_list_invalid_type(self):
         self.system_exit_run(self.command + ['--list', '--type', 'fire'], self.server_args)
 
-    def testCreateNoOptions(self):
+    def test_create_no_options(self):
         self.system_exit_run(self.command + ['--create'], self.server_args)
         self.assertIn('dataverse is required', self.str_output)
 
-    def testCreateNoType(self):
+    def test_create_no_type(self):
         self.system_exit_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east'], self.server_args)
         self.assertIn('type is required', self.str_output)
 
-    def testCreateMinimum(self):
-        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 's3'], self.server_args)
+    def test_create_minimum(self):
+        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 's3'],
+                          self.server_args)
         self.assertIn('POST:/analytics/link', self.server.trace)
         self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=s3'])
 
-    def testCreateS3(self):
+    def test_create_S3(self):
         self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 's3',
                                           '--access-key-id', 'id-1', '--secret-access-key', 'my-secret', '--region',
                                           'us-east-0', '--service-endpoint', 'my-cool-endpoint.com'], self.server_args)
@@ -1779,7 +1782,7 @@ class TestAnalyticsLinkSetup(CommandTest):
                                    'secretAccessKey=my-secret', 'region=us-east-0',
                                    'serviceEndpoint=my-cool-endpoint.com'])
 
-    def testCreateCouchbase(self):
+    def test_create_couchbase(self):
         self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
                                           '--link-username', 'user', '--link-password', 'secret', '--encryption',
                                           'none'], self.server_args)
@@ -1787,12 +1790,12 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=couchbase', 'username=user',
                                    'password=secret', 'encryption=none'])
 
-    def testEditNoType(self):
+    def test_edit_no_type(self):
         self.no_error_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east'], self.server_args)
         self.assertIn('PUT:/analytics/link', self.server.trace)
         self.rest_parameter_match(['dataverse=Default', 'name=east'])
 
-    def testEditCouchbase(self):
+    def test_edit_couchbase(self):
         self.no_error_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
                                           '--link-username', 'user', '--link-password', 'secret', '--encryption',
                                           'none'], self.server_args)
@@ -1800,7 +1803,7 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=couchbase', 'username=user',
                                    'password=secret', 'encryption=none'])
 
-    def testEditWithCerts(self):
+    def test_edit_with_certs(self):
         # create fake cert file
         cert_file = tempfile.NamedTemporaryFile(delete=False)
         cert_file_name = cert_file.name
@@ -1835,7 +1838,7 @@ class TestAnalyticsLinkSetup(CommandTest):
                                    'clientKey=this-is-the-user-key-file',
                                    'clientCertificate=this-is-the-user-cert-file'])
 
-    def testSetWithCertsThatDontExist(self):
+    def test_set_with_certs_that_dont_exist(self):
         # create fake cert file and deleted immediately guaranteeing it does not exists
         cert_file = tempfile.NamedTemporaryFile(delete=True)
         cert_file_name = cert_file.name
@@ -1846,15 +1849,15 @@ class TestAnalyticsLinkSetup(CommandTest):
                                              'full', '--user-certificate', cert_file_name, '--certificate',
                                              cert_file_name, '--user-key', cert_file_name], self.server_args)
 
-    def testDeleteNoParams(self):
+    def test_delete_no_params(self):
         self.system_exit_run(self.command + ['--delete'], self.server_args)
         self.assertIn('dataverse is required', self.str_output)
 
-    def testDeleteNoName(self):
+    def test_delete_no_name(self):
         self.system_exit_run(self.command + ['--delete', '--dataverse', 'Default'], self.server_args)
         self.assertIn('name is required', self.str_output)
 
-    def testDelete(self):
+    def test_delete(self):
         self.no_error_run(self.command + ['--delete', '--dataverse', 'Default', '--name', 'me'], self.server_args)
         self.assertIn('DELETE:/analytics/link', self.server.trace)
         self.rest_parameter_match(['dataverse=Default', 'name=me'])

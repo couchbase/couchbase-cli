@@ -23,7 +23,7 @@ DATATYPE_JSON = 0x01
 DATATYPE_COMPRESSED = 0x02
 DATATYPE_HAS_XATTR = 0x04
 
-#HELO flags
+# HELO flags
 HELO_DATATYPE_INVALID = 0x01
 HELO_TLS = 0x2
 HELO_TCPNODELAY = 0x03
@@ -79,7 +79,7 @@ CMD_SASL_STEP = 0x22
 # AUDIT
 CMD_AUDIT_PUT = 0x27
 CMD_AUDIT_CONFIG_RELOAD = 0x28
-AUDIT_PKT_FMT=">I"
+AUDIT_PKT_FMT = ">I"
 
 AUDIT_EVENT_BACKUP_START         = 0x3000
 AUDIT_EVENT_BACKUP_STOP          = 0x3001
@@ -157,12 +157,12 @@ CMD_DCP_NOOP = 0x5C
 CMD_DCP_BUFFER_ACK = 0x5D
 CMD_DCP_CONTROL = 0x5E
 
-#DCP flags
+# DCP flags
 FLAG_DCP_CONSUMER = 0x00
 FLAG_DCP_PRODUCER = 0x01
 FLAG_DCP_XATTRS   = 0x04
 
-#DCP control keys
+# DCP control keys
 KEY_DCP_CONNECTION_BUFFER_SIZE = b"connection_buffer_size"
 KEY_DCP_STREAM_BUFFER_SIZE = b"stream_buffer_size"
 KEY_DCP_NOOP = b"enable_noop"
@@ -216,7 +216,7 @@ TAP_FLAG_TYPES = {TAP_FLAG_BACKFILL: ">Q",
 
 # TAP per-message flags
 TAP_FLAG_ACK      = 0x01
-TAP_FLAG_NO_VALUE = 0x02 # The value for the key is not included in the packet
+TAP_FLAG_NO_VALUE = 0x02  # The value for the key is not included in the packet
 TAP_FLAG_NETWORK_BYTE_ORDER = 0x04
 
 # Flags, expiration
@@ -228,12 +228,12 @@ GET_RES_FMT=">I"
 # How long until the deletion takes effect.
 DEL_PKT_FMT=""
 
-## TAP stuff
+# TAP stuff
 # eng-specific length, flags, ttl, [res, res, res]; item flags, exp
 TAP_MUTATION_PKT_FMT = ">HHbxxxII"
 TAP_GENERAL_PKT_FMT = ">HHbxxx"
 
-## DCP stuff
+# DCP stuff
 DCP_CONNECT_PKT_FMT = ">II"
 DCP_STREAM_REQ_PKT_FMT = ">IIQQQQQ"
 DCP_MUTATION_PKT_FMT = ">QQIIIHB"
@@ -248,40 +248,40 @@ DCP_EXTRA_META_ADJUSTED_TIME = 0x01
 DCP_EXTRA_META_CONFLICT_RESOLUTION = 0x02
 
 # amount, initial value, expiration
-INCRDECR_PKT_FMT=">QQI"
+INCRDECR_PKT_FMT = ">QQI"
 # Special incr expiration that means do not store
-INCRDECR_SPECIAL=0xffffffff
-INCRDECR_RES_FMT=">Q"
+INCRDECR_SPECIAL = 0xffffffff
+INCRDECR_RES_FMT = ">Q"
 
 # Time bomb
-FLUSH_PKT_FMT=">I"
+FLUSH_PKT_FMT = ">I"
 
 # Touch commands
 # expiration
-TOUCH_PKT_FMT=">I"
-GAT_PKT_FMT=">I"
-GETL_PKT_FMT=">I"
+TOUCH_PKT_FMT = ">I"
+GAT_PKT_FMT = ">I"
+GETL_PKT_FMT = ">I"
 
 # set param command
-SET_PARAM_FMT=">I"
+SET_PARAM_FMT = ">I"
 
 # 2 bit integer.  :/
-VB_SET_PKT_FMT=">I"
+VB_SET_PKT_FMT = ">I"
 
 MAGIC_BYTE = 0x80
 REQ_MAGIC_BYTE = 0x80
 RES_MAGIC_BYTE = 0x81
 
 # magic, opcode, keylen, extralen, datatype, vbucket, bodylen, opaque, cas
-REQ_PKT_FMT=">BBHBBHIIQ"
+REQ_PKT_FMT = ">BBHBBHIIQ"
 # magic, opcode, keylen, extralen, datatype, status, bodylen, opaque, cas
-RES_PKT_FMT=">BBHBBHIIQ"
+RES_PKT_FMT = ">BBHBBHIIQ"
 # min recv packet size
 MIN_RECV_PACKET = struct.calcsize(REQ_PKT_FMT)
 # The header sizes don't deviate
 assert struct.calcsize(REQ_PKT_FMT) == struct.calcsize(RES_PKT_FMT)
 
-EXTRA_HDR_FMTS={
+EXTRA_HDR_FMTS = {
     CMD_SET: SET_PKT_FMT,
     CMD_ADD: SET_PKT_FMT,
     CMD_REPLACE: SET_PKT_FMT,

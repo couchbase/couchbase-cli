@@ -6,11 +6,11 @@ import glob
 import logging
 import os
 import json
-import string
-import sys
 import datetime
 import time
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import fnmatch
 import sqlite3
 from typing import List, Dict, Optional, Any, Tuple, Union
@@ -18,7 +18,7 @@ from typing import List, Dict, Optional, Any, Tuple, Union
 import couchbaseConstants
 import pump
 
-CBB_VERSION = [2004, 2014, 2015] # sqlite pragma user version.
+CBB_VERSION = [2004, 2014, 2015]  # sqlite pragma user version.
 
 DDOC_FILE_NAME = "design.json"
 INDEX_FILE_NAME = "index.json"
@@ -42,12 +42,12 @@ class BFD:
         bucket_path = os.path.join(os.path.normpath(spec), "bucket-" + bucket_name)
         if os.path.isdir(bucket_path):
             return os.path.join(bucket_path, file)
-        else:
-            path, dirs = BFD.find_latest_dir(spec, None)
+
+        path, _ = BFD.find_latest_dir(spec, None)
+        if path:
+            path, _ = BFD.find_latest_dir(path, None)
             if path:
-                path, dirs = BFD.find_latest_dir(path, None)
-                if path:
-                    return os.path.join(path, "bucket-" + bucket_name, file)
+                return os.path.join(path, "bucket-" + bucket_name, file)
         return os.path.join(bucket_path, file)
 
     @staticmethod
@@ -149,49 +149,50 @@ class BFD:
         if not tmstamp:
             tmstamp = time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime())
         parent_dir = os.path.normpath(spec)
-        rootpath, dirs = BFD.find_latest_dir(parent_dir, None)
+        rootpath, _ = BFD.find_latest_dir(parent_dir, None)
         if not rootpath or not mode or mode == "full":
             # no any backup roots exists
             path = os.path.join(parent_dir, tmstamp, tmstamp+"-full")
             return BFD.construct_dir(path, bucket_name, node_name)
 
         # check if any full backup exists
-        path, dirs = BFD.find_latest_dir(rootpath, "full")  # type: ignore
+        path, _ = BFD.find_latest_dir(rootpath, "full")  # type: ignore
         if not path:
             path = os.path.join(rootpath, tmstamp+"-full")
             return BFD.construct_dir(path, bucket_name, node_name)
-        else:
-            # further check full backup for this bucket and node
+
+        # further check full backup for this bucket and node
+        path = BFD.construct_dir(path, bucket_name, node_name)
+        if not os.path.isdir(path):
+            return path
+
+        if mode.find("diff") >= 0:
+            path, _ = BFD.find_latest_dir(rootpath, "diff")  # type: ignore
+            if not path or new_session:
+                path = os.path.join(rootpath, tmstamp+"-diff")
+                return BFD.construct_dir(path, bucket_name, node_name)
+
             path = BFD.construct_dir(path, bucket_name, node_name)
             if not os.path.isdir(path):
                 return path
 
-        if mode.find("diff") >= 0:
-            path, dirs = BFD.find_latest_dir(rootpath, "diff")  # type: ignore
-            if not path or new_session:
-                path = os.path.join(rootpath, tmstamp+"-diff")
-                return BFD.construct_dir(path, bucket_name, node_name)
-            else:
-                path = BFD.construct_dir(path, bucket_name, node_name)
-                if not os.path.isdir(path):
-                    return path
-                else:
-                    path = os.path.join(rootpath, tmstamp+"-diff")
-                    return BFD.construct_dir(path, bucket_name, node_name)
-        elif mode.find("accu") >= 0:
-            path, dirs = BFD.find_latest_dir(rootpath, "accu")  # type: ignore
+            path = os.path.join(rootpath, tmstamp+"-diff")
+            return BFD.construct_dir(path, bucket_name, node_name)
+
+        if mode.find("accu") >= 0:
+            path, _ = BFD.find_latest_dir(rootpath, "accu")  # type: ignore
             if not path or new_session:
                 path = os.path.join(rootpath, tmstamp+"-accu")
                 return BFD.construct_dir(path, bucket_name, node_name)
-            else:
-                path = BFD.construct_dir(path, bucket_name, node_name)
-                if not os.path.isdir(path):
-                    return path
-                else:
-                    path = os.path.join(rootpath, tmstamp+"-accu")
-                    return BFD.construct_dir(path, bucket_name, node_name)
-        else:
-            return parent_dir
+
+            path = BFD.construct_dir(path, bucket_name, node_name)
+            if not os.path.isdir(path):
+                return path
+
+            path = os.path.join(rootpath, tmstamp+"-accu")
+            return BFD.construct_dir(path, bucket_name, node_name)
+
+        return parent_dir
 
     @staticmethod
     def find_latest_dir(parent_dir: str, mode: Union[str, None]) -> Tuple[Optional[str], List[str]]:
@@ -233,7 +234,7 @@ class BFD:
 
         if mode == "full":
             return seqno, dep_list, failover_log, snapshot_markers
-        timedir,latest_dirs = BFD.find_latest_dir(parent_dir, None)
+        timedir, latest_dirs = BFD.find_latest_dir(parent_dir, None)
         if not timedir:
             return seqno, dep_list, failover_log, snapshot_markers
         fulldir, latest_dirs = BFD.find_latest_dir(timedir, "full")
@@ -379,7 +380,7 @@ class BFDSource(BFD, pump.Source):
             if not bucket_name:
                 return f'error: bucket_name too short: {bucket_dir}', None
 
-            bucket = { 'name': bucket_name, 'nodes': [] }
+            bucket = {'name': bucket_name, 'nodes': []}
             buckets.append(bucket)
 
             node_dirs = glob.glob(f'{bucket_dir}/node-*')
@@ -401,7 +402,7 @@ class BFDSource(BFD, pump.Source):
         return BFDSource.read_index_file(source_spec, source_bucket, DDOC_FILE_NAME)
 
     @staticmethod
-    def provide_index(opts,  source_spec: str, source_bucket: Dict[str, Any],
+    def provide_index(opts, source_spec: str, source_bucket: Dict[str, Any],
                       source_map: Any) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[str]]:
         return BFDSource.read_index_file(source_spec, source_bucket, INDEX_FILE_NAME)
 
@@ -570,7 +571,7 @@ class BFDSource(BFD, pump.Source):
                                  source_bucket['name'],
                                  source_node['hostname']) + "/data-*.cbb")
         if not file_list:
-            #check 3.0 directory structure
+            # check 3.0 directory structure
             rv, file_list = BFDSource.list_files(opts,
                                         source_map['spec'],
                                         source_bucket['name'],
@@ -652,9 +653,9 @@ class BFDSink(BFD, pump.Sink):
         cbb_max_bytes = self.opts.extra.get("cbb_max_mb", 100000) * 1024 * 1024
         _, dep, _, _ = BFD.find_seqno(self.opts, self.spec, self.bucket_name(), self.node_name(), self.mode)
 
-        confResType = "seqno"
+        conf_res_type = "seqno"
         if "conflictResolutionType" in self.source_bucket:
-            confResType = self.source_bucket["conflictResolutionType"]
+            conf_res_type = self.source_bucket["conflictResolutionType"]
 
         version = "0.0.0"
         for bucket in self.source_map["buckets"]:
@@ -683,10 +684,10 @@ class BFDSink(BFD, pump.Sink):
 
                 meta_file = os.path.join(db_dir, "meta.json")
                 json_file = open(meta_file, "w")
-                toWrite = {'pred': dep,
-                           'conflict_resolution_type': confResType,
+                to_write = {'pred': dep,
+                           'conflict_resolution_type': conf_res_type,
                            'version': version}
-                json.dump(toWrite, json_file, ensure_ascii=False)
+                json.dump(to_write, json_file, ensure_ascii=False)
                 json_file.close()
 
             if not batch:
@@ -733,7 +734,7 @@ class BFDSink(BFD, pump.Sink):
                         seqno_map[vbucket_id] = seqno
                 db.commit()
                 BFD.write_json_file(db_dir, "seqno.json", seqno_map)
-                self.future_done(future, 0) # No return to keep looping.
+                self.future_done(future, 0)  # No return to keep looping.
 
             except sqlite3.Error as e:
                 return self.future_done(future, f'error: db error: {e!s}')

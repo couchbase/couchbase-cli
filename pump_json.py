@@ -3,10 +3,6 @@
 import logging
 import os
 import json
-import struct
-import sys
-import shutil
-import tempfile
 import zipfile
 from typing import Tuple, Any, List, Optional, Dict
 import couchbaseConstants
@@ -29,9 +25,9 @@ class JSONSource(pump.Source):
     @staticmethod
     def can_handle(opts, spec: str) -> bool:
         return spec.startswith(JSON_SCHEME) and \
-            (os.path.isfile(spec.replace(JSON_SCHEME, "")) or \
-             os.path.isdir(spec.replace(JSON_SCHEME, "")) or \
-             spec.endswith(".zip"))
+            (os.path.isfile(spec.replace(JSON_SCHEME, ""))
+             or os.path.isdir(spec.replace(JSON_SCHEME, ""))
+             or spec.endswith(".zip"))
 
     @staticmethod
     def check(opts, spec: str) -> Tuple[couchbaseConstants.PUMP_ERROR, Dict[str, Any]]:
@@ -73,8 +69,8 @@ class JSONSource(pump.Source):
                    (not skip_docs and "docs" in path.split(os.path.sep)):
                     file_candidate.append(path)
             else:
-                if not ((skip_docs and "docs" in path.split(os.path.sep)) or \
-                   (skip_views and "design_docs" in path.split(os.path.sep))):
+                if not ((skip_docs and "docs" in path.split(os.path.sep))
+                   or (skip_views and "design_docs" in path.split(os.path.sep))):
                     JSONSource.enumerate_files(path, file_candidate, skip_views, skip_docs)
 
     @staticmethod

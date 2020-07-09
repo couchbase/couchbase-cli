@@ -372,7 +372,7 @@ class TestBFDSource(unittest.TestCase):
         self.assertFalse(self.source.can_handle(None, '/made/up/dir'))
         with tempfile.TemporaryDirectory() as tmpdirname:
             self.assertFalse(self.source.can_handle(None, tmpdirname))
-            path = self.create_folder_struct(tmpdirname, 'full')
+            self.create_folder_struct(tmpdirname, 'full')
             self.assertTrue(self.source.can_handle(None, tmpdirname))
 
     def test_check(self):
@@ -405,14 +405,14 @@ class TestBFDSource(unittest.TestCase):
                            (FTS_FILE_NAME, self.source.provide_fts_index)]:
             with tempfile.TemporaryDirectory() as tmpdirname, self.subTest(i=file):
                 path = self.create_folder_struct(tmpdirname, 'full')
-                bucket_level, node = os.path.split(path)
+                bucket_level, _ = os.path.split(path)
                 ddoc = open(os.path.join(bucket_level, file), 'w')
                 ddoc.write('the file')
                 ddoc.close()
 
-                rv, rDdod = fn(None, tmpdirname, {'name': b'default', 'nodes': [{'hostname': b'1'}]}, None)
+                rv, returned_ddoc = fn(None, tmpdirname, {'name': b'default', 'nodes': [{'hostname': b'1'}]}, None)
                 self.assertEqual(rv, 0)
-                self.assertEqual(rDdod, 'the file')
+                self.assertEqual(returned_ddoc, 'the file')
 
     def test_provide_batch_one_full(self):
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -491,13 +491,13 @@ class DCPHelperClass:
         self.msgs = []
         self.responses = responses
 
-    def _sendCmd(self, cmd, key, val, opaque, extraHeader=b'', cas=0, extraMeta=b''):
-        self._sendMsg(cmd, key, val, opaque, extraHeader=extraHeader, cas=cas, vbucketId=self.vbucket,
-                      extraMeta=extraMeta)
+    def _send_cmd(self, cmd, key, val, opaque, extra_header=b'', cas=0, extra_meta=b''):
+        self._send_msg(cmd, key, val, opaque, extra_header=extra_header, cas=cas, vbucket_id=self.vbucket,
+                       extra_meta=extra_meta)
 
-    def _sendMsg(self, cmd, key, val, opaque, extraHeader=b'', cas=0, dtype=0, vbucketId=0, extraMeta=b'',
+    def _send_msg(self, cmd, key, val, opaque, extra_header=b'', cas=0, dtype=0, vbucket_id=0, extra_meta=b'',
                  fmt=cbcs.REQ_PKT_FMT, magic=cbcs.REQ_MAGIC_BYTE):
-        self.msgs.append((cmd, key, val, opaque, extraHeader, cas, dtype, vbucketId, extraMeta, fmt, magic))
+        self.msgs.append((cmd, key, val, opaque, extra_header, cas, dtype, vbucket_id, extra_meta, fmt, magic))
 
     def get(self):
         if len(self.responses) == 0:
@@ -516,7 +516,7 @@ class DCPHelperClass:
 class TestDCPSource(unittest.TestCase):
     def setUp(self):
         self.opts = Ditto({'extra': {'batch_max_size': 100, 'batch_max_bytes': 40000}, 'process_name': 'test'})
-        self.source = DCPStreamSource(self.opts, '', None, {'version':'0.0.0-0000-enterprise'}, None, None, None, None)
+        self.source = DCPStreamSource(self.opts, '', None, {'version': '0.0.0-0000-enterprise'}, None, None, None, None)
 
     def test_can_handle(self):
         self.assertFalse(DCPStreamSource.can_handle(None, ''))
@@ -526,7 +526,7 @@ class TestDCPSource(unittest.TestCase):
         self.assertTrue(DCPStreamSource.can_handle(None, 'couchbase://localhost'))
 
     def test_set_ssl_automatically(self):
-        self.source = DCPStreamSource(self.opts, 'https://localhsot:8091', None, {'version':'0.0.0-0000-enterprise'},
+        self.source = DCPStreamSource(self.opts, 'https://localhsot:8091', None, {'version': '0.0.0-0000-enterprise'},
                                       None, None, None, None)
         self.assertTrue(self.source.opts.ssl)
 
@@ -560,7 +560,7 @@ class TestDCPSource(unittest.TestCase):
 
     def test_request_dcp_streams(self):
         helper_class = DCPHelperClass()
-        self.source = DCPStreamSource(self.opts, 'http://localhost:8091', None, {'version':'0.0.0-0000-enterprise'},
+        self.source = DCPStreamSource(self.opts, 'http://localhost:8091', None, {'version': '0.0.0-0000-enterprise'},
                                       None, None, None, None)
         self.source.dcp_conn = helper_class
         vbid = 0
@@ -590,7 +590,8 @@ class TestDCPSource(unittest.TestCase):
 
     def test_provide_batch_uncompress(self):
         helper_class = DCPHelperClass()
-        self.opts = Ditto({'extra': {'batch_max_size': 100, 'batch_max_bytes': 40000,  'uncompress': 1.0}, 'process_name': 'test'})
+        self.opts = Ditto({'extra': {'batch_max_size': 100, 'batch_max_bytes': 40000, 'uncompress': 1.0},
+                           'process_name': 'test'})
         self.source = DCPStreamSource(self.opts, 'http://localhost:9112', None, {'version': '0.0.0-0000-enterprise'},
                                       None, None, None, None)
 
@@ -638,7 +639,6 @@ class TestDCPSource(unittest.TestCase):
 
         for m in batch.msgs:
             self.assertIn(m, expected_out)
-
 
     def test_provide_dcp_batch_actual_mutations(self):
         helper_class = DCPHelperClass()
@@ -766,7 +766,7 @@ class TestCSVSink(unittest.TestCase):
         # setup sink
         with tempfile.TemporaryDirectory() as tmpdirname, self.subTest(i='basic test'):
             self.sink = CSVSink(self.opts, 'csv:'+os.path.join(tmpdirname, 'test-out.csv'),
-                                  {'name': 'default'}, {'hostname': 'node1'}, None, None, None, None)
+                                {'name': 'default'}, {'hostname': 'node1'}, None, None, None, None)
             # test data
             msgs = [
                 (cbcs.CMD_DCP_MUTATION, 0, 'KEY:0'.encode(), 0x02000006, 0, 0, ''.encode(),
@@ -802,7 +802,7 @@ class TestCSVSink(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname, self.subTest(i='batch with gets'):
             self.sink = CSVSink(self.opts, 'csv:'+os.path.join(tmpdirname, 'test-out.csv'),
-                                  {'name': 'default'}, {'hostname': 'node1'}, None, None, None, None)
+                                {'name': 'default'}, {'hostname': 'node1'}, None, None, None, None)
             # test data
             msgs = [
                 (cbcs.CMD_DCP_MUTATION, 0, 'KEY:0'.encode(), 0x02000006, 0, 0, ''.encode(),
@@ -856,15 +856,15 @@ class TestBFDSinkEx(unittest.TestCase):
 
     def test_check(self):
         with self.subTest(i='made up dir'):
-            rv, _ = BFDSinkEx.check(None, '/made/up/dir', None,)
+            rv, _ = BFDSinkEx.check(None, '/made/up/dir', None)
             self.assertEqual(rv, "error: missing parent directory: /made/up")
 
         with tempfile.NamedTemporaryFile() as f, self.subTest(i='file given as backup dir'):
-            rv, _ = BFDSinkEx.check(None, f.name, None,)
+            rv, _ = BFDSinkEx.check(None, f.name, None)
             self.assertEqual(rv, "error: backup directory is not a directory: "+f.name)
 
         with tempfile.TemporaryDirectory() as tempdirname, self.subTest(i='given a golder'):
-            rv, _ = BFDSinkEx.check(None, tempdirname, None,)
+            rv, _ = BFDSinkEx.check(None, tempdirname, None)
             self.assertEqual(rv, 0)
 
     def test_consume_services_metadata(self):
@@ -959,13 +959,13 @@ class TestMCSink(unittest.TestCase):
 
     def test_append_req(self):
         opts = Ditto({'extra': {}})
-        sink = MCSink(opts, 'localhost:9878', None, None, None, {'buckets':['default']}, {'stop': False},
+        sink = MCSink(opts, 'localhost:9878', None, None, None, {'buckets': ['default']}, {'stop': False},
                       defaultdict(int))
         m = []
         requests = [
-            (b'header-0',  b'', b'key-0', b'val-0', b''),
-            (b'header-1',  b'extra-1', b'key-1', b'val-1', b''),
-            (b'header-2',  b'', b'key-1', b'val-1', b'extra-meta-2')
+            (b'header-0', b'', b'key-0', b'val-0', b''),
+            (b'header-1', b'extra-1', b'key-1', b'val-1', b''),
+            (b'header-2', b'', b'key-1', b'val-1', b'extra-meta-2')
         ]
 
         for r in requests:
@@ -1001,7 +1001,7 @@ class TestMCSink(unittest.TestCase):
 
         expected_out = b''
         i = 0
-        for (cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res) in msgs:
+        for (_, vbucket_id, key, flg, exp, cas, meta, val, seqno, dtype, nmeta, conf_res) in msgs:
             ext = struct.pack(cbcs.SET_PKT_FMT, flg, exp)
             hdr = struct.pack(cbcs.REQ_PKT_FMT, cbcs.REQ_MAGIC_BYTE, cbcs.CMD_SET, len(key), len(ext), dtype,
                               vbucket_id, len(key) + len(ext) + len(val), i, cas)
@@ -1179,7 +1179,7 @@ class TestMemcachedClient(unittest.TestCase):
     def test_send_msg(self):
         self.server.start()
         client = MemcachedClient(self.host, self.port)
-        client._sendMsg(cbcs.CMD_DCP_MUTATION, b'KEY', b'', 1, b'', 0, 0, 0, b'')
+        client._send_msg(cbcs.CMD_DCP_MUTATION, b'KEY', b'', 1, b'', 0, 0, 0, b'')
         time.sleep(1)
         client.close()
         self.server.stop()
@@ -1195,7 +1195,7 @@ class TestMemcachedClient(unittest.TestCase):
 
         try:
             client = MemcachedClient(self.host, self.port)
-            opaque_o, cas_o, data = client._doCmd(cbcs.CMD_DCP_MUTATION, b'KEY', b'', b'', 0)
+            opaque_o, cas_o, data = client._do_cmd(cbcs.CMD_DCP_MUTATION, b'KEY', b'', b'', 0)
         except Exception as e:
             client.close()
             self.server.stop()

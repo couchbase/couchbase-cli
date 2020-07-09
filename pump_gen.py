@@ -7,7 +7,8 @@ import random
 import string
 import struct
 from typing import Tuple, Optional, Dict, Any
-from cb_bin_client import encodeCollectionId
+from cb_bin_client import encode_collection_id
+
 
 class GenSource(pump.Source):
     """Generates simple SET/GET workload, useful for basic testing.
@@ -17,6 +18,7 @@ class GenSource(pump.Source):
                           prefix=steve1-,ratio-sets=1.0 \
                       http://10.3.121.192:8091 -B my-other-bucket --threads=10
     """
+
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
         super(GenSource, self).__init__(opts, spec, source_bucket, source_node,
@@ -126,8 +128,8 @@ class GenSource(pump.Source):
         vbucket_id = 0x0000ffff
         cas, exp, flg = 0, 0, 0
 
-        while (batch.size() < batch_max_size and
-               batch.bytes < batch_max_bytes):
+        while (batch.size() < batch_max_size
+               and batch.bytes < batch_max_bytes):
             if ratio_sets >= float(self.cur_sets) / float(self.cur_ops or 1):
                 self.cur_sets = self.cur_sets + 1
                 if xattrs:
@@ -167,24 +169,24 @@ class GenSource(pump.Source):
                 except ValueError as e:
                     return f'Invalid collection id, collection id must be a hexadecimal number: {e}', None
 
-                encodedCid = encodeCollectionId(cid)
+                encoded_cid = encode_collection_id(cid)
                 # Generate the pack format and pack the key
-                docKey: bytes = struct.pack(
-                    ("!" + str(len(encodedCid)) + "s"
+                doc_key: bytes = struct.pack(
+                    ("!" + str(len(encoded_cid)) + "s"
                         + str(len(prefix)) + "s"
                         + str(len(key)) + "s").encode(),
-                    encodedCid,
+                    encoded_cid,
                     prefix.encode(),
-                    key.encode());
+                    key.encode())
             else:
-                docKey = prefix.encode() + key.encode()
+                doc_key = prefix.encode() + key.encode()
 
             datatype = 0x00
             if json_body and cmd != couchbaseConstants.CMD_GET:
                 datatype = 0x01
 
-            msg: couchbaseConstants.BATCH_MSG = (cmd, vbucket_id, docKey, flg, exp, cas, b'', value_bytes, 0, datatype,
-                                                0, 0)
+            msg: couchbaseConstants.BATCH_MSG = (cmd, vbucket_id, doc_key, flg, exp, cas, b'', value_bytes, 0, datatype,
+                                                 0, 0)
             batch.append(msg, len(value_bytes))
 
             if exit_after_creates and self.cur_items >= max_items:
