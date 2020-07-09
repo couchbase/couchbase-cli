@@ -164,10 +164,10 @@ pipeline {
                     sh "coverage xml -o ${WORKSPACE}/reports/coverage-cli.xml"
 
                     // Post the test results
-                    junit allowEmptyResults: true, testResults: "${WORKSPACE}/reports/test-*.xml"
+                    junit allowEmptyResults: true, testResults: "${WORKSPACE}/reports/test-cli.xml"
 
                     // Post the test coverage
-                    cobertura autoUpdateStability: false, autoUpdateHealth: false, onlyStable: false, coberturaReportFile: "${WORKSPACE}/reports/coverage-*.xml", conditionalCoverageTargets: "70, 10, 30", failNoReports: false, failUnhealthy: true, failUnstable: true, lineCoverageTargets: "70, 10, 30", methodCoverageTargets: "70, 10, 30", maxNumberOfBuilds: 0, sourceEncoding: "ASCII", zoomCoverageChart: false
+                    cobertura autoUpdateStability: false, autoUpdateHealth: false, onlyStable: false, coberturaReportFile: "${WORKSPACE}/reports/coverage-cli.xml", conditionalCoverageTargets: "70, 10, 30", failNoReports: false, failUnhealthy: true, failUnstable: true, lineCoverageTargets: "70, 10, 30", methodCoverageTargets: "70, 10, 30", maxNumberOfBuilds: 0, sourceEncoding: "ASCII", zoomCoverageChart: false
                 }
              }
          }
