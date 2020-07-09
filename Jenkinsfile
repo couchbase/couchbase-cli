@@ -158,7 +158,10 @@ pipeline {
 
                 dir("${PROJECTPATH}"){
                     // Use pytest to run the test as it is nicer and also can produce junit xml reports
-                    sh "coverage run --source . -m pytest test/test_*.py --cache-clear --junitxml=${WORKSPACE}/test-cli.xml -v"
+                    sh "coverage run --source . -m pytest test/test_*.py --cache-clear --junitxml=${WORKSPACE}/reports/test-cli.xml -v"
+
+                    // Produce xml report for cobertura
+                    sh "coverage xml -o ${WORKSPACE}/reports/coverage-cli.xml"
 
                     // Post the test results
                     junit allowEmptyResults: true, testResults: "reports/test-*.xml"
