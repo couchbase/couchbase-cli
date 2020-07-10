@@ -1853,6 +1853,23 @@ class ClusterManager(object):
 
         return self._get(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/{state}')
 
+    def get_backup_service_instance(self, instance_id, state, cluster='self'):
+        """Retrieves a single instance from the backup service
+
+        Args:
+            instance_id (str): The instance id to be retrieved
+            state (str): The state of the instance to retrieve
+            cluster (str): Only 'self' is supported.
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._get(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/{state}/{instance_id}')
+
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
         params = {"name": scope}

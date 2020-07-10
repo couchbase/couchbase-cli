@@ -451,7 +451,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content">_couchbase-cli backup-service [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-    [--password &lt;password&gt;] [--output] instance [--list] [--state &lt;state&gt;]</pre>
+    [--password &lt;password&gt;] [--output] instance [--list] [--get]
+    [--id &lt;id&gt;] [--state &lt;state&gt;]</pre>
 </div>
 </div>
 </div>
@@ -464,13 +465,30 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_options">OPTIONS</h2>
+<h2 id="_action_options">ACTION OPTIONS</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
 <dt class="hdlist1">--list</dt>
 <dd>
 <p>List the backup instances.</p>
+</dd>
+<dt class="hdlist1">--get</dt>
+<dd>
+<p>Get a specific backup instance.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options">OPTIONS</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--id &lt;id&gt;</dt>
+<dd>
+<p>Specify the instance id.</p>
 </dd>
 <dt class="hdlist1">--state &lt;state&gt;</dt>
 <dd>
@@ -570,6 +588,34 @@ details for the instance use the JSON output as can be seen below:</p>
   ]
 }</pre>
 </div>
+</div>
+<div class="paragraph">
+<p>To retrieve just the information for one instance used instead the <code>--get</code> action flag as
+illustrated below.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --get --id weekly-all --state active
+ID: weekly-all
+State: active
+Healthy: True
+Archive: /backup
+Repository: a8059549-7fc3-401a-8fb8-008d1e20f1b0
+Profile: _weekly
+Creation time: 2020-07-10T07:44:18.826195+01:00
+
+Scheduled tasks:
+Name               | Task type | Next run
+----------------------------------------------
+backup_monday_full | Backup    | 2020-07-13T22:00:00+01:00
+backup_wednesday   | Backup    | 2020-07-15T22:00:00+01:00
+merge_week         | Merge     | 2020-07-12T23:20:00+01:00</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As before you can retrieve all details in JSON format by using <code>--output json</code> before the
+instance subcommand.</p>
 </div>
 </div>
 </div>

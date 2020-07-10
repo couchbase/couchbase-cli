@@ -34,7 +34,8 @@ couchbase\-cli\-backup\-service\-instance \- Manage the backup service instances
 .sp
 .nf
 _couchbase\-cli backup\-service [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>] [\-\-output] instance [\-\-list] [\-\-state <state>]
+    [\-\-password <password>] [\-\-output] instance [\-\-list] [\-\-get]
+    [\-\-id <id>] [\-\-state <state>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -45,6 +46,17 @@ Manage backup service instances
 \-\-list
 .RS 4
 List the backup instances.
+.RE
+.sp
+\-\-get
+.RS 4
+Get a specific backup instance.
+.RE
+.SH "OPTIONS"
+.sp
+\-\-id <id>
+.RS 4
+Specify the instance id.
 .RE
 .sp
 \-\-state <state>
@@ -153,6 +165,33 @@ $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p passwo
 }
 .fi
 .if n .RE
+.sp
+To retrieve just the information for one instance used instead the \f(CR\-\-get\fP action flag as
+illustrated below.
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
+  instance \-\-get \-\-id weekly\-all \-\-state active
+ID: weekly\-all
+State: active
+Healthy: True
+Archive: /backup
+Repository: a8059549\-7fc3\-401a\-8fb8\-008d1e20f1b0
+Profile: _weekly
+Creation time: 2020\-07\-10T07:44:18.826195+01:00
+
+Scheduled tasks:
+Name               | Task type | Next run
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+backup_monday_full | Backup    | 2020\-07\-13T22:00:00+01:00
+backup_wednesday   | Backup    | 2020\-07\-15T22:00:00+01:00
+merge_week         | Merge     | 2020\-07\-12T23:20:00+01:00
+.fi
+.if n .RE
+.sp
+As before you can retrieve all details in JSON format by using \f(CR\-\-output json\fP before the
+instance subcommand.
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_USERNAME

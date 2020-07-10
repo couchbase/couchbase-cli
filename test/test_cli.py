@@ -1903,7 +1903,6 @@ class TestBackupServiceSettings(CommandTest):
                                   sort_keys=True)])
 
 
-
 class TestBackupServiceInstance(CommandTest):
     """Test the backup-service instance subcommand and all its actions
     """
@@ -1993,6 +1992,48 @@ class TestBackupServiceInstance(CommandTest):
         self.assertIn('imported-instance', self.str_output)
         # as a bonus also check that N/A is printed for the profiles
         self.assertIn('N/A', self.str_output)
+
+    def test_get_instance_no_id(self):
+        """Test that the --get action flag fails if the --id option is not given"""
+        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {}
+        self.system_exit_run(self.command + ['--get', '--state', 'active'], self.server_args)
+        self.assertIn('--id is required', self.str_output)
+
+    def test_get_instance_no_state(self):
+        """Test that the --get action flag fails if the --state flag is not given"""
+        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {}
+        self.system_exit_run(self.command + ['--get', '--id', 'instance'], self.server_args)
+        self.assertIn('--state is required', self.str_output)
+
+    def test_get_instance(self):
+        """Test get the instance when all valid options are valid"""
+        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {
+            'id': 'instance',
+            'state': 'active',
+            'health': {'healthy': False},
+            'archive': 'some/archive',
+            'repo': 'the-repo',
+            'bucket': {'name': 'beer-sample'},
+            'profile_name': 'daily-profile',
+            'creation_time': '10-01-2020T01:02:00.00001Z',
+            'scheduled': {'task-1': {'name': 'task-1', 'task_type': 'BACKUP', 'next_run': '07-10-2020T00:00:00Z'}},
+        }
+
+        self.no_error_run(self.command + ['--get', '--id', 'instance', '--state', 'active'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/instance/active/instance', self.server.trace)
+
+        # check that the expected lines are there
+        self.assertIn('ID: instance', self.str_output)
+        self.assertIn('State: active', self.str_output)
+        self.assertIn('Healthy: False', self.str_output)
+        self.assertIn('Archive: some/archive', self.str_output)
+        self.assertIn('Repository: the-repo', self.str_output)
+        self.assertIn('Bucket: beer-sample', self.str_output)
+        self.assertIn('Profile: daily-profile', self.str_output)
+        self.assertIn('Creation time: 10-01-2020T01:02:00.00001Z', self.str_output)
+        self.assertIn('Scheduled tasks:', self.str_output)
+        self.assertIn('Name   | Task type | Next run', self.str_output)
+        self.assertIn('task-1 | Backup    | 07-10-2020T00:00:00Z', self.str_output)
 
 
 if __name__ == '__main__':

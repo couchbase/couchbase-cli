@@ -12,16 +12,25 @@ Manage the backup service instances.
 
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
-    [--password <password>] [--output] instance [--list] [--state <state>]
+    [--password <password>] [--output] instance [--list] [--get]
+    [--id <id>] [--state <state>]
 
 == DESCRIPTION
 
 Manage backup service instances
 
-== OPTIONS
+== ACTION OPTIONS
 
 --list::
     List the backup instances.
+
+--get::
+    Get a specific backup instance.
+
+== OPTIONS
+
+--id <id>::
+    Specify the instance id.
 
 --state <state>::
     Specifies the instance state. Valid states are 'active', 'archived' or 'imported'
@@ -83,6 +92,31 @@ $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password  -
   ]
 }
 ----
+
+To retrieve just the information for one instance used instead the `--get` action flag as
+illustrated below.
+
+----
+$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --get --id weekly-all --state active
+ID: weekly-all
+State: active
+Healthy: True
+Archive: /backup
+Repository: a8059549-7fc3-401a-8fb8-008d1e20f1b0
+Profile: _weekly
+Creation time: 2020-07-10T07:44:18.826195+01:00
+
+Scheduled tasks:
+Name               | Task type | Next run
+----------------------------------------------
+backup_monday_full | Backup    | 2020-07-13T22:00:00+01:00
+backup_wednesday   | Backup    | 2020-07-15T22:00:00+01:00
+merge_week         | Merge     | 2020-07-12T23:20:00+01:00
+----
+
+As before you can retrieve all details in JSON format by using `--output json` before the
+instance subcommand.
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

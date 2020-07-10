@@ -4809,8 +4809,8 @@ class BackupServiceInstance:
         # action flags are mutually exclusive
         action_group = instance_parser.add_mutually_exclusive_group(required=True)
         action_group.add_argument('--list', action='store_true', help='Get all instances')
+        action_group.add_argument('--get', action='store_true', help='Get instance by id')
         # further actions to come
-        # action_group.add_argument('--get', action='store_true', help='Get instance by id')
         # action_group.add_argument('--add', action='store_true', help='Add a new instance')
         # action_group.add_argument('--remove', action='store_true', help='Remove an instance')
         # action_group.add_argument('--archive', action='store_true', help='Archive an instance')
@@ -4819,6 +4819,7 @@ class BackupServiceInstance:
 
         # other arguments
         group = instance_parser.add_argument_group('Backup service instance configuration')
+        group.add_argument('--id', metavar='<id>', help='The instance id')
         group.add_argument('--state', metavar='<state>', choices=['active', 'archived', 'imported'],
                            help='The instance state.')
 
@@ -4827,6 +4828,8 @@ class BackupServiceInstance:
         """Run the backup-service instance subcommand"""
         if opts.list:
             self.list_instances(opts.state, opts.output == 'json')
+        if opts.get:
+            self.get_instance(opts.id, opts.state, opts.output == 'json')
 
     def list_instances(self, state=None, json_out=False):
         """List the backup instances.
@@ -4849,10 +4852,108 @@ class BackupServiceInstance:
         if json_out:
             print(json.dumps(results, indent=2))
         else:
-            self.human_friendly_print_instance(results)
+            self.human_friendly_print_instances(results)
+
+    def get_instance(self, instance_id, state, json_out=False):
+        """Retrieves one instance from the backup service
+
+        If the instance does not exist an error will be returned
+
+        Args:
+            instance_id (str): The instance id to be retrieved
+            state (str): The state of the instance to retrieve
+            json_out (bool): If True the output will be JSON otherwise it will be a human friendly format.
+        """
+        if not instance_id:
+            _exit_if_errors(['--id is required'])
+        if not state:
+            _exit_if_errors(['--state is required'])
+
+        instance, errors = self.rest.get_backup_service_instance(instance_id, state)
+        _exit_if_errors(errors)
+        if json_out:
+            print(json.dumps(instance, indent=2))
+        else:
+            self.human_firendly_print_instance(instance)
 
     @staticmethod
-    def human_friendly_print_instance(instances_map):
+    def human_firendly_print_instance(instance):
+        """Print the instance in a human friendly format
+
+        Args:
+            instance (obj): The backup instance information
+        """
+
+        print(f'ID: {instance["id"]}')
+        print(f'State: {instance["state"]}')
+        print(f'Healthy: {(not ("health" in instance and not instance["health"]["healthy"]))!s}')
+        print(f'Archive: {instance["archive"]}')
+        print(f'Repository: {instance["repo"]}')
+        if 'bucket' in instance:
+            print(f'Bucket: {instance["bucket"]["name"]}')
+        if 'profile_name' in instance and instance['profile_name'] != "":
+            print(f'Profile: {instance["profile_name"]}')
+        print(f'Creation time: {instance["creation_time"]}')
+
+        if 'scheduled' in instance and instance['scheduled']:
+            print()
+            BackupServiceInstance.human_firendly_print_instance_scheduled_tasks(instance['scheduled'])
+
+        one_off = instance['running_one_off'] if 'running_one_off' in instance else None
+        running_scheduled = instance['running_tasks'] if 'running_tasks' in instance else None
+        if one_off or running_scheduled:
+            print()
+            BackupServiceInstance.human_friendly_print_running_tasks(one_off, running_scheduled)
+
+    @staticmethod
+    def human_friendly_print_running_tasks(one_off, scheduled):
+        """Prints the running task summary in a human friendly way
+
+        Args:
+            one_off (map<str, task object>): Running one off tasks
+            scheduled (map<str, task object>): Running scheduled tasks
+        """
+        all_vals = []
+        name_pad = 5
+        if one_off:
+            for name in one_off:
+                if len(name) > name_pad:
+                    name_pad = len(name)
+            all_vals += one_off.values()
+
+        if scheduled:
+            for name in scheduled:
+                if len(name) > name_pad:
+                    name_pad = len(name)
+            all_vals += scheduled.values()
+
+        name_pad += 1
+
+        header = f'{"Name":<{name_pad}}| Task type | Status  | Start'
+        print(header)
+        print('-' * (len(header) + 5))
+        for task in all_vals:
+            print(f'{task["name"]:<{name_pad}}| {task["type"].title():<10}| {task["status"]:<8} | {task["start"]}')
+
+    @staticmethod
+    def human_firendly_print_instance_scheduled_tasks(scheduled):
+        """Print the scheduled task in a tabular format"""
+        name_pad = 5
+        for name in scheduled:
+            if len(name) > name_pad:
+                name_pad = len(name)
+        name_pad += 1
+
+        header = f'{"Name":<{name_pad}}| Task type | Next run'
+        print('Scheduled tasks:')
+        print(header)
+        print('-' * (len(header) + 5))
+
+        for task in scheduled.values():
+            print(f'{task["name"]:<{name_pad}}| {task["task_type"].title():<10}| {task["next_run"]}')
+
+    @staticmethod
+    def human_friendly_print_instances(instances_map):
         """This will print the instances in a tabular format
 
         Args:
