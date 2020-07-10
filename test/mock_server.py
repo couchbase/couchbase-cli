@@ -412,5 +412,6 @@ endpoints = [
     (r'/analytics/link', {'GET': get_by_path, 'POST': do_nothing, 'PUT': do_nothing, 'DELETE': do_nothing}),
 
     # backup server API
-    (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing})
+    (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing}),
+    (r'/api/v1/cluster/self/instance/(:?active|archived|imported)$', {'GET': get_by_path})
 ]

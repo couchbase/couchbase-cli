@@ -38,6 +38,7 @@ function gen_docs {
 }
 
 gen_docs couchbase-cli-backup-service.adoc 1
+gen_docs couchbase-cli-backup-service-instance.adoc 1
 gen_docs couchbase-cli-backup-service-settings.adoc 1
 gen_docs couchbase-cli-bucket-compact.adoc 1
 gen_docs couchbase-cli-bucket-create.adoc 1

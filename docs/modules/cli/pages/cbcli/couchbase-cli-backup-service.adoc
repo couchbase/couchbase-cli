@@ -12,11 +12,11 @@ Manages the Couchbase backup service
 
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
-    [--password <password>] <subcommand>
+    [--password <password>] <settings|instance>
 
 == DESCRIPTION
 
-Manage the backup service settings
+Manage the backup service
 
 == OPTIONS
 
@@ -26,6 +26,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 man:couchbase-cli-backup-service-settings[1]::
   Manage backup service configuration.
+
+man:couchbase-cli-backup-service-instance[1]::
+  Manage backup instances.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

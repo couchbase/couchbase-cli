@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-backup-service
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-07-06
+.\"      Date: 2020-07-10
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE" "1" "2020-07-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE" "1" "2020-07-10" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -34,12 +34,12 @@ couchbase\-cli\-backup\-service \- Manages the Couchbase backup service
 .sp
 .nf
 _couchbase\-cli backup\-service [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>] <subcommand>
+    [\-\-password <password>] <settings|instance>
 .fi
 .br
 .SH "DESCRIPTION"
 .sp
-Manage the backup service settings
+Manage the backup service
 .SH "OPTIONS"
 .sp
 \-c, \-\-cluster
@@ -69,6 +69,11 @@ environment variable CB_REST_PASSWORD.
 \fBcouchbase\-cli\-backup\-service\-settings\fP(1)
 .RS 4
 Manage backup service configuration.
+.RE
+.sp
+\fBcouchbase\-cli\-backup\-service\-instance\fP(1)
+.RS 4
+Manage backup instances.
 .RE
 .SH "HOST FORMATS"
 .sp

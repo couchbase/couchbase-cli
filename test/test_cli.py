@@ -1903,5 +1903,97 @@ class TestBackupServiceSettings(CommandTest):
                                   sort_keys=True)])
 
 
+
+class TestBackupServiceInstance(CommandTest):
+    """Test the backup-service instance subcommand and all its actions
+    """
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/api/v1/cluster/self/instance/active': [],
+                            '/api/v1/cluster/self/instance/archived': [],
+                            '/api/v1/cluster/self/instance/imported': [],
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['instance']
+        super(TestBackupServiceInstance, self).setUp()
+
+    def test_list_invalid_state(self):
+        """Test that if a state not in [active, imported, archived] is provided the command exits with a non zero status
+        code
+        """
+        self.system_exit_run(self.command + ['--list', '--state', 'state'], self.server_args)
+
+    def test_list_no_instances(self):
+        """Test that if the are no instances the command exits with 0 status and prints out that the are no instances"""
+        self.no_error_run(self.command + ['--list'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/instance/active', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/instance/archived', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/instance/imported', self.server.trace)
+        self.assertIn('No instances found', self.str_output)
+
+    def test_list_various_instances(self):
+        """Test that instance of all state are retireved and outputed"""
+        self.server_args['/api/v1/cluster/self/instance/active'] = [{
+            'id': 'active-instance',
+            'state': 'active',
+            'profile_name': 'profile1',
+            'health': {'healthy': False},
+            'repo': 'repo1',
+        }]
+        self.server_args['/api/v1/cluster/self/instance/imported'] = [{
+            'id': 'imported-instance',
+            'state': 'imported',
+            'repo': 'repo2',
+        }]
+        self.server_args['/api/v1/cluster/self/instance/archived'] = [{
+            'id': 'archived-instance',
+            'state': 'archived',
+            'profile_name': 'profile2',
+            'repo': 'repo2',
+        }]
+
+        self.no_error_run(self.command + ['--list'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/instance/active', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/instance/archived', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/instance/imported', self.server.trace)
+        self.assertGreaterEqual(len(self.str_output.split('\n')), 4, 'Expected at least four lines')
+        for instance_id in ['active-instance', 'imported-instance', 'archived-instance']:
+            self.assertIn(instance_id, self.str_output)
+
+    def test_list_various_instances_state_filter(self):
+        """Test that instance of the specific state are retireved and outputed"""
+        self.server_args['/api/v1/cluster/self/instance/active'] = [{
+            'id': 'active-instance',
+            'state': 'active',
+            'profile_name': 'profile1',
+            'health': {'health': False},
+            'repo': 'repo1',
+        }]
+        self.server_args['/api/v1/cluster/self/instance/imported'] = [{
+            'id': 'imported-instance',
+            'state': 'imported',
+            'repo': 'repo2',
+        }]
+        self.server_args['/api/v1/cluster/self/instance/archived'] = [{
+            'id': 'archived-instance',
+            'state': 'archived',
+            'profile_name': 'profile2',
+            'repo': 'repo2',
+        }]
+
+        self.no_error_run(self.command + ['--list', '--state', 'imported'], self.server_args)
+        self.assertNotIn('GET:/api/v1/cluster/self/instance/active', self.server.trace)
+        self.assertNotIn('GET:/api/v1/cluster/self/instance/archived', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/instance/imported', self.server.trace)
+        self.assertIn('imported-instance', self.str_output)
+        # as a bonus also check that N/A is printed for the profiles
+        self.assertIn('N/A', self.str_output)
+
+
 if __name__ == '__main__':
     unittest.main()

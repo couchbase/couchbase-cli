@@ -1832,6 +1832,28 @@ class ClusterManager(object):
 
         return self._patch_json(f'{hosts[0]}/api/v1/config', params)
 
+    def get_backup_service_instances(self, cluster='self', state=None):
+        """List all backup instances in the given state
+
+        Args:
+            cluster (str): Only 'self' is supported.
+            state (str): The state of instances to retrieve
+
+        Returns:
+            A list of instances and None if successful. Otherwise none a list of strings denoting the errors.
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        if state not in ['active', 'archived', 'imported']:
+            return None, [f'Invalid backup instance state {state}']
+
+        return self._get(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/{state}')
+
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
         params = {"name": scope}

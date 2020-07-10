@@ -1,0 +1,95 @@
+= couchbase-cli-backup-service-instance(1)
+ifndef::doctype-manpage[:doctitle: backup-serivce-instance]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-instance -
+endif::[]
+Manage the backup service instances.
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service [--cluster <url>] [--username <user>]
+    [--password <password>] [--output] instance [--list] [--state <state>]
+
+== DESCRIPTION
+
+Manage backup service instances
+
+== OPTIONS
+
+--list::
+    List the backup instances.
+
+--state <state>::
+    Specifies the instance state. Valid states are 'active', 'archived' or 'imported'
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To retrieve a summary of all instances run:
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  instance --list
+ID            | State    | Profile | Healthy | Repository"
+----------------------------------------------------------
+weekly-all    | active   | _weekly |  True   | a8059549-7fc3-401a-8fb8-008d1e20f1b0
+old-data      | archived | _daily  |  True   | d6ccec04-6f03-4599-94c5-b95ac10a4f80
+test-data-set | imported | N/A     |  True   | provider
+----
+
+You can also filter to only get instances in certain state by using the `--state` flag. If you want more in-depth
+details for the instance use the JSON output as can be seen below:
+
+To set the backup service configuration use the `--set` flag and any of the configuration flags for example:
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password  --output json \
+  instance --list --state active
+{
+  "active": [
+    {
+      "id": "weekly-all",
+      "profile_name": "_weekly",
+      "state": "active",
+      "archive": "/backup",
+      "repo": "a8059549-7fc3-401a-8fb8-008d1e20f1b0",
+      "scheduled": {
+        "backup_monday_full": {
+          "name": "backup_monday_full",
+          "task_type": "BACKUP",
+          "next_run": "2020-07-13T22:00:00+01:00"
+        },
+        "backup_wednesday": {
+          "name": "backup_wednesday",
+          "task_type": "BACKUP",
+          "next_run": "2020-07-15T22:00:00+01:00"
+        },
+        "merge_week": {
+          "name": "merge_week",
+          "task_type": "MERGE",
+          "next_run": "2020-07-12T23:20:00+01:00"
+        }
+      },
+      "version": 1,
+      "health": {
+        "healthy": true
+      },
+      "creation_time": "2020-07-10T07:44:18.826195+01:00",
+      "update_time": "2020-07-10T07:44:18.826195+01:00"
+    }
+  ]
+}
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

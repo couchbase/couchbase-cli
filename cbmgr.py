@@ -15,6 +15,7 @@ import urllib.parse
 import time
 
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
+from functools import reduce
 from operator import itemgetter
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
@@ -4712,15 +4713,18 @@ class BackupService(Subcommand):
     def __init__(self):
         super(BackupService, self).__init__()
         self.parser.prog = "couchbase-cli backup-service"
-        self.settings_cmd = BackupServiceSettings(self.parser)
+        self.subparser = self.parser.add_subparsers(help='Sub command help', dest='sub_cmd', metavar='<subcommand>')
+        self.settings_cmd = BackupServiceSettings(self.subparser)
+        self.instance_cmd = BackupServiceInstance(self.subparser)
 
-    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
-        if opts.sub_cmd is None or opts.sub_cmd not in ['settings']:
+        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'instance']:
             _exit_if_errors(['<subcommand> must settings'])
 
         if opts.sub_cmd == 'settings':
             self.settings_cmd.execute(opts)
+        elif opts.sub_cmd == 'instance':
+            self.instance_cmd.execute(opts)
 
     @staticmethod
     def get_man_page_name():
@@ -4734,9 +4738,8 @@ class BackupService(Subcommand):
 class BackupServiceSettings:
     """Backup service settings is a nested command and manages the backup service settings"""
 
-    def __init__(self, parser):
+    def __init__(self, subparser):
         self.rest = None
-        subparser = parser.add_subparsers(help='Sub command help', dest='sub_cmd', metavar='<subcommand>')
         setting_parser = subparser.add_parser('settings', help='Manage backup service settings', add_help=False,
                                               allow_abbrev=False)
         group = setting_parser.add_argument_group('Backup service settings options')
@@ -4788,3 +4791,118 @@ class BackupServiceSettings:
     @staticmethod
     def get_description():
         return 'Manage backup service settings'
+
+
+class BackupServiceInstance:
+    """This command manages backup services instances.
+
+    Things this command can do is:
+    - List instances
+    - Get instance
+    - Add instance
+    - Archive instance
+    - Import instance
+    - Delete instance
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        instance_parser = subparser.add_parser('instance', help='Manage backup instances', add_help=False,
+                                               allow_abbrev=False)
+
+        # action flags are mutually exclusive
+        action_group = instance_parser.add_mutually_exclusive_group(required=True)
+        action_group.add_argument('--list', action='store_true', help='Get all instances')
+        # further actions to come
+        # action_group.add_argument('--get', action='store_true', help='Get instance by id')
+        # action_group.add_argument('--add', action='store_true', help='Add a new instance')
+        # action_group.add_argument('--remove', action='store_true', help='Remove an instance')
+        # action_group.add_argument('--archive', action='store_true', help='Archive an instance')
+        action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
+                                  help="Prints the short or long help message")
+
+        # other arguments
+        group = instance_parser.add_argument_group('Backup service instance configuration')
+        group.add_argument('--state', metavar='<state>', choices=['active', 'archived', 'imported'],
+                           help='The instance state.')
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service instance subcommand"""
+        if opts.list:
+            self.list_instances(opts.state, opts.output == 'json')
+
+    def list_instances(self, state=None, json_out=False):
+        """List the backup instances.
+
+        If a instance state is given only instances in that state will be listed. This command supports listing both in
+        json and human friendly format.
+
+        Args:
+            state (str, optional): One of ['active', 'imported', 'archived']. The instance on this state will be
+                retrieved.
+            json_out (bool): If True the output will be JSON otherwise it will be a human friendly format.
+        """
+        states = ['active', 'archived', 'imported'] if state is None else [state]
+        results = {}
+        for get_state in states:
+            instances, errors = self.rest.get_backup_service_instances(state=get_state)
+            _exit_if_errors(errors)
+            results[get_state] = instances
+
+        if json_out:
+            print(json.dumps(results, indent=2))
+        else:
+            self.human_friendly_print_instance(results)
+
+    @staticmethod
+    def human_friendly_print_instance(instances_map):
+        """This will print the instances in a tabular format
+
+        Args:
+            instance_map (map<state (str), instance (list of objects)>)
+        """
+        instance_count = 0
+        id_pad = 5
+        profile_pad = 7
+        for instances in instances_map.values():
+            for instance in instances:
+                instance_count += 1
+                if id_pad < len(instance['id']):
+                    id_pad = len(instance['id'])
+                if 'profile_name' in instance and profile_pad < len(instance['profile_name']):
+                    profile_pad = len(instance['profile_name'])
+
+        if instance_count == 0:
+            print('No instances found')
+            return
+
+        # Get an extra space between the the information and the column separator
+        profile_pad += 1
+        id_pad += 1
+
+        # build header
+        header = f'{"ID":<{id_pad}}| {"State":<9}| {"Profile":<{profile_pad}}| Healthy | Repository'
+        print(header)
+        print('-' * len(header))
+
+        # print instance summary
+        for _, instances in sorted(instances_map.items()):
+            for instance in instances:
+                healthy = not ('health' in instance and not instance['health']['healthy'])
+                # archived and imported instances may not have profiles so we have to replace the empty string with N/A
+                profile_name = 'N/A'
+                if 'profile_name' in instance and len(instance['profile_name']) != 0:
+                    profile_name = instance['profile_name']
+
+                print(f"{instance['id']:<{id_pad}}| {instance['state']:<9}| {profile_name:<{profile_pad}}| "
+                      f" {healthy!s:<7}| {instance['repo']}")
+
+    @staticmethod
+    def get_man_page_name():
+        return 'couchbase-cli-backup-service-instance' + '.1' if os.name != 'nt' else '.html'
+
+    @staticmethod
+    def get_description():
+        return 'Manage backup service instances'
