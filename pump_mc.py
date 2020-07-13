@@ -131,13 +131,13 @@ class MCSink(pump.Sink):
 
     def get_conflict_resolution_type(self) -> str:
         bucket = self.sink_map["buckets"][0]
-        confResType = "seqno"
+        conf_res_type = "seqno"
         if "conflictResolutionType" in bucket:
-            confResType = bucket["conflictResolutionType"]
-        return confResType
+            conf_res_type = bucket["conflictResolutionType"]
+        return conf_res_type
 
     def close_mconns(self, mconns: Dict[str, cb_bin_client.MemcachedClient]):
-        for k, conn in mconns.items():
+        for conn in mconns.values():
             self.add_stop_event(conn)
             conn.close()
 
@@ -201,13 +201,12 @@ class MCSink(pump.Sink):
             rv, translated_cmd = self.translate_cmd(cmd, operation, meta)
             if translated_cmd is None:
                 return rv, skipped
-            if dtype & couchbaseConstants.DATATYPE_COMPRESSED:
-                if self.uncompress and val:
-                    try:
-                        val = snappy.uncompress(val)
-                        dtype = dtype ^ couchbaseConstants.DATATYPE_COMPRESSED
-                    except Exception as err:
-                        pass
+            if dtype & couchbaseConstants.DATATYPE_COMPRESSED and self.uncompress and val:
+                try:
+                    val = snappy.uncompress(val)
+                    dtype = dtype ^ couchbaseConstants.DATATYPE_COMPRESSED
+                except Exception:
+                    pass
             if translated_cmd == couchbaseConstants.CMD_GET:
                 val, flg, exp, cas = b'', 0, 0, 0
             if translated_cmd == couchbaseConstants.CMD_NOOP:
@@ -218,16 +217,16 @@ class MCSink(pump.Sink):
             if translated_cmd == couchbaseConstants.CMD_DELETE_WITH_META and not dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
                 val = b''
             # on mutations filter txn related data
-            if translated_cmd == couchbaseConstants.CMD_SET_WITH_META or translated_cmd == couchbaseConstants.CMD_SET:
-                if not getattr(self.opts, 'force_txn', False):
-                    skip, val, cas, exp, meta, dtype = self.filter_out_txn(key, val, cas, exp, meta, dtype)
-                    if skip:
-                        skipped.append(i)
-                        if not self.txn_warning_issued:
-                            self.txn_warning_issued = True
-                            print(f'Mid-transaction data have being rolled backed and restored, but transactional atomicity cannot'
-                                  f' be guaranteed.')
-                        continue
+            if (translated_cmd in [couchbaseConstants.CMD_SET_WITH_META, couchbaseConstants.CMD_SET]
+                    and not getattr(self.opts, 'force_txn', False)):
+                skip, val, cas, exp, meta, dtype = self.filter_out_txn(key, val, cas, exp, meta, dtype)
+                if skip:
+                    skipped.append(i)
+                    if not self.txn_warning_issued:
+                        self.txn_warning_issued = True
+                        print('Mid-transaction data have being rolled backed and restored, but transactional '
+                              'atomicity cannot be guaranteed.')
+                    continue
 
             rv, req = self.cmd_request(translated_cmd, vbucket_id_msg, key, val,  # type: ignore
                                        ctypes.c_uint32(flg).value,
@@ -300,7 +299,7 @@ class MCSink(pump.Sink):
         # check if txn is valid JSON if not let the server handle it
         try:
             txn_xattr = json.loads(txn_marker.body.decode())
-        except Exception as e:
+        except Exception:
             logging.debug('(TXN) txn is invalid json')
             return False, val, cas, exp, revid, data_type
 
@@ -338,7 +337,7 @@ class MCSink(pump.Sink):
             try:
                 _ = json.loads(val.decode())
                 data_type = 0x01  # Raw json
-            except Exception as e:
+            except Exception:
                 data_type = 0x00
             return False, val, cas, exp, revid, data_type
 
@@ -536,7 +535,7 @@ class MCSink(pump.Sink):
     def check(opts, spec: str, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[Dict[str, Any]]]:
         host, port, user, pswd, _ = pump.parse_spec(opts, spec, int(getattr(opts, "port", 11211)))
         if opts.ssl:
-            ports = couchbaseConstants.SSL_PORT
+            port = couchbaseConstants.SSL_PORT
         rv, conn = MCSink.connect_mc(host, port, user, pswd, None, opts.ssl, opts.no_ssl_verify, opts.cacert)
         if rv != 0:
             return rv, None
@@ -559,9 +558,7 @@ class MCSink(pump.Sink):
         return self.push_next_batch(batch, pump.SinkBatchFuture(self, batch))
 
     def connect(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[cb_bin_client.MemcachedClient]]:
-        host, port, user, pswd, path = \
-            pump.parse_spec(self.opts, self.spec,
-                            int(getattr(self.opts, "port", 11211)))
+        host, port, user, pswd, _ = pump.parse_spec(self.opts, self.spec, int(getattr(self.opts, "port", 11211)))
         if self.opts.ssl:
             port = couchbaseConstants.SSL_PORT
         return MCSink.connect_mc(host, port, user, pswd, self.sink_map["name"],

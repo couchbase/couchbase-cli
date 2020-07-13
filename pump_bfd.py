@@ -98,8 +98,7 @@ class BFD:
 
     @staticmethod
     def list_files(opts, spec, bucket, node, pattern):
-        file_list = []
-        prec_list = []
+        pass
 
     @staticmethod
     def write_json_file(parent_dir, filename, output_data):
@@ -616,7 +615,6 @@ class BFDSource(BFD, pump.Source):
                 break
 
         while len(prec_list) > 0:
-            deps = glob.glob(os.path.join(prec_list[0], pattern))
             for d in glob.glob(os.path.join(prec_list[0], pattern)):
                 if d not in file_list:
                     file_list.append(d)

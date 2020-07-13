@@ -329,9 +329,8 @@ class CBEnvAction(Action):
     """Allows the custom handling of environment variables for command line options"""
 
     def __init__(self, envvar, required=True, default=None, **kwargs):
-        if not default and envvar:
-            if envvar in os.environ:
-                default = os.environ[envvar]
+        if not default and envvar and envvar in os.environ:
+            default = os.environ[envvar]
         if required and default:
             required = False
         super(CBEnvAction, self).__init__(default=default, required=required,
@@ -820,12 +819,10 @@ class BucketCreate(Subcommand):
                 _exit_if_errors(["--compression-mode cannot be specified for a memcached bucket"])
             if opts.durability_min_level is not None:
                 _exit_if_errors(["--durability-min-level cannot be specified for a memcached bucket"])
-        elif opts.type == "ephemeral":
-            if opts.eviction_policy in ["valueOnly", "fullEviction"]:
-                _exit_if_errors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
-        elif opts.type == "couchbase":
-            if opts.eviction_policy in ["noEviction", "nruEviction"]:
-                _exit_if_errors(["--bucket-eviction-policy must either be valueOnly or fullEviction"])
+        elif opts.type == "ephemeral" and opts.eviction_policy in ["valueOnly", "fullEviction"]:
+            _exit_if_errors(["--bucket-eviction-policy must either be noEviction or nruEviction"])
+        elif opts.type == "couchbase" and opts.eviction_policy in ["noEviction", "nruEviction"]:
+            _exit_if_errors(["--bucket-eviction-policy must either be valueOnly or fullEviction"])
 
         if ((opts.type == "memcached" or opts.type == "ephemeral")
                 and (opts.db_frag_perc is not None
@@ -1871,7 +1868,7 @@ class ServerEshell(Subcommand):
             else:
                 _exit_if_errors([f'Unknown vm type `{opts.vm}`'])
 
-        rand_chars = ''.join(random.choice(string.ascii_letters) for i in range(20))
+        rand_chars = ''.join(random.choice(string.ascii_letters) for _ in range(20))
         name = f'ctl-{rand_chars}@127.0.0.1'
 
         cb_erl = os.path.join(opts.erl_path, 'erl')
@@ -2169,7 +2166,6 @@ class SettingAudit(Subcommand):
                 return
 
             self.format_descriptors_in_table(descriptors)
-            return
         elif opts.get_settings:
             audit_settings, errors = self.rest.get_audit_settings()
             _exit_if_errors(errors)
@@ -2180,12 +2176,12 @@ class SettingAudit(Subcommand):
             descriptors, errors = self.rest.get_id_descriptors()
             _exit_if_errors(errors)
             self.format_audit_settings(audit_settings, descriptors)
-            return
         elif opts.set_settings:
             if not (opts.enabled or opts.log_path or opts.rotate_interval or opts.rotate_size
                     or opts.disable_events is not None or opts.disabled_users is not None):
                 _exit_if_errors(["At least one of [--audit-enabled, --audit-log-path, --audit-log-rotate-interval,"
-                               " --audit-log-rotate-size, --disabled-users, --disable-events] is required with --set"])
+                                 " --audit-log-rotate-size, --disabled-users, --disable-events] is required with"
+                                 " --set"])
 
             if opts.enabled == "1":
                 opts.enabled = "true"
@@ -2269,19 +2265,19 @@ class SettingAutofailover(Subcommand):
                            choices=["0", "1"], help="Enable/disable auto-failover")
         group.add_argument("--auto-failover-timeout", dest="timeout", metavar="<seconds>",
                            type=(int), help="The auto-failover timeout")
-        group.add_argument("--enable-failover-of-server-groups", dest="enableFailoverOfServerGroups", metavar="<1|0>",
-                           choices=["0", "1"], help="Enable/disable auto-failover of server Groups")
-        group.add_argument("--max-failovers", dest="maxFailovers", metavar="<1|2|3>", choices=["1", "2", "3"],
+        group.add_argument("--enable-failover-of-server-groups", dest="enable_failover_of_server_groups",
+                           metavar="<1|0>", choices=["0", "1"], help="Enable/disable auto-failover of server Groups")
+        group.add_argument("--max-failovers", dest="max_failovers", metavar="<1|2|3>", choices=["1", "2", "3"],
                            help="Maximum number of times an auto-failover event can happen")
-        group.add_argument("--enable-failover-on-data-disk-issues", dest="enableFailoverOnDataDiskIssues",
+        group.add_argument("--enable-failover-on-data-disk-issues", dest="enable_failover_on_data_disk_issues",
                            metavar="<1|0>", choices=["0", "1"],
                            help="Enable/disable auto-failover when the Data Service reports disk issues. "
                            + "Couchbase Server Enterprise Edition only.")
-        group.add_argument("--failover-data-disk-period", dest="failoverOnDataDiskPeriod",
+        group.add_argument("--failover-data-disk-period", dest="failover_on_data_disk_period",
                            metavar="<seconds>", type=(int),
                            help="The amount of time the Data Serivce disk failures has to be happening for to trigger"
                                 " an auto-failover")
-        group.add_argument("--can-abort-rebalance", metavar="<1|0>", choices=["1", "0"], dest="canAbortRebalance",
+        group.add_argument("--can-abort-rebalance", metavar="<1|0>", choices=["1", "0"], dest="can_abort_rebalance",
                            help="Enables auto-failover to abort rebalance and perform the failover. (EE only)")
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
@@ -2291,57 +2287,58 @@ class SettingAutofailover(Subcommand):
         elif opts.enabled == "0":
             opts.enabled = "false"
 
-        if opts.enableFailoverOnDataDiskIssues == "1":
-            opts.enableFailoverOnDataDiskIssues = "true"
-        elif opts.enableFailoverOnDataDiskIssues == "0":
-            opts.enableFailoverOnDataDiskIssues = "false"
+        if opts.enable_failover_on_data_disk_issues == "1":
+            opts.enable_failover_on_data_disk_issues = "true"
+        elif opts.enable_failover_on_data_disk_issues == "0":
+            opts.enable_failover_on_data_disk_issues = "false"
 
-        if opts.enableFailoverOfServerGroups == "1":
-            opts.enableFailoverOfServerGroups = "true"
-        elif opts.enableFailoverOfServerGroups == "0":
-            opts.enableFailoverOfServerGroups = "false"
+        if opts.enable_failover_of_server_groups == "1":
+            opts.enable_failover_of_server_groups = "true"
+        elif opts.enable_failover_of_server_groups == "0":
+            opts.enable_failover_of_server_groups = "false"
 
         if not self.enterprise:
-            if opts.enableFailoverOfServerGroups:
+            if opts.enable_failover_of_server_groups:
                 _exit_if_errors(["--enable-failover-of-server-groups can only be configured on enterprise edition"])
-            if opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod:
+            if opts.enable_failover_on_data_disk_issues or opts.failover_on_data_disk_period:
                 _exit_if_errors(["Auto failover on Data Service disk issues can only be configured on enterprise"
-                               + "edition"])
-            if opts.maxFailovers:
+                                 + "edition"])
+            if opts.max_failovers:
                 _exit_if_errors(["--max-count can only be configured on enterprise edition"])
-            if opts.canAbortRebalance:
+            if opts.can_abort_rebalance:
                 _exit_if_errors(["--can-abort-rebalance can only be configured on enterprise edition"])
 
-        if not any([opts.enabled, opts.timeout, opts.enableFailoverOnDataDiskIssues, opts.failoverOnDataDiskPeriod,
-                    opts.enableFailoverOfServerGroups, opts.maxFailovers]):
+        if not any([opts.enabled, opts.timeout, opts.enable_failover_on_data_disk_issues,
+                    opts.failover_on_data_disk_period, opts.enable_failover_of_server_groups, opts.max_failovers]):
             _exit_if_errors(["No settings specified to be changed"])
 
-        if ((opts.enableFailoverOnDataDiskIssues is None or opts.enableFailoverOnDataDiskIssues == "false")
-                and opts.failoverOnDataDiskPeriod):
+        if ((opts.enable_failover_on_data_disk_issues is None or opts.enable_failover_on_data_disk_issues == "false")
+                and opts.failover_on_data_disk_period):
             _exit_if_errors(["--enable-failover-on-data-disk-issues must be set to 1 when auto-failover Data"
-                           " Service disk period has been set"])
+                             " Service disk period has been set"])
 
-        if opts.enableFailoverOnDataDiskIssues and opts.failoverOnDataDiskPeriod is None:
+        if opts.enable_failover_on_data_disk_issues and opts.failover_on_data_disk_period is None:
             _exit_if_errors(["--failover-data-disk-period must be set when auto-failover on Data Service disk"
-                           " is enabled"])
+                             " is enabled"])
 
         if opts.enabled == "false" or opts.enabled is None:
-            if opts.enableFailoverOnDataDiskIssues or opts.failoverOnDataDiskPeriod:
+            if opts.enable_failover_on_data_disk_issues or opts.failover_on_data_disk_period:
                 _exit_if_errors(["--enable-auto-failover must be set to 1 when auto-failover on Data Service disk issues"
-                               " settings are being configured"])
-            if opts.enableFailoverOfServerGroups:
+                                 " settings are being configured"])
+            if opts.enable_failover_of_server_groups:
                 _exit_if_errors(["--enable-auto-failover must be set to 1 when enabling auto-failover of Server Groups"])
             if opts.timeout:
                 _warning("Timeout specified will not take affect because auto-failover is being disabled")
 
-        if opts.canAbortRebalance == '1':
-            opts.canAbortRebalance = 'true'
-        elif opts.canAbortRebalance == '0':
-            opts.canAbortRebalance = 'false'
+        if opts.can_abort_rebalance == '1':
+            opts.can_abort_rebalance = 'true'
+        elif opts.can_abort_rebalance == '0':
+            opts.can_abort_rebalance = 'false'
 
-        _, errors = self.rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.enableFailoverOfServerGroups,
-                                                        opts.maxFailovers, opts.enableFailoverOnDataDiskIssues,
-                                                        opts.failoverOnDataDiskPeriod, opts.canAbortRebalance)
+        _, errors = self.rest.set_autofailover_settings(opts.enabled, opts.timeout,
+                                                        opts.enable_failover_of_server_groups, opts.max_failovers,
+                                                        opts.enable_failover_on_data_disk_issues,
+                                                        opts.failover_on_data_disk_period, opts.can_abort_rebalance)
         _exit_if_errors(errors)
 
         _success("Auto-failover settings modified")
@@ -4264,10 +4261,9 @@ class SettingAlternateAddress(Subcommand):
             if opts.output == 'standard':
                 port_names = set()
                 for node in add:
-                    if 'alternateAddresses' in node:
-                        if 'ports' in node['alternateAddresses']['external']:
-                            for port in node['alternateAddresses']['external']['ports'].keys():
-                                port_names.add(port)
+                    if 'alternateAddresses' in node and 'ports' in node['alternateAddresses']['external']:
+                        for port in node['alternateAddresses']['external']['ports'].keys():
+                            port_names.add(port)
                 print('{:20}{:20}{}'.format('Hostname', 'Alternate Address', 'Ports (Primary/Alternate)'))
                 print('{:40}'.format(' '), end='')
                 port_names = sorted(port_names)
@@ -4648,9 +4644,9 @@ class SettingRebalance(Subcommand):
                     print(f'Maximum number of retries: {settings["maxAttempts"]}')
                 print(f'Maximum number of vBucket move per node: {settings["rebalanceMovesPerNode"]}')
         elif opts.set:
-            if not self.enterprise:
-                if opts.enable is not None or opts.wait_for is not None or opts.max_attempts is not None:
-                    _exit_if_errors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
+            if (not self.enterprise and (opts.enable is not None or opts.wait_for is not None
+                    or opts.max_attempts is not None)):
+                _exit_if_errors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
             if opts.enable == '1':
                 opts.enable = 'true'
             else:
@@ -4672,9 +4668,8 @@ class SettingRebalance(Subcommand):
                 _exit_if_errors(err)
 
             _success('Rebalance settings updated')
-        elif opts.cancel:
-            if not self.enterprise:
-                _exit_if_errors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
+        elif opts.cancel and not self.enterprise:
+            _exit_if_errors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
 
             if opts.rebalance_id is None:
                 _exit_if_errors(['Provide the failed rebalance id using --rebalance-id <id>'])

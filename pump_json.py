@@ -46,13 +46,6 @@ class JSONSource(pump.Source):
             if '_id' not in doc:
                 msg = (cmd, vbucket_id, dockey, flg, exp, cas, b'', docvalue, 0, 0, 0, 0)
                 batch.append(msg, len(docvalue))
-            else:
-                id = doc['_id'].encode('UTF-8')
-                del doc['_id']
-                docdata = {"doc": {
-                    "json": doc,
-                    "meta": {"id": id}
-                }}
         except ValueError as error:
             logging.error(f'Fail to read json file with error: {error!s}')
 

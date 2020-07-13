@@ -104,20 +104,19 @@ class DCPStreamSource(pump.Source, threading.Thread):
         if not couch_api_base:
             return 0, None  # No couchApiBase; probably not 2.0.
 
-        err, ddocs_json, ddocs = \
+        err, _, ddocs = \
             pump.rest_request_json(host, int(port), user, pswd, opts.ssl,
                                    "/pools/default/buckets/%s/ddocs" %
                                    (source_bucket['name']),
                                    reason="provide_design", verify=opts.no_ssl_verify, cacert=opts.cacert)
         if err and "response: 404" in err:  # A 404/not-found likely means 2.0-DP4.
-            ddocs_json = None
             ddocs_url = f'{couch_api_base}/_all_docs'
             ddocs_qry = "?startkey=\"_design/\"&endkey=\"_design0\"&include_docs=true"
 
             host, port, user, pswd, path = \
                 pump.parse_spec(opts, ddocs_url, 8092)
             # Not using user/pwd as 2.0-DP4 CAPI did not support auth.
-            err, ddocs_json, ddocs = \
+            err, _, ddocs = \
                 pump.rest_request_json(host, int(port), None, None, opts.ssl,
                                        path + ddocs_qry,
                                        reason="provide_design-2.0DP4", verify=opts.no_ssl_verify, cacert=opts.cacert)
@@ -129,8 +128,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
 
         if not ddocs.get('rows', None):
             return 0, None
-        else:
-            return 0, json.dumps(ddocs.get('rows', []))
+
+        return 0, json.dumps(ddocs.get('rows', []))
 
     @staticmethod
     def provide_index(opts, source_spec: str, source_bucket: Dict[str, Any], source_map) -> \
@@ -142,7 +141,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             if errors:
                 return errors, None
             return 0, json.dumps(result["result"])
-        except ServiceNotAvailableException as e:
+        except ServiceNotAvailableException:
             return 0, None
 
     @staticmethod
@@ -155,7 +154,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             if errors:
                 return errors, None
             return 0, json.dumps(result)
-        except ServiceNotAvailableException as e:
+        except ServiceNotAvailableException:
             return 0, None
 
     @staticmethod
@@ -168,7 +167,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             if errors:
                 return errors, None
             return 0, json.dumps(result)
-        except ServiceNotAvailableException as e:
+        except ServiceNotAvailableException:
             return 0, None
 
     def get_conflict_resolution_type(self) -> str:
@@ -283,7 +282,6 @@ class DCPStreamSource(pump.Source, threading.Thread):
         start_seqno: int = 0
         end_seqno: int = 0
         vb_uuid: int = 0
-        hi_seqno: int = 0
         ss_start_seqno: int = 0
         ss_end_seqno: int = 0
         no_response_count: int = 0
@@ -554,30 +552,24 @@ class DCPStreamSource(pump.Source, threading.Thread):
             extra = struct.pack(couchbaseConstants.DCP_CONNECT_PKT_FMT, 0, flags)
             try:
                 opaque = self.r.randint(0, 2**32)
-                self.dcp_conn._send_cmd(couchbaseConstants.CMD_DCP_CONNECT, self.dcp_name.encode() , b'', opaque, extra)
+                self.dcp_conn._send_cmd(couchbaseConstants.CMD_DCP_CONNECT, self.dcp_name.encode(), b'', opaque, extra)
                 self.dcp_conn._handle_single_response(opaque)
 
-                buff_size = 0
-                if self.flow_control:
-                    # set connection buffer size. Considering header size, we roughly
-                    # set the total received package size as 10 times as value size.
-                    buff_size = self.batch_max_bytes * 10
-
-                opaque=self.r.randint(0, 2**32)
+                opaque = self.r.randint(0, 2**32)
                 self.dcp_conn._send_cmd(couchbaseConstants.CMD_DCP_CONTROL,
-                                       couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
-                                       str(self.batch_max_bytes * 10).encode(), opaque)
+                                        couchbaseConstants.KEY_DCP_CONNECTION_BUFFER_SIZE,
+                                        str(self.batch_max_bytes * 10).encode(), opaque)
                 self.dcp_conn._handle_single_response(opaque)
 
-                opaque=self.r.randint(0, 2**32)
+                opaque = self.r.randint(0, 2**32)
                 self.dcp_conn._send_cmd(couchbaseConstants.CMD_DCP_CONTROL,
-                                       couchbaseConstants.KEY_DCP_NOOP, b'true', opaque)
+                                        couchbaseConstants.KEY_DCP_NOOP, b'true', opaque)
                 self.dcp_conn._handle_single_response(opaque)
 
-                opaque=self.r.randint(0, 2**32)
+                opaque = self.r.randint(0, 2**32)
                 self.dcp_conn._send_cmd(couchbaseConstants.CMD_DCP_CONTROL,
-                                       couchbaseConstants.KEY_DCP_NOOP_INTERVAL,
-                                       b'180', opaque)
+                                        couchbaseConstants.KEY_DCP_NOOP_INTERVAL,
+                                        b'180', opaque)
                 self.dcp_conn._handle_single_response(opaque)
             except EOFError:
                 return "error: Fail to set up DCP connection"
@@ -586,7 +578,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             except socket.error:
                 return "error: DCP connection error"
             try:
-                opaque=self.r.randint(0, 2**32)
+                opaque = self.r.randint(0, 2**32)
                 self.dcp_conn._send_cmd(couchbaseConstants.CMD_DCP_CONTROL,
                                        couchbaseConstants.KEY_DCP_EXT_METADATA,
                                        bool_to_str(True).encode(), opaque)
@@ -633,7 +625,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                 if self.dcp_done:
                     time.sleep(1)
                     continue
-                readers, writers, errors = select.select(desc, [], [], rd_timeout)
+                readers, _, _ = select.select(desc, [], [], rd_timeout)
                 rd_timeout = .25
                 if len(self.stream_list) == 0:
                     time.sleep(1)
@@ -646,7 +638,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                         raise EOFError("Got empty data (remote died?).")
                     bytes_read += data
                 while len(bytes_read) >= couchbaseConstants.MIN_RECV_PACKET:
-                    magic, opcode, keylen, extlen, datatype, status, bodylen, opaque, cas= \
+                    magic, opcode, keylen, extlen, datatype, status, bodylen, opaque, cas = \
                         struct.unpack(couchbaseConstants.RES_PKT_FMT, \
                                       bytes_read[0:couchbaseConstants.MIN_RECV_PACKET])
 
@@ -660,7 +652,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
                                        couchbaseConstants.MIN_RECV_PACKET+bodylen))
             except socket.error:
                 break
-            except Exception as e:
+            except Exception:
                 pass
 
     def setup_dcp_streams(self):
@@ -714,14 +706,13 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     uuid, _ = self.cur['failoverlog'][pair_index][vbid][0]
             ss_start_seqno = start_seqno
             ss_end_seqno = start_seqno
-            if self.cur['snapshot'] and self.cur['snapshot'][pair_index]:
-                if vbid in self.cur['snapshot'][pair_index] and \
-                   self.cur['snapshot'][pair_index][vbid]:
-                    ss_start_seqno, ss_end_seqno = self.cur['snapshot'][pair_index][vbid]
-                    if start_seqno == ss_end_seqno:
-                        ss_start_seqno = start_seqno
-            self.request_dcp_stream(int(vbid), flags, start_seqno,
-                                    vb_list[vbid][DCPStreamSource.HIGH_SEQNO],
+            if (self.cur['snapshot'] and self.cur['snapshot'][pair_index] and vbid in self.cur['snapshot'][pair_index]
+                    and self.cur['snapshot'][pair_index][vbid]):
+                ss_start_seqno, ss_end_seqno = self.cur['snapshot'][pair_index][vbid]
+                if start_seqno == ss_end_seqno:
+                    ss_start_seqno = start_seqno
+
+            self.request_dcp_stream(int(vbid), flags, start_seqno, vb_list[vbid][DCPStreamSource.HIGH_SEQNO],
                                     uuid, ss_start_seqno, ss_end_seqno)
 
     def request_dcp_stream(self,

@@ -400,16 +400,16 @@ class CBSink(pump_mc.MCSink):
             Tuple[couchbaseConstants.PUMP_ERROR, Optional[cb_bin_client.MemcachedClient]]:
         bucket = self.sink_map['buckets'][0]
 
-        vBucketMap = bucket['vBucketServerMap']['vBucketMap']
-        serverList = bucket['vBucketServerMap']['serverList']
+        vbucket_map = bucket['vBucketServerMap']['vBucketMap']
+        server_list = bucket['vBucketServerMap']['serverList']
 
-        if vbucket_id > len(vBucketMap):
+        if vbucket_id > len(vbucket_map):
             return f'error: map missing vbucket_id: {vbucket_id!s}' \
                 f'; perhaps your source does not have vbuckets; if so, try using moxi (HOST:11211) as a destination',\
                    None
 
         # Primary server for a vbucket_id is the 0'th entry.
-        host_port = serverList[vBucketMap[vbucket_id][0]]
+        host_port = server_list[vbucket_map[vbucket_id][0]]
         server_host, _ = pump.hostport(host_port)
         if getattr(self, 'alt_add', None):
             host = None
@@ -448,7 +448,7 @@ class CBSink(pump_mc.MCSink):
                 host = '[' + host + ']'
 
             try:
-                port_int = int(port)
+                int(port)
             except ValueError:
                 return 'Invalid port "{}"'.format(port), None
 

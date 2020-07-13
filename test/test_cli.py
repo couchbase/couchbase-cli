@@ -1363,10 +1363,10 @@ class TestXdcrReplicate(CommandTest):
                                           '--xdcr-replication-mode', 'capi', '--enable-compression', '1'],
                           self.server_args)
         self.assertIn('POST:/controller/createReplication', self.server.trace)
-        expectedParams = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1', 'compressionType=Auto',
+        expected_params = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1', 'compressionType=Auto',
                           'type=capi', 'filterExpression=key%3A%5Ba-zA-z%5D%2B', 'replicationType=continuous']
 
-        self.rest_parameter_match(expectedParams)
+        self.rest_parameter_match(expected_params)
 
     def test_create_CE_with_EE(self):
         self.server_args['enterprise'] = False

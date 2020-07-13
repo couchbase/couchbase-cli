@@ -181,7 +181,7 @@ class CSVSink(pump.Sink):
                     filename = self.get_csvfile(self.spec[len(CSVSink.CSV_JSON_SCHEME):])
                     try:
                         self.csvfile = open(filename, "w", encoding='utf-8')
-                    except IOError as e:
+                    except IOError:
                         return f'error: could not write csv to file: {filename}', None
                 self.writer = csv.writer(self.csvfile)
                 self.writer.writerow(self.fields)
@@ -190,7 +190,7 @@ class CSVSink(pump.Sink):
                     filename = self.get_csvfile(self.spec[len(CSVSink.CSV_SCHEME):])
                     try:
                         self.csvfile = open(filename, "w", encoding='utf-8')
-                    except IOError as e:
+                    except IOError:
                         return f'error: could not write csv to file: {filename}', None
                 self.writer = csv.writer(self.csvfile)
                 self.writer.writerow(['id', 'flags', 'expiration', 'cas', 'value', 'rev', 'vbid', 'dtype'])
@@ -207,7 +207,7 @@ class CSVSink(pump.Sink):
             if dtype > 2:
                 try:
                     val_bytes = snappy.uncompress(val_bytes)
-                except Exception as err:
+                except Exception:
                     pass
             try:
                 if cmd in [couchbaseConstants.CMD_TAP_MUTATION,

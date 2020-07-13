@@ -345,52 +345,36 @@ class PumpingStation(ProgressReporter):
 
     def transfer_bucket_design(self, source_bucket, source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         """Transfer bucket design (e.g., design docs, views)."""
-        rv, source_design = \
-            self.source_class.provide_design(self.opts, self.source_spec,
-                                             source_bucket, source_map)
-        if rv == 0:
-            if source_design:
-                sources = source_design if isinstance(source_design, list) else [source_design]
-                for source_design in sources:
-                    rv = self.sink_class.consume_design(self.opts,
-                                                self.sink_spec, sink_map,
-                                                source_bucket, source_map,
-                                                source_design)
+        rv, source_design = self.source_class.provide_design(self.opts, self.source_spec, source_bucket, source_map)
+        if rv == 0 and source_design:
+            sources = source_design if isinstance(source_design, list) else [source_design]
+            for source_design in sources:
+                rv = self.sink_class.consume_design(self.opts, self.sink_spec, sink_map, source_bucket, source_map,
+                                                    source_design)
         return rv
 
     def transfer_bucket_index(self, source_bucket, source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         """Transfer bucket index meta."""
-        rv, source_design = \
-            self.source_class.provide_index(self.opts, self.source_spec,
-                                             source_bucket, source_map)
-        if rv == 0:
-            if source_design:
-                rv = self.sink_class.consume_index(self.opts,
-                                                self.sink_spec, sink_map,
-                                                source_bucket, source_map,
-                                                source_design)
+        rv, source_design = self.source_class.provide_index(self.opts, self.source_spec, source_bucket, source_map)
+        if rv == 0 and source_design:
+            rv = self.sink_class.consume_index(self.opts, self.sink_spec, sink_map, source_bucket, source_map,
+                                               source_design)
         return rv
 
     def transfer_bucket_fts_index(self, source_bucket, source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         """Transfer bucket index meta."""
-        rv, source_design = \
-            self.source_class.provide_fts_index(self.opts, self.source_spec,
-                                                source_bucket, source_map)
-        if rv == 0:
-            if source_design:
-                rv = self.sink_class.consume_fts_index(self.opts,
-                                                   self.sink_spec, sink_map,
-                                                   source_bucket, source_map,
+        rv, source_design = self.source_class.provide_fts_index(self.opts, self.source_spec, source_bucket, source_map)
+        if rv == 0 and source_design:
+            rv = self.sink_class.consume_fts_index(self.opts, self.sink_spec, sink_map, source_bucket, source_map,
                                                    source_design)
         return rv
 
     def transfer_fts_alias(self, source_bucket, source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         """Transfer fts alias meta."""
         rv, alias = self.source_class.provide_fts_alias(self.opts, self.source_spec, source_bucket, source_map)
-        if rv == 0:
-            if alias:
-                rv = self.sink_class.consume_fts_alias(self.opts, self.sink_spec, sink_map, source_bucket, source_map,
-                                                       alias)
+        if rv == 0 and alias:
+            rv = self.sink_class.consume_fts_alias(self.opts, self.sink_spec, sink_map, source_bucket, source_map,
+                                                   alias)
         return rv
 
     @staticmethod
@@ -923,7 +907,7 @@ class StdOutSink(Sink):
             if dtype > 2:
                 try:
                     val = snappy.uncompress(val)
-                except Exception as err:
+                except Exception:
                     pass
             try:
                 if cmd in [couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_DCP_MUTATION]:

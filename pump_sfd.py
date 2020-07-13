@@ -116,12 +116,8 @@ class SFDSource(pump.Source):
         if not os.path.isdir(bucket_dir):
             return 0, None
 
-        rv, store, store_path = \
-            open_latest_store(bucket_dir,
-                              "master.couch.*",
-                              "^(master)\\.couch\\.([0-9]+)$",
-                              "master.couch.0",
-                              mode='r')
+        rv, store, _ = open_latest_store(bucket_dir, "master.couch.*", "^(master)\\.couch\\.([0-9]+)$",
+                                         "master.couch.0", mode='r')
         if rv != 0 or not store:
             return rv, None
 
@@ -250,7 +246,7 @@ class SFDSource(pump.Source):
                 store = couchstore.CouchStore(f, 'r')
                 store.forEachChange(0, change_callback)
                 store.close()
-            except Exception as e:
+            except Exception:
                 # MB-12270: Some files may be deleted due to compaction. We can
                 # safely ignore them and move to next file.
                 pass
@@ -411,7 +407,7 @@ class SFDSink(pump.Sink):
 
         try:
             sd = json.loads(source_design)
-        except ValueError as e:
+        except ValueError:
             return f'error: could not parse source_design: {source_design}'
 
         rv, d = data_dir(sink_spec)
@@ -422,11 +418,8 @@ class SFDSink(pump.Sink):
         if not os.path.isdir(bucket_dir):
             os.mkdir(bucket_dir)
 
-        rv, store, store_path = \
-            open_latest_store(bucket_dir,
-                              "master.couch.*",
-                              "^(master)\\.couch\\.([0-9]+)$",
-                              "master.couch.1")
+        rv, store, _ = open_latest_store(bucket_dir, "master.couch.*", "^(master)\\.couch\\.([0-9]+)$",
+                                         "master.couch.1")
         if rv != 0:
             return rv
 

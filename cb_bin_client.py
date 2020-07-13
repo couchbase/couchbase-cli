@@ -94,10 +94,10 @@ class MemcachedClient(object):
                 sock = socket.socket(_family, socktype, proto)
                 sock.settimeout(10)
                 if use_ssl:
-                    certReq = ssl.CERT_REQUIRED
+                    cert_req = ssl.CERT_REQUIRED
                     if not verify:
-                        certReq = ssl.CERT_NONE
-                    sock = ssl.wrap_socket(sock, server_side=False, do_handshake_on_connect=True, cert_reqs=certReq,
+                        cert_req = ssl.CERT_NONE
+                    sock = ssl.wrap_socket(sock, server_side=False, do_handshake_on_connect=True, cert_reqs=cert_req,
                                            ca_certs=cacert)
 
                 self.s = sock
@@ -210,7 +210,7 @@ class MemcachedClient(object):
             extra = struct.pack('>IIQQH', flags, exp, seqno, remote_cas, meta_len)
         return self._do_cmd(cmd, key, value, extra, cas)
 
-    def _doRevCmd(self, cmd: int, key: bytes, exp: int, flags: int, value: bytes, rev: Tuple[int, bytes], cas: int = 0):
+    def _do_rev_cmd(self, cmd: int, key: bytes, exp: int, flags: int, value: bytes, rev: Tuple[int, bytes], cas: int = 0):
         seqno, revid = rev
         meta_data = struct.pack('>I', seqno) + revid
         meta_type = couchbaseConstants.META_REVID
@@ -229,7 +229,7 @@ class MemcachedClient(object):
 
     def set_with_rev(self, key: bytes, exp: int, flags: int, value: bytes, rev: Tuple[int, bytes]):
         """Set a value and its revision in the memcached server."""
-        return self._doRevCmd(couchbaseConstants.CMD_SET_WITH_META,
+        return self._do_rev_cmd(couchbaseConstants.CMD_SET_WITH_META,
                               key, exp, flags, value, rev)
 
     def add(self, key: bytes, exp: int, flags: int, val: bytes):
@@ -241,7 +241,7 @@ class MemcachedClient(object):
                                key, value, 0, exp, flags, seqno, remote_cas)
 
     def add_with_rev(self, key: bytes, exp: int, flags: int, value: bytes, rev: Tuple[int, bytes]):
-        return self._doRevCmd(couchbaseConstants.CMD_ADD_WITH_META,
+        return self._do_rev_cmd(couchbaseConstants.CMD_ADD_WITH_META,
                               key, exp, flags, value, rev)
 
     def replace(self, key: bytes, exp: int, flags: int, val: bytes):
@@ -282,9 +282,9 @@ class MemcachedClient(object):
                                  struct.pack(couchbaseConstants.GETL_PKT_FMT, exp))
         return self.__parse_get(data)
 
-    def cas(self, key: bytes, exp: int, flags: int, oldVal: int, val: bytes):
+    def cas(self, key: bytes, exp: int, flags: int, old_val: int, val: bytes):
         """CAS in a new value for the given key and comparison value."""
-        self._mutate(couchbaseConstants.CMD_SET, key, exp, flags, oldVal, val)
+        self._mutate(couchbaseConstants.CMD_SET, key, exp, flags, old_val, val)
 
     def touch(self, key: bytes, exp: int):
         """Touch a key in the memcached server."""
@@ -333,11 +333,11 @@ class MemcachedClient(object):
         type_bytes: bytes = struct.pack(couchbaseConstants.SET_PARAM_FMT, type)
         return self._do_cmd(couchbaseConstants.CMD_SET_PARAM, key, val, type_bytes)
 
-    def set_vbucket_state(self, vbucket: int, stateName: str):
+    def set_vbucket_state(self, vbucket: int, state_name: str):
         assert isinstance(vbucket, int)
         self.vbucket_id = vbucket
         state = struct.pack(couchbaseConstants.VB_SET_PKT_FMT,
-                            couchbaseConstants.VB_STATE_NAMES[stateName])
+                            couchbaseConstants.VB_STATE_NAMES[state_name])
         return self._do_cmd(couchbaseConstants.CMD_SET_VBUCKET_STATE, b'', b'', state)
 
     def get_vbucket_state(self, vbucket: int):

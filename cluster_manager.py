@@ -428,7 +428,7 @@ class ClusterManager(object):
         url = f'{self.hostname}/pools/default/serverGroups'
         return self._get(url)
 
-    def get_server_group(self, groupName):
+    def get_server_group(self, group_name):
         groups, errors = self.get_server_groups()
         if errors:
             return None, errors
@@ -436,16 +436,16 @@ class ClusterManager(object):
         if not groups or not groups["groups"] or groups["groups"] == 0:
             return None, ["No server groups found"]
 
-        if groupName:
+        if group_name:
             for group in groups["groups"]:
-                if group["name"] == groupName:
+                if group["name"] == group_name:
                     return group, None
-            return None, [f'Group `{groupName}` not found']
+            return None, [f'Group `{group_name}` not found']
         else:
             return groups["groups"][0], None
 
-    def add_server(self, add_server, groupName, username, password, services):
-        group, errors = self.get_server_group(groupName)
+    def add_server(self, add_server, group_name, username, password, services):
+        group, errors = self.get_server_group(group_name)
         if errors:
             return None, errors
 
@@ -649,10 +649,9 @@ class ClusterManager(object):
             elif task["status"] == "notRunning":
                 rv["status"] = task["status"]
                 rv["msg"] = "Rebalance is not running"
-                if "statusIsStale" in task:
-                    if task["statusIsStale"] or task["statusIsStale"] == "true":
-                        rv["status"] = "stale"
-                        rv["msg"] = "Current status is stale, please retry"
+                if "statusIsStale" in task and (task["statusIsStale"] or task["statusIsStale"] == "true"):
+                    rv["status"] = "stale"
+                    rv["msg"] = "Current status is stale, please retry"
 
             break
 
@@ -1205,9 +1204,9 @@ class ClusterManager(object):
     def get_id_descriptors(self):
         return self._get(f'{self.hostname}/settings/audit/descriptors')
 
-    def set_autofailover_settings(self, enabled, timeout, failoverOfServerGroups, maxCount,
-                                  failoverOnDataDiskIssuesEnabled, failoverOnDataDiskIssuesTimePeriod,
-                                  canAbortRebalance):
+    def set_autofailover_settings(self, enabled, timeout, failover_of_server_groups, max_count,
+                                  failover_on_data_disk_issues_enabled, failover_on_data_disk_issues_time_period,
+                                  can_abort_rebalance):
         url = self.hostname + '/settings/autoFailover'
 
         params = dict()
@@ -1215,16 +1214,16 @@ class ClusterManager(object):
             params["enabled"] = enabled
         if timeout:
             params["timeout"] = timeout
-        if failoverOfServerGroups:
-            params["failoverServerGroup"] = failoverOfServerGroups
-        if failoverOnDataDiskIssuesEnabled:
-            params["failoverOnDataDiskIssues[enabled]"] = failoverOnDataDiskIssuesEnabled
-        if maxCount:
-            params["maxCount"] = maxCount
-        if failoverOnDataDiskIssuesTimePeriod:
-            params["failoverOnDataDiskIssues[timePeriod]"] = failoverOnDataDiskIssuesTimePeriod
-        if canAbortRebalance:
-            params["canAbortRebalance"] = canAbortRebalance
+        if failover_of_server_groups:
+            params["failoverServerGroup"] = failover_of_server_groups
+        if failover_on_data_disk_issues_enabled:
+            params["failoverOnDataDiskIssues[enabled]"] = failover_on_data_disk_issues_enabled
+        if max_count:
+            params["maxCount"] = max_count
+        if failover_on_data_disk_issues_time_period:
+            params["failoverOnDataDiskIssues[timePeriod]"] = failover_on_data_disk_issues_time_period
+        if can_abort_rebalance:
+            params["canAbortRebalance"] = can_abort_rebalance
 
         return self._post_form_encoded(url, params)
 
@@ -1244,71 +1243,71 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def set_compaction_settings(self, dbFragPerc, dbFragSize, viewFragPerc, viewFragSize,
-                                fromHour, fromMin, toHour, toMin, abortOutside,
-                                parallelDBAndViewCompact, purgeInterval, gsiMode, gsiPerc,
-                                gsiInterval, gsiFromHour, gsiFromMin, gsiToHour, gsiToMin,
-                                enableGsiAbort):
+    def set_compaction_settings(self, db_frag_perc, db_frag_size, view_frag_perc, view_frag_size,
+                                from_hour, from_min, to_hour, to_min, abortOutside,
+                                parallel_db_and_view_compact, purge_interval, gsi_mode, gsi_perc,
+                                gsi_interval, gsi_from_hour, gsi_from_min, gsi_to_hour, gsi_to_min,
+                                enable_gsi_abort):
         url = f'{self.hostname}/controller/setAutoCompaction'
         params = dict()
 
-        if dbFragPerc is not None:
-            params["databaseFragmentationThreshold[percentage]"] = dbFragPerc
-        if dbFragSize is not None:
-            params["databaseFragmentationThreshold[size]"] = dbFragSize
-        if viewFragPerc is not None:
-            params["viewFragmentationThreshold[percentage]"] = viewFragPerc
-        if viewFragSize is not None:
-            params["viewFragmentationThreshold[size]"] = viewFragSize
-        if fromHour is not None:
-            params["allowedTimePeriod[fromHour]"] = fromHour
-        if fromMin is not None:
-            params["allowedTimePeriod[fromMinute]"] = fromMin
-        if toHour is not None:
-            params["allowedTimePeriod[toHour]"] = toHour
-        if toMin is not None:
-            params["allowedTimePeriod[toMinute]"] = toMin
+        if db_frag_perc is not None:
+            params["databaseFragmentationThreshold[percentage]"] = db_frag_perc
+        if db_frag_size is not None:
+            params["databaseFragmentationThreshold[size]"] = db_frag_size
+        if view_frag_perc is not None:
+            params["viewFragmentationThreshold[percentage]"] = view_frag_perc
+        if view_frag_size is not None:
+            params["viewFragmentationThreshold[size]"] = view_frag_size
+        if from_hour is not None:
+            params["allowedTimePeriod[fromHour]"] = from_hour
+        if from_min is not None:
+            params["allowedTimePeriod[fromMinute]"] = from_min
+        if to_hour is not None:
+            params["allowedTimePeriod[toHour]"] = to_hour
+        if to_min is not None:
+            params["allowedTimePeriod[toMinute]"] = to_min
         if abortOutside is not None:
             params["allowedTimePeriod[abortOutside]"] = abortOutside
-        if parallelDBAndViewCompact is not None:
-            params["parallelDBAndViewCompaction"] = parallelDBAndViewCompact
-        if purgeInterval is not None:
-            params["purgeInterval"] = purgeInterval
-        if gsiMode is not None:
-            params["indexCompactionMode"] = gsiMode
-        if gsiPerc is not None:
-            params["indexFragmentationThreshold[percentage]"] = gsiPerc
-        if gsiInterval is not None:
-            params["indexCircularCompaction[daysOfWeek]"] = gsiInterval
-        if gsiFromHour is not None:
-            params["indexCircularCompaction[interval][fromHour]"] = gsiFromHour
-        if gsiFromMin is not None:
-            params["indexCircularCompaction[interval][fromMinute]"] = gsiFromMin
-        if gsiToHour is not None:
-            params["indexCircularCompaction[interval][toHour]"] = gsiToHour
-        if gsiToMin is not None:
-            params["indexCircularCompaction[interval][toMinute]"] = gsiToMin
-        if enableGsiAbort is not None:
-            params["indexCircularCompaction[interval][abortOutside]"] = enableGsiAbort
+        if parallel_db_and_view_compact is not None:
+            params["parallelDBAndViewCompaction"] = parallel_db_and_view_compact
+        if purge_interval is not None:
+            params["purgeInterval"] = purge_interval
+        if gsi_mode is not None:
+            params["indexCompactionMode"] = gsi_mode
+        if gsi_perc is not None:
+            params["indexFragmentationThreshold[percentage]"] = gsi_perc
+        if gsi_interval is not None:
+            params["indexCircularCompaction[daysOfWeek]"] = gsi_interval
+        if gsi_from_hour is not None:
+            params["indexCircularCompaction[interval][fromHour]"] = gsi_from_hour
+        if gsi_from_min is not None:
+            params["indexCircularCompaction[interval][fromMinute]"] = gsi_from_min
+        if gsi_to_hour is not None:
+            params["indexCircularCompaction[interval][toHour]"] = gsi_to_hour
+        if gsi_to_min is not None:
+            params["indexCircularCompaction[interval][toMinute]"] = gsi_to_min
+        if enable_gsi_abort is not None:
+            params["indexCircularCompaction[interval][abortOutside]"] = enable_gsi_abort
 
         return self._post_form_encoded(url, params)
 
-    def set_index_settings(self, storageMode, maxRollbackPoints, stableSnapInterval,
-                           memSnapInterval, threads, logLevel):
+    def set_index_settings(self, storage_mode, max_rollback_points, stable_snap_interval,
+                           mem_snap_interval, threads, log_level):
         """ Sets global index settings"""
         params = dict()
-        if storageMode is not None:
-            params["storageMode"] = storageMode
-        if maxRollbackPoints is not None:
-            params["maxRollbackPoints"] = maxRollbackPoints
-        if stableSnapInterval is not None:
-            params["stableSnapshotInterval"] = stableSnapInterval
-        if memSnapInterval is not None:
-            params["memorySnapshotInterval"] = memSnapInterval
+        if storage_mode is not None:
+            params["storageMode"] = storage_mode
+        if max_rollback_points is not None:
+            params["maxRollbackPoints"] = max_rollback_points
+        if stable_snap_interval is not None:
+            params["stableSnapshotInterval"] = stable_snap_interval
+        if mem_snap_interval is not None:
+            params["memorySnapshotInterval"] = mem_snap_interval
         if threads is not None:
             params["indexerThreads"] = threads
-        if logLevel is not None:
-            params["logLevel"] = logLevel
+        if log_level is not None:
+            params["logLevel"] = log_level
 
         url = f'{self.hostname}/settings/indexes'
         return self._post_form_encoded(url, params)

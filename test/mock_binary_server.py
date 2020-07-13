@@ -87,22 +87,3 @@ class MockMemcachedServer:
     def log(self, msg):
         if self.debug:
             print(msg)
-
-
-def fake_conn():
-    for info in socket.getaddrinfo('127.0.0.1', 5235, socket.AF_UNSPEC,
-                                   socket.SOCK_STREAM):
-        _family, socktype, proto, _, sockaddr = info
-        try:
-            sock = socket.socket(_family, socktype, proto)
-            sock.settimeout(10)
-            s = sock
-            s.connect_ex(sockaddr)
-            return s
-        except socket.error:
-            # If we get here socket objects will be close()d via
-            # garbage collection.
-            pass
-    else:
-        # Didn't break from the loop, re-raise the last error
-        raise sock_error
