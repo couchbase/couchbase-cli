@@ -10,6 +10,7 @@ import sys
 import time
 import urllib.request, urllib.parse, urllib.error
 import urllib3
+from typing import Dict, Optional, List, Any
 
 N1QL_SERVICE = 'n1ql'
 INDEX_SERVICE = 'index'
@@ -1887,6 +1888,23 @@ class ClusterManager(object):
 
         return self._post_json(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/active/{instance_id}/archive',
                                {'id': new_id})
+
+    def add_backup_active_instance(self, instance_id: str, body: Dict[str, Any], cluster: str = 'self'):
+        """Archive an active instance
+
+        Args:
+            instance_id (str): The id to be given to the new instance.
+            body (dict): The add active instance request.
+            cluster (str): Only 'self' is supported.
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._post_json(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/active/{instance_id}', body)
 
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'

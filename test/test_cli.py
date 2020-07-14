@@ -2078,6 +2078,63 @@ class TestBackupServiceInstance(CommandTest):
         self.assertIn('POST:/api/v1/cluster/self/instance/active/old/archive', self.server.trace)
         self.rest_parameter_match([json.dumps({'id': 'new'})])
 
+    def test_add_instance_id_missing(self):
+        """Test that the add process fails if any of the mandatory flags are missing"""
+        self.system_exit_run(self.command + ['--add', '--profile', 'a', '--backup-archive', 'b'], self.server_args)
+        self.assertIn('--id is required', self.str_output)
+
+    def test_add_instance_profile_missing(self):
+        """Test that the add process fails if any of the mandatory flags are missing"""
+        self.system_exit_run(self.command + ['--add', '--id', 'a', '--backup-archive', 'b'], self.server_args)
+        self.assertIn('--profile is required', self.str_output)
+
+    def test_add_instance_backup_archive_missing(self):
+        """Test that the add process fails if any of the mandatory flags are missing"""
+        self.system_exit_run(self.command + ['--add', '--profile', 'a', '--id', 'b'], self.server_args)
+        self.assertIn('--backup-archive is required', self.str_output)
+
+    def test_simple_add(self):
+        """Test that add works with the minimum amount of the flags given"""
+        self.no_error_run(self.command + ['--add', '--id', 'a', '--profile', 'profile', '--backup-archive', 'archive'],
+                          self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/instance/active/a', self.server.trace)
+        self.rest_parameter_match([json.dumps({'profile': 'profile', 'archive': 'archive'}, sort_keys=True)])
+
+    def test_add_with_bucket_name(self):
+        """Test that add works when given a bucket, it should ssend the bucket name to the service"""
+        self.no_error_run(self.command + ['--add', '--id', 'a', '--profile', 'profile', '--backup-archive', 'archive',
+                                          '--bucket-name', 'bucket'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/instance/active/a', self.server.trace)
+        self.rest_parameter_match([json.dumps({'profile': 'profile', 'archive': 'archive',
+                                               'bucket_name': 'bucket'}, sort_keys=True)])
+
+    def test_add_cloud_backup_instance_with_no_cloud_credentials(self):
+        """"Test that if an S3 archive is given but no cloud credentials that the command throws a meaningfull error"""
+        self.system_exit_run(self.command + ['--add', '--id', 'a', '--profile', 'profile', '--backup-archive',
+                                             's3://archive', '--cloud-credentials-region', 'a', '--cloud-staging-dir',
+                                             'b'], self.server_args)
+        self.assertIn('must provide either --cloud-credentials-name or --cloud-credentials-key ', self.str_output)
+
+    def test_add_cloud_backup_instance_with_no_staging_dir(self):
+        """Test that if an S3 archive is given without a staging directory it fails"""
+        self.system_exit_run(self.command + ['--add', '--id', 'a', '--profile', 'p', '--backup-archive', 's3://b',
+                                             '--cloud-credentials-name', 'c'],
+                             self.server_args)
+        self.assertIn('--cloud-staging-dir is required', self.str_output)
+
+    def test_add_cloud_backup_instance_all_options(self):
+        """Test that creating a cloud instnace with the maximum amount of options is allowed"""
+        self.no_error_run(self.command + ['--add', '--id', 'a', '--profile', 'p', '--backup-archive', 's3://b/a',
+                                          '--cloud-credentials-id', 'id', '--cloud-credentials-key', 'key',
+                                          '--cloud-credentials-region', 'region', '--cloud-staging-dir', 'dir',
+                                          '--cloud-endpoint', 'endpoint', '--s3-force-path-style', '--bucket-name',
+                                          'bucket'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/instance/active/a', self.server.trace)
+        self.rest_parameter_match([json.dumps({'profile': 'p', 'archive': 's3://b/a', 'cloud_credentials_id': 'id',
+                                               'cloud_credentials_key': 'key', 'cloud_credentials_region': 'region',
+                                               'cloud_endpoint': 'endpoint', 'cloud_force_path_style': True,
+                                               'bucket_name': 'bucket'}, sort_keys=True)])
+
 
 if __name__ == '__main__':
     unittest.main()

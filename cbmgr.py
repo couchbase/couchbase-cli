@@ -14,6 +14,7 @@ import sys
 import urllib.parse
 import time
 
+from typing import Optional, List
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
 from functools import reduce
 from operator import itemgetter
@@ -4811,10 +4812,9 @@ class BackupServiceInstance:
         action_group.add_argument('--list', action='store_true', help='Get all instances')
         action_group.add_argument('--get', action='store_true', help='Get instance by id')
         action_group.add_argument('--archive', action='store_true', help='Archive an instance')
+        action_group.add_argument('--add', action='store_true', help='Add a new active instance')
         # further actions to come
-        # action_group.add_argument('--add', action='store_true', help='Add a new instance')
         # action_group.add_argument('--remove', action='store_true', help='Remove an instance')
-        # action_group.add_argument('--archive', action='store_true', help='Archive an instance')
         action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
                                   help="Prints the short or long help message")
 
@@ -4824,16 +4824,117 @@ class BackupServiceInstance:
         group.add_argument('--new-id', metavar='<id>', help='The new instance id')
         group.add_argument('--state', metavar='<state>', choices=['active', 'archived', 'imported'],
                            help='The instance state.')
+        group.add_argument('--profile', metavar='<profile_name>', help='The profile to use as base for the instance')
+        group.add_argument('--backup-archive', metavar='<archive>', help='The location to store the backups in')
+        group.add_argument('--bucket-name', metavar='<name>', help='The bucket to backup')
+
+        # the cloud arguments are given the own group so that the short help is a bit more readable
+        cloud_group = instance_parser.add_argument_group('Backup instance cloud arguments')
+        cloud_group.add_argument('--cloud-credentials-name', metavar='<name>',
+                                 help='The stored clouds credential name to use for the new instance')
+        cloud_group.add_argument('--cloud-staging-dir', metavar='<path>', help='The path to the staging directory')
+        cloud_group.add_argument('--cloud-credentials-id', metavar='<id>',
+                                 help='The ID to use to communicate with the object store')
+        cloud_group.add_argument('--cloud-credentials-key', metavar='<key>',
+                                 help='The key to use to communicate with the object store')
+        cloud_group.add_argument('--cloud-credentials-region', metavar='<region>',
+                                 help='The region for the object store')
+        cloud_group.add_argument('--cloud-endpoint', metavar='<endpoint>',
+                                 help='Overrides the default endpoint used to communicate with the cloud provider. '
+                                      'Use for object store compatible third party solutions')
+        cloud_group.add_argument('--s3-force-path-style', action='store_true',
+                                 help='When using S3 or S3 compatible storage it will use the old path style.')
+
 
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
         """Run the backup-service instance subcommand"""
         if opts.list:
             self.list_instances(opts.state, opts.output == 'json')
-        if opts.get:
+        elif opts.get:
             self.get_instance(opts.id, opts.state, opts.output == 'json')
-        if opts.archive:
+        elif opts.archive:
             self.archive_instance(opts.id, opts.new_id)
+        elif opts.add:
+            self.add_active_instance(opts.id, opts.profile, opts.backup_archive, bucket_name=opts.bucket_name,
+                                     credentials_name=opts.cloud_credentials_name,
+                                     credentials_id=opts.cloud_credentials_id,
+                                     credentials_key=opts.cloud_credentials_key,
+                                     cloud_region=opts.cloud_credentials_region, staging_dir=opts.cloud_staging_dir,
+                                     cloud_endpoint=opts.cloud_endpoint, s3_path_style=opts.s3_force_path_style)
+
+    def add_active_instance(self, instance_id: str, profile: str, archive: str, **kwargs):
+        """Adds a new active instance identified by 'instance_id' and that uses 'profile' as base.
+
+        Args:
+            instance_id (str): The ID to give to the instance. This must be unique, if it is not an error will be
+                returned.
+            profile (str): The name of the profile to use as base for the instance. If it does not exist the service
+                will return an error.
+            archive (str): The location to store the data in. It must be accessible by all nodes. To use S3 instead of
+                providing a path to a filesystem directory use the syntax.
+                s3://<bucket-name>/<optional_prefix>/<archive>
+            **kwargs: Optional parameters [bucket_name, credentials_name, credentials_id, credentials_key, cloud_region,
+                staging_dir, cloud_endpoint, s3_path_style]
+        """
+        if not instance_id:
+            _exit_if_errors(['--id is required'])
+        if not profile:
+            _exit_if_errors(['--profile is required'])
+        if not archive:
+            _exit_if_errors(['--backup-archive is required'])
+
+        _exit_if_errors(self.check_cloud_params(archive, **kwargs))
+
+        add_request_body = {
+            'profile': profile,
+            'archive': archive,
+        }
+
+        if kwargs.get('bucket_name', False):
+            add_request_body['bucket_name'] = kwargs.get('bucket_name')
+        if kwargs.get('credentials_name', False):
+            add_request_body['cloud_credential_name'] = kwargs.get('credentials_name')
+        if kwargs.get('credentials_id', False):
+            add_request_body['cloud_credentials_id'] = kwargs.get('credentials_id')
+        if kwargs.get('credentials_key', False):
+            add_request_body['cloud_credentials_key'] = kwargs.get('credentials_key')
+        if kwargs.get('cloud_region', False):
+            add_request_body['cloud_credentials_region'] = kwargs.get('cloud_region')
+        if kwargs.get('cloud_endpoint', False):
+            add_request_body['cloud_endpoint'] = kwargs.get('cloud_endpoint')
+        if kwargs.get('s3_path_style', False):
+            add_request_body['cloud_force_path_style'] = kwargs.get('s3_path_style')
+
+        _, errors = self.rest.add_backup_active_instance(instance_id, add_request_body)
+        _exit_if_errors(errors)
+        _success('Added instance')
+
+    @staticmethod
+    def check_cloud_params(archive: str, **kwargs) -> Optional[List[str]]:
+        """Checks that inside kwargs there is a valid set of parameters to add a cloud instance
+        Args:
+            archive (str): The archive to use for the instance.
+        """
+        # If not an s3 archive skip this
+        if not archive.startswith('s3://'):
+            return None
+
+        creds_name = kwargs.get('credentials_name')
+        region = kwargs.get('cloud_region')
+        creds_id = kwargs.get('credentials_id')
+        creds_key = kwargs.get('credentials_key')
+        staging_dir = kwargs.get('staging_dir')
+
+        if (creds_name and (creds_id or creds_key)) or (not creds_name and not (creds_id or creds_key)):
+            return ['must provide either --cloud-credentials-name or --cloud-credentials-key and '
+                    '--cloud-credentials-id']
+        if not staging_dir:
+            return ['--cloud-staging-dir is required']
+        if not creds_name and not region:
+            return ['--cloud-credentials-region is required']
+
+        return None
 
     def archive_instance(self, instance_id, new_id):
         """Archive an instance. The archived instance will have the id `new_id`

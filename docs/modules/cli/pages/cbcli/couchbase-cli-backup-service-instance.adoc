@@ -13,7 +13,12 @@ Manage the backup service instances.
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
     [--password <password>] [--output] instance [--list] [--get] [--archive]
-    [--id <id>] [--new-id <id>] [--state <state>]
+    [--add] [--id <id>] [--new-id <id>] [--state <state>] [--profile <name>]
+    [--backup-archive <archive>] [--bucket-name <name>]
+    [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
+    [--cloud-credentials-id <id>] [--cloud-credentials-key <key>]
+    [--cloud-credentials-region <region>] [--cloud-endpoint <endpoint>]
+    [--s3-force-path-style]
 
 == DESCRIPTION
 
@@ -31,6 +36,9 @@ Manage backup service instances
     Archives an active instance. This will move the instance into a read only mode.
     This operation cannot be undone.
 
+--add::
+    Add a new active backup instance.
+
 == OPTIONS
 
 --id <id>::
@@ -43,9 +51,45 @@ Manage backup service instances
 --state <state>::
     Specifies the instance state. Valid states are 'active', 'archived' or 'imported'
 
+--profile <profile_name>::
+    Specify the profile to use when adding a new instance.
+
+--backup-archive <archive>::
+    The location to store backups in. This location should be accessible by all backup
+    nodes. To use S3 or S3 compatible storages the archive must be in the format:
+    `s3://<bucket>/<optional_prefix>/<archive>`.
+
+--bucket-name <name>::
+    When adding an instance a bucket name can be supplied so that the instance only
+    backups that bucket.
+
+== CLOUD OPTIONS
+
+--cloud-credentials-name <name>::
+    The identifying name for a set of credentials already stored in the service.
+
+--cloud-credentials-id <id>::
+    The id to use with the object store.
+
+--cloud-credentials-key <key>::
+    The key to use with the object store.
+
+--cloud-credentials-region <region>::
+    The region for the object store.
+
+--cloud-endpoint <endpoint>::
+    Overrides the default endpoint used to communicate with the cloud provider. Use for
+    object store compatible third party solutions.
+
+--s3-force-path-style::
+    When using S3 or S3 compatible storage it will use the old path style.
+
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
+
+=== Retrieving instance information
 
 To retrieve a summary of all instances run:
 ----
@@ -126,7 +170,64 @@ merge_week         | Merge     | 2020-07-12T23:20:00+01:00
 As before you can retrieve all details in JSON format by using `--output json` before the
 instance subcommand.
 
-To archive an instance you can use the following subcommand:
+=== Adding and modifying instances
+
+To add an instance one can use the `--add action` flag as shown below.
+
+----
+$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --add --id new-instance --profile _weekly --backup-archive /backup/service
+----
+
+In the command above we are adding a new instance with name `new-instance` that is using a
+base profile `_weekly`. The base profile defines the schedules of the tasks that the
+instance will run as well as what services it will backup. Finally the backup archive is the
+location where the backups will stored. This location is equivalent to a cbbackupmgr
+archive. Two instance should *not* use the same archive. Also `cbbackupmgr` should *not*
+be run on the archives managed by the service directly.
+
+If you want an instance that only backs up one bucket or want different backup schedules
+for each bucket this can be achieved by using the `--bucket-name` argument to specify
+which bucket the instance should backup. An example can be seen below.
+
+----
+$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --add --id new-instance --profile _weekly --backup-archive /backup/service \
+  --bucket-name beer-sample
+----
+
+The service also supports creating cloud backup instances. These are instances that backup
+directly to object store. Currently the only supported object store is S3 and S3
+compatible stores. To create a cloud instance you will need to supply some more details,
+as ilustrated in the example below.
+
+----
+$ couchbase-cli -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --add --id cloud-instance --profile _daily --backup-archive s3://cloud-bucket/archive \
+  --cloud-staging-dir /backup/staging --cloud-credentials-id id --cloud-credentials-key key \
+  --cloud-credentials-region us-east-1
+----
+
+In the command above we can see that the archive supplied for cloud must start with the
+schema `s3://` followed by the bucket name, after, the path to the archive in S3 must be
+given. A *staging directory* must also be supplied. This is a location where cbbackupmgr
+will temporarily store data whilst doing cloud backups. This path must be available in
+all backup nodes and should have space for roughly 10% of the data set size as reported
+by the UI. In the command above we have also supplied the cloud credential ID, key and
+region. This are the details that will be used to communicate with S3. Note that
+credentials can be stored and reused in the backup service so if you already have
+the correct set of credentials stored you can replace the id, key and region flags by
+`--cloud-credential-name` and give the name of the credential set you want to re-use.
+
+Finally, for S3 compatible stores you can use the `--cloud-endpoint` argument to override
+the endpoint use to communicate with S3 and point it to your storage solution address.
+Some S3 compatible storages only support the old S3 path styles to use those supply the
+`s3-force-path-style` argument.
+
+To archive an instance you can use the command below. Archiving an instance moves the
+instance to read-only mode. This means that no more backup tasks will be run. The
+instance can still be restored and the data examined but not altered. This action is not
+reversible.
 
 ----
 $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \

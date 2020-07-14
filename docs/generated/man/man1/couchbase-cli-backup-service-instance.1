@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-backup-service-instance
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-07-14
+.\"      Date: 2020-07-15
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-INSTANCE" "1" "2020-07-14" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-INSTANCE" "1" "2020-07-15" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,7 +35,12 @@ couchbase\-cli\-backup\-service\-instance \- Manage the backup service instances
 .nf
 _couchbase\-cli backup\-service [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-output] instance [\-\-list] [\-\-get] [\-\-archive]
-    [\-\-id <id>] [\-\-new\-id <id>] [\-\-state <state>]
+    [\-\-add] [\-\-id <id>] [\-\-new\-id <id>] [\-\-state <state>] [\-\-profile <name>]
+    [\-\-backup\-archive <archive>] [\-\-bucket\-name <name>]
+    [\-\-cloud\-credentials\-name <name>] [\-\-cloud\-staging\-dir <path>]
+    [\-\-cloud\-credentials\-id <id>] [\-\-cloud\-credentials\-key <key>]
+    [\-\-cloud\-credentials\-region <region>] [\-\-cloud\-endpoint <endpoint>]
+    [\-\-s3\-force\-path\-style]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -58,6 +63,11 @@ Get a specific backup instance.
 Archives an active instance. This will move the instance into a read only mode.
 This operation cannot be undone.
 .RE
+.sp
+\-\-add
+.RS 4
+Add a new active backup instance.
+.RE
 .SH "OPTIONS"
 .sp
 \-\-id <id>
@@ -74,6 +84,56 @@ once it is archived.
 \-\-state <state>
 .RS 4
 Specifies the instance state. Valid states are \(aqactive\(aq, \(aqarchived\(aq or \(aqimported\(aq
+.RE
+.sp
+\-\-profile <profile_name>
+.RS 4
+Specify the profile to use when adding a new instance.
+.RE
+.sp
+\-\-backup\-archive <archive>
+.RS 4
+The location to store backups in. This location should be accessible by all backup
+nodes. To use S3 or S3 compatible storages the archive must be in the format:
+\f(CRs3://<bucket>/<optional_prefix>/<archive>\fP.
+.RE
+.sp
+\-\-bucket\-name <name>
+.RS 4
+When adding an instance a bucket name can be supplied so that the instance only
+backups that bucket.
+.RE
+.SH "CLOUD OPTIONS"
+.sp
+\-\-cloud\-credentials\-name <name>
+.RS 4
+The identifying name for a set of credentials already stored in the service.
+.RE
+.sp
+\-\-cloud\-credentials\-id <id>
+.RS 4
+The id to use with the object store.
+.RE
+.sp
+\-\-cloud\-credentials\-key <key>
+.RS 4
+The key to use with the object store.
+.RE
+.sp
+\-\-cloud\-credentials\-region <region>
+.RS 4
+The region for the object store.
+.RE
+.sp
+\-\-cloud\-endpoint <endpoint>
+.RS 4
+Overrides the default endpoint used to communicate with the cloud provider. Use for
+object store compatible third party solutions.
+.RE
+.sp
+\-\-s3\-force\-path\-style
+.RS 4
+When using S3 or S3 compatible storage it will use the old path style.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -117,6 +177,7 @@ installations. The other two formats allow an option to take a port number which
 is needed for non\-default installations where the admin port has been set up on
 a port other that 8091.
 .SH "EXAMPLES"
+.SS "Retrieving instance information"
 .sp
 To retrieve a summary of all instances run:
 .sp
@@ -204,8 +265,70 @@ merge_week         | Merge     | 2020\-07\-12T23:20:00+01:00
 .sp
 As before you can retrieve all details in JSON format by using \f(CR\-\-output json\fP before the
 instance subcommand.
+.SS "Adding and modifying instances"
 .sp
-To archive an instance you can use the following subcommand:
+To add an instance one can use the \f(CR\-\-add action\fP flag as shown below.
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
+  instance \-\-add \-\-id new\-instance \-\-profile _weekly \-\-backup\-archive /backup/service
+.fi
+.if n .RE
+.sp
+In the command above we are adding a new instance with name \f(CRnew\-instance\fP that is using a
+base profile \f(CR_weekly\fP. The base profile defines the schedules of the tasks that the
+instance will run as well as what services it will backup. Finally the backup archive is the
+location where the backups will stored. This location is equivalent to a cbbackupmgr
+archive. Two instance should \fBnot\fP use the same archive. Also \f(CRcbbackupmgr\fP should \fBnot\fP
+be run on the archives managed by the service directly.
+.sp
+If you want an instance that only backs up one bucket or want different backup schedules
+for each bucket this can be achieved by using the \f(CR\-\-bucket\-name\fP argument to specify
+which bucket the instance should backup. An example can be seen below.
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
+  instance \-\-add \-\-id new\-instance \-\-profile _weekly \-\-backup\-archive /backup/service \(rs
+  \-\-bucket\-name beer\-sample
+.fi
+.if n .RE
+.sp
+The service also supports creating cloud backup instances. These are instances that backup
+directly to object store. Currently the only supported object store is S3 and S3
+compatible stores. To create a cloud instance you will need to supply some more details,
+as ilustrated in the example below.
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
+  instance \-\-add \-\-id cloud\-instance \-\-profile _daily \-\-backup\-archive s3://cloud\-bucket/archive \(rs
+  \-\-cloud\-staging\-dir /backup/staging \-\-cloud\-credentials\-id id \-\-cloud\-credentials\-key key \(rs
+  \-\-cloud\-credentials\-region us\-east\-1
+.fi
+.if n .RE
+.sp
+In the command above we can see that the archive supplied for cloud must start with the
+schema \f(CRs3://\fP followed by the bucket name, after, the path to the archive in S3 must be
+given. A \fBstaging directory\fP must also be supplied. This is a location where cbbackupmgr
+will temporarily store data whilst doing cloud backups. This path must be available in
+all backup nodes and should have space for roughly 10% of the data set size as reported
+by the UI. In the command above we have also supplied the cloud credential ID, key and
+region. This are the details that will be used to communicate with S3. Note that
+credentials can be stored and reused in the backup service so if you already have
+the correct set of credentials stored you can replace the id, key and region flags by
+\f(CR\-\-cloud\-credential\-name\fP and give the name of the credential set you want to re\-use.
+.sp
+Finally, for S3 compatible stores you can use the \f(CR\-\-cloud\-endpoint\fP argument to override
+the endpoint use to communicate with S3 and point it to your storage solution address.
+Some S3 compatible storages only support the old S3 path styles to use those supply the
+\f(CRs3\-force\-path\-style\fP argument.
+.sp
+To archive an instance you can use the command below. Archiving an instance moves the
+instance to read\-only mode. This means that no more backup tasks will be run. The
+instance can still be restored and the data examined but not altered. This action is not
+reversible.
 .sp
 .if n .RS 4
 .nf
