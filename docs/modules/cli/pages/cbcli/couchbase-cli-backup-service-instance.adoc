@@ -12,8 +12,8 @@ Manage the backup service instances.
 
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
-    [--password <password>] [--output] instance [--list] [--get]
-    [--id <id>] [--state <state>]
+    [--password <password>] [--output] instance [--list] [--get] [--archive]
+    [--id <id>] [--new-id <id>] [--state <state>]
 
 == DESCRIPTION
 
@@ -27,10 +27,18 @@ Manage backup service instances
 --get::
     Get a specific backup instance.
 
+--archive::
+    Archives an active instance. This will move the instance into a read only mode.
+    This operation cannot be undone.
+
 == OPTIONS
 
 --id <id>::
     Specify the instance id.
+
+--new-id <id>::
+    Used together with the `--archive` action flag to specify the new id for the instance
+    once it is archived.
 
 --state <state>::
     Specifies the instance state. Valid states are 'active', 'archived' or 'imported'
@@ -117,6 +125,13 @@ merge_week         | Merge     | 2020-07-12T23:20:00+01:00
 
 As before you can retrieve all details in JSON format by using `--output json` before the
 instance subcommand.
+
+To archive an instance you can use the following subcommand:
+
+----
+$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --archive --id active-instance --new-id deprecated
+----
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

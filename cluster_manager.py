@@ -1870,6 +1870,24 @@ class ClusterManager(object):
 
         return self._get(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/{state}/{instance_id}')
 
+    def archive_backup_instance(self, instance_id, new_id, cluster='self'):
+        """Archive an active instance
+
+        Args:
+            instance_id (str): The instance id to be retrieved
+            new_id (str): The id that will be given to the archived instance
+            cluster (str): Only 'self' is supported.
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._post_json(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/active/{instance_id}/archive',
+                               {'id': new_id})
+
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
         params = {"name": scope}

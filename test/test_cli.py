@@ -2035,6 +2035,49 @@ class TestBackupServiceInstance(CommandTest):
         self.assertIn('Name   | Task type | Next run', self.str_output)
         self.assertIn('task-1 | Backup    | 07-10-2020T00:00:00Z', self.str_output)
 
+    def test_archive_instance_no_id(self):
+        """Test that the archive id fails if no id specified"""
+        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {
+            'id': 'instance',
+            'state': 'active',
+            'archive': 'some/archive',
+            'repo': 'the-repo',
+            'profile_name': 'daily-profile',
+            'creation_time': '10-01-2020T01:02:00.00001Z',
+        }
+
+        self.system_exit_run(self.command + ['--archive', '--new-id', 'new'], self.server_args)
+        self.assertIn('--id is required', self.str_output)
+
+    def test_archive_instance_no_new_id(self):
+        """Test that the archive id fails if no new id specified"""
+        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {
+            'id': 'instance',
+            'state': 'active',
+            'archive': 'some/archive',
+            'repo': 'the-repo',
+            'profile_name': 'daily-profile',
+            'creation_time': '10-01-2020T01:02:00.00001Z',
+        }
+
+        self.system_exit_run(self.command + ['--archive', '--id', 'old'], self.server_args)
+        self.assertIn('--new-id is required', self.str_output)
+
+    def test_archive_instance(self):
+        """Test that the parameters are passed to the POST request"""
+        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {
+            'id': 'instance',
+            'state': 'active',
+            'archive': 'some/archive',
+            'repo': 'the-repo',
+            'profile_name': 'daily-profile',
+            'creation_time': '10-01-2020T01:02:00.00001Z',
+        }
+
+        self.no_error_run(self.command + ['--archive', '--id', 'old', '--new-id', 'new'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/instance/active/old/archive', self.server.trace)
+        self.rest_parameter_match([json.dumps({'id': 'new'})])
+
 
 if __name__ == '__main__':
     unittest.main()

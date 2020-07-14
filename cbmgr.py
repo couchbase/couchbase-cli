@@ -4810,6 +4810,7 @@ class BackupServiceInstance:
         action_group = instance_parser.add_mutually_exclusive_group(required=True)
         action_group.add_argument('--list', action='store_true', help='Get all instances')
         action_group.add_argument('--get', action='store_true', help='Get instance by id')
+        action_group.add_argument('--archive', action='store_true', help='Archive an instance')
         # further actions to come
         # action_group.add_argument('--add', action='store_true', help='Add a new instance')
         # action_group.add_argument('--remove', action='store_true', help='Remove an instance')
@@ -4820,6 +4821,7 @@ class BackupServiceInstance:
         # other arguments
         group = instance_parser.add_argument_group('Backup service instance configuration')
         group.add_argument('--id', metavar='<id>', help='The instance id')
+        group.add_argument('--new-id', metavar='<id>', help='The new instance id')
         group.add_argument('--state', metavar='<state>', choices=['active', 'archived', 'imported'],
                            help='The instance state.')
 
@@ -4830,6 +4832,24 @@ class BackupServiceInstance:
             self.list_instances(opts.state, opts.output == 'json')
         if opts.get:
             self.get_instance(opts.id, opts.state, opts.output == 'json')
+        if opts.archive:
+            self.archive_instance(opts.id, opts.new_id)
+
+    def archive_instance(self, instance_id, new_id):
+        """Archive an instance. The archived instance will have the id `new_id`
+
+        Args:
+            instance_id (str): The active instance ID to be archived
+            new_id (str): The id that will be given to the archived instance
+        """
+        if not instance_id:
+            _exit_if_errors(['--id is required'])
+        if not new_id:
+            _exit_if_errors(['--new-id is required'])
+
+        _, errors = self.rest.archive_backup_instance(instance_id, new_id)
+        _exit_if_errors(errors)
+        _success('Archived instance')
 
     def list_instances(self, state=None, json_out=False):
         """List the backup instances.

@@ -451,8 +451,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content">_couchbase-cli backup-service [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-    [--password &lt;password&gt;] [--output] instance [--list] [--get]
-    [--id &lt;id&gt;] [--state &lt;state&gt;]</pre>
+    [--password &lt;password&gt;] [--output] instance [--list] [--get] [--archive]
+    [--id &lt;id&gt;] [--new-id &lt;id&gt;] [--state &lt;state&gt;]</pre>
 </div>
 </div>
 </div>
@@ -477,6 +477,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dd>
 <p>Get a specific backup instance.</p>
 </dd>
+<dt class="hdlist1">--archive</dt>
+<dd>
+<p>Archives an active instance. This will move the instance into a read only mode.
+This operation cannot be undone.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -489,6 +494,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dt class="hdlist1">--id &lt;id&gt;</dt>
 <dd>
 <p>Specify the instance id.</p>
+</dd>
+<dt class="hdlist1">--new-id &lt;id&gt;</dt>
+<dd>
+<p>Used together with the <code>--archive</code> action flag to specify the new id for the instance
+once it is archived.</p>
 </dd>
 <dt class="hdlist1">--state &lt;state&gt;</dt>
 <dd>
@@ -616,6 +626,15 @@ merge_week         | Merge     | 2020-07-12T23:20:00+01:00</pre>
 <div class="paragraph">
 <p>As before you can retrieve all details in JSON format by using <code>--output json</code> before the
 instance subcommand.</p>
+</div>
+<div class="paragraph">
+<p>To archive an instance you can use the following subcommand:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --archive --id active-instance --new-id deprecated</pre>
+</div>
 </div>
 </div>
 </div>

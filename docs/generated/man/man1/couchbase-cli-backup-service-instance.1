@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-backup-service-instance
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-07-13
+.\"      Date: 2020-07-14
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-INSTANCE" "1" "2020-07-13" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-INSTANCE" "1" "2020-07-14" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -34,14 +34,14 @@ couchbase\-cli\-backup\-service\-instance \- Manage the backup service instances
 .sp
 .nf
 _couchbase\-cli backup\-service [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>] [\-\-output] instance [\-\-list] [\-\-get]
-    [\-\-id <id>] [\-\-state <state>]
+    [\-\-password <password>] [\-\-output] instance [\-\-list] [\-\-get] [\-\-archive]
+    [\-\-id <id>] [\-\-new\-id <id>] [\-\-state <state>]
 .fi
 .br
 .SH "DESCRIPTION"
 .sp
 Manage backup service instances
-.SH "OPTIONS"
+.SH "ACTION OPTIONS"
 .sp
 \-\-list
 .RS 4
@@ -52,11 +52,23 @@ List the backup instances.
 .RS 4
 Get a specific backup instance.
 .RE
+.sp
+\-\-archive
+.RS 4
+Archives an active instance. This will move the instance into a read only mode.
+This operation cannot be undone.
+.RE
 .SH "OPTIONS"
 .sp
 \-\-id <id>
 .RS 4
 Specify the instance id.
+.RE
+.sp
+\-\-new\-id <id>
+.RS 4
+Used together with the \f(CR\-\-archive\fP action flag to specify the new id for the instance
+once it is archived.
 .RE
 .sp
 \-\-state <state>
@@ -192,6 +204,15 @@ merge_week         | Merge     | 2020\-07\-12T23:20:00+01:00
 .sp
 As before you can retrieve all details in JSON format by using \f(CR\-\-output json\fP before the
 instance subcommand.
+.sp
+To archive an instance you can use the following subcommand:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
+  instance \-\-archive \-\-id active\-instance \-\-new\-id deprecated
+.fi
+.if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_USERNAME

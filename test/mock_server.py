@@ -414,5 +414,6 @@ endpoints = [
     # backup server API
     (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing}),
     (r'/api/v1/cluster/self/instance/(:?active|archived|imported)$', {'GET': get_by_path}),
+    (r'/api/v1/cluster/self/instance/active/\w+/archive$', {'POST': do_nothing}),
     (r'/api/v1/cluster/self/instance/(:?active|archived|imported)/\w+$', {'GET': get_by_path})
 ]
