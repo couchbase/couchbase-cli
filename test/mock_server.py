@@ -49,6 +49,9 @@ class RequestHandler(BaseHTTPRequestHandler):
     def  do_DELETE(self):
         parsed = urlparse(self.path)
         self.server.rest_server.trace.append(f'DELETE:{parsed.path}')
+        if parsed.query:
+            self.server.rest_server.queries.append(parsed.query)
+
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'DELETE' in fns:
                 return self.handle_fn(fns['DELETE'], parsed.path)
@@ -104,6 +107,7 @@ class MockRESTServer(object):
         self.port = port
         self.trace = []
         self.rest_params = []
+        self.queries = []
         self.stop = False
         self.server = MockHTTPServer((host, port), RequestHandler, self)
         self.t1 = threading.Thread(target=self._run)
@@ -413,9 +417,11 @@ endpoints = [
 
     # backup server API
     (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing}),
+    (r'api/v1/profile$', {'GET': get_by_path}),
     (r'/api/v1/cluster/self/instance/(:?active|archived|imported)$', {'GET': get_by_path}),
     (r'/api/v1/cluster/self/instance/active/\w+/archive$', {'POST': do_nothing}),
-    (r'/api/v1/cluster/self/instance/(:?active|archived|imported)/\w+$', {'GET': get_by_path, 'POST': do_nothing}),
     (r'/api/v1/profile$', {'GET': get_by_path}),
     (r'/api/v1/profile/\w+$', {'GET': get_by_path, 'DELETE': do_nothing}),
+    (r'/api/v1/cluster/self/instance/(:?active|archived|imported)/\w+(:?\?remove_repository=\w+)?$',
+     {'GET': get_by_path, 'POST': do_nothing, 'DELETE': do_nothing})
 ]

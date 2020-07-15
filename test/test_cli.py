@@ -2135,6 +2135,34 @@ class TestBackupServiceInstance(CommandTest):
                                                'cloud_endpoint': 'endpoint', 'cloud_force_path_style': True,
                                                'bucket_name': 'bucket'}, sort_keys=True)])
 
+    def test_remove_fails_with_no_id(self):
+        """Test that the remove action fails if no id is given and that a valid error message is returned"""
+        self.system_exit_run(self.command + ['--remove', '--state', 'imported'], self.server_args)
+        self.assertIn('--id is required', self.str_output)
+
+    def test_remove_fails_with_no_state(self):
+        """Test that the remove action fails if no state is given and that a valid error message is returned"""
+        self.system_exit_run(self.command + ['--remove', '--id', 'a'], self.server_args)
+        self.assertIn('--state is required', self.str_output)
+
+    def test_remove_active_instance_fails(self):
+        """Test that the remove action fails if no state is given and that a valid error message is returned"""
+        self.system_exit_run(self.command + ['--remove', '--id', 'a', '--state', 'active'], self.server_args)
+        self.assertIn('can only delete archived or imported instances', self.str_output)
+
+    def test_remove_delete_data_imported_instance_failes(self):
+        """Test that the CLI does not allow the option --remove-data to be given when deleting an imported instance"""
+        self.system_exit_run(self.command + ['--remove', '--id', 'a', '--state', 'imported', '--remove-data'],
+                             self.server_args)
+        self.assertIn('cannot delete the repository for an imported instance', self.str_output)
+
+    def test_remove_valid_request(self):
+        """Test that if all valid options are given that the correct request is made"""
+        self.no_error_run(self.command + ['--remove', '--id', 'r', '--state', 'archived', '--remove-data'],
+                          self.server_args)
+        self.assertIn('DELETE:/api/v1/cluster/self/instance/archived/r', self.server.trace)
+        self.assertIn('remove_repository=True', self.server.queries)
+
 
 class TestBackupServiceProfile(CommandTest):
     """Test the backup-service profile subcommand and all its actions

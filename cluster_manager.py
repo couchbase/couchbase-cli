@@ -1939,6 +1939,24 @@ class ClusterManager(object):
 
         return self._delete(f'{hosts[0]}/api/v1/profile/{name}', None)
 
+    def delete_backup_instance(self, instance_id: str, state: str, delete_repo: bool, cluster: str = 'self'):
+        """Delete a backup instance
+        Args:
+            instance_id (str): The id to be deleted.
+            state (str): The state in which the isntance to be deleted is.
+            delete_repo (bool): Wheter or not to delete the backup Repository.
+            cluster (str): Only 'self' is supported.
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        url = f'{hosts[0]}/api/v1/cluster/{cluster}/instance/{state}/{instance_id}?remove_repository={delete_repo!s}'
+        return self._delete(url, None)
+
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
         params = {"name": scope}

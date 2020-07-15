@@ -4815,8 +4815,7 @@ class BackupServiceInstance:
         action_group.add_argument('--get', action='store_true', help='Get instance by id')
         action_group.add_argument('--archive', action='store_true', help='Archive an instance')
         action_group.add_argument('--add', action='store_true', help='Add a new active instance')
-        # further actions to come
-        # action_group.add_argument('--remove', action='store_true', help='Remove an instance')
+        action_group.add_argument('--remove', action='store_true', help='Remove an archived/imported instance')
         action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
                                   help="Prints the short or long help message")
 
@@ -4829,6 +4828,7 @@ class BackupServiceInstance:
         group.add_argument('--profile', metavar='<profile_name>', help='The profile to use as base for the instance')
         group.add_argument('--backup-archive', metavar='<archive>', help='The location to store the backups in')
         group.add_argument('--bucket-name', metavar='<name>', help='The bucket to backup')
+        group.add_argument('--remove-data', action='store_true', help='Used to delete the instance data')
 
         # the cloud arguments are given the own group so that the short help is a bit more readable
         cloud_group = instance_parser.add_argument_group('Backup instance cloud arguments')
@@ -4847,7 +4847,6 @@ class BackupServiceInstance:
         cloud_group.add_argument('--s3-force-path-style', action='store_true',
                                  help='When using S3 or S3 compatible storage it will use the old path style.')
 
-
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
         """Run the backup-service instance subcommand"""
@@ -4857,6 +4856,8 @@ class BackupServiceInstance:
             self.get_instance(opts.id, opts.state, opts.output == 'json')
         elif opts.archive:
             self.archive_instance(opts.id, opts.new_id)
+        elif opts.remove:
+            self.remove_instance(opts.id, opts.state, opts.remove_data)
         elif opts.add:
             self.add_active_instance(opts.id, opts.profile, opts.backup_archive, bucket_name=opts.bucket_name,
                                      credentials_name=opts.cloud_credentials_name,
@@ -4864,6 +4865,30 @@ class BackupServiceInstance:
                                      credentials_key=opts.cloud_credentials_key,
                                      cloud_region=opts.cloud_credentials_region, staging_dir=opts.cloud_staging_dir,
                                      cloud_endpoint=opts.cloud_endpoint, s3_path_style=opts.s3_force_path_style)
+
+    def remove_instance(self, instance_id: str, state: str, delete_repo: bool = False):
+        """Removes the instance in state 'state' and with id 'instance_id'
+        Args:
+            instance_id (str): The instance id
+            state (str): It must be either archived or imported otherwise it will return an error
+            delete_repo (bool): Whether or not the backup repository should be deleted
+        """
+        if not instance_id:
+            _exit_if_errors(['--id is required'])
+        # the following is devided in two options to give better error messages depending if state is missing or if it
+        # is invalid
+        if not state:
+            _exit_if_errors(['--state is required'])
+        if state not in ['archived', 'imported']:
+            _exit_if_errors(['can only delete archived or imported instances to delete an active instance it needs to '
+                             'be archived first'])
+        # can only delete repo of archived instances
+        if delete_repo and state == 'imported':
+            _exit_if_errors(['cannot delete the repository for an imported instance'])
+
+        _, errors = self.rest.delete_backup_instance(instance_id, state, delete_repo)
+        _exit_if_errors(errors)
+        _success('Instance was deleted')
 
     def add_active_instance(self, instance_id: str, profile: str, archive: str, **kwargs):
         """Adds a new active instance identified by 'instance_id' and that uses 'profile' as base.

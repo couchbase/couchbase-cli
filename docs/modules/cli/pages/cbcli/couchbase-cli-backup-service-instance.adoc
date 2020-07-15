@@ -13,12 +13,12 @@ Manage the backup service instances.
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
     [--password <password>] [--output] instance [--list] [--get] [--archive]
-    [--add] [--id <id>] [--new-id <id>] [--state <state>] [--profile <name>]
-    [--backup-archive <archive>] [--bucket-name <name>]
+    [--add] [--remove] [--id <id>] [--new-id <id>] [--state <state>]
+    [--profile <name>] [--backup-archive <archive>] [--bucket-name <name>]
     [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
     [--cloud-credentials-id <id>] [--cloud-credentials-key <key>]
     [--cloud-credentials-region <region>] [--cloud-endpoint <endpoint>]
-    [--s3-force-path-style]
+    [--s3-force-path-style] [--remove-data]
 
 == DESCRIPTION
 
@@ -38,6 +38,9 @@ Manage backup service instances
 
 --add::
     Add a new active backup instance.
+
+--remove::
+    Remove an archived or imported instance. This operation cannot be undone.
 
 == OPTIONS
 
@@ -62,6 +65,10 @@ Manage backup service instances
 --bucket-name <name>::
     When adding an instance a bucket name can be supplied so that the instance only
     backups that bucket.
+
+--remove-data::
+    When removing an archived instance this option can be given to also delete the
+    underlaying backup repository and all of its data. This cannot be undone.
 
 == CLOUD OPTIONS
 
@@ -232,6 +239,27 @@ reversible.
 ----
 $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
   instance --archive --id active-instance --new-id deprecated
+----
+
+The last way in which can modify an instance is by removing it. Only archived and imported
+instances can be removed. If you want to remove an active instance you first have to
+archive it as explained above. To remove an instance use the command below. Note that this
+operation cannot be undone.
+
+----
+$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --remove --id instance --state imported
+----
+
+Note that by default this command only removes the instance from the service but does
+*not* remove the backup repository. The flag `--remove-data` allows you to also delete
+the underlaying data. This argument can only be used with archived instances as imported
+ones could still be in use by another node. To remove the data as well follow the example
+below, note that once the data is deleted it cannot be recovered.
+
+----
+$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --remove --id other_instance --state archived --remove-data
 ----
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES

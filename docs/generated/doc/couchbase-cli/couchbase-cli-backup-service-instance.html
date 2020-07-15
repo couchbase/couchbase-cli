@@ -452,12 +452,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content">_couchbase-cli backup-service [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--output] instance [--list] [--get] [--archive]
-    [--add] [--id &lt;id&gt;] [--new-id &lt;id&gt;] [--state &lt;state&gt;] [--profile &lt;name&gt;]
-    [--backup-archive &lt;archive&gt;] [--bucket-name &lt;name&gt;]
+    [--add] [--remove] [--id &lt;id&gt;] [--new-id &lt;id&gt;] [--state &lt;state&gt;]
+    [--profile &lt;name&gt;] [--backup-archive &lt;archive&gt;] [--bucket-name &lt;name&gt;]
     [--cloud-credentials-name &lt;name&gt;] [--cloud-staging-dir &lt;path&gt;]
     [--cloud-credentials-id &lt;id&gt;] [--cloud-credentials-key &lt;key&gt;]
     [--cloud-credentials-region &lt;region&gt;] [--cloud-endpoint &lt;endpoint&gt;]
-    [--s3-force-path-style]</pre>
+    [--s3-force-path-style] [--remove-data]</pre>
 </div>
 </div>
 </div>
@@ -490,6 +490,10 @@ This operation cannot be undone.</p>
 <dt class="hdlist1">--add</dt>
 <dd>
 <p>Add a new active backup instance.</p>
+</dd>
+<dt class="hdlist1">--remove</dt>
+<dd>
+<p>Remove an archived or imported instance. This operation cannot be undone.</p>
 </dd>
 </dl>
 </div>
@@ -527,6 +531,11 @@ nodes. To use S3 or S3 compatible storages the archive must be in the format:
 <dd>
 <p>When adding an instance a bucket name can be supplied so that the instance only
 backups that bucket.</p>
+</dd>
+<dt class="hdlist1">--remove-data</dt>
+<dd>
+<p>When removing an archived instance this option can be given to also delete the
+underlaying backup repository and all of its data. This cannot be undone.</p>
 </dd>
 </dl>
 </div>
@@ -761,6 +770,31 @@ reversible.</p>
 <div class="content">
 <pre>$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
   instance --archive --id active-instance --new-id deprecated</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The last way in which can modify an instance is by removing it. Only archived and imported
+instances can be removed. If you want to remove an active instance you first have to
+archive it as explained above. To remove an instance use the command below. Note that this
+operation cannot be undone.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --remove --id instance --state imported</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that by default this command only removes the instance from the service but does
+<strong>not</strong> remove the backup repository. The flag <code>--remove-data</code> allows you to also delete
+the underlaying data. This argument can only be used with archived instances as imported
+ones could still be in use by another node. To remove the data as well follow the example
+below, note that once the data is deleted it cannot be recovered.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
+  instance --remove --id other_instance --state archived --remove-data</pre>
 </div>
 </div>
 </div>
