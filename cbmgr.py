@@ -14,9 +14,8 @@ import sys
 import urllib.parse
 import time
 
-from typing import Optional, List
+from typing import Optional, List, Any
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
-from functools import reduce
 from operator import itemgetter
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
@@ -4712,15 +4711,18 @@ class BackupService(Subcommand):
         self.subparser = self.parser.add_subparsers(help='Sub command help', dest='sub_cmd', metavar='<subcommand>')
         self.settings_cmd = BackupServiceSettings(self.subparser)
         self.instance_cmd = BackupServiceInstance(self.subparser)
+        self.profile_cmd = BackupServiceProfile(self.subparser)
 
     def execute(self, opts):
-        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'instance']:
+        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'instance', 'profile']:
             _exit_if_errors(['<subcommand> must settings'])
 
         if opts.sub_cmd == 'settings':
             self.settings_cmd.execute(opts)
         elif opts.sub_cmd == 'instance':
             self.instance_cmd.execute(opts)
+        elif opts.sub_cmd == 'profile':
+            self.profile_cmd.execute(opts)
 
     @staticmethod
     def get_man_page_name():
@@ -5123,3 +5125,90 @@ class BackupServiceInstance:
     @staticmethod
     def get_description():
         return 'Manage backup service instances'
+
+
+class BackupServiceProfile:
+    """This command manages backup services profiless.
+
+    Things this command can do is:
+    - List profiles
+    - Add delete
+    - Delete profiles
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        profile_parser = subparser.add_parser('profile', help='Manage backup profiles', add_help=False,
+                                              allow_abbrev=False)
+
+        # action flags are mutually exclusive
+        action_group = profile_parser.add_mutually_exclusive_group(required=True)
+        action_group.add_argument('--list', action='store_true', help='List all available backup profiles')
+        action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
+                                  help="Prints the short or long help message")
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup profile managment command"""
+        if opts.list:
+            self.list_profiles(opts.output == 'json')
+
+    def list_profiles(self, json_output: bool = False):
+        """Prints all the profiles stored in the backup service
+
+        Args:
+            json_output (bool): Whether to print in JSON or a more human friendly way
+        """
+        profiles, errors = self.rest.list_backup_profiles()
+        _exit_if_errors(errors)
+        if json_output:
+            print(json.dumps(profiles, indent=2))
+        else:
+            self.human_print_profiles(profiles)
+
+    @staticmethod
+    def human_print_profiles(profiles: List[Any]):
+        """Prints a table with an overview of each profile"""
+        # if profiles is empty or none print no profiles message
+        if not profiles:
+            print('No profiles')
+            return
+
+        name_pad = 5
+        service_pad = 8
+        for profile in profiles:
+            if len(profile['name']) > name_pad:
+                name_pad = len(profile['name'])
+            services_str = BackupServiceProfile.service_list_to_str(profile['services'])
+            if len(services_str) > service_pad:
+                service_pad = len(services_str)
+
+        name_pad += 1
+        service_pad += 1
+        header = f'{"Name":<{name_pad}} | # Tasks | {"Services":<{service_pad}} | Default'
+        print(header)
+        print('-' * (len(header) + 5))
+        for profile in profiles:
+            task_len = len(profile['tasks']) if 'tasks' in profile and profile['tasks'] else 0
+            print(f'{profile["name"]:<{name_pad}} | {task_len:<7} | '
+                  f'{BackupServiceProfile.service_list_to_str(profile["services"]):<{service_pad}} | '
+                  f'{(profile["default"] if "default" in profile else False)!s}')
+
+    @staticmethod
+    def service_list_to_str(services: Optional[List[Any]]) -> str:
+        """convert the list of services to a concise list of services"""
+        if not services:
+            return 'all'
+
+        # a way to convert codenames to visible name
+        convert = {'gsi': 'Indexing', 'cbas': 'Analytics', 'ft': 'Full Text Search'}
+        return ', '.join([convert[service] if service in convert else service.title() for service in services])
+
+    @staticmethod
+    def get_man_page_name():
+        return 'couchbase-cli-backup-service-profile' + '.1' if os.name != 'nt' else '.html'
+
+    @staticmethod
+    def get_description():
+        return 'Manage backup service profiles'

@@ -1906,6 +1906,17 @@ class ClusterManager(object):
 
         return self._post_json(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/active/{instance_id}', body)
 
+    def list_backup_profiles(self):
+        """Retrieves all the backup profiles from the backup service"""
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._get(f'{hosts[0]}/api/v1/profile')
+
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
         params = {"name": scope}

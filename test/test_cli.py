@@ -2136,5 +2136,55 @@ class TestBackupServiceInstance(CommandTest):
                                                'bucket_name': 'bucket'}, sort_keys=True)])
 
 
+class TestBackupServiceProfile(CommandTest):
+    """Test the backup-service profile subcommand and all its actions
+    """
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['profile']
+        super(TestBackupServiceProfile, self).setUp()
+
+    def test_profile_list_empty(self):
+        """Test that if the are no profiles a sensible message is returned"""
+        self.server_args['api/v1/profiles'] = []
+        self.no_error_run(self.command + ['--list'], self.server_args)
+        self.assertIn('GET:/api/v1/profile', self.server.trace)
+        self.assertIn('No profiles', self.str_output)
+
+    def test_profile_list(self):
+        """Test that the profile list calls the correct endpoint and prints the expected information"""
+        self.server_args['/api/v1/profile'] = [
+            {
+                'name': 'p1',
+                'description': 'somethings',
+                'services': [],
+                'tasks': [{}, {}],
+                'default': True,
+            },
+            {
+                'name': 'p2',
+                'services': ['data', 'cbas'],
+                'tasks': [{}],
+            }
+        ]
+        self.no_error_run(self.command + ['--list'], self.server_args)
+        self.assertIn('GET:/api/v1/profile', self.server.trace)
+        self.assertIn('p1', self.str_output)
+        self.assertIn('all', self.str_output)
+        self.assertIn('2', self.str_output)
+        self.assertIn('True', self.str_output)
+        self.assertIn('p2', self.str_output)
+        self.assertIn('Data, Analytics', self.str_output)
+        self.assertIn('1', self.str_output)
+        self.assertIn('False', self.str_output)
+
+
 if __name__ == '__main__':
     unittest.main()

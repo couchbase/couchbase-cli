@@ -1,0 +1,51 @@
+= couchbase-cli-backup-service-profile(1)
+ifndef::doctype-manpage[:doctitle: backup-serivce-profile]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-profile -
+endif::[]
+Manage the backup service profiles.
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--output] profile
+
+== DESCRIPTION
+
+Manage backup service profiles.
+
+== ACTION OPTIONS
+
+--list::
+    List the backup profiles.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+== EXAMPLES
+
+To retrieve a summary of all profiles run:
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  profiles --list
+  Name     | # Tasks | Services  | Default
+  ---------------------------------------------
+  _daily   | 3       | all       | True
+  custom   | 9       | Data      | False
+----
+
+This will show you the name of all the profiles registered with the service as well as
+how many tasks the profiles has and what services are included.
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
