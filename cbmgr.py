@@ -5145,14 +5145,37 @@ class BackupServiceProfile:
         # action flags are mutually exclusive
         action_group = profile_parser.add_mutually_exclusive_group(required=True)
         action_group.add_argument('--list', action='store_true', help='List all available backup profiles')
+        action_group.add_argument('--get', action='store_true', help='Get a profile by name')
         action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
                                   help="Prints the short or long help message")
+
+        options = profile_parser.add_argument_group('Profile options')
+        options.add_argument('--name', metavar='<name>', help='Profile name')
 
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
         """Run the backup profile managment command"""
         if opts.list:
             self.list_profiles(opts.output == 'json')
+        elif opts.get:
+            self.get_profile(opts.name, opts.output == 'json')
+
+    def get_profile(self, name: str, json_output: bool = False):
+        """Gets a backup profile by name
+
+        Args:
+            name (str): The name of the profile to retrieve
+            json_output (bool): Whether to print in JSON or a more human friendly way
+        """
+        if not name:
+            _exit_if_errors(['--name is required'])
+
+        profile, errors = self.rest.get_backup_profile(name)
+        _exit_if_errors(errors)
+        if json_output:
+            print(json.dumps(profile, indent=2))
+        else:
+            self.human_print_profile(profile)
 
     def list_profiles(self, json_output: bool = False):
         """Prints all the profiles stored in the backup service
@@ -5166,6 +5189,69 @@ class BackupServiceProfile:
             print(json.dumps(profiles, indent=2))
         else:
             self.human_print_profiles(profiles)
+
+    @staticmethod
+    def human_print_profile(profile: object):
+        """Prints the profile in a human friendly way"""
+        print(f'Name: {profile["name"]}')
+        print(f'Description: {profile["description"] if "description" in profile else "N/A"}')
+        print(f'Services: {BackupServiceProfile.service_list_to_str(profile["services"])}')
+        print(f'Default: {(profile["default"] if "deafult" in profile else False)!s}')
+
+        # If the are no tasks return
+        if not profile["tasks"]:
+            return
+
+        print()
+        print('Tasks:')
+        task_name_pad = 5
+        schedule_pad = 10
+        for task in profile['tasks']:
+            if len(task['name']) > task_name_pad:
+                task_name_pad = len(task['name'])
+
+            task['schedule_str'] = BackupServiceProfile.format_schedule(task['schedule'])
+            if len(task['schedule_str']) > schedule_pad:
+                schedule_pad = len(task['schedule_str'])
+
+        task_name_pad += 1
+        schedule_pad += 1
+
+        header = f'{"Name":<{task_name_pad}} | {"Schedule":<{schedule_pad}} | Options'
+        print(header)
+        print('-' * (len(header) + 5))
+
+        for task in profile['tasks']:
+            options = BackupServiceProfile.format_options(task)
+            print(f'{task["name"]:<{task_name_pad}} | {task["schedule_str"]:<{schedule_pad}} | {options}')
+
+    @staticmethod
+    def format_options(task: object) -> str:
+        """Format the full backup or merge options"""
+        options = 'N/A'
+        if task['task_type'] == 'BACKUP' and task['full_backup']:
+            options = 'Full backup'
+        elif task['task_type'] == 'MERGE':
+            if 'merge_options' in task:
+                options = (f'Merge from {task["merge_options"]["offset_start"]} to '
+                           f'{task["merge_options"]["offset_end"]}')
+            else:
+                options = 'Merge everything'
+        return options
+
+    @staticmethod
+    def format_schedule(schedule: object) -> str:
+        """Format the schedule object in a string of the format <task> every <frequency>? <period> (at <time>)?"""
+        task_start = f'{schedule["job_type"].lower()}'
+        frequency_part = 'every'
+        if schedule['frequency'] == 1:
+            period = schedule["period"].lower()
+            period = period if period[-1] != 's' else period[:-1]
+            frequency_part += f' {period}'
+        else:
+            frequency_part += f' {schedule["frequency"]} {schedule["period"].lower()}'
+        time_part = f' at {schedule["time"]}' if 'time' in schedule else ''
+        return f'{task_start} {frequency_part}{time_part}'
 
     @staticmethod
     def human_print_profiles(profiles: List[Any]):

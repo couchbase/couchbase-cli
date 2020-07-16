@@ -2185,6 +2185,40 @@ class TestBackupServiceProfile(CommandTest):
         self.assertIn('1', self.str_output)
         self.assertIn('False', self.str_output)
 
+    def test_get_profile_no_name(self):
+        """Test that the get profile operation fails if no name is given"""
+        self.system_exit_run(self.command + ['--get'], self.server_args)
+        self.assertIn('--name is required', self.str_output)
+
+    def test_get_profile(self):
+        """Test that get operatiopn hits the right endpoint and prints the correct information"""
+        self.server_args['/api/v1/profile/p1'] = {
+            'name': 'p1',
+            'description': 'Some description',
+            'services': ['data', 'cbas'],
+            'tasks': [{
+                'name': 't1',
+                'task_type': 'BACKUP',
+                'full_backup': True,
+                'schedule': {
+                    'job_type': 'BACKUP',
+                    'frequency': 3,
+                    'period': 'HOURS',
+                    'time': '00:00',
+                }
+            }],
+        }
+
+        self.no_error_run(self.command + ['--get', '--name', 'p1'], self.server_args)
+        self.assertIn('GET:/api/v1/profile/p1', self.server.trace)
+        self.assertIn('Name: p1', self.str_output)
+        self.assertIn('Description: Some description', self.str_output)
+        self.assertIn('Services: Data, Analytics', self.str_output)
+        self.assertIn('Default: False', self.str_output)
+        self.assertIn('Tasks:', self.str_output)
+        self.assertIn('t1', self.str_output)
+        self.assertIn('backup every 3 hours at 00:00', self.str_output)
+
 
 if __name__ == '__main__':
     unittest.main()

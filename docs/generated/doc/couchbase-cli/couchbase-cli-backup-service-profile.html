@@ -451,7 +451,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli backup-service</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-    [--password &lt;password&gt;] [--output] profile</pre>
+    [--password &lt;password&gt;] [--output] profile [--list] [--get]
+    [--name &lt;name&gt;]</pre>
 </div>
 </div>
 </div>
@@ -471,6 +472,23 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dt class="hdlist1">--list</dt>
 <dd>
 <p>List the backup profiles.</p>
+</dd>
+<dt class="hdlist1">--get</dt>
+<dd>
+<p>Get the backup profile by name.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options">OPTIONS</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--name &lt;name&gt;</dt>
+<dd>
+<p>Profile name</p>
 </dd>
 </dl>
 </div>
@@ -512,7 +530,7 @@ a port other that 8091.</p>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profiles --list
+  profile --list
   Name     | # Tasks | Services  | Default
   ---------------------------------------------
   _daily   | 3       | all       | True
@@ -522,6 +540,31 @@ a port other that 8091.</p>
 <div class="paragraph">
 <p>This will show you the name of all the profiles registered with the service as well as
 how many tasks the profiles has and what services are included.</p>
+</div>
+<div class="paragraph">
+<p>To retrieve more in-depth information of a singular profile you can use the <code>--get</code>
+action argument as shown below.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  profile --get --name _daily
+Name: _daily
+Description: This profile does a backup every hour and merge 6 hours as well as at the end of the week
+Services: all
+Default: False
+
+Tasks:
+Name                 | Schedule                      | Options
+-------------------------------------------------------------------
+backup_hourly        | backup every hour at 00:00    | N/A
+merge_every_6_hours  | merge every 6 hours at 00:30  | Merge from 0 to 0
+merge_week           | merge every sunday at 23:40   | Merge from 0 to 7</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To retrieve the information in JSON format add <code>--output json</code> before the <code>profile</code> key
+word.</p>
 </div>
 </div>
 </div>

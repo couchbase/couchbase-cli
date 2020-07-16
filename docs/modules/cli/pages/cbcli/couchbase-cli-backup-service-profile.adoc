@@ -12,7 +12,8 @@ Manage the backup service profiles.
 
 [verse]
 _couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--output] profile
+    [--password <password>] [--output] profile [--list] [--get]
+    [--name <name>]
 
 == DESCRIPTION
 
@@ -23,6 +24,15 @@ Manage backup service profiles.
 --list::
     List the backup profiles.
 
+--get::
+    Get the backup profile by name.
+
+== OPTIONS
+
+--name <name>::
+    Profile name
+
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
@@ -30,7 +40,7 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 To retrieve a summary of all profiles run:
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profiles --list
+  profile --list
   Name     | # Tasks | Services  | Default
   ---------------------------------------------
   _daily   | 3       | all       | True
@@ -39,6 +49,27 @@ $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
 
 This will show you the name of all the profiles registered with the service as well as
 how many tasks the profiles has and what services are included.
+
+To retrieve more in-depth information of a singular profile you can use the `--get`
+action argument as shown below.
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  profile --get --name _daily
+Name: _daily
+Description: This profile does a backup every hour and merge 6 hours as well as at the end of the week
+Services: all
+Default: False
+
+Tasks:
+Name                 | Schedule                      | Options
+-------------------------------------------------------------------
+backup_hourly        | backup every hour at 00:00    | N/A
+merge_every_6_hours  | merge every 6 hours at 00:30  | Merge from 0 to 0
+merge_week           | merge every sunday at 23:40   | Merge from 0 to 7
+----
+
+To retrieve the information in JSON format add `--output json` before the `profile` key
+word.
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
