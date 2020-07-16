@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-backup-service-profile
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-07-20
+.\"      Date: 2020-07-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-PROFILE" "1" "2020-07-20" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-PROFILE" "1" "2020-07-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,7 +35,8 @@ couchbase\-cli\-backup\-service\-profile \- Manage the backup service profiles.
 .nf
 \fIcouchbase\-cli backup\-service\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-output] profile [\-\-list] [\-\-get]
-    [\-\-remove] [\-\-name <name>]
+    [\-\-remove] [\-\-add] [\-\-name <name>] [\-\-description <text>]
+    [\-\-services <list>] [\-\-task [<task> ...]]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -57,11 +58,32 @@ Get the backup profile by name.
 .RS 4
 Remove a profile by name.
 .RE
+.sp
+\-\-add
+.RS 4
+Add a new profile.
+.RE
 .SH "OPTIONS"
 .sp
 \-\-name <name>
 .RS 4
-Profile name
+Profile name.
+.RE
+.sp
+\-\-description <text>
+.RS 4
+An optional description provided when adding a new profile.
+.RE
+.sp
+\-\-services <list>
+.RS 4
+An optional comma separated lists of services to backup when adding a new profile.
+.RE
+.sp
+\-\-task [<task> ...]
+.RS 4
+One or more tasks to add to the profile. Tasks are given in JSON format. For
+more information see the examples below.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -154,6 +176,44 @@ profile that is being used, all the profiles that use it must be archived first.
 .nf
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
   profile \-\-remove \-\-name _daily
+.fi
+.if n .RE
+.sp
+To add a profile  use the action argument \f(CR\-\-add\fP as seen below.
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
+  profile \-\-add \-\-name new\-profile \-\-description "Optional description"
+  \-\-task \(aq{"name":"t1", "task_type":"BACKUP", "full_backup": true, \(rs
+  "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}\(aq
+   \-\-services data
+.fi
+.if n .RE
+.sp
+The \f(CR\-\-description\fP is an optional string of up to 140 characters that can be used to
+describe what the profile does. The \f(CR\-\-services\fP flag defines what services should be
+backed up by the tasks in the profile, valid services are
+\f(CR[data, gsi, cbas, ft, eventing, views]\fP. Finally, the \f(CR\-\-task\fP argument accepts JSON
+task objects. The task objects have the following schema:
+.sp
+.if n .RS 4
+.nf
+{
+    "name": "task\-name",
+    "task_type": "BACKUP", // it can be either BACKUP or MERGE
+    "full_backup": true,   // optional field to make backup tasks full
+    "merge_options": {     // optional field to configure what data to merge in merge tasks
+        "offset_start": 1, // the offset on which to start merging in days
+        "offset_end": 1    // the offset on which to end the merge based from the start in days
+    },
+    "schedule": {
+        "frequency": 5,
+        "period": "HOURS",    // period can be [MINUTES, HOURS, DAYS, WEEKS, MONDAY\-SUNDAY]
+        "job_type": "BACKUP", // either BACKUP or MERGE
+        "time": "22:00"       // Optional time at which to run the tasks
+    }
+}
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

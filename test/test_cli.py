@@ -2258,6 +2258,26 @@ class TestBackupServiceProfile(CommandTest):
         self.assertIn('DELETE:/api/v1/profile/p1', self.server.trace)
         self.assertIn('Profile removed', self.str_output)
 
+    def test_add_profile_no_name(self):
+        """Test that when no name is given to the add profile command it fails and gives a sensible error"""
+        self.system_exit_run(self.command + ['--add'], self.server_args)
+        self.assertIn('--name is required', self.str_output)
+
+    def test_add_empty_profile(self):
+        """Test that a profile with just a name is valid"""
+        self.no_error_run(self.command + ['--add', '--name', 'prof'], self.server_args)
+        self.assertIn('POST:/api/v1/profile/prof', self.server.trace)
+        self.rest_parameter_match(['{}'])
+
+    def test_add_profile_all_options(self):
+        """Test that all options are valid when adding a profile"""
+        task = {'name': 't1', 'task_type': 'BACKUP', 'schedule': {'frequency': 1, 'period': 'DAYS'}}
+        self.no_error_run(self.command + ['--add', '--name', 'prof', '--description', 'some description',
+                                          '--services', 'data,eventing', '--task', json.dumps(task)], self.server_args)
+        self.assertIn('POST:/api/v1/profile/prof', self.server.trace)
+        self.rest_parameter_match([json.dumps({'description': 'some description', 'services': ['data', 'eventing'],
+                                               'tasks': [task]}, sort_keys=True)])
+
 
 if __name__ == '__main__':
     unittest.main()

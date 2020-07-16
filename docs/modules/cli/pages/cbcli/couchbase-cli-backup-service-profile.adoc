@@ -13,7 +13,8 @@ Manage the backup service profiles.
 [verse]
 _couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
     [--password <password>] [--output] profile [--list] [--get]
-    [--remove] [--name <name>]
+    [--remove] [--add] [--name <name>] [--description <text>]
+    [--services <list>] [--task [<task> ...]]
 
 == DESCRIPTION
 
@@ -30,10 +31,23 @@ Manage backup service profiles.
 --remove::
     Remove a profile by name.
 
+--add::
+    Add a new profile.
+
 == OPTIONS
 
 --name <name>::
-    Profile name
+    Profile name.
+
+--description <text>::
+    An optional description provided when adding a new profile.
+
+--services <list>::
+    An optional comma separated lists of services to backup when adding a new profile.
+
+--task [<task> ...]::
+    One or more tasks to add to the profile. Tasks are given in JSON format. For
+    more information see the examples below.
 
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
@@ -81,6 +95,40 @@ profile that is being used, all the profiles that use it must be archived first.
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
   profile --remove --name _daily
+----
+
+To add a profile  use the action argument `--add` as seen below.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  profile --add --name new-profile --description "Optional description"
+  --task '{"name":"t1", "task_type":"BACKUP", "full_backup": true, \
+  "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}'
+   --services data
+----
+
+The `--description` is an optional string of up to 140 characters that can be used to
+describe what the profile does. The `--services` flag defines what services should be
+backed up by the tasks in the profile, valid services are
+`[data, gsi, cbas, ft, eventing, views]`. Finally, the `--task` argument accepts JSON
+task objects. The task objects have the following schema:
+
+----
+{
+    "name": "task-name",
+    "task_type": "BACKUP", // it can be either BACKUP or MERGE
+    "full_backup": true,   // optional field to make backup tasks full
+    "merge_options": {     // optional field to configure what data to merge in merge tasks
+        "offset_start": 1, // the offset on which to start merging in days
+        "offset_end": 1    // the offset on which to end the merge based from the start in days
+    },
+    "schedule": {
+        "frequency": 5,
+        "period": "HOURS",    // period can be [MINUTES, HOURS, DAYS, WEEKS, MONDAY-SUNDAY]
+        "job_type": "BACKUP", // either BACKUP or MERGE
+        "time": "22:00"       // Optional time at which to run the tasks
+    }
+}
 ----
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES

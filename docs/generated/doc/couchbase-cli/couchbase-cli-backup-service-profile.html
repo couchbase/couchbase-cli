@@ -452,7 +452,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli backup-service</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--output] profile [--list] [--get]
-    [--remove] [--name &lt;name&gt;]</pre>
+    [--remove] [--add] [--name &lt;name&gt;] [--description &lt;text&gt;]
+    [--services &lt;list&gt;] [--task [&lt;task&gt; &#8230;&#8203;]]</pre>
 </div>
 </div>
 </div>
@@ -481,6 +482,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dd>
 <p>Remove a profile by name.</p>
 </dd>
+<dt class="hdlist1">--add</dt>
+<dd>
+<p>Add a new profile.</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -492,7 +497,20 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dl>
 <dt class="hdlist1">--name &lt;name&gt;</dt>
 <dd>
-<p>Profile name</p>
+<p>Profile name.</p>
+</dd>
+<dt class="hdlist1">--description &lt;text&gt;</dt>
+<dd>
+<p>An optional description provided when adding a new profile.</p>
+</dd>
+<dt class="hdlist1">--services &lt;list&gt;</dt>
+<dd>
+<p>An optional comma separated lists of services to backup when adding a new profile.</p>
+</dd>
+<dt class="hdlist1">--task [&lt;task&gt; &#8230;&#8203;]</dt>
+<dd>
+<p>One or more tasks to add to the profile. Tasks are given in JSON format. For
+more information see the examples below.</p>
 </dd>
 </dl>
 </div>
@@ -579,6 +597,44 @@ profile that is being used, all the profiles that use it must be archived first.
 <div class="content">
 <pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
   profile --remove --name _daily</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To add a profile  use the action argument <code>--add</code> as seen below.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  profile --add --name new-profile --description "Optional description"
+  --task '{"name":"t1", "task_type":"BACKUP", "full_backup": true, \
+  "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}'
+   --services data</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>--description</code> is an optional string of up to 140 characters that can be used to
+describe what the profile does. The <code>--services</code> flag defines what services should be
+backed up by the tasks in the profile, valid services are
+<code>[data, gsi, cbas, ft, eventing, views]</code>. Finally, the <code>--task</code> argument accepts JSON
+task objects. The task objects have the following schema:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>{
+    "name": "task-name",
+    "task_type": "BACKUP", // it can be either BACKUP or MERGE
+    "full_backup": true,   // optional field to make backup tasks full
+    "merge_options": {     // optional field to configure what data to merge in merge tasks
+        "offset_start": 1, // the offset on which to start merging in days
+        "offset_end": 1    // the offset on which to end the merge based from the start in days
+    },
+    "schedule": {
+        "frequency": 5,
+        "period": "HOURS",    // period can be [MINUTES, HOURS, DAYS, WEEKS, MONDAY-SUNDAY]
+        "job_type": "BACKUP", // either BACKUP or MERGE
+        "time": "22:00"       // Optional time at which to run the tasks
+    }
+}</pre>
 </div>
 </div>
 </div>

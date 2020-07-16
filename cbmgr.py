@@ -5172,11 +5172,15 @@ class BackupServiceProfile:
         action_group.add_argument('--list', action='store_true', help='List all available backup profiles')
         action_group.add_argument('--get', action='store_true', help='Get a profile by name')
         action_group.add_argument('--remove', action='store_true', help='Remove a profile by name')
+        action_group.add_argument('--add', action='store_true', help='Add a new profile')
         action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
                                   help="Prints the short or long help message")
 
         options = profile_parser.add_argument_group('Profile options')
         options.add_argument('--name', metavar='<name>', help='Profile name')
+        options.add_argument('--description', metavar='<description>', help='Optional description')
+        options.add_argument('--services', metavar='<services>', help='A comma separated list of services to backup')
+        options.add_argument('--task', metavar='<tasks>', nargs='+', help='JSON task definition')
 
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
@@ -5187,6 +5191,46 @@ class BackupServiceProfile:
             self.get_profile(opts.name, opts.output == 'json')
         elif opts.remove:
             self.remove_profile(opts.name)
+        elif opts.add:
+            self.add_profile(opts.name, opts.services, opts.task, opts.description)
+
+    def add_profile(self, name: str, services: Optional[str], tasks: Optional[List[str]], description: Optional[str]):
+        """Add a new backup profile
+
+        The validation of the inputs in the CLI is intentionally lacking as this is ofloaded to the backup service.
+        Args:
+            name (str): The name to give the new profile. It must be unique.
+            services (optional list): A list of services to backup if empty all services are backed up.
+            tasks (optional list): A list of JSON strings representing the tasks to be run.
+            description (optional str): A optional description string.
+        """
+        if not name:
+            _exit_if_errors(['--name is required'])
+
+        service_list = []
+        if services:
+            service_list = [service.strip() for service in services.split(',')]
+
+        tasks_objects = []
+        if tasks:
+            for task_str in tasks:
+                try:
+                    task = json.loads(task_str)
+                    tasks_objects.append(task)
+                except json.decoder.JSONDecodeError as json_error:
+                    _exit_if_errors([f'invalid task {json_error!s}'])
+
+        profile = {}
+        if service_list:
+            profile['services'] = service_list
+        if tasks_objects:
+            profile['tasks'] = tasks_objects
+        if description:
+            profile['description'] = description
+
+        _, errors = self.rest.add_backup_profile(name, profile)
+        _exit_if_errors(errors)
+        _success('Added profile')
 
     def remove_profile(self, name: str):
         """Removes a profile by name"""

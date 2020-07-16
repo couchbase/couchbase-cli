@@ -1953,9 +1953,24 @@ class ClusterManager(object):
 
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
-
         url = f'{hosts[0]}/api/v1/cluster/{cluster}/instance/{state}/{instance_id}?remove_repository={delete_repo!s}'
         return self._delete(url, None)
+
+    def add_backup_profile(self, name: str, profile: Dict[str, Any]):
+        """Adds a new backup profile
+
+        Args:
+            name (str): The name to give to the new profile if it already exists it will fail.
+            profile (object): The profile to add.
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._post_json(f'{hosts[0]}/api/v1/profile/{name}', profile)
 
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'

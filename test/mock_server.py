@@ -421,7 +421,7 @@ endpoints = [
     (r'/api/v1/cluster/self/instance/(:?active|archived|imported)$', {'GET': get_by_path}),
     (r'/api/v1/cluster/self/instance/active/\w+/archive$', {'POST': do_nothing}),
     (r'/api/v1/profile$', {'GET': get_by_path}),
-    (r'/api/v1/profile/\w+$', {'GET': get_by_path, 'DELETE': do_nothing}),
+    (r'/api/v1/profile/\w+$', {'GET': get_by_path, 'DELETE': do_nothing, 'POST': do_nothing}),
     (r'/api/v1/cluster/self/instance/(:?active|archived|imported)/\w+(:?\?remove_repository=\w+)?$',
      {'GET': get_by_path, 'POST': do_nothing, 'DELETE': do_nothing})
 ]
