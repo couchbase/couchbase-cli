@@ -2219,6 +2219,17 @@ class TestBackupServiceProfile(CommandTest):
         self.assertIn('t1', self.str_output)
         self.assertIn('backup every 3 hours at 00:00', self.str_output)
 
+    def test_remove_profile_no_name(self):
+        """Test that the remove action does not work if no profile name is given"""
+        self.system_exit_run(self.command + ['--remove'], self.server_args)
+        self.assertIn('--name is required', self.str_output)
+
+    def test_remove_profile(self):
+        """Test that given a name the CLI will hit the correct endpoint"""
+        self.no_error_run(self.command + ['--remove', '--name', 'p1'], self.server_args)
+        self.assertIn('DELETE:/api/v1/profile/p1', self.server.trace)
+        self.assertIn('Profile removed', self.str_output)
+
 
 if __name__ == '__main__':
     unittest.main()

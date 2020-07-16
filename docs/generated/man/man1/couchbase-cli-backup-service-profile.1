@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-backup-service-profile
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-07-16
+.\"      Date: 2020-07-20
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-PROFILE" "1" "2020-07-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-PROFILE" "1" "2020-07-20" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,7 +35,7 @@ couchbase\-cli\-backup\-service\-profile \- Manage the backup service profiles.
 .nf
 \fIcouchbase\-cli backup\-service\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-output] profile [\-\-list] [\-\-get]
-    [\-\-name <name>]
+    [\-\-remove] [\-\-name <name>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -51,6 +51,11 @@ List the backup profiles.
 \-\-get
 .RS 4
 Get the backup profile by name.
+.RE
+.sp
+\-\-remove
+.RS 4
+Remove a profile by name.
 .RE
 .SH "OPTIONS"
 .sp
@@ -140,6 +145,17 @@ merge_week           | merge every sunday at 23:40   | Merge from 0 to 7
 .sp
 To retrieve the information in JSON format add \f(CR\-\-output json\fP before the \f(CRprofile\fP key
 word.
+.sp
+To remove a profile use the action argument \f(CR\-\-remove\fP as shown below. Note that only
+profiles that are not being used by an active instance may be removed. To remove a
+profile that is being used, all the profiles that use it must be archived first.
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
+  profile \-\-remove \-\-name _daily
+.fi
+.if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_USERNAME

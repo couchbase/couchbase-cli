@@ -452,7 +452,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli backup-service</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--output] profile [--list] [--get]
-    [--name &lt;name&gt;]</pre>
+    [--remove] [--name &lt;name&gt;]</pre>
 </div>
 </div>
 </div>
@@ -476,6 +476,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dt class="hdlist1">--get</dt>
 <dd>
 <p>Get the backup profile by name.</p>
+</dd>
+<dt class="hdlist1">--remove</dt>
+<dd>
+<p>Remove a profile by name.</p>
 </dd>
 </dl>
 </div>
@@ -565,6 +569,17 @@ merge_week           | merge every sunday at 23:40   | Merge from 0 to 7</pre>
 <div class="paragraph">
 <p>To retrieve the information in JSON format add <code>--output json</code> before the <code>profile</code> key
 word.</p>
+</div>
+<div class="paragraph">
+<p>To remove a profile use the action argument <code>--remove</code> as shown below. Note that only
+profiles that are not being used by an active instance may be removed. To remove a
+profile that is being used, all the profiles that use it must be archived first.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  profile --remove --name _daily</pre>
+</div>
 </div>
 </div>
 </div>

@@ -13,7 +13,7 @@ Manage the backup service profiles.
 [verse]
 _couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
     [--password <password>] [--output] profile [--list] [--get]
-    [--name <name>]
+    [--remove] [--name <name>]
 
 == DESCRIPTION
 
@@ -26,6 +26,9 @@ Manage backup service profiles.
 
 --get::
     Get the backup profile by name.
+
+--remove::
+    Remove a profile by name.
 
 == OPTIONS
 
@@ -70,6 +73,15 @@ merge_week           | merge every sunday at 23:40   | Merge from 0 to 7
 
 To retrieve the information in JSON format add `--output json` before the `profile` key
 word.
+
+To remove a profile use the action argument `--remove` as shown below. Note that only
+profiles that are not being used by an active instance may be removed. To remove a
+profile that is being used, all the profiles that use it must be archived first.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  profile --remove --name _daily
+----
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

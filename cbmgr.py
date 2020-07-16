@@ -5146,6 +5146,7 @@ class BackupServiceProfile:
         action_group = profile_parser.add_mutually_exclusive_group(required=True)
         action_group.add_argument('--list', action='store_true', help='List all available backup profiles')
         action_group.add_argument('--get', action='store_true', help='Get a profile by name')
+        action_group.add_argument('--remove', action='store_true', help='Remove a profile by name')
         action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
                                   help="Prints the short or long help message")
 
@@ -5159,6 +5160,17 @@ class BackupServiceProfile:
             self.list_profiles(opts.output == 'json')
         elif opts.get:
             self.get_profile(opts.name, opts.output == 'json')
+        elif opts.remove:
+            self.remove_profile(opts.name)
+
+    def remove_profile(self, name: str):
+        """Removes a profile by name"""
+        if not name:
+            _exit_if_errors(['--name is required'])
+
+        _, errors = self.rest.delete_backup_profile(name)
+        _exit_if_errors(errors)
+        _success('Profile removed')
 
     def get_profile(self, name: str, json_output: bool = False):
         """Gets a backup profile by name

@@ -1928,6 +1928,17 @@ class ClusterManager(object):
 
         return self._get(f'{hosts[0]}/api/v1/profile/{name}')
 
+    def delete_backup_profile(self, name: str):
+        """Deletes a backup profile by name"""
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._delete(f'{hosts[0]}/api/v1/profile/{name}', None)
+
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
         params = {"name": scope}
