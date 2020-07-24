@@ -753,7 +753,7 @@ class BucketCreate(Subcommand):
                            metavar="<0|1>", choices=["0", "1"], help="Set parallel DB and View Compaction")
 
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
-                           metavar="<float>", help="Set parallel DB and View Compaction")
+                           metavar="<float>", help="Sets the frequency of the tombstone purge interval")
 
     def execute(self, opts):
         rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
