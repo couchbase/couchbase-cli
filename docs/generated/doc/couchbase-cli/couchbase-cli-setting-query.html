@@ -455,7 +455,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--pipeline-cap &lt;num&gt;] [--scan-cap &lt;size&gt;] [--timeout &lt;ms&gt;]
     [--prepared-limit &lt;max&gt;] [--completed-limit &lt;max&gt;]
     [--log-level &lt;trace|debug|info|warn|error|server|none&gt;]
-    [--max-parallelism &lt;max&gt;] [--n1ql-feature-control &lt;num&gt;]</pre>
+    [--max-parallelism &lt;max&gt;] [--n1ql-feature-control &lt;num&gt;]
+    [--temp-dir &lt;path&gt;] [--temp-dir-size &lt;megabytes&gt;]
+    [--curl-restricted &lt;restricted|unrestricted&gt;]
+    [--allowed-urls &lt;urls&gt;] [--disallowed-urls &lt;urls&gt;]</pre>
 </div>
 </div>
 </div>
@@ -542,6 +545,38 @@ The default is 1.</p>
 <dd>
 <p>N1QL Feature Controls.
 0x0001 (1) Disable Index Aggregation</p>
+</dd>
+<dt class="hdlist1">--temp-dir &lt;path&gt;</dt>
+<dd>
+<p>Specify the directory for temporary query data.</p>
+</dd>
+<dt class="hdlist1">--temp-dir-size &lt;megabytes&gt;</dt>
+<dd>
+<p>Maximum size in megabytes for the temporary query data directory.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_query_whitelist_options">QUERY WHITELIST OPTIONS</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--curl-restricted &lt;restricted|unrestricted&gt;</dt>
+<dd>
+<p>Specify either unrestricted or restricted, to determine which URLs are permitted
+to be accessed by the curl function.</p>
+</dd>
+<dt class="hdlist1">--allowed-urls &lt;urls&gt;</dt>
+<dd>
+<p>Comma separated lists of URLs that are allowed to be accessed by the curl
+function. This option must be provided together with --curl-restricted.</p>
+</dd>
+<dt class="hdlist1">--disallowed-urls &lt;urls&gt;</dt>
+<dd>
+<p>Comma separated lists of URLs that are disallowed to be accessed by the curl
+function. This option must be provided together with --curl-restricted.</p>
 </dd>
 </dl>
 </div>

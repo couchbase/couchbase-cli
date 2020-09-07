@@ -4373,6 +4373,21 @@ class SettingQuery(Subcommand):
                            help='Maximum parallelism per query.')
         group.add_argument('--n1ql-feature-control', metavar='<num>', type=int, default=None,
                            help='N1QL Feature Controls')
+        group.add_argument('--temp-dir', metavar='<path>', type=str, default=None,
+                           help='This specifies the directory for temporary query data.')
+        group.add_argument('--temp-dir-size', metavar='<megabytes>', type=int, default=None,
+                           help='Specify the maximum size in megabytes for the temporary query data directory.')
+
+        whitelist_group = self.parser.add_argument_group('Query whitelist settings')
+        whitelist_group.add_argument('--curl-restricted', choices=['restricted', 'unrestricted'], default=None,
+                                     help='Specify either unrestricted or restricted, to determine which URLs are'
+                                          ' permitted to be accessed by the curl function.')
+        whitelist_group.add_argument('--allowed-urls', metavar='<urls>', type=str, default=None,
+                                     help='Comma separated lists of URLs that are allowed to be accessed by the curl'
+                                          ' function.')
+        whitelist_group.add_argument('--disallowed-urls', metavar='<urls>', type=str, default=None,
+                                     help='Comma separated lists of URLs that are disallowed to be accessed by the curl'
+                                          ' function.')
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
@@ -4384,16 +4399,35 @@ class SettingQuery(Subcommand):
             _exit_if_errors(err)
             print(json.dumps(settings))
         if opts.set:
-            if all(v is None for v in [opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
-                                       opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
-                                       opts.log_level, opts.max_parallelism, opts.n1ql_feature_control]):
-                _exit_if_errors(['Please provide at least one other option with --set'])
-
-            _, err = self.rest.post_query_settings(opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
-                                                   opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
-                                                   opts.log_level, opts.max_parallelism, opts.n1ql_feature_control)
-            _exit_if_errors(err)
+            whitelist = self._post_query_whitelist(opts)
+            self._post_query_settings(opts, whitelist)
             _success('Updated the query settings')
+
+    def _post_query_whitelist(self, opts) -> bool:
+        if opts.curl_restricted:
+            allowed = opts.allowed_urls.strip().split(',') if opts.allowed_urls is not None else None
+            disallowed = opts.disallowed_urls.strip().split(',') if opts.disallowed_urls is not None else None
+            _, err = self.rest.post_query_whitelist_settings(opts.curl_restricted == 'restricted', allowed,
+                                                             disallowed)
+            _exit_if_errors(err)
+            return True
+        return False
+
+    def _post_query_settings(self, opts, white_listed):
+        if all(v is None for v in [opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
+                                   opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
+                                   opts.log_level, opts.max_parallelism, opts.n1ql_feature_control, opts.temp_dir,
+                                   opts.temp_dir_size]):
+            if white_listed:
+                return
+
+            _exit_if_errors(['Please provide at least one other option with --set'])
+
+        _, err = self.rest.post_query_settings(opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
+                                               opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
+                                               opts.log_level, opts.max_parallelism, opts.n1ql_feature_control,
+                                               opts.temp_dir, opts.temp_dir_size)
+        _exit_if_errors(err)
 
     @staticmethod
     def get_man_page_name():

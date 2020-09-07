@@ -1633,7 +1633,8 @@ class ClusterManager(object):
         return self._get(url)
 
     def post_query_settings(self, pipeline_batch, pipeline_cap, scan_cap, timeout, prepared_limit, completed_limit,
-                            complete_threshold, log_level, max_parallelism, n1ql_feature_control):
+                            complete_threshold, log_level, max_parallelism, n1ql_feature_control, temp_dir,
+                            temp_dir_max_size):
         url = f'{self.hostname}/settings/querySettings'
         params = {}
         if pipeline_batch is not None:
@@ -1656,8 +1657,24 @@ class ClusterManager(object):
             params['queryMaxParallelism'] = max_parallelism
         if n1ql_feature_control is not None:
             params['queryN1QLFeatCtrl'] = n1ql_feature_control
+        if temp_dir is not None:
+            params['queryTmpSpaceDir'] = temp_dir
+        if temp_dir_max_size is not None:
+            params['queryTmpSpaceSize'] = temp_dir_max_size
 
         return self._post_form_encoded(url, params)
+
+    def post_query_whitelist_settings(self, restricted: bool, allowed_urls: Optional[List[str]],
+                                      disallowed_urls: Optional[List[str]]):
+        """POST query whitelist settings."""
+        url = f'{self.hostname}/settings/querySettings/curlWhitelist'
+        params: Dict[str, Any] = {'all_access': not restricted}
+        if allowed_urls is not None:
+            params['allowed_urls'] = allowed_urls
+        if disallowed_urls is not None:
+            params['disallowed_urls'] = disallowed_urls
+
+        return self._post_json(url, params)
 
     def list_functions(self):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)

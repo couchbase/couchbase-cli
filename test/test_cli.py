@@ -2279,5 +2279,27 @@ class TestBackupServiceProfile(CommandTest):
                                                'tasks': [task]}, sort_keys=True)])
 
 
+class TestSettingQuery(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'setting-query'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        super(TestSettingQuery, self).setUp()
+
+    def test_whitelist(self):
+        self.no_error_run(self.command + ['--set', '--curl-restricted', 'restricted', '--allowed-urls', 'url1,url2',
+                                          '--disallowed-urls', 'url3,url4'], self.server_args)
+        self.assertIn('POST:/settings/querySettings/curlWhitelist', self.server.trace)
+        self.rest_parameter_match([json.dumps({'all_access': False, 'allowed_urls': ['url1', 'url2'],
+                                               'disallowed_urls': ['url3', 'url4']}, sort_keys=True)])
+
+    def test_whitelist_and_temp_query_dir(self):
+        self.no_error_run(self.command + ['--set', '--curl-restricted', 'unrestricted', '--temp-dir', 'location',
+                                          '--temp-dir-size', '9000'], self.server_args)
+        self.assertIn('POST:/settings/querySettings/curlWhitelist', self.server.trace)
+        self.assertIn('POST:/settings/querySettings', self.server.trace)
+        self.rest_parameter_match([json.dumps({'all_access': True}, sort_keys=True),
+                                   'queryTmpSpaceDir=location', 'queryTmpSpaceSize=9000'])
+
+
 if __name__ == '__main__':
     unittest.main()
