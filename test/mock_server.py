@@ -391,7 +391,7 @@ endpoints = [
     (r'/settings/replications$', {'POST': do_nothing}),
     (r'/settings/rebalance$', {'GET': get_by_path, 'POST': do_nothing}),
     (r'/settings/retryRebalance$', {'GET': get_by_path, 'POST': do_nothing}),
-    (r'/settings/replications/(\d|\w)+$', {'POST': do_nothing}),
+    (r'/settings/replications/(\d|\w)+$', {'POST': do_nothing, 'GET': get_by_path}),
     (r'/node/controller/setupServices$', {'POST': do_nothing}),
     (r'/nodes/self/controller/settings$', {'POST': do_nothing}),
     (r'/nodes/self$', {'GET': get_node_info}),

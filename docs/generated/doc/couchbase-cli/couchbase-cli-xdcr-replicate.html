@@ -452,7 +452,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli xdcr-replicate</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--create] [--delete] [--pause] [--list]
-    [--resume] [--settings] [--xdcr-from-bucket &lt;bucket&gt;]
+    [--resume] [--settings] [--get] [--xdcr-from-bucket &lt;bucket&gt;]
     [--xdcr-to-bucket &lt;bucket&gt;] [--xdcr-cluster-name &lt;name&gt;]
     [--xdcr-replication-mode &lt;mode&gt;] [--filter-expression &lt;regex&gt;]
     [--xdcr-replicator &lt;id&gt;] [--checkpoint-interval &lt;seconds&gt;]
@@ -462,7 +462,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--enable-compression &lt;num&gt;] [--stats-interval &lt;milliseconds&gt;]
     [--optimistic-replication-threshold &lt;bytes&gt;] [--log-level &lt;level&gt;]
     [--priority &lt;High|Medium|Low&gt;] [--reset-expiry &lt;1|0&gt;]
-    [--filter-deletion &lt;1|0&gt;] [--filter-expiration &lt;1|0&gt;]</pre>
+    [--filter-deletion &lt;1|0&gt;] [--filter-expiration &lt;1|0&gt;]
+    [--collection-explicit-mappings &lt;1|0&gt;] [--collections-migration &lt;1|0&gt;]
+    [--collection-mapping-rules &lt;mappings&gt;]</pre>
 </div>
 </div>
 </div>
@@ -525,6 +527,10 @@ environment variable CB_REST_PASSWORD.</p>
 <dt class="hdlist1">--settings</dt>
 <dd>
 <p>Sets advanced settings for an XDCR replication.</p>
+</dd>
+<dt class="hdlist1">--get</dt>
+<dd>
+<p>Gets the setting for a XDCR replication.</p>
 </dd>
 <dt class="hdlist1">--xdcr-from-bucket &lt;bucket&gt;</dt>
 <dd>
@@ -641,6 +647,29 @@ expirations on the source cluster.</p>
 </div>
 </div>
 <div class="sect1">
+<h2 id="_collection_options">COLLECTION OPTIONS</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--collection-explicit-mappings &lt;1|0&gt;</dt>
+<dd>
+<p>Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
+below for more information.</p>
+</dd>
+<dt class="hdlist1">--collections-migration &lt;1|0&gt;</dt>
+<dd>
+<p>Enable or disable XDCR migration mode.</p>
+</dd>
+<dt class="hdlist1">--collection-mapping-rules &lt;mappings&gt;</dt>
+<dd>
+<p>The mappings rules from source bucket to target bucket. The mappings are
+JSON formatted string. See COLLECTION MAPPINGS below for more information.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_host_formats">HOST FORMATS</h2>
 <div class="sectionbody">
 <div class="paragraph">
@@ -745,6 +774,93 @@ and failure restart interval to 60 seconds.</p>
    -p password --settings --failure-restart-interval=60 \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
      --doc-batch-size=2048</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_collection_mappings">COLLECTION MAPPINGS</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>By default, upgraded bucket-to-bucket replication includes implicit mapping of all
+scope and collections replications of which the bucket contains to globally unique
+entities on the remote cluster. This means that whatever collection exists in the
+source will be implicitly mapped by name to the target, and the data replicated.
+For example, if a namespace such as S1:C1 exists on the source, Implicit Mapping
+states that the equivalent mapped entity of S1:C1 namespace should also exist on
+the target. If brand-new replicated systems that both support Collections are
+created with Implicit Mapping without specifying anything regarding collections,
+this is also the behavior of the system. If there is a default scope and/or default
+collection, they will be mapped to the default scope/collection on the target cluster.</p>
+</div>
+<div class="paragraph">
+<p>For users who require more detailed control over collections, they may choose to
+use Explicit Mapping. Explicit mapping for a replication is specified by a set of
+rules defined below.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Explict Mapping Rules</caption>
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Priority</th>
+<th class="tableblock halign-left valign-top">Match Rule</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Syntax</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S:C to S:C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Matches a single Scope:Collection to a target Scope:Collection</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{"s:c":"target_s:target_c"}</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S:C Deny-list</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Stops one singular Scope:Collection from being replicated</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{"s:c":null}</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Scope to Scope</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Explicitly map one source scope to a target scope</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{"s":"target_s"}</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Scope Deny-list</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Stop one source scope from being replicated</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{"s": null}</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Note that when migration mode is enabled Explicit Rule-Based Mapping is used
+instead. The Rule-Based Mapping expressions have the same format as the filtering
+expressions in advance filtering.</p>
+</div>
+<div class="sect2">
+<h3 id="_collection_mapping_examples">COLLECTION MAPPING EXAMPLES</h3>
+<div class="paragraph">
+<p>To enable explicit collection mapping for a bucket <em>default</em> that has a scope
+with name <em>databases</em> and a collection called <em>nosql</em> and want this to be
+mapped in the target bucket to a scope <em>database-replica</em> and <em>nosql-replica</em>
+we can use the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+   -p password --settings \
+   --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
+   --collection-explicit-mapping 1  --collection-mapping-rules {"databases:nosql":"databases-replica:nosql-replica"}</pre>
+</div>
 </div>
 </div>
 </div>

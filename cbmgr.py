@@ -3442,6 +3442,7 @@ class XdcrReplicate(Subcommand):
         super(XdcrReplicate, self).__init__()
         self.parser.prog = "couchbase-cli xdcr-replicate"
         group = self.parser.add_argument_group("XDCR replicate options")
+        group.add_argument("--get", action="store_true", help="Retrieve the settings of a XDCR replication.")
         group.add_argument("--create", dest="create", action="store_true",
                            default=False, help="Create an XDCR replication")
         group.add_argument("--delete", dest="delete", action="store_true",
@@ -3508,6 +3509,14 @@ class XdcrReplicate(Subcommand):
                            help='When set to true expiry mutations will be filter out and not sent to the target '
                                 'cluster')
 
+        collection_group = self.parser.add_argument_group("Collection options")
+        collection_group.add_argument('--collection-explicit-mappings', choices=['1', '0'], metavar='<1|0>',
+                                      default=None, help='If explicit collection mappings is to be used.')
+        collection_group.add_argument('--collections-migration',  choices=['1', '0'], metavar='<1|0>',
+                                      default=None, help='If XDCR is to run in collection migration mode.')
+        collection_group.add_argument('--collection-mapping-rules', type=str, default=None, metavar='<mappings>',
+                                      help='The mapping rules specified as a JSON formatted string.')
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if not self.enterprise and opts.compression:
@@ -3518,12 +3527,11 @@ class XdcrReplicate(Subcommand):
         elif opts.compression == "1":
             opts.compression = "Auto"
 
-        actions = sum([opts.create, opts.delete, opts.pause, opts.list, opts.resume,
-                       opts.settings])
+        actions = sum([opts.create, opts.delete, opts.pause, opts.list, opts.resume, opts.settings, opts.get])
         if actions == 0:
-            _exit_if_errors(['Must specify one of --create, --delete, --pause, --list, --resume, --settings'])
+            _exit_if_errors(['Must specify one of --create, --delete, --pause, --list, --resume, --settings, --get'])
         elif actions > 1:
-            _exit_if_errors(['The --create, --delete, --pause, --list, --resume, --settings flags may not be '
+            _exit_if_errors(['The --create, --delete, --pause, --list, --resume, --settings, --get flags may not be '
                            'specified at the same time'])
         elif opts.create:
             self._create(opts)
@@ -3535,6 +3543,16 @@ class XdcrReplicate(Subcommand):
             self._list()
         elif opts.settings:
             self._settings(opts)
+        elif opts.get:
+            self._get(opts)
+
+    def _get(self, opts):
+        if opts.replicator_id is None:
+            _exit_if_errors(["--xdcr-replicator is need to get the replicator settings"])
+
+        settings, errors = self.rest.get_xdcr_replicator_settings(opts.replicator_id)
+        _exit_if_errors(errors)
+        print(json.dumps(settings, indent=4, sort_keys=True))
 
     def _create(self, opts):
         _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.filter,
@@ -3598,7 +3616,9 @@ class XdcrReplicate(Subcommand):
                                                        opts.dst_nozzles, opts.usage_limit, opts.compression,
                                                        opts.log_level, opts.stats_interval, opts.replicator_id,
                                                        opts.filter, opts.filter_skip, opts.priority, opts.reset_expiry,
-                                                       opts.filter_del, opts.filter_exp)
+                                                       opts.filter_del, opts.filter_exp,
+                                                       opts.collection_explicit_mappings, opts.collections_migration,
+                                                       opts.collection_mapping_rules)
         _exit_if_errors(errors)
 
         _success("XDCR replicator settings updated")

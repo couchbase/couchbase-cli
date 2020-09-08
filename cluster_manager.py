@@ -30,6 +30,11 @@ try:
 except ImportError:
     VERSION = '0.0.0-0000'
 
+
+def one_zero_boolean_to_string(value: str) -> str:
+    """Helper function to convert arguments with 1/0 string values to true or false"""
+    return 'true' if value == '1' else 'false'
+
 # Remove this once we can verify SSL certificates
 urllib3.disable_warnings()
 
@@ -1520,11 +1525,16 @@ class ClusterManager(object):
         url = f'{self.hostname}/pools/default/remoteClusters/'
         return self._get(url)
 
+    def get_xdcr_replicator_settings(self, replicator_id: str):
+        """Retrieves the settings for a XDCR replication with id 'replicator_id'"""
+        return self._get(f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}')
+
     def xdcr_replicator_settings(self, chk_interval, worker_batch_size,
                                  doc_batch_size, fail_interval, replication_thresh,
                                  src_nozzles, dst_nozzles, usage_limit, compression,
                                  log_level, stats_interval, replicator_id, filter_expression, filter_skip, priority,
-                                 reset_expiry, filter_del, filter_exp):
+                                 reset_expiry, filter_del, filter_exp, col_explicit_mappings, col_migration_mode,
+                                 col_mapping_rule):
 
         url = f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
@@ -1540,11 +1550,17 @@ class ClusterManager(object):
         if priority:
             params['priority'] = priority
         if reset_expiry:
-            params['filterBypassExpiry'] = 'true' if reset_expiry == '1' else 'false'
+            params['filterBypassExpiry'] = one_zero_boolean_to_string(reset_expiry)
         if filter_del:
-            params['filterDeletion'] = 'true' if filter_del == '1' else 'false'
+            params['filterDeletion'] = one_zero_boolean_to_string(filter_del)
         if filter_exp:
-            params['filterExpiration'] = 'true' if filter_exp == '1' else 'false'
+            params['filterExpiration'] = one_zero_boolean_to_string(filter_exp)
+        if col_explicit_mappings is not None:
+            params['collectionsExplicitMapping'] = one_zero_boolean_to_string(col_explicit_mappings)
+        if col_migration_mode is not None:
+            params['collectionsMigrationMode'] = one_zero_boolean_to_string(col_migration_mode)
+        if col_mapping_rule is not None:
+            params['colMappingRules'] = col_mapping_rule
 
         return self._post_form_encoded(url, params)
 

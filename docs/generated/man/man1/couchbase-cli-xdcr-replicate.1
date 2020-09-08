@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-05-22
+.\"      Date: 2020-09-14
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-09-14" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,7 +35,7 @@ couchbase\-cli\-xdcr\-replicate \- Creates a replication between two data center
 .nf
 \fIcouchbase\-cli xdcr\-replicate\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-create] [\-\-delete] [\-\-pause] [\-\-list]
-    [\-\-resume] [\-\-settings] [\-\-xdcr\-from\-bucket <bucket>]
+    [\-\-resume] [\-\-settings] [\-\-get] [\-\-xdcr\-from\-bucket <bucket>]
     [\-\-xdcr\-to\-bucket <bucket>] [\-\-xdcr\-cluster\-name <name>]
     [\-\-xdcr\-replication\-mode <mode>] [\-\-filter\-expression <regex>]
     [\-\-xdcr\-replicator <id>] [\-\-checkpoint\-interval <seconds>]
@@ -46,6 +46,8 @@ couchbase\-cli\-xdcr\-replicate \- Creates a replication between two data center
     [\-\-optimistic\-replication\-threshold <bytes>] [\-\-log\-level <level>]
     [\-\-priority <High|Medium|Low>] [\-\-reset\-expiry <1|0>]
     [\-\-filter\-deletion <1|0>] [\-\-filter\-expiration <1|0>]
+    [\-\-collection\-explicit\-mappings <1|0>] [\-\-collections\-migration <1|0>]
+    [\-\-collection\-mapping\-rules <mappings>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -104,6 +106,11 @@ Resumes an XDCR replication.
 \-\-settings
 .RS 4
 Sets advanced settings for an XDCR replication.
+.RE
+.sp
+\-\-get
+.RS 4
+Gets the setting for a XDCR replication.
 .RE
 .sp
 \-\-xdcr\-from\-bucket <bucket>
@@ -237,6 +244,24 @@ When set to true, expiry mutations will not be sent to the target cluster.
 This means documents will not be deleted in the target cluster via
 expirations on the source cluster.
 .RE
+.SH "COLLECTION OPTIONS"
+.sp
+\-\-collection\-explicit\-mappings <1|0>
+.RS 4
+Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
+below for more information.
+.RE
+.sp
+\-\-collections\-migration <1|0>
+.RS 4
+Enable or disable XDCR migration mode.
+.RE
+.sp
+\-\-collection\-mapping\-rules <mappings>
+.RS 4
+The mappings rules from source bucket to target bucket. The mappings are
+JSON formatted string. See COLLECTION MAPPINGS below for more information.
+.RE
 .SH "HOST FORMATS"
 .sp
 When specifying a host for the couchbase\-cli command the following formats are expected:
@@ -354,6 +379,117 @@ $ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
    \-p password \-\-settings \-\-failure\-restart\-interval=60 \(rs
    \-\-xdcr\-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \(rs
      \-\-doc\-batch\-size=2048
+.fi
+.if n .RE
+.SH "COLLECTION MAPPINGS"
+.sp
+By default, upgraded bucket\-to\-bucket replication includes implicit mapping of all
+scope and collections replications of which the bucket contains to globally unique
+entities on the remote cluster. This means that whatever collection exists in the
+source will be implicitly mapped by name to the target, and the data replicated.
+For example, if a namespace such as S1:C1 exists on the source, Implicit Mapping
+states that the equivalent mapped entity of S1:C1 namespace should also exist on
+the target. If brand\-new replicated systems that both support Collections are
+created with Implicit Mapping without specifying anything regarding collections,
+this is also the behavior of the system. If there is a default scope and/or default
+collection, they will be mapped to the default scope/collection on the target cluster.
+.sp
+For users who require more detailed control over collections, they may choose to
+use Explicit Mapping. Explicit mapping for a replication is specified by a set of
+rules defined below.
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table 1. Explict Mapping Rules
+.TS
+allbox tab(:);
+lt lt lt lt.
+T{
+.sp
+Priority
+T}:T{
+.sp
+Match Rule
+T}:T{
+.sp
+Description
+T}:T{
+.sp
+Syntax
+T}
+T{
+.sp
+0
+T}:T{
+.sp
+S:C to S:C
+T}:T{
+.sp
+Matches a single Scope:Collection to a target Scope:Collection
+T}:T{
+.sp
+\f(CR{"s:c":"target_s:target_c"}\fP
+T}
+T{
+.sp
+1
+T}:T{
+.sp
+S:C Deny\-list
+T}:T{
+.sp
+Stops one singular Scope:Collection from being replicated
+T}:T{
+.sp
+\f(CR{"s:c":null}\fP
+T}
+T{
+.sp
+2
+T}:T{
+.sp
+Scope to Scope
+T}:T{
+.sp
+Explicitly map one source scope to a target scope
+T}:T{
+.sp
+\f(CR{"s":"target_s"}\fP
+T}
+T{
+.sp
+3
+T}:T{
+.sp
+Scope Deny\-list
+T}:T{
+.sp
+Stop one source scope from being replicated
+T}:T{
+.sp
+\f(CR{"s": null}\fP
+T}
+.TE
+.sp
+.sp
+Note that when migration mode is enabled Explicit Rule\-Based Mapping is used
+instead. The Rule\-Based Mapping expressions have the same format as the filtering
+expressions in advance filtering.
+.SS "COLLECTION MAPPING EXAMPLES"
+.sp
+To enable explicit collection mapping for a bucket \fIdefault\fP that has a scope
+with name \fIdatabases\fP and a collection called \fInosql\fP and want this to be
+mapped in the target bucket to a scope \fIdatabase\-replica\fP and \fInosql\-replica\fP
+we can use the following command:
+.sp
+.if n .RS 4
+.nf
+$ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
+   \-p password \-\-settings \(rs
+   \-\-xdcr\-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \(rs
+   \-\-collection\-explicit\-mapping 1  \-\-collection\-mapping\-rules {"databases:nosql":"databases\-replica:nosql\-replica"}
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

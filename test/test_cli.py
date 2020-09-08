@@ -1375,6 +1375,11 @@ class TestXdcrReplicate(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestXdcrReplicate, self).setUp()
 
+    def test_get_replication_settings(self):
+        self.server_args['/settings/replications/1'] = {'test': 0}
+        self.no_error_run(self.command + ['--get', '--xdcr-replicator', '1'], self.server_args)
+        self.assertIn('GET:/settings/replications/1', self.server.trace)
+
     def test_create_EE(self):
         self.no_error_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
                                           '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:[a-zA-z]+',
@@ -1421,6 +1426,15 @@ class TestXdcrReplicate(CommandTest):
         expected_params = ['filterExpression=key%3A', 'filterSkipRestream=1', 'filterBypassExpiry=true',
                            'filterDeletion=false', 'filterExpiration=true']
         self.rest_parameter_match(expected_params)
+
+    def test_settings_collection_args(self):
+        self.no_error_run(self.command + ['--settings', '--xdcr-replicator', '1', '--collection-explicit-mappings',
+                                          '1', '--collections-migration', '0', '--collection-mapping-rules',
+                                          'mappings'], self.server_args)
+        self.assertIn('POST:/settings/replications/1', self.server.trace)
+        expected_params = ['collectionsExplicitMapping=true', 'collectionsMigrationMode=false',
+                           'colMappingRules=mappings']
+        self.rest_parameter_match(expected_params, False)
 
     def test_list_replicate(self):
         self.no_error_run(self.command + ['--list'], self.server_args)

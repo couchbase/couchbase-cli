@@ -13,7 +13,7 @@ Creates a replication between two data centers
 [verse]
 _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>]
     [--password <password>] [--create] [--delete] [--pause] [--list]
-    [--resume] [--settings] [--xdcr-from-bucket <bucket>]
+    [--resume] [--settings] [--get] [--xdcr-from-bucket <bucket>]
     [--xdcr-to-bucket <bucket>] [--xdcr-cluster-name <name>]
     [--xdcr-replication-mode <mode>] [--filter-expression <regex>]
     [--xdcr-replicator <id>] [--checkpoint-interval <seconds>]
@@ -24,6 +24,8 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>]
     [--optimistic-replication-threshold <bytes>] [--log-level <level>]
     [--priority <High|Medium|Low>] [--reset-expiry <1|0>]
     [--filter-deletion <1|0>] [--filter-expiration <1|0>]
+    [--collection-explicit-mappings <1|0>] [--collections-migration <1|0>]
+    [--collection-mapping-rules <mappings>]
 
 == DESCRIPTION
 
@@ -50,6 +52,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --settings::
   Sets advanced settings for an XDCR replication.
+
+--get::
+  Gets the setting for a XDCR replication.
 
 --xdcr-from-bucket <bucket>::
   The name bucket to replicate data from.
@@ -139,6 +144,19 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   This means documents will not be deleted in the target cluster via
   expirations on the source cluster.
 
+== COLLECTION OPTIONS
+
+--collection-explicit-mappings <1|0>::
+  Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
+  below for more information.
+
+--collections-migration <1|0>::
+  Enable or disable XDCR migration mode.
+
+--collection-mapping-rules <mappings>::
+  The mappings rules from source bucket to target bucket. The mappings are
+  JSON formatted string. See COLLECTION MAPPINGS below for more information.
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
@@ -196,6 +214,67 @@ $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
      --doc-batch-size=2048
 ----
+
+== COLLECTION MAPPINGS
+
+By default, upgraded bucket-to-bucket replication includes implicit mapping of all
+scope and collections replications of which the bucket contains to globally unique
+entities on the remote cluster. This means that whatever collection exists in the
+source will be implicitly mapped by name to the target, and the data replicated.
+For example, if a namespace such as S1:C1 exists on the source, Implicit Mapping
+states that the equivalent mapped entity of S1:C1 namespace should also exist on
+the target. If brand-new replicated systems that both support Collections are
+created with Implicit Mapping without specifying anything regarding collections,
+this is also the behavior of the system. If there is a default scope and/or default
+collection, they will be mapped to the default scope/collection on the target cluster.
+
+For users who require more detailed control over collections, they may choose to
+use Explicit Mapping. Explicit mapping for a replication is specified by a set of
+rules defined below.
+
+.Explict Mapping Rules
+|===
+| Priority | Match Rule | Description | Syntax
+
+| 0
+| S:C to S:C
+| Matches a single Scope:Collection to a target Scope:Collection
+| `{"s:c":"target_s:target_c"}`
+
+| 1
+| S:C Deny-list
+| Stops one singular Scope:Collection from being replicated
+| `{"s:c":null}`
+
+| 2
+| Scope to Scope
+| Explicitly map one source scope to a target scope
+| `{"s":"target_s"}`
+
+| 3
+| Scope Deny-list
+| Stop one source scope from being replicated
+| `{"s": null}`
+|===
+
+Note that when migration mode is enabled Explicit Rule-Based Mapping is used
+instead. The Rule-Based Mapping expressions have the same format as the filtering
+expressions in advance filtering.
+
+=== COLLECTION MAPPING EXAMPLES
+
+To enable explicit collection mapping for a bucket _default_ that has a scope
+with name _databases_ and a collection called _nosql_ and want this to be
+mapped in the target bucket to a scope _database-replica_ and _nosql-replica_
+we can use the following command:
+
+----
+$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+   -p password --settings \
+   --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
+   --collection-explicit-mapping 1  --collection-mapping-rules {"databases:nosql":"databases-replica:nosql-replica"}
+----
+
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
 include::{partialsdir}/cbcli/part-common-env.adoc[]
