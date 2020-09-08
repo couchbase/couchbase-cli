@@ -125,6 +125,12 @@ bucket_admin[...]::
   bucket_admin[default]. If the user needs to be manage multiple buckets, for
   example _default_ and _app_, then set the role as bucket[default],bucket[app].
 
+bucket_full_access[...]::
+  Gives the user full access to bucket data. This user cannot access the web
+  console and is intended only for application access. This user can read and
+  write data. To give the user full access to all buckets use bucket_full_access[*],
+  to give permissions to only one bucket _default_ use bucket_full_access[default].
+
 cluster_admin::
   Gives the user permissions to read, write and manage all cluster-level
   settings except security.
@@ -139,7 +145,12 @@ ro_admin::
   the ability to create or view documents), XDCR cluster references, XDCR
   replications, and cluster settings.
 
-view_admin[...]::
+security_admin::
+  Gives the user permission to view all cluster statistics and manage user roles,
+  but cannot grant Full Admin or Security Admin roles to other users or alter their
+  own role. This user can access the web console. This user cannot read data.
+
+views_admin[...]::
   Gives the user privileges to define views and then run these views on data
   to ensure that views are defined properly. This applies both to the
   map-reduce and spatial views. To give a user the ability to manage views on
@@ -151,34 +162,6 @@ view_admin[...]::
 
 .Data Service Roles:
 
-data_reader[...]::
-  Gives the user permission to read data through the Couchbase key-value APIs.
-  To give a user read-only access for all buckets set their role to
-  data_reader[*]. To give the user read-only access to data on a single
-  bucket named _default_ then specify their role as data_reader[default].
-  If the user needs read-only access to data for multiple buckets, for example
-  _default_ and _app_, then set their role as
-  data_reader[default],data_reader[app].
-
-data_writer[...]::
-  Gives the user permission to read and write data through the Couchbase
-  key-value APIs. The user cannot however modify the settings of a bucket.
-  To give a user read-write access for all buckets set their role to
-  data_writer[*]. To give the user read-write access to data on a single
-  bucket named _default_ then specify their role as data_writer[default].
-  If the user needs read-write access to data for multiple buckets, for
-  example _default_ and _app_, then set their role as
-  data_writer[default,app].
-
-data_dcp_reader[...]::
-  Gives the user permission to create Couchbase DCP connections. To give a
-  user the ability to create DCP connections for all buckets set their role to
-  data_dcp_reader[*]. To give the user the ability to create DCP connections
-  on a single bucket named _default_ then specify their role as
-  data_dcp_reader[default]. If the user needs to be able to create DCP
-  connections for multiple buckets, for example _default_ and _app_, then set
-  their role as data_dcp_reader[default],data_dcp_reader[app].
-
 data_backup[...]::
   Gives the user permission to backup and restore data in Couchbase. To give a
   user the ability to backup and restore data for all buckets set their role
@@ -188,6 +171,18 @@ data_backup[...]::
   data for multiple buckets, for example _default_ and _app_, then set their
   role as data_backup[default],data_backup[app].
 
+data_dcp_reader[...]::
+  Gives the user permission to create Couchbase DCP connections for a given
+  bucket, collection or scope. To give a user the ability to create DCP
+  connections for all buckets set their role to  data_dcp_reader[*]. To give the
+  user the ability to create DCP connections on a single bucket named _default_
+  then specify their role as data_dcp_reader[default]. If the user needs to be
+  able to create DCP connections for multiple buckets, for example _default_ and
+  _app_, then set their role as data_dcp_reader[default],data_dcp_reader[app].
+  To give the permissions for only a scope _scope0_ of _default_ use
+  data_dcp_reader[default:scope0]. To get permission for a single collection
+  _col0_ in _scope0_ then give the user the role data_dcp_reader[default:scope0:col0].
+
 data_monitoring[...]::
   Gives the user permission to read monitoring data related to the data
   service in Couchbase. To give a user the ability to monitor data for all
@@ -195,7 +190,37 @@ data_monitoring[...]::
   to monitor data on a single bucket named _default_ then specify their role
   as data_monitoring[default]. If the user needs to be able to monitor data
   for multiple buckets, for example _default_ and _app_, then set their role
-  as data_monitoring[default],data_monitoring[app].
+  as data_monitoring[default],data_monitoring[app]. If the user need to be
+  able to monitor data only for a specific _scope0_ in bucket _default_ then
+  set their role as data_monitoring[default:scope0]. To monitor only collection
+  _col0_ inside _scope0_ then set their role as data_monitoring[default:scope0:col0].
+
+data_reader[...]::
+  Gives the user permission to read data through the Couchbase key-value APIs.
+  To give a user read-only access for all buckets set their role to
+  data_reader[*]. To give the user read-only access to data on a single
+  bucket named _default_ then specify their role as data_reader[default].
+  If the user needs read-only access to data for multiple buckets, for example
+  _default_ and _app_, then set their role as
+  data_reader[default],data_reader[app]. If the user needs read-only access to
+  data for a specific _scope0_ in bucket _default_ then set their role as
+  data_reader[default:scope0].  If the user needs read-only access to
+  data for a collection _col0_ inside _scope0_ then set their role as
+  data_reader[default:scope0:col0].
+
+data_writer[...]::
+  Gives the user permission to read and write data through the Couchbase
+  key-value APIs. The user cannot however modify the settings of a bucket.
+  To give a user read-write access for all buckets set their role to
+  data_writer[*]. To give the user read-write access to data on a single
+  bucket named _default_ then specify their role as data_writer[default].
+  If the user needs read-write access to data for multiple buckets, for
+  example _default_ and _app_, then set their role as
+  data_writer[default,app]. If the user needs read-write access to
+  data for a specific _scope0_ in bucket _default_ then set their role as
+  data_writer[default:scope0].  If the user needs read-write access to
+  data for a collection _col0_ inside _scope0_ then set their role as
+  data_writer[default:scope0:col0].
 
 .Full Text Service Roles:
 
@@ -209,70 +234,196 @@ fts_admin[...]::
   set their role as fts_admin[default],fts_admin[app].
 
 fts_searcher[...]::
-  Allows the user to query full text indexes for the specified buckets. To
-  give a user the ability to query full text indexes on all buckets set their
-  role to fts_searcher[*]. To give the ability to query FTS indexes on a
-  single bucket named _default_ then specify their role as
+  Allows the user to query full text indexes for the specified bucket, scope
+  or collection. To give a user the ability to query full text indexes on all
+  buckets set their role to fts_searcher[*]. To give the ability to query FTS
+  indexes on a single bucket named _default_ then specify their role as
   fts_searcher[default]. If the user needs to query FTS indexes on multiple
   multiple buckets, for example _default_ and _app_, then set their role as
-  fts_searcher[default],fts_searcher[app].
+  fts_searcher[default],fts_searcher[app]. If the user needs to query FTS
+  indexes for a specific _scope0_ in bucket _default_ then set their role as
+  fts_searcher[default:scope0]. If the user needs to query FTS indexes for a
+  collection _col0_ inside _scope0_ then set their role as
+  fts_searcher[default:scope0:col0].
+
 
 .Query Service Roles:
 
-query_manage_index[...]::
-  Allows the user to create and delete indexes on the specified buckets. To
-  give a user the ability to create and delete indexes on all buckets set
-  their role to query_manage_index[*]. To give the user permission to create
-  and delete indexes on a single bucket named _default_ then specify their
-  role as query_manage_index[default]. If the user needs to be create and
-  delete indexes for multiple buckets, for example _default_ and _app_, then
-  set their role as query_manage_index[default],query_manage_index[app].
-
 query_delete[...]::
-  Allows the user to execute DELETE query statements on the specified buckets.
-  To give a user the ability execute DELETE statements on all buckets set
-  their role to query_delete[*]. To give the user permission to execute
-  DELETE statements on a single bucket named _default_ then specify their role
-  as query_delete[default]. If the user needs to be execute DELETE statements
-  for multiple buckets, for example _default_ and _app_, then set their role
-  as query_delete[default],query_delete[app].
+  Allows the user to execute DELETE query statements on the specified bucket,
+  scope or collection. To give a user the ability execute DELETE statements
+  on all buckets set their role to query_delete[*]. To give the user needs
+  permission to execute DELETE statements on a single bucket named _default_
+  then specify their role as query_delete[default]. If the user needs to
+  execute DELETE statements for multiple buckets, for example _default_ and
+  _app_, then set their role as query_delete[default],query_delete[app]. If
+  the user needs to execute DELETE statements for a single scope named _scope0_
+  inside _default_ then give their role query_delete[default:scope0]. If the
+  user need to execute DELETE statements for a single collection named _col0_
+  inside _scope0_ then give the role query_delete[default:scope0:col0].
+
+query_execute_external_functions[...]::
+  Allows the user to execute external language functions for a given scope.
+  To allow the user to execute external language functions for all scopes in
+  bucket _default_ use the role query_execute_external_functions[default].
+  If the user needs to execute external language functions for a scope
+  _scope0_ of bucket _default_ then give them the role
+  query_execute_external_functions[default:scope0].
+
+query_execute_functions[...]::
+  Allows the user to execute N1QL functions for a given scope. To allow the
+  user to execute N1QL functions for all scopes in bucket _default_ use the
+  role query_execute_functions[default]. If the user needs to execute N1QL
+  functions for a scope _scope0_ of bucket _default_ then give them the role
+  query_execute_functions[default:scope0].
+
+query_execute_global_external_functions::
+  Allows the user to execute global external language functions.
+
+query_execute_global_functions::
+  Allows the user to execute global N1QL functions.
 
 query_insert[...]::
-  Allows the user to execute INSERT query statements on the specified buckets.
-  To give a user the ability execute INSERT statements on all buckets set
-  their role to query_insert[*]. To give the user permission to execute
-  INSERT statements on a single bucket named _default_ then specify their role
-  as query_insert[default]. If the user needs to be execute INSERT statements
-  for multiple buckets, for example _default_ and _app_, then set their role
-  as query_insert[default],query_insert[app].
+  Allows the user to execute INSERT query statements on the specified bucket,
+  scope or collection. To give a user the ability execute INSERT statements
+  on all buckets set their role to query_insert[*]. To give the user
+  permission to execute INSERT statements on a single bucket named _default_
+  then specify their role as query_insert[default]. If the user needs to
+  execute INSERT statements for multiple buckets, for example _default_ and
+  _app_, then set their role as query_insert[default],query_insert[app]. If the
+  user needs to execute INSERT statements for a scope with name _scope0_ of
+  bucket _default_ give the user the role query_insert[default:scope0]. If the
+  user need to execute INSERT statements for a scope with name _col0_ of _scope0_
+  then give them the role query_insert[default:scope0:col0].
+
+query_manage_external_functions[...]::
+  Allows the user to manage external language functions for a given scope.
+  To allow the user to manage external language functions for all scopes in
+  bucket _default_ use the role query_manage_external_functions[default].
+  If the user needs to manage external language functions for a scope
+  _scope0_ of bucket _default_ then give them the role
+  query_manage_external_functions[default:scope0].
+
+query_manage_functions[...]::
+  Allows the user to manage N1QL functions for a given scope. To allow the user
+  to manage N1QL functions for all scopes in bucket _default_ use the
+  role query_manage_functions[default]. If the user needs to manage N1QL
+  functions for a scope _scope0_ of bucket _default_ then give them the role
+  query_manage_functions[default:scope0].
+
+query_manage_global_external_functions::
+  Allows the user to manage global external language functions.
+
+query_manage_global_functions::
+  Allows the user to manage global N1QL functions.
+
+query_manage_index[...]::
+  Allows the user to create and delete indexes on the specified bucket, scope
+  or collection. To give a user the ability to create and delete indexes on all
+  buckets set their role to query_manage_index[*]. To give the user permission
+  to create and delete indexes on a single bucket named _default_ then specify
+  their role as query_manage_index[default]. If the user needs to be create and
+  delete indexes for multiple buckets, for example _default_ and _app_, then
+  set their role as query_manage_index[default],query_manage_index[app]. To give
+  the user permission to create and delete indexes on a scope _scope0_ of bucket
+  _default_ set their role as query_manage_index[default:scope0]. To give the
+  user permission to create and delete indexes on a collections _col0_ of _scope0_
+  set their role as query_manage_index[default:scope0:col0].
 
 query_select[...]::
-  Allows the user to execute SELECT query statements on the specified buckets.
-  To give a user the ability execute SELECT statements on all buckets set
-  their role to query_select[*]. To give the user permission to execute
-  SELECT statements on a single bucket named _default_ then specify their role
-  as query_select[default]. If the user needs to be execute SELECT statements
-  for multiple buckets, for example _default_ and _app_, then set their role
-  as query_select[default],query_select[app].
+  Allows the user to execute SELECT query statements on the specified bucket,
+  scope or collection. To give a user the ability to execute SELECT statements on
+  all buckets set  their role to query_select[*]. To give the user permission to
+  execute SELECT statements on a single bucket named _default_ then specify their
+  role as query_select[default]. If the user needs to be execute SELECT
+  statements for multiple buckets, for example _default_ and _app_, then set
+  their role as query_select[default],query_select[app]. To give a user the
+  ability to execute SELECT statements on a scope _scope0_ of bucket _default
+  set their role as query_select[default:scope0]. To give the user the ability to
+  execute select statements on a collection _col0_ of _scope0_ set their role as
+  query_select[default:scope0:col0].
+
+query_system_catalog[...]::
+  Allows the users to run queries against the system catalog on the specified
+  bucket, scope or collection. To give a user the ability to run queries against
+  the system catalog on all buckets set their role to query_system_catalog[*].
+  To give the user permission to run queries against the system catalog on a
+  single bucket named _default_ then specify their role as
+  query_system_catalog[default]. If the user needs to be run queries against the
+  system catalog for multiple buckets, for example _default_ and _app_, then set
+  their role as query_system_catalog[default],query_system_catalog[app]. To give
+  the user the permissions to run queries against the system catalog on a specified
+  scope _scope0_ of bucket _default_ set their roles as
+  query_system_catalog[default:scope0]. To give a user the ability to run queries
+  against the system catalog on the a specified collection _col0_ of _scope0_ set
+  their role as query_system_catalog[default:scope0:col0].
 
 query_update[...]::
-  Allows the user to execute UPDATE query statements on the specified buckets.
-  To give a user the ability execute UPDATE statements on all buckets set
-  their role to query_update[*]. To give the user permission to execute
-  UPDATE statements on a single bucket named _default_ then specify their role
-  as query_update[default]. If the user needs to be execute UPDATE statements
+  Allows the user to execute UPDATE query statements on the specified bucket,
+  scope or collections. To give a user the ability to execute UPDATE statements on
+  all buckets set their role to query_update[*]. To give the user permission to
+  execute UPDATE statements on a single bucket named _default_ then specify their
+  role as query_update[default]. If the user needs to be execute UPDATE statements
   for multiple buckets, for example _default_ and _app_, then set their role
-  as query_update[default],query_update[app].
+  as query_update[default],query_update[app]. To give a user the ability to execute
+  UPDATE statements on a single scope _scope0_ of bucket _default_ set their role
+  as query_update[default:scope0]. To give the user the ability to execute UPDATE
+  statements on a single collections _col0_ of _scope0_ set their role to
+  query_update[default:scope0:col0].
 
-system_catalog[...]::
-  Allows the users to run queries against the system catalog on the specified
-  buckets. To give a user the ability to run queries against the system
-  catalog on all buckets set their role to system_catalog[*]. To give the user
-  permission to run queries against the system catalog on a single bucket
-  named _default_ then specify their role as system_catalog[default]. If the
-  user needs to be run queries against the system catalog for multiple
-  buckets, for example _default_ and _app_, then set their role as
-  system_catalog[default],system_catalog[app].
+.Analytics roles
+
+analytics_admin::
+  Allows the user to manage dataverses, links and datasets. This user can access
+  the web console but cannot read data.
+
+analytics_manager[...]::
+  Allows the user to manage local links and datasets on a given bucket as well as
+  query datasets created on this bucket. This user can access the web console and
+  read some data. To give the user this permissions for all buckets use
+  analytics_manager[*]. To give the permissions for a bucket _default_ then
+  specify the role as analytics_manager[default]. If the user needs the permissions
+  for a subset of buckets _bucket1_ and _bucket2_ then set their role as
+  analytics_manager[bucket1],analytics_manager[bucket2].
+
+analytics_reader::
+  Allows the user to query datasets. This user can access the web console and
+  read some data.
+
+analytics_select[...]::
+  Allows user to query datasets on a given bucket, scope or collection. This user
+  can access the web console and read some data. To give a user access to a bucket
+  _default_ use the role analytics_select[default]. This gives access to the
+  bucket and all underlying scopes and collections. To give access to only a
+  specific collection then use the following role
+  analytics_select[default:scope0:collection0].
+
+.Mobile roles
+
+mobile_sync_gateway[...]::
+  Gives user full access to bucket data as required by Sync Gateway. This user
+  cannot access the web console and is intended only for use by Sync Gateway.
+  This user can read and write data, manage indexes and views, and read some cluster
+  information. To give this role for all buckets use mobile_sync_gateway[*], for a
+  specific bucket _default_ use the role mobile_sync_gateway[default] and for multiple
+  buckets _default_ and _app_ give the roles
+  mobile_sync_gateway[default],mobile_sync_gateway[app].
+
+.XDCR roles
+
+replication_admin::
+  Allows the user to administer XDCR features, create cluster references and
+  replication streams of the cluster. This user can access the console and read
+  some data.
+
+replication_target[...]::
+  Allows the user to create XDCR streams into a given bucket. This user cannot
+  access the  web console or read any data. To allow the user to create XDCR
+  streams into all buckets  set their roles as replication_target[*]. To allow
+  the user to create XDCR streams into  bucket _default_ set their roles as
+  replication_target[default]. To allow the user to create XDCR streams to bucket
+  _default_ and _app_ set their roles as
+  replication_target[default],replication_target[app]
 
 == EXAMPLES
 
