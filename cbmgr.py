@@ -301,8 +301,8 @@ class CBHostAction(Action):
         if not hostname_regex.match(parsed.hostname):
             try:
                 ipaddress.ip_address(parsed.hostname)
-            except ValueError:
-                raise ArgumentError(self, f"{values} is not an accepted hostname")
+            except ValueError as val_error:
+                raise ArgumentError(self, f"{values} is not an accepted hostname") from val_error
 
         scheme = parsed.scheme
         port = None
