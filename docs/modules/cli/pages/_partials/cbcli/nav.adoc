@@ -1,4 +1,5 @@
 * xref:cli:cbcli/couchbase-cli.adoc[couchbase-cli]
+ ** xref:cli:cbcli/couchbase-cli-analytics-link-setup.adoc[analytics-link-setup]
  ** xref:cli:cbcli/couchbase-cli-bucket-compact.adoc[bucket-compact]
  ** xref:cli:cbcli/couchbase-cli-bucket-create.adoc[bucket-create]
  ** xref:cli:cbcli/couchbase-cli-bucket-delete.adoc[bucket-delete]

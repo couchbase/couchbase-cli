@@ -218,7 +218,9 @@ class DCPStreamSource(pump.Source, threading.Thread):
             return None
 
         node_vbucket_map = []
-        nodename = f'{self.source_node.get("hostname", "N/A").split(":")[0]}:{self.source_node["ports"]["direct"]!s}'
+
+        host, _ = couchbaseConstants.parse_host_port(self.source_node.get('hostname', 'N/A'))
+        nodename = f'{host}:{self.source_node["ports"]["direct"]!s}'
         nodeindex = -1
         for index, node in enumerate(server_list):
             if nodename == node:

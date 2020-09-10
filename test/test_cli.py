@@ -8,6 +8,7 @@ import json
 from io import StringIO
 from cbmgr import CouchbaseCLI, CollectionManage
 from mock_server import MockRESTServer
+from couchbaseConstants import parse_host_port
 
 
 host = '127.0.0.1'
@@ -38,6 +39,23 @@ class ExpandCollectionTest(unittest.TestCase):
         for test_val in test:
             _, _, err = CollectionManage.expand_collection_shortcut(test_val)
             self.assertNotEqual(err, None, 'Expected an error')
+
+
+class HostPortSplitTest(unittest.TestCase):
+    def test_parse_host_port(self):
+        testcase = {
+            'localhost:9000': ('localhost', 9000),
+            '[::1]:9000': ('[::1]', 9000),
+            '[::1]': ('[::1]', 0),
+            '127.0.0.1:8792': ('127.0.0.1', 8792),
+            'some-random-hostname.com:7000': ('some-random-hostname.com', 7000),
+            '[2001:db8:85a3:8d3:1319:8a2e:370:7348]:notaport': ('[2001:db8:85a3:8d3:1319:8a2e:370:7348]', 0)
+        }
+
+        for input_host, expected in testcase.items():
+            result_host, result_port = parse_host_port(input_host)
+            self.assertEqual(expected[0], result_host)
+            self.assertEqual(expected[1], result_port)
 
 
 class CommandTest(unittest.TestCase):
