@@ -242,7 +242,7 @@ rules defined below.
 | `{"s:c":"target_s:target_c"}`
 
 | 1
-| S:C Deny-list
+| S:C Denylist
 | Stops one singular Scope:Collection from being replicated
 | `{"s:c":null}`
 
@@ -252,7 +252,7 @@ rules defined below.
 | `{"s":"target_s"}`
 
 | 3
-| Scope Deny-list
+| Scope Denylist
 | Stop one source scope from being replicated
 | `{"s": null}`
 |===
