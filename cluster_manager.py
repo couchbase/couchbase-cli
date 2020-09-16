@@ -2214,7 +2214,7 @@ def _handle_response(response, debug):
         else:
             response.encoding = 'utf-8'
             return response.text, None
-    elif response.status_code in [400, 404]:
+    elif response.status_code in [400, 404, 405, 409]:
         if 'application/json' in response.headers['Content-Type']:
             errors = response.json()
             if isinstance(errors, list):
