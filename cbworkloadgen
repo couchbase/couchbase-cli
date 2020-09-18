@@ -26,8 +26,8 @@ class WorkloadGen(pump_transfer.Transfer):
             "%prog [options]\n\n" \
             "Generate workload to destination.\n\n" \
             "Examples:\n" \
-            "  %prog -n localhost:8091\n" \
-            "  %prog -n 10.3.121.192:8091 -r .9 -i 100000 \\\n" \
+            "  %prog -n localhost:8091 -u Administrator -p password\n" \
+            "  %prog -n 10.3.121.192:8091 -r .9 -i 100000 -u Administrator -p password \\\n" \
             "         -s 100 -b my-other-bucket --threads=10\n\n"
 
     def main(self, argv):
