@@ -2302,7 +2302,7 @@ class SettingAutofailover(Subcommand):
                 _exit_if_errors(["--enable-failover-of-server-groups can only be configured on enterprise edition"])
             if opts.enable_failover_on_data_disk_issues or opts.failover_on_data_disk_period:
                 _exit_if_errors(["Auto failover on Data Service disk issues can only be configured on enterprise"
-                                 + "edition"])
+                                 + " edition"])
             if opts.max_failovers:
                 _exit_if_errors(["--max-count can only be configured on enterprise edition"])
             if opts.can_abort_rebalance:
