@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-09-15
+.\"      Date: 2020-09-24
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-09-15" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-09-24" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -46,7 +46,7 @@ couchbase\-cli\-xdcr\-replicate \- Creates a replication between two data center
     [\-\-optimistic\-replication\-threshold <bytes>] [\-\-log\-level <level>]
     [\-\-priority <High|Medium|Low>] [\-\-reset\-expiry <1|0>]
     [\-\-filter\-deletion <1|0>] [\-\-filter\-expiration <1|0>]
-    [\-\-collection\-explicit\-mappings <1|0>] [\-\-collections\-migration <1|0>]
+    [\-\-collection\-explicit\-mappings <1|0>] [\-\-collection\-migration <1|0>]
     [\-\-collection\-mapping\-rules <mappings>]
 .fi
 .br
@@ -254,7 +254,8 @@ below for more information.
 .sp
 \-\-collections\-migration <1|0>
 .RS 4
-Enable or disable XDCR migration mode.
+Enable or disable XDCR migration mode. Explicit mappings must be set to
+1 for this.
 .RE
 .sp
 \-\-collection\-mapping\-rules <mappings>
@@ -489,7 +490,7 @@ we can use the following command:
 $ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
    \-p password \-\-settings \(rs
    \-\-xdcr\-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \(rs
-   \-\-collection\-explicit\-mapping 1  \-\-collection\-mapping\-rules {"databases:nosql":"databases\-replica:nosql\-replica"}
+   \-\-collection\-explicit\-mappings 1  \-\-collection\-mapping\-rules {"databases:nosql":"databases\-replica:nosql\-replica"}
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

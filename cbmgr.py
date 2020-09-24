@@ -3512,7 +3512,7 @@ class XdcrReplicate(Subcommand):
         collection_group = self.parser.add_argument_group("Collection options")
         collection_group.add_argument('--collection-explicit-mappings', choices=['1', '0'], metavar='<1|0>',
                                       default=None, help='If explicit collection mappings is to be used.')
-        collection_group.add_argument('--collections-migration',  choices=['1', '0'], metavar='<1|0>',
+        collection_group.add_argument('--collection-migration',  choices=['1', '0'], metavar='<1|0>',
                                       default=None, help='If XDCR is to run in collection migration mode.')
         collection_group.add_argument('--collection-mapping-rules', type=str, default=None, metavar='<mappings>',
                                       help='The mapping rules specified as a JSON formatted string.')
@@ -3617,7 +3617,7 @@ class XdcrReplicate(Subcommand):
                                                        opts.log_level, opts.stats_interval, opts.replicator_id,
                                                        opts.filter, opts.filter_skip, opts.priority, opts.reset_expiry,
                                                        opts.filter_del, opts.filter_exp,
-                                                       opts.collection_explicit_mappings, opts.collections_migration,
+                                                       opts.collection_explicit_mappings, opts.collection_migration,
                                                        opts.collection_mapping_rules)
         _exit_if_errors(errors)
 

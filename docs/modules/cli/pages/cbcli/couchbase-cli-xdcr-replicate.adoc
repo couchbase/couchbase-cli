@@ -24,7 +24,7 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>]
     [--optimistic-replication-threshold <bytes>] [--log-level <level>]
     [--priority <High|Medium|Low>] [--reset-expiry <1|0>]
     [--filter-deletion <1|0>] [--filter-expiration <1|0>]
-    [--collection-explicit-mappings <1|0>] [--collections-migration <1|0>]
+    [--collection-explicit-mappings <1|0>] [--collection-migration <1|0>]
     [--collection-mapping-rules <mappings>]
 
 == DESCRIPTION
@@ -151,7 +151,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   below for more information.
 
 --collections-migration <1|0>::
-  Enable or disable XDCR migration mode.
+  Enable or disable XDCR migration mode. Explicit mappings must be set to
+  1 for this.
 
 --collection-mapping-rules <mappings>::
   The mappings rules from source bucket to target bucket. The mappings are
@@ -272,7 +273,7 @@ we can use the following command:
 $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --settings \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
-   --collection-explicit-mapping 1  --collection-mapping-rules {"databases:nosql":"databases-replica:nosql-replica"}
+   --collection-explicit-mappings 1  --collection-mapping-rules {"databases:nosql":"databases-replica:nosql-replica"}
 ----
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES

@@ -1429,7 +1429,7 @@ class TestXdcrReplicate(CommandTest):
 
     def test_settings_collection_args(self):
         self.no_error_run(self.command + ['--settings', '--xdcr-replicator', '1', '--collection-explicit-mappings',
-                                          '1', '--collections-migration', '0', '--collection-mapping-rules',
+                                          '1', '--collection-migration', '0', '--collection-mapping-rules',
                                           'mappings'], self.server_args)
         self.assertIn('POST:/settings/replications/1', self.server.trace)
         expected_params = ['collectionsExplicitMapping=true', 'collectionsMigrationMode=false',

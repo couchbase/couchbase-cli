@@ -463,7 +463,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--optimistic-replication-threshold &lt;bytes&gt;] [--log-level &lt;level&gt;]
     [--priority &lt;High|Medium|Low&gt;] [--reset-expiry &lt;1|0&gt;]
     [--filter-deletion &lt;1|0&gt;] [--filter-expiration &lt;1|0&gt;]
-    [--collection-explicit-mappings &lt;1|0&gt;] [--collections-migration &lt;1|0&gt;]
+    [--collection-explicit-mappings &lt;1|0&gt;] [--collection-migration &lt;1|0&gt;]
     [--collection-mapping-rules &lt;mappings&gt;]</pre>
 </div>
 </div>
@@ -658,7 +658,8 @@ below for more information.</p>
 </dd>
 <dt class="hdlist1">--collections-migration &lt;1|0&gt;</dt>
 <dd>
-<p>Enable or disable XDCR migration mode.</p>
+<p>Enable or disable XDCR migration mode. Explicit mappings must be set to
+1 for this.</p>
 </dd>
 <dt class="hdlist1">--collection-mapping-rules &lt;mappings&gt;</dt>
 <dd>
@@ -859,7 +860,7 @@ we can use the following command:</p>
 <pre>$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --settings \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
-   --collection-explicit-mapping 1  --collection-mapping-rules {"databases:nosql":"databases-replica:nosql-replica"}</pre>
+   --collection-explicit-mappings 1  --collection-mapping-rules {"databases:nosql":"databases-replica:nosql-replica"}</pre>
 </div>
 </div>
 </div>
