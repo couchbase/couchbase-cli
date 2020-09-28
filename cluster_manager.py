@@ -244,7 +244,7 @@ class ClusterManager(object):
         useAlt = False
         # next check if its external or internal
         for node in data['nodesExt']:
-            if not 'hostname' in node and (used_host == '127.0.0.1' or used_host == 'localhost'):
+            if 'hostname' not in node and (used_host == '127.0.0.1' or used_host == 'localhost'):
                 useAlt = False
                 break
             if 'hostname' in node and used_host == node['hostname']:
@@ -256,7 +256,9 @@ class ClusterManager(object):
 
         hosts = []
         for node in data['nodesExt']:
-            node_host = '127.0.0.1'
+            # Single node cluster will not have a hostname, default to the hostname specified
+            # to work with remote clusters
+            node_host = used_host
             if 'hostname' in node:
                 node_host = node['hostname']
 
