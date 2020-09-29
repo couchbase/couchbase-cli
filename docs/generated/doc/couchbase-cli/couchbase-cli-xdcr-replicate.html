@@ -845,8 +845,45 @@ rules defined below.</p>
 <div class="paragraph">
 <p>Note that when migration mode is enabled Explicit Rule-Based Mapping is used
 instead. The Rule-Based Mapping expressions have the same format as the filtering
-expressions in advance filtering.</p>
+expressions in advance filtering. Below are some example rules. Note that the filter
+expression syntax is supported so a large range of expressions can be created:</p>
 </div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 2. Example Rule-Based Mapping Rules</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Rule</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Syntax</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Key</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Matches a document based on the key and maps it to a collection</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{“REGEXP_CONTAINS(META().id, ‘^app1_’”:”Apps:App1”}</code></p>
+<p class="tableblock"><em>Maps any document with a key starting with <code>app1</em></code> to the collection `Apps:App1`_</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Field value match</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Matches documents based on the values of one or more fields and maps it to a collection</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{“Region == ‘APAC’ AND Country == ‘Japan’”:”APAC:Japan”}</code></p>
+<p class="tableblock"><em>Maps any document that has field <code>Region</code> and <code>Country</code> with respective values APAC and Japan
+to the collection `APAC:Japan`</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Field exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Matches any document that has the given field and maps it to a collection</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{“EXISTS(PhotosData)”:”<em>default:PhotoDocuments”}</code></p>
+<p class="tableblock">_Maps any document that has the <code>PhotosData</code> field to the <code>PhotoDocuments</code> collections under the default scope</em></p></td>
+</tr>
+</tbody>
+</table>
 <div class="sect2">
 <h3 id="_collection_mapping_examples">COLLECTION MAPPING EXAMPLES</h3>
 <div class="paragraph">

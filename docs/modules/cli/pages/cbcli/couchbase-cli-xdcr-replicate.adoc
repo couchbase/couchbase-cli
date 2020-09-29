@@ -260,7 +260,32 @@ rules defined below.
 
 Note that when migration mode is enabled Explicit Rule-Based Mapping is used
 instead. The Rule-Based Mapping expressions have the same format as the filtering
-expressions in advance filtering.
+expressions in advance filtering. Below are some example rules. Note that the filter
+expression syntax is supported so a large range of expressions can be created:
+
+.Example Rule-Based Mapping Rules
+|===
+| Rule | Description | Syntax
+
+| Key
+| Matches a document based on the key and maps it to a collection
+| `{“REGEXP_CONTAINS(META().id, ‘^app1_’”:”Apps:App1”}`
+
+_Maps any document with a key starting with `app1_` to the collection `Apps:App1`_
+
+| Field value match
+| Matches documents based on the values of one or more fields and maps it to a collection
+| `{“Region == ‘APAC’ AND Country == ‘Japan’”:”APAC:Japan”}`
+
+_Maps any document that has field `Region` and `Country` with respective values APAC and Japan
+to the collection `APAC:Japan`_
+
+| Field exists
+| Matches any document that has the given field and maps it to a collection
+| `{“EXISTS(PhotosData)”:”_default:PhotoDocuments”}`
+
+_Maps any document that has the `PhotosData` field to the `PhotoDocuments` collections under the default scope_
+|===
 
 === COLLECTION MAPPING EXAMPLES
 

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-09-24
+.\"      Date: 2020-09-29
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-09-24" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-09-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -477,7 +477,60 @@ T}
 .sp
 Note that when migration mode is enabled Explicit Rule\-Based Mapping is used
 instead. The Rule\-Based Mapping expressions have the same format as the filtering
-expressions in advance filtering.
+expressions in advance filtering. Below are some example rules. Note that the filter
+expression syntax is supported so a large range of expressions can be created:
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.B Table 2. Example Rule\-Based Mapping Rules
+.TS
+allbox tab(:);
+lt lt lt.
+T{
+.sp
+Rule
+T}:T{
+.sp
+Description
+T}:T{
+.sp
+Syntax
+T}
+T{
+.sp
+Key
+T}:T{
+.sp
+Matches a document based on the key and maps it to a collection
+T}:T{
+.sp
+\f(CR{“REGEXP_CONTAINS(META().id, ‘^app1_’”:”Apps:App1”}\fP\fIMaps any document with a key starting with \f(CRapp1\fP\fP to the collection `Apps:App1`_
+T}
+T{
+.sp
+Field value match
+T}:T{
+.sp
+Matches documents based on the values of one or more fields and maps it to a collection
+T}:T{
+.sp
+\f(CR{“Region == ‘APAC’ AND Country == ‘Japan’”:”APAC:Japan”}\fP\fIMaps any document that has field \f(CRRegion\fP and \f(CRCountry\fP with respective values APAC and Japan
+to the collection `APAC:Japan`\fP
+T}
+T{
+.sp
+Field exists
+T}:T{
+.sp
+Matches any document that has the given field and maps it to a collection
+T}:T{
+.sp
+\f(CR{“EXISTS(PhotosData)”:”\fIdefault:PhotoDocuments”}\fP_Maps any document that has the \f(CRPhotosData\fP field to the \f(CRPhotoDocuments\fP collections under the default scope\fP
+T}
+.TE
+.sp
 .SS "COLLECTION MAPPING EXAMPLES"
 .sp
 To enable explicit collection mapping for a bucket \fIdefault\fP that has a scope
