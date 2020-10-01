@@ -1436,6 +1436,13 @@ class TestXdcrReplicate(CommandTest):
                            'colMappingRules=mappings']
         self.rest_parameter_match(expected_params, False)
 
+    def test_migration_CE_(self):
+        self.server_args['enterprise'] = False
+        self.system_exit_run(self.command + ['--settings', '--xdcr-replicator', '1', '--collection-explicit-mappings',
+                                             '1', '--collection-migration', '1', '--collection-mapping-rules',
+                                             'mappings'], self.server_args)
+        self.assertIn('can only be configured on enterprise edition', self.str_output)
+
     def test_list_replicate(self):
         self.no_error_run(self.command + ['--list'], self.server_args)
         self.assertIn('GET:/pools/default/tasks', self.server.trace)

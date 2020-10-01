@@ -152,7 +152,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --collections-migration <1|0>::
   Enable or disable XDCR migration mode. Explicit mappings must be set to
-  1 for this.
+  1 for this. This is an Enterprise Edition only feature.
 
 --collection-mapping-rules <mappings>::
   The mappings rules from source bucket to target bucket. The mappings are

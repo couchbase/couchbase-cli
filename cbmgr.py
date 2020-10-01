@@ -3513,7 +3513,8 @@ class XdcrReplicate(Subcommand):
         collection_group.add_argument('--collection-explicit-mappings', choices=['1', '0'], metavar='<1|0>',
                                       default=None, help='If explicit collection mappings is to be used.')
         collection_group.add_argument('--collection-migration',  choices=['1', '0'], metavar='<1|0>',
-                                      default=None, help='If XDCR is to run in collection migration mode.')
+                                      default=None, help='If XDCR is to run in collection migration mode. '
+                                                         '(Enterprise Edition only)')
         collection_group.add_argument('--collection-mapping-rules', type=str, default=None, metavar='<mappings>',
                                       help='The mapping rules specified as a JSON formatted string.')
 
@@ -3521,6 +3522,8 @@ class XdcrReplicate(Subcommand):
     def execute(self, opts):
         if not self.enterprise and opts.compression:
             _exit_if_errors(["--enable-compression can only be configured on enterprise edition"])
+        if not self.enterprise and opts.collection_migration:
+            _exit_if_errors(["--collection-migration can only be configured on enterprise edition"])
 
         if opts.compression == "0":
             opts.compression = "None"
