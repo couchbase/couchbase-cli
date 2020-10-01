@@ -4119,7 +4119,7 @@ class CollectionManage(Subcommand):
     def _drop_scope(self, opts):
         _, errors = self.rest.drop_scope(opts.bucket, opts.drop_scope)
         _exit_if_errors(errors)
-        _success("Scope deleted")
+        _success("Scope dropped")
 
     def _list_scopes(self, opts):
         manifest, errors = self.rest.get_manifest(opts.bucket)
@@ -4137,7 +4137,7 @@ class CollectionManage(Subcommand):
         scope, collection = self._get_scope_collection(opts.drop_collection)
         _, errors = self.rest.drop_collection(opts.bucket, scope, collection)
         _exit_if_errors(errors)
-        _success("Collection deleted")
+        _success("Collection dropped")
 
     def _list_collections(self, opts):
         manifest, errors = self.rest.get_manifest(opts.bucket)
