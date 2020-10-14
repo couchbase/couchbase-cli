@@ -262,7 +262,9 @@ class ClusterManager(object):
 
         hosts = []
         for node in data['nodesExt']:
-            node_host = '127.0.0.1'
+            # Single node cluster will not have a hostname, default to the hostname specified
+            # to work with remote clusters
+            node_host = used_host
             if 'hostname' in node:
                 node_host = node['hostname']
 

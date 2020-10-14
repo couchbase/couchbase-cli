@@ -456,6 +456,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--audit-log-rotate-interval &lt;seconds&gt;] [--audit-log-rotate-size &lt;bytes&gt;]
     [--disabled-users &lt;user-list&gt;] [--disable-events &lt;event-list&gt;]</pre>
 </div>
+<div class="paragraph">
+<p>Some of these options are only available in Couchbase Server 6.5.1 and later.
+Refer to <a href="#_options">OPTIONS</a> for details.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -467,6 +471,7 @@ turned on for security purposes to ensure that those without permission to
 access information do not access it. By default auditing is disabled in
 Couchbase. The setting-audit command can be used to enable and disable auditing,
 set the auditing log path, and change the auditing log rotation interval;
+in Couchbase Server 6.5.1 and later,
 the command can also be used to retrieve the current auditing configuration,
 retrieve the auditable events and descriptions,
 and disable auditing for certain users and events.</p>
@@ -503,17 +508,20 @@ environment variable CB_REST_PASSWORD.</p>
 </dd>
 <dt class="hdlist1">--list-filterable-events</dt>
 <dd>
-<p>Returns a table or a JSON list (if --output json used) with all the event
-IDs with there descriptions.</p>
+<p>(Couchbase Server 6.5.1 and later.)
+  Returns a table or a JSON list (if --output json used) with all the event
+  IDs with there descriptions.</p>
 </dd>
 <dt class="hdlist1">--get-settings</dt>
 <dd>
-<p>Returns the current audit settings including which events are disabled and
-which are enabled.</p>
+<p>(Couchbase Server 6.5.1 and later.)
+  Returns the current audit settings including which events are disabled and
+  which are enabled.</p>
 </dd>
 <dt class="hdlist1">--set</dt>
 <dd>
-<p>Sets the cluster audit settings.</p>
+<p>(Couchbase Server 6.5.1 and later.)
+  Sets the cluster audit settings.</p>
 </dd>
 <dt class="hdlist1">--audit-enabled &lt;num&gt;</dt>
 <dd>
@@ -544,14 +552,16 @@ on size.</p>
 </dd>
 <dt class="hdlist1">--disabled-users &lt;user-list&gt;</dt>
 <dd>
-<p>A comma separated list of users to ignore events from.</p>
+<p>(Couchbase Server 6.5.1 and later.)
+  A comma separated list of users to ignore events from.</p>
 </dd>
 <dt class="hdlist1">--disable-events &lt;events-list&gt;</dt>
 <dd>
-<p>A comma separated list of events IDs to disable auditing for
-(e.g 8243,8255,8257). To retrieve information of what event ID maps to
-what event use the --list-filterable-events to retrieve a list of IDs with
-descriptions.</p>
+<p>(Couchbase Server 6.5.1 and later.)
+  A comma separated list of events IDs to disable auditing for
+  (e.g 8243,8255,8257). To retrieve information of what event ID maps to
+  what event use the --list-filterable-events to retrieve a list of IDs with
+  descriptions.</p>
 </dd>
 </dl>
 </div>
@@ -587,6 +597,10 @@ a port other that 8091.</p>
 <div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>(Unless otherwise specified, the examples below are only applicable to Couchbase
+Server 6.5.1 and later.)</p>
+</div>
 <div class="paragraph">
 <p>To get the current audit settings run the command below.</p>
 </div>
@@ -638,6 +652,19 @@ Disabled users: []</pre>
 on a Linux installation with a log rotate interval of 7 days, run the command
 below.</p>
 </div>
+<div class="paragraph">
+<p><em>Couchbase Server 6.5:</em></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
+ --password password --audit-enabled 1 --audit-log-rotate-interval 604800 \
+ --audit-log-path /opt/couchbase/var/lib/couchbase/logs</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><em>Couchbase Server 6.5.1 and later:</em></p>
+</div>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
@@ -648,6 +675,19 @@ below.</p>
 <div class="paragraph">
 <p>To enable auditing on a cluster and set the audit log to the default logs folder
 on a Linux installation with a log rotate size of 20MB, run the command below.</p>
+</div>
+<div class="paragraph">
+<p><em>Couchbase Server 6.5:</em></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
+ --password password --audit-enabled 1 --audit-log-rotate-size 20971520 \
+ --audit-log-path /opt/couchbase/var/lib/couchbase/logs</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><em>Couchbase Server 6.5.1 and later:</em></p>
 </div>
 <div class="literalblock">
 <div class="content">
@@ -672,6 +712,18 @@ run the command below.</p>
 </div>
 <div class="paragraph">
 <p>To disable auditing run the following command.</p>
+</div>
+<div class="paragraph">
+<p><em>Couchbase Server 6.5:</em></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
+ --password password --audit-enabled 0</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><em>Couchbase Server 6.5.1 and later:</em></p>
 </div>
 <div class="literalblock">
 <div class="content">
