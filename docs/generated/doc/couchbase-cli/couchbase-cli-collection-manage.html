@@ -453,7 +453,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <pre class="content"><em>couchbase-cli collection-manage</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--bucket &lt;bucket&gt;] [--create-scope &lt;scope&gt;]
     [--drop-scope &lt;scope&gt;] [--list-scopes] [--create-collection &lt;collection&gt;]
-    [--drop-collection &lt;collection&gt;] [--list-collections &lt;scope&gt;]
+    [--drop-collection &lt;collection&gt;] [--list-collections [&lt;scope_list&gt;]]
     [--max-ttl &lt;seconds&gt;]</pre>
 </div>
 </div>
@@ -546,10 +546,11 @@ collection and the name to be created.</p>
 dot format (scope.collection), specifying the scope from which
 the collection and collection-name are to be removed.</p>
 </dd>
-<dt class="hdlist1">--list-collections [&lt;scope&gt;]</dt>
+<dt class="hdlist1">--list-collections [&lt;scope_list&gt;]</dt>
 <dd>
-<p>Shows all the collections in the scope provided. If the scope is not
-provided, it will show the collections in the  "_default" scope.</p>
+<p>Takes an optional comma separated list of scope names. It will show all the
+collections inside those scopes. If no scopes are provided it will show all the
+collections.</p>
 </dd>
 <dt class="hdlist1">--max-ttl &lt;seconds&gt;</dt>
 <dd>
@@ -613,13 +614,13 @@ furniture bucket.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>To list all of the collections in the chairs scope in the furniture
+<p>To list all of the collections in the chairs and tables scopes in the furniture
 bucket.</p>
 </div>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
- -p password --bucket furniture --list-collections chairs</pre>
+ -p password --bucket furniture --list-collections chairs,tables</pre>
 </div>
 </div>
 <div class="paragraph">

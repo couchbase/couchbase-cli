@@ -14,7 +14,7 @@ Manage collections and scopes in a bucket
 _couchbase-cli collection-manage_ [--cluster <url>] [--username <user>]
     [--password <password>] [--bucket <bucket>] [--create-scope <scope>]
     [--drop-scope <scope>] [--list-scopes] [--create-collection <collection>]
-    [--drop-collection <collection>] [--list-collections <scope>]
+    [--drop-collection <collection>] [--list-collections [<scope_list>]]
     [--max-ttl <seconds>]
 
 == DESCRIPTION
@@ -60,9 +60,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   dot format (scope.collection), specifying the scope from which
   the collection and collection-name are to be removed.
 
---list-collections [<scope>]::
-  Shows all the collections in the scope provided. If the scope is not
-  provided, it will show the collections in the  "_default" scope.
+--list-collections [<scope_list>]::
+  Takes an optional comma separated list of scope names. It will show all the
+  collections inside those scopes. If no scopes are provided it will show all the
+  collections.
 
 --max-ttl <seconds>::
   Specifies the maximum TTL (time-to-live) for all documents in the
@@ -87,11 +88,11 @@ furniture bucket.
   $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
    -p password --bucket furniture --create-collection chairs.couches
 
-To list all of the collections in the chairs scope in the furniture
+To list all of the collections in the chairs and tables scopes in the furniture
 bucket.
 
   $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
-   -p password --bucket furniture --list-collections chairs
+   -p password --bucket furniture --list-collections chairs,tables
 
 To drop the couches collection from the chairs scope in the
 furniture bucket.

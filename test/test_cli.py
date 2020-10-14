@@ -1538,12 +1538,38 @@ class TestCollectionManage(CommandTest):
         self.assertIn('DELETE:/pools/default/buckets/name/collections/scope_1/collection_1', self.server.trace)
 
     def list_collections(self):
-        self.server_args['collection_manifest'] = {"scope_1": {"collection_1": {}, "collection_2": {}}}
+        self.server_args['collection_manifest'] = {
+            'scopes': [{
+                'name': 'scope_1',
+                'collections':[{'name': 'collection_1'}, {'name': 'collection_2'}]
+            }]
+        }
         self.no_error_run(self.command + ['--list-collections', 'scope_1'], self.server_args)
         self.assertIn('GET:/pools/default/buckets/name/collections', self.server.trace)
-        expected_out = ['collection_1', 'collection_2']
+        expected_out = ['    - collection_1', '    - collection_2', 'Scope scope_1:']
         for p in expected_out:
             self.assertIn(p, self.str_output)
+
+    def list_collections_json(self):
+        self.server_args['collection_manifest'] = {
+            'scopes': [
+                {
+                    'name': 'scope_1',
+                    'collections':[{'name': 'collection_1'}, {'name': 'collection_2'}]
+                },
+                {
+                    'name': 'scope_2',
+                    'collections': [{'name': 'collection_1'}, {'name': 'collection_2'}]
+                }
+            ]
+        }
+        self.no_error_run(self.command + ['--list-collections', 'scope_1', '-o', 'json'], self.server_args)
+        self.assertIn('GET:/pools/default/buckets/name/collections', self.server.trace)
+        expected = json.dumps({'scope_1':['collection_1', 'collection_2'], 'scope_2': ['collection_1', 'collection_2']},
+                              sort_keys=True)
+
+        out = json.dumps(json.loads(self.str_output), sort_keys=True)
+        self.assertEqual(expected, out)
 
 
 class TestSettingLdap(CommandTest):

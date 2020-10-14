@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-collection-manage
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-03-20
+.\"      Date: 2020-10-15
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-COLLECTION\-MANAGE" "1" "2020-03-20" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-COLLECTION\-MANAGE" "1" "2020-10-15" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -36,7 +36,7 @@ couchbase\-cli\-collection\-manage \- Manage collections and scopes in a bucket
 \fIcouchbase\-cli collection\-manage\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-bucket <bucket>] [\-\-create\-scope <scope>]
     [\-\-drop\-scope <scope>] [\-\-list\-scopes] [\-\-create\-collection <collection>]
-    [\-\-drop\-collection <collection>] [\-\-list\-collections <scope>]
+    [\-\-drop\-collection <collection>] [\-\-list\-collections [<scope_list>]]
     [\-\-max\-ttl <seconds>]
 .fi
 .br
@@ -144,10 +144,11 @@ dot format (scope.collection), specifying the scope from which
 the collection and collection\-name are to be removed.
 .RE
 .sp
-\-\-list\-collections [<scope>]
+\-\-list\-collections [<scope_list>]
 .RS 4
-Shows all the collections in the scope provided. If the scope is not
-provided, it will show the collections in the  "_default" scope.
+Takes an optional comma separated list of scope names. It will show all the
+collections inside those scopes. If no scopes are provided it will show all the
+collections.
 .RE
 .sp
 \-\-max\-ttl <seconds>
@@ -220,13 +221,13 @@ $ couchbase\-cli collection\-manage \-c 192.168.1.5 \-u Administrator \(rs
 .fi
 .if n .RE
 .sp
-To list all of the collections in the chairs scope in the furniture
+To list all of the collections in the chairs and tables scopes in the furniture
 bucket.
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli collection\-manage \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-bucket furniture \-\-list\-collections chairs
+ \-p password \-\-bucket furniture \-\-list\-collections chairs,tables
 .fi
 .if n .RE
 .sp

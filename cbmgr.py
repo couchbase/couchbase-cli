@@ -14,7 +14,7 @@ import sys
 import urllib.parse
 import time
 
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
 from operator import itemgetter
 from cluster_manager import ClusterManager
@@ -4077,8 +4077,9 @@ class CollectionManage(Subcommand):
                            help="The path to the collection to make")
         group.add_argument("--drop-collection", dest="drop_collection", metavar="<collection>", default=None,
                            help="The path to the collection to remove")
-        group.add_argument("--list-collections", dest="list_collections", metavar="<scope>", default=None,
-                           const="_default", nargs='?', help="List all of the collections in the scope")
+        group.add_argument("--list-collections", dest="list_collections", metavar="<scope_list>", default=None,
+                           const="", nargs='?', help="List all of the collections in the provided scopes. If no scopes "
+                                                     "are provided it will print all collections")
         group.add_argument("--max-ttl", dest="max_ttl", metavar="<seconds>", type=int,
                            help="Set the maximum TTL the collection will accept")
 
@@ -4108,7 +4109,7 @@ class CollectionManage(Subcommand):
             self._create_collection(opts)
         if opts.drop_collection:
             self._drop_collection(opts)
-        if opts.list_collections:
+        if opts.list_collections is not None:
             self._list_collections(opts)
 
     def _create_scope(self, opts):
@@ -4142,14 +4143,37 @@ class CollectionManage(Subcommand):
     def _list_collections(self, opts):
         manifest, errors = self.rest.get_manifest(opts.bucket)
         _exit_if_errors(errors)
-        found_scope = False
+
+        if opts.list_collections == "":
+            scope_dict = {}
+        else:
+            scope_dict = {scope: False for scope in opts.list_collections.split(',')}
+
+        if opts.output == 'json':
+            self._json_list_collections(manifest, scope_dict)
+            return
+
         for scope in manifest['scopes']:
-            if opts.list_collections == scope['name']:
-                found_scope = True
+            if len(scope_dict) == 0 or scope['name'] in scope_dict:
+                if len(scope_dict) > 0:
+                    scope_dict[scope['name']] = True
+
+                print(f'Scope {scope["name"]}:')
                 for collection in scope['collections']:
-                    print(collection['name'])
-        if not found_scope:
-            _exit_if_errors([f"Scope {opts.list_collections} does not exist"])
+                    print(f'    - {collection["name"]}')
+
+        if len(scope_dict) > 0:
+            for scope, found in scope_dict.items():
+                if not found:
+                    _warning(f'Scope "{scope}" does not exist')
+
+    @staticmethod
+    def _json_list_collections(manifest: Dict[str, Any], scope_dict: Dict[str, bool]):
+        out = {}
+        for scope in manifest['scopes']:
+            if len(scope_dict) == 0 or scope['name'] in scope_dict:
+                out[scope['name']] = [collection["name"] for collection in scope['collections']]
+        print(json.dumps(out, indent=4))
 
     def _get_scope_collection(self, path):
         scope, collection, err = self.expand_collection_shortcut(path)
