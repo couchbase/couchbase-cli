@@ -418,26 +418,26 @@ T{
 0
 T}:T{
 .sp
-S:C to S:C
+S.C to S.C
 T}:T{
 .sp
 Matches a single Scope:Collection to a target Scope:Collection
 T}:T{
 .sp
-\f(CR{"s:c":"target_s:target_c"}\fP
+\f(CR{"s.c":"target_s.target_c"}\fP
 T}
 T{
 .sp
 1
 T}:T{
 .sp
-S:C Denylist
+S.C Denylist
 T}:T{
 .sp
 Stops one singular Scope:Collection from being replicated
 T}:T{
 .sp
-\f(CR{"s:c":null}\fP
+\f(CR{"s.c":null}\fP
 T}
 T{
 .sp
@@ -499,7 +499,7 @@ T}:T{
 Matches a document based on the key and maps it to a collection
 T}:T{
 .sp
-\f(CR{“REGEXP_CONTAINS(META().id, ‘^app1_’”:”Apps:App1”}\fP\fIMaps any document with a key starting with \f(CRapp1\fP\fP to the collection `Apps:App1`_
+\f(CR{“REGEXP_CONTAINS(META().id, ‘^app1_’”:”Apps.App1”}\fP\fIMaps any document with a key starting with \f(CRapp1\fP\fP to the collection `Apps.App1`_
 T}
 T{
 .sp
@@ -509,8 +509,8 @@ T}:T{
 Matches documents based on the values of one or more fields and maps it to a collection
 T}:T{
 .sp
-\f(CR{“Region == ‘APAC’ AND Country == ‘Japan’”:”APAC:Japan”}\fP\fIMaps any document that has field \f(CRRegion\fP and \f(CRCountry\fP with respective values APAC and Japan
-to the collection `APAC:Japan`\fP
+\f(CR{“Region == ‘APAC’ AND Country == ‘Japan’”:”APAC.Japan”}\fP\fIMaps any document that has field \f(CRRegion\fP and \f(CRCountry\fP with respective values APAC and Japan
+to the collection `APAC.Japan`\fP
 T}
 T{
 .sp
@@ -520,7 +520,7 @@ T}:T{
 Matches any document that has the given field and maps it to a collection
 T}:T{
 .sp
-\f(CR{“EXISTS(PhotosData)”:”\fIdefault:PhotoDocuments”}\fP_Maps any document that has the \f(CRPhotosData\fP field to the \f(CRPhotoDocuments\fP collections under the default scope\fP
+\f(CR{“EXISTS(PhotosData)”:”\fIdefault.PhotoDocuments”}\fP_Maps any document that has the \f(CRPhotosData\fP field to the \f(CRPhotoDocuments\fP collections under the default scope\fP
 T}
 .TE
 .sp
@@ -536,7 +536,7 @@ we can use the following command:
 $ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
    \-p password \-\-settings \(rs
    \-\-xdcr\-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \(rs
-   \-\-collection\-explicit\-mappings 1  \-\-collection\-mapping\-rules {"databases:nosql":"databases\-replica:nosql\-replica"}
+   \-\-collection\-explicit\-mappings 1  \-\-collection\-mapping\-rules {"databases.nosql":"databases\-replica.nosql\-replica"}
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

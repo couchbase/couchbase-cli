@@ -812,15 +812,15 @@ rules defined below.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S:C to S:C</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S.C to S.C</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Matches a single Scope:Collection to a target Scope:Collection</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{"s:c":"target_s:target_c"}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{"s.c":"target_s.target_c"}</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S:C Denylist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S.C Denylist</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Stops one singular Scope:Collection from being replicated</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{"s:c":null}</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{"s.c":null}</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
@@ -860,20 +860,20 @@ expression syntax is supported so a large range of expressions can be created:</
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Key</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Matches a document based on the key and maps it to a collection</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{“REGEXP_CONTAINS(META().id, ‘^app1_’”:”Apps:App1”}</code></p>
-<p class="tableblock"><em>Maps any document with a key starting with <code>app1</em></code> to the collection `Apps:App1`_</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{“REGEXP_CONTAINS(META().id, ‘^app1_’”:”Apps.App1”}</code></p>
+<p class="tableblock"><em>Maps any document with a key starting with <code>app1</em></code> to the collection `Apps.App1`_</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Field value match</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Matches documents based on the values of one or more fields and maps it to a collection</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{“Region == ‘APAC’ AND Country == ‘Japan’”:”APAC:Japan”}</code></p>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{“Region == ‘APAC’ AND Country == ‘Japan’”:”APAC.Japan”}</code></p>
 <p class="tableblock"><em>Maps any document that has field <code>Region</code> and <code>Country</code> with respective values APAC and Japan
-to the collection `APAC:Japan`</em></p></td>
+to the collection `APAC.Japan`</em></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Field exists</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Matches any document that has the given field and maps it to a collection</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{“EXISTS(PhotosData)”:”<em>default:PhotoDocuments”}</code></p>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>{“EXISTS(PhotosData)”:”<em>default.PhotoDocuments”}</code></p>
 <p class="tableblock">_Maps any document that has the <code>PhotosData</code> field to the <code>PhotoDocuments</code> collections under the default scope</em></p></td>
 </tr>
 </tbody>
@@ -891,7 +891,7 @@ we can use the following command:</p>
 <pre>$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --settings \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
-   --collection-explicit-mappings 1  --collection-mapping-rules {"databases:nosql":"databases-replica:nosql-replica"}</pre>
+   --collection-explicit-mappings 1  --collection-mapping-rules {"databases.nosql":"databases-replica.nosql-replica"}</pre>
 </div>
 </div>
 </div>

@@ -232,14 +232,14 @@ rules defined below.
 | Priority | Match Rule | Description | Syntax
 
 | 0
-| S:C to S:C
+| S.C to S.C
 | Matches a single Scope:Collection to a target Scope:Collection
-| `{"s:c":"target_s:target_c"}`
+| `{"s.c":"target_s.target_c"}`
 
 | 1
-| S:C Denylist
+| S.C Denylist
 | Stops one singular Scope:Collection from being replicated
-| `{"s:c":null}`
+| `{"s.c":null}`
 
 | 2
 | Scope to Scope
@@ -263,20 +263,20 @@ expression syntax is supported so a large range of expressions can be created:
 
 | Key
 | Matches a document based on the key and maps it to a collection
-| `{“REGEXP_CONTAINS(META().id, ‘^app1_’”:”Apps:App1”}`
+| `{“REGEXP_CONTAINS(META().id, ‘^app1_’”:”Apps.App1”}`
 
-_Maps any document with a key starting with `app1_` to the collection `Apps:App1`_
+_Maps any document with a key starting with `app1_` to the collection `Apps.App1`_
 
 | Field value match
 | Matches documents based on the values of one or more fields and maps it to a collection
-| `{“Region == ‘APAC’ AND Country == ‘Japan’”:”APAC:Japan”}`
+| `{“Region == ‘APAC’ AND Country == ‘Japan’”:”APAC.Japan”}`
 
 _Maps any document that has field `Region` and `Country` with respective values APAC and Japan
-to the collection `APAC:Japan`_
+to the collection `APAC.Japan`_
 
 | Field exists
 | Matches any document that has the given field and maps it to a collection
-| `{“EXISTS(PhotosData)”:”_default:PhotoDocuments”}`
+| `{“EXISTS(PhotosData)”:”_default.PhotoDocuments”}`
 
 _Maps any document that has the `PhotosData` field to the `PhotoDocuments` collections under the default scope_
 |===
@@ -292,7 +292,7 @@ we can use the following command:
 $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --settings \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
-   --collection-explicit-mappings 1  --collection-mapping-rules {"databases:nosql":"databases-replica:nosql-replica"}
+   --collection-explicit-mappings 1  --collection-mapping-rules {"databases.nosql":"databases-replica.nosql-replica"}
 ----
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
