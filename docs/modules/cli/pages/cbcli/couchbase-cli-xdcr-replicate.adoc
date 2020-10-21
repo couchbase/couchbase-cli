@@ -62,7 +62,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --xdcr-replication-mode <mode>::
   The XDCR replication protocol to use. This can be set to either `capi` or
-  `xmem`.
+  `xmem`. This flag is deprecated and should no longer be used. XDCR will now
+  always use `xmem`.
 
 --filter-expression <regex>::
   A regular expression used to filter the replication stream.
@@ -144,14 +145,13 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 == EXAMPLES
 
 To create a new XDCR replication from the "default" bucket to the "apps" bucket
-on a remote cluster called "east" using the `xmem` replication protocol. You can
-run the following command below. Note that if you have not setup a remote
-cluster reference then you need to do this first by running the
-man:couchbase-cli-xdcr-setup[1].
+on a remote cluster called "east". You can run the following command below. Note
+that if you have not setup a remote cluster reference then you need to do this first
+by running the man:couchbase-cli-xdcr-setup[1].
 ----
 $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --create --xdcr-cluster-name east --xdcr-from-bucket apps \
-   --xdcr-to-bucket apps --xdcr-replication-mode xmem
+   --xdcr-to-bucket apps
 ----
 To list all of the current XDCR replication you can run the following command.
 ----

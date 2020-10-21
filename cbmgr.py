@@ -3586,7 +3586,8 @@ class XdcrReplicate(Subcommand):
                            help="The name of the cluster reference to replicate to")
         group.add_argument("--xdcr-replication-mode", dest="rep_mode", metavar="<mode>",
                            choices=["xmem", "capi"],
-                           help="The replication protocol (capi or xmem)")
+                           help="The replication protocol (capi or xmem). This flag is deprecated and should not be"
+                                " used.")
         group.add_argument("--filter-expression", dest="filter", metavar="<regex>",
                            help="Regular expression to filter replication streams")
         group.add_argument("--filter-skip-restream", dest="filter_skip", action="store_true", default=False,

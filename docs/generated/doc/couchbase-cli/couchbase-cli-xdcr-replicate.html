@@ -541,7 +541,8 @@ environment variable CB_REST_PASSWORD.</p>
 <dt class="hdlist1">--xdcr-replication-mode &lt;mode&gt;</dt>
 <dd>
 <p>The XDCR replication protocol to use. This can be set to either <code>capi</code> or
-<code>xmem</code>.</p>
+<code>xmem</code>. This flag is deprecated and should no longer be used. XDCR will now
+always use <code>xmem</code>.</p>
 </dd>
 <dt class="hdlist1">--filter-expression &lt;regex&gt;</dt>
 <dd>
@@ -672,16 +673,15 @@ a port other that 8091.</p>
 <div class="sectionbody">
 <div class="paragraph">
 <p>To create a new XDCR replication from the "default" bucket to the "apps" bucket
-on a remote cluster called "east" using the <code>xmem</code> replication protocol. You can
-run the following command below. Note that if you have not setup a remote
-cluster reference then you need to do this first by running the
-<a href="couchbase-cli-xdcr-setup.html">couchbase-cli-xdcr-setup(1)</a>.</p>
+on a remote cluster called "east". You can run the following command below. Note
+that if you have not setup a remote cluster reference then you need to do this first
+by running the <a href="couchbase-cli-xdcr-setup.html">couchbase-cli-xdcr-setup(1)</a>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --create --xdcr-cluster-name east --xdcr-from-bucket apps \
-   --xdcr-to-bucket apps --xdcr-replication-mode xmem</pre>
+   --xdcr-to-bucket apps</pre>
 </div>
 </div>
 <div class="paragraph">

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-05-22
+.\"      Date: 2020-10-21
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-10-21" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -124,7 +124,8 @@ The name of the cluster reference to replicate to.
 \-\-xdcr\-replication\-mode <mode>
 .RS 4
 The XDCR replication protocol to use. This can be set to either \f(CRcapi\fP or
-\f(CRxmem\fP.
+\f(CRxmem\fP. This flag is deprecated and should no longer be used. XDCR will now
+always use \f(CRxmem\fP.
 .RE
 .sp
 \-\-filter\-expression <regex>
@@ -281,16 +282,15 @@ a port other that 8091.
 .SH "EXAMPLES"
 .sp
 To create a new XDCR replication from the "default" bucket to the "apps" bucket
-on a remote cluster called "east" using the \f(CRxmem\fP replication protocol. You can
-run the following command below. Note that if you have not setup a remote
-cluster reference then you need to do this first by running the
-\fBcouchbase\-cli\-xdcr\-setup\fP(1).
+on a remote cluster called "east". You can run the following command below. Note
+that if you have not setup a remote cluster reference then you need to do this first
+by running the \fBcouchbase\-cli\-xdcr\-setup\fP(1).
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
    \-p password \-\-create \-\-xdcr\-cluster\-name east \-\-xdcr\-from\-bucket apps \(rs
-   \-\-xdcr\-to\-bucket apps \-\-xdcr\-replication\-mode xmem
+   \-\-xdcr\-to\-bucket apps
 .fi
 .if n .RE
 .sp
