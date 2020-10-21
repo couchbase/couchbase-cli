@@ -454,14 +454,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--password &lt;password&gt;] [--create] [--delete] [--pause] [--list]
     [--resume] [--settings] [--get] [--xdcr-from-bucket &lt;bucket&gt;]
     [--xdcr-to-bucket &lt;bucket&gt;] [--xdcr-cluster-name &lt;name&gt;]
-    [--xdcr-replication-mode &lt;mode&gt;] [--filter-expression &lt;regex&gt;]
-    [--xdcr-replicator &lt;id&gt;] [--checkpoint-interval &lt;seconds&gt;]
-    [--worker-batch-size &lt;num&gt;] [--doc-batch-size &lt;kilobytes&gt;]
-    [--failure-restart-interval &lt;seconds&gt;] [--source-nozzle-per-node &lt;num&gt;]
-    [--target-nozzle-per-node &lt;num&gt;] [--bandwidth-usage-limit &lt;num&gt;]
-    [--enable-compression &lt;num&gt;] [--stats-interval &lt;milliseconds&gt;]
-    [--optimistic-replication-threshold &lt;bytes&gt;] [--log-level &lt;level&gt;]
-    [--priority &lt;High|Medium|Low&gt;] [--reset-expiry &lt;1|0&gt;]
+    [--filter-expression &lt;regex&gt;] [--xdcr-replicator &lt;id&gt;]
+    [--checkpoint-interval &lt;seconds&gt;] [--worker-batch-size &lt;num&gt;]
+    [--doc-batch-size &lt;kilobytes&gt;][--failure-restart-interval &lt;seconds&gt;]
+    [--source-nozzle-per-node &lt;num&gt;] [--target-nozzle-per-node &lt;num&gt;]
+    [--bandwidth-usage-limit &lt;num&gt;] [--enable-compression &lt;num&gt;]
+    [--stats-interval &lt;milliseconds&gt;][--optimistic-replication-threshold &lt;bytes&gt;]
+    [--log-level &lt;level&gt;] [--priority &lt;High|Medium|Low&gt;] [--reset-expiry &lt;1|0&gt;]
     [--filter-deletion &lt;1|0&gt;] [--filter-expiration &lt;1|0&gt;]
     [--collection-explicit-mappings &lt;1|0&gt;] [--collection-migration &lt;1|0&gt;]
     [--collection-mapping-rules &lt;mappings&gt;]</pre>
@@ -543,11 +542,6 @@ environment variable CB_REST_PASSWORD.</p>
 <dt class="hdlist1">--xdcr-cluster-name &lt;name&gt;</dt>
 <dd>
 <p>The name of the cluster reference to replicate to.</p>
-</dd>
-<dt class="hdlist1">--xdcr-replication-mode &lt;mode&gt;</dt>
-<dd>
-<p>The XDCR replication protocol to use. This can be set to either <code>capi</code> or
-<code>xmem</code>.</p>
 </dd>
 <dt class="hdlist1">--filter-expression &lt;regex&gt;</dt>
 <dd>
@@ -702,7 +696,7 @@ a port other that 8091.</p>
 <div class="sectionbody">
 <div class="paragraph">
 <p>To create a new XDCR replication from the "default" bucket to the "apps" bucket
-on a remote cluster called "east" using the <code>xmem</code> replication protocol. You can
+on a remote cluster called "east". You can
 run the following command below. Note that if you have not setup a remote
 cluster reference then you need to do this first by running the
 <a href="couchbase-cli-xdcr-setup.html">couchbase-cli-xdcr-setup(1)</a>.</p>
@@ -711,7 +705,7 @@ cluster reference then you need to do this first by running the
 <div class="content">
 <pre>$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --create --xdcr-cluster-name east --xdcr-from-bucket apps \
-   --xdcr-to-bucket apps --xdcr-replication-mode xmem</pre>
+   --xdcr-to-bucket apps</pre>
 </div>
 </div>
 <div class="paragraph">

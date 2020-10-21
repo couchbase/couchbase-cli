@@ -15,14 +15,13 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>]
     [--password <password>] [--create] [--delete] [--pause] [--list]
     [--resume] [--settings] [--get] [--xdcr-from-bucket <bucket>]
     [--xdcr-to-bucket <bucket>] [--xdcr-cluster-name <name>]
-    [--xdcr-replication-mode <mode>] [--filter-expression <regex>]
-    [--xdcr-replicator <id>] [--checkpoint-interval <seconds>]
-    [--worker-batch-size <num>] [--doc-batch-size <kilobytes>]
-    [--failure-restart-interval <seconds>] [--source-nozzle-per-node <num>]
-    [--target-nozzle-per-node <num>] [--bandwidth-usage-limit <num>]
-    [--enable-compression <num>] [--stats-interval <milliseconds>]
-    [--optimistic-replication-threshold <bytes>] [--log-level <level>]
-    [--priority <High|Medium|Low>] [--reset-expiry <1|0>]
+    [--filter-expression <regex>] [--xdcr-replicator <id>]
+    [--checkpoint-interval <seconds>] [--worker-batch-size <num>]
+    [--doc-batch-size <kilobytes>][--failure-restart-interval <seconds>]
+    [--source-nozzle-per-node <num>] [--target-nozzle-per-node <num>]
+    [--bandwidth-usage-limit <num>] [--enable-compression <num>]
+    [--stats-interval <milliseconds>][--optimistic-replication-threshold <bytes>]
+    [--log-level <level>] [--priority <High|Medium|Low>] [--reset-expiry <1|0>]
     [--filter-deletion <1|0>] [--filter-expiration <1|0>]
     [--collection-explicit-mappings <1|0>] [--collection-migration <1|0>]
     [--collection-mapping-rules <mappings>]
@@ -64,10 +63,6 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --xdcr-cluster-name <name>::
   The name of the cluster reference to replicate to.
-
---xdcr-replication-mode <mode>::
-  The XDCR replication protocol to use. This can be set to either `capi` or
-  `xmem`.
 
 --filter-expression <regex>::
   A regular expression used to filter the replication stream.
@@ -163,14 +158,13 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 == EXAMPLES
 
 To create a new XDCR replication from the "default" bucket to the "apps" bucket
-on a remote cluster called "east" using the `xmem` replication protocol. You can
-run the following command below. Note that if you have not setup a remote
-cluster reference then you need to do this first by running the
-man:couchbase-cli-xdcr-setup[1].
+on a remote cluster called "east". You can run the following command below.
+Note that if you have not setup a remote cluster reference then you need to
+do this first by running the man:couchbase-cli-xdcr-setup[1].
 ----
 $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --create --xdcr-cluster-name east --xdcr-from-bucket apps \
-   --xdcr-to-bucket apps --xdcr-replication-mode xmem
+   --xdcr-to-bucket apps
 ----
 To list all of the current XDCR replication you can run the following command.
 ----

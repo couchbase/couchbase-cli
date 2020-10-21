@@ -1606,8 +1606,8 @@ class ClusterManager(object):
             params["statsInterval"] = stats_interval
         return params
 
-    def  create_xdcr_replication(self, name, to_bucket, from_bucket, filter_expression, rep_mode, compression,
-                                 reset_expiry, filter_del, filter_exp):
+    def  create_xdcr_replication(self, name, to_bucket, from_bucket, filter_expression, compression, reset_expiry,
+                                 filter_del, filter_exp):
         url = f'{self.hostname}/controller/createReplication'
         params = {"replicationType": "continuous"}
 
@@ -1617,8 +1617,6 @@ class ClusterManager(object):
             params["toCluster"] = name
         if from_bucket is not None:
             params["fromBucket"] = from_bucket
-        if rep_mode is not None:
-            params["type"] = rep_mode
         if filter is not None:
             params["filterExpression"] = filter_expression
         if compression is not None:

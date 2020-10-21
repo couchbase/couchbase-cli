@@ -3462,8 +3462,7 @@ class XdcrReplicate(Subcommand):
         group.add_argument("--xdcr-cluster-name", dest="cluster_name", metavar="<name>",
                            help="The name of the cluster reference to replicate to")
         group.add_argument("--xdcr-replication-mode", dest="rep_mode", metavar="<mode>",
-                           choices=["xmem", "capi"],
-                           help="The replication protocol (capi or xmem)")
+                           choices=["xmem", "capi"], action=CBDeprecatedAction, help=SUPPRESS)
         group.add_argument("--filter-expression", dest="filter", metavar="<regex>",
                            help="Regular expression to filter replication streams")
         group.add_argument("--filter-skip-restream", dest="filter_skip", action="store_true", default=False,
@@ -3559,8 +3558,8 @@ class XdcrReplicate(Subcommand):
 
     def _create(self, opts):
         _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.filter,
-                                                      opts.rep_mode, opts.compression, opts.reset_expiry,
-                                                      opts.filter_del, opts.filter_exp)
+                                                      opts.compression, opts.reset_expiry, opts.filter_del,
+                                                      opts.filter_exp)
         _exit_if_errors(errors)
 
         _success("XDCR replication created")

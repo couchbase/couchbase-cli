@@ -1387,7 +1387,7 @@ class TestXdcrReplicate(CommandTest):
                           self.server_args)
         self.assertIn('POST:/controller/createReplication', self.server.trace)
         expected_params = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1', 'compressionType=Auto',
-                          'type=capi', 'filterExpression=key%3A%5Ba-zA-z%5D%2B', 'replicationType=continuous']
+                           'filterExpression=key%3A%5Ba-zA-z%5D%2B', 'replicationType=continuous']
 
         self.rest_parameter_match(expected_params)
 
