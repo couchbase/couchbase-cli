@@ -452,8 +452,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli analytics-link-setup</em> [--cluster &lt;cluster&gt;] [--username &lt;username&gt;]
     [--password &lt;password&gt;] [--create] [--delete] [--edit] [--list]
-    [--dataverse &lt;name&gt;] [--name &lt;name&gt;] [--type &lt;type&gt;] [--hostname &lt;hostname&gt;]
-    [--link-username &lt;username&gt;] [--link-password &lt;password&gt;]
+    [--dataverse &lt;name&gt;] [--scope &lt;name&gt;] [--name &lt;name&gt;] [--type &lt;type&gt;]
+    [--hostname &lt;hostname&gt;] [--link-username &lt;username&gt;] [--link-password &lt;password&gt;]
     [--user-certificate &lt;path&gt;] [--user-key &lt;path&gt;] [--certificate &lt;path&gt;]
     [--encryption &lt;type&gt;] [--access-key-id &lt;id&gt;] [--secret-access-key &lt;key&gt;]
     [--region &lt;region&gt;] [--service-endpoint &lt;url&gt;]</pre>
@@ -522,6 +522,14 @@ environment variable CB_REST_PASSWORD.</p>
 <dt class="hdlist1">--type &lt;type&gt;</dt>
 <dd>
 <p>The type of the link, either 'couchbase' or 's3'.</p>
+</dd>
+<dt class="hdlist1">--dataverse &lt;name&gt;</dt>
+<dd>
+<p>(Deprecated) The dataverse of the link. Use --scope instead.</p>
+</dd>
+<dt class="hdlist1">--scope &lt;name&gt;</dt>
+<dd>
+<p>The scope of the link in its display form.</p>
 </dd>
 </dl>
 </div>
@@ -642,7 +650,7 @@ following command:</p>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --dataverse Default --name east --type couchbase \
+ -p password --create --scope Default --name east --type couchbase \
  --hostname 192.168.1.6 --link-username Administrator \
  --link-password password --encryption none</pre>
 </div>
@@ -654,20 +662,20 @@ encryption:</p>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --dataverse Default --name east --type couchbase \
+ -p password --create --scope Default --name east --type couchbase \
  --hostname 192.168.1.6 --link-username Administrator \
  --link-password password --encryption full \
  --certificate /root/cluster.cert</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To create an S3 link named <code>myAwsLink</code> in the "test" dataverse, run the
+<p>To create an S3 link named <code>myAwsLink</code> in the "test" scope, run the
 following command:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --dataverse test --name myAwsLink --type s3 \
+ -p password --create --scope test --name myAwsLink --type s3 \
  --region us-west-2 --access-key-id LOREMIPSUMDOLORSITAMET123 \
  --secret-access-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456</pre>
 </div>
@@ -697,7 +705,7 @@ following command:</p>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --edit --dataverse Default --name east --type couchbase \
+ -p password --edit --scope Default --name east --type couchbase \
  --hostname 192.168.1.6 --link-username Administrator \
  --link-password new_password --encryption half</pre>
 </div>
@@ -708,13 +716,13 @@ unchanging configuration parameters in addition to changing ones, except
 <strong>--type</strong> which cannot change.</p>
 </div>
 <div class="paragraph">
-<p>If an link is no longer needed it can be deleted. The following example
-deletes the link named "east" in the "Default" dataverse:</p>
+<p>If a link is no longer needed it can be deleted. The following example
+deletes the link named "east" in the "Default" scope:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --delete --dataverse Default --link east</pre>
+ -p password --delete --scope Default --link east</pre>
 </div>
 </div>
 </div>

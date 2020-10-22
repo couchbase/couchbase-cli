@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-analytics-link-setup
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-05-22
+.\"      Date: 2020-10-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2020-10-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,8 +35,8 @@ couchbase\-cli\-analytics\-link\-setup \- Manage Analytics links
 .nf
 \fIcouchbase\-cli analytics\-link\-setup\fP [\-\-cluster <cluster>] [\-\-username <username>]
     [\-\-password <password>] [\-\-create] [\-\-delete] [\-\-edit] [\-\-list]
-    [\-\-dataverse <name>] [\-\-name <name>] [\-\-type <type>] [\-\-hostname <hostname>]
-    [\-\-link\-username <username>] [\-\-link\-password <password>]
+    [\-\-dataverse <name>] [\-\-scope <name>] [\-\-name <name>] [\-\-type <type>]
+    [\-\-hostname <hostname>] [\-\-link\-username <username>] [\-\-link\-password <password>]
     [\-\-user\-certificate <path>] [\-\-user\-key <path>] [\-\-certificate <path>]
     [\-\-encryption <type>] [\-\-access\-key\-id <id>] [\-\-secret\-access\-key <key>]
     [\-\-region <region>] [\-\-service\-endpoint <url>]
@@ -100,6 +100,16 @@ The name for the link.
 \-\-type <type>
 .RS 4
 The type of the link, either \(aqcouchbase\(aq or \(aqs3\(aq.
+.RE
+.sp
+\-\-dataverse <name>
+.RS 4
+(Deprecated) The dataverse of the link. Use \-\-scope instead.
+.RE
+.sp
+\-\-scope <name>
+.RS 4
+The scope of the link in its display form.
 .RE
 .SS "Couchbase Link Options"
 .sp
@@ -224,7 +234,7 @@ following command:
 .if n .RS 4
 .nf
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-dataverse Default \-\-name east \-\-type couchbase \(rs
+ \-p password \-\-create \-\-scope Default \-\-name east \-\-type couchbase \(rs
  \-\-hostname 192.168.1.6 \-\-link\-username Administrator \(rs
  \-\-link\-password password \-\-encryption none
 .fi
@@ -236,20 +246,20 @@ encryption:
 .if n .RS 4
 .nf
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-dataverse Default \-\-name east \-\-type couchbase \(rs
+ \-p password \-\-create \-\-scope Default \-\-name east \-\-type couchbase \(rs
  \-\-hostname 192.168.1.6 \-\-link\-username Administrator \(rs
  \-\-link\-password password \-\-encryption full \(rs
  \-\-certificate /root/cluster.cert
 .fi
 .if n .RE
 .sp
-To create an S3 link named \f(CRmyAwsLink\fP in the "test" dataverse, run the
+To create an S3 link named \f(CRmyAwsLink\fP in the "test" scope, run the
 following command:
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-dataverse test \-\-name myAwsLink \-\-type s3 \(rs
+ \-p password \-\-create \-\-scope test \-\-name myAwsLink \-\-type s3 \(rs
  \-\-region us\-west\-2 \-\-access\-key\-id LOREMIPSUMDOLORSITAMET123 \(rs
  \-\-secret\-access\-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456
 .fi
@@ -279,7 +289,7 @@ following command:
 .if n .RS 4
 .nf
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-edit \-\-dataverse Default \-\-name east \-\-type couchbase \(rs
+ \-p password \-\-edit \-\-scope Default \-\-name east \-\-type couchbase \(rs
  \-\-hostname 192.168.1.6 \-\-link\-username Administrator \(rs
  \-\-link\-password new_password \-\-encryption half
 .fi
@@ -289,13 +299,13 @@ Note in the above example that you need to re\-specify all of the current
 unchanging configuration parameters in addition to changing ones, except
 \fB\-\-type\fP which cannot change.
 .sp
-If an link is no longer needed it can be deleted. The following example
-deletes the link named "east" in the "Default" dataverse:
+If a link is no longer needed it can be deleted. The following example
+deletes the link named "east" in the "Default" scope:
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-delete \-\-dataverse Default \-\-link east
+ \-p password \-\-delete \-\-scope Default \-\-link east
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

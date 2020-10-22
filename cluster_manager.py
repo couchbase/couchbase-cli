@@ -1768,7 +1768,11 @@ class ClusterManager(object):
 
     @staticmethod
     def _get_analytics_link_params(opts):
-        params = {"dataverse": opts.dataverse, "name": opts.name}
+        params = {"name": opts.name}
+        if opts.dataverse:
+            params['dataverse'] = opts.dataverse
+        if opts.scope:
+            params['scope'] = opts.scope
         if opts.type:
             params["type"] = opts.type
         if opts.hostname:
@@ -1808,7 +1812,7 @@ class ClusterManager(object):
 
         return self._put(url, params) if edit else self._post_form_encoded(url, params)
 
-    def delete_analytics_link(self, dataverse, name):
+    def delete_analytics_link(self, dataverse, name, scope):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -1817,9 +1821,14 @@ class ClusterManager(object):
             raise ServiceNotAvailableException(CBAS_SERVICE)
 
         url = f'{hosts[0]}/analytics/link'
-        return self._delete(url, {"dataverse": dataverse, "name": name})
+        params = {"name": name}
+        if dataverse:
+            params["dataverse"] = dataverse
+        if scope:
+            params["scope"] = scope
+        return self._delete(url, params)
 
-    def list_analytics_links(self, dataverse, name, link_type):
+    def list_analytics_links(self, dataverse, name, link_type, scope):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -1832,6 +1841,8 @@ class ClusterManager(object):
         params = {}
         if dataverse:
             params["dataverse"] = dataverse
+        if scope:
+            params["scope"] = scope
         if name:
             params["name"] = name
         if link_type:

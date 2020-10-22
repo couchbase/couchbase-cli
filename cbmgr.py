@@ -3931,7 +3931,9 @@ class AnalyticsLinkSetup(Subcommand):
         group.add_argument("--list", dest="list", action="store_true",
                            default=False, help="List all links")
         group.add_argument("--dataverse", dest="dataverse", metavar="<name>",
-                           help="The dataverse of the link")
+                           help="The dataverse of the link (Deprecated)")
+        group.add_argument("--scope", dest="scope", metavar="<name>",
+                           help="The scope of the link in its display form")
         group.add_argument("--name", dest="name", metavar="<name>",
                            help="The name of the link")
         group.add_argument("--type", dest="type", metavar="<type>", choices=["couchbase", "s3"],
@@ -3971,7 +3973,9 @@ class AnalyticsLinkSetup(Subcommand):
             _exit_if_errors(["Must specify one of --create, --delete, --edit, --list"])
         elif actions > 1:
             _exit_if_errors(["The --create, --delete, --edit, --list flags may not be specified at the same time"])
-        elif opts.create or opts.edit:
+        if opts.dataverse:
+            _deprecated("--dataverse is deprecated, please use --scope instead")
+        if opts.create or opts.edit:
             self._set(opts)
         elif opts.delete:
             self._delete(opts)
@@ -3983,8 +3987,8 @@ class AnalyticsLinkSetup(Subcommand):
         if opts.edit:
             cmd = "edit"
 
-        if opts.dataverse is None:
-            _exit_if_errors([f'--dataverse is required to {cmd} a link'])
+        if opts.dataverse is None and opts.scope is None:
+            _exit_if_errors([f'--dataverse or --scope is required to {cmd} a link'])
         if opts.name is None:
             _exit_if_errors([f'--name is required to {cmd} a link'])
         if opts.create and opts.type is None:
@@ -4007,17 +4011,17 @@ class AnalyticsLinkSetup(Subcommand):
             _success("Link edited")
 
     def _delete(self, opts):
-        if opts.dataverse is None:
-            _exit_if_errors(['--dataverse is required to delete a link'])
+        if opts.dataverse is None and opts.scope is None:
+            _exit_if_errors(['--dataverse or --scope is required to delete a link'])
         if opts.name is None:
             _exit_if_errors(['--name is required to delete a link'])
 
-        _, errors = self.rest.delete_analytics_link(opts.dataverse, opts.name)
+        _, errors = self.rest.delete_analytics_link(opts.dataverse, opts.name, opts.scope)
         _exit_if_errors(errors)
         _success("Link deleted")
 
     def _list(self, opts):
-        clusters, errors = self.rest.list_analytics_links(opts.dataverse, opts.name, opts.type)
+        clusters, errors = self.rest.list_analytics_links(opts.dataverse, opts.name, opts.type, opts.scope)
         _exit_if_errors(errors)
         print(json.dumps(clusters, sort_keys=True, indent=2))
 

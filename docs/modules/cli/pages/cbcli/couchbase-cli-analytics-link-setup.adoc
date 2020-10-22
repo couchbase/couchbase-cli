@@ -13,8 +13,8 @@ Manage Analytics links
 [verse]
 _couchbase-cli analytics-link-setup_ [--cluster <cluster>] [--username <username>]
     [--password <password>] [--create] [--delete] [--edit] [--list]
-    [--dataverse <name>] [--name <name>] [--type <type>] [--hostname <hostname>]
-    [--link-username <username>] [--link-password <password>]
+    [--dataverse <name>] [--scope <name>] [--name <name>] [--type <type>]
+    [--hostname <hostname>] [--link-username <username>] [--link-password <password>]
     [--user-certificate <path>] [--user-key <path>] [--certificate <path>]
     [--encryption <type>] [--access-key-id <id>] [--secret-access-key <key>]
     [--region <region>] [--service-endpoint <url>]
@@ -47,6 +47,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --type <type>::
   The type of the link, either 'couchbase' or 's3'.
+
+--dataverse <name>::
+  (Deprecated) The dataverse of the link. Use --scope instead.
+
+--scope <name>::
+  The scope of the link in its display form.
 
 === Couchbase Link Options
 Following are the options specific to *--type couchbase*, i.e. Couchbase
@@ -108,7 +114,7 @@ To create a new link to a Couchbase cluster named "east", run the
 following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --dataverse Default --name east --type couchbase \
+ -p password --create --scope Default --name east --type couchbase \
  --hostname 192.168.1.6 --link-username Administrator \
  --link-password password --encryption none
 ----
@@ -116,16 +122,16 @@ If the new remote reference should be fully encrypted then make sure to enable
 encryption:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --dataverse Default --name east --type couchbase \
+ -p password --create --scope Default --name east --type couchbase \
  --hostname 192.168.1.6 --link-username Administrator \
  --link-password password --encryption full \
  --certificate /root/cluster.cert
 ----
-To create an S3 link named `myAwsLink` in the "test" dataverse, run the
+To create an S3 link named `myAwsLink` in the "test" scope, run the
 following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --dataverse test --name myAwsLink --type s3 \
+ -p password --create --scope test --name myAwsLink --type s3 \
  --region us-west-2 --access-key-id LOREMIPSUMDOLORSITAMET123 \
  --secret-access-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456
 ----
@@ -143,7 +149,7 @@ If you need to edit a link named "east" and change the password, run the
 following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --edit --dataverse Default --name east --type couchbase \
+ -p password --edit --scope Default --name east --type couchbase \
  --hostname 192.168.1.6 --link-username Administrator \
  --link-password new_password --encryption half
 ----
@@ -151,11 +157,11 @@ Note in the above example that you need to re-specify all of the current
 unchanging configuration parameters in addition to changing ones, except
 *--type* which cannot change.
 
-If an link is no longer needed it can be deleted. The following example
-deletes the link named "east" in the "Default" dataverse:
+If a link is no longer needed it can be deleted. The following example
+deletes the link named "east" in the "Default" scope:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --delete --dataverse Default --link east
+ -p password --delete --scope Default --link east
 ----
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

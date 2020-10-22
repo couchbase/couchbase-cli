@@ -1826,7 +1826,7 @@ class TestAnalyticsLinkSetup(CommandTest):
 
     def test_create_no_options(self):
         self.system_exit_run(self.command + ['--create'], self.server_args)
-        self.assertIn('dataverse is required', self.str_output)
+        self.assertIn('scope is required', self.str_output)
 
     def test_create_no_type(self):
         self.system_exit_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east'], self.server_args)
@@ -1924,7 +1924,7 @@ class TestAnalyticsLinkSetup(CommandTest):
 
     def test_delete_no_params(self):
         self.system_exit_run(self.command + ['--delete'], self.server_args)
-        self.assertIn('dataverse is required', self.str_output)
+        self.assertIn('scope is required', self.str_output)
 
     def test_delete_no_name(self):
         self.system_exit_run(self.command + ['--delete', '--dataverse', 'Default'], self.server_args)
