@@ -4296,6 +4296,10 @@ class SettingAlternateAddress(Subcommand):
                 cluster += f':{port}'
             opts.cluster = cluster
 
+            # override rest client so it uses the node to be altered
+            self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                                       opts.cacert, opts.debug)
+
         if opts.set:
             ports, error = self._parse_ports(opts.ports)
             _exit_if_errors(error)
