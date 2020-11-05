@@ -1,52 +1,52 @@
-= couchbase-cli-backup-service-profile(1)
-ifndef::doctype-manpage[:doctitle: backup-serivce-profile]
+= couchbase-cli-backup-service-plan(1)
+ifndef::doctype-manpage[:doctitle: backup-serivce-plan]
 
 ifdef::doctype-manpage[]
 == NAME
 
-couchbase-cli-backup-service-profile -
+couchbase-cli-backup-service-plan -
 endif::[]
-Manage the backup service profiles.
+Manage the backup service plans.
 
 == SYNOPSIS
 
 [verse]
 _couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--output] profile [--list] [--get]
+    [--password <password>] [--output] plan [--list] [--get]
     [--remove] [--add] [--name <name>] [--description <text>]
     [--services <list>] [--task [<task> ...]]
 
 == DESCRIPTION
 
-Manage backup service profiles.
+Manage backup service plans.
 
 == ACTION OPTIONS
 
 --list::
-    List the backup profiles.
+    List the backup plans.
 
 --get::
-    Get the backup profile by name.
+    Get the backup plan by name.
 
 --remove::
-    Remove a profile by name.
+    Remove a plan by name.
 
 --add::
-    Add a new profile.
+    Add a new plan.
 
 == OPTIONS
 
 --name <name>::
-    Profile name.
+    plan name.
 
 --description <text>::
-    An optional description provided when adding a new profile.
+    An optional description provided when adding a new plan.
 
 --services <list>::
-    An optional comma separated lists of services to backup when adding a new profile.
+    An optional comma separated lists of services to backup when adding a new plan.
 
 --task [<task> ...]::
-    One or more tasks to add to the profile. Tasks are given in JSON format. For
+    One or more tasks to add to the plan. Tasks are given in JSON format. For
     more information see the examples below.
 
 
@@ -54,26 +54,26 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
 
-To retrieve a summary of all profiles run:
+To retrieve a summary of all plans run:
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profile --list
+  plan --list
   Name     | # Tasks | Services  | Default
   ---------------------------------------------
   _daily   | 3       | all       | True
   custom   | 9       | Data      | False
 ----
 
-This will show you the name of all the profiles registered with the service as well as
-how many tasks the profiles has and what services are included.
+This will show you the name of all the plans registered with the service as well as
+how many tasks the plans has and what services are included.
 
-To retrieve more in-depth information of a singular profile you can use the `--get`
+To retrieve more in-depth information of a singular plan you can use the `--get`
 action argument as shown below.
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profile --get --name _daily
+  plan --get --name _daily
 Name: _daily
-Description: This profile does a backup every hour and merge 6 hours as well as at the end of the week
+Description: This plan does a backup every hour and merge 6 hours as well as at the end of the week
 Services: all
 Default: False
 
@@ -85,31 +85,31 @@ merge_every_6_hours  | merge every 6 hours at 00:30  | Merge from 0 to 0
 merge_week           | merge every sunday at 23:40   | Merge from 0 to 7
 ----
 
-To retrieve the information in JSON format add `--output json` before the `profile` key
+To retrieve the information in JSON format add `--output json` before the `plan` key
 word.
 
-To remove a profile use the action argument `--remove` as shown below. Note that only
-profiles that are not being used by an active instance may be removed. To remove a
-profile that is being used, all the profiles that use it must be archived first.
+To remove a plan use the action argument `--remove` as shown below. Note that only
+plans that are not being used by an active instance may be removed. To remove a
+plan that is being used, all the plans that use it must be archived first.
 
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profile --remove --name _daily
+  plan --remove --name _daily
 ----
 
-To add a profile  use the action argument `--add` as seen below.
+To add a plan  use the action argument `--add` as seen below.
 
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profile --add --name new-profile --description "Optional description"
+  plan --add --name new-plan --description "Optional description"
   --task '{"name":"t1", "task_type":"BACKUP", "full_backup": true, \
   "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}'
    --services data
 ----
 
 The `--description` is an optional string of up to 140 characters that can be used to
-describe what the profile does. The `--services` flag defines what services should be
-backed up by the tasks in the profile, valid services are
+describe what the plan does. The `--services` flag defines what services should be
+backed up by the tasks in the plan, valid services are
 `[data, gsi, cbas, ft, eventing, views]`. Finally, the `--task` argument accepts JSON
 task objects. The task objects have the following schema:
 

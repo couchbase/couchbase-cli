@@ -27,11 +27,11 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 man:couchbase-cli-backup-service-settings[1]::
   Manage backup service configuration.
 
-man:couchbase-cli-backup-service-instance[1]::
-  Manage backup instances.
+man:couchbase-cli-backup-service-repository[1]::
+  Manage backup repositories.
 
-man:couchbase-cli-backup-service-profile[1]::
-  Manage backup profiles.
+man:couchbase-cli-backup-service-plan[1]::
+  Manage backup plans.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

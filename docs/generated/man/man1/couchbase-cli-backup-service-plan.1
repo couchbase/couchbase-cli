@@ -1,13 +1,13 @@
 '\" t
-.\"     Title: couchbase-cli-backup-service-profile
+.\"     Title: couchbase-cli-backup-service-plan
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-07-22
+.\"      Date: 2020-11-05
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-PROFILE" "1" "2020-07-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-PLAN" "1" "2020-11-05" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,61 +28,61 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-backup\-service\-profile \- Manage the backup service profiles.
+couchbase\-cli\-backup\-service\-plan \- Manage the backup service plans.
 .SH "SYNOPSIS"
 .sp
 .sp
 .nf
 \fIcouchbase\-cli backup\-service\fP [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>] [\-\-output] profile [\-\-list] [\-\-get]
+    [\-\-password <password>] [\-\-output] plan [\-\-list] [\-\-get]
     [\-\-remove] [\-\-add] [\-\-name <name>] [\-\-description <text>]
     [\-\-services <list>] [\-\-task [<task> ...]]
 .fi
 .br
 .SH "DESCRIPTION"
 .sp
-Manage backup service profiles.
+Manage backup service plans.
 .SH "ACTION OPTIONS"
 .sp
 \-\-list
 .RS 4
-List the backup profiles.
+List the backup plans.
 .RE
 .sp
 \-\-get
 .RS 4
-Get the backup profile by name.
+Get the backup plan by name.
 .RE
 .sp
 \-\-remove
 .RS 4
-Remove a profile by name.
+Remove a plan by name.
 .RE
 .sp
 \-\-add
 .RS 4
-Add a new profile.
+Add a new plan.
 .RE
 .SH "OPTIONS"
 .sp
 \-\-name <name>
 .RS 4
-Profile name.
+plan name.
 .RE
 .sp
 \-\-description <text>
 .RS 4
-An optional description provided when adding a new profile.
+An optional description provided when adding a new plan.
 .RE
 .sp
 \-\-services <list>
 .RS 4
-An optional comma separated lists of services to backup when adding a new profile.
+An optional comma separated lists of services to backup when adding a new plan.
 .RE
 .sp
 \-\-task [<task> ...]
 .RS 4
-One or more tasks to add to the profile. Tasks are given in JSON format. For
+One or more tasks to add to the plan. Tasks are given in JSON format. For
 more information see the examples below.
 .RE
 .SH "HOST FORMATS"
@@ -128,12 +128,12 @@ is needed for non\-default installations where the admin port has been set up on
 a port other that 8091.
 .SH "EXAMPLES"
 .sp
-To retrieve a summary of all profiles run:
+To retrieve a summary of all plans run:
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
-  profile \-\-list
+  plan \-\-list
   Name     | # Tasks | Services  | Default
   \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
   _daily   | 3       | all       | True
@@ -141,18 +141,18 @@ $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p passwo
 .fi
 .if n .RE
 .sp
-This will show you the name of all the profiles registered with the service as well as
-how many tasks the profiles has and what services are included.
+This will show you the name of all the plans registered with the service as well as
+how many tasks the plans has and what services are included.
 .sp
-To retrieve more in\-depth information of a singular profile you can use the \f(CR\-\-get\fP
+To retrieve more in\-depth information of a singular plan you can use the \f(CR\-\-get\fP
 action argument as shown below.
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
-  profile \-\-get \-\-name _daily
+  plan \-\-get \-\-name _daily
 Name: _daily
-Description: This profile does a backup every hour and merge 6 hours as well as at the end of the week
+Description: This plan does a backup every hour and merge 6 hours as well as at the end of the week
 Services: all
 Default: False
 
@@ -165,26 +165,26 @@ merge_week           | merge every sunday at 23:40   | Merge from 0 to 7
 .fi
 .if n .RE
 .sp
-To retrieve the information in JSON format add \f(CR\-\-output json\fP before the \f(CRprofile\fP key
+To retrieve the information in JSON format add \f(CR\-\-output json\fP before the \f(CRplan\fP key
 word.
 .sp
-To remove a profile use the action argument \f(CR\-\-remove\fP as shown below. Note that only
-profiles that are not being used by an active instance may be removed. To remove a
-profile that is being used, all the profiles that use it must be archived first.
+To remove a plan use the action argument \f(CR\-\-remove\fP as shown below. Note that only
+plans that are not being used by an active instance may be removed. To remove a
+plan that is being used, all the plans that use it must be archived first.
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
-  profile \-\-remove \-\-name _daily
+  plan \-\-remove \-\-name _daily
 .fi
 .if n .RE
 .sp
-To add a profile  use the action argument \f(CR\-\-add\fP as seen below.
+To add a plan  use the action argument \f(CR\-\-add\fP as seen below.
 .sp
 .if n .RS 4
 .nf
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
-  profile \-\-add \-\-name new\-profile \-\-description "Optional description"
+  plan \-\-add \-\-name new\-plan \-\-description "Optional description"
   \-\-task \(aq{"name":"t1", "task_type":"BACKUP", "full_backup": true, \(rs
   "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}\(aq
    \-\-services data
@@ -192,8 +192,8 @@ $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p passwo
 .if n .RE
 .sp
 The \f(CR\-\-description\fP is an optional string of up to 140 characters that can be used to
-describe what the profile does. The \f(CR\-\-services\fP flag defines what services should be
-backed up by the tasks in the profile, valid services are
+describe what the plan does. The \f(CR\-\-services\fP flag defines what services should be
+backed up by the tasks in the plan, valid services are
 \f(CR[data, gsi, cbas, ft, eventing, views]\fP. Finally, the \f(CR\-\-task\fP argument accepts JSON
 task objects. The task objects have the following schema:
 .sp

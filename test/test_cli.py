@@ -1976,23 +1976,23 @@ class TestBackupServiceSettings(CommandTest):
                                   sort_keys=True)])
 
 
-class TestBackupServiceInstance(CommandTest):
-    """Test the backup-service instance subcommand and all its actions
+class TestBackupServiceRepository(CommandTest):
+    """Test the backup-service repository subcommand and all its actions
     """
 
     def setUp(self):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
-                            '/api/v1/cluster/self/instance/active': [],
-                            '/api/v1/cluster/self/instance/archived': [],
-                            '/api/v1/cluster/self/instance/imported': [],
+                            '/api/v1/cluster/self/repository/active': [],
+                            '/api/v1/cluster/self/repository/archived': [],
+                            '/api/v1/cluster/self/repository/imported': [],
                             '/pools/default/nodeServices': {'nodesExt': [{
                                 'hostname': host,
                                 'services': {
                                     'backupAPI': port,
                                 },
                             }]}}
-        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['instance']
-        super(TestBackupServiceInstance, self).setUp()
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repository']
+        super(TestBackupServiceRepository, self).setUp()
 
     def test_list_invalid_state(self):
         """Test that if a state not in [active, imported, archived] is provided the command exits with a non zero status
@@ -2000,210 +2000,210 @@ class TestBackupServiceInstance(CommandTest):
         """
         self.system_exit_run(self.command + ['--list', '--state', 'state'], self.server_args)
 
-    def test_list_no_instances(self):
-        """Test that if the are no instances the command exits with 0 status and prints out that the are no instances"""
+    def test_list_no_repositories(self):
+        """Test that if the are no repositories the command exits with 0 status and prints out that the are no repositories"""
         self.no_error_run(self.command + ['--list'], self.server_args)
-        self.assertIn('GET:/api/v1/cluster/self/instance/active', self.server.trace)
-        self.assertIn('GET:/api/v1/cluster/self/instance/archived', self.server.trace)
-        self.assertIn('GET:/api/v1/cluster/self/instance/imported', self.server.trace)
-        self.assertIn('No instances found', self.str_output)
+        self.assertIn('GET:/api/v1/cluster/self/repository/active', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/archived', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/imported', self.server.trace)
+        self.assertIn('No repositories found', self.str_output)
 
-    def test_list_various_instances(self):
-        """Test that instance of all state are retireved and outputed"""
-        self.server_args['/api/v1/cluster/self/instance/active'] = [{
-            'id': 'active-instance',
+    def test_list_various_repositories(self):
+        """Test that repository of all state are retireved and outputed"""
+        self.server_args['/api/v1/cluster/self/repository/active'] = [{
+            'id': 'active-repository',
             'state': 'active',
-            'profile_name': 'profile1',
+            'plan_name': 'plan1',
             'health': {'healthy': False},
             'repo': 'repo1',
         }]
-        self.server_args['/api/v1/cluster/self/instance/imported'] = [{
-            'id': 'imported-instance',
+        self.server_args['/api/v1/cluster/self/repository/imported'] = [{
+            'id': 'imported-repository',
             'state': 'imported',
             'repo': 'repo2',
         }]
-        self.server_args['/api/v1/cluster/self/instance/archived'] = [{
-            'id': 'archived-instance',
+        self.server_args['/api/v1/cluster/self/repository/archived'] = [{
+            'id': 'archived-repository',
             'state': 'archived',
-            'profile_name': 'profile2',
+            'plan_name': 'plan2',
             'repo': 'repo2',
         }]
 
         self.no_error_run(self.command + ['--list'], self.server_args)
-        self.assertIn('GET:/api/v1/cluster/self/instance/active', self.server.trace)
-        self.assertIn('GET:/api/v1/cluster/self/instance/archived', self.server.trace)
-        self.assertIn('GET:/api/v1/cluster/self/instance/imported', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/active', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/archived', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/imported', self.server.trace)
         self.assertGreaterEqual(len(self.str_output.split('\n')), 4, 'Expected at least four lines')
-        for instance_id in ['active-instance', 'imported-instance', 'archived-instance']:
-            self.assertIn(instance_id, self.str_output)
+        for repository_id in ['active-repository', 'imported-repository', 'archived-repository']:
+            self.assertIn(repository_id, self.str_output)
 
-    def test_list_various_instances_state_filter(self):
-        """Test that instance of the specific state are retireved and outputed"""
-        self.server_args['/api/v1/cluster/self/instance/active'] = [{
-            'id': 'active-instance',
+    def test_list_various_repositories_state_filter(self):
+        """Test that repository of the specific state are retireved and outputed"""
+        self.server_args['/api/v1/cluster/self/repository/active'] = [{
+            'id': 'active-repository',
             'state': 'active',
-            'profile_name': 'profile1',
+            'plan_name': 'plan1',
             'health': {'health': False},
             'repo': 'repo1',
         }]
-        self.server_args['/api/v1/cluster/self/instance/imported'] = [{
-            'id': 'imported-instance',
+        self.server_args['/api/v1/cluster/self/repository/imported'] = [{
+            'id': 'imported-repository',
             'state': 'imported',
             'repo': 'repo2',
         }]
-        self.server_args['/api/v1/cluster/self/instance/archived'] = [{
-            'id': 'archived-instance',
+        self.server_args['/api/v1/cluster/self/repository/archived'] = [{
+            'id': 'archived-repository',
             'state': 'archived',
-            'profile_name': 'profile2',
+            'plan_name': 'plan2',
             'repo': 'repo2',
         }]
 
         self.no_error_run(self.command + ['--list', '--state', 'imported'], self.server_args)
-        self.assertNotIn('GET:/api/v1/cluster/self/instance/active', self.server.trace)
-        self.assertNotIn('GET:/api/v1/cluster/self/instance/archived', self.server.trace)
-        self.assertIn('GET:/api/v1/cluster/self/instance/imported', self.server.trace)
-        self.assertIn('imported-instance', self.str_output)
-        # as a bonus also check that N/A is printed for the profiles
+        self.assertNotIn('GET:/api/v1/cluster/self/repository/active', self.server.trace)
+        self.assertNotIn('GET:/api/v1/cluster/self/repository/archived', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/imported', self.server.trace)
+        self.assertIn('imported-repository', self.str_output)
+        # as a bonus also check that N/A is printed for the plans
         self.assertIn('N/A', self.str_output)
 
-    def test_get_instance_no_id(self):
+    def test_get_repository_no_id(self):
         """Test that the --get action flag fails if the --id option is not given"""
-        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {}
+        self.server_args['/api/v1/cluster/self/repository/active/repository'] = {}
         self.system_exit_run(self.command + ['--get', '--state', 'active'], self.server_args)
         self.assertIn('--id is required', self.str_output)
 
-    def test_get_instance_no_state(self):
+    def test_get_repository_no_state(self):
         """Test that the --get action flag fails if the --state flag is not given"""
-        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {}
-        self.system_exit_run(self.command + ['--get', '--id', 'instance'], self.server_args)
+        self.server_args['/api/v1/cluster/self/repository/active/repository'] = {}
+        self.system_exit_run(self.command + ['--get', '--id', 'repository'], self.server_args)
         self.assertIn('--state is required', self.str_output)
 
-    def test_get_instance(self):
-        """Test get the instance when all valid options are valid"""
-        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {
-            'id': 'instance',
+    def test_get_repository(self):
+        """Test get the repository when all valid options are valid"""
+        self.server_args['/api/v1/cluster/self/repository/active/repository'] = {
+            'id': 'repository',
             'state': 'active',
             'health': {'healthy': False},
             'archive': 'some/archive',
             'repo': 'the-repo',
             'bucket': {'name': 'beer-sample'},
-            'profile_name': 'daily-profile',
+            'plan_name': 'daily-plan',
             'creation_time': '10-01-2020T01:02:00.00001Z',
             'scheduled': {'task-1': {'name': 'task-1', 'task_type': 'BACKUP', 'next_run': '07-10-2020T00:00:00Z'}},
         }
 
-        self.no_error_run(self.command + ['--get', '--id', 'instance', '--state', 'active'], self.server_args)
-        self.assertIn('GET:/api/v1/cluster/self/instance/active/instance', self.server.trace)
+        self.no_error_run(self.command + ['--get', '--id', 'repository', '--state', 'active'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/active/repository', self.server.trace)
 
         # check that the expected lines are there
-        self.assertIn('ID: instance', self.str_output)
+        self.assertIn('ID: repository', self.str_output)
         self.assertIn('State: active', self.str_output)
         self.assertIn('Healthy: False', self.str_output)
         self.assertIn('Archive: some/archive', self.str_output)
         self.assertIn('Repository: the-repo', self.str_output)
         self.assertIn('Bucket: beer-sample', self.str_output)
-        self.assertIn('Profile: daily-profile', self.str_output)
+        self.assertIn('plan: daily-plan', self.str_output)
         self.assertIn('Creation time: 10-01-2020T01:02:00.00001Z', self.str_output)
         self.assertIn('Scheduled tasks:', self.str_output)
         self.assertIn('Name   | Task type | Next run', self.str_output)
         self.assertIn('task-1 | Backup    | 07-10-2020T00:00:00Z', self.str_output)
 
-    def test_archive_instance_no_id(self):
+    def test_archive_repository_no_id(self):
         """Test that the archive id fails if no id specified"""
-        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {
-            'id': 'instance',
+        self.server_args['/api/v1/cluster/self/repository/active/repository'] = {
+            'id': 'repository',
             'state': 'active',
             'archive': 'some/archive',
             'repo': 'the-repo',
-            'profile_name': 'daily-profile',
+            'plan_name': 'daily-plan',
             'creation_time': '10-01-2020T01:02:00.00001Z',
         }
 
         self.system_exit_run(self.command + ['--archive', '--new-id', 'new'], self.server_args)
         self.assertIn('--id is required', self.str_output)
 
-    def test_archive_instance_no_new_id(self):
+    def test_archive_repository_no_new_id(self):
         """Test that the archive id fails if no new id specified"""
-        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {
-            'id': 'instance',
+        self.server_args['/api/v1/cluster/self/repository/active/repository'] = {
+            'id': 'repository',
             'state': 'active',
             'archive': 'some/archive',
             'repo': 'the-repo',
-            'profile_name': 'daily-profile',
+            'plan_name': 'daily-plan',
             'creation_time': '10-01-2020T01:02:00.00001Z',
         }
 
         self.system_exit_run(self.command + ['--archive', '--id', 'old'], self.server_args)
         self.assertIn('--new-id is required', self.str_output)
 
-    def test_archive_instance(self):
+    def test_archive_repository(self):
         """Test that the parameters are passed to the POST request"""
-        self.server_args['/api/v1/cluster/self/instance/active/instance'] = {
-            'id': 'instance',
+        self.server_args['/api/v1/cluster/self/repository/active/repository'] = {
+            'id': 'repository',
             'state': 'active',
             'archive': 'some/archive',
             'repo': 'the-repo',
-            'profile_name': 'daily-profile',
+            'plan_name': 'daily-plan',
             'creation_time': '10-01-2020T01:02:00.00001Z',
         }
 
         self.no_error_run(self.command + ['--archive', '--id', 'old', '--new-id', 'new'], self.server_args)
-        self.assertIn('POST:/api/v1/cluster/self/instance/active/old/archive', self.server.trace)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/old/archive', self.server.trace)
         self.rest_parameter_match([json.dumps({'id': 'new'})])
 
-    def test_add_instance_id_missing(self):
+    def test_add_repository_id_missing(self):
         """Test that the add process fails if any of the mandatory flags are missing"""
-        self.system_exit_run(self.command + ['--add', '--profile', 'a', '--backup-archive', 'b'], self.server_args)
+        self.system_exit_run(self.command + ['--add', '--plan', 'a', '--backup-archive', 'b'], self.server_args)
         self.assertIn('--id is required', self.str_output)
 
-    def test_add_instance_profile_missing(self):
+    def test_add_repository_plan_missing(self):
         """Test that the add process fails if any of the mandatory flags are missing"""
         self.system_exit_run(self.command + ['--add', '--id', 'a', '--backup-archive', 'b'], self.server_args)
-        self.assertIn('--profile is required', self.str_output)
+        self.assertIn('--plan is required', self.str_output)
 
-    def test_add_instance_backup_archive_missing(self):
+    def test_add_repository_backup_archive_missing(self):
         """Test that the add process fails if any of the mandatory flags are missing"""
-        self.system_exit_run(self.command + ['--add', '--profile', 'a', '--id', 'b'], self.server_args)
+        self.system_exit_run(self.command + ['--add', '--plan', 'a', '--id', 'b'], self.server_args)
         self.assertIn('--backup-archive is required', self.str_output)
 
     def test_simple_add(self):
         """Test that add works with the minimum amount of the flags given"""
-        self.no_error_run(self.command + ['--add', '--id', 'a', '--profile', 'profile', '--backup-archive', 'archive'],
+        self.no_error_run(self.command + ['--add', '--id', 'a', '--plan', 'plan', '--backup-archive', 'archive'],
                           self.server_args)
-        self.assertIn('POST:/api/v1/cluster/self/instance/active/a', self.server.trace)
-        self.rest_parameter_match([json.dumps({'profile': 'profile', 'archive': 'archive'}, sort_keys=True)])
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/a', self.server.trace)
+        self.rest_parameter_match([json.dumps({'plan': 'plan', 'archive': 'archive'}, sort_keys=True)])
 
     def test_add_with_bucket_name(self):
         """Test that add works when given a bucket, it should ssend the bucket name to the service"""
-        self.no_error_run(self.command + ['--add', '--id', 'a', '--profile', 'profile', '--backup-archive', 'archive',
+        self.no_error_run(self.command + ['--add', '--id', 'a', '--plan', 'plan', '--backup-archive', 'archive',
                                           '--bucket-name', 'bucket'], self.server_args)
-        self.assertIn('POST:/api/v1/cluster/self/instance/active/a', self.server.trace)
-        self.rest_parameter_match([json.dumps({'profile': 'profile', 'archive': 'archive',
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/a', self.server.trace)
+        self.rest_parameter_match([json.dumps({'plan': 'plan', 'archive': 'archive',
                                                'bucket_name': 'bucket'}, sort_keys=True)])
 
-    def test_add_cloud_backup_instance_with_no_cloud_credentials(self):
+    def test_add_cloud_backup_repository_with_no_cloud_credentials(self):
         """"Test that if an S3 archive is given but no cloud credentials that the command throws a meaningfull error"""
-        self.system_exit_run(self.command + ['--add', '--id', 'a', '--profile', 'profile', '--backup-archive',
+        self.system_exit_run(self.command + ['--add', '--id', 'a', '--plan', 'plan', '--backup-archive',
                                              's3://archive', '--cloud-credentials-region', 'a', '--cloud-staging-dir',
                                              'b'], self.server_args)
         self.assertIn('must provide either --cloud-credentials-name or --cloud-credentials-key ', self.str_output)
 
-    def test_add_cloud_backup_instance_with_no_staging_dir(self):
+    def test_add_cloud_backup_repository_with_no_staging_dir(self):
         """Test that if an S3 archive is given without a staging directory it fails"""
-        self.system_exit_run(self.command + ['--add', '--id', 'a', '--profile', 'p', '--backup-archive', 's3://b',
+        self.system_exit_run(self.command + ['--add', '--id', 'a', '--plan', 'p', '--backup-archive', 's3://b',
                                              '--cloud-credentials-name', 'c'],
                              self.server_args)
         self.assertIn('--cloud-staging-dir is required', self.str_output)
 
-    def test_add_cloud_backup_instance_all_options(self):
-        """Test that creating a cloud instnace with the maximum amount of options is allowed"""
-        self.no_error_run(self.command + ['--add', '--id', 'a', '--profile', 'p', '--backup-archive', 's3://b/a',
+    def test_add_cloud_backup_repository_all_options(self):
+        """Test that creating a cloud repository with the maximum amount of options is allowed"""
+        self.no_error_run(self.command + ['--add', '--id', 'a', '--plan', 'p', '--backup-archive', 's3://b/a',
                                           '--cloud-credentials-id', 'id', '--cloud-credentials-key', 'key',
                                           '--cloud-credentials-region', 'region', '--cloud-staging-dir', 'dir',
                                           '--cloud-endpoint', 'endpoint', '--s3-force-path-style', '--bucket-name',
                                           'bucket'], self.server_args)
-        self.assertIn('POST:/api/v1/cluster/self/instance/active/a', self.server.trace)
-        self.rest_parameter_match([json.dumps({'profile': 'p', 'archive': 's3://b/a', 'cloud_credentials_id': 'id',
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/a', self.server.trace)
+        self.rest_parameter_match([json.dumps({'plan': 'p', 'archive': 's3://b/a', 'cloud_credentials_id': 'id',
                                                'cloud_credentials_key': 'key', 'cloud_credentials_region': 'region',
                                                'cloud_endpoint': 'endpoint', 'cloud_force_path_style': True,
                                                'bucket_name': 'bucket'}, sort_keys=True)])
@@ -2218,27 +2218,27 @@ class TestBackupServiceInstance(CommandTest):
         self.system_exit_run(self.command + ['--remove', '--id', 'a'], self.server_args)
         self.assertIn('--state is required', self.str_output)
 
-    def test_remove_active_instance_fails(self):
+    def test_remove_active_repository_fails(self):
         """Test that the remove action fails if no state is given and that a valid error message is returned"""
         self.system_exit_run(self.command + ['--remove', '--id', 'a', '--state', 'active'], self.server_args)
-        self.assertIn('can only delete archived or imported instances', self.str_output)
+        self.assertIn('can only delete archived or imported repositories', self.str_output)
 
-    def test_remove_delete_data_imported_instance_failes(self):
-        """Test that the CLI does not allow the option --remove-data to be given when deleting an imported instance"""
+    def test_remove_delete_data_imported_repository_failes(self):
+        """Test that the CLI does not allow the option --remove-data to be given when deleting an imported repository"""
         self.system_exit_run(self.command + ['--remove', '--id', 'a', '--state', 'imported', '--remove-data'],
                              self.server_args)
-        self.assertIn('cannot delete the repository for an imported instance', self.str_output)
+        self.assertIn('cannot delete the repository for an imported repository', self.str_output)
 
     def test_remove_valid_request(self):
         """Test that if all valid options are given that the correct request is made"""
         self.no_error_run(self.command + ['--remove', '--id', 'r', '--state', 'archived', '--remove-data'],
                           self.server_args)
-        self.assertIn('DELETE:/api/v1/cluster/self/instance/archived/r', self.server.trace)
+        self.assertIn('DELETE:/api/v1/cluster/self/repository/archived/r', self.server.trace)
         self.assertIn('remove_repository=True', self.server.queries)
 
 
-class TestBackupServiceProfile(CommandTest):
-    """Test the backup-service profile subcommand and all its actions
+class TestBackupServicePlan(CommandTest):
+    """Test the backup-service plan subcommand and all its actions
     """
 
     def setUp(self):
@@ -2249,19 +2249,19 @@ class TestBackupServiceProfile(CommandTest):
                                     'backupAPI': port,
                                 },
                             }]}}
-        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['profile']
-        super(TestBackupServiceProfile, self).setUp()
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['plan']
+        super(TestBackupServicePlan, self).setUp()
 
-    def test_profile_list_empty(self):
-        """Test that if the are no profiles a sensible message is returned"""
-        self.server_args['api/v1/profiles'] = []
+    def test_plan_list_empty(self):
+        """Test that if the are no plans a sensible message is returned"""
+        self.server_args['api/v1/plans'] = []
         self.no_error_run(self.command + ['--list'], self.server_args)
-        self.assertIn('GET:/api/v1/profile', self.server.trace)
-        self.assertIn('No profiles', self.str_output)
+        self.assertIn('GET:/api/v1/plan', self.server.trace)
+        self.assertIn('No plans', self.str_output)
 
-    def test_profile_list(self):
-        """Test that the profile list calls the correct endpoint and prints the expected information"""
-        self.server_args['/api/v1/profile'] = [
+    def test_plan_list(self):
+        """Test that the plan list calls the correct endpoint and prints the expected information"""
+        self.server_args['/api/v1/plan'] = [
             {
                 'name': 'p1',
                 'description': 'somethings',
@@ -2276,7 +2276,7 @@ class TestBackupServiceProfile(CommandTest):
             }
         ]
         self.no_error_run(self.command + ['--list'], self.server_args)
-        self.assertIn('GET:/api/v1/profile', self.server.trace)
+        self.assertIn('GET:/api/v1/plan', self.server.trace)
         self.assertIn('p1', self.str_output)
         self.assertIn('all', self.str_output)
         self.assertIn('2', self.str_output)
@@ -2286,14 +2286,14 @@ class TestBackupServiceProfile(CommandTest):
         self.assertIn('1', self.str_output)
         self.assertIn('False', self.str_output)
 
-    def test_get_profile_no_name(self):
-        """Test that the get profile operation fails if no name is given"""
+    def test_get_plan_no_name(self):
+        """Test that the get plan operation fails if no name is given"""
         self.system_exit_run(self.command + ['--get'], self.server_args)
         self.assertIn('--name is required', self.str_output)
 
-    def test_get_profile(self):
+    def test_get_plan(self):
         """Test that get operatiopn hits the right endpoint and prints the correct information"""
-        self.server_args['/api/v1/profile/p1'] = {
+        self.server_args['/api/v1/plan/p1'] = {
             'name': 'p1',
             'description': 'Some description',
             'services': ['data', 'cbas'],
@@ -2311,7 +2311,7 @@ class TestBackupServiceProfile(CommandTest):
         }
 
         self.no_error_run(self.command + ['--get', '--name', 'p1'], self.server_args)
-        self.assertIn('GET:/api/v1/profile/p1', self.server.trace)
+        self.assertIn('GET:/api/v1/plan/p1', self.server.trace)
         self.assertIn('Name: p1', self.str_output)
         self.assertIn('Description: Some description', self.str_output)
         self.assertIn('Services: Data, Analytics', self.str_output)
@@ -2320,34 +2320,34 @@ class TestBackupServiceProfile(CommandTest):
         self.assertIn('t1', self.str_output)
         self.assertIn('backup every 3 hours at 00:00', self.str_output)
 
-    def test_remove_profile_no_name(self):
-        """Test that the remove action does not work if no profile name is given"""
+    def test_remove_plan_no_name(self):
+        """Test that the remove action does not work if no plan name is given"""
         self.system_exit_run(self.command + ['--remove'], self.server_args)
         self.assertIn('--name is required', self.str_output)
 
-    def test_remove_profile(self):
+    def test_remove_plan(self):
         """Test that given a name the CLI will hit the correct endpoint"""
         self.no_error_run(self.command + ['--remove', '--name', 'p1'], self.server_args)
-        self.assertIn('DELETE:/api/v1/profile/p1', self.server.trace)
-        self.assertIn('Profile removed', self.str_output)
+        self.assertIn('DELETE:/api/v1/plan/p1', self.server.trace)
+        self.assertIn('Plan removed', self.str_output)
 
-    def test_add_profile_no_name(self):
-        """Test that when no name is given to the add profile command it fails and gives a sensible error"""
+    def test_add_plan_no_name(self):
+        """Test that when no name is given to the add plan command it fails and gives a sensible error"""
         self.system_exit_run(self.command + ['--add'], self.server_args)
         self.assertIn('--name is required', self.str_output)
 
-    def test_add_empty_profile(self):
-        """Test that a profile with just a name is valid"""
+    def test_add_empty_plan(self):
+        """Test that a plan with just a name is valid"""
         self.no_error_run(self.command + ['--add', '--name', 'prof'], self.server_args)
-        self.assertIn('POST:/api/v1/profile/prof', self.server.trace)
+        self.assertIn('POST:/api/v1/plan/prof', self.server.trace)
         self.rest_parameter_match(['{}'])
 
-    def test_add_profile_all_options(self):
-        """Test that all options are valid when adding a profile"""
+    def test_add_plan_all_options(self):
+        """Test that all options are valid when adding a plan"""
         task = {'name': 't1', 'task_type': 'BACKUP', 'schedule': {'frequency': 1, 'period': 'DAYS'}}
         self.no_error_run(self.command + ['--add', '--name', 'prof', '--description', 'some description',
                                           '--services', 'data,eventing', '--task', json.dumps(task)], self.server_args)
-        self.assertIn('POST:/api/v1/profile/prof', self.server.trace)
+        self.assertIn('POST:/api/v1/plan/prof', self.server.trace)
         self.rest_parameter_match([json.dumps({'description': 'some description', 'services': ['data', 'eventing'],
                                                'tasks': [task]}, sort_keys=True)])
 

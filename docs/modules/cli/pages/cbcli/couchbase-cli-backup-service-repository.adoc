@@ -6,13 +6,13 @@ ifdef::doctype-manpage[]
 
 couchbase-cli-backup-service-instance -
 endif::[]
-Manage the backup service instances.
+Manage the backup service repositories.
 
 == SYNOPSIS
 
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
-    [--password <password>] [--output] instance [--list] [--get] [--archive]
+    [--password <password>] [--output] repository [--list] [--get] [--archive]
     [--add] [--remove] [--id <id>] [--new-id <id>] [--state <state>]
     [--profile <name>] [--backup-archive <archive>] [--bucket-name <name>]
     [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
@@ -22,40 +22,40 @@ _couchbase-cli backup-service [--cluster <url>] [--username <user>]
 
 == DESCRIPTION
 
-Manage backup service instances
+Manage backup service repositories
 
 == ACTION OPTIONS
 
 --list::
-    List the backup instances.
+    List the backup repositories.
 
 --get::
-    Get a specific backup instance.
+    Get a specific backup repository.
 
 --archive::
-    Archives an active instance. This will move the instance into a read only mode.
+    Archives an active repository. This will move the repository into a read only mode.
     This operation cannot be undone.
 
 --add::
-    Add a new active backup instance.
+    Add a new active backup repository.
 
 --remove::
-    Remove an archived or imported instance. This operation cannot be undone.
+    Remove an archived or imported repository. This operation cannot be undone.
 
 == OPTIONS
 
 --id <id>::
-    Specify the instance id.
+    Specify the repository id.
 
 --new-id <id>::
-    Used together with the `--archive` action flag to specify the new id for the instance
+    Used together with the `--archive` action flag to specify the new id for the repository
     once it is archived.
 
 --state <state>::
-    Specifies the instance state. Valid states are 'active', 'archived' or 'imported'
+    Specifies the repository state. Valid states are 'active', 'archived' or 'imported'
 
 --profile <profile_name>::
-    Specify the profile to use when adding a new instance.
+    Specify the profile to use when adding a new repository.
 
 --backup-archive <archive>::
     The location to store backups in. This location should be accessible by all backup
@@ -63,11 +63,11 @@ Manage backup service instances
     `s3://<bucket>/<optional_prefix>/<archive>`.
 
 --bucket-name <name>::
-    When adding an instance a bucket name can be supplied so that the instance only
+    When adding an repository a bucket name can be supplied so that the repository only
     backups that bucket.
 
 --remove-data::
-    When removing an archived instance this option can be given to also delete the
+    When removing an archived repository this option can be given to also delete the
     underlaying backup repository and all of its data. This cannot be undone.
 
 == CLOUD OPTIONS
@@ -96,12 +96,12 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
 
-=== Retrieving instance information
+=== Retrieving repository information
 
-To retrieve a summary of all instances run:
+To retrieve a summary of all repositories run:
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  instance --list
+  repository --list
 ID            | State    | Profile | Healthy | Repository"
 ----------------------------------------------------------
 weekly-all    | active   | _weekly |  True   | a8059549-7fc3-401a-8fb8-008d1e20f1b0
@@ -109,13 +109,13 @@ old-data      | archived | _daily  |  True   | d6ccec04-6f03-4599-94c5-b95ac10a4
 test-data-set | imported | N/A     |  True   | provider
 ----
 
-You can also filter to only get instances in certain state by using the `--state` flag. If you want more in-depth
-details for the instance use the JSON output as can be seen below:
+You can also filter to only get repositories in certain state by using the `--state` flag. If you want more in-depth
+details for the repository use the JSON output as can be seen below:
 
 To set the backup service configuration use the `--set` flag and any of the configuration flags for example:
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password  --output json \
-  instance --list --state active
+  repository --list --state active
 {
   "active": [
     {
@@ -152,12 +152,12 @@ $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password  -
 }
 ----
 
-To retrieve just the information for one instance used instead the `--get` action flag as
+To retrieve just the information for one repository used instead the `--get` action flag as
 illustrated below.
 
 ----
 $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
-  instance --get --id weekly-all --state active
+  repository --get --id weekly-all --state active
 ID: weekly-all
 State: active
 Healthy: True
@@ -175,42 +175,42 @@ merge_week         | Merge     | 2020-07-12T23:20:00+01:00
 ----
 
 As before you can retrieve all details in JSON format by using `--output json` before the
-instance subcommand.
+repository subcommand.
 
-=== Adding and modifying instances
+=== Adding and modifying repositories
 
-To add an instance one can use the `--add action` flag as shown below.
+To add an repository one can use the `--add action` flag as shown below.
 
 ----
 $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
-  instance --add --id new-instance --profile _weekly --backup-archive /backup/service
+  repository --add --id new-repository --profile _weekly --backup-archive /backup/service
 ----
 
-In the command above we are adding a new instance with name `new-instance` that is using a
+In the command above we are adding a new repository with name `new-repository` that is using a
 base profile `_weekly`. The base profile defines the schedules of the tasks that the
-instance will run as well as what services it will backup. Finally the backup archive is the
+repository will run as well as what services it will backup. Finally the backup archive is the
 location where the backups will stored. This location is equivalent to a cbbackupmgr
-archive. Two instance should *not* use the same archive. Also `cbbackupmgr` should *not*
+archive. Two repository should *not* use the same archive. Also `cbbackupmgr` should *not*
 be run on the archives managed by the service directly.
 
-If you want an instance that only backs up one bucket or want different backup schedules
+If you want an repository that only backs up one bucket or want different backup schedules
 for each bucket this can be achieved by using the `--bucket-name` argument to specify
-which bucket the instance should backup. An example can be seen below.
+which bucket the repository should backup. An example can be seen below.
 
 ----
 $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
-  instance --add --id new-instance --profile _weekly --backup-archive /backup/service \
+  repository --add --id new-repository --profile _weekly --backup-archive /backup/service \
   --bucket-name beer-sample
 ----
 
-The service also supports creating cloud backup instances. These are instances that backup
+The service also supports creating cloud backup repositories. These are repositories that backup
 directly to object store. Currently the only supported object store is S3 and S3
-compatible stores. To create a cloud instance you will need to supply some more details,
+compatible stores. To create a cloud repository you will need to supply some more details,
 as ilustrated in the example below.
 
 ----
 $ couchbase-cli -c http://127.0.0.1:8091 -u Administrator -p password \
-  instance --add --id cloud-instance --profile _daily --backup-archive s3://cloud-bucket/archive \
+  repository --add --id cloud-repository --profile _daily --backup-archive s3://cloud-bucket/archive \
   --cloud-staging-dir /backup/staging --cloud-credentials-id id --cloud-credentials-key key \
   --cloud-credentials-region us-east-1
 ----
@@ -231,35 +231,35 @@ the endpoint use to communicate with S3 and point it to your storage solution ad
 Some S3 compatible storages only support the old S3 path styles to use those supply the
 `s3-force-path-style` argument.
 
-To archive an instance you can use the command below. Archiving an instance moves the
-instance to read-only mode. This means that no more backup tasks will be run. The
-instance can still be restored and the data examined but not altered. This action is not
+To archive an repository you can use the command below. Archiving an repository moves the
+repository to read-only mode. This means that no more backup tasks will be run. The
+repository can still be restored and the data examined but not altered. This action is not
 reversible.
 
 ----
 $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
-  instance --archive --id active-instance --new-id deprecated
+  repository --archive --id active-repository --new-id deprecated
 ----
 
-The last way in which can modify an instance is by removing it. Only archived and imported
-instances can be removed. If you want to remove an active instance you first have to
-archive it as explained above. To remove an instance use the command below. Note that this
+The last way in which can modify an repository is by removing it. Only archived and imported
+repositories can be removed. If you want to remove an active repository you first have to
+archive it as explained above. To remove an repository use the command below. Note that this
 operation cannot be undone.
 
 ----
 $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
-  instance --remove --id instance --state imported
+  repository --remove --id repository --state imported
 ----
 
-Note that by default this command only removes the instance from the service but does
+Note that by default this command only removes the repository from the service but does
 *not* remove the backup repository. The flag `--remove-data` allows you to also delete
-the underlaying data. This argument can only be used with archived instances as imported
+the underlaying data. This argument can only be used with archived repositories as imported
 ones could still be in use by another node. To remove the data as well follow the example
 below, note that once the data is deleted it cannot be recovered.
 
 ----
 $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p password \
-  instance --remove --id other_instance --state archived --remove-data
+  repository --remove --id other_repository --state archived --remove-data
 ----
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES

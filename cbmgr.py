@@ -4784,10 +4784,10 @@ class BackupService(Subcommand):
     """BackupService class is a subcommand that will contain other commands to configure the service as well as manage
     it. This approach attempts to make the interface more intuitive by keeping a hierarchical structure where the
     service can have all its options under one command instead of having multiple completely separate commands (e.g
-    settings-backups, manage-backups and instance-setup-backup.)
+    settings-backups, manage-backups and repository-setup-backup.)
 
     The idea is that the interface will look like:
-    couchbase-cli backup-service [settings | profiles | instances | cloud-credentials] where each element in [] is a
+    couchbase-cli backup-service [settings | plans | repositories | cloud-credentials] where each element in [] is a
     subcommand to manage those options for that part of the backup service. As such if the user is not sure of what they
     want to do they can always do couchbase-cli backup-service -h to get a top level details and then move down the
     hierarchy to a more concrete option.
@@ -4798,19 +4798,19 @@ class BackupService(Subcommand):
         self.parser.prog = "couchbase-cli backup-service"
         self.subparser = self.parser.add_subparsers(help='Sub command help', dest='sub_cmd', metavar='<subcommand>')
         self.settings_cmd = BackupServiceSettings(self.subparser)
-        self.instance_cmd = BackupServiceInstance(self.subparser)
-        self.profile_cmd = BackupServiceProfile(self.subparser)
+        self.repository_cmd = BackupServiceRepository(self.subparser)
+        self.plan_cmd = BackupServicePlan(self.subparser)
 
     def execute(self, opts):
-        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'instance', 'profile']:
-            _exit_if_errors(['<subcommand> must settings'])
+        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'repository', 'plan']:
+            _exit_if_errors(['<subcommand> must be one off [settings, repository, plan]'])
 
         if opts.sub_cmd == 'settings':
             self.settings_cmd.execute(opts)
-        elif opts.sub_cmd == 'instance':
-            self.instance_cmd.execute(opts)
-        elif opts.sub_cmd == 'profile':
-            self.profile_cmd.execute(opts)
+        elif opts.sub_cmd == 'repository':
+            self.repository_cmd.execute(opts)
+        elif opts.sub_cmd == 'plan':
+            self.plan_cmd.execute(opts)
 
     @staticmethod
     def get_man_page_name():
@@ -4879,49 +4879,49 @@ class BackupServiceSettings:
         return 'Manage backup service settings'
 
 
-class BackupServiceInstance:
-    """This command manages backup services instances.
+class BackupServiceRepository:
+    """This command manages backup services repositories.
 
     Things this command can do is:
-    - List instances
-    - Get instance
-    - Add instance
-    - Archive instance
-    - Import instance
-    - Delete instance
+    - List repositories
+    - Get repository
+    - Add repository
+    - Archive repository
+    - Import repository
+    - Delete repository
     """
 
     def __init__(self, subparser):
         """setup the parser"""
         self.rest = None
-        instance_parser = subparser.add_parser('instance', help='Manage backup instances', add_help=False,
+        repository_parser = subparser.add_parser('repository', help='Manage backup repositories', add_help=False,
                                                allow_abbrev=False)
 
         # action flags are mutually exclusive
-        action_group = instance_parser.add_mutually_exclusive_group(required=True)
-        action_group.add_argument('--list', action='store_true', help='Get all instances')
-        action_group.add_argument('--get', action='store_true', help='Get instance by id')
-        action_group.add_argument('--archive', action='store_true', help='Archive an instance')
-        action_group.add_argument('--add', action='store_true', help='Add a new active instance')
-        action_group.add_argument('--remove', action='store_true', help='Remove an archived/imported instance')
+        action_group = repository_parser.add_mutually_exclusive_group(required=True)
+        action_group.add_argument('--list', action='store_true', help='Get all repositories')
+        action_group.add_argument('--get', action='store_true', help='Get repository by id')
+        action_group.add_argument('--archive', action='store_true', help='Archive a repository')
+        action_group.add_argument('--add', action='store_true', help='Add a new active repository')
+        action_group.add_argument('--remove', action='store_true', help='Remove an archived/imported repository')
         action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
                                   help="Prints the short or long help message")
 
         # other arguments
-        group = instance_parser.add_argument_group('Backup service instance configuration')
-        group.add_argument('--id', metavar='<id>', help='The instance id')
-        group.add_argument('--new-id', metavar='<id>', help='The new instance id')
+        group = repository_parser.add_argument_group('Backup service repository configuration')
+        group.add_argument('--id', metavar='<id>', help='The repository id')
+        group.add_argument('--new-id', metavar='<id>', help='The new repository id')
         group.add_argument('--state', metavar='<state>', choices=['active', 'archived', 'imported'],
-                           help='The instance state.')
-        group.add_argument('--profile', metavar='<profile_name>', help='The profile to use as base for the instance')
+                           help='The repository state.')
+        group.add_argument('--plan', metavar='<plan_name>', help='The plan to use as base for the repository')
         group.add_argument('--backup-archive', metavar='<archive>', help='The location to store the backups in')
         group.add_argument('--bucket-name', metavar='<name>', help='The bucket to backup')
-        group.add_argument('--remove-data', action='store_true', help='Used to delete the instance data')
+        group.add_argument('--remove-data', action='store_true', help='Used to delete the repository data')
 
         # the cloud arguments are given the own group so that the short help is a bit more readable
-        cloud_group = instance_parser.add_argument_group('Backup instance cloud arguments')
+        cloud_group = repository_parser.add_argument_group('Backup repository cloud arguments')
         cloud_group.add_argument('--cloud-credentials-name', metavar='<name>',
-                                 help='The stored clouds credential name to use for the new instance')
+                                 help='The stored clouds credential name to use for the new repository')
         cloud_group.add_argument('--cloud-staging-dir', metavar='<path>', help='The path to the staging directory')
         cloud_group.add_argument('--cloud-credentials-id', metavar='<id>',
                                  help='The ID to use to communicate with the object store')
@@ -4937,54 +4937,54 @@ class BackupServiceInstance:
 
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
-        """Run the backup-service instance subcommand"""
+        """Run the backup-service repository subcommand"""
         if opts.list:
-            self.list_instances(opts.state, opts.output == 'json')
+            self.list_repositories(opts.state, opts.output == 'json')
         elif opts.get:
-            self.get_instance(opts.id, opts.state, opts.output == 'json')
+            self.get_repository(opts.id, opts.state, opts.output == 'json')
         elif opts.archive:
-            self.archive_instance(opts.id, opts.new_id)
+            self.archive_repository(opts.id, opts.new_id)
         elif opts.remove:
-            self.remove_instance(opts.id, opts.state, opts.remove_data)
+            self.remove_repository(opts.id, opts.state, opts.remove_data)
         elif opts.add:
-            self.add_active_instance(opts.id, opts.profile, opts.backup_archive, bucket_name=opts.bucket_name,
+            self.add_active_repository(opts.id, opts.plan, opts.backup_archive, bucket_name=opts.bucket_name,
                                      credentials_name=opts.cloud_credentials_name,
                                      credentials_id=opts.cloud_credentials_id,
                                      credentials_key=opts.cloud_credentials_key,
                                      cloud_region=opts.cloud_credentials_region, staging_dir=opts.cloud_staging_dir,
                                      cloud_endpoint=opts.cloud_endpoint, s3_path_style=opts.s3_force_path_style)
 
-    def remove_instance(self, instance_id: str, state: str, delete_repo: bool = False):
-        """Removes the instance in state 'state' and with id 'instance_id'
+    def remove_repository(self, repository_id: str, state: str, delete_repo: bool = False):
+        """Removes the repository in state 'state' and with id 'repository_id'
         Args:
-            instance_id (str): The instance id
+            repository_id (str): The repository id
             state (str): It must be either archived or imported otherwise it will return an error
             delete_repo (bool): Whether or not the backup repository should be deleted
         """
-        if not instance_id:
+        if not repository_id:
             _exit_if_errors(['--id is required'])
         # the following is devided in two options to give better error messages depending if state is missing or if it
         # is invalid
         if not state:
             _exit_if_errors(['--state is required'])
         if state not in ['archived', 'imported']:
-            _exit_if_errors(['can only delete archived or imported instances to delete an active instance it needs to '
+            _exit_if_errors(['can only delete archived or imported repositories to delete an active repository it needs to '
                              'be archived first'])
-        # can only delete repo of archived instances
+        # can only delete repo of archived repositories
         if delete_repo and state == 'imported':
-            _exit_if_errors(['cannot delete the repository for an imported instance'])
+            _exit_if_errors(['cannot delete the repository for an imported repository'])
 
-        _, errors = self.rest.delete_backup_instance(instance_id, state, delete_repo)
+        _, errors = self.rest.delete_backup_repository(repository_id, state, delete_repo)
         _exit_if_errors(errors)
-        _success('Instance was deleted')
+        _success('Repository was deleted')
 
-    def add_active_instance(self, instance_id: str, profile: str, archive: str, **kwargs):
-        """Adds a new active instance identified by 'instance_id' and that uses 'profile' as base.
+    def add_active_repository(self, repository_id: str, plan: str, archive: str, **kwargs):
+        """Adds a new active repository identified by 'repository_id' and that uses 'plan' as base.
 
         Args:
-            instance_id (str): The ID to give to the instance. This must be unique, if it is not an error will be
+            repository_id (str): The ID to give to the repository. This must be unique, if it is not an error will be
                 returned.
-            profile (str): The name of the profile to use as base for the instance. If it does not exist the service
+            plan (str): The name of the plan to use as base for the repository. If it does not exist the service
                 will return an error.
             archive (str): The location to store the data in. It must be accessible by all nodes. To use S3 instead of
                 providing a path to a filesystem directory use the syntax.
@@ -4992,17 +4992,17 @@ class BackupServiceInstance:
             **kwargs: Optional parameters [bucket_name, credentials_name, credentials_id, credentials_key, cloud_region,
                 staging_dir, cloud_endpoint, s3_path_style]
         """
-        if not instance_id:
+        if not repository_id:
             _exit_if_errors(['--id is required'])
-        if not profile:
-            _exit_if_errors(['--profile is required'])
+        if not plan:
+            _exit_if_errors(['--plan is required'])
         if not archive:
             _exit_if_errors(['--backup-archive is required'])
 
         _exit_if_errors(self.check_cloud_params(archive, **kwargs))
 
         add_request_body = {
-            'profile': profile,
+            'plan': plan,
             'archive': archive,
         }
 
@@ -5021,15 +5021,15 @@ class BackupServiceInstance:
         if kwargs.get('s3_path_style', False):
             add_request_body['cloud_force_path_style'] = kwargs.get('s3_path_style')
 
-        _, errors = self.rest.add_backup_active_instance(instance_id, add_request_body)
+        _, errors = self.rest.add_backup_active_repository(repository_id, add_request_body)
         _exit_if_errors(errors)
-        _success('Added instance')
+        _success('Added repository')
 
     @staticmethod
     def check_cloud_params(archive: str, **kwargs) -> Optional[List[str]]:
-        """Checks that inside kwargs there is a valid set of parameters to add a cloud instance
+        """Checks that inside kwargs there is a valid set of parameters to add a cloud repository
         Args:
-            archive (str): The archive to use for the instance.
+            archive (str): The archive to use for the repository.
         """
         # If not an s3 archive skip this
         if not archive.startswith('s3://'):
@@ -5051,95 +5051,95 @@ class BackupServiceInstance:
 
         return None
 
-    def archive_instance(self, instance_id, new_id):
-        """Archive an instance. The archived instance will have the id `new_id`
+    def archive_repository(self, repository_id, new_id):
+        """Archive an repository. The archived repository will have the id `new_id`
 
         Args:
-            instance_id (str): The active instance ID to be archived
-            new_id (str): The id that will be given to the archived instance
+            repository_id (str): The active repository ID to be archived
+            new_id (str): The id that will be given to the archived repository
         """
-        if not instance_id:
+        if not repository_id:
             _exit_if_errors(['--id is required'])
         if not new_id:
             _exit_if_errors(['--new-id is required'])
 
-        _, errors = self.rest.archive_backup_instance(instance_id, new_id)
+        _, errors = self.rest.archive_backup_repository(repository_id, new_id)
         _exit_if_errors(errors)
-        _success('Archived instance')
+        _success('Archived repository')
 
-    def list_instances(self, state=None, json_out=False):
-        """List the backup instances.
+    def list_repositories(self, state=None, json_out=False):
+        """List the backup repositories.
 
-        If a instance state is given only instances in that state will be listed. This command supports listing both in
+        If a repository state is given only repositories in that state will be listed. This command supports listing both in
         json and human friendly format.
 
         Args:
-            state (str, optional): One of ['active', 'imported', 'archived']. The instance on this state will be
+            state (str, optional): One of ['active', 'imported', 'archived']. The repository on this state will be
                 retrieved.
             json_out (bool): If True the output will be JSON otherwise it will be a human friendly format.
         """
         states = ['active', 'archived', 'imported'] if state is None else [state]
         results = {}
         for get_state in states:
-            instances, errors = self.rest.get_backup_service_instances(state=get_state)
+            repositories, errors = self.rest.get_backup_service_repositories(state=get_state)
             _exit_if_errors(errors)
-            results[get_state] = instances
+            results[get_state] = repositories
 
         if json_out:
             print(json.dumps(results, indent=2))
         else:
-            self.human_friendly_print_instances(results)
+            self.human_friendly_print_repositories(results)
 
-    def get_instance(self, instance_id, state, json_out=False):
-        """Retrieves one instance from the backup service
+    def get_repository(self, repository_id, state, json_out=False):
+        """Retrieves one repository from the backup service
 
-        If the instance does not exist an error will be returned
+        If the repository does not exist an error will be returned
 
         Args:
-            instance_id (str): The instance id to be retrieved
-            state (str): The state of the instance to retrieve
+            repository_id (str): The repository id to be retrieved
+            state (str): The state of the repository to retrieve
             json_out (bool): If True the output will be JSON otherwise it will be a human friendly format.
         """
-        if not instance_id:
+        if not repository_id:
             _exit_if_errors(['--id is required'])
         if not state:
             _exit_if_errors(['--state is required'])
 
-        instance, errors = self.rest.get_backup_service_instance(instance_id, state)
+        repository, errors = self.rest.get_backup_service_repository(repository_id, state)
         _exit_if_errors(errors)
         if json_out:
-            print(json.dumps(instance, indent=2))
+            print(json.dumps(repository, indent=2))
         else:
-            self.human_firendly_print_instance(instance)
+            self.human_firendly_print_repository(repository)
 
     @staticmethod
-    def human_firendly_print_instance(instance):
-        """Print the instance in a human friendly format
+    def human_firendly_print_repository(repository):
+        """Print the repository in a human friendly format
 
         Args:
-            instance (obj): The backup instance information
+            repository (obj): The backup repository information
         """
 
-        print(f'ID: {instance["id"]}')
-        print(f'State: {instance["state"]}')
-        print(f'Healthy: {(not ("health" in instance and not instance["health"]["healthy"]))!s}')
-        print(f'Archive: {instance["archive"]}')
-        print(f'Repository: {instance["repo"]}')
-        if 'bucket' in instance:
-            print(f'Bucket: {instance["bucket"]["name"]}')
-        if 'profile_name' in instance and instance['profile_name'] != "":
-            print(f'Profile: {instance["profile_name"]}')
-        print(f'Creation time: {instance["creation_time"]}')
+        print(f'ID: {repository["id"]}')
+        print(f'State: {repository["state"]}')
+        print(f'Healthy: {(not ("health" in repository and not repository["health"]["healthy"]))!s}')
+        print(f'Archive: {repository["archive"]}')
+        print(f'Repository: {repository["repo"]}')
+        if 'bucket' in repository:
+            print(f'Bucket: {repository["bucket"]["name"]}')
+        if 'plan_name' in repository and repository['plan_name'] != "":
+            print(f'plan: {repository["plan_name"]}')
+        print(f'Creation time: {repository["creation_time"]}')
 
-        if 'scheduled' in instance and instance['scheduled']:
+        if 'scheduled' in repository and repository['scheduled']:
             print()
-            BackupServiceInstance.human_firendly_print_instance_scheduled_tasks(instance['scheduled'])
+            BackupServiceRepository.human_firendly_print_repository_scheduled_tasks(repository['scheduled'])
 
-        one_off = instance['running_one_off'] if 'running_one_off' in instance else None
-        running_scheduled = instance['running_tasks'] if 'running_tasks' in instance else None
+        one_off = repository['running_one_off'] if 'running_one_off' in repository else None
+        running_scheduled = repository['running_tasks'] if 'running_tasks' in repository else None
         if one_off or running_scheduled:
             print()
-            BackupServiceInstance.human_friendly_print_running_tasks(one_off, running_scheduled)
+            BackupServiceRepository.human_friendly_print_running_tasks(one_off, running_scheduled)
 
     @staticmethod
     def human_friendly_print_running_tasks(one_off, scheduled):
@@ -5172,7 +5172,7 @@ class BackupServiceInstance:
             print(f'{task["name"]:<{name_pad}}| {task["type"].title():<10}| {task["status"]:<8} | {task["start"]}')
 
     @staticmethod
-    def human_firendly_print_instance_scheduled_tasks(scheduled):
+    def human_firendly_print_repository_scheduled_tasks(scheduled):
         """Print the scheduled task in a tabular format"""
         name_pad = 5
         for name in scheduled:
@@ -5189,105 +5189,105 @@ class BackupServiceInstance:
             print(f'{task["name"]:<{name_pad}}| {task["task_type"].title():<10}| {task["next_run"]}')
 
     @staticmethod
-    def human_friendly_print_instances(instances_map):
-        """This will print the instances in a tabular format
+    def human_friendly_print_repositories(repositories_map):
+        """This will print the repositories in a tabular format
 
         Args:
-            instance_map (map<state (str), instance (list of objects)>)
+            repository_map (map<state (str), repository (list of objects)>)
         """
-        instance_count = 0
+        repository_count = 0
         id_pad = 5
-        profile_pad = 7
-        for instances in instances_map.values():
-            for instance in instances:
-                instance_count += 1
-                if id_pad < len(instance['id']):
-                    id_pad = len(instance['id'])
-                if 'profile_name' in instance and profile_pad < len(instance['profile_name']):
-                    profile_pad = len(instance['profile_name'])
+        plan_pad = 7
+        for repositories in repositories_map.values():
+            for repository in repositories:
+                repository_count += 1
+                if id_pad < len(repository['id']):
+                    id_pad = len(repository['id'])
+                if 'plan_name' in repository and plan_pad < len(repository['plan_name']):
+                    plan_pad = len(repository['plan_name'])
 
-        if instance_count == 0:
-            print('No instances found')
+        if repository_count == 0:
+            print('No repositories found')
             return
 
         # Get an extra space between the the information and the column separator
-        profile_pad += 1
+        plan_pad += 1
         id_pad += 1
 
         # build header
-        header = f'{"ID":<{id_pad}}| {"State":<9}| {"Profile":<{profile_pad}}| Healthy | Repository'
+        header = f'{"ID":<{id_pad}}| {"State":<9}| {"plan":<{plan_pad}}| Healthy | Repository'
         print(header)
         print('-' * len(header))
 
-        # print instance summary
-        for _, instances in sorted(instances_map.items()):
-            for instance in instances:
-                healthy = not ('health' in instance and not instance['health']['healthy'])
-                # archived and imported instances may not have profiles so we have to replace the empty string with N/A
-                profile_name = 'N/A'
-                if 'profile_name' in instance and len(instance['profile_name']) != 0:
-                    profile_name = instance['profile_name']
+        # print repository summary
+        for _, repositories in sorted(repositories_map.items()):
+            for repository in repositories:
+                healthy = not ('health' in repository and not repository['health']['healthy'])
+                # archived and imported repositories may not have plans so we have to replace the empty string with N/A
+                plan_name = 'N/A'
+                if 'plan_name' in repository and len(repository['plan_name']) != 0:
+                    plan_name = repository['plan_name']
 
-                print(f"{instance['id']:<{id_pad}}| {instance['state']:<9}| {profile_name:<{profile_pad}}| "
-                      f" {healthy!s:<7}| {instance['repo']}")
+                print(f"{repository['id']:<{id_pad}}| {repository['state']:<9}| {plan_name:<{plan_pad}}| "
+                      f" {healthy!s:<7}| {repository['repo']}")
 
     @staticmethod
     def get_man_page_name():
-        return 'couchbase-cli-backup-service-instance' + '.1' if os.name != 'nt' else '.html'
+        return 'couchbase-cli-backup-service-repository' + '.1' if os.name != 'nt' else '.html'
 
     @staticmethod
     def get_description():
-        return 'Manage backup service instances'
+        return 'Manage backup service repositories'
 
 
-class BackupServiceProfile:
-    """This command manages backup services profiless.
+class BackupServicePlan:
+    """This command manages backup services plans.
 
     Things this command can do is:
-    - List profiles
+    - List plans
     - Add delete
-    - Delete profiles
+    - Delete plans
     """
 
     def __init__(self, subparser):
         """setup the parser"""
         self.rest = None
-        profile_parser = subparser.add_parser('profile', help='Manage backup profiles', add_help=False,
+        plan_parser = subparser.add_parser('plan', help='Manage backup plans', add_help=False,
                                               allow_abbrev=False)
 
         # action flags are mutually exclusive
-        action_group = profile_parser.add_mutually_exclusive_group(required=True)
-        action_group.add_argument('--list', action='store_true', help='List all available backup profiles')
-        action_group.add_argument('--get', action='store_true', help='Get a profile by name')
-        action_group.add_argument('--remove', action='store_true', help='Remove a profile by name')
-        action_group.add_argument('--add', action='store_true', help='Add a new profile')
+        action_group = plan_parser.add_mutually_exclusive_group(required=True)
+        action_group.add_argument('--list', action='store_true', help='List all available backup plans')
+        action_group.add_argument('--get', action='store_true', help='Get a plan by name')
+        action_group.add_argument('--remove', action='store_true', help='Remove a plan by name')
+        action_group.add_argument('--add', action='store_true', help='Add a new plan')
         action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
                                   help="Prints the short or long help message")
 
-        options = profile_parser.add_argument_group('Profile options')
-        options.add_argument('--name', metavar='<name>', help='Profile name')
+        options = plan_parser.add_argument_group('Plan options')
+        options.add_argument('--name', metavar='<name>', help='Plan name')
         options.add_argument('--description', metavar='<description>', help='Optional description')
         options.add_argument('--services', metavar='<services>', help='A comma separated list of services to backup')
         options.add_argument('--task', metavar='<tasks>', nargs='+', help='JSON task definition')
 
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
-        """Run the backup profile managment command"""
+        """Run the backup plan managment command"""
         if opts.list:
-            self.list_profiles(opts.output == 'json')
+            self.list_plans(opts.output == 'json')
         elif opts.get:
-            self.get_profile(opts.name, opts.output == 'json')
+            self.get_plan(opts.name, opts.output == 'json')
         elif opts.remove:
-            self.remove_profile(opts.name)
+            self.remove_plan(opts.name)
         elif opts.add:
-            self.add_profile(opts.name, opts.services, opts.task, opts.description)
+            self.add_plan(opts.name, opts.services, opts.task, opts.description)
 
-    def add_profile(self, name: str, services: Optional[str], tasks: Optional[List[str]], description: Optional[str]):
-        """Add a new backup profile
+    def add_plan(self, name: str, services: Optional[str], tasks: Optional[List[str]], description: Optional[str]):
+        """Add a new backup plan
 
-        The validation of the inputs in the CLI is intentionally lacking as this is ofloaded to the backup service.
+        The validation of the inputs in the CLI is intentionally lacking as this is offloaded to the backup service.
         Args:
-            name (str): The name to give the new profile. It must be unique.
+            name (str): The name to give the new plan. It must be unique.
             services (optional list): A list of services to backup if empty all services are backed up.
             tasks (optional list): A list of JSON strings representing the tasks to be run.
             description (optional str): A optional description string.
@@ -5308,78 +5308,78 @@ class BackupServiceProfile:
                 except json.decoder.JSONDecodeError as json_error:
                     _exit_if_errors([f'invalid task {json_error!s}'])
 
-        profile = {}
+        plan = {}
         if service_list:
-            profile['services'] = service_list
+            plan['services'] = service_list
         if tasks_objects:
-            profile['tasks'] = tasks_objects
+            plan['tasks'] = tasks_objects
         if description:
-            profile['description'] = description
+            plan['description'] = description
 
-        _, errors = self.rest.add_backup_profile(name, profile)
+        _, errors = self.rest.add_backup_plan(name, plan)
         _exit_if_errors(errors)
-        _success('Added profile')
+        _success('Added plan')
 
-    def remove_profile(self, name: str):
-        """Removes a profile by name"""
+    def remove_plan(self, name: str):
+        """Removes a plan by name"""
         if not name:
             _exit_if_errors(['--name is required'])
 
-        _, errors = self.rest.delete_backup_profile(name)
+        _, errors = self.rest.delete_backup_plan(name)
         _exit_if_errors(errors)
-        _success('Profile removed')
+        _success('Plan removed')
 
-    def get_profile(self, name: str, json_output: bool = False):
-        """Gets a backup profile by name
+    def get_plan(self, name: str, json_output: bool = False):
+        """Gets a backup plan by name
 
         Args:
-            name (str): The name of the profile to retrieve
+            name (str): The name of the plan to retrieve
             json_output (bool): Whether to print in JSON or a more human friendly way
         """
         if not name:
             _exit_if_errors(['--name is required'])
 
-        profile, errors = self.rest.get_backup_profile(name)
+        plan, errors = self.rest.get_backup_plan(name)
         _exit_if_errors(errors)
         if json_output:
-            print(json.dumps(profile, indent=2))
+            print(json.dumps(plan, indent=2))
         else:
-            self.human_print_profile(profile)
+            self.human_print_plan(plan)
 
-    def list_profiles(self, json_output: bool = False):
-        """Prints all the profiles stored in the backup service
+    def list_plans(self, json_output: bool = False):
+        """Prints all the plans stored in the backup service
 
         Args:
             json_output (bool): Whether to print in JSON or a more human friendly way
         """
-        profiles, errors = self.rest.list_backup_profiles()
+        plans, errors = self.rest.list_backup_plans()
         _exit_if_errors(errors)
         if json_output:
-            print(json.dumps(profiles, indent=2))
+            print(json.dumps(plans, indent=2))
         else:
-            self.human_print_profiles(profiles)
+            self.human_print_plans(plans)
 
     @staticmethod
-    def human_print_profile(profile: object):
-        """Prints the profile in a human friendly way"""
-        print(f'Name: {profile["name"]}')
-        print(f'Description: {profile["description"] if "description" in profile else "N/A"}')
-        print(f'Services: {BackupServiceProfile.service_list_to_str(profile["services"])}')
-        print(f'Default: {(profile["default"] if "deafult" in profile else False)!s}')
+    def human_print_plan(plan: object):
+        """Prints the plan in a human friendly way"""
+        print(f'Name: {plan["name"]}')
+        print(f'Description: {plan["description"] if "description" in plan else "N/A"}')
+        print(f'Services: {BackupServicePlan.service_list_to_str(plan["services"])}')
+        print(f'Default: {(plan["default"] if "deafult" in plan else False)!s}')
 
         # If the are no tasks return
-        if not profile["tasks"]:
+        if not plan["tasks"]:
             return
 
         print()
         print('Tasks:')
         task_name_pad = 5
         schedule_pad = 10
-        for task in profile['tasks']:
+        for task in plan['tasks']:
             if len(task['name']) > task_name_pad:
                 task_name_pad = len(task['name'])
 
-            task['schedule_str'] = BackupServiceProfile.format_schedule(task['schedule'])
+            task['schedule_str'] = BackupServicePlan.format_schedule(task['schedule'])
             if len(task['schedule_str']) > schedule_pad:
                 schedule_pad = len(task['schedule_str'])
 
@@ -5390,8 +5390,8 @@ class BackupServiceProfile:
         print(header)
         print('-' * (len(header) + 5))
 
-        for task in profile['tasks']:
-            options = BackupServiceProfile.format_options(task)
+        for task in plan['tasks']:
+            options = BackupServicePlan.format_options(task)
             print(f'{task["name"]:<{task_name_pad}} | {task["schedule_str"]:<{schedule_pad}} | {options}')
 
     @staticmethod
@@ -5423,19 +5423,19 @@ class BackupServiceProfile:
         return f'{task_start} {frequency_part}{time_part}'
 
     @staticmethod
-    def human_print_profiles(profiles: List[Any]):
-        """Prints a table with an overview of each profile"""
-        # if profiles is empty or none print no profiles message
-        if not profiles:
-            print('No profiles')
+    def human_print_plans(plans: List[Any]):
+        """Prints a table with an overview of each plan"""
+        # if plans is empty or none print no plans message
+        if not plans:
+            print('No plans')
             return
 
         name_pad = 5
         service_pad = 8
-        for profile in profiles:
-            if len(profile['name']) > name_pad:
-                name_pad = len(profile['name'])
-            services_str = BackupServiceProfile.service_list_to_str(profile['services'])
+        for plan in plans:
+            if len(plan['name']) > name_pad:
+                name_pad = len(plan['name'])
+            services_str = BackupServicePlan.service_list_to_str(plan['services'])
             if len(services_str) > service_pad:
                 service_pad = len(services_str)
 
@@ -5444,11 +5444,11 @@ class BackupServiceProfile:
         header = f'{"Name":<{name_pad}} | # Tasks | {"Services":<{service_pad}} | Default'
         print(header)
         print('-' * (len(header) + 5))
-        for profile in profiles:
-            task_len = len(profile['tasks']) if 'tasks' in profile and profile['tasks'] else 0
-            print(f'{profile["name"]:<{name_pad}} | {task_len:<7} | '
-                  f'{BackupServiceProfile.service_list_to_str(profile["services"]):<{service_pad}} | '
-                  f'{(profile["default"] if "default" in profile else False)!s}')
+        for plan in plans:
+            task_len = len(plan['tasks']) if 'tasks' in plan and plan['tasks'] else 0
+            print(f'{plan["name"]:<{name_pad}} | {task_len:<7} | '
+                  f'{BackupServicePlan.service_list_to_str(plan["services"]):<{service_pad}} | '
+                  f'{(plan["default"] if "default" in plan else False)!s}')
 
     @staticmethod
     def service_list_to_str(services: Optional[List[Any]]) -> str:
@@ -5462,8 +5462,8 @@ class BackupServiceProfile:
 
     @staticmethod
     def get_man_page_name():
-        return 'couchbase-cli-backup-service-profile' + '.1' if os.name != 'nt' else '.html'
+        return 'couchbase-cli-backup-service-plan' + '.1' if os.name != 'nt' else '.html'
 
     @staticmethod
     def get_description():
-        return 'Manage backup service profiles'
+        return 'Manage backup service plans'

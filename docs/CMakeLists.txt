@@ -2,8 +2,8 @@
 INSTALL(FILES
   generated/doc/couchbase-cli/couchbase-cli-analytics-link-setup.html
   generated/doc/couchbase-cli/couchbase-cli-backup-service.html
-  generated/doc/couchbase-cli/couchbase-cli-backup-service-instance.html
-  generated/doc/couchbase-cli/couchbase-cli-backup-service-profile.html
+  generated/doc/couchbase-cli/couchbase-cli-backup-service-repository.html
+  generated/doc/couchbase-cli/couchbase-cli-backup-service-plan.html
   generated/doc/couchbase-cli/couchbase-cli-backup-service-settings.html
   generated/doc/couchbase-cli/couchbase-cli-bucket-compact.html
   generated/doc/couchbase-cli/couchbase-cli-bucket-create.html
@@ -68,8 +68,8 @@ INSTALL(FILES
 IF (NOT WIN32)
   INSTALL(FILES
     generated/man/man1/couchbase-cli-backup-service.1
-    generated/man/man1/couchbase-cli-backup-service-instance.1
-    generated/man/man1/couchbase-cli-backup-service-profile.1
+    generated/man/man1/couchbase-cli-backup-service-repository.1
+    generated/man/man1/couchbase-cli-backup-service-plan.1
     generated/man/man1/couchbase-cli-backup-service-settings.1
     generated/man/man1/couchbase-cli-analytics-link-setup.1
     generated/man/man1/couchbase-cli-bucket-compact.1

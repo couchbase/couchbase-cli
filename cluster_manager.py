@@ -1876,15 +1876,15 @@ class ClusterManager(object):
 
         return self._patch_json(f'{hosts[0]}/api/v1/config', params)
 
-    def get_backup_service_instances(self, cluster='self', state=None):
-        """List all backup instances in the given state
+    def get_backup_service_repositories(self, cluster='self', state=None):
+        """List all backup repositories in the given state
 
         Args:
             cluster (str): Only 'self' is supported.
-            state (str): The state of instances to retrieve
+            state (str): The state of repositories to retrieve
 
         Returns:
-            A list of instances and None if successful. Otherwise none a list of strings denoting the errors.
+            A list of repositories and None if successful. Otherwise none a list of strings denoting the errors.
         """
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
         if errors:
@@ -1894,16 +1894,16 @@ class ClusterManager(object):
             raise ServiceNotAvailableException(BACKUP_SERVICE)
 
         if state not in ['active', 'archived', 'imported']:
-            return None, [f'Invalid backup instance state {state}']
+            return None, [f'Invalid backup repository state {state}']
 
-        return self._get(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/{state}')
+        return self._get(f'{hosts[0]}/api/v1/cluster/{cluster}/repository/{state}')
 
-    def get_backup_service_instance(self, instance_id, state, cluster='self'):
-        """Retrieves a single instance from the backup service
+    def get_backup_service_repository(self, repository_id, state, cluster='self'):
+        """Retrieves a single repository from the backup service
 
         Args:
-            instance_id (str): The instance id to be retrieved
-            state (str): The state of the instance to retrieve
+            repository_id (str): The repository id to be retrieved
+            state (str): The state of the repository to retrieve
             cluster (str): Only 'self' is supported.
         """
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
@@ -1913,14 +1913,14 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
 
-        return self._get(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/{state}/{instance_id}')
+        return self._get(f'{hosts[0]}/api/v1/cluster/{cluster}/repository/{state}/{repository_id}')
 
-    def archive_backup_instance(self, instance_id, new_id, cluster='self'):
-        """Archive an active instance
+    def archive_backup_repository(self, repository_id, new_id, cluster='self'):
+        """Archive an active repository
 
         Args:
-            instance_id (str): The instance id to be retrieved
-            new_id (str): The id that will be given to the archived instance
+            repository_id (str): The repository id to be retrieved
+            new_id (str): The id that will be given to the archived repository
             cluster (str): Only 'self' is supported.
         """
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
@@ -1930,15 +1930,15 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
 
-        return self._post_json(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/active/{instance_id}/archive',
+        return self._post_json(f'{hosts[0]}/api/v1/cluster/{cluster}/repository/active/{repository_id}/archive',
                                {'id': new_id})
 
-    def add_backup_active_instance(self, instance_id: str, body: Dict[str, Any], cluster: str = 'self'):
-        """Archive an active instance
+    def add_backup_active_repository(self, repository_id: str, body: Dict[str, Any], cluster: str = 'self'):
+        """Archive an active repository
 
         Args:
-            instance_id (str): The id to be given to the new instance.
-            body (dict): The add active instance request.
+            repository_id (str): The id to be given to the new repository.
+            body (dict): The add active repository request.
             cluster (str): Only 'self' is supported.
         """
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
@@ -1948,10 +1948,10 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
 
-        return self._post_json(f'{hosts[0]}/api/v1/cluster/{cluster}/instance/active/{instance_id}', body)
+        return self._post_json(f'{hosts[0]}/api/v1/cluster/{cluster}/repository/active/{repository_id}', body)
 
-    def list_backup_profiles(self):
-        """Retrieves all the backup profiles from the backup service"""
+    def list_backup_plans(self):
+        """Retrieves all the backup plans from the backup service"""
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
         if errors:
             return None, errors
@@ -1959,10 +1959,10 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
 
-        return self._get(f'{hosts[0]}/api/v1/profile')
+        return self._get(f'{hosts[0]}/api/v1/plan')
 
-    def get_backup_profile(self, name: str):
-        """Retrieves a profile by name"""
+    def get_backup_plan(self, name: str):
+        """Retrieves a plan by name"""
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
         if errors:
             return None, errors
@@ -1970,10 +1970,10 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
 
-        return self._get(f'{hosts[0]}/api/v1/profile/{name}')
+        return self._get(f'{hosts[0]}/api/v1/plan/{name}')
 
-    def delete_backup_profile(self, name: str):
-        """Deletes a backup profile by name"""
+    def delete_backup_plan(self, name: str):
+        """Deletes a backup plan by name"""
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
         if errors:
             return None, errors
@@ -1981,12 +1981,12 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
 
-        return self._delete(f'{hosts[0]}/api/v1/profile/{name}', None)
+        return self._delete(f'{hosts[0]}/api/v1/plan/{name}', None)
 
-    def delete_backup_instance(self, instance_id: str, state: str, delete_repo: bool, cluster: str = 'self'):
-        """Delete a backup instance
+    def delete_backup_repository(self, repository_id: str, state: str, delete_repo: bool, cluster: str = 'self'):
+        """Delete a backup repository
         Args:
-            instance_id (str): The id to be deleted.
+            repository_id (str): The id to be deleted.
             state (str): The state in which the isntance to be deleted is.
             delete_repo (bool): Wheter or not to delete the backup Repository.
             cluster (str): Only 'self' is supported.
@@ -1997,15 +1997,15 @@ class ClusterManager(object):
 
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
-        url = f'{hosts[0]}/api/v1/cluster/{cluster}/instance/{state}/{instance_id}?remove_repository={delete_repo!s}'
+        url = f'{hosts[0]}/api/v1/cluster/{cluster}/repository/{state}/{repository_id}?remove_repository={delete_repo!s}'
         return self._delete(url, None)
 
-    def add_backup_profile(self, name: str, profile: Dict[str, Any]):
-        """Adds a new backup profile
+    def add_backup_plan(self, name: str, plan: Dict[str, Any]):
+        """Adds a new backup plan
 
         Args:
-            name (str): The name to give to the new profile if it already exists it will fail.
-            profile (object): The profile to add.
+            name (str): The name to give to the new plan if it already exists it will fail.
+            plan (object): The plan to add.
         """
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
         if errors:
@@ -2014,7 +2014,7 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
 
-        return self._post_json(f'{hosts[0]}/api/v1/profile/{name}', profile)
+        return self._post_json(f'{hosts[0]}/api/v1/plan/{name}', plan)
 
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'

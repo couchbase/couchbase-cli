@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="author" content="Couchbase">
-<title>couchbase-cli-backup-service-profile(1)</title>
+<title>couchbase-cli-backup-service-plan(1)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -439,10 +439,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="manpage">
 <div id="header">
-<h1>couchbase-cli-backup-service-profile(1) Manual Page</h1>
+<h1>couchbase-cli-backup-service-plan(1) Manual Page</h1>
 <h2 id="_name">NAME</h2>
 <div class="sectionbody">
-<p>couchbase-cli-backup-service-profile - Manage the backup service profiles.</p>
+<p>couchbase-cli-backup-service-plan - Manage the backup service plans.</p>
 </div>
 </div>
 <div id="content">
@@ -451,7 +451,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli backup-service</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-    [--password &lt;password&gt;] [--output] profile [--list] [--get]
+    [--password &lt;password&gt;] [--output] plan [--list] [--get]
     [--remove] [--add] [--name &lt;name&gt;] [--description &lt;text&gt;]
     [--services &lt;list&gt;] [--task [&lt;task&gt; &#8230;&#8203;]]</pre>
 </div>
@@ -461,7 +461,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_description">DESCRIPTION</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Manage backup service profiles.</p>
+<p>Manage backup service plans.</p>
 </div>
 </div>
 </div>
@@ -472,19 +472,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dl>
 <dt class="hdlist1">--list</dt>
 <dd>
-<p>List the backup profiles.</p>
+<p>List the backup plans.</p>
 </dd>
 <dt class="hdlist1">--get</dt>
 <dd>
-<p>Get the backup profile by name.</p>
+<p>Get the backup plan by name.</p>
 </dd>
 <dt class="hdlist1">--remove</dt>
 <dd>
-<p>Remove a profile by name.</p>
+<p>Remove a plan by name.</p>
 </dd>
 <dt class="hdlist1">--add</dt>
 <dd>
-<p>Add a new profile.</p>
+<p>Add a new plan.</p>
 </dd>
 </dl>
 </div>
@@ -497,19 +497,19 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dl>
 <dt class="hdlist1">--name &lt;name&gt;</dt>
 <dd>
-<p>Profile name.</p>
+<p>plan name.</p>
 </dd>
 <dt class="hdlist1">--description &lt;text&gt;</dt>
 <dd>
-<p>An optional description provided when adding a new profile.</p>
+<p>An optional description provided when adding a new plan.</p>
 </dd>
 <dt class="hdlist1">--services &lt;list&gt;</dt>
 <dd>
-<p>An optional comma separated lists of services to backup when adding a new profile.</p>
+<p>An optional comma separated lists of services to backup when adding a new plan.</p>
 </dd>
 <dt class="hdlist1">--task [&lt;task&gt; &#8230;&#8203;]</dt>
 <dd>
-<p>One or more tasks to add to the profile. Tasks are given in JSON format. For
+<p>One or more tasks to add to the plan. Tasks are given in JSON format. For
 more information see the examples below.</p>
 </dd>
 </dl>
@@ -547,12 +547,12 @@ a port other that 8091.</p>
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>To retrieve a summary of all profiles run:</p>
+<p>To retrieve a summary of all plans run:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profile --list
+  plan --list
   Name     | # Tasks | Services  | Default
   ---------------------------------------------
   _daily   | 3       | all       | True
@@ -560,19 +560,19 @@ a port other that 8091.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>This will show you the name of all the profiles registered with the service as well as
-how many tasks the profiles has and what services are included.</p>
+<p>This will show you the name of all the plans registered with the service as well as
+how many tasks the plans has and what services are included.</p>
 </div>
 <div class="paragraph">
-<p>To retrieve more in-depth information of a singular profile you can use the <code>--get</code>
+<p>To retrieve more in-depth information of a singular plan you can use the <code>--get</code>
 action argument as shown below.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profile --get --name _daily
+  plan --get --name _daily
 Name: _daily
-Description: This profile does a backup every hour and merge 6 hours as well as at the end of the week
+Description: This plan does a backup every hour and merge 6 hours as well as at the end of the week
 Services: all
 Default: False
 
@@ -585,27 +585,27 @@ merge_week           | merge every sunday at 23:40   | Merge from 0 to 7</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To retrieve the information in JSON format add <code>--output json</code> before the <code>profile</code> key
+<p>To retrieve the information in JSON format add <code>--output json</code> before the <code>plan</code> key
 word.</p>
 </div>
 <div class="paragraph">
-<p>To remove a profile use the action argument <code>--remove</code> as shown below. Note that only
-profiles that are not being used by an active instance may be removed. To remove a
-profile that is being used, all the profiles that use it must be archived first.</p>
+<p>To remove a plan use the action argument <code>--remove</code> as shown below. Note that only
+plans that are not being used by an active instance may be removed. To remove a
+plan that is being used, all the plans that use it must be archived first.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profile --remove --name _daily</pre>
+  plan --remove --name _daily</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To add a profile  use the action argument <code>--add</code> as seen below.</p>
+<p>To add a plan  use the action argument <code>--add</code> as seen below.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  profile --add --name new-profile --description "Optional description"
+  plan --add --name new-plan --description "Optional description"
   --task '{"name":"t1", "task_type":"BACKUP", "full_backup": true, \
   "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}'
    --services data</pre>
@@ -613,8 +613,8 @@ profile that is being used, all the profiles that use it must be archived first.
 </div>
 <div class="paragraph">
 <p>The <code>--description</code> is an optional string of up to 140 characters that can be used to
-describe what the profile does. The <code>--services</code> flag defines what services should be
-backed up by the tasks in the profile, valid services are
+describe what the plan does. The <code>--services</code> flag defines what services should be
+backed up by the tasks in the plan, valid services are
 <code>[data, gsi, cbas, ft, eventing, views]</code>. Finally, the <code>--task</code> argument accepts JSON
 task objects. The task objects have the following schema:</p>
 </div>
