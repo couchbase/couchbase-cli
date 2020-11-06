@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-index
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-07-31
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-11-06
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-INDEX" "1" "2018-07-31" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-INDEX" "1" "2020-11-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 couchbase\-cli\-setting\-index \- Modifies index settings
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 \fIcouchbase\-cli setting\-index\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -71,7 +72,8 @@ environment variable CB_REST_PASSWORD.
 \-\-index\-max\-rollback\-points <num>
 .RS 4
 The maximum number of rollback points. The value of this option must be
-greater than or equal to 1.
+greater than or equal to 1. If this option is not specified it defaults
+to 2.
 .RE
 .sp
 \-\-index\-stable\-snapshot\-interval <seconds>
@@ -79,8 +81,7 @@ greater than or equal to 1.
 Specifies the frequency of persisted snapshots for recovery in seconds. This
 means that in the event of a failover this is the farthest back we may have
 to rebuild the index from. This value of this parameter must be greater than 1.
-If this options is not specified it defaults to 30000 seconds (8 hours
-20 minutes).
+If this option is not specified it defaults to 5000 seconds.
 .RE
 .sp
 \-\-index\-memory\-snapshot\-interval <milliseconds>
@@ -97,21 +98,21 @@ Sets the index storage mode for all indexes in this cluster. This parameter
 may only be changed if there are no nodes running the index service. To
 specify the disk based forestdb index backend set this parameter to
 "default". To set the storage mode to use memory optimized indexes set this
-parameter to "memopt".
+parameter to "memopt". This option does not have a default value if not set.
 .RE
 .sp
 \-\-index\-threads <num>
 .RS 4
 Sets the number of CPUs that can be used by the indexer. The value of this
 option must be between 0 and 1024. If this option is not set then it
-default to 4.
+default to 0.
 .RE
 .sp
 \-\-index\-log\-level <level>
 .RS 4
 Sets the log level for the index service. Valid log levels include "debug",
 "silent", "fatal", "error", "warn", "info", "verbose", "timing", and
-"trace".
+"trace". If this option is not specified it defaults to "info".
 .RE
 .SH "HOST FORMATS"
 .sp
