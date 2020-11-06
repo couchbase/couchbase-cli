@@ -1,10 +1,10 @@
-= couchbase-cli-backup-service-instance(1)
-ifndef::doctype-manpage[:doctitle: backup-serivce-instance]
+= couchbase-cli-backup-service-repository(1)
+ifndef::doctype-manpage[:doctitle: backup-serivce-repository]
 
 ifdef::doctype-manpage[]
 == NAME
 
-couchbase-cli-backup-service-instance -
+couchbase-cli-backup-service-repository -
 endif::[]
 Manage the backup service repositories.
 
