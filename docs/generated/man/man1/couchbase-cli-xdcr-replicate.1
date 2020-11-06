@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-10-21
+.\"      Date: 2020-11-06
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-10-21" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-11-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -242,7 +242,7 @@ expirations on the source cluster.
 \-\-collection\-explicit\-mappings <1|0>
 .RS 4
 Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
-below for more information.
+below for more information. This is an Enterprise Edition only feature.
 .RE
 .sp
 \-\-collections\-migration <1|0>
@@ -255,6 +255,7 @@ Enable or disable XDCR migration mode. Explicit mappings must be set to
 .RS 4
 The mappings rules from source bucket to target bucket. The mappings are
 JSON formatted string. See COLLECTION MAPPINGS below for more information.
+This is an Enterprise Edition only feature.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -300,10 +301,9 @@ a port other that 8091.
 .SH "EXAMPLES"
 .sp
 To create a new XDCR replication from the "default" bucket to the "apps" bucket
-on a remote cluster called "east". You can
-run the following command below. Note that if you have not setup a remote
-cluster reference then you need to do this first by running the
-\fBcouchbase\-cli\-xdcr\-setup\fP(1).
+on a remote cluster called "east". You can run the following command below.
+Note that if you have not setup a remote cluster reference then you need to
+do this first by running the \fBcouchbase\-cli\-xdcr\-setup\fP(1).
 .sp
 .if n .RS 4
 .nf

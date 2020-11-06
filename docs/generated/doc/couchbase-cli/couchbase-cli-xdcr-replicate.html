@@ -648,7 +648,7 @@ expirations on the source cluster.</p>
 <dt class="hdlist1">--collection-explicit-mappings &lt;1|0&gt;</dt>
 <dd>
 <p>Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
-below for more information.</p>
+below for more information. This is an Enterprise Edition only feature.</p>
 </dd>
 <dt class="hdlist1">--collections-migration &lt;1|0&gt;</dt>
 <dd>
@@ -658,7 +658,8 @@ below for more information.</p>
 <dt class="hdlist1">--collection-mapping-rules &lt;mappings&gt;</dt>
 <dd>
 <p>The mappings rules from source bucket to target bucket. The mappings are
-JSON formatted string. See COLLECTION MAPPINGS below for more information.</p>
+JSON formatted string. See COLLECTION MAPPINGS below for more information.
+This is an Enterprise Edition only feature.</p>
 </dd>
 </dl>
 </div>
@@ -696,10 +697,9 @@ a port other that 8091.</p>
 <div class="sectionbody">
 <div class="paragraph">
 <p>To create a new XDCR replication from the "default" bucket to the "apps" bucket
-on a remote cluster called "east". You can
-run the following command below. Note that if you have not setup a remote
-cluster reference then you need to do this first by running the
-<a href="couchbase-cli-xdcr-setup.html">couchbase-cli-xdcr-setup(1)</a>.</p>
+on a remote cluster called "east". You can run the following command below.
+Note that if you have not setup a remote cluster reference then you need to
+do this first by running the <a href="couchbase-cli-xdcr-setup.html">couchbase-cli-xdcr-setup(1)</a>.</p>
 </div>
 <div class="listingblock">
 <div class="content">

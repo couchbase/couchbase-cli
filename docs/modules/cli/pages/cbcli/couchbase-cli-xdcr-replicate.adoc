@@ -143,7 +143,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --collection-explicit-mappings <1|0>::
   Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
-  below for more information.
+  below for more information. This is an Enterprise Edition only feature.
 
 --collections-migration <1|0>::
   Enable or disable XDCR migration mode. Explicit mappings must be set to
@@ -152,6 +152,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --collection-mapping-rules <mappings>::
   The mappings rules from source bucket to target bucket. The mappings are
   JSON formatted string. See COLLECTION MAPPINGS below for more information.
+  This is an Enterprise Edition only feature.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
