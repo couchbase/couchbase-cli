@@ -70,7 +70,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --bucket-eviction-policy <policy>::
   The memory-cache eviction policy for this bucket. This option is valid for
-  Couchbase and Ephemeral buckets only.
+  Couchbase buckets only; the eviction policy for ephemeral buckets can't be
+  changed.
 +
 [normal]
   Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
@@ -80,14 +81,6 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   bucket. Specifying the "fullEviction" policy means that performance is
   impacted for key-value operations, but the maximum size of the bucket is
   unbounded.
-+
-[normal]
-  Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
-  "noEviction" means that the bucket will not evict items from the cache if
-  the cache is full: this type of eviction policy should be used for in-memory
-  database use-cases. Specifying "nruEviction" means that items not recently
-  used will be evicted from memory, when all memory in the bucket is used:
-  this type of eviction policy should be used for caching use-cases.
 
 --enable-flush <num>::
   Specifies whether or not the flush operation is allowed for this bucket. To
