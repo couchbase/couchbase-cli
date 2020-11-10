@@ -55,6 +55,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --completed-limit <max>::
   Maximum number of completed requests, the default is 4000.
 
+--completed-threshold <ms>::
+  Cache completed queries lasting longer than this threshold (in milliseconds),
+  the default is 1000.
+
 --log-level <trace|debug|info|warn|error|server|none>::
   Query engine log level, the default level is info.
 
