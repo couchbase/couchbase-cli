@@ -498,15 +498,15 @@ environment variable CB_REST_PASSWORD.</p>
 <dt class="hdlist1">--index-max-rollback-points &lt;num&gt;</dt>
 <dd>
 <p>The maximum number of rollback points. The value of this option must be
-greater than or equal to 1.</p>
+greater than or equal to 1. If this option is not specified it defaults
+to 2.</p>
 </dd>
 <dt class="hdlist1">--index-stable-snapshot-interval &lt;seconds&gt;</dt>
 <dd>
 <p>Specifies the frequency of persisted snapshots for recovery in seconds. This
 means that in the event of a failover this is the farthest back we may have
 to rebuild the index from. This value of this parameter must be greater than 1.
-If this options is not specified it defaults to 30000 seconds (8 hours
-20 minutes).</p>
+If this option is not specified it defaults to 5000 seconds.</p>
 </dd>
 <dt class="hdlist1">--index-memory-snapshot-interval &lt;milliseconds&gt;</dt>
 <dd>
@@ -521,19 +521,19 @@ to 200 if it is not specified.</p>
 may only be changed if there are no nodes running the index service. To
 specify the disk based forestdb index backend set this parameter to
 "default". To set the storage mode to use memory optimized indexes set this
-parameter to <code>memopt</code>.</p>
+parameter to <code>memopt</code>. This option does not have a default value if not set.</p>
 </dd>
 <dt class="hdlist1">--index-threads &lt;num&gt;</dt>
 <dd>
 <p>Sets the number of CPUs that can be used by the indexer. The value of this
 option must be between 0 and 1024. If this option is not set then it
-default to 4.</p>
+default to 0.</p>
 </dd>
 <dt class="hdlist1">--index-log-level &lt;level&gt;</dt>
 <dd>
 <p>Sets the log level for the index service. Valid log levels include "debug",
 "silent", "fatal", "error", "warn", "info", "verbose", "timing", and
-"trace".</p>
+"trace". If this option is not specified it defaults to "info".</p>
 </dd>
 </dl>
 </div>

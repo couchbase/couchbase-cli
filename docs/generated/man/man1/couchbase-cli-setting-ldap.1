@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-ldap
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-10-08
+.\"      Date: 2020-11-10
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2020-10-08" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-LDAP" "1" "2020-11-10" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -36,7 +36,7 @@ couchbase\-cli\-setting\-ldap \- Configure LDAP
 \fIcouchbase\-cli setting\-ldap\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-authentication\-enabled <1|0>]
     [\-\-authorization\-enabled <1|0>] [\-\-hosts <host_list>] [\-\-port <port>]
-    [\-\-encryption <tls|startTLS|none>] [\-\-disable\-cert\-validation]
+    [\-\-encryption <tls|startTLS|none>] [\-\-server\-cert\-validation <1|0>]
     [\-\-ldap\-cacert <path>] [\-\-request\-timeout <ms>]
     [\-\-user\-dn\-query <query> | \-\-user\-dn\-template <template>]
     [\-\-max\-parallel <max>] [\-\-max\-cache\-size <size>]
@@ -100,9 +100,9 @@ Security used to communicate with LDAP servers. Supported options
 [tls, startTLS, none].
 .RE
 .sp
-\-\-disable\-cert\-validation
+\-\-server\-cert\-validation <1|0>
 .RS 4
-Disable server certificate validation.
+Enable or disable certificate validation when connecting to LDAP server.
 .RE
 .sp
 \-\-ldap\-cacert <path>
@@ -128,7 +128,7 @@ Template to construct user\(cqs DN. Must contain at least one instance of %u
 Example: uid=%u,ou=Users,dc=example
 .RE
 .sp
-\-\-max\-parallel\-connections <max>
+\-\-max\-parallel <max>
 .RS 4
 Maximum number of parallel connections that can be established with LDAP
 servers.
@@ -182,7 +182,7 @@ considered a group, for example:
 \(aqou=groups,dc=example,dc=com??one?(member=%D)\(aq
 .RE
 .sp
-\-\-nested\-groups\-enabled <0|1>
+\-\-enable\-nested\-groups <0|1>
 .RS 4
 If enabled Couchbase server will try to recursively search for groups for
 every discovered ldap group.
@@ -244,7 +244,7 @@ with encryption disabled:
 .nf
 $ couchbase\-cli setting\-ldap \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-authentication\-enabled 1 \-\-authorization\-enabled 1 \(rs
- \-\-hosts ldap.couchbase.com \-\-encryption 0
+ \-\-hosts ldap.couchbase.com \-\-encryption none
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
