@@ -1578,7 +1578,8 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def _get_xdcr_params(self, chk_interval, worker_batch_size, doc_batch_size,
+    @staticmethod
+    def _get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                          fail_interval, replication_threshold, src_nozzles,
                          dst_nozzles, usage_limit, compression, log_level, stats_interval):
         params = {}
@@ -1606,11 +1607,17 @@ class ClusterManager(object):
             params["statsInterval"] = stats_interval
         return params
 
-    def  create_xdcr_replication(self, name, to_bucket, from_bucket, filter_expression, compression, reset_expiry,
-                                 filter_del, filter_exp):
+    def create_xdcr_replication(self, name, to_bucket, from_bucket, chk_interval, worker_batch_size, doc_batch_size,
+                                fail_interval, replication_thresh, src_nozzles, dst_nozzles, usage_limit, compression,
+                                log_level, stats_interval, filter_expression, priority, reset_expiry, filter_del,
+                                filter_exp, col_explicit_mappings, col_migration_mode, col_mapping_rule):
         url = f'{self.hostname}/controller/createReplication'
-        params = {"replicationType": "continuous"}
+        params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
+                                       fail_interval, replication_thresh, src_nozzles,
+                                       dst_nozzles, usage_limit, compression, log_level,
+                                       stats_interval)
 
+        params['replicationType'] = 'continuous'
         if to_bucket is not None:
             params["toBucket"] = to_bucket
         if name is not None:
@@ -1618,15 +1625,21 @@ class ClusterManager(object):
         if from_bucket is not None:
             params["fromBucket"] = from_bucket
         if filter is not None:
-            params["filterExpression"] = filter_expression
-        if compression is not None:
-            params["compressionType"] = compression
+            params['filterExpression'] = filter_expression
+        if priority:
+            params['priority'] = priority
         if reset_expiry:
-            params['filterBypassExpiry'] = 'true' if reset_expiry == '1' else 'false'
+            params['filterBypassExpiry'] = one_zero_boolean_to_string(reset_expiry)
         if filter_del:
-            params['filterDeletion'] = 'true' if filter_del == '1' else 'false'
+            params['filterDeletion'] = one_zero_boolean_to_string(filter_del)
         if filter_exp:
-            params['filterExpiration'] = 'true' if filter_exp == '1' else 'false'
+            params['filterExpiration'] = one_zero_boolean_to_string(filter_exp)
+        if col_explicit_mappings is not None:
+            params['collectionsExplicitMapping'] = one_zero_boolean_to_string(col_explicit_mappings)
+        if col_migration_mode is not None:
+            params['collectionsMigrationMode'] = one_zero_boolean_to_string(col_migration_mode)
+        if col_mapping_rule is not None:
+            params['colMappingRules'] = col_mapping_rule
 
         return self._post_form_encoded(url, params)
 

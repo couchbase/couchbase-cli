@@ -3561,9 +3561,16 @@ class XdcrReplicate(Subcommand):
         print(json.dumps(settings, indent=4, sort_keys=True))
 
     def _create(self, opts):
-        _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.filter,
-                                                      opts.compression, opts.reset_expiry, opts.filter_del,
-                                                      opts.filter_exp)
+        if opts.filter_skip and opts.filter is None:
+            _exit_if_errors(["--filter-expersion is needed with the --filter-skip-restream option"])
+        _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.chk_int,
+                                                      opts.worker_batch_size, opts.doc_batch_size, opts.fail_interval,
+                                                      opts.rep_thresh, opts.src_nozzles, opts.dst_nozzles,
+                                                      opts.usage_limit, opts.compression, opts.log_level,
+                                                      opts.stats_interval, opts.filter, opts.priority,
+                                                      opts.reset_expiry, opts.filter_del, opts.filter_exp,
+                                                      opts.collection_explicit_mappings, opts.collection_migration,
+                                                      opts.collection_mapping_rules)
         _exit_if_errors(errors)
 
         _success("XDCR replication created")
