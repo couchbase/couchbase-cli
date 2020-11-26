@@ -648,12 +648,14 @@ expirations on the source cluster.</p>
 <dt class="hdlist1">--collection-explicit-mappings &lt;1|0&gt;</dt>
 <dd>
 <p>Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
-below for more information. This is an Enterprise Edition only feature.</p>
+below for more information. This is an Enterprise Edition only feature.
+This option cannot be turned on if collections migration is on.</p>
 </dd>
 <dt class="hdlist1">--collections-migration &lt;1|0&gt;</dt>
 <dd>
 <p>Enable or disable XDCR migration mode. Explicit mappings must be set to
-1 for this. This is an Enterprise Edition only feature.</p>
+1 for this. This is an Enterprise Edition only feature. This option
+cannot be turned on if collection explicit mappings is on.</p>
 </dd>
 <dt class="hdlist1">--collection-mapping-rules &lt;mappings&gt;</dt>
 <dd>
@@ -893,6 +895,9 @@ we can use the following command:</p>
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
    --collection-explicit-mappings 1  --collection-mapping-rules {"databases.nosql":"databases-replica.nosql-replica"}</pre>
 </div>
+</div>
+<div class="paragraph">
+<p>Note that explicit mapping rules cannot be used with collection migration mode.</p>
 </div>
 </div>
 </div>

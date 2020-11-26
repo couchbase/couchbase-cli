@@ -144,10 +144,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --collection-explicit-mappings <1|0>::
   Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
   below for more information. This is an Enterprise Edition only feature.
+  This option cannot be turned on if collections migration is on.
 
 --collections-migration <1|0>::
   Enable or disable XDCR migration mode. Explicit mappings must be set to
-  1 for this. This is an Enterprise Edition only feature.
+  1 for this. This is an Enterprise Edition only feature. This option
+  cannot be turned on if collection explicit mappings is on.
 
 --collection-mapping-rules <mappings>::
   The mappings rules from source bucket to target bucket. The mappings are
@@ -295,6 +297,8 @@ $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    --xdcr-replicator=f4eb540d74c43fd3ac6d4b7910c8c92f/default/default \
    --collection-explicit-mappings 1  --collection-mapping-rules {"databases.nosql":"databases-replica.nosql-replica"}
 ----
+
+Note that explicit mapping rules cannot be used with collection migration mode.
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

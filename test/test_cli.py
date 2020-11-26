@@ -1391,6 +1391,14 @@ class TestXdcrReplicate(CommandTest):
 
         self.rest_parameter_match(expected_params)
 
+    def test_create_with_mutually_exclusive_args(self):
+        self.system_exit_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket',
+                                             'bucket2', '--xdcr-from-bucket', 'bucket1', '--filter-expression',
+                                             'key:[a-zA-z]+', '--xdcr-replication-mode', 'capi', '--enable-compression',
+                                             '1', '--collection-explicit-mappings','1', '--collection-migration', '1'],
+                             self.server_args)
+        self.assertIn('cannot enable both collection migration and explicit mappings', self.str_output)
+
     def test_create_CE_with_EE(self):
         self.server_args['enterprise'] = False
         self.system_exit_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
@@ -1436,10 +1444,16 @@ class TestXdcrReplicate(CommandTest):
                            'colMappingRules=mappings']
         self.rest_parameter_match(expected_params, False)
 
+    def test_settings_collection_mutually_exclusive_args(self):
+        self.system_exit_run(self.command + ['--settings', '--xdcr-replicator', '1', '--collection-explicit-mappings',
+                                             '1', '--collection-migration', '1', '--collection-mapping-rules',
+                                             'mappings'], self.server_args)
+        self.assertIn('cannot enable both collection migration and explicit mappings', self.str_output)
+
     def test_migration_CE_(self):
         self.server_args['enterprise'] = False
         self.system_exit_run(self.command + ['--settings', '--xdcr-replicator', '1', '--collection-explicit-mappings',
-                                             '1', '--collection-migration', '1', '--collection-mapping-rules',
+                                             '1', '--collection-migration', '0', '--collection-mapping-rules',
                                              'mappings'], self.server_args)
         self.assertIn('can only be configured on enterprise edition', self.str_output)
 

@@ -3561,6 +3561,8 @@ class XdcrReplicate(Subcommand):
         print(json.dumps(settings, indent=4, sort_keys=True))
 
     def _create(self, opts):
+        if opts.collection_migration == '1' and opts.collection_explicit_mappings == '1':
+            _exit_if_errors(['cannot enable both collection migration and explicit mappings'])
         if opts.filter_skip and opts.filter is None:
             _exit_if_errors(["--filter-expersion is needed with the --filter-skip-restream option"])
         _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.chk_int,
@@ -3624,6 +3626,8 @@ class XdcrReplicate(Subcommand):
             _exit_if_errors(["--xdcr-replicator is needed to change a replicators settings"])
         if opts.filter_skip and opts.filter is None:
             _exit_if_errors(["--filter-expersion is needed with the --filter-skip-restream option"])
+        if opts.collection_migration == '1' and opts.collection_explicit_mappings == '1':
+            _exit_if_errors(['cannot enable both collection migration and explicit mappings'])
         _, errors = self.rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size, opts.doc_batch_size,
                                                        opts.fail_interval, opts.rep_thresh, opts.src_nozzles,
                                                        opts.dst_nozzles, opts.usage_limit, opts.compression,

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-xdcr-replicate
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-11-06
+.\"      Date: 2020-11-26
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-11-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-XDCR\-REPLICATE" "1" "2020-11-26" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -243,12 +243,14 @@ expirations on the source cluster.
 .RS 4
 Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
 below for more information. This is an Enterprise Edition only feature.
+This option cannot be turned on if collections migration is on.
 .RE
 .sp
 \-\-collections\-migration <1|0>
 .RS 4
 Enable or disable XDCR migration mode. Explicit mappings must be set to
-1 for this. This is an Enterprise Edition only feature.
+1 for this. This is an Enterprise Edition only feature. This option
+cannot be turned on if collection explicit mappings is on.
 .RE
 .sp
 \-\-collection\-mapping\-rules <mappings>
@@ -539,6 +541,8 @@ $ couchbase\-cli xdcr\-replicate \-c 192.168.1.5 \-u Administrator \(rs
    \-\-collection\-explicit\-mappings 1  \-\-collection\-mapping\-rules {"databases.nosql":"databases\-replica.nosql\-replica"}
 .fi
 .if n .RE
+.sp
+Note that explicit mapping rules cannot be used with collection migration mode.
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_USERNAME
