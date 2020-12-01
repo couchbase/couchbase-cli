@@ -53,6 +53,12 @@ if os.name == "nt":
 else:
     CB_MAN_PATH = os.path.join(CB_MAN_PATH, "man", "man1")
 
+def remove_prefix(val: str, prefix: str) -> str:
+    """This function removes a prefix from a string.
+
+    Note this is a built-in function in Python 3.9 once we upgrade to it we should use it instead.
+    """
+    return val[len(prefix):] if val.startswith(prefix) else val
 
 def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_check=None):
     """rest_initialiser is a decorator that does common subcommand tasks.
@@ -181,7 +187,9 @@ def _warning(msg):
 def _exit_if_errors(errors):
     if errors:
         for error in errors:
-            print(f'ERROR: {error}')
+            # Some endpoint return errors prefixed with '_ -' this has to be stripped out. For more information see
+            # MB-42801
+            print(f'ERROR: {remove_prefix(error, "_ -").lstrip(" ")}')
         sys.exit(1)
 
 
