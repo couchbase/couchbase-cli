@@ -2030,30 +2030,30 @@ class ClusterManager(object):
         return self._post_json(f'{hosts[0]}/api/v1/plan/{name}', plan)
 
     def create_scope(self, bucket, scope):
-        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
+        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes'
         params = {"name": scope}
         return self._post_form_encoded(url, params)
 
     def drop_scope(self, bucket, scope):
-        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections/'\
+        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/'\
             f'{urllib.parse.quote_plus(scope)}'
         return self._delete(url, None)
 
     def create_collection(self, bucket, scope, collection, max_ttl):
-        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections/' \
-            f'{urllib.parse.quote_plus(scope)}'
+        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/' \
+            f'{urllib.parse.quote_plus(scope)}/collections'
         params = {"name": collection}
         if max_ttl:
             params["maxTTL"] = max_ttl
         return self._post_form_encoded(url, params)
 
     def drop_collection(self, bucket, scope, collection):
-        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections/'\
-            f'{urllib.parse.quote_plus(scope)}/{urllib.parse.quote_plus(collection)}'
+        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/'\
+            f'{urllib.parse.quote_plus(scope)}/collections/{urllib.parse.quote_plus(collection)}'
         return self._delete(url, None)
 
     def get_manifest(self, bucket):
-        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/collections'
+        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes'
         return self._get(url)
 
     def set_alternate_address(self, hostname, ports):
