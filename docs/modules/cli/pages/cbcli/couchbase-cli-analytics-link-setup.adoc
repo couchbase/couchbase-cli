@@ -17,7 +17,7 @@ _couchbase-cli analytics-link-setup_ [--cluster <cluster>] [--username <username
     [--hostname <hostname>] [--link-username <username>] [--link-password <password>]
     [--user-certificate <path>] [--user-key <path>] [--certificate <path>]
     [--encryption <type>] [--access-key-id <id>] [--secret-access-key <key>]
-    [--region <region>] [--service-endpoint <url>]
+    [--session-token <token>] [--region <region>] [--service-endpoint <url>]
 
 == DESCRIPTION
 
@@ -100,6 +100,10 @@ Following are the options specific to *--type s3*, i.e. S3 links
 --secret-access-key <key>::
   The secret access key of the s3 link.
 
+--session-token <token>::
+  The session token of the s3 link. This is used when Multi-Factor Authentication
+(MFA) temporary credentials are used.
+
 --region <region>::
   The region of the s3 link.
 
@@ -134,6 +138,15 @@ $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --create --scope test --name myAwsLink --type s3 \
  --region us-west-2 --access-key-id LOREMIPSUMDOLORSITAMET123 \
  --secret-access-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456
+----
+To create an S3 link named `myAwsLink` in the "test" scope, with
+temporary S3 credentials, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope test --name myAwsLink --type s3 \
+ --region us-west-2 --access-key-id myTemporaryAccessKeyId \
+ --secret-access-key myTemporarySecretAccessKey \
+ --session-token myTemporarySessionToken
 ----
 To list all current links, run the following command:
 ----

@@ -1861,6 +1861,16 @@ class TestAnalyticsLinkSetup(CommandTest):
                                    'secretAccessKey=my-secret', 'region=us-east-0',
                                    'serviceEndpoint=my-cool-endpoint.com'])
 
+    def test_create_s3_session_token(self):
+        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 's3',
+                                          '--access-key-id', 'id-1', '--secret-access-key', 'my-secret', '--region',
+                                          'us-east-0', '--session-token', 'my-token', '--service-endpoint',
+                                          'my-cool-endpoint.com'], self.server_args)
+        self.assertIn('POST:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=s3', 'accessKeyId=id-1',
+                                   'secretAccessKey=my-secret', 'region=us-east-0', 'sessionToken=my-token',
+                                   'serviceEndpoint=my-cool-endpoint.com'])
+
     def test_create_couchbase(self):
         self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
                                           '--link-username', 'user', '--link-password', 'secret', '--encryption',

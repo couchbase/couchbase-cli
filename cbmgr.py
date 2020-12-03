@@ -3984,6 +3984,8 @@ class AnalyticsLinkSetup(Subcommand):
                            help="The access key ID of the link")
         group.add_argument("--secret-access-key", dest="secret_access_key", metavar="<key>",
                            help="The secret access key of the link")
+        group.add_argument("--session-token", dest="session_token", metavar="<token>",
+                           help="Temporary credentials session token")
         group.add_argument("--region", dest="region", metavar="<region>",
                            help="The region of the link")
         group.add_argument("--service-endpoint", dest="service_endpoint", metavar="<url>",

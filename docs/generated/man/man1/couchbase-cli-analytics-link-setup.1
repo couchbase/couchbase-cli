@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-analytics-link-setup
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-10-22
+.\" Generator: Asciidoctor 2.0.12
+.\"      Date: 2020-12-03
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2020-10-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2020-12-03" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -39,7 +39,7 @@ couchbase\-cli\-analytics\-link\-setup \- Manage Analytics links
     [\-\-hostname <hostname>] [\-\-link\-username <username>] [\-\-link\-password <password>]
     [\-\-user\-certificate <path>] [\-\-user\-key <path>] [\-\-certificate <path>]
     [\-\-encryption <type>] [\-\-access\-key\-id <id>] [\-\-secret\-access\-key <key>]
-    [\-\-region <region>] [\-\-service\-endpoint <url>]
+    [\-\-session\-token <token>] [\-\-region <region>] [\-\-service\-endpoint <url>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -176,6 +176,12 @@ The access key ID of the s3 link.
 The secret access key of the s3 link.
 .RE
 .sp
+\-\-session\-token <token>
+.RS 4
+  The session token of the s3 link. This is used when Multi\-Factor Authentication
+(MFA) temporary credentials are used.
+.RE
+.sp
 \-\-region <region>
 .RS 4
 The region of the s3 link.
@@ -233,10 +239,12 @@ following command:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-create \-\-scope Default \-\-name east \-\-type couchbase \(rs
  \-\-hostname 192.168.1.6 \-\-link\-username Administrator \(rs
  \-\-link\-password password \-\-encryption none
+.fam
 .fi
 .if n .RE
 .sp
@@ -245,11 +253,13 @@ encryption:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-create \-\-scope Default \-\-name east \-\-type couchbase \(rs
  \-\-hostname 192.168.1.6 \-\-link\-username Administrator \(rs
  \-\-link\-password password \-\-encryption full \(rs
  \-\-certificate /root/cluster.cert
+.fam
 .fi
 .if n .RE
 .sp
@@ -258,10 +268,27 @@ following command:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-create \-\-scope test \-\-name myAwsLink \-\-type s3 \(rs
  \-\-region us\-west\-2 \-\-access\-key\-id LOREMIPSUMDOLORSITAMET123 \(rs
  \-\-secret\-access\-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456
+.fam
+.fi
+.if n .RE
+.sp
+To create an S3 link named \f(CRmyAwsLink\fP in the "test" scope, with
+temporary S3 credentials, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-scope test \-\-name myAwsLink \-\-type s3 \(rs
+ \-\-region us\-west\-2 \-\-access\-key\-id myTemporaryAccessKeyId \(rs
+ \-\-secret\-access\-key myTemporarySecretAccessKey \(rs
+ \-\-session\-token myTemporarySessionToken
+.fam
 .fi
 .if n .RE
 .sp
@@ -269,8 +296,10 @@ To list all current links, run the following command:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-list
+.fam
 .fi
 .if n .RE
 .sp
@@ -278,8 +307,10 @@ To list current S3 links, run the following command:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-list \-\-type s3
+.fam
 .fi
 .if n .RE
 .sp
@@ -288,10 +319,12 @@ following command:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-edit \-\-scope Default \-\-name east \-\-type couchbase \(rs
  \-\-hostname 192.168.1.6 \-\-link\-username Administrator \(rs
  \-\-link\-password new_password \-\-encryption half
+.fam
 .fi
 .if n .RE
 .sp
@@ -304,8 +337,10 @@ deletes the link named "east" in the "Default" scope:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-delete \-\-scope Default \-\-link east
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

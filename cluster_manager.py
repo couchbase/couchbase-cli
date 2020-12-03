@@ -1806,6 +1806,8 @@ class ClusterManager(object):
             params['accessKeyId'] = opts.access_key_id
         if opts.secret_access_key:
             params['secretAccessKey'] = opts.secret_access_key
+        if opts.session_token:
+            params['sessionToken'] = opts.session_token
         if opts.region:
             params['region'] = opts.region
         if opts.service_endpoint:
