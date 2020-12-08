@@ -2241,6 +2241,8 @@ def _handle_response(response, debug):
             response.encoding = 'utf-8'
             return response.text, None
     elif response.status_code in [400, 404, 405, 409]:
+        if 'Content-Type' not in response.headers:
+            return None, ["Not a Couchbase Server, please check hostname and port"]
         if 'application/json' in response.headers['Content-Type']:
             errors = response.json()
             if isinstance(errors, list):
