@@ -369,6 +369,36 @@ class TestBucketEdit(CommandTest):
         ]
         self.rest_parameter_match(expected_params)
 
+    def test_bucket_edit_value_only(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.no_error_run(self.command + self.command_args + ['--bucket-eviction-policy', 'valueOnly'],
+                self.server_args)
+        self.rest_parameter_match(['evictionPolicy=valueOnly'])
+
+    def test_bucket_edit_full_eviction(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.no_error_run(self.command + self.command_args + ['--bucket-eviction-policy', 'fullEviction'],
+                self.server_args)
+        self.rest_parameter_match(['evictionPolicy=fullEviction'])
+
+    def test_bucket_edit_no_eviction(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.no_error_run(self.command + self.command_args + ['--bucket-eviction-policy', 'noEviction'],
+                self.server_args)
+        self.rest_parameter_match(['evictionPolicy=noEviction'])
+
+    def test_bucket_edit_nru_eviction(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.no_error_run(self.command + self.command_args + ['--bucket-eviction-policy', 'nruEviction'],
+                self.server_args)
+        self.rest_parameter_match(['evictionPolicy=nruEviction'])
+
+    def test_bucket_edit_invalid_policy(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.system_exit_run(self.command + self.command_args + ['--bucket-eviction-policy', 'nope'], self.server_args)
+        self.assertIn("ERROR: argument --bucket-eviction-policy: invalid choice: 'nope'"+
+                " (choose from 'valueOnly', 'fullEviction')", self.str_output)
+
     def test_memcached_bucket_edit(self):
         self.server_args['buckets'].append(self.bucket_memcached)
         self.memcahced_args = ['--enable-flush', '1']

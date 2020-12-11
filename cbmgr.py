@@ -929,8 +929,7 @@ class BucketEdit(Subcommand):
                            choices=["none", "majority", "majorityAndPersistActive", "persistToMajority"],
                            help="The bucket durability minimum level")
         group.add_argument("--bucket-eviction-policy", dest="eviction_policy", metavar="<policy>",
-                           choices=["valueOnly", "fullEviction"],
-                           help="The bucket eviction policy (valueOnly or fullEviction)")
+                           type=(str), help="The bucket eviction policy (valueOnly or fullEviction)")
         group.add_argument("--max-ttl", dest="max_ttl", default=None, type=(int), metavar="<seconds>",
                            help="Set the maximum TTL the bucket will accept")
         group.add_argument("--compression-mode", dest="compression_mode",
@@ -976,6 +975,14 @@ class BucketEdit(Subcommand):
 
         if opts.compression_mode and not self.enterprise:
             _exit_if_errors(["Compression mode can only be configured on enterprise edition"])
+
+        # Note that we accept 'noEviction' and 'nruEviction' as valid values even though they are undocumented; this is
+        # so that users attempting to modify the eviction policy of an ephemeral bucket will receive a meaningful
+        # message from 'ns_server'. See MB-39036 for more information.
+        if (opts.eviction_policy is not None
+                and opts.eviction_policy not in ["valueOnly", "fullEviction", "noEviction", "nruEviction"]):
+            _exit_if_errors([f"argument --bucket-eviction-policy: invalid choice: '{opts.eviction_policy}'"+
+                " (choose from 'valueOnly', 'fullEviction')"])
 
         bucket, errors = self.rest.get_bucket(opts.bucket_name)
         _exit_if_errors(errors)
