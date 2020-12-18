@@ -2100,6 +2100,17 @@ class ClusterManager(object):
             params['nodeEncryption'] = encryption
         return self._post_form_encoded(url, params)
 
+    def disable_unused_external_listeners(self, host=None, ipfamily=None, encryption=None):
+        hostname = host if host else self.hostname
+        url = f'{hostname}/node/controller/disableUnusedExternalListeners'
+        res, err = self._post_form_encoded(url, None)
+        if err is None or err[0] != 'Requested resource not found.\r\n':
+            return res, err
+
+        # Backward compatibility: 6.5 nodes don't have
+        # disableUnusedExternalListeners api yet. Call previous api then.
+        return self.disable_external_listener(host=host, ipfamily=ipfamily, encryption=encryption)
+
     def setup_net_config(self, host=None, ipfamily=None, encryption=None):
         hostname = host if host else self.hostname
         url = f'{hostname}/node/controller/setupNetConfig'

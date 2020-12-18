@@ -1612,7 +1612,7 @@ class NodeInit(Subcommand):
         _exit_if_errors(err)
         _, err = self.rest.setup_net_config(ipfamily=ip_enable)
         _exit_if_errors(err)
-        _, err = self.rest.disable_external_listener(ipfamily=ip_disable)
+        _, err = self.rest.disable_unused_external_listeners(ipfamily=ip_disable)
         _exit_if_errors(err)
 
     @staticmethod
@@ -4564,7 +4564,7 @@ class IpFamily(Subcommand):
             _exit_if_errors(err)
             _, err = rest.setup_net_config(ipfamily=ip_fam)
             _exit_if_errors(err)
-            _, err = rest.disable_external_listener(ipfamily=ip_fam_disable)
+            _, err = rest.disable_unused_external_listeners(ipfamily=ip_fam_disable)
             _exit_if_errors(err)
             _success('Switched IP family of the cluster')
             return
@@ -4587,7 +4587,7 @@ class IpFamily(Subcommand):
             print(f'Switched IP family for node: {h}')
 
         for h in hosts:
-            _, err = rest.disable_external_listener(host=h, ipfamily=ip_fam_disable)
+            _, err = rest.disable_unused_external_listeners(host=h, ipfamily=ip_fam_disable)
             _exit_if_errors(err)
 
         _success('Switched IP family of the cluster')
@@ -4658,7 +4658,7 @@ class NodeToNodeEncryption(Subcommand):
             _exit_if_errors(err)
             _, err = rest.setup_net_config(encryption=encryption)
             _exit_if_errors(err)
-            _, err = rest.disable_external_listener(encryption=encryption_disable)
+            _, err = rest.disable_unused_external_listeners(encryption=encryption_disable)
             _exit_if_errors(err)
             _success(f'Switched node-to-node encryption {encryption}')
             return
@@ -4681,7 +4681,7 @@ class NodeToNodeEncryption(Subcommand):
             print(f'Turned {encryption} encryption for node: {h}')
 
         for h in hosts:
-            _, err = rest.disable_external_listener(host=h, encryption=encryption_disable)
+            _, err = rest.disable_unused_external_listeners(host=h, encryption=encryption_disable)
             _exit_if_errors(err)
 
         _success(f'Switched node-to-node encryption {encryption}')

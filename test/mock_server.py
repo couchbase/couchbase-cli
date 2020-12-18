@@ -404,7 +404,7 @@ endpoints = [
     (r'/nodes/self$', {'GET': get_node_info}),
     (r'/node/controller/rename', {'POST': do_nothing}),
     (r'/node/controller/enableExternalListener', {'POST': do_nothing}),
-    (r'/node/controller/disableExternalListener', {'POST': do_nothing}),
+    (r'/node/controller/disableUnusedExternalListeners', {'POST': do_nothing}),
     (r'/node/controller/setupNetConfig', {'POST': do_nothing}),
     (r'/controller/failOver$', {'POST': do_nothing}),
     (r'/controller/rebalance$', {'POST': do_nothing}),

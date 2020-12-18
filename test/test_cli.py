@@ -688,9 +688,9 @@ class TestNodeInit(CommandTest):
         self.no_error_run(self.command + self.name_args + ['--ipv6'], self.server_args)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
         expected_params = [
-            'hostname=foo', 'afamily=ipv4', 'afamily=ipv6', 'afamily=ipv6'
+            'hostname=foo', 'afamily=ipv6', 'afamily=ipv6'
         ]
         self.rest_parameter_match(expected_params)
 
@@ -698,9 +698,9 @@ class TestNodeInit(CommandTest):
         self.no_error_run(self.command + self.name_args + ['--ipv4'], self.server_args)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
         expected_params = [
-            'hostname=foo', 'afamily=ipv4', 'afamily=ipv4', 'afamily=ipv6'
+            'hostname=foo', 'afamily=ipv4', 'afamily=ipv4'
         ]
         self.rest_parameter_match(expected_params)
 
@@ -1706,8 +1706,8 @@ class TestIpFamily(CommandTest):
         self.assertIn('GET:/pools/nodes', self.server.trace)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
-        expected_params = ['afamily=ipv4', 'afamily=ipv4', 'afamily=ipv6']
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        expected_params = ['afamily=ipv4', 'afamily=ipv4']
         self.rest_parameter_match(expected_params, True)
 
     def test_set_ipv6(self):
@@ -1718,8 +1718,8 @@ class TestIpFamily(CommandTest):
         self.assertIn('GET:/pools/nodes', self.server.trace)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
-        expected_params = ['afamily=ipv6', 'afamily=ipv6', 'afamily=ipv4']
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        expected_params = ['afamily=ipv6', 'afamily=ipv6']
         self.rest_parameter_match(expected_params, True)
 
 
@@ -1754,8 +1754,8 @@ class TestClusterEncryption(CommandTest):
         self.no_error_run(self.command + ['--enable'], self.server_args)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
-        self.rest_parameter_match(['nodeEncryption=on', 'nodeEncryption=on', 'nodeEncryption=off'])
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        self.rest_parameter_match(['nodeEncryption=on', 'nodeEncryption=on'])
 
     def test_disable_cluster_encryption_ipv4(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
@@ -1763,8 +1763,8 @@ class TestClusterEncryption(CommandTest):
         self.no_error_run(self.command + ['--disable'], self.server_args)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableExternalListener', self.server.trace)
-        self.rest_parameter_match(['nodeEncryption=off', 'nodeEncryption=off', 'nodeEncryption=on'])
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        self.rest_parameter_match(['nodeEncryption=off', 'nodeEncryption=off'])
 
 
 class TestSettingRebalance(CommandTest):
