@@ -77,6 +77,7 @@ class CBSink(pump_mc.MCSink):
 
         vbuckets_num = len(sink_map_buckets[0]['vBucketServerMap']['vBucketMap'])
         vbuckets = batch.group_by_vbucket_id(vbuckets_num, self.rehash)
+        vbucket_skip_list: Dict[int, List[int]] = {}
 
         # Scatter or send phase.
         for vbucket_id, msgs in vbuckets.items():
@@ -86,8 +87,10 @@ class CBSink(pump_mc.MCSink):
             if conn is not None:
                 rv, skipped = self.send_msgs(conn, msgs, self.operation(),
                                     vbucket_id=vbucket_id)
-            if rv != 0:
-                return rv, None, None
+                if rv != 0:
+                    return rv, None, None
+                if len(skipped) > 0:
+                    vbucket_skip_list[vbucket_id] = skipped
 
         # Yield to let other threads do stuff while server's processing.
         time.sleep(0.01)
@@ -101,7 +104,8 @@ class CBSink(pump_mc.MCSink):
             if rv != 0:
                 return rv, None, None
             if conn is not None:
-                rv, retry, refresh = self.recv_msgs(conn, msgs, skipped, vbucket_id=vbucket_id)
+                rv, retry, refresh = self.recv_msgs(conn, msgs, vbucket_skip_list.get(vbucket_id, []),
+                                                    vbucket_id=vbucket_id)
             if rv != 0:
                 return rv, None, None
             if retry:
