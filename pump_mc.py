@@ -483,6 +483,8 @@ class MCSink(pump.Sink):
                         retry = True
                 elif r_status == couchbaseConstants.ERR_ACCESS:
                     return json.loads(r_val)["error"]["context"], None, None
+                elif r_status == couchbaseConstants.ERR_UNKNOWN_COLLECTION:
+                    return json.loads(r_val)["error"]["context"], None, None
                 else:
                     return "error: MCSink MC error: " + str(r_status), None, None
 
