@@ -20,7 +20,7 @@ from pump_bfd import BFDSource, DDOC_FILE_NAME, INDEX_FILE_NAME, FTS_FILE_NAME, 
 from pump_bfd2 import BFDSinkEx
 from pump_mc import MCSink
 from cb_bin_client import MemcachedClient
-from pump import Batch
+from pump import Batch, filter_bucket_nodes
 from mock_binary_server import MockMemcachedServer
 from mock_server import MockRESTServer
 
@@ -1291,3 +1291,19 @@ class TestMemcachedClient(unittest.TestCase):
         client.close()
         self.server.stop()
         self.assertFalse(self.helper_class.failed, self.helper_class.reason)
+
+
+class TestPumpFunctions(unittest.TestCase):
+    def test_filter_bucket_nodes(self):
+        test_cases = [
+            [{'nodes': [{'hostname': 'SUPERHOST.com:9000'}]}, ['superhost.com', 9000],
+             [{'hostname': 'SUPERHOST.com:9000'}]],
+            [{'nodes': [{'hostname': 'SUPERHOST1.com:9000'}]}, ['superhost.com', 9000], []],
+            [{'nodes': [{'hostname': 'superhost.com:9000'}]}, ['superhost.com', 9000],
+             [{'hostname': 'superhost.com:9000'}]],
+            [{'nodes': [{'hostname': '10.15.11.0:9000'}]}, ['10.15.11.0', 9000], [{'hostname': '10.15.11.0:9000'}]]
+        ]
+
+        for (i, test_case) in enumerate(test_cases):
+            with self.subTest(i=i):
+                self.assertListEqual(filter_bucket_nodes(test_case[0], test_case[1]), test_case[2])

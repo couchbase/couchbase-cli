@@ -288,7 +288,7 @@ class PumpingStation(ProgressReporter):
                 except ValueError:
                     pass
             for sn in source_nodes:
-                if 'alternateAddresses' in sn and sn['alternateAddresses']['external']['hostname'] == host:
+                if 'alternateAddresses' in sn and sn['alternateAddresses']['external']['hostname'].lower() == host:
                     alt_add['source'] = True
                     break
         # step 2:
@@ -303,7 +303,7 @@ class PumpingStation(ProgressReporter):
                 except ValueError:
                     pass
             for n in sink_map['buckets'][0]['nodes']:
-                if 'alternateAddresses' in n and host == n['alternateAddresses']['external']['hostname']:
+                if 'alternateAddresses' in n and host == n['alternateAddresses']['external']['hostname'].lower():
                     alt_add['sink'] = True
                     break
 
@@ -1099,7 +1099,11 @@ def filter_bucket_nodes(bucket: Dict[str, Any], spec_parts: Sequence[Any]) -> Li
         host_port = f'[{host}]:{port!s}'
     else:
         host_port = f'{host}:{port!s}'
-    return [n for n in bucket['nodes'] if n.get('hostname') == host_port]
+
+    # Hosts are case-insensitive but the url parser used by the CLI normalizes the input which turns it into lower
+    # case (this is the spec_parts). To avoid any issues we will convert the hostnames we get from the REST API to lower
+    # case. See MB-38453.
+    return [n for n in bucket['nodes'] if n.get('hostname').lower() == host_port]
 
 
 def get_ip() -> str:
