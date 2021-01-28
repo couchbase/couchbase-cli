@@ -12,6 +12,7 @@ import string
 import subprocess
 import sys
 import urllib.parse
+import tempfile
 import time
 
 from typing import Optional, List, Any, Dict
@@ -1899,13 +1900,23 @@ class ServerEshell(Subcommand):
         else:
             inetrc_opt = []
 
-        proto_dist = result['addressFamily'] + "_tcp"
+        ns_server_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
 
-        try:
-            subprocess.call([path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist',
-                             proto_dist] + inetrc_opt)
-        except OSError:
-            _exit_if_errors(["Unable to find the erl executable"])
+        with tempfile.NamedTemporaryFile() as temp:
+            temp.write(f'[{{preferred_local_proto,{result["addressFamily"]}_tcp_dist}}].'.encode())
+            temp_name = temp.name
+
+            args = [path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist', 'cb',
+                    '-epmd_module', 'cb_epmd', '-pa', ns_server_ebin_path, '-kernel', 'dist_config_file',
+                    f'"{temp_name}"'] + inetrc_opt
+
+            if opts.debug:
+                print(f'Running {" ".join(args)}')
+
+            try:
+                subprocess.call(args)
+            except OSError:
+                _exit_if_errors(["Unable to find the erl executable"])
 
     @staticmethod
     def get_man_page_name():
