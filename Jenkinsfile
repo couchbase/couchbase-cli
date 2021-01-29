@@ -107,6 +107,14 @@ pipeline {
             }
         }
 
+        stage("Spell check docs") {
+            steps {
+                dir("${PROJECTPATH}") {
+                    sh "./jenkins/adoc-lint.sh"
+                }
+            }
+        }
+
         stage("Type check") {
             steps {
                 timeout(time: 10, unit: "MINUTES") {
