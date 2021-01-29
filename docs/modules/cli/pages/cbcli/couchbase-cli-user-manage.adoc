@@ -114,6 +114,10 @@ admin::
   and read and write all data in the cluster. This user can make changes to
   anything in the cluster.
 
+backup_admin::
+  Gives the user all the permissions required to backup and restore all
+  services. This level of permission is required to use the Backup Service.
+
 bucket_admin[...]::
   Gives the user permissions to manage bucket settings. This role can be
   assigned globally to all buckets or to a particular bucket. For XDCR

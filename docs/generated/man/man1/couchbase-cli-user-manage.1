@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-09-08
+.\"      Date: 2021-01-29
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2020-09-08" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2021-01-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -231,6 +231,12 @@ admin
 Give the user permissions to manage all Couchbase configuration settings,
 and read and write all data in the cluster. This user can make changes to
 anything in the cluster.
+.RE
+.sp
+backup_admin
+.RS 4
+Gives the user all the permissions required to backup and restore all
+services. This level of permission is required to use the Backup Service.
 .RE
 .sp
 bucket_admin[...]
