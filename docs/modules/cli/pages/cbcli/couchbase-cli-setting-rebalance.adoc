@@ -53,7 +53,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   provided must be between 1 and 3, the default is 1.
 
 --moves-per-node <num>::
-  Specify the number ofconcurrent vBucket to move per a node during a rebalance.
+  Specify the number of concurrent vBucket to move per a node during a rebalance.
   The value provided must be between 1 and 64, the default is 4. A higher
   setting may improve rebalance performance, at the cost of higher resource
   consumption; in terms of CPU, memory, disk, and bandwidth. Conversely, a lower
