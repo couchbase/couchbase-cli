@@ -1,5 +1,5 @@
 = couchbase-cli-backup-service-plan(1)
-ifndef::doctype-manpage[:doctitle: backup-serivce-plan]
+ifndef::doctype-manpage[:doctitle: backup-service-plan]
 
 ifdef::doctype-manpage[]
 == NAME

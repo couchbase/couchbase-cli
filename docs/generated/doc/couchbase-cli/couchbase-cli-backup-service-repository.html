@@ -529,13 +529,13 @@ nodes. To use S3 or S3 compatible storages the archive must be in the format:
 </dd>
 <dt class="hdlist1">--bucket-name &lt;name&gt;</dt>
 <dd>
-<p>When adding an repository a bucket name can be supplied so that the repository only
+<p>When adding a repository a bucket name can be supplied so that the repository only
 backups that bucket.</p>
 </dd>
 <dt class="hdlist1">--remove-data</dt>
 <dd>
 <p>When removing an archived repository this option can be given to also delete the
-underlaying backup repository and all of its data. This cannot be undone.</p>
+underlying backup repository and all of its data. This cannot be undone.</p>
 </dd>
 </dl>
 </div>
@@ -730,9 +730,9 @@ which bucket the repository should backup. An example can be seen below.</p>
 </div>
 <div class="paragraph">
 <p>The service also supports creating cloud backup repositories. These are repositories that backup
-directly to object store. Currently the only supported object store is S3 and S3
+directly to object store. Currently, the only supported object store is S3 and S3
 compatible stores. To create a cloud repository you will need to supply some more details,
-as ilustrated in the example below.</p>
+as illustrated in the example below.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -787,7 +787,7 @@ operation cannot be undone.</p>
 <div class="paragraph">
 <p>Note that by default this command only removes the repository from the service but does
 <strong>not</strong> remove the backup repository. The flag <code>--remove-data</code> allows you to also delete
-the underlaying data. This argument can only be used with archived repositories as imported
+the underlying data. This argument can only be used with archived repositories as imported
 ones could still be in use by another node. To remove the data as well follow the example
 below, note that once the data is deleted it cannot be recovered.</p>
 </div>

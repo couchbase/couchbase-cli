@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-backup-service-repository
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-11-06
+.\"      Date: 2021-02-01
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-REPOSITORY" "1" "2020-11-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-REPOSITORY" "1" "2021-02-01" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -105,14 +105,14 @@ nodes. To use S3 or S3 compatible storages the archive must be in the format:
 .sp
 \-\-bucket\-name <name>
 .RS 4
-When adding an repository a bucket name can be supplied so that the repository only
+When adding a repository a bucket name can be supplied so that the repository only
 backups that bucket.
 .RE
 .sp
 \-\-remove\-data
 .RS 4
 When removing an archived repository this option can be given to also delete the
-underlaying backup repository and all of its data. This cannot be undone.
+underlying backup repository and all of its data. This cannot be undone.
 .RE
 .SH "CLOUD OPTIONS"
 .sp
@@ -307,9 +307,9 @@ $ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p
 .if n .RE
 .sp
 The service also supports creating cloud backup repositories. These are repositories that backup
-directly to object store. Currently the only supported object store is S3 and S3
+directly to object store. Currently, the only supported object store is S3 and S3
 compatible stores. To create a cloud repository you will need to supply some more details,
-as ilustrated in the example below.
+as illustrated in the example below.
 .sp
 .if n .RS 4
 .nf
@@ -362,7 +362,7 @@ $ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p
 .sp
 Note that by default this command only removes the repository from the service but does
 \fBnot\fP remove the backup repository. The flag \f(CR\-\-remove\-data\fP allows you to also delete
-the underlaying data. This argument can only be used with archived repositories as imported
+the underlying data. This argument can only be used with archived repositories as imported
 ones could still be in use by another node. To remove the data as well follow the example
 below, note that once the data is deleted it cannot be recovered.
 .sp

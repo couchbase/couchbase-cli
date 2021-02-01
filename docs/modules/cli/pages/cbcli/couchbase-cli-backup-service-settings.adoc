@@ -1,5 +1,5 @@
 = couchbase-cli-setting-query(1)
-ifndef::doctype-manpage[:doctitle: backup-serivce-settings]
+ifndef::doctype-manpage[:doctitle: backup-service-settings]
 
 ifdef::doctype-manpage[]
 == NAME

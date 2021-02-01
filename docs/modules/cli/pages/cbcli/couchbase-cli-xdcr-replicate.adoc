@@ -230,7 +230,7 @@ For users who require more detailed control over collections, they may choose to
 use Explicit Mapping. Explicit mapping for a replication is specified by a set of
 rules defined below.
 
-.Explict Mapping Rules
+.Explicit Mapping Rules
 |===
 | Priority | Match Rule | Description | Syntax
 
@@ -240,7 +240,7 @@ rules defined below.
 | `{"s.c":"target_s.target_c"}`
 
 | 1
-| S.C Denylist
+| S.C Deny List
 | Stops one singular Scope:Collection from being replicated
 | `{"s.c":null}`
 
@@ -250,7 +250,7 @@ rules defined below.
 | `{"s":"target_s"}`
 
 | 3
-| Scope Denylist
+| Scope Deny List
 | Stop one source scope from being replicated
 | `{"s": null}`
 |===

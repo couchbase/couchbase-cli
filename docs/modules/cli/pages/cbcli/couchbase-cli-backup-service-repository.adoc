@@ -1,5 +1,5 @@
 = couchbase-cli-backup-service-repository(1)
-ifndef::doctype-manpage[:doctitle: backup-serivce-repository]
+ifndef::doctype-manpage[:doctitle: backup-service-repository]
 
 ifdef::doctype-manpage[]
 == NAME
@@ -63,12 +63,12 @@ Manage backup service repositories
     `s3://<bucket>/<optional_prefix>/<archive>`.
 
 --bucket-name <name>::
-    When adding an repository a bucket name can be supplied so that the repository only
+    When adding a repository a bucket name can be supplied so that the repository only
     backups that bucket.
 
 --remove-data::
     When removing an archived repository this option can be given to also delete the
-    underlaying backup repository and all of its data. This cannot be undone.
+    underlying backup repository and all of its data. This cannot be undone.
 
 == CLOUD OPTIONS
 
@@ -204,9 +204,9 @@ $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p pass
 ----
 
 The service also supports creating cloud backup repositories. These are repositories that backup
-directly to object store. Currently the only supported object store is S3 and S3
+directly to object store. Currently, the only supported object store is S3 and S3
 compatible stores. To create a cloud repository you will need to supply some more details,
-as ilustrated in the example below.
+as illustrated in the example below.
 
 ----
 $ couchbase-cli -c http://127.0.0.1:8091 -u Administrator -p password \
@@ -253,7 +253,7 @@ $ couchbase-cli backup-service -c http://127.0.0.1:8091 -u Administrator -p pass
 
 Note that by default this command only removes the repository from the service but does
 *not* remove the backup repository. The flag `--remove-data` allows you to also delete
-the underlaying data. This argument can only be used with archived repositories as imported
+the underlying data. This argument can only be used with archived repositories as imported
 ones could still be in use by another node. To remove the data as well follow the example
 below, note that once the data is deleted it cannot be recovered.
 

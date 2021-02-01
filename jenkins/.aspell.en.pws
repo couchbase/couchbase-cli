@@ -1,6 +1,7 @@
 personal_ws-1.1 en 0
 adoc
 analytics
+APAC
 api
 API
 APIs
@@ -38,7 +39,9 @@ csv
 CSV
 Ctrl
 dataset
+datasets
 dataverse
+dataverses
 dcp
 DCP
 DDoc
@@ -88,9 +91,11 @@ membase
 memcached
 moxi
 msg
+namespace
 NAT'd
 NFS
 noEviction
+nosql
 nruEviction
 ns
 num
@@ -128,6 +133,7 @@ startTLS
 stdin
 stdout
 stderr
+storages
 subcommand
 subcommands
 SSL
@@ -146,6 +152,7 @@ undeployed
 uncompress
 UUID
 url
+urls
 valueOnly
 Varley
 vbucket
@@ -157,6 +164,7 @@ vvv
 VVV
 vm
 VM
+WHITELIST
 www
 xattr
 xdcr
