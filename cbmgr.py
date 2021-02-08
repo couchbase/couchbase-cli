@@ -603,7 +603,7 @@ class ClusterInit(Subcommand):
         group.add_argument("--cluster-username", dest="username", required=True,
                            metavar="<username>", help="The cluster administrator username")
         group.add_argument("--cluster-password", dest="password", required=True,
-                           metavar="<password>", help="Only compact the data files")
+                           metavar="<password>", help="The cluster administrator password")
         group.add_argument("--cluster-port", dest="port", type=(int),
                            metavar="<port>", help="The cluster administration console port")
         group.add_argument("--cluster-ramsize", dest="data_mem_quota", type=(int),
