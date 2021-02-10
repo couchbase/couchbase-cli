@@ -18,6 +18,8 @@ _couchbase-cli analytics-link-setup_ [--cluster <cluster>] [--username <username
     [--user-certificate <path>] [--user-key <path>] [--certificate <path>]
     [--encryption <type>] [--access-key-id <id>] [--secret-access-key <key>]
     [--session-token <token>] [--region <region>] [--service-endpoint <url>]
+    [--connection-string <key>] [--account-name <id>] [--account-key <key>]
+    [--shared-access-signature <token>] [--blob-endpoint <url>] [--endpoint-suffix <url>]
 
 == DESCRIPTION
 
@@ -46,7 +48,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The name for the link.
 
 --type <type>::
-  The type of the link, either 'couchbase' or 's3'.
+  The type of the link, either 'couchbase', 's3', 'azureblob'.
 
 --dataverse <name>::
   (Deprecated) The dataverse of the link. Use --scope instead.
@@ -110,6 +112,35 @@ Following are the options specific to *--type s3*, i.e. S3 links
 --service-endpoint <url>::
   The service endpoint of the link (optional).
 
+=== Azure Blob Link Options
+Following are the options specific to *--type azureblob*, i.e. Azure Blob links
+
+--connection-string <key>::
+  The connection string of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &
+account key, or account name & shared access signature.
+
+--account-name <id>::
+  The account name of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &
+account key, or account name & shared access signature.
+
+--account-key <key>::
+  The account key of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &
+account key, or account name & shared access signature.
+
+--shared-access-signature <token>::
+  The shared access signature of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &
+account key, or account name & shared access signature.
+
+--blob-endpoint <url>::
+  The blob endpoint of the link (optional).
+
+--endpoint-suffix <url>::
+  The endpoint suffix of the link (optional).
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
@@ -148,6 +179,36 @@ $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  --secret-access-key myTemporarySecretAccessKey \
  --session-token myTemporarySessionToken
 ----
+To create an AzureBlob link named `myAzureBlobLink` in the "test" scope, using
+*"connection string"* for authentication, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope test --name myAzureBlobLink --type azureblob \
+ --connection-string myConnectionString
+----
+To create an AzureBlob link named `myAzureBlobLink` in the "test" scope, using
+*"account name and account key"* for authentication, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope test --name myAzureBlobLink --type azureblob \
+ --account-name myAccountName --account-key myAccountKey
+----
+To create an AzureBlob link named `myAzureBlobLink` in the "test" scope, using
+*"account name and shared access signature"* for authentication, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope test --name myAzureBlobLink --type azureblob \
+ --account-name myAccountName --shared-access-signature mySharedAccessSignature
+----
+To create an AzureBlob link named `myAzureBlobLink` in the "test" scope, using
+*"account name and shared access signature"* for authentication, and using a *custom
+endpoint*, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope test --name myAzureBlobLink --type azureblob \
+ --account-name myAccountName --shared-access-signature mySharedAccessSignature \
+ --blob-endpoint my-custom-endpoint.com
+----
 To list all current links, run the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
@@ -157,6 +218,11 @@ To list current S3 links, run the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --list --type s3
+----
+To list current AzureBlob links, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --list --type azureblob
 ----
 If you need to edit a link named "east" and change the password, run the
 following command:

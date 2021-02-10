@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-analytics-link-setup
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.12
-.\"      Date: 2020-12-03
+.\"      Date: 2021-02-10
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2020-12-03" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2021-02-10" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -40,6 +40,8 @@ couchbase\-cli\-analytics\-link\-setup \- Manage Analytics links
     [\-\-user\-certificate <path>] [\-\-user\-key <path>] [\-\-certificate <path>]
     [\-\-encryption <type>] [\-\-access\-key\-id <id>] [\-\-secret\-access\-key <key>]
     [\-\-session\-token <token>] [\-\-region <region>] [\-\-service\-endpoint <url>]
+    [\-\-connection\-string <key>] [\-\-account\-name <id>] [\-\-account\-key <key>]
+    [\-\-shared\-access\-signature <token>] [\-\-blob\-endpoint <url>] [\-\-endpoint\-suffix <url>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -99,7 +101,7 @@ The name for the link.
 .sp
 \-\-type <type>
 .RS 4
-The type of the link, either \(aqcouchbase\(aq or \(aqs3\(aq.
+The type of the link, either \(aqcouchbase\(aq, \(aqs3\(aq, \(aqazureblob\(aq.
 .RE
 .sp
 \-\-dataverse <name>
@@ -190,6 +192,47 @@ The region of the s3 link.
 \-\-service\-endpoint <url>
 .RS 4
 The service endpoint of the link (optional).
+.RE
+.SS "Azure Blob Link Options"
+.sp
+Following are the options specific to \fB\-\-type azureblob\fP, i.e. Azure Blob links
+.sp
+\-\-connection\-string <key>
+.RS 4
+  The connection string of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &
+account key, or account name & shared access signature.
+.RE
+.sp
+\-\-account\-name <id>
+.RS 4
+  The account name of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &
+account key, or account name & shared access signature.
+.RE
+.sp
+\-\-account\-key <key>
+.RS 4
+  The account key of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &
+account key, or account name & shared access signature.
+.RE
+.sp
+\-\-shared\-access\-signature <token>
+.RS 4
+  The shared access signature of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &
+account key, or account name & shared access signature.
+.RE
+.sp
+\-\-blob\-endpoint <url>
+.RS 4
+The blob endpoint of the link (optional).
+.RE
+.sp
+\-\-endpoint\-suffix <url>
+.RS 4
+The endpoint suffix of the link (optional).
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -292,6 +335,60 @@ $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
 .fi
 .if n .RE
 .sp
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "test" scope, using
+\fB"connection string"\fP for authentication, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-scope test \-\-name myAzureBlobLink \-\-type azureblob \(rs
+ \-\-connection\-string myConnectionString
+.fam
+.fi
+.if n .RE
+.sp
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "test" scope, using
+\fB"account name and account key"\fP for authentication, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-scope test \-\-name myAzureBlobLink \-\-type azureblob \(rs
+ \-\-account\-name myAccountName \-\-account\-key myAccountKey
+.fam
+.fi
+.if n .RE
+.sp
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "test" scope, using
+\fB"account name and shared access signature"\fP for authentication, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-scope test \-\-name myAzureBlobLink \-\-type azureblob \(rs
+ \-\-account\-name myAccountName \-\-shared\-access\-signature mySharedAccessSignature
+.fam
+.fi
+.if n .RE
+.sp
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "test" scope, using
+\fB"account name and shared access signature"\fP for authentication, and using a \fBcustom
+endpoint\fP, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-scope test \-\-name myAzureBlobLink \-\-type azureblob \(rs
+ \-\-account\-name myAccountName \-\-shared\-access\-signature mySharedAccessSignature \(rs
+ \-\-blob\-endpoint my\-custom\-endpoint.com
+.fam
+.fi
+.if n .RE
+.sp
 To list all current links, run the following command:
 .sp
 .if n .RS 4
@@ -310,6 +407,17 @@ To list current S3 links, run the following command:
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-list \-\-type s3
+.fam
+.fi
+.if n .RE
+.sp
+To list current AzureBlob links, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-list \-\-type azureblob
 .fam
 .fi
 .if n .RE

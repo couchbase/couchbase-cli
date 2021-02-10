@@ -9,6 +9,8 @@ auth
 authType
 autofailover
 autoreprovision
+azureblob
+AzureBlob
 backend
 backoff
 bashrc

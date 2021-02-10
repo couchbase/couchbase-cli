@@ -3977,8 +3977,8 @@ class AnalyticsLinkSetup(Subcommand):
                            help="The scope of the link in its display form")
         group.add_argument("--name", dest="name", metavar="<name>",
                            help="The name of the link")
-        group.add_argument("--type", dest="type", metavar="<type>", choices=["couchbase", "s3"],
-                           help="The type of the link ('couchbase' or 's3')")
+        group.add_argument("--type", dest="type", metavar="<type>", choices=["couchbase", "s3", "azureblob"],
+                           help="The type of the link ('couchbase', 's3' or 'azureblob')")
 
         group = self.parser.add_argument_group("Analytics Service Couchbase link setup options")
         group.add_argument("--hostname", dest="hostname", metavar="<hostname>",
@@ -4009,6 +4009,20 @@ class AnalyticsLinkSetup(Subcommand):
         group.add_argument("--service-endpoint", dest="service_endpoint", metavar="<url>",
                            help="The service endpoint of the link (optional)")
 
+        group = self.parser.add_argument_group("Analytics Service Azure Blob link setup options")
+        group.add_argument("--connection-string", dest="connection_string", metavar="<key>",
+                           help="The connection string of the link")
+        group.add_argument("--account-name", dest="account_name", metavar="<id>",
+                           help="The account name of the link")
+        group.add_argument("--account-key", dest="account_key", metavar="<key>",
+                           help="The account key of the link")
+        group.add_argument("--shared-access-signature", dest="shared_access_signature", metavar="<token>",
+                           help="The shared access signature of the link")
+        group.add_argument("--blob-endpoint", dest="blob_endpoint", metavar="<url>",
+                           help="The blob endpoint of the link (optional)")
+        group.add_argument("--endpoint-suffix", dest="endpoint_suffix", metavar="<url>",
+                           help="The endpoint suffix of the link (optional)")
+
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         actions = sum([opts.create, opts.delete, opts.edit, opts.list])
@@ -4036,6 +4050,14 @@ class AnalyticsLinkSetup(Subcommand):
             _exit_if_errors([f'--name is required to {cmd} a link'])
         if opts.create and opts.type is None:
             _exit_if_errors([f'--type is required to {cmd} a link'])
+
+        if opts.type == 'azureblob':
+            if opts.connection_string is None and opts.account_key is None and opts.shared_access_signature is None:
+                _exit_if_errors(['No authentication parameters provided'])
+            if opts.connection_string and (opts.account_key or opts.shared_access_signature):
+                _exit_if_errors(['Only a single authentication method is allowed'])
+            if opts.account_key and opts.shared_access_signature:
+                _exit_if_errors(['Only a single authentication method is allowed'])
 
         if opts.certificate:
             opts.certificate = _exit_on_file_read_failure(opts.certificate)

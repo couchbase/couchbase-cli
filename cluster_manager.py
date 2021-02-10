@@ -1812,6 +1812,18 @@ class ClusterManager(object):
             params['region'] = opts.region
         if opts.service_endpoint:
             params['serviceEndpoint'] = opts.service_endpoint
+        if opts.connection_string:
+            params['connectionString'] = opts.connection_string
+        if opts.account_name:
+            params['accountName'] = opts.account_name
+        if opts.account_key:
+            params['accountKey'] = opts.account_key
+        if opts.shared_access_signature:
+            params['sharedAccessSignature'] = opts.shared_access_signature
+        if opts.blob_endpoint:
+            params['blobEndpoint'] = opts.blob_endpoint
+        if opts.endpoint_suffix:
+            params['endpointSuffix'] = opts.endpoint_suffix
 
         return params
 

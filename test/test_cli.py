@@ -1901,6 +1901,60 @@ class TestAnalyticsLinkSetup(CommandTest):
                                    'secretAccessKey=my-secret', 'region=us-east-0', 'sessionToken=my-token',
                                    'serviceEndpoint=my-cool-endpoint.com'])
 
+    def test_create_azureblob_using_connection_string(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                          'azureblob', '--connection-string', 'myConnectionString', '--blob-endpoint',
+                                          'my-cool-endpoint.com', '--endpoint-suffix', 'cool-suffix'],
+                          self.server_args)
+        self.assertIn('POST:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['scope=Default', 'name=myLink', 'type=azureblob',
+                                   'connectionString=myConnectionString', 'blobEndpoint=my-cool-endpoint.com',
+                                   'endpointSuffix=cool-suffix'])
+
+    def test_create_azureblob_using_accountname_accountkey(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                          'azureblob', '--account-name', 'myAccountName', '--account-key',
+                                          'myAccountKey', '--blob-endpoint', 'my-cool-endpoint.com',
+                                          '--endpoint-suffix', 'cool-suffix'], self.server_args)
+        self.assertIn('POST:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['scope=Default', 'name=myLink', 'type=azureblob', 'accountName=myAccountName',
+                                   'accountKey=myAccountKey', 'blobEndpoint=my-cool-endpoint.com',
+                                   'endpointSuffix=cool-suffix'])
+
+    def test_create_azureblob_using_accountname_sharedaccesssignature(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                          'azureblob', '--account-name', 'myAccountName', '--shared-access-signature',
+                                          'mySharedAccessSignature', '--blob-endpoint', 'my-cool-endpoint.com',
+                                          '--endpoint-suffix', 'cool-suffix'], self.server_args)
+        self.assertIn('POST:/analytics/link', self.server.trace)
+        self.rest_parameter_match(['scope=Default', 'name=myLink', 'type=azureblob', 'accountName=myAccountName',
+                                   'sharedAccessSignature=mySharedAccessSignature', 'blobEndpoint=my-cool-endpoint.com',
+                                   'endpointSuffix=cool-suffix'])
+
+    def test_create_azureblob_no_auth_bad(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--blob-endpoint', 'my-cool-endpoint.com',
+                                             '--endpoint-suffix', 'cool-suffix'],
+                             self.server_args)
+        self.assertIn('No authentication parameters provided', self.str_output)
+
+    def test_create_azureblob_multiple_auth_bad_1(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--connection-string', 'myConnectionString', '--account-name',
+                                             'myAccountName', '--account-key', 'myAccountKey', '--blob-endpoint',
+                                             'my-cool-endpoint.com', '--endpoint-suffix', 'cool-suffix'],
+                             self.server_args)
+        self.assertIn('Only a single authentication method is allowed', self.str_output)
+
+    def test_create_azureblob_multiple_auth_bad_2(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--account-name', 'myAccountName', '--account-key',
+                                             'myAccountKey', '--shared-access-signature', 'mySharedAccessSignature',
+                                             '--blob-endpoint', 'my-cool-endpoint.com', '--endpoint-suffix',
+                                             'cool-suffix'],
+                             self.server_args)
+        self.assertIn('Only a single authentication method is allowed', self.str_output)
+
     def test_create_couchbase(self):
         self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
                                           '--link-username', 'user', '--link-password', 'secret', '--encryption',

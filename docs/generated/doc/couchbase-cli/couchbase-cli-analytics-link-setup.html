@@ -458,7 +458,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--hostname &lt;hostname&gt;] [--link-username &lt;username&gt;] [--link-password &lt;password&gt;]
     [--user-certificate &lt;path&gt;] [--user-key &lt;path&gt;] [--certificate &lt;path&gt;]
     [--encryption &lt;type&gt;] [--access-key-id &lt;id&gt;] [--secret-access-key &lt;key&gt;]
-    [--session-token &lt;token&gt;] [--region &lt;region&gt;] [--service-endpoint &lt;url&gt;]</pre>
+    [--session-token &lt;token&gt;] [--region &lt;region&gt;] [--service-endpoint &lt;url&gt;]
+    [--connection-string &lt;key&gt;] [--account-name &lt;id&gt;] [--account-key &lt;key&gt;]
+    [--shared-access-signature &lt;token&gt;] [--blob-endpoint &lt;url&gt;] [--endpoint-suffix &lt;url&gt;]</pre>
 </div>
 </div>
 </div>
@@ -523,7 +525,7 @@ environment variable CB_REST_PASSWORD.</p>
 </dd>
 <dt class="hdlist1">--type &lt;type&gt;</dt>
 <dd>
-<p>The type of the link, either 'couchbase' or 's3'.</p>
+<p>The type of the link, either 'couchbase', 's3', 'azureblob'.</p>
 </dd>
 <dt class="hdlist1">--dataverse &lt;name&gt;</dt>
 <dd>
@@ -618,6 +620,48 @@ Required with <strong>--encryption full</strong>.</p>
 </dl>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_azure_blob_link_options">Azure Blob Link Options</h3>
+<div class="paragraph">
+<p>Following are the options specific to <strong>--type azureblob</strong>, i.e. Azure Blob links</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--connection-string &lt;key&gt;</dt>
+<dd>
+<p>  The connection string of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &amp;
+account key, or account name &amp; shared access signature.</p>
+</dd>
+<dt class="hdlist1">--account-name &lt;id&gt;</dt>
+<dd>
+<p>  The account name of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &amp;
+account key, or account name &amp; shared access signature.</p>
+</dd>
+<dt class="hdlist1">--account-key &lt;key&gt;</dt>
+<dd>
+<p>  The account key of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &amp;
+account key, or account name &amp; shared access signature.</p>
+</dd>
+<dt class="hdlist1">--shared-access-signature &lt;token&gt;</dt>
+<dd>
+<p>  The shared access signature of the link. Only a single authentication method can be
+used at a time. Authentication method can be connection string, account name &amp;
+account key, or account name &amp; shared access signature.</p>
+</dd>
+<dt class="hdlist1">--blob-endpoint &lt;url&gt;</dt>
+<dd>
+<p>The blob endpoint of the link (optional).</p>
+</dd>
+<dt class="hdlist1">--endpoint-suffix &lt;url&gt;</dt>
+<dd>
+<p>The endpoint suffix of the link (optional).</p>
+</dd>
+</dl>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -701,6 +745,52 @@ temporary S3 credentials, run the following command:</p>
 </div>
 </div>
 <div class="paragraph">
+<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "test" scope, using
+<strong>"connection string"</strong> for authentication, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope test --name myAzureBlobLink --type azureblob \
+ --connection-string myConnectionString</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "test" scope, using
+<strong>"account name and account key"</strong> for authentication, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope test --name myAzureBlobLink --type azureblob \
+ --account-name myAccountName --account-key myAccountKey</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "test" scope, using
+<strong>"account name and shared access signature"</strong> for authentication, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope test --name myAzureBlobLink --type azureblob \
+ --account-name myAccountName --shared-access-signature mySharedAccessSignature</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "test" scope, using
+<strong>"account name and shared access signature"</strong> for authentication, and using a <strong>custom
+endpoint</strong>, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope test --name myAzureBlobLink --type azureblob \
+ --account-name myAccountName --shared-access-signature mySharedAccessSignature \
+ --blob-endpoint my-custom-endpoint.com</pre>
+</div>
+</div>
+<div class="paragraph">
 <p>To list all current links, run the following command:</p>
 </div>
 <div class="listingblock">
@@ -716,6 +806,15 @@ temporary S3 credentials, run the following command:</p>
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --list --type s3</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To list current AzureBlob links, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --list --type azureblob</pre>
 </div>
 </div>
 <div class="paragraph">
