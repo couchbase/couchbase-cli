@@ -71,7 +71,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --rbac-name <name>::
   Specifies the name to be used for an RBAC user profile. This option is used
-  when creating or updating an RBAC user profile and it is recommanded that
+  when creating or updating an RBAC user profile and it is recommended that
   this option be set to the users full name.
 
 --roles <roles_list>::
@@ -152,7 +152,7 @@ view_admin[...]::
 .Data Service Roles:
 
 data_reader[...]::
-  Gives the user permission to read data through Couchbases key-value APIs.
+  Gives the user permission to read data through the Couchbase key-value APIs.
   To give a user read-only access for all buckets set their role to
   data_reader[*]. To give the user read-only access to data on a single
   bucket named _default_ then specify their role as data_reader[default].
@@ -161,7 +161,7 @@ data_reader[...]::
   data_reader[default],data_reader[app].
 
 data_writer[...]::
-  Gives the user permission to read and write data through Couchbases
+  Gives the user permission to read and write data through the Couchbase
   key-value APIs. The user cannot however modify the settings of a bucket.
   To give a user read-write access for all buckets set their role to
   data_writer[*]. To give the user read-write access to data on a single
@@ -277,69 +277,70 @@ system_catalog[...]::
 == EXAMPLES
 
 To create an local RBAC user profile for a user named "John Doe" with username
-jdoe and password cbpass with roles to manage the _default_ bucket and all
+`jdoe` and password `cbpass` with roles to manage the _default_ bucket and all
 XDCR replication run the following command
-
-  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-   -p password --set --rbac-username jdoe --rbac-password cbpass \
-   --rbac-name "John Doe" --roles bucket_admin[default],replication_admin \
-   --auth-domain local
-
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+ -p password --set --rbac-username jdoe --rbac-password cbpass \
+ --rbac-name "John Doe" --roles bucket_admin[default],replication_admin \
+ --auth-domain local
+----
 If you have external user source setup in your cluster and you want to add a
-user "John Doe" with username jdoe who should have the ability to manage only
+user "John Doe" with username `jdoe` who should have the ability to manage only
 views for all bucket run the following command
-
-  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-   -p password --set --rbac-username jdoe --rbac-name "John Doe" \
-   --roles view_admin[*] --auth-domain external
-
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+ -p password --set --rbac-username jdoe --rbac-name "John Doe" \
+ --roles view_admin[*] --auth-domain external
+----
 To list the current RBAC user profiles run the following command.
-
-  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-   -p password --list
-
-To delete an external user named jdoe run the following command.
-
-  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-   -p password --delete --rbac-username jdoe --auth-domain external
-
-To delete a local user named jdoe run the following command.
-
-  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-   -p password --delete --rbac-username jdoe --auth-domain local
-
-To see the user profile for a user with the username jdoe and password cbpass
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+ -p password --list
+----
+To delete an external user named `jdoe` run the following command.
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+ -p password --delete --rbac-username jdoe --auth-domain external
+----
+To delete a local user named `jdoe` run the following command.
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+ -p password --delete --rbac-username jdoe --auth-domain local
+----
+To see the user profile for a user with the username `jdoe` and password `cbpass`
 run the following command.
 
-  $ couchbase-cli user-manage -c 127.0.0.1:8091 -u jdoe -p cbpass \
-   --my-roles
-
-To create a user group with name admins and roles admin and reference to and
-LDAP group reference admins run the following command.
-
-    $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-    -p password --set-group --group-name admins --roles admin \
-    --group-description "CB admins" --ldap-ref admins
-
-To delete a user group "admins" you have to run the following command.
-
-   $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-    -p password --delete-group --group-name admins
-
-To get a user group "admins" you have to run the following command. This
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u jdoe -p cbpass \
+ --my-roles
+----
+To create a user group with name `admins` and roles `admin` and reference to and
+LDAP group reference `admins` run the following command.
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+ -p password --set-group --group-name admins --roles admin \
+ --group-description "CB admins" --ldap-ref admins
+----
+To delete a user group `admins` you have to run the following command.
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+  -p password --delete-group --group-name admins
+----
+To get a user group `admins` you have to run the following command. This
 will show the associated roles.
-
-   $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-    -p password --get-group --group-name admins
-
-To add or remove roles a user group "admins" you have to first get the current
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+  -p password --get-group --group-name admins
+----
+To add or remove roles a user group `admins` you have to first get the current
 roles using the previous command and then use the set command bellow giving it
 an amended version of the roles.
-
-   $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
-    -p password --set-group --group-name admins --roles admin \
-    --group-description "CB admins" --ldap-ref ro_admin
-
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+ -p password --set-group --group-name admins --roles admin \
+ --group-description "CB admins" --ldap-ref ro_admin
+----
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
 include::{partialsdir}/cbcli/part-common-env.adoc[]

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-security
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-02-06
+.\"      Date: 2020-05-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2020-02-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -108,7 +108,7 @@ level will be "control".
 \-\-tls\-min\-version <tlsv1|tlsv1.1|tlsv1.2>
 .RS 4
 Specify the minimum TLS protocol version to be used across all of the
-Couhbase services.
+Couchbase services.
 .RE
 .sp
 \-\-tls\-honor\-cipher\-order <1|0>
@@ -123,9 +123,8 @@ forcing the newer clients to use stronger ciphers.
 .RS 4
 Specify the cipher suite to be used across all of the couchbase services.
 The ciphers have to be a comma separated list such as:
-"TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA",
-"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA". If an empty string is given ("")
-then the cipher list will be reset to its default.
+\f(CRTLS_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA\fP.
+If an empty string is given ("") then the cipher list will be reset to its default.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -207,7 +206,7 @@ password are not cached in their command line history.
 .SH "SEE ALSO"
 .sp
 \fBcouchbase\-cli\fP(1)
-\fBcouchbase\-cli\-cluster\-encryption\fP(1)
+\fBcouchbase\-cli\-node\-to\-node\-encryption\fP(1)
 .SH "COUCHBASE\-CLI"
 .sp
 Part of the \fBcouchbase\-cli\fP(1) suite

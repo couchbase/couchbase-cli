@@ -59,7 +59,7 @@ man:couchbase-cli-node-to-node-encryption[1]::
 man:couchbase-cli-cluster-init[1]::
   Initializes a Couchbase cluster.
 
-man:couchbase-cli-change-ip-family[1]::
+man:couchbase-cli-ip-family[1]::
   Change ip family used for node to node communication.
 
 man:couchbase-cli-collect-logs-start[1]::
@@ -156,7 +156,7 @@ man:couchbase-cli-setting-security[1]::
   Modifies security policies.
 
 man:couchbase-cli-setting-xdcr[1]::
-  Modifies cross datacenter replication (XDCR) settings.
+  Modifies cross data center replication (XDCR) settings.
 
 man:couchbase-cli-ssl-manage[1]::
   Manage SSL certificates.
@@ -170,13 +170,13 @@ man:couchbase-cli-xdcr-replicate[1]::
 man:couchbase-cli-xdcr-setup[1]::
   Manages XDCR replications.
 
-man::couchbase-cli-setting-saslauth[1]::
+man:couchbase-cli-setting-saslauthd[1]::
   Manage saslauth settings.
 
-man::couchbase-cli-enable-developer-preview[1]::
+man:couchbase-cli-enable-developer-preview[1]::
   Enable developer preview.
 
-man::couchbase-cli-collection-manage[1]::
+man:couchbase-cli-collection-manage[1]::
   Manage collections.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]

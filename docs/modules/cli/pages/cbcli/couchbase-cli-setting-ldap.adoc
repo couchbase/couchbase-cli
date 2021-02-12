@@ -13,7 +13,7 @@ Configure LDAP
 _couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>]
     [--password <password>] [--authentication-enabled <1|0>]
     [--authorization-enabled <1|0>] [--hosts <host_list>] [--port <port>]
-    [--encryption <tls|startTLS|none>] [--disable-cert-validation]
+    [--encryption <tls|startTLS|none>] [--server-cert-validation <1|0>]
     [--ldap-cacert <path>] [--request-timeout <ms>]
     [--user-dn-query <query> | --user-dn-template <template>]
     [--max-parallel <max>] [--max-cache-size <size>]
@@ -46,8 +46,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Security used to communicate with LDAP servers. Supported options
   [tls, startTLS, none].
 
---disable-cert-validation::
-  Disable server certificate validation.
+--server-cert-validation <1|0>::
+  Enable or disable certificate validation when connecting to LDAP server.
 
 --ldap-cacert <path>::
   CA certificate to be used for server's certificate validation, required if
@@ -64,7 +64,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Template to construct user's DN. Must contain at least one instance of %u
   Example: uid=%u,ou=Users,dc=example
 
---max-parallel-connections <max>::
+--max-parallel <max>::
   Maximum number of parallel connections that can be established with LDAP
   servers.
 
@@ -75,7 +75,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Lifetime of values in cache in milliseconds. Default 300000 ms.
 
 --bind-dn <dn>::
-  The DN of a user to autheicate as to allow user search and groups
+  The DN of a user to authenticate as to allow user search and groups
   synchronization. If bind details are not provided anonymous bind
   will be used instead.
 
@@ -92,7 +92,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   considered a group, for example:
   'ou=groups,dc=example,dc=com??one?(member=%D)'
 
---nested-groups-enabled <0|1>::
+--enable-nested-groups <0|1>::
   If enabled Couchbase server will try to recursively search for groups for
   every discovered ldap group.
 
@@ -111,7 +111,7 @@ with encryption disabled:
 
  $ couchbase-cli setting-ldap -c 192.168.1.5 -u Administrator \
   -p password --authentication-enabled 1 --authorization-enabled 1 \
-  --hosts ldap.couchbase.com --encryption 0
+  --hosts ldap.couchbase.com --encryption none
 
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-query
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-05-09
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-11-06
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-QUERY" "1" "2019-05-09" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-QUERY" "1" "2020-11-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 couchbase\-cli\-setting\-query \- Manage query engine settings
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 _couchbase\-cli setting\-query [\-\-cluster <url>] [\-\-username <user>]
@@ -108,6 +109,12 @@ Maximum number of prepared statements, the default is 16384.
 \-\-completed\-limit <max>
 .RS 4
 Maximum number of completed requests, the default is 4000.
+.RE
+.sp
+\-\-completed\-threshold <ms>
+.RS 4
+Cache completed queries lasting longer than this threshold (in milliseconds),
+the default is 1000.
 .RE
 .sp
 \-\-log\-level <trace|debug|info|warn|error|server|none>

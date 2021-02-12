@@ -213,7 +213,7 @@ See xref:backup-restore:enterprise-backup-restore.adoc[Backup].
 
 == EXAMPLE
 
-If enough node fails in the custer 1 with address 10.142.180.104:8091 but
+If enough node fails in the cluster 1 with address 10.142.180.104:8091 but
 before hand we had replicated the bucket in the cluster 3 with address
 10.142.170.103:8091 then we can recover the missing data using the command
 bellow:

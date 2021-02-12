@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-05-29
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-05-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI" "1" "2019-05-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 couchbase\-cli \- The Couchbase cluster management utility.
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 \fIcouchbase\-cli <command> [options]\fP
@@ -92,9 +93,9 @@ List all Couchbase data buckets.
 Edits cluster settings.
 .RE
 .sp
-\fBcouchbase\-cli\-cluster\-encryption\fP(1)
+\fBcouchbase\-cli\-node\-to\-node\-encryption\fP(1)
 .RS 4
-Allows enabling and disabling of cluster encryption.
+Allows enabling and disabling of node\-to\-node encryption.
 .RE
 .sp
 \fBcouchbase\-cli\-cluster\-init\fP(1)
@@ -102,7 +103,7 @@ Allows enabling and disabling of cluster encryption.
 Initializes a Couchbase cluster.
 .RE
 .sp
-\fBcouchbase\-cli\-change\-ip\-family\fP(1)
+\fBcouchbase\-cli\-ip\-family\fP(1)
 .RS 4
 Change ip family used for node to node communication.
 .RE
@@ -170,6 +171,11 @@ Recovers a previously failed over node.
 \fBcouchbase\-cli\-reset\-admin\-password\fP(1)
 .RS 4
 Resets the administrator password.
+.RE
+.sp
+\fBcouchbase\-cli\-reset\-cipher\-suites\fP(1)
+.RS 4
+Resets the cipher suites to the default.
 .RE
 .sp
 \fBcouchbase\-cli\-server\-add\fP(1)
@@ -259,7 +265,7 @@ Modifies security policies.
 .sp
 \fBcouchbase\-cli\-setting\-xdcr\fP(1)
 .RS 4
-Modifies cross datacenter replication (XDCR) settings.
+Modifies cross data center replication (XDCR) settings.
 .RE
 .sp
 \fBcouchbase\-cli\-ssl\-manage\fP(1)
@@ -282,24 +288,19 @@ Manages XDCR cluster references.
 Manages XDCR replications.
 .RE
 .sp
-\fB:couchbase\-cli\-setting\-saslauth\fP(1)
+\fBcouchbase\-cli\-setting\-saslauthd\fP(1)
 .RS 4
 Manage saslauth settings.
 .RE
 .sp
-\fB:couchbase\-cli\-enable\-developer\-preview\fP(1)
+\fBcouchbase\-cli\-enable\-developer\-preview\fP(1)
 .RS 4
 Enable developer preview.
 .RE
 .sp
-\fB:couchbase\-cli\-collection\-manage\fP(1)
+\fBcouchbase\-cli\-collection\-manage\fP(1)
 .RS 4
 Manage collections.
-.RE
-.sp
-\fB:couchbase\-cli\-setting\-on\-demand\fP(1)
-.RS 4
-Manage on demand pricing settings.
 .RE
 .SH "HOST FORMATS"
 .sp

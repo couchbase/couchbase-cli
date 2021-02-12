@@ -44,18 +44,18 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
 
-For a cluster with nodes [cb1.com, cb2.com, cb3.com] communicating via IPv4 we
+For a cluster with nodes [`cb1.com`, `cb2.com`, `cb3.com`] communicating via IPv4 we
 can change the IP family being used to IPv6 by using the following command.
-
-  $ couchbase-cli ip-family -c http://cb1.com:8091 -u Administrator \
-    -p password --set --ipv6
-
+----
+$ couchbase-cli ip-family -c http://cb1.com:8091 -u Administrator \
+  -p password --set --ipv6
+----
 This command will configure each node in the cluster to use IPv6. To check what
 family is being used use the command below:
-
-  $ couchbase-cli ip-family -c http://cb1.com:8091 -u Administrator \
-    -p password --get
-
+----
+$ couchbase-cli ip-family -c http://cb1.com:8091 -u Administrator \
+  -p password --get
+----
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
@@ -63,8 +63,8 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 
 == SEE ALSO
 
-man:couchbase-setting-security[1]
-man:couchbase-ssl-manage[1]
+man:couchbase-cli-setting-security[1]
+man:couchbase-cli-ssl-manage[1]
 man:couchbase-cli-node-to-node-encryption[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-rebalance
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2019-05-29
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-05-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-REBALANCE" "1" "2019-05-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-REBALANCE" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 couchbase\-cli\-setting\-rebalance \- Modifies rebalance retry settings
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 _couchbase\-cli setting\-rebalance [\-\-cluster <url>] [\-\-username <user>]
@@ -97,7 +98,7 @@ when using \-\-set. By default automatic rebalance retry is disabled.
 \-\-wait\-for <sec>
 .RS 4
 Specify the amount of time to wait after a failed rebalance before retrying.
-Time must be a value between 5 abd 3600 seconds. By default the wait time is
+Time must be a value between 5 and 3600 seconds. By default the wait time is
 300 seconds.
 .RE
 .sp
@@ -179,8 +180,8 @@ time before retrying to 60 seconds and the maximum number of retires to 2.
 .sp
 .if n .RS 4
 .nf
- $ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
-\-p password \-\-set \-\-enabled 1 \-\-wait\-for 60 \-\-retries 2
+$ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
+ \-p password \-\-set \-\-enabled 1 \-\-wait\-for 60 \-\-retries 2
 .fi
 .if n .RE
 .sp
@@ -188,8 +189,8 @@ To retrieve information of the pending rebalance retries run the command bellow.
 .sp
 .if n .RS 4
 .nf
- $ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
-\-p password \-\-pending\-info
+$ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
+ \-p password \-\-pending\-info
 .fi
 .if n .RE
 .sp
@@ -199,8 +200,8 @@ the \f(CR\-\-pending\-info\fP flag above.
 .sp
 .if n .RS 4
 .nf
- $ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
-\-p password \-\-pending\-info \-\-rebalance\-id 4198f4b1564a800223271af76edd4f98
+$ couchbase\-cli setting\-rebalance \-c 127.0.0.1:8091 \-u Administrator \(rs
+ \-p password \-\-pending\-info \-\-rebalance\-id 4198f4b1564a800223271af76edd4f98
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

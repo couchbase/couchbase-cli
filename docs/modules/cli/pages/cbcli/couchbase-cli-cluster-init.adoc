@@ -91,7 +91,7 @@ which will determine how the global secondary indexes (GSI) are stored.
 
 --index-storage-setting::
   Specifies the index storage mode for the index service. Accepted storage
-  modes are "default" for the standard index backend or "memopt" for memory
+  modes are "default" for the standard index backend or `memopt` for memory
   optimized indexes. If the index service is specified to be started with the
   --services command then this parameter defaults to "default". If the index
   service is not specified to be started then the index storage mode will not
@@ -115,10 +115,10 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 To create a Couchbase Server cluster with only the data service on the first node
 and a memory quota of 4096MB run the following command.
-
-  $ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
-   --cluster-password password --services data --cluster-ramsize 4096
-
+----
+$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
+ --cluster-password password --services data --cluster-ramsize 4096
+----
 To create a Couchbase Server cluster with the data and index service then you
 also need to set the memory quotas for each service as well as the index storage
 mode since you are starting the index service.
@@ -126,11 +126,11 @@ mode since you are starting the index service.
 To create a cluster with an index memory quota of 1024MB, a data service memory
 quota of 2048MB and a memory optimized index storage mode run the following
 command.
-
-  $ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
-   --cluster-password password --services data,index --cluster-ramsize 2048 \
-   --cluster-index-ramsize 1024 --index-storage-setting memopt
-
+----
+$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
+ --cluster-password password --services data,index --cluster-ramsize 2048 \
+ --cluster-index-ramsize 1024 --index-storage-setting memopt
+----
 To create a Couchbase Server cluster with all services then you need to set
 the memory quotas for the Data, Index, Full-Text, Eventing and Analytics
 service. The quotas are set to 2048MB, 1024MB, 1024MB, 1024MB and 1024MB
@@ -138,22 +138,22 @@ respectively. A quota is not set for the query service since it does not have
 a memory quota. You also need to set the index storage mode for the index
 service, which will be set to "default" since the service is started on the
 first node.
-
-  $ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
-   --cluster-password password --services data,index,query,fts,analytics \
-   --cluster-ramsize 2048 --cluster-index-ramsize 1024 \
-   --cluster-eventing-ramsize 1024 --cluster-fts-ramsize 1024 \
-   --cluster-analytics-ramsize 1024 --cluster-fts-ramsize 1024 \
-   --index-storage-setting default
-
+----
+$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
+ --cluster-password password --services data,index,query,fts,analytics \
+ --cluster-ramsize 2048 --cluster-index-ramsize 1024 \
+ --cluster-eventing-ramsize 1024 --cluster-fts-ramsize 1024 \
+ --cluster-analytics-ramsize 1024 --cluster-fts-ramsize 1024 \
+ --index-storage-setting default
+----
 If you want to set the port number you can do so with the --cluster-port
 option. In the example below, a cluster is setup on port 5000 and starts
 only the data service. The memory quota of the data service is set to 2048MB.
-
-  $ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
-   --cluster-password password --services data --cluster-ramsize 2048 \
-   --cluster-port 5000
-
+----
+$ couchbase-cli cluster-init -c 127.0.0.1 --cluster-username Administrator \
+ --cluster-password password --services data --cluster-ramsize 2048 \
+ --cluster-port 5000
+----
 == DISCUSSION
 
 The cluster-init subcommand sets up the first node on a Couchbase cluster. To

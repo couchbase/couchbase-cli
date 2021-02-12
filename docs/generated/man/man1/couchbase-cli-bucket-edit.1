@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-bucket-edit
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2019-10-29
+.\"      Date: 2020-11-06
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-EDIT" "1" "2019-10-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-EDIT" "1" "2020-11-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -124,7 +124,8 @@ affects the prioritization only of task\-types other than disk I/O.
 \-\-bucket\-eviction\-policy <policy>
 .RS 4
 The memory\-cache eviction policy for this bucket. This option is valid for
-Couchbase and Ephemeral buckets only.
+Couchbase buckets only; the eviction policy for ephemeral buckets can\(cqt be
+changed.
 .sp
 Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
 the "valueOnly" policy means that each key stored in this bucket must be
@@ -133,13 +134,6 @@ performance of key\-value operations, but limits the maximum size of the
 bucket. Specifying the "fullEviction" policy means that performance is
 impacted for key\-value operations, but the maximum size of the bucket is
 unbounded.
-.sp
-Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
-"noEviction" means that the bucket will not evict items from the cache if
-the cache is full: this type of eviction policy should be used for in\-memory
-database use\-cases. Specifying "nruEviction" means that items not recently
-used will be evicted from memory, when all memory in the bucket is used:
-this type of eviction policy should be used for caching use\-cases.
 .RE
 .sp
 \-\-enable\-flush <num>

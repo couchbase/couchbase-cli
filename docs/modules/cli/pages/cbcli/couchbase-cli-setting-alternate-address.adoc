@@ -42,8 +42,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Alternate host address
 
 --ports <port>::
-  Alternate port mappings. Specified as a comma separated list: e.g. --ports
-  kv=9000,kvSSL=9999.
+  Alternate port mappings. Specified as a comma separated list:
+ e.g. `--ports kv=9000,kvSSL=9999.`
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
@@ -51,17 +51,17 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 To set the alternate address and custom ports for node 192.168.1.5 we would use the
 following command:
-
-  $ couchbase-cli setting-alternate-address -c 192.168.1.5:8091 --username Administrator \
+----
+$ couchbase-cli setting-alternate-address -c 192.168.1.5:8091 --username Administrator \
    --password password --set --node 192.168.1.5 --hostname 10.10.10.10 \
    --ports mgmt=1100,capi=2000,capiSSL=3000
-
+----
 To see the current alternate address configuration we would use the --list flag as
 follows:
-
-  $ couchbase-cli setting-alternate-address -c 192.168.1.5:8091 --username Administrator \
+----
+$ couchbase-cli setting-alternate-address -c 192.168.1.5:8091 --username Administrator \
    --password password --list
-
+----
 == DISCUSSION
 
 All of the ports that can be configured:
@@ -70,42 +70,42 @@ All of the ports that can be configured:
 |===
 |Port Name | Encrypted Port Name | Service | Description
 
-|mgmt
-|mgmtSSL
+|`mgmt`
+|`mgmtSSL`
 |Cluster Manager
 |The UI and REST API for managing the Cluster
 
-|kv
-|kvSSL
+|`kv`
+|`kvSSL`
 |Data
 |Used by the SDKs and XDCR to transfer data to and from the Data Service
 
-|capi
-|capiSSL
+|`capi`
+|`capiSSL`
 |View Engine
 |Used by the SDKs and XDCR
 
-|n1ql
-|n1qlSSL
+|`n1ql`
+|`n1qlSSL`
 |Query
 |Used by the SDKs to query data
 
-|fts
-|ftsSSL
+|`fts`
+|`ftsSSL`
 |Search
 |Used by the SDKs to do full text searches
 
-|cbas
-|cbasSSL
+|`cbas`
+|`cbasSSL`
 |Analytics
 |Used by the SDKs to query data managed by the Analytic service
 
-|eventingAdminPort
-|eventingSSL
+|`eventingAdminPort`
+|`eventingSSL`
 |Eventing
-|Used by the SDK to transfer dat to and from the Eventing Service
+|Used by the SDK to transfer data to and from the Eventing Service
 
-|eventing_debug_port
+|`eventing_debug_port`
 |N/A
 |Eventing
 |The Eventing debugger port, this should only be set in development environments.

@@ -44,7 +44,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --wait-for <sec>::
   Specify the amount of time to wait after a failed rebalance before retrying.
-  Time must be a value between 5 abd 3600 seconds. By default the wait time is
+  Time must be a value between 5 and 3600 seconds. By default the wait time is
   300 seconds.
 
 --max-attempts <num>::
@@ -61,34 +61,34 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 == EXAMPLES
 
 To retrieve the current automatic rebalance retry configuration use:
-
-  $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
-   -p password --get
-
+----
+$ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+ -p password --get
+----
 To enable automatic rebalance retry use the command bellow.
-
-  $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
-   -p password --set --enabled 1
-
+----
+$ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+ -p password --set --enabled 1
+----
 You can also set the the wait for period and the maximum number of retries. The
 command above enables automatic rebalance retry as well as setting the wait
 time before retrying to 60 seconds and the maximum number of retires to 2.
-
-    $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
-   -p password --set --enabled 1 --wait-for 60 --retries 2
-
+----
+$ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+ -p password --set --enabled 1 --wait-for 60 --retries 2
+----
 To retrieve information of the pending rebalance retries run the command bellow.
-
-    $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
-   -p password --pending-info
-
+----
+$ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+ -p password --pending-info
+----
 To cancel a pending rebalance retry run the command bellow where
 `4198f4b1564a800223271af76edd4f98` is the rebalance id, this can be retrieved using
 the `--pending-info` flag above.
-
-    $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
-   -p password --pending-info --rebalance-id 4198f4b1564a800223271af76edd4f98
-
+----
+$ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
+ -p password --pending-info --rebalance-id 4198f4b1564a800223271af76edd4f98
+----
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
 include::{partialsdir}/cbcli/part-common-env.adoc[]

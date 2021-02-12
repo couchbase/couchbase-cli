@@ -54,23 +54,23 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 == EXAMPLES
 
 To enable SASL on a cluster run the following command.
-
-  $ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
-   --password password --enabled 1
-
-To add users alice and barry as Administrators and users clair and daniel as
+----
+$ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
+ --password password --enabled 1
+----
+To add users `alice` and `barry` as Administrators and users `clair` and `daniel` as
 Read-Only Administrators run the following command.
-
-  $ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
-   --password password --enabled 1 --admins alice,barry \
-   --roadmins clair,daniel
-
+----
+$ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
+ --password password --enabled 1 --admins alice,barry \
+ --roadmins clair,daniel
+----
 To enable SASL and allow all SASL users to have Administrator access run the
 following command.
-
-  $ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
-   --password password --enabled 1 --default admins
-
+----
+$ couchbase-cli setting-saslauthd -c 192.168.1.5 --username Administrator \
+ --password password --enabled 1 --default admins
+----
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
 include::{partialsdir}/cbcli/part-common-env.adoc[]

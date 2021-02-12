@@ -48,22 +48,22 @@ Although the metadata for this other services is also backed up and restore the
 indexes will still have to be rebuilt after a restore.
 
 The first backup made is always a full backup regardless of the mode given.
-The backup directory will looks as follows after a succesfull first backup:
-
-   └── 2019-06-25T124727Z
-    └── 2019-06-25T124727Z-full
-        ├── bucket-beer-sample
-        │   ├── design.json
-        │   ├── fts_index.json
-        │   ├── index.json
-        │   └── node-127.0.0.1%3A8091
-        │       ├── data-0000.cbb
-        │       ├── failover.json
-        │       ├── meta.json
-        │       ├── seqno.json
-        │       └── snapshot_markers.json
-        └── fts_alias.json
-
+The backup directory will looks as follows after a successful first backup:
+----
+└── 2019-06-25T124727Z
+ └── 2019-06-25T124727Z-full
+     ├── bucket-beer-sample
+     │   ├── design.json
+     │   ├── fts_index.json
+     │   ├── index.json
+     │   └── node-127.0.0.1%3A8091
+     │       ├── data-0000.cbb
+     │       ├── failover.json
+     │       ├── meta.json
+     │       ├── seqno.json
+     │       └── snapshot_markers.json
+     └── fts_alias.json
+----
 The backup directory will have as a name the timestamp of the first backup.
 Inside it there will be one or more backup folders each named with a timestamp
 of when they occurred and suffixed with the mode in this case
@@ -122,7 +122,7 @@ case there is only one node in the cluster.
   Transfer only items with keys that match the given regular expression.
 
 -m,--mode <full|diff|accu>::
-  Select tha backup mode, the available options are: full, diff, accu.
+  Select the backup mode, the available options are: `full`, `diff`, `accu`.
   If an option is not provided it defaults to `diff`. The `full` mode will
   perform a full backup. The `diff` mode will perform a differential
   incremental backup which backups only the changes since the last full or
@@ -229,28 +229,28 @@ See xref:backup-restore:enterprise-backup-restore.adoc[Backup].
 
 The most basic operation is to backup an entire cluster, this can be done using
 the following command:
-
-    $ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password
-
+----
+$ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password
+----
 This command will create the following directory structure:
-
-    └── backups
-        └── 2019-06-25T124727Z
-            └── 2019-06-25T124727Z-full
-                ├── bucket-beer-sample
-                │   ├── design.json
-                │   ├── fts_index.json
-                │   ├── index.json
-                │   ├── node-10.112.193.101%3A8091
-                │   ├── node-10.112.193.102%3A8091
-                │   ├── node-10.112.193.103%3A8091
-                ├── bucket-gamesim-sample
-                │   ├── design.json
-                │   ├── node-10.112.193.101%3A8091
-                │   ├── node-10.112.193.102%3A8091
-                │   └── node-10.112.193.103%3A8091
-                └── fts_alias.json
-
+----
+ └── backups
+     └── 2019-06-25T124727Z
+         └── 2019-06-25T124727Z-full
+             ├── bucket-beer-sample
+             │   ├── design.json
+             │   ├── fts_index.json
+             │   ├── index.json
+             │   ├── node-10.112.193.101%3A8091
+             │   ├── node-10.112.193.102%3A8091
+             │   ├── node-10.112.193.103%3A8091
+             ├── bucket-gamesim-sample
+             │   ├── design.json
+             │   ├── node-10.112.193.101%3A8091
+             │   ├── node-10.112.193.102%3A8091
+             │   └── node-10.112.193.103%3A8091
+             └── fts_alias.json
+----
 Inside our requested backup directory `cbbackup` has created another folder
 named after the time when the command was run. Inside there is only one backup,
 `2019-06-25T124727Z-full` we can see by the prefix that is a full backup.
@@ -258,7 +258,7 @@ This is expected as there where no other backups in the `~/backups` directory
 Inside out backup we can find the full text aliases in the `fts_alias.json` as
 well as another two folders. one for each bucket in the cluster. This cluster
 had buckets beer-sample and gamesim-sample. Inside the folder for each bucket
-we find the design documents, full text index adn general secondary index
+we find the design documents, full text index and general secondary index
 definitions. We can see that the gamesim-bucket does not have either a
 `fts_index.json` or an `index.json` this s because this bucket had no
 indexes. Inside the bucket folders we have a folder for each node in the
@@ -298,7 +298,7 @@ the bucket `beer-sample` use the following command:
       -b beer-sample
 
 This command will backup only the data relevant to bucket `beer-sample` from
-evey node in the cluster. The user can also want only data from one node in the
+every node in the cluster. The user can also want only data from one node in the
 cluster this can be done as follows.
 
     $ cbbackup http://10.112.193.101:8091 ~/backups -u Administrator -p password \

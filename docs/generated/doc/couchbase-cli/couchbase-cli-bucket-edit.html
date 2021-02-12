@@ -545,7 +545,8 @@ affects the prioritization only of task-types other than disk I/O.</p>
 <dt class="hdlist1">--bucket-eviction-policy &lt;policy&gt;</dt>
 <dd>
 <p>The memory-cache eviction policy for this bucket. This option is valid for
-Couchbase and Ephemeral buckets only.</p>
+Couchbase buckets only; the eviction policy for ephemeral buckets can&#8217;t be
+changed.</p>
 <div class="paragraph">
 <p>Couchbase buckets support either "valueOnly" or "fullEviction". Specifying
 the "valueOnly" policy means that each key stored in this bucket must be
@@ -554,14 +555,6 @@ performance of key-value operations, but limits the maximum size of the
 bucket. Specifying the "fullEviction" policy means that performance is
 impacted for key-value operations, but the maximum size of the bucket is
 unbounded.</p>
-</div>
-<div class="paragraph">
-<p>Ephemeral buckets support either "noEviction" or "nruEviction". Specifying
-"noEviction" means that the bucket will not evict items from the cache if
-the cache is full: this type of eviction policy should be used for in-memory
-database use-cases. Specifying "nruEviction" means that items not recently
-used will be evicted from memory, when all memory in the bucket is used:
-this type of eviction policy should be used for caching use-cases.</p>
 </div>
 </dd>
 <dt class="hdlist1">--enable-flush &lt;num&gt;</dt>

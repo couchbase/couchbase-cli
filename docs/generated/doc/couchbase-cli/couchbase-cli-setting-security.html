@@ -529,7 +529,7 @@ level will be "control".</p>
 <dt class="hdlist1">--tls-min-version &lt;tlsv1|tlsv1.1|tlsv1.2&gt;</dt>
 <dd>
 <p>Specify the minimum TLS protocol version to be used across all of the
-Couhbase services.</p>
+Couchbase services.</p>
 </dd>
 <dt class="hdlist1">--tls-honor-cipher-order &lt;1|0&gt;</dt>
 <dd>
@@ -542,9 +542,8 @@ forcing the newer clients to use stronger ciphers.</p>
 <dd>
 <p>Specify the cipher suite to be used across all of the couchbase services.
 The ciphers have to be a comma separated list such as:
-"TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA",
-"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA". If an empty string is given ("")
-then the cipher list will be reset to its default.</p>
+<code>TLS_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA</code>.
+If an empty string is given ("") then the cipher list will be reset to its default.</p>
 </dd>
 </dl>
 </div>
@@ -628,7 +627,7 @@ password are not cached in their command line history.</p>
 <div class="sectionbody">
 <div class="paragraph">
 <p><a href="couchbase-cli.html">couchbase-cli(1)</a>
-<a href="couchbase-cli-cluster-encryption.html">couchbase-cli-cluster-encryption(1)</a></p>
+<a href="couchbase-cli-node-to-node-encryption.html">couchbase-cli-node-to-node-encryption(1)</a></p>
 </div>
 </div>
 </div>

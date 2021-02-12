@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: cblogredaction
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.7.1
-.\"      Date: 2018-08-29
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-05-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "CBLOGREDACTION" "1" "2018-08-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "CBLOGREDACTION" "1" "2020-05-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,6 +30,7 @@
 .SH "NAME"
 cblogredaction \- Redacts log files
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 \fIcblogredaction\fP [\-h] (\-s <string> | \-g) [\-t <num>] [\-o <path>] [\-v]
@@ -83,7 +84,7 @@ the logging will be.
 .RE
 .SH "EXAMPLES"
 .sp
-To redact a file called "backup.log" using "ABCDEF" as the salt.
+To redact a file called \f(CRbackup.log\fP using \f(CRABCDEF\fP as the salt.
 .sp
 .if n .RS 4
 .nf
@@ -91,7 +92,7 @@ $ cblogredaction \-s ABCDEF backup.log
 .fi
 .if n .RE
 .sp
-To redact two files called "sdk\-01.log" and "sdk\-02.log" using a generated salt
+To redact two files called \f(CRsdk\-01.log\fP and \f(CRsdk\-02.log\fP using a generated salt
 and two threads.
 .sp
 .if n .RS 4
