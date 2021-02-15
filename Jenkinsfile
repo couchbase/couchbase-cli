@@ -169,7 +169,7 @@ pipeline {
                     sh "coverage run --source . -m pytest test/test_*.py --cache-clear --junitxml=${WORKSPACE}/reports/test-cli.xml -v"
 
                     // Produce xml report for cobertura
-                    sh "coverage xml -o ${WORKSPACE}/reports/coverage-cli.xml"
+                    sh "coverage xml --omit 't/*' -o ${WORKSPACE}/reports/coverage-cli.xml"
                 }
              }
          }
