@@ -1,7 +1,7 @@
 include::part-common-cluster.adoc[]
 
 -u::
---user <username>::
+--username <username>::
   Specifies the username of the user executing the command. If you do not have
   a user account with permission to execute the command then it will fail with
   an unauthorized error.
