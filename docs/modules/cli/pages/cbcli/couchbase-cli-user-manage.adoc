@@ -123,7 +123,7 @@ bucket_admin[...]::
   bucket_admin[*]. To give the user permission to manage bucket settings on a
   single bucket named _default_ then specify the role as
   bucket_admin[default]. If the user needs to be manage multiple buckets, for
-  example _default_ and _app_, then set the role as bucket[default],bucket[app].
+  example _default_ and _app_, then set the role as bucket_admin[default],bucket_admin[app].
 
 cluster_admin::
   Gives the user permissions to read, write and manage all cluster-level
