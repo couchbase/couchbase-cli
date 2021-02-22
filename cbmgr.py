@@ -1904,6 +1904,7 @@ class ServerEshell(Subcommand):
 
         with tempfile.NamedTemporaryFile() as temp:
             temp.write(f'[{{preferred_local_proto,{result["addressFamily"]}_tcp_dist}}].'.encode())
+            temp.flush()
             temp_name = temp.name
 
             args = [path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist', 'cb',
