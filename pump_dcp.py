@@ -10,6 +10,7 @@ import struct
 import time
 import threading
 import select
+import snappy
 
 from typing import Dict, List, Any, Optional, Tuple, Union
 
@@ -63,6 +64,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
         self.stream_list: Dict[Any, Any] = {}
         self.unack_size = 0
         self.node_vbucket_map: Optional[List[int]] = None
+        self.uncompress = opts.extra.get("uncompress", 0)
 
     @staticmethod
     def can_handle(opts, spec: str) -> bool:
@@ -270,6 +272,16 @@ class DCPStreamSource(pump.Source, threading.Thread):
             cur_sleep = min(cur_sleep * 2, 20) # Max backoff sleep 20 seconds.
             cur_retry = cur_retry + 1
 
+    def maybe_uncompress_value(self, data_type: int, value: bytes) -> Tuple[int, bytes]:
+        if self.uncompress and data_type & couchbaseConstants.DATATYPE_COMPRESSED:
+            try:
+                value = snappy.uncompress(value)
+                data_type = data_type ^ couchbaseConstants.DATATYPE_COMPRESSED
+            except snappy.UncompressError as e:
+                logging.warning(f'Could not uncompress value: {e}')
+
+        return data_type, value
+
     def provide_dcp_batch_actual(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch]]:
         batch = pump.Batch(self)
 
@@ -412,8 +424,9 @@ class DCPStreamSource(pump.Source, threading.Thread):
                             extra_index += extlen
 
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno.to_bytes(8, 'big'), val, seqno, dtype, metalen,
-                               conf_res)
+                        dtype, val = self.maybe_uncompress_value(dtype, val)
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno.to_bytes(8, 'big'), val, seqno, dtype,
+                               metalen, conf_res)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                 elif cmd == couchbaseConstants.CMD_DCP_DELETE or cmd == couchbaseConstants.CMD_DCP_EXPIRATION:
@@ -426,7 +439,9 @@ class DCPStreamSource(pump.Source, threading.Thread):
                     if dtype & couchbaseConstants.DATATYPE_HAS_XATTR:
                         val = data[val_start:]
                     if not self.skip(key, vbucket_id):
-                        msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno.to_bytes(8, 'big'), val, seqno, dtype, metalen, 0)
+                        dtype, val = self.maybe_uncompress_value(dtype, val)
+                        msg = (cmd, vbucket_id, key, flg, exp, cas, rev_seqno.to_bytes(8, 'big'), val, seqno, dtype,
+                               metalen, 0)
                         batch.append(msg, len(val))
                         self.num_msg += 1
                     if cmd == couchbaseConstants.CMD_DCP_DELETE:

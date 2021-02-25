@@ -4,6 +4,7 @@ import json
 import os
 import socket
 import sqlite3
+import snappy
 import struct
 import tempfile
 import time
@@ -597,6 +598,118 @@ class TestDCPSource(unittest.TestCase):
             (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field1":"value1"}', 1, 0, 0, 0),
             (cbcs.CMD_DCP_MUTATION, 0, b'KEY:2', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field2":"value2"}', 2, 0, 0, 0),
             (cbcs.CMD_DCP_MUTATION, 0, b'KEY:3', 0, 0, 0, bytes([255,255,255,255,255,255,255,254]), b'{"field3":"value3"}', 3, 0, 0, 0)
+        ]
+
+        for m in batch.msgs:
+            self.assertIn(m, expected_out)
+
+    def test_provide_dcp_mutations_compression(self):
+        """Test transferring out with compression see MB-44580"""
+        helper_class = DCPHelperClass()
+        self.source = DCPStreamSource(self.opts, 'http://localhost:9112', None, {'version': '0.0.0-0000-enterprise'},
+                                      None, None, None, None)
+        # Data expected by response: cmd, errcode, opaque, cas, keylen, extlen, data, datalen, dtype, bytes_read
+
+        # extras is formed by seqno, rev_seqno, flg, exp, loctime, metalen, nru
+        extra1 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 1, 1, 0, 0, 0, 0, 0)
+        extra2 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 2, 1, 0, 0, 0, 0, 0)
+        # Test MB-38683: MAX rev minus one
+        extra3 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 3, (2 ** 64 - 1), 0, 0, 0, 0, 0)
+
+        compressed_values = [
+            snappy.compress(b'{"field1":"00000000000000000000000000000000000000000000000000000000000000000000000001"}'),
+            snappy.compress(b'{"field2":"00000000000000000000000000000000000000000000000000000000000000000000000002"}'),
+            snappy.compress(b'{"field3":"00000000000000000000000000000000000000000000000000000000000000000000000003"}'),
+        ]
+        data1 = extra1 + b'KEY:1' + compressed_values[0]
+        data2 = extra2 + b'KEY:2' + compressed_values[1]
+        data3 = extra3 + b'KEY:3' + compressed_values[2]
+        data = [
+            (cbcs.CMD_DCP_MUTATION, 0, 0, 0, len(b'KEY:1'), len(extra1), data1, len(data1), 3, 1000),
+            (cbcs.CMD_DCP_MUTATION, 0, 0, 0, len(b'KEY:2'), len(extra2), data2, len(data2), 3, 1000),
+            (cbcs.CMD_DCP_MUTATION, 0, 0, 0, len(b'KEY:3'), len(extra3), data2, len(data3), 3, 1000),
+            (cbcs.CMD_DCP_END_STREAM, 0, 0, 0, 0, 0, b'', 0, 0, 100)
+        ]
+
+        helper_class._set_response(data)
+
+        self.source.stream_list = ['stream_1']
+        self.source.response = helper_class
+        self.source.dcp_conn = helper_class
+        error, batch = self.source.provide_dcp_batch_actual()
+        self.assertEqual(error, 0)
+        self.assertTrue(self.source.dcp_done)
+        self.assertNotEqual(batch, None)
+        # should receive a buffer ack message when finish consuming the data
+        self.assertEqual(len(helper_class.msgs), 1)
+        self.assertEqual(helper_class.msgs[0][0], cbcs.CMD_DCP_BUFFER_ACK)
+        # Batch should contain 3 mutations
+        self.assertEqual(batch.size(), 3)
+
+        expected_out = [
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]), compressed_values[0], 1, 3,
+             0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:2', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]), compressed_values[1], 2, 3,
+             0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:3', 0, 0, 0, bytes([255, 255, 255, 255, 255, 255, 255, 254]),
+             compressed_values[2], 3, 3, 0, 0)
+        ]
+
+        for m in batch.msgs:
+            self.assertIn(m, expected_out)
+
+    def test_provide_dcp_mutations_uncompressed(self):
+        """Test transferring out can uncompress see MB-44580"""
+        helper_class = DCPHelperClass()
+        opts = self.opts
+        opts.transform({'extra': {'batch_max_size': 100, 'batch_max_bytes': 40000, "uncompress": 1}})
+        self.source = DCPStreamSource(opts, 'http://localhost:9112', None, {'version': '0.0.0-0000-enterprise'},
+                                      None, None, None, None)
+        # Data expected by response: cmd, errcode, opaque, cas, keylen, extlen, data, datalen, dtype, bytes_read
+
+        # extras is formed by seqno, rev_seqno, flg, exp, loctime, metalen, nru
+        extra1 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 1, 1, 0, 0, 0, 0, 0)
+        extra2 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 2, 1, 0, 0, 0, 0, 0)
+        # Test MB-38683: MAX rev minus one
+        extra3 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 3, (2 ** 64 - 1), 0, 0, 0, 0, 0)
+
+        compressed_values = [
+            snappy.compress(b'{"field1":"00000000000000000000000000000000000000000000000000000000000000000000000001"}'),
+            snappy.compress(b'{"field2":"00000000000000000000000000000000000000000000000000000000000000000000000002"}'),
+            snappy.compress(b'{"field3":"00000000000000000000000000000000000000000000000000000000000000000000000003"}'),
+        ]
+        data1 = extra1 + b'KEY:1' + compressed_values[0]
+        data2 = extra2 + b'KEY:2' + compressed_values[1]
+        data3 = extra3 + b'KEY:3' + compressed_values[2]
+        data = [
+            (cbcs.CMD_DCP_MUTATION, 0, 0, 0, len(b'KEY:1'), len(extra1), data1, len(data1), 3, 1000),
+            (cbcs.CMD_DCP_MUTATION, 0, 0, 0, len(b'KEY:2'), len(extra2), data2, len(data2), 3, 1000),
+            (cbcs.CMD_DCP_MUTATION, 0, 0, 0, len(b'KEY:3'), len(extra3), data2, len(data3), 3, 1000),
+            (cbcs.CMD_DCP_END_STREAM, 0, 0, 0, 0, 0, b'', 0, 0, 100)
+        ]
+
+        helper_class._set_response(data)
+
+        self.source.stream_list = ['stream_1']
+        self.source.response = helper_class
+        self.source.dcp_conn = helper_class
+        error, batch = self.source.provide_dcp_batch_actual()
+        self.assertEqual(error, 0)
+        self.assertTrue(self.source.dcp_done)
+        self.assertNotEqual(batch, None)
+        # should receive a buffer ack message when finish consuming the data
+        self.assertEqual(len(helper_class.msgs), 1)
+        self.assertEqual(helper_class.msgs[0][0], cbcs.CMD_DCP_BUFFER_ACK)
+        # Batch should contain 3 mutations
+        self.assertEqual(batch.size(), 3)
+
+        expected_out = [
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]),
+             snappy.uncompress(compressed_values[0]), 1, 1, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:2', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]),
+             snappy.uncompress(compressed_values[1]), 2, 1, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:3', 0, 0, 0, bytes([255, 255, 255, 255, 255, 255, 255, 254]),
+             snappy.uncompress(compressed_values[2]), 3, 1, 0, 0)
         ]
 
         for m in batch.msgs:
