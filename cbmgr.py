@@ -1878,9 +1878,9 @@ class ServerEshell(Subcommand):
             [short, _] = node.split('@')
 
             if opts.vm == 'babysitter':
-                node = f'babysitter_of_{short}@127.0.0.1'
+                node = f'babysitter_of_{short}@cb.local'
             elif opts.vm == 'couchdb':
-                node = f'couchdb_{short}@127.0.0.1'
+                node = f'couchdb_{short}@cb.local'
             else:
                 _exit_if_errors([f'Unknown vm type `{opts.vm}`'])
 
