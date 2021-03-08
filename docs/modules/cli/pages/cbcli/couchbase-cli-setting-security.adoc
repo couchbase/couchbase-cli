@@ -76,12 +76,12 @@ To disable the Couchbase Administration Console over HTTP run the following
 command.
 
   $ couchbase-cli setting-security -c 192.168.1.5 -u Administrator \
-   -p password --disable-http-ui 1
+   -p password --set --disable-http-ui 1
 
 To change the encryption level to "all" run the following command.
 
   $ couchbase-cli setting-security -c 192.168.1.5 -u Administrator \
-   -p password --cluster-encryption-level all
+   -p password --set --cluster-encryption-level all
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
