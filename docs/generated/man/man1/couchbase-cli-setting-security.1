@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-security
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-17
+.\"      Date: 2021-03-08
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2021-03-08" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -175,7 +175,7 @@ command.
 .if n .RS 4
 .nf
 $ couchbase\-cli setting\-security \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-disable\-http\-ui 1
+ \-p password \-\-set \-\-disable\-http\-ui 1
 .fi
 .if n .RE
 .sp
@@ -184,7 +184,7 @@ To change the encryption level to "all" run the following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli setting\-security \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-cluster\-encryption\-level all
+ \-p password \-\-set \-\-cluster\-encryption\-level all
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
