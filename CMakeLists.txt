@@ -46,6 +46,8 @@ IF (BUILD_ENTERPRISE)
   INSTALL (FILES pump_bfd2.py DESTINATION lib/python)
 ENDIF ()
 
+INSTALL (DIRECTORY requests DESTINATION lib/python)
+
 ADD_SUBDIRECTORY(docs)
 
 ADD_CUSTOM_TARGET (couchbase-cli-clean
