@@ -144,9 +144,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --collection-explicit-mappings <1|0>::
   Enable or disable explicit collection mappings. See COLLECTION MAPPINGS
   below for more information. This is an Enterprise Edition only feature.
-  This option cannot be turned on if collections migration is on.
+  This option cannot be turned on if collection migration is on.
 
---collections-migration <1|0>::
+--collection-migration <1|0>::
   Enable or disable XDCR migration mode. Explicit mappings must be set to
   1 for this. This is an Enterprise Edition only feature. This option
   cannot be turned on if collection explicit mappings is on.
