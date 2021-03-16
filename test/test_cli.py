@@ -674,9 +674,10 @@ class TestNodeInit(CommandTest):
 
     def test_node_init(self):
         self.no_error_run(self.command + self.name_args + self.path_args, self.server_args)
+        self.assertIn('POST:/nodeInit', self.server.trace)
         expected_params = [
-            'path=%2Ffoo%2Fbar%2Fdata', 'index_path=%2Ffoo%2Fbar%2Findex', 'cbas_path=%2Ffoo%2Fbar%2Fanalytics',
-            'eventing_path=%2Ffoo%2Fbar%2Feventing', 'java_home=%2Ffoo%2Fbar%2Fjava', 'hostname=foo'
+            'dataPath=%2Ffoo%2Fbar%2Fdata', 'indexPath=%2Ffoo%2Fbar%2Findex', 'analyticsPath=%2Ffoo%2Fbar%2Fanalytics',
+            'eventingPath=%2Ffoo%2Fbar%2Feventing', 'javaHome=%2Ffoo%2Fbar%2Fjava', 'hostname=foo'
         ]
         self.rest_parameter_match(expected_params)
 
@@ -686,22 +687,14 @@ class TestNodeInit(CommandTest):
 
     def test_node_init_ipv6(self):
         self.no_error_run(self.command + self.name_args + ['--ipv6'], self.server_args)
-        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
-        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
-        expected_params = [
-            'hostname=foo', 'afamily=ipv6', 'afamily=ipv6'
-        ]
+        self.assertIn('POST:/nodeInit', self.server.trace)
+        expected_params = ['hostname=foo', 'afamily=ipv6']
         self.rest_parameter_match(expected_params)
 
     def test_node_init_ipv4(self):
         self.no_error_run(self.command + self.name_args + ['--ipv4'], self.server_args)
-        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
-        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
-        expected_params = [
-            'hostname=foo', 'afamily=ipv4', 'afamily=ipv4'
-        ]
+        self.assertIn('POST:/nodeInit', self.server.trace)
+        expected_params = ['hostname=foo', 'afamily=ipv4']
         self.rest_parameter_match(expected_params)
 
 

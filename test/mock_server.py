@@ -402,7 +402,7 @@ endpoints = [
     (r'/node/controller/setupServices$', {'POST': do_nothing}),
     (r'/nodes/self/controller/settings$', {'POST': do_nothing}),
     (r'/nodes/self$', {'GET': get_node_info}),
-    (r'/node/controller/rename', {'POST': do_nothing}),
+    (r'/nodeInit', {'POST': do_nothing}),
     (r'/node/controller/enableExternalListener', {'POST': do_nothing}),
     (r'/node/controller/disableUnusedExternalListeners', {'POST': do_nothing}),
     (r'/node/controller/setupNetConfig', {'POST': do_nothing}),

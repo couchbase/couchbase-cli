@@ -919,24 +919,32 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
-    def set_data_paths(self, data_path, index_path, cbas_path, eventing_path, java_home):
-        url = f'{self.hostname}/nodes/self/controller/settings'
+    def node_init(self, hostname=None, afamily=None, data_path=None,
+                  index_path=None, cbas_path=None, eventing_path=None,
+                  java_home=None):
+        url = f'{self.hostname}/nodeInit'
         params = dict()
 
+        if hostname is not None:
+            params["hostname"] = hostname
+
+        if afamily is not None:
+            params["afamily"] = afamily
+
         if data_path is not None:
-            params["path"] = data_path
+            params["dataPath"] = data_path
 
         if index_path is not None:
-            params["index_path"] = index_path
+            params["indexPath"] = index_path
 
         if cbas_path is not None:
-            params["cbas_path"] = cbas_path
+            params["analyticsPath"] = cbas_path
 
         if eventing_path is not None:
-            params["eventing_path"] = eventing_path
+            params["eventingPath"] = eventing_path
 
         if java_home is not None:
-            params["java_home"] = java_home
+            params["javaHome"] = java_home
 
         return self._post_form_encoded(url, params)
 
@@ -949,11 +957,6 @@ class ClusterManager(object):
         payload = \
             '{json, atom_to_binary(ns_server:get_babysitter_cookie(), latin1)}.'
         return self._post_form_encoded(url, payload)
-
-    def set_hostname(self, hostname):
-        url = f'{self.hostname}/node/controller/rename'
-        params = {"hostname": hostname}
-        return self._post_form_encoded(url, params)
 
     def stop_rebalance(self):
         params = {"allowUnsafe": "true"}

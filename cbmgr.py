@@ -1589,32 +1589,26 @@ class NodeInit(Subcommand):
                 and opts.ipv6 is None and opts.ipv4 is None):
             _exit_if_errors(["No node initialization parameters specified"])
 
-        if opts.data_path or opts.index_path or opts.analytics_path or opts.eventing_path or opts.java_home is not None:
-            _, errors = self.rest.set_data_paths(opts.data_path, opts.index_path, opts.analytics_path,
-                                                 opts.eventing_path, opts.java_home)
-            _exit_if_errors(errors)
-
         if opts.ipv4 and opts.ipv6:
             _exit_if_errors(["Use either --ipv4 or --ipv6"])
 
-        if opts.ipv6:
-            self._set_ipv("ipv6", "ipv4")
-        elif opts.ipv4:
-            self._set_ipv("ipv4", "ipv6")
+        if opts.ipv4:
+            afamily = 'ipv4'
+        elif opts.ipv6:
+            afamily = 'ipv6'
+        else:
+            afamily = None
 
-        if opts.hostname:
-            _, errors = self.rest.set_hostname(opts.hostname)
-            _exit_if_errors(errors)
+        _, errors = self.rest.node_init(hostname=opts.hostname,
+                                        afamily=afamily,
+                                        data_path=opts.data_path,
+                                        index_path=opts.index_path,
+                                        cbas_path=opts.analytics_path,
+                                        eventing_path=opts.eventing_path,
+                                        java_home=opts.java_home)
 
+        _exit_if_errors(errors)
         _success("Node initialized")
-
-    def _set_ipv(self, ip_enable, ip_disable):
-        _, err = self.rest.enable_external_listener(ipfamily=ip_enable)
-        _exit_if_errors(err)
-        _, err = self.rest.setup_net_config(ipfamily=ip_enable)
-        _exit_if_errors(err)
-        _, err = self.rest.disable_unused_external_listeners(ipfamily=ip_disable)
-        _exit_if_errors(err)
 
     @staticmethod
     def get_man_page_name():
