@@ -154,7 +154,7 @@ The following are extra, specialized command options with the `cbbackup -x` para
 | Transfer this # of documents per batch.
 
 | `cbb_max_mb=100000`
-| Split backup file on destination cluster if it exceeds the MB.
+| Split backup file on destination cluster if it exceeds the MiB.
 
 | `conflict_resolve=1`
 | By default, disable conflict resolution.

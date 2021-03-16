@@ -14,10 +14,10 @@ Modifies cluster settings
 _couchbase-cli setting-cluster_ [--cluster <url>] [--username <user>]
     [--password <password>] [--cluster-username <username>]
     [--cluster-password <password>] [--cluster-port <port>]
-    [--cluster-ramsize <megabytes>] [--cluster-name <name>]
-    [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
-    [--cluster-eventing-ramsize <megabytes>]
-    [--cluster-analytics-ramsize <megabytes>]
+    [--cluster-ramsize <mebibytes>] [--cluster-name <name>]
+    [--cluster-index-ramsize <mebibytes>] [--cluster-fts-ramsize <mebibytes>]
+    [--cluster-eventing-ramsize <mebibytes>]
+    [--cluster-analytics-ramsize <mebibytes>]
 
 == DESCRIPTION
 
@@ -52,13 +52,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   to all future nodes added to the cluster with the index service.
 
 --cluster-eventing-ramsize::
-  Sets the Eventing service memory quota (in MB). This parameter is required
+  Sets the Eventing service memory quota (in MiB). This parameter is required
   if the Eventing service is specified in the --services option. This quota
   will be assigned to all future nodes added to the cluster with the eventing
   service.
 
 --cluster-analytics-ramsize::
-  Sets the Analytics service memory quota (in MB). This parameter is required
+  Sets the Analytics service memory quota (in MiB). This parameter is required
   if the Analytics service is specified in the --services option. This quota
   will be assigned to all future nodes added to the cluster with the
   Analytics service.

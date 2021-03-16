@@ -13,7 +13,7 @@ Manage the backup service settings
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
     [--password <password>] settings [--get] [--set] [--history-rotation-period <days>]
-    [--history-rotation-size <megabytes>]
+    [--history-rotation-size <mebibytes>]
 
 == DESCRIPTION
 
@@ -27,8 +27,8 @@ Manage the backup service settings
 --set::
   Set backup service settings.
 
---history-rotation-size <megabytes>::
-  The history size in megabytes at which it should be rotated. Valid values are between 5
+--history-rotation-size <mebibytes>::
+  The history size in mebibytes at which it should be rotated. Valid values are between 5
   and 200.
 
 --history-rotation-period <days>::
@@ -44,7 +44,7 @@ To retrieve the backup service settings:
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
   settings --get
 -- Backup service configuration --
-History rotation size: 70 MB
+History rotation size: 70 MiB
 History rotation period: 28 days
 ----
 

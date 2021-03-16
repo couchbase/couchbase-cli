@@ -365,11 +365,11 @@ class ClusterManager(object):
         """ Sets Couchbase RAM Quotas for various services
 
         Options:
-        data_ramsize - An integer denoting the size in MB, None skips the parameter
-        index_ramsize - An integer denoting the size in MB, None skips the parameter
-        fts_ramsize - An integer denoting the size in MB, None skips the parameter
-        cbas_ramsize - An integer denoting the size in MB, None skips the parameter
-        eventing_ramsize - An integer denoting the size in MB, None skips the parameter
+        data_ramsize - An integer denoting the size in MiB, None skips the parameter
+        index_ramsize - An integer denoting the size in MiB, None skips the parameter
+        fts_ramsize - An integer denoting the size in MiB, None skips the parameter
+        cbas_ramsize - An integer denoting the size in MiB, None skips the parameter
+        eventing_ramsize - An integer denoting the size in MiB, None skips the parameter
         cluster_name - Sets a name for the cluster, None skips the parameter
         """
         url = f'{self.hostname}/pools/default'

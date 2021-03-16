@@ -13,8 +13,8 @@ Modifies compaction settings
 [verse]
 _couchbase-cli setting-compaction_ [--cluster <url>] [--username <user>]
     [--password <password>] [--compaction-db-percentage <num>]
-    [--compaction-db-size <megabytes>] [--compaction-view-percentage <num>]
-    [--compaction-view-size <megabytes>] [--compaction-period-from <HH:MM>]
+    [--compaction-db-size <mebibytes>] [--compaction-view-percentage <num>]
+    [--compaction-view-size <mebibytes>] [--compaction-period-from <HH:MM>]
     [--compaction-period-to <HH:MM>] [--enable-compaction-abort <num>]
     [--enable-compaction-parallel <num>] [--metadata-purge-interval <num>]
     [--gsi-compaction-mode <mode>] [--compaction-gsi-percentage <percent>]
@@ -35,8 +35,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Compacts database files once the fragmentation percentage is greater than
   the value set for this option. The value must be between 2 and 100.
 
---compaction-db-size <megabytes>::
-  Compacts the database files once the file fragmentation (in MB) is greater
+--compaction-db-size <mebibytes>::
+  Compacts the database files once the file fragmentation (in MiB) is greater
   than the value of this option. This option must be set to a value
   greater than 1.
 
@@ -44,8 +44,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Compacts view files once the fragmentation percentage is greater than the
   value set for this option. The value must be between 2 and 100.
 
---compaction-view-size: <megabytes>::
-  Compacts the view files once the file fragmentation (in MB) is greater than
+--compaction-view-size: <mebibytes>::
+  Compacts the view files once the file fragmentation (in MiB) is greater than
   the value of this option. This option must be set to a value greater than 1.
 
 --compaction-period-from <HH:MM>::

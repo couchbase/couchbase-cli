@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-query
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-17
+.\"      Date: 2021-03-16
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-QUERY" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-QUERY" "1" "2021-03-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -39,7 +39,7 @@ _couchbase\-cli setting\-query [\-\-cluster <url>] [\-\-username <user>]
     [\-\-prepared\-limit <max>] [\-\-completed\-limit <max>]
     [\-\-log\-level <trace|debug|info|warn|error|server|none>]
     [\-\-max\-parallelism <max>] [\-\-n1ql\-feature\-control <num>]
-    [\-\-temp\-dir <path>] [\-\-temp\-dir\-size <megabytes>]
+    [\-\-temp\-dir <path>] [\-\-temp\-dir\-size <mebibytes>]
     [\-\-curl\-restricted <restricted|unrestricted>]
     [\-\-allowed\-urls <urls>] [\-\-disallowed\-urls <urls>]
 .fi
@@ -142,9 +142,9 @@ N1QL Feature Controls.
 Specify the directory for temporary query data.
 .RE
 .sp
-\-\-temp\-dir\-size <megabytes>
+\-\-temp\-dir\-size <mebibytes>
 .RS 4
-Maximum size in megabytes for the temporary query data directory.
+Maximum size in mebibytes for the temporary query data directory.
 .RE
 .SH "QUERY WHITELIST OPTIONS"
 .sp

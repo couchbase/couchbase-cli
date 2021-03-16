@@ -452,8 +452,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli setting-compaction</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--compaction-db-percentage &lt;num&gt;]
-    [--compaction-db-size &lt;megabytes&gt;] [--compaction-view-percentage &lt;num&gt;]
-    [--compaction-view-size &lt;megabytes&gt;] [--compaction-period-from &lt;HH:MM&gt;]
+    [--compaction-db-size &lt;mebibytes&gt;] [--compaction-view-percentage &lt;num&gt;]
+    [--compaction-view-size &lt;mebibytes&gt;] [--compaction-period-from &lt;HH:MM&gt;]
     [--compaction-period-to &lt;HH:MM&gt;] [--enable-compaction-abort &lt;num&gt;]
     [--enable-compaction-parallel &lt;num&gt;] [--metadata-purge-interval &lt;num&gt;]
     [--gsi-compaction-mode &lt;mode&gt;] [--compaction-gsi-percentage &lt;percent&gt;]
@@ -505,9 +505,9 @@ environment variable CB_REST_PASSWORD.</p>
 <p>Compacts database files once the fragmentation percentage is greater than
 the value set for this option. The value must be between 2 and 100.</p>
 </dd>
-<dt class="hdlist1">--compaction-db-size &lt;megabytes&gt;</dt>
+<dt class="hdlist1">--compaction-db-size &lt;mebibytes&gt;</dt>
 <dd>
-<p>Compacts the database files once the file fragmentation (in MB) is greater
+<p>Compacts the database files once the file fragmentation (in MiB) is greater
 than the value of this option. This option must be set to a value
 greater than 1.</p>
 </dd>
@@ -516,9 +516,9 @@ greater than 1.</p>
 <p>Compacts view files once the fragmentation percentage is greater than the
 value set for this option. The value must be between 2 and 100.</p>
 </dd>
-<dt class="hdlist1">--compaction-view-size: &lt;megabytes&gt;</dt>
+<dt class="hdlist1">--compaction-view-size: &lt;mebibytes&gt;</dt>
 <dd>
-<p>Compacts the view files once the file fragmentation (in MB) is greater than
+<p>Compacts the view files once the file fragmentation (in MiB) is greater than
 the value of this option. This option must be set to a value greater than 1.</p>
 </dd>
 <dt class="hdlist1">--compaction-period-from &lt;HH:MM&gt;</dt>

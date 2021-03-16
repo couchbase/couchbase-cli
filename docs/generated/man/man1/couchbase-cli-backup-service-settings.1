@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-query
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-01
+.\"      Date: 2021-03-16
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-SETTINGS" "1" "2021-02-01" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-SETTINGS" "1" "2021-03-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,7 +35,7 @@ couchbase\-cli\-backup\-service\-settings \- Manage the backup service settings
 .nf
 _couchbase\-cli backup\-service [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] settings [\-\-get] [\-\-set] [\-\-history\-rotation\-period <days>]
-    [\-\-history\-rotation\-size <megabytes>]
+    [\-\-history\-rotation\-size <mebibytes>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -53,9 +53,9 @@ Retrieve current backup service settings.
 Set backup service settings.
 .RE
 .sp
-\-\-history\-rotation\-size <megabytes>
+\-\-history\-rotation\-size <mebibytes>
 .RS 4
-The history size in megabytes at which it should be rotated. Valid values are between 5
+The history size in mebibytes at which it should be rotated. Valid values are between 5
 and 200.
 .RE
 .sp
@@ -114,7 +114,7 @@ To retrieve the backup service settings:
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
   settings \-\-get
 \-\- Backup service configuration \-\-
-History rotation size: 70 MB
+History rotation size: 70 MiB
 History rotation period: 28 days
 .fi
 .if n .RE

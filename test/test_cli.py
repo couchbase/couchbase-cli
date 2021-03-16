@@ -2067,7 +2067,7 @@ class TestBackupServiceSettings(CommandTest):
         """Test that the --get action flag will retrieve the backups service configuration and print it out"""
         self.server_args['/api/v1/config'] = {'history_rotation_size': 10, 'history_rotation_period': 50}
         self.no_error_run(self.command + ['--get'], self.server_args)
-        self.assertIn('History rotation size: 10 MB', self.str_output)
+        self.assertIn('History rotation size: 10 MiB', self.str_output)
         self.assertIn('History rotation period: 50 days', self.str_output)
 
     def test_set_no_options(self):

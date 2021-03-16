@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-cluster
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-17
+.\"      Date: 2021-03-16
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-CLUSTER" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-CLUSTER" "1" "2021-03-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -36,10 +36,10 @@ couchbase\-cli\-setting\-cluster \- Modifies cluster settings
 \fIcouchbase\-cli setting\-cluster\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-cluster\-username <username>]
     [\-\-cluster\-password <password>] [\-\-cluster\-port <port>]
-    [\-\-cluster\-ramsize <megabytes>] [\-\-cluster\-name <name>]
-    [\-\-cluster\-index\-ramsize <megabytes>] [\-\-cluster\-fts\-ramsize <megabytes>]
-    [\-\-cluster\-eventing\-ramsize <megabytes>]
-    [\-\-cluster\-analytics\-ramsize <megabytes>]
+    [\-\-cluster\-ramsize <mebibytes>] [\-\-cluster\-name <name>]
+    [\-\-cluster\-index\-ramsize <mebibytes>] [\-\-cluster\-fts\-ramsize <mebibytes>]
+    [\-\-cluster\-eventing\-ramsize <mebibytes>]
+    [\-\-cluster\-analytics\-ramsize <mebibytes>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -106,7 +106,7 @@ to all future nodes added to the cluster with the index service.
 .sp
 \-\-cluster\-eventing\-ramsize
 .RS 4
-Sets the Eventing service memory quota (in MB). This parameter is required
+Sets the Eventing service memory quota (in MiB). This parameter is required
 if the Eventing service is specified in the \-\-services option. This quota
 will be assigned to all future nodes added to the cluster with the eventing
 service.
@@ -114,7 +114,7 @@ service.
 .sp
 \-\-cluster\-analytics\-ramsize
 .RS 4
-Sets the Analytics service memory quota (in MB). This parameter is required
+Sets the Analytics service memory quota (in MiB). This parameter is required
 if the Analytics service is specified in the \-\-services option. This quota
 will be assigned to all future nodes added to the cluster with the
 Analytics service.

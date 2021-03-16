@@ -18,9 +18,9 @@ _couchbase-cli bucket-edit_ [--cluster <url>] [--username <user>]
     [--max-ttl <seconds>] [--compression-mode <mode>]
     [--remove-bucket-port <num>]
     [--database-fragmentation-threshold-percentage <perc>]
-    [--database-fragmentation-threshold-size <megabytes>]
+    [--database-fragmentation-threshold-size <mebibytes>]
     [--view-fragmentation-threshold-percentage <perc>]
-    [--view-fragmentation-threshold-size <megabytes>] [--from-hour <hour>]
+    [--view-fragmentation-threshold-size <mebibytes>] [--from-hour <hour>]
     [--from-minute <min>] [--to-hour <hour>] [--to-minute <min>]
     [--abort-outside <0|1>] [--parallel-db-view-compaction <0|1>]
     [--purge-interval <num>] [--durability-min-level <level>]
@@ -39,9 +39,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The name of the bucket to edit.
 
 --bucket-ramsize <size>::
-  The amount of memory to allocate to the cache for this bucket, in Megabytes.
+  The amount of memory to allocate to the cache for this bucket, in mebibytes.
   The memory quota of this bucket must fit into the overall cluster memory
-  quota. The minimum cache size is 100MB.
+  quota. The minimum cache size is 100MiB.
 
 --bucket-replica <num>::
   The number of servers to which data is replicated. Replicas provide
@@ -139,16 +139,16 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Sets the database fragmentation trigger threshold as a percentage. Can be set
   to values between 2 and 100.
 
---database-fragmentation-threshold-size <megabytes>::
-  Sets the database fragmentation trigger threshold as a number of megabytes.
+--database-fragmentation-threshold-size <mebibytes>::
+  Sets the database fragmentation trigger threshold as a number of mebibytes.
   It accepts integers greater than 1.
 
 --view-fragmentation-threshold-percentage <perc>::
   Sets the view fragmentation trigger threshold as a percentage. Can be set
   to values between 2 and 100.
 
---view-fragmentation-threshold-size <megabytes>::
-  Sets the view fragmentation trigger threshold as a number of megabytes.
+--view-fragmentation-threshold-size <mebibytes>::
+  Sets the view fragmentation trigger threshold as a number of mebibytes.
   It accepts integers greater than 1.
 
 --from-hour <hour>::

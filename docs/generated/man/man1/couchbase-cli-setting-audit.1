@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-audit
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-17
+.\"      Date: 2021-03-16
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-AUDIT" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-AUDIT" "1" "2021-03-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -119,7 +119,7 @@ Specifies the audit log rotate size. This is the size at which the current
 audit log will be replaced with a new empty audit log file. The log
 file is rotated to ensure that the audit log does not consume too much disk
 space. The minimum audit log rotate size is 0 bytes and maximum is
-524,288,000 (500MB). When it is set to 0 the log will not be rotated based
+524,288,000 (500MiB). When it is set to 0 the log will not be rotated based
 on size.
 .RE
 .sp
@@ -238,7 +238,7 @@ $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator 
 .if n .RE
 .sp
 To enable auditing on a cluster and set the audit log to the default logs folder
-on a Linux installation with a log rotate size of 20MB, run the command below.
+on a Linux installation with a log rotate size of 20MiB, run the command below.
 .sp
 .if n .RS 4
 .nf
@@ -249,7 +249,7 @@ $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator 
 .if n .RE
 .sp
 To enable auditing on a cluster, set the audit log to the default logs folder
-on a Linux installation with a log rotate size of 20MB, disable
+on a Linux installation with a log rotate size of 20MiB, disable
 auditing for users backup and restore, and disable auditing for event 40964 and 40963,
 run the command below.
 .sp

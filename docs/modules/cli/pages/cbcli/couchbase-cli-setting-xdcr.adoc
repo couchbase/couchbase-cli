@@ -59,7 +59,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   value of this option must be between 1 and 10.
 
 --bandwidth-usage-limit <num>::
-  The default bandwidth limit for XDCR replications in Megabytes per second.
+  The default bandwidth limit for XDCR replications in mebibytes per second.
 
 --enable-compression <num>::
   Specifies whether or not XDCR compression is enabled. Set this option to

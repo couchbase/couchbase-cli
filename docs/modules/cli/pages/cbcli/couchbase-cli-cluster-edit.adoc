@@ -13,8 +13,8 @@ Edits cluster settings
 [verse]
 _couchbase-cli cluster-edit_ [--cluster <url>] [--cluster-username <username>]
     [--cluster-password <password>] [--cluster-port <port>]
-    [--cluster-ramsize <megabytes>] [--cluster-name <name>]
-    [--cluster-index-ramsize <megabytes>] [--cluster-fts-ramsize <megabytes>]
+    [--cluster-ramsize <mebibytes>] [--cluster-name <name>]
+    [--cluster-index-ramsize <mebibytes>] [--cluster-fts-ramsize <mebibytes>]
 
 == DESCRIPTION
 
@@ -37,17 +37,17 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Specifies the new password for the Couchbase Server administrator user.
 
 --cluster-ramsize::
-  Sets the data service memory quota (in MB). This quota will be assigned
+  Sets the data service memory quota (in MiB). This quota will be assigned
   to all future nodes added to the cluster with the data service.
 
 --cluster-fts-ramsize::
-  Sets the full-text service memory quota (in MB). This parameter is required
+  Sets the full-text service memory quota (in MiB). This parameter is required
   if the full-text service is specified in the --services option. This quota
   will be assigned to all future nodes added to the cluster with the full-text
   service.
 
 --cluster-index-ramsize::
-  Sets the index service memory quota (in MB). This parameter is required if
+  Sets the index service memory quota (in MiB). This parameter is required if
   the index service is specified in the --services option. This quota will be
   assigned to all future nodes added to the cluster with the index service.
 
@@ -76,8 +76,8 @@ name to "new_name" run the following command.
   $ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username Administrator \
    --password password --cluster-port 5000 --cluster-name new_name
 
-To change the memory quota of the data service to 2048MB and the memory quota of
-the index service to 4096MB run the following command.
+To change the memory quota of the data service to 2048MiB and the memory quota of
+the index service to 4096MiB run the following command.
 
   $ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username Administrator \
    --password password --cluster-ramsize 2048 --cluster-index-ramsize 4096
@@ -85,8 +85,8 @@ the index service to 4096MB run the following command.
 All of the parameters in this command can be specified at the same time. To
 change the username and password of the Couchbase Server administrator user, change
 the port number to 5000, change the cluster name to "new_name", change the memory
-quota of the data service to 2048MB and change the memory quota of the index
-service to 4096MB run the following command.
+quota of the data service to 2048MiB and change the memory quota of the index
+service to 4096MiB run the following command.
 
   $ couchbase-cli cluster-edit -c 192.168.1.5:8091 --username current_user \
    --password current_password --cluster-username new_username \

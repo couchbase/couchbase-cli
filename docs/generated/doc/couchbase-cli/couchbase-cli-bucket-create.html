@@ -458,9 +458,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--max-ttl &lt;seconds&gt;] [--compression-mode &lt;mode&gt;] [--enable-flush &lt;num&gt;]
     [--enable-index-replica &lt;num&gt;] [--conflict-resolution &lt;type&gt;] [--wait]
     [--database-fragmentation-threshold-percentage &lt;perc&gt;]
-    [--database-fragmentation-threshold-size &lt;megabytes&gt;]
+    [--database-fragmentation-threshold-size &lt;mebibytes&gt;]
     [--view-fragmentation-threshold-percentage &lt;perc&gt;]
-    [--view-fragmentation-threshold-size &lt;megabytes&gt;] [--from-hour &lt;hour&gt;]
+    [--view-fragmentation-threshold-size &lt;mebibytes&gt;] [--from-hour &lt;hour&gt;]
     [--from-minute &lt;min&gt;] [--to-hour &lt;hour&gt;] [--to-minute &lt;min&gt;]
     [--abort-outside &lt;0|1&gt;] [--parallel-db-view-compaction &lt;0|1&gt;]
     [--purge-interval &lt;float&gt;]</pre>
@@ -548,9 +548,9 @@ on those nodes.</p>
 </dd>
 <dt class="hdlist1">--bucket-ramsize &lt;size&gt;</dt>
 <dd>
-<p>The amount of memory to allocate to the cache for this bucket, in Megabytes.
+<p>The amount of memory to allocate to the cache for this bucket, in mebibytes.
 The memory quota of this bucket must fit into the overall cluster memory
-quota. The minimum cache size is 100MB.</p>
+quota. The minimum cache size is 100MiB.</p>
 </dd>
 <dt class="hdlist1">--bucket-replica &lt;num&gt;</dt>
 <dd>
@@ -676,9 +676,9 @@ bucket has been fully created.</p>
 <p>Sets the database fragmentation trigger threshold as a percentage. Can be set
 to values between 2 and 100.</p>
 </dd>
-<dt class="hdlist1">--database-fragmentation-threshold-size &lt;megabytes&gt;</dt>
+<dt class="hdlist1">--database-fragmentation-threshold-size &lt;mebibytes&gt;</dt>
 <dd>
-<p>Sets the database fragmentation trigger threshold as a number of megabytes.
+<p>Sets the database fragmentation trigger threshold as a number of mebibytes.
 It accepts integers greater than 1.</p>
 </dd>
 <dt class="hdlist1">--view-fragmentation-threshold-percentage &lt;perc&gt;</dt>
@@ -686,9 +686,9 @@ It accepts integers greater than 1.</p>
 <p>Sets the view fragmentation trigger threshold as a percentage. Can be set
 to values between 2 and 100.</p>
 </dd>
-<dt class="hdlist1">--view-fragmentation-threshold-size &lt;megabytes&gt;</dt>
+<dt class="hdlist1">--view-fragmentation-threshold-size &lt;mebibytes&gt;</dt>
 <dd>
-<p>Sets the view fragmentation trigger threshold as a number of megabytes.
+<p>Sets the view fragmentation trigger threshold as a number of mebibytes.
 It accepts integers greater than 1.</p>
 </dd>
 <dt class="hdlist1">--from-hour &lt;hour&gt;</dt>
@@ -801,7 +801,7 @@ of 1GB, run the following command.</p>
 </div>
 <div class="paragraph">
 <p>To create an Ephemeral bucket named "hotel-data" synchronously, with a memory
-cache size of 256MB, flushing enabled, "nruEviction", and timestamp-based
+cache size of 256MiB, flushing enabled, "nruEviction", and timestamp-based
 conflict resolution, run the following command.</p>
 </div>
 <div class="literalblock">

@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-compaction
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-17
+.\"      Date: 2021-03-16
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-COMPACTION" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-COMPACTION" "1" "2021-03-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,8 +35,8 @@ couchbase\-cli\-setting\-compaction \- Modifies compaction settings
 .nf
 \fIcouchbase\-cli setting\-compaction\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-compaction\-db\-percentage <num>]
-    [\-\-compaction\-db\-size <megabytes>] [\-\-compaction\-view\-percentage <num>]
-    [\-\-compaction\-view\-size <megabytes>] [\-\-compaction\-period\-from <HH:MM>]
+    [\-\-compaction\-db\-size <mebibytes>] [\-\-compaction\-view\-percentage <num>]
+    [\-\-compaction\-view\-size <mebibytes>] [\-\-compaction\-period\-from <HH:MM>]
     [\-\-compaction\-period\-to <HH:MM>] [\-\-enable\-compaction\-abort <num>]
     [\-\-enable\-compaction\-parallel <num>] [\-\-metadata\-purge\-interval <num>]
     [\-\-gsi\-compaction\-mode <mode>] [\-\-compaction\-gsi\-percentage <percent>]
@@ -80,9 +80,9 @@ Compacts database files once the fragmentation percentage is greater than
 the value set for this option. The value must be between 2 and 100.
 .RE
 .sp
-\-\-compaction\-db\-size <megabytes>
+\-\-compaction\-db\-size <mebibytes>
 .RS 4
-Compacts the database files once the file fragmentation (in MB) is greater
+Compacts the database files once the file fragmentation (in MiB) is greater
 than the value of this option. This option must be set to a value
 greater than 1.
 .RE
@@ -93,9 +93,9 @@ Compacts view files once the fragmentation percentage is greater than the
 value set for this option. The value must be between 2 and 100.
 .RE
 .sp
-\-\-compaction\-view\-size: <megabytes>
+\-\-compaction\-view\-size: <mebibytes>
 .RS 4
-Compacts the view files once the file fragmentation (in MB) is greater than
+Compacts the view files once the file fragmentation (in MiB) is greater than
 the value of this option. This option must be set to a value greater than 1.
 .RE
 .sp

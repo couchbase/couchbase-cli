@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-cluster-init
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-10-14
+.\"      Date: 2021-03-16
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-CLUSTER\-INIT" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-CLUSTER\-INIT" "1" "2021-03-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -35,10 +35,10 @@ couchbase\-cli\-cluster\-init \- Initializes a Couchbase Server cluster
 .nf
 \fIcouchbase\-cli cluster\-init\fP [\-\-cluster <url>] [\-\-cluster\-username <username>]
     [\-\-cluster\-password <password>] [\-\-cluster\-port <port>]
-    [\-\-cluster\-ramsize <megabytes>] [\-\-cluster\-name <name>]
-    [\-\-cluster\-index\-ramsize <megabytes>] [\-\-cluster\-fts\-ramsize <megabytes>]
-    [\-\-cluster\-eventing\-ramsize <megabytes>]
-    [\-\-cluster\-analytics\-ramsize <megabytes>]
+    [\-\-cluster\-ramsize <mebibytes>] [\-\-cluster\-name <name>]
+    [\-\-cluster\-index\-ramsize <mebibytes>] [\-\-cluster\-fts\-ramsize <mebibytes>]
+    [\-\-cluster\-eventing\-ramsize <mebibytes>]
+    [\-\-cluster\-analytics\-ramsize <mebibytes>]
     [\-\-index\-storage\-setting <setting>] [\-\-services <services>]
     [\-\-update\-notifications <1|0>]
 .fi
@@ -84,13 +84,13 @@ administrator user.
 .sp
 \-\-cluster\-ramsize
 .RS 4
-Specifies the data services memory quota (in MB). This quota will be assigned
+Specifies the data services memory quota (in MiB). This quota will be assigned
 to all future nodes added to the cluster with the data service.
 .RE
 .sp
 \-\-cluster\-fts\-ramsize
 .RS 4
-Sets the full\-text service memory quota (in MB). This parameter is required
+Sets the full\-text service memory quota (in MiB). This parameter is required
 if the full\-text service is specified in the \-\-services option. This quota will
 be assigned to all future nodes added to the cluster with the full\-text
 service.
@@ -98,14 +98,14 @@ service.
 .sp
 \-\-cluster\-index\-ramsize
 .RS 4
-Sets the index service memory quota (in MB). This parameter is required if
+Sets the index service memory quota (in MiB). This parameter is required if
 the index service is specified in the \-\-services option. This quota will be
 assigned to all future nodes added to the cluster with the index service.
 .RE
 .sp
 \-\-cluster\-eventing\-ramsize
 .RS 4
-Sets the Eventing service memory quota (in MB). This parameter is required
+Sets the Eventing service memory quota (in MiB). This parameter is required
 if the Eventing service is specified in the \-\-services option. This quota
 will be assigned to all future nodes added to the cluster with the eventing
 service.
@@ -113,7 +113,7 @@ service.
 .sp
 \-\-cluster\-analytics\-ramsize
 .RS 4
-Sets the Analytics service memory quota (in MB). This parameter is required
+Sets the Analytics service memory quota (in MiB). This parameter is required
 if the Analytics service is specified in the \-\-services option. This quota
 will be assigned to all future nodes added to the cluster with the
 analytics service.
@@ -220,7 +220,7 @@ a port other that 8091.
 .SH "EXAMPLES"
 .sp
 To create a Couchbase Server cluster with only the data service on the first node
-and a memory quota of 4096MB run the following command.
+and a memory quota of 4096MiB run the following command.
 .sp
 .if n .RS 4
 .nf
@@ -233,8 +233,8 @@ To create a Couchbase Server cluster with the data and index service then you
 also need to set the memory quotas for each service as well as the index storage
 mode since you are starting the index service.
 .sp
-To create a cluster with an index memory quota of 1024MB, a data service memory
-quota of 2048MB and a memory optimized index storage mode run the following
+To create a cluster with an index memory quota of 1024MiB, a data service memory
+quota of 2048MiB and a memory optimized index storage mode run the following
 command.
 .sp
 .if n .RS 4
@@ -247,7 +247,7 @@ $ couchbase\-cli cluster\-init \-c 127.0.0.1 \-\-cluster\-username Administrator
 .sp
 To create a Couchbase Server cluster with all services then you need to set
 the memory quotas for the Data, Index, Full\-Text, Eventing and Analytics
-service. The quotas are set to 2048MB, 1024MB, 1024MB, 1024MB and 1024MB
+service. The quotas are set to 2048MiB, 1024MiB, 1024MiB, 1024MiB and 1024MiB
 respectively. A quota is not set for the query service since it does not have
 a memory quota. You also need to set the index storage mode for the index
 service, which will be set to "default" since the service is started on the
@@ -266,7 +266,7 @@ $ couchbase\-cli cluster\-init \-c 127.0.0.1 \-\-cluster\-username Administrator
 .sp
 If you want to set the port number you can do so with the \-\-cluster\-port
 option. In the example below, a cluster is setup on port 5000 and starts
-only the data service. The memory quota of the data service is set to 2048MB.
+only the data service. The memory quota of the data service is set to 2048MiB.
 .sp
 .if n .RS 4
 .nf

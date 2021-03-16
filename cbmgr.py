@@ -607,18 +607,18 @@ class ClusterInit(Subcommand):
         group.add_argument("--cluster-port", dest="port", type=(int),
                            metavar="<port>", help="The cluster administration console port")
         group.add_argument("--cluster-ramsize", dest="data_mem_quota", type=(int),
-                           metavar="<quota>", help="The data service memory quota in megabytes")
+                           metavar="<quota>", help="The data service memory quota in mebibytes")
         group.add_argument("--cluster-index-ramsize", dest="index_mem_quota", type=(int),
-                           metavar="<quota>", help="The index service memory quota in megabytes")
+                           metavar="<quota>", help="The index service memory quota in mebibytes")
         group.add_argument("--cluster-fts-ramsize", dest="fts_mem_quota", type=(int),
                            metavar="<quota>",
-                           help="The full-text service memory quota in Megabytes")
+                           help="The full-text service memory quota in mebibytes")
         group.add_argument("--cluster-eventing-ramsize", dest="eventing_mem_quota", type=(int),
                            metavar="<quota>",
-                           help="The Eventing service memory quota in Megabytes")
+                           help="The Eventing service memory quota in mebibytes")
         group.add_argument("--cluster-analytics-ramsize", dest="cbas_mem_quota", type=(int),
                            metavar="<quota>",
-                           help="The analytics service memory quota in Megabytes")
+                           help="The analytics service memory quota in mebibytes")
         group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
         group.add_argument("--index-storage-setting", dest="index_storage_mode",
                            choices=["default", "memopt"], metavar="<mode>",
@@ -778,13 +778,13 @@ class BucketCreate(Subcommand):
                            metavar="<perc>", type=(int), help="Set Database Fragmentation level percent")
 
         group.add_argument("--database-fragmentation-threshold-size", dest="db_frag_size",
-                           metavar="<megabytes>", type=(int), help="Set Database Fragmentation level")
+                           metavar="<mebibytes>", type=(int), help="Set Database Fragmentation level")
 
         group.add_argument("--view-fragmentation-threshold-percentage", dest="view_frag_perc",
                            metavar="<perc>", type=(int), help="Set View Fragmentation level percent")
 
         group.add_argument("--view-fragmentation-threshold-size", dest="view_frag_size",
-                           metavar="<megabytes>", type=(int), help="Set View Fragmentation level size")
+                           metavar="<mebibytes>", type=(int), help="Set View Fragmentation level size")
 
         group.add_argument("--from-hour", dest="from_hour",
                            metavar="<quota>", type=(int), help="Set start time hour")
@@ -944,13 +944,13 @@ class BucketEdit(Subcommand):
                            metavar="<perc>", type=(int), help="Set Database Fragmentation level percent")
 
         group.add_argument("--database-fragmentation-threshold-size", dest="db_frag_size",
-                           metavar="<megabytes>", type=(int), help="Set Database Fragmentation level")
+                           metavar="<mebibytes>", type=(int), help="Set Database Fragmentation level")
 
         group.add_argument("--view-fragmentation-threshold-percentage", dest="view_frag_perc",
                            metavar="<perc>", type=(int), help="Set View Fragmentation level percent")
 
         group.add_argument("--view-fragmentation-threshold-size", dest="view_frag_size",
-                           metavar="<megabytes>", type=(int), help="Set View Fragmentation level size")
+                           metavar="<mebibytes>", type=(int), help="Set View Fragmentation level size")
 
         group.add_argument("--from-hour", dest="from_hour",
                            metavar="<hour>", type=(int), help="Set start time hour")
@@ -2435,15 +2435,15 @@ class SettingCluster(Subcommand):
         group.add_argument("--cluster-port", dest="port", type=(int), metavar="<port>",
                            help="The cluster administration console port")
         group.add_argument("--cluster-ramsize", dest="data_mem_quota", metavar="<quota>",
-                           type=(int), help="The data service memory quota in megabytes")
+                           type=(int), help="The data service memory quota in mebibytes")
         group.add_argument("--cluster-index-ramsize", dest="index_mem_quota", metavar="<quota>",
-                           type=(int), help="The index service memory quota in megabytes")
+                           type=(int), help="The index service memory quota in mebibytes")
         group.add_argument("--cluster-fts-ramsize", dest="fts_mem_quota", metavar="<quota>",
-                           type=(int), help="The full-text service memory quota in megabytes")
+                           type=(int), help="The full-text service memory quota in mebibytes")
         group.add_argument("--cluster-eventing-ramsize", dest="eventing_mem_quota", metavar="<quota>",
-                           type=(int), help="The Eventing service memory quota in megabytes")
+                           type=(int), help="The Eventing service memory quota in mebibytes")
         group.add_argument("--cluster-analytics-ramsize", dest="cbas_mem_quota", metavar="<quota>",
-                           type=(int), help="The analytics service memory quota in megabytes")
+                           type=(int), help="The analytics service memory quota in mebibytes")
         group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
@@ -2508,15 +2508,15 @@ class SettingCompaction(Subcommand):
         group.add_argument("--compaction-db-percentage", dest="db_perc", metavar="<perc>",
                            type=(int),
                            help="Compacts the db once the fragmentation reaches this percentage")
-        group.add_argument("--compaction-db-size", dest="db_size", metavar="<megabytes>",
+        group.add_argument("--compaction-db-size", dest="db_size", metavar="<mebibytes>",
                            type=(int),
-                           help="Compacts db once the fragmentation reaches this size (MB)")
+                           help="Compacts db once the fragmentation reaches this size (MiB)")
         group.add_argument("--compaction-view-percentage", dest="view_perc", metavar="<perc>",
                            type=(int),
                            help="Compacts the view once the fragmentation reaches this percentage")
-        group.add_argument("--compaction-view-size", dest="view_size", metavar="<megabytes>",
+        group.add_argument("--compaction-view-size", dest="view_size", metavar="<mebibytes>",
                            type=(int),
-                           help="Compacts view once the fragmentation reaches this size (MB)")
+                           help="Compacts view once the fragmentation reaches this size (MiB)")
         group.add_argument("--compaction-period-from", dest="from_period", metavar="<HH:MM>",
                            help="Only run compaction after this time")
         group.add_argument("--compaction-period-to", dest="to_period", metavar="<HH:MM>",
@@ -3107,7 +3107,7 @@ class SettingXdcr(Subcommand):
                            type=(int),
                            help="The number of outgoing nozzles per target node (1 to 10)")
         group.add_argument("--bandwidth-usage-limit", dest="usage_limit", type=(int),
-                           metavar="<num>", help="The bandwidth usage limit in MB/Sec")
+                           metavar="<num>", help="The bandwidth usage limit in MiB/Sec")
         group.add_argument("--enable-compression", dest="compression", metavar="<1|0>", choices=["1", "0"],
                            help="Enable/disable compression")
         group.add_argument("--log-level", dest="log_level", metavar="<level>",
@@ -3516,7 +3516,7 @@ class XdcrReplicate(Subcommand):
                            metavar="<num>",
                            help="The number of outgoing nozzles per target node (1 to 10)")
         group.add_argument("--bandwidth-usage-limit", dest="usage_limit", type=(int),
-                           metavar="<num>", help="The bandwidth usage limit in MB/Sec")
+                           metavar="<num>", help="The bandwidth usage limit in MiB/Sec")
         group.add_argument("--enable-compression", dest="compression", metavar="<1|0>", choices=["1", "0"],
                            help="Enable/disable compression")
         group.add_argument("--log-level", dest="log_level", metavar="<level>",
@@ -4495,8 +4495,8 @@ class SettingQuery(Subcommand):
                            help='N1QL Feature Controls')
         group.add_argument('--temp-dir', metavar='<path>', type=str, default=None,
                            help='This specifies the directory for temporary query data.')
-        group.add_argument('--temp-dir-size', metavar='<megabytes>', type=int, default=None,
-                           help='Specify the maximum size in megabytes for the temporary query data directory.')
+        group.add_argument('--temp-dir-size', metavar='<mebibytes>', type=int, default=None,
+                           help='Specify the maximum size in mebibytes for the temporary query data directory.')
 
         whitelist_group = self.parser.add_argument_group('Query whitelist settings')
         whitelist_group.add_argument('--curl-restricted', choices=['restricted', 'unrestricted'], default=None,
@@ -4899,8 +4899,8 @@ class BackupServiceSettings:
         group.add_argument('--set', action='store_true', help='Change the service configuration')
         group.add_argument('--history-rotation-period', dest='rotation_period', type=int, metavar='<days>',
                            help='The number of days after which the task history should be rotated')
-        group.add_argument('--history-rotation-size', dest='rotation_size', type=int, metavar='<megabytes>',
-                           help='The size in MB at which to rotate the task history')
+        group.add_argument('--history-rotation-size', dest='rotation_size', type=int, metavar='<mebibytes>',
+                           help='The size in MiB at which to rotate the task history')
         group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
                            help="Prints the short or long help message")
 
@@ -4924,7 +4924,7 @@ class BackupServiceSettings:
             print('-- Backup service configuration --')
             size = config['history_rotation_size'] if 'history_rotation_size' in config else 'N/A'
             period = config['history_rotation_period'] if 'history_rotation_period' in config else 'N/A'
-            print(f'History rotation size: {size} MB')
+            print(f'History rotation size: {size} MiB')
             print(
                 f'History rotation period: {period} days')
 

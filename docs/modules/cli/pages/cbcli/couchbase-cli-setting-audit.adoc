@@ -72,7 +72,7 @@ ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   audit log will be replaced with a new empty audit log file. The log
   file is rotated to ensure that the audit log does not consume too much disk
   space. The minimum audit log rotate size is 0 bytes and maximum is
-  524,288,000 (500MB). When it is set to 0 the log will not be rotated based
+  524,288,000 (500MiB). When it is set to 0 the log will not be rotated based
   on size.
 
 --disabled-users <user-list>::
@@ -146,7 +146,7 @@ endif::[]
    --audit-log-path /opt/couchbase/var/lib/couchbase/logs
 
 To enable auditing on a cluster and set the audit log to the default logs folder
-on a Linux installation with a log rotate size of 20MB, run the command below.
+on a Linux installation with a log rotate size of 20MiB, run the command below.
 
 ifdef::site-gen-antora,backend-html5[]
 _Couchbase Server 6.5:_
@@ -163,7 +163,7 @@ endif::[]
    --audit-log-path /opt/couchbase/var/lib/couchbase/logs
 
 To enable auditing on a cluster, set the audit log to the default logs folder
-on a Linux installation with a log rotate size of 20MB, disable
+on a Linux installation with a log rotate size of 20MiB, disable
 auditing for users backup and restore, and disable auditing for event 40964 and 40963,
 run the command below.
 

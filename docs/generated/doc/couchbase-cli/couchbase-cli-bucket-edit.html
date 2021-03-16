@@ -457,9 +457,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--max-ttl &lt;seconds&gt;] [--compression-mode &lt;mode&gt;]
     [--remove-bucket-port &lt;num&gt;]
     [--database-fragmentation-threshold-percentage &lt;perc&gt;]
-    [--database-fragmentation-threshold-size &lt;megabytes&gt;]
+    [--database-fragmentation-threshold-size &lt;mebibytes&gt;]
     [--view-fragmentation-threshold-percentage &lt;perc&gt;]
-    [--view-fragmentation-threshold-size &lt;megabytes&gt;] [--from-hour &lt;hour&gt;]
+    [--view-fragmentation-threshold-size &lt;mebibytes&gt;] [--from-hour &lt;hour&gt;]
     [--from-minute &lt;min&gt;] [--to-hour &lt;hour&gt;] [--to-minute &lt;min&gt;]
     [--abort-outside &lt;0|1&gt;] [--parallel-db-view-compaction &lt;0|1&gt;]
     [--purge-interval &lt;num&gt;] [--durability-min-level &lt;level&gt;]</pre>
@@ -510,9 +510,9 @@ environment variable CB_REST_PASSWORD.</p>
 </dd>
 <dt class="hdlist1">--bucket-ramsize &lt;size&gt;</dt>
 <dd>
-<p>The amount of memory to allocate to the cache for this bucket, in Megabytes.
+<p>The amount of memory to allocate to the cache for this bucket, in mebibytes.
 The memory quota of this bucket must fit into the overall cluster memory
-quota. The minimum cache size is 100MB.</p>
+quota. The minimum cache size is 100MiB.</p>
 </dd>
 <dt class="hdlist1">--bucket-replica &lt;num&gt;</dt>
 <dd>
@@ -620,9 +620,9 @@ it to 1.</p>
 <p>Sets the database fragmentation trigger threshold as a percentage. Can be set
 to values between 2 and 100.</p>
 </dd>
-<dt class="hdlist1">--database-fragmentation-threshold-size &lt;megabytes&gt;</dt>
+<dt class="hdlist1">--database-fragmentation-threshold-size &lt;mebibytes&gt;</dt>
 <dd>
-<p>Sets the database fragmentation trigger threshold as a number of megabytes.
+<p>Sets the database fragmentation trigger threshold as a number of mebibytes.
 It accepts integers greater than 1.</p>
 </dd>
 <dt class="hdlist1">--view-fragmentation-threshold-percentage &lt;perc&gt;</dt>
@@ -630,9 +630,9 @@ It accepts integers greater than 1.</p>
 <p>Sets the view fragmentation trigger threshold as a percentage. Can be set
 to values between 2 and 100.</p>
 </dd>
-<dt class="hdlist1">--view-fragmentation-threshold-size &lt;megabytes&gt;</dt>
+<dt class="hdlist1">--view-fragmentation-threshold-size &lt;mebibytes&gt;</dt>
 <dd>
-<p>Sets the view fragmentation trigger threshold as a number of megabytes.
+<p>Sets the view fragmentation trigger threshold as a number of mebibytes.
 It accepts integers greater than 1.</p>
 </dd>
 <dt class="hdlist1">--from-hour &lt;hour&gt;</dt>

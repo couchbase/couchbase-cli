@@ -453,10 +453,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <pre class="content"><em>couchbase-cli setting-cluster</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] [--cluster-username &lt;username&gt;]
     [--cluster-password &lt;password&gt;] [--cluster-port &lt;port&gt;]
-    [--cluster-ramsize &lt;megabytes&gt;] [--cluster-name &lt;name&gt;]
-    [--cluster-index-ramsize &lt;megabytes&gt;] [--cluster-fts-ramsize &lt;megabytes&gt;]
-    [--cluster-eventing-ramsize &lt;megabytes&gt;]
-    [--cluster-analytics-ramsize &lt;megabytes&gt;]</pre>
+    [--cluster-ramsize &lt;mebibytes&gt;] [--cluster-name &lt;name&gt;]
+    [--cluster-index-ramsize &lt;mebibytes&gt;] [--cluster-fts-ramsize &lt;mebibytes&gt;]
+    [--cluster-eventing-ramsize &lt;mebibytes&gt;]
+    [--cluster-analytics-ramsize &lt;mebibytes&gt;]</pre>
 </div>
 </div>
 </div>
@@ -527,14 +527,14 @@ to all future nodes added to the cluster with the index service.</p>
 </dd>
 <dt class="hdlist1">--cluster-eventing-ramsize</dt>
 <dd>
-<p>Sets the Eventing service memory quota (in MB). This parameter is required
+<p>Sets the Eventing service memory quota (in MiB). This parameter is required
 if the Eventing service is specified in the --services option. This quota
 will be assigned to all future nodes added to the cluster with the eventing
 service.</p>
 </dd>
 <dt class="hdlist1">--cluster-analytics-ramsize</dt>
 <dd>
-<p>Sets the Analytics service memory quota (in MB). This parameter is required
+<p>Sets the Analytics service memory quota (in MiB). This parameter is required
 if the Analytics service is specified in the --services option. This quota
 will be assigned to all future nodes added to the cluster with the
 Analytics service.</p>

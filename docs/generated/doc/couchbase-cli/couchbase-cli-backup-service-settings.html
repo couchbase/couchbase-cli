@@ -452,7 +452,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="verseblock">
 <pre class="content">_couchbase-cli backup-service [--cluster &lt;url&gt;] [--username &lt;user&gt;]
     [--password &lt;password&gt;] settings [--get] [--set] [--history-rotation-period &lt;days&gt;]
-    [--history-rotation-size &lt;megabytes&gt;]</pre>
+    [--history-rotation-size &lt;mebibytes&gt;]</pre>
 </div>
 </div>
 </div>
@@ -477,9 +477,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <dd>
 <p>Set backup service settings.</p>
 </dd>
-<dt class="hdlist1">--history-rotation-size &lt;megabytes&gt;</dt>
+<dt class="hdlist1">--history-rotation-size &lt;mebibytes&gt;</dt>
 <dd>
-<p>The history size in megabytes at which it should be rotated. Valid values are between 5
+<p>The history size in mebibytes at which it should be rotated. Valid values are between 5
 and 200.</p>
 </dd>
 <dt class="hdlist1">--history-rotation-period &lt;days&gt;</dt>
@@ -529,7 +529,7 @@ a port other that 8091.</p>
 <pre>$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
   settings --get
 -- Backup service configuration --
-History rotation size: 70 MB
+History rotation size: 70 MiB
 History rotation period: 28 days</pre>
 </div>
 </div>

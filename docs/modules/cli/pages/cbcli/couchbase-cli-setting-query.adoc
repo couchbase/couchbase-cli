@@ -17,7 +17,7 @@ _couchbase-cli setting-query [--cluster <url>] [--username <user>]
     [--prepared-limit <max>] [--completed-limit <max>]
     [--log-level <trace|debug|info|warn|error|server|none>]
     [--max-parallelism <max>] [--n1ql-feature-control <num>]
-    [--temp-dir <path>] [--temp-dir-size <megabytes>]
+    [--temp-dir <path>] [--temp-dir-size <mebibytes>]
     [--curl-restricted <restricted|unrestricted>]
     [--allowed-urls <urls>] [--disallowed-urls <urls>]
 
@@ -73,8 +73,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --temp-dir <path>::
   Specify the directory for temporary query data.
 
---temp-dir-size <megabytes>::
-  Maximum size in megabytes for the temporary query data directory.
+--temp-dir-size <mebibytes>::
+  Maximum size in mebibytes for the temporary query data directory.
 
 == QUERY WHITELIST OPTIONS
 

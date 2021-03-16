@@ -217,7 +217,7 @@ from a source cluster into the caching layer at the destination""")
         rv = {
             "batch_max_size":  (1000,   "Transfer this # of documents per batch"),
             "batch_max_bytes": (400000, "Transfer this # of bytes per batch"),
-            "cbb_max_mb":      (100000, "Split backup file on destination cluster if it exceeds MB"),
+            "cbb_max_mb":      (100000, "Split backup file on destination cluster if it exceeds MiB"),
             "max_retry":       (10,     "Max number of sequential retries if transfer fails"),
             "report":          (5,      "Number batches transferred before updating progress bar in console"),
             "report_full":     (2000,   "Number batches transferred before emitting progress information in console"),

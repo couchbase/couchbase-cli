@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-bucket-edit
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-17
+.\"      Date: 2021-03-16
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-EDIT" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-EDIT" "1" "2021-03-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -40,9 +40,9 @@ couchbase\-cli\-bucket\-edit \- Edit a bucket
     [\-\-max\-ttl <seconds>] [\-\-compression\-mode <mode>]
     [\-\-remove\-bucket\-port <num>]
     [\-\-database\-fragmentation\-threshold\-percentage <perc>]
-    [\-\-database\-fragmentation\-threshold\-size <megabytes>]
+    [\-\-database\-fragmentation\-threshold\-size <mebibytes>]
     [\-\-view\-fragmentation\-threshold\-percentage <perc>]
-    [\-\-view\-fragmentation\-threshold\-size <megabytes>] [\-\-from\-hour <hour>]
+    [\-\-view\-fragmentation\-threshold\-size <mebibytes>] [\-\-from\-hour <hour>]
     [\-\-from\-minute <min>] [\-\-to\-hour <hour>] [\-\-to\-minute <min>]
     [\-\-abort\-outside <0|1>] [\-\-parallel\-db\-view\-compaction <0|1>]
     [\-\-purge\-interval <num>] [\-\-durability\-min\-level <level>]
@@ -85,9 +85,9 @@ The name of the bucket to edit.
 .sp
 \-\-bucket\-ramsize <size>
 .RS 4
-The amount of memory to allocate to the cache for this bucket, in Megabytes.
+The amount of memory to allocate to the cache for this bucket, in mebibytes.
 The memory quota of this bucket must fit into the overall cluster memory
-quota. The minimum cache size is 100MB.
+quota. The minimum cache size is 100MiB.
 .RE
 .sp
 \-\-bucket\-replica <num>
@@ -202,9 +202,9 @@ Sets the database fragmentation trigger threshold as a percentage. Can be set
 to values between 2 and 100.
 .RE
 .sp
-\-\-database\-fragmentation\-threshold\-size <megabytes>
+\-\-database\-fragmentation\-threshold\-size <mebibytes>
 .RS 4
-Sets the database fragmentation trigger threshold as a number of megabytes.
+Sets the database fragmentation trigger threshold as a number of mebibytes.
 It accepts integers greater than 1.
 .RE
 .sp
@@ -214,9 +214,9 @@ Sets the view fragmentation trigger threshold as a percentage. Can be set
 to values between 2 and 100.
 .RE
 .sp
-\-\-view\-fragmentation\-threshold\-size <megabytes>
+\-\-view\-fragmentation\-threshold\-size <mebibytes>
 .RS 4
-Sets the view fragmentation trigger threshold as a number of megabytes.
+Sets the view fragmentation trigger threshold as a number of mebibytes.
 It accepts integers greater than 1.
 .RE
 .sp

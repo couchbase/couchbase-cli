@@ -88,9 +88,11 @@ KV
 ldap
 localhost
 majorityAndPersistActive
+mebibytes
 memberOf
 membase
 memcached
+MiB
 moxi
 msg
 namespace
