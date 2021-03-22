@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-17
+.\"      Date: 2021-03-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2021-03-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -623,6 +623,15 @@ the user to create XDCR streams into  bucket \fIdefault\fP set their roles as
 replication_target[default]. To allow the user to create XDCR streams to bucket
 \fIdefault\fP and \fIapp\fP set their roles as
 replication_target[default],replication_target[app]
+.RE
+.sp
+.B Eventing roles
+.br
+.sp
+eventing_admin
+.RS 4
+Allows the user to create and manage eventing functions. This user can access
+the console.
 .RE
 .SH "EXAMPLES"
 .sp

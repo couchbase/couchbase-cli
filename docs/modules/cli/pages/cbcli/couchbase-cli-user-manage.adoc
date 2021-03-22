@@ -429,6 +429,12 @@ replication_target[...]::
   _default_ and _app_ set their roles as
   replication_target[default],replication_target[app]
 
+.Eventing roles
+
+eventing_admin::
+  Allows the user to create and manage eventing functions. This user can access
+  the console.
+
 == EXAMPLES
 
 To create an local RBAC user profile for a user named "John Doe" with username
