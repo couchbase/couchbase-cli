@@ -457,7 +457,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--log-level &lt;trace|debug|info|warn|error|server|none&gt;]
     [--max-parallelism &lt;max&gt;] [--n1ql-feature-control &lt;num&gt;]
     [--temp-dir &lt;path&gt;] [--temp-dir-size &lt;mebibytes&gt;]
-    [--curl-restricted &lt;restricted|unrestricted&gt;]
+    [--curl-access &lt;restricted|unrestricted&gt;]
     [--allowed-urls &lt;urls&gt;] [--disallowed-urls &lt;urls&gt;]</pre>
 </div>
 </div>
@@ -564,11 +564,11 @@ The default is 1.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_query_whitelist_options">QUERY WHITELIST OPTIONS</h2>
+<h2 id="_query_curl_access_options">QUERY CURL ACCESS OPTIONS</h2>
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">--curl-restricted &lt;restricted|unrestricted&gt;</dt>
+<dt class="hdlist1">--curl-access &lt;restricted|unrestricted&gt;</dt>
 <dd>
 <p>Specify either unrestricted or restricted, to determine which URLs are permitted
 to be accessed by the curl function.</p>
@@ -576,12 +576,14 @@ to be accessed by the curl function.</p>
 <dt class="hdlist1">--allowed-urls &lt;urls&gt;</dt>
 <dd>
 <p>Comma separated lists of URLs that are allowed to be accessed by the curl
-function. This option must be provided together with --curl-restricted.</p>
+function. This option must be provided together with --curl-access restricted.
+If disallowed-urls also provided then the disallowed list takes precedence.</p>
 </dd>
 <dt class="hdlist1">--disallowed-urls &lt;urls&gt;</dt>
 <dd>
 <p>Comma separated lists of URLs that are disallowed to be accessed by the curl
-function. This option must be provided together with --curl-restricted.</p>
+function. This option must be provided together with --curl-access restricted.
+If allowed-urls also provided then the disallowed list takes precedence.</p>
 </dd>
 </dl>
 </div>

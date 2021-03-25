@@ -4492,8 +4492,8 @@ class SettingQuery(Subcommand):
         group.add_argument('--temp-dir-size', metavar='<mebibytes>', type=int, default=None,
                            help='Specify the maximum size in mebibytes for the temporary query data directory.')
 
-        whitelist_group = self.parser.add_argument_group('Query whitelist settings')
-        whitelist_group.add_argument('--curl-restricted', choices=['restricted', 'unrestricted'], default=None,
+        whitelist_group = self.parser.add_argument_group('Query curl access settings')
+        whitelist_group.add_argument('--curl-access', choices=['restricted', 'unrestricted'], default=None,
                                      help='Specify either unrestricted or restricted, to determine which URLs are'
                                           ' permitted to be accessed by the curl function.')
         whitelist_group.add_argument('--allowed-urls', metavar='<urls>', type=str, default=None,
@@ -4513,26 +4513,27 @@ class SettingQuery(Subcommand):
             _exit_if_errors(err)
             print(json.dumps(settings))
         if opts.set:
-            whitelist = self._post_query_whitelist(opts)
-            self._post_query_settings(opts, whitelist)
+            access_list = self._post_query_access_list(opts)
+            self._post_query_settings(opts, access_list)
             _success('Updated the query settings')
 
-    def _post_query_whitelist(self, opts) -> bool:
-        if opts.curl_restricted:
+    def _post_query_access_list(self, opts) -> bool:
+        if opts.curl_access != 'restricted' and (opts.allowed_urls is not None or opts.disallowed_urls is not None):
+            _exit_if_errors(['Can only provide --allowed-urls or --disallowed-urls with --curl-access restricted'])
+        if opts.curl_access:
             allowed = opts.allowed_urls.strip().split(',') if opts.allowed_urls is not None else None
             disallowed = opts.disallowed_urls.strip().split(',') if opts.disallowed_urls is not None else None
-            _, err = self.rest.post_query_whitelist_settings(opts.curl_restricted == 'restricted', allowed,
-                                                             disallowed)
+            _, err = self.rest.post_query_curl_access_settings(opts.curl_access == 'restricted', allowed, disallowed)
             _exit_if_errors(err)
             return True
         return False
 
-    def _post_query_settings(self, opts, white_listed):
+    def _post_query_settings(self, opts, access_list):
         if all(v is None for v in [opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
                                    opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
                                    opts.log_level, opts.max_parallelism, opts.n1ql_feature_control, opts.temp_dir,
                                    opts.temp_dir_size]):
-            if white_listed:
+            if access_list:
                 return
 
             _exit_if_errors(['Please provide at least one other option with --set'])

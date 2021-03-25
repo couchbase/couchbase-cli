@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-query
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-03-16
+.\"      Date: 2021-03-29
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-QUERY" "1" "2021-03-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-QUERY" "1" "2021-03-29" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -40,7 +40,7 @@ _couchbase\-cli setting\-query [\-\-cluster <url>] [\-\-username <user>]
     [\-\-log\-level <trace|debug|info|warn|error|server|none>]
     [\-\-max\-parallelism <max>] [\-\-n1ql\-feature\-control <num>]
     [\-\-temp\-dir <path>] [\-\-temp\-dir\-size <mebibytes>]
-    [\-\-curl\-restricted <restricted|unrestricted>]
+    [\-\-curl\-access <restricted|unrestricted>]
     [\-\-allowed\-urls <urls>] [\-\-disallowed\-urls <urls>]
 .fi
 .br
@@ -146,9 +146,9 @@ Specify the directory for temporary query data.
 .RS 4
 Maximum size in mebibytes for the temporary query data directory.
 .RE
-.SH "QUERY WHITELIST OPTIONS"
+.SH "QUERY CURL ACCESS OPTIONS"
 .sp
-\-\-curl\-restricted <restricted|unrestricted>
+\-\-curl\-access <restricted|unrestricted>
 .RS 4
 Specify either unrestricted or restricted, to determine which URLs are permitted
 to be accessed by the curl function.
@@ -157,13 +157,15 @@ to be accessed by the curl function.
 \-\-allowed\-urls <urls>
 .RS 4
 Comma separated lists of URLs that are allowed to be accessed by the curl
-function. This option must be provided together with \-\-curl\-restricted.
+function. This option must be provided together with \-\-curl\-access restricted.
+If disallowed\-urls also provided then the disallowed list takes precedence.
 .RE
 .sp
 \-\-disallowed\-urls <urls>
 .RS 4
 Comma separated lists of URLs that are disallowed to be accessed by the curl
-function. This option must be provided together with \-\-curl\-restricted.
+function. This option must be provided together with \-\-curl\-access restricted.
+If allowed\-urls also provided then the disallowed list takes precedence.
 .RE
 .SH "HOST FORMATS"
 .sp
