@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-bucket-list
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-17
+.\" Generator: Asciidoctor 2.0.12
+.\"      Date: 2021-03-25
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BUCKET\-LIST" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BUCKET\-LIST" "1" "2021-03-25" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -40,7 +40,7 @@ couchbase\-cli\-bucket\-list \- List all buckets
 .SH "DESCRIPTION"
 .sp
 Lists all buckets in the cluster. For each bucket, the following are printed
-to stdout: \f(CRbucketType\fP, \f(CRauthType\fP, \f(CRnumReplicas\fP, \f(CRramQuota\fP, \f(CRramUsed\fP.
+to stdout: \f(CRbucketType\fP, \f(CRnumReplicas\fP, \f(CRramQuota\fP, \f(CRramUsed\fP.
 .SH "OPTIONS"
 .sp
 \-c, \-\-cluster
@@ -112,33 +112,32 @@ To list all buckets in the cluster, run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli bucket\-list \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password
 
  travel\-data
    bucketType: membase
-   authType: sasl
    numReplicas: 1
    ramQuota: 104857600
    ramUsed: 45302840
  airline\-data
    bucketType: ephemeral
-   authType: sasl
    numReplicas: 1
    ramQuota: 268435456
    ramUsed: 1134432
  flight\-data
    bucketType: memcached
-   authType: sasl
    numReplicas: 0
    ramQuota: 104857600
    ramUsed: 0
+.fam
 .fi
 .if n .RE
 .SH "DISCUSSION"
 .sp
 In the output, RAM figures are in bytes. The "membase" bucketType signifies a
-Couchbase bucket. The authType can be either "sasl" or "none".
+Couchbase bucket.
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
 .sp
 CB_REST_USERNAME

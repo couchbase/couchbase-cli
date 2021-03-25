@@ -6,7 +6,6 @@ api
 API
 APIs
 auth
-authType
 autofailover
 autoreprovision
 azureblob
