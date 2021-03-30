@@ -4492,16 +4492,16 @@ class SettingQuery(Subcommand):
         group.add_argument('--temp-dir-size', metavar='<mebibytes>', type=int, default=None,
                            help='Specify the maximum size in mebibytes for the temporary query data directory.')
 
-        whitelist_group = self.parser.add_argument_group('Query curl access settings')
-        whitelist_group.add_argument('--curl-access', choices=['restricted', 'unrestricted'], default=None,
-                                     help='Specify either unrestricted or restricted, to determine which URLs are'
-                                          ' permitted to be accessed by the curl function.')
-        whitelist_group.add_argument('--allowed-urls', metavar='<urls>', type=str, default=None,
-                                     help='Comma separated lists of URLs that are allowed to be accessed by the curl'
-                                          ' function.')
-        whitelist_group.add_argument('--disallowed-urls', metavar='<urls>', type=str, default=None,
-                                     help='Comma separated lists of URLs that are disallowed to be accessed by the curl'
-                                          ' function.')
+        access_list_group = self.parser.add_argument_group('Query curl access settings')
+        access_list_group.add_argument('--curl-access', choices=['restricted', 'unrestricted'], default=None,
+                                       help='Specify either unrestricted or restricted, to determine which URLs are'
+                                            ' permitted to be accessed by the curl function.')
+        access_list_group.add_argument('--allowed-urls', metavar='<urls>', type=str, default=None,
+                                       help='Comma separated lists of URLs that are allowed to be accessed by the curl'
+                                            ' function.')
+        access_list_group.add_argument('--disallowed-urls', metavar='<urls>', type=str, default=None,
+                                       help='Comma separated lists of URLs that are disallowed to be accessed by the'
+                                            ' curl function.')
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
