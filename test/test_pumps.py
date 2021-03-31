@@ -1267,7 +1267,7 @@ class MCHelper:
         errcode = 0
         if cmd != cbcs.CMD_HELLO:
             self.failed = True
-            self.reason = "Got command {} expected {}".format(cmd, cbcs.CMD_SELECT_BUCKET)
+            self.reason = "Got command {} expected {}".format(cmd, cbcs.CMD_HELLO)
             errcode = cbcs.ERR_EINVAL
 
         key = data[0][cbcs.MIN_RECV_PACKET:cbcs.MIN_RECV_PACKET+keylen]
@@ -1275,6 +1275,11 @@ class MCHelper:
         if features != self.test_data['packed_features']:
             self.failed = True
             self.reason = "Got features {} expected {}".format(features, self.test_data['packed_features'])
+            errcode = cbcs.ERR_EINVAL
+
+        if b'couchbase-cli/' not in key:
+            self.failed = True
+            self.reason = f'Expected the agent to be of the format couchbase-cli/0.0.0-0000-enterprise got {key}'
             errcode = cbcs.ERR_EINVAL
 
         self.res(req, cbcs.CMD_SELECT_BUCKET, errcode=errcode, body=self.reason.encode(), opaque=opaque, cas=cas)

@@ -17,6 +17,12 @@ from couchbaseConstants import SET_PKT_FMT, INCRDECR_RES_FMT
 from couchbaseConstants import AUDIT_PKT_FMT
 import couchbaseConstants
 
+try:
+    from cb_version import VERSION  # pylint: disable=import-error
+except ImportError:
+    VERSION = '0.0.0-0000-community'
+    print(f'WARNING: Could not import cb_version, setting VERSION to {VERSION}')
+
 
 # Collections on the wire uses a varint encoding for the collection-ID
 # A simple unsigned_leb128 encoded is used https://en.wikipedia.org/wiki/LEB128
@@ -455,9 +461,10 @@ class MemcachedClient(object):
 
     def helo(self, features: List[int]) -> Tuple[int, int, Tuple[int, ...]]:
         """Send a hello command for feature checking"""
-        r1, r2, value = self._do_cmd(couchbaseConstants.CMD_HELLO, b'', struct.pack('>' + ('H' * len(features)), *features))
+        r1, r2, value = self._do_cmd(couchbaseConstants.CMD_HELLO, f'couchbase-cli/{VERSION}'.encode(),
+                                     struct.pack('>' + ('H' * len(features)), *features))
         # divide length of value by 2 to find out how many 2-byte elements exist
-        return r1, r2, struct.unpack('>' + ('H' * int(len(value)/2)) , value)
+        return r1, r2, struct.unpack('>' + ('H' * int(len(value)/2)), value)
 
     def delete(self, key: bytes, cas: int = 0) -> Tuple[int, int, bytes]:
         """Delete the value for a given key within the memcached server."""
