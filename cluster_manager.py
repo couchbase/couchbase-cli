@@ -1777,18 +1777,14 @@ class ClusterManager(object):
         return self._post_json(url, params)
 
     def create_analytics_link(self, opts):
-        return self._set_analytics_link(False, self._get_analytics_link_params(opts))
+        return self._set_analytics_link(False, opts.scope, opts.name, self._get_analytics_link_params(opts))
 
     def edit_analytics_link(self, opts):
-        return self._set_analytics_link(True, self._get_analytics_link_params(opts))
+        return self._set_analytics_link(True, opts.scope, opts.name, self._get_analytics_link_params(opts))
 
     @staticmethod
     def _get_analytics_link_params(opts):
-        params = {"name": opts.name}
-        if opts.dataverse:
-            params['dataverse'] = opts.dataverse
-        if opts.scope:
-            params['scope'] = opts.scope
+        params = {}
         if opts.type:
             params["type"] = opts.type
         if opts.hostname:
@@ -1830,7 +1826,7 @@ class ClusterManager(object):
 
         return params
 
-    def _set_analytics_link(self, edit, params):
+    def _set_analytics_link(self, edit, scope, name, params):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -1838,11 +1834,11 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(CBAS_SERVICE)
 
-        url = f'{hosts[0]}/analytics/link'
+        url = f'{hosts[0]}/analytics/link/{urllib.parse.quote_plus(scope)}/{urllib.parse.quote_plus(name)}'
 
         return self._put(url, params) if edit else self._post_form_encoded(url, params)
 
-    def delete_analytics_link(self, dataverse, name, scope):
+    def delete_analytics_link(self, scope, name):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -1850,15 +1846,11 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(CBAS_SERVICE)
 
-        url = f'{hosts[0]}/analytics/link'
-        params = {"name": name}
-        if dataverse:
-            params["dataverse"] = dataverse
-        if scope:
-            params["scope"] = scope
-        return self._delete(url, params)
+        url = f'{hosts[0]}/analytics/link/{urllib.parse.quote_plus(scope)}/{urllib.parse.quote_plus(name)}'
 
-    def list_analytics_links(self, dataverse, name, link_type, scope):
+        return self._delete(url, None)
+
+    def list_analytics_links(self, scope, name, link_type):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -1869,12 +1861,11 @@ class ClusterManager(object):
         url = f'{hosts[0]}/analytics/link'
 
         params = {}
-        if dataverse:
-            params["dataverse"] = dataverse
         if scope:
-            params["scope"] = scope
-        if name:
-            params["name"] = name
+            url += f'/{urllib.parse.quote_plus(scope)}'
+            if name:
+                url += f'/{urllib.parse.quote_plus(name)}'
+
         if link_type:
             params["type"] = link_type
 

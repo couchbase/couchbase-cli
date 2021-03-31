@@ -3969,7 +3969,7 @@ class AnalyticsLinkSetup(Subcommand):
         group.add_argument("--dataverse", dest="dataverse", metavar="<name>",
                            help="The dataverse of the link (Deprecated)")
         group.add_argument("--scope", dest="scope", metavar="<name>",
-                           help="The scope of the link in its display form")
+                           help="The analytics scope of the link in its canonical form")
         group.add_argument("--name", dest="name", metavar="<name>",
                            help="The name of the link")
         group.add_argument("--type", dest="type", metavar="<type>", choices=["couchbase", "s3", "azureblob"],
@@ -4027,6 +4027,8 @@ class AnalyticsLinkSetup(Subcommand):
             _exit_if_errors(["The --create, --delete, --edit, --list flags may not be specified at the same time"])
         if opts.dataverse:
             _deprecated("--dataverse is deprecated, please use --scope instead")
+        if opts.dataverse and opts.scope:
+            _exit_if_errors(['Only one of --dataverse and --scope is allowed'])
         if opts.create or opts.edit:
             self._set(opts)
         elif opts.delete:
@@ -4054,6 +4056,8 @@ class AnalyticsLinkSetup(Subcommand):
             if opts.account_key and opts.shared_access_signature:
                 _exit_if_errors(['Only a single authentication method is allowed'])
 
+        if opts.dataverse:
+            opts.scope = opts.dataverse
         if opts.certificate:
             opts.certificate = _exit_on_file_read_failure(opts.certificate)
         if opts.user_key:
@@ -4075,13 +4079,17 @@ class AnalyticsLinkSetup(Subcommand):
             _exit_if_errors(['--dataverse or --scope is required to delete a link'])
         if opts.name is None:
             _exit_if_errors(['--name is required to delete a link'])
+        if opts.dataverse:
+            opts.scope = opts.dataverse
 
-        _, errors = self.rest.delete_analytics_link(opts.dataverse, opts.name, opts.scope)
+        _, errors = self.rest.delete_analytics_link(opts.scope, opts.name)
         _exit_if_errors(errors)
         _success("Link deleted")
 
     def _list(self, opts):
-        clusters, errors = self.rest.list_analytics_links(opts.dataverse, opts.name, opts.type, opts.scope)
+        if opts.dataverse:
+            opts.scope = opts.dataverse
+        clusters, errors = self.rest.list_analytics_links(opts.scope, opts.name, opts.type)
         _exit_if_errors(errors)
         print(json.dumps(clusters, sort_keys=True, indent=2))
 

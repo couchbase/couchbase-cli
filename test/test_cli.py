@@ -1842,21 +1842,18 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.assertNotIn('query', self.server_args, 'did not expect any query arguments')
 
     def test_list_data_verse(self):
-        self.server_args['/analytics/link'] = []
+        self.server_args['/analytics/link/Default'] = []
         self.no_error_run(self.command + ['--list', '--dataverse', 'Default'], self.server_args)
-        self.assertIn('query', self.server_args, 'expected query parameters to have been set')
-        self.assertEqual(self.server_args['query'], 'dataverse=Default')
+        self.assertNotIn('query', self.server_args, 'did not expect any query arguments')
+        self.assertIn('GET:/analytics/link/Default', self.server.trace)
 
     def test_list_all_options(self):
-        self.server_args['/analytics/link'] = []
+        self.server_args['/analytics/link/Default/name'] = []
         self.no_error_run(self.command + ['--list', '--dataverse', 'Default', '--name', 'name', '--type', 'couchbase'],
                           self.server_args)
         self.assertIn('query', self.server_args, 'expected query parameters to have been set')
-        querys = self.server_args['query'].split('&')
-        self.assertEqual(3, len(querys))
-        self.assertIn('dataverse=Default', querys)
-        self.assertIn('name=name', querys)
-        self.assertIn('type=couchbase', querys)
+        self.assertEqual(self.server_args['query'], 'type=couchbase')
+        self.assertIn('GET:/analytics/link/Default/name', self.server.trace)
 
     def test_list_invalid_type(self):
         self.system_exit_run(self.command + ['--list', '--type', 'fire'], self.server_args)
@@ -1872,45 +1869,42 @@ class TestAnalyticsLinkSetup(CommandTest):
     def test_create_minimum(self):
         self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 's3'],
                           self.server_args)
-        self.assertIn('POST:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=s3'])
+        self.assertIn('POST:/analytics/link/Default/east', self.server.trace)
+        self.rest_parameter_match(['type=s3'])
 
     def test_create_S3(self):
-        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 's3',
+        self.no_error_run(self.command + ['--create', '--scope', 'my/Scope', '--name', 'east', '--type', 's3',
                                           '--access-key-id', 'id-1', '--secret-access-key', 'my-secret', '--region',
                                           'us-east-0', '--service-endpoint', 'my-cool-endpoint.com'], self.server_args)
-        self.assertIn('POST:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=s3', 'accessKeyId=id-1',
-                                   'secretAccessKey=my-secret', 'region=us-east-0',
+        self.assertIn('POST:/analytics/link/my%2FScope/east', self.server.trace)
+        self.rest_parameter_match(['type=s3', 'accessKeyId=id-1', 'secretAccessKey=my-secret', 'region=us-east-0',
                                    'serviceEndpoint=my-cool-endpoint.com'])
 
     def test_create_s3_session_token(self):
-        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 's3',
+        self.no_error_run(self.command + ['--create', '--dataverse', 'Default%Scope', '--name', 'east', '--type', 's3',
                                           '--access-key-id', 'id-1', '--secret-access-key', 'my-secret', '--region',
                                           'us-east-0', '--session-token', 'my-token', '--service-endpoint',
                                           'my-cool-endpoint.com'], self.server_args)
-        self.assertIn('POST:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=s3', 'accessKeyId=id-1',
-                                   'secretAccessKey=my-secret', 'region=us-east-0', 'sessionToken=my-token',
-                                   'serviceEndpoint=my-cool-endpoint.com'])
+        self.assertIn('POST:/analytics/link/Default%25Scope/east', self.server.trace)
+        self.rest_parameter_match(['type=s3', 'accessKeyId=id-1', 'secretAccessKey=my-secret', 'region=us-east-0',
+                                   'sessionToken=my-token', 'serviceEndpoint=my-cool-endpoint.com'])
 
     def test_create_azureblob_using_connection_string(self):
         self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
                                           'azureblob', '--connection-string', 'myConnectionString', '--blob-endpoint',
                                           'my-cool-endpoint.com', '--endpoint-suffix', 'cool-suffix'],
                           self.server_args)
-        self.assertIn('POST:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['scope=Default', 'name=myLink', 'type=azureblob',
-                                   'connectionString=myConnectionString', 'blobEndpoint=my-cool-endpoint.com',
-                                   'endpointSuffix=cool-suffix'])
+        self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
+        self.rest_parameter_match(['type=azureblob', 'connectionString=myConnectionString',
+                                   'blobEndpoint=my-cool-endpoint.com', 'endpointSuffix=cool-suffix'])
 
     def test_create_azureblob_using_accountname_accountkey(self):
         self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
                                           'azureblob', '--account-name', 'myAccountName', '--account-key',
                                           'myAccountKey', '--blob-endpoint', 'my-cool-endpoint.com',
                                           '--endpoint-suffix', 'cool-suffix'], self.server_args)
-        self.assertIn('POST:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['scope=Default', 'name=myLink', 'type=azureblob', 'accountName=myAccountName',
+        self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
+        self.rest_parameter_match(['type=azureblob', 'accountName=myAccountName',
                                    'accountKey=myAccountKey', 'blobEndpoint=my-cool-endpoint.com',
                                    'endpointSuffix=cool-suffix'])
 
@@ -1919,8 +1913,8 @@ class TestAnalyticsLinkSetup(CommandTest):
                                           'azureblob', '--account-name', 'myAccountName', '--shared-access-signature',
                                           'mySharedAccessSignature', '--blob-endpoint', 'my-cool-endpoint.com',
                                           '--endpoint-suffix', 'cool-suffix'], self.server_args)
-        self.assertIn('POST:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['scope=Default', 'name=myLink', 'type=azureblob', 'accountName=myAccountName',
+        self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
+        self.rest_parameter_match(['type=azureblob', 'accountName=myAccountName',
                                    'sharedAccessSignature=mySharedAccessSignature', 'blobEndpoint=my-cool-endpoint.com',
                                    'endpointSuffix=cool-suffix'])
 
@@ -1952,22 +1946,20 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
                                           '--link-username', 'user', '--link-password', 'secret', '--encryption',
                                           'none'], self.server_args)
-        self.assertIn('POST:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=couchbase', 'username=user',
+        self.assertIn('POST:/analytics/link/Default/east', self.server.trace)
+        self.rest_parameter_match(['type=couchbase', 'username=user',
                                    'password=secret', 'encryption=none'])
 
     def test_edit_no_type(self):
         self.no_error_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east'], self.server_args)
-        self.assertIn('PUT:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['dataverse=Default', 'name=east'])
+        self.assertIn('PUT:/analytics/link/Default/east', self.server.trace)
 
     def test_edit_couchbase(self):
         self.no_error_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
                                           '--link-username', 'user', '--link-password', 'secret', '--encryption',
                                           'none'], self.server_args)
-        self.assertIn('PUT:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=couchbase', 'username=user',
-                                   'password=secret', 'encryption=none'])
+        self.assertIn('PUT:/analytics/link/Default/east', self.server.trace)
+        self.rest_parameter_match(['type=couchbase', 'username=user', 'password=secret', 'encryption=none'])
 
     def testFailEditCouchbase(self):
         self.server_args['fail'] = True
@@ -2006,10 +1998,9 @@ class TestAnalyticsLinkSetup(CommandTest):
         os.remove(user_cert_file_name)
         os.remove(user_key_file_name)
 
-        self.assertIn('PUT:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['dataverse=Default', 'name=east', 'type=couchbase', 'username=user',
-                                   'password=secret', 'encryption=full', 'certificate=this-is-the-cert-file',
-                                   'clientKey=this-is-the-user-key-file',
+        self.assertIn('PUT:/analytics/link/Default/east', self.server.trace)
+        self.rest_parameter_match(['type=couchbase', 'username=user', 'password=secret', 'encryption=full',
+                                   'certificate=this-is-the-cert-file', 'clientKey=this-is-the-user-key-file',
                                    'clientCertificate=this-is-the-user-cert-file'])
 
     def test_set_with_certs_that_dont_exist(self):
@@ -2033,8 +2024,7 @@ class TestAnalyticsLinkSetup(CommandTest):
 
     def test_delete(self):
         self.no_error_run(self.command + ['--delete', '--dataverse', 'Default', '--name', 'me'], self.server_args)
-        self.assertIn('DELETE:/analytics/link', self.server.trace)
-        self.rest_parameter_match(['dataverse=Default', 'name=me'])
+        self.assertIn('DELETE:/analytics/link/Default/me', self.server.trace)
 
 
 class TestBackupServiceSettings(CommandTest):

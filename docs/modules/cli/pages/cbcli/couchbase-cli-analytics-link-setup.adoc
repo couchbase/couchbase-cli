@@ -54,7 +54,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   (Deprecated) The dataverse of the link. Use --scope instead.
 
 --scope <name>::
-  The scope of the link in its display form.
+  The scope of the link in its canonical form.  The canonical form of a
+  scope is each part of the form, joined with a '/' character.  e.g. the
+  canonical form of the scope '`remote.links`.s3' would be represented as
+  'remote.links/s3'
 
 === Couchbase Link Options
 Following are the options specific to *--type couchbase*, i.e. Couchbase
@@ -65,11 +68,11 @@ links
 
 --encryption <type>::
   Specifies the type of encryption to use. This flag may either be set to
-either "half", "full", or "none". Half encryption means that passwords are
-encrypted, but data is not. This results in faster data transfer, but less
-security. Full encryption means that all data and passwords are encrypted
-which increases security, but reduces overall data transfer speed. If no
-encryption is needed then "none" can be specified.
+  either "half", "full", or "none". Half encryption means that passwords are
+  encrypted, but data is not. This results in faster data transfer, but less
+  security. Full encryption means that all data and passwords are encrypted
+  which increases security, but reduces overall data transfer speed. If no
+  encryption is needed then "none" can be specified.
 
 --link-username <username>::
   The username of the link.
@@ -79,19 +82,19 @@ encryption is needed then "none" can be specified.
 
 --user-certificate <path>::
   The local path to the file containing the user certificate for authentication.
-This and *--user-key* are used in place of *--link-username* and
-*--link-password* when utilizing certificate-based authentication.
-Certificate-based auth requires *--encryption full*.
+  This and *--user-key* are used in place of *--link-username* and
+  *--link-password* when utilizing certificate-based authentication.
+  Certificate-based auth requires *--encryption full*.
 
 --user-key <path>::
   The local path to the file containing the user key for authentication. This
-and *--user-certificate* are used in place of *--link-username* and
-*--link-password* when utilizing certificate-based authentication.
-Certificate-based auth requires *--encryption full*.
+  and *--user-certificate* are used in place of *--link-username* and
+  *--link-password* when utilizing certificate-based authentication.
+  Certificate-based auth requires *--encryption full*.
 
 --certificate <path>::
   The local path to the file containing the certificate used for encryption.
-Required with *--encryption full*.
+  Required with *--encryption full*.
 
 === S3 Link Options
 Following are the options specific to *--type s3*, i.e. S3 links
@@ -104,7 +107,7 @@ Following are the options specific to *--type s3*, i.e. S3 links
 
 --session-token <token>::
   The session token of the s3 link. This is used when Multi-Factor Authentication
-(MFA) temporary credentials are used.
+  (MFA) temporary credentials are used.
 
 --region <region>::
   The region of the s3 link.
@@ -117,23 +120,23 @@ Following are the options specific to *--type azureblob*, i.e. Azure Blob links
 
 --connection-string <key>::
   The connection string of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &
-account key, or account name & shared access signature.
+  used at a time. Authentication method can be connection string, account name &
+  account key, or account name & shared access signature.
 
 --account-name <id>::
   The account name of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &
-account key, or account name & shared access signature.
+  used at a time. Authentication method can be connection string, account name &
+  account key, or account name & shared access signature.
 
 --account-key <key>::
   The account key of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &
-account key, or account name & shared access signature.
+  used at a time. Authentication method can be connection string, account name &
+  account key, or account name & shared access signature.
 
 --shared-access-signature <token>::
-  The shared access signature of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &
-account key, or account name & shared access signature.
+  The shared access signature of the link. Only a single authentication method
+  can be used at a time. Authentication method can be connection string, account
+  name & account key, or account name & shared access signature.
 
 --blob-endpoint <url>::
   The blob endpoint of the link (optional).
@@ -162,54 +165,58 @@ $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  --link-password password --encryption full \
  --certificate /root/cluster.cert
 ----
-To create an S3 link named `myAwsLink` in the "test" scope, run the
-following command:
+To create an S3 link named `myAwsLink` in the "`remote.links`.s3" scope, run
+the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope test --name myAwsLink --type s3 \
+ -p password --create --scope remote.links/s3 --name myAwsLink --type s3 \
  --region us-west-2 --access-key-id LOREMIPSUMDOLORSITAMET123 \
  --secret-access-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456
 ----
-To create an S3 link named `myAwsLink` in the "test" scope, with
+To create an S3 link named `myAwsLink` in the "`remote.links`.s3" scope, with
 temporary S3 credentials, run the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope test --name myAwsLink --type s3 \
+ -p password --create --scope remote.links/s3 --name myAwsLink --type s3 \
  --region us-west-2 --access-key-id myTemporaryAccessKeyId \
  --secret-access-key myTemporarySecretAccessKey \
  --session-token myTemporarySessionToken
 ----
 *Note: Azure Blob links are supported only in `Developer Preview` mode.*
 
-To create an AzureBlob link named `myAzureBlobLink` in the "test" scope, using
-*"connection string"* for authentication, run the following command:
+To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.s3"
+scope, using *"connection string"* for authentication, run the following
+command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope test --name myAzureBlobLink --type azureblob \
- --connection-string myConnectionString
+ -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
+ azureblob --connection-string myConnectionString
 ----
-To create an AzureBlob link named `myAzureBlobLink` in the "test" scope, using
-*"account name and account key"* for authentication, run the following command:
-----
-$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope test --name myAzureBlobLink --type azureblob \
- --account-name myAccountName --account-key myAccountKey
-----
-To create an AzureBlob link named `myAzureBlobLink` in the "test" scope, using
-*"account name and shared access signature"* for authentication, run the following command:
+To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.s3"
+scope, using *"account name and account key"* for authentication, run the
+following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope test --name myAzureBlobLink --type azureblob \
- --account-name myAccountName --shared-access-signature mySharedAccessSignature
+ -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
+ azureblob --account-name myAccountName --account-key myAccountKey
 ----
-To create an AzureBlob link named `myAzureBlobLink` in the "test" scope, using
-*"account name and shared access signature"* for authentication, and using a *custom
-endpoint*, run the following command:
+To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.s3"
+scope, using *"account name and shared access signature"* for authentication,
+run the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope test --name myAzureBlobLink --type azureblob \
- --account-name myAccountName --shared-access-signature mySharedAccessSignature \
- --blob-endpoint my-custom-endpoint.com
+ -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
+ azureblob --account-name myAccountName --shared-access-signature \
+ mySharedAccessSignature
+----
+To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.s3"
+scope, using *"account name and shared access signature"* for authentication,
+and using a *custom endpoint*, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
+ azureblob --account-name myAccountName --shared-access-signature \
+ mySharedAccessSignature --blob-endpoint my-custom-endpoint.com
 ----
 To list all current links, run the following command:
 ----
