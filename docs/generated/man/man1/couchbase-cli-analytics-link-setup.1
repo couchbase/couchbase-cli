@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-analytics-link-setup
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.12
-.\"      Date: 2021-02-10
+.\"      Date: 2021-04-06
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2021-02-10" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2021-04-06" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -57,7 +57,7 @@ Specifies the hostname of a node in the cluster. See the HOST FORMATS
 section for more information on specifying a hostname.
 .RE
 .sp
-\-u, \-\-user <username>
+\-u, \-\-username <username>
 .RS 4
 Specifies the username of the user executing the command. If you do not have
 a user account with permission to execute the command then it will fail with
@@ -101,7 +101,7 @@ The name for the link.
 .sp
 \-\-type <type>
 .RS 4
-The type of the link, either \(aqcouchbase\(aq, \(aqs3\(aq, \(aqazureblob\(aq.
+The type of the link. It can be \(aqcouchbase\(aq, \(aqs3\(aq or \(aqazureblob\(aq.
 .RE
 .sp
 \-\-dataverse <name>
@@ -111,7 +111,10 @@ The type of the link, either \(aqcouchbase\(aq, \(aqs3\(aq, \(aqazureblob\(aq.
 .sp
 \-\-scope <name>
 .RS 4
-The scope of the link in its display form.
+The scope of the link in its canonical form.  The canonical form of a
+scope is each part of the form, joined with a \(aq/\(aq character.  e.g. the
+canonical form of the scope \(aq`remote.links`.s3\(aq would be represented as
+\(aqremote.links/s3\(aq
 .RE
 .SS "Couchbase Link Options"
 .sp
@@ -125,11 +128,11 @@ The hostname of the link.
 .sp
 \-\-encryption <type>
 .RS 4
-  Specifies the type of encryption to use. This flag may either be set to
-either "half", "full", or "none". Half encryption means that passwords are
-encrypted, but data is not. This results in faster data transfer, but less
-security. Full encryption means that all data and passwords are encrypted
-which increases security, but reduces overall data transfer speed. If no
+Specifies the type of encryption to use. This flag may be set to \(aqhalf\(aq,
+\(aqfull\(aq, or \(aqnone\(aq. Half encryption means that passwords are encrypted,
+but data is not. This results in faster data transfer, but less security.
+Full encryption means that all data and passwords are encrypted which
+increases security, but reduces overall data transfer speed. If no
 encryption is needed then "none" can be specified.
 .RE
 .sp
@@ -145,7 +148,7 @@ The password of the link.
 .sp
 \-\-user\-certificate <path>
 .RS 4
-  The local path to the file containing the user certificate for authentication.
+The local path to the file containing the user certificate for authentication.
 This and \fB\-\-user\-key\fP are used in place of \fB\-\-link\-username\fP and
 \fB\-\-link\-password\fP when utilizing certificate\-based authentication.
 Certificate\-based auth requires \fB\-\-encryption full\fP.
@@ -153,7 +156,7 @@ Certificate\-based auth requires \fB\-\-encryption full\fP.
 .sp
 \-\-user\-key <path>
 .RS 4
-  The local path to the file containing the user key for authentication. This
+The local path to the file containing the user key for authentication. This
 and \fB\-\-user\-certificate\fP are used in place of \fB\-\-link\-username\fP and
 \fB\-\-link\-password\fP when utilizing certificate\-based authentication.
 Certificate\-based auth requires \fB\-\-encryption full\fP.
@@ -161,7 +164,7 @@ Certificate\-based auth requires \fB\-\-encryption full\fP.
 .sp
 \-\-certificate <path>
 .RS 4
-  The local path to the file containing the certificate used for encryption.
+The local path to the file containing the certificate used for encryption.
 Required with \fB\-\-encryption full\fP.
 .RE
 .SS "S3 Link Options"
@@ -180,7 +183,7 @@ The secret access key of the s3 link.
 .sp
 \-\-session\-token <token>
 .RS 4
-  The session token of the s3 link. This is used when Multi\-Factor Authentication
+The session token of the s3 link. This is used when Multi\-Factor Authentication
 (MFA) temporary credentials are used.
 .RE
 .sp
@@ -199,30 +202,30 @@ Following are the options specific to \fB\-\-type azureblob\fP, i.e. Azure Blob 
 .sp
 \-\-connection\-string <key>
 .RS 4
-  The connection string of the link. Only a single authentication method can be
+The connection string of the link. Only a single authentication method can be
 used at a time. Authentication method can be connection string, account name &
 account key, or account name & shared access signature.
 .RE
 .sp
 \-\-account\-name <id>
 .RS 4
-  The account name of the link. Only a single authentication method can be
+The account name of the link. Only a single authentication method can be
 used at a time. Authentication method can be connection string, account name &
 account key, or account name & shared access signature.
 .RE
 .sp
 \-\-account\-key <key>
 .RS 4
-  The account key of the link. Only a single authentication method can be
+The account key of the link. Only a single authentication method can be
 used at a time. Authentication method can be connection string, account name &
 account key, or account name & shared access signature.
 .RE
 .sp
 \-\-shared\-access\-signature <token>
 .RS 4
-  The shared access signature of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &
-account key, or account name & shared access signature.
+The shared access signature of the link. Only a single authentication method
+can be used at a time. Authentication method can be connection string, account
+name & account key, or account name & shared access signature.
 .RE
 .sp
 \-\-blob\-endpoint <url>
@@ -306,28 +309,28 @@ $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
 .fi
 .if n .RE
 .sp
-To create an S3 link named \f(CRmyAwsLink\fP in the "test" scope, run the
-following command:
+To create an S3 link named \f(CRmyAwsLink\fP in the "`remote.links`.s3" scope, run
+the following command:
 .sp
 .if n .RS 4
 .nf
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope test \-\-name myAwsLink \-\-type s3 \(rs
+ \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAwsLink \-\-type s3 \(rs
  \-\-region us\-west\-2 \-\-access\-key\-id LOREMIPSUMDOLORSITAMET123 \(rs
  \-\-secret\-access\-key CoNSEcteTuRadipIsciNGelITSEDDoeiUSmODTEMpor456
 .fam
 .fi
 .if n .RE
 .sp
-To create an S3 link named \f(CRmyAwsLink\fP in the "test" scope, with
+To create an S3 link named \f(CRmyAwsLink\fP in the "`remote.links`.s3" scope, with
 temporary S3 credentials, run the following command:
 .sp
 .if n .RS 4
 .nf
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope test \-\-name myAwsLink \-\-type s3 \(rs
+ \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAwsLink \-\-type s3 \(rs
  \-\-region us\-west\-2 \-\-access\-key\-id myTemporaryAccessKeyId \(rs
  \-\-secret\-access\-key myTemporarySecretAccessKey \(rs
  \-\-session\-token myTemporarySessionToken
@@ -337,56 +340,60 @@ $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
 .sp
 \fBNote: Azure Blob links are supported only in \f(CRDeveloper Preview\fP mode.\fP
 .sp
-To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "test" scope, using
-\fB"connection string"\fP for authentication, run the following command:
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.s3"
+scope, using \fB"connection string"\fP for authentication, run the following
+command:
 .sp
 .if n .RS 4
 .nf
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope test \-\-name myAzureBlobLink \-\-type azureblob \(rs
- \-\-connection\-string myConnectionString
+ \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAzureBlobLink \-\-type \(rs
+ azureblob \-\-connection\-string myConnectionString
 .fam
 .fi
 .if n .RE
 .sp
-To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "test" scope, using
-\fB"account name and account key"\fP for authentication, run the following command:
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.s3"
+scope, using \fB"account name and account key"\fP for authentication, run the
+following command:
 .sp
 .if n .RS 4
 .nf
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope test \-\-name myAzureBlobLink \-\-type azureblob \(rs
- \-\-account\-name myAccountName \-\-account\-key myAccountKey
+ \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAzureBlobLink \-\-type \(rs
+ azureblob \-\-account\-name myAccountName \-\-account\-key myAccountKey
 .fam
 .fi
 .if n .RE
 .sp
-To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "test" scope, using
-\fB"account name and shared access signature"\fP for authentication, run the following command:
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.s3"
+scope, using \fB"account name and shared access signature"\fP for authentication,
+run the following command:
 .sp
 .if n .RS 4
 .nf
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope test \-\-name myAzureBlobLink \-\-type azureblob \(rs
- \-\-account\-name myAccountName \-\-shared\-access\-signature mySharedAccessSignature
+ \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAzureBlobLink \-\-type \(rs
+ azureblob \-\-account\-name myAccountName \-\-shared\-access\-signature \(rs
+ mySharedAccessSignature
 .fam
 .fi
 .if n .RE
 .sp
-To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "test" scope, using
-\fB"account name and shared access signature"\fP for authentication, and using a \fBcustom
-endpoint\fP, run the following command:
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.s3"
+scope, using \fB"account name and shared access signature"\fP for authentication,
+and using a \fBcustom endpoint\fP, run the following command:
 .sp
 .if n .RS 4
 .nf
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope test \-\-name myAzureBlobLink \-\-type azureblob \(rs
- \-\-account\-name myAccountName \-\-shared\-access\-signature mySharedAccessSignature \(rs
- \-\-blob\-endpoint my\-custom\-endpoint.com
+ \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAzureBlobLink \-\-type \(rs
+ azureblob \-\-account\-name myAccountName \-\-shared\-access\-signature \(rs
+ mySharedAccessSignature \-\-blob\-endpoint my\-custom\-endpoint.com
 .fam
 .fi
 .if n .RE

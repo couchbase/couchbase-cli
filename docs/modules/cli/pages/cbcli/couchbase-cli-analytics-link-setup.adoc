@@ -48,7 +48,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The name for the link.
 
 --type <type>::
-  The type of the link, either 'couchbase', 's3', 'azureblob'.
+  The type of the link. It can be 'couchbase', 's3' or 'azureblob'.
 
 --dataverse <name>::
   (Deprecated) The dataverse of the link. Use --scope instead.
@@ -67,11 +67,11 @@ links
   The hostname of the link.
 
 --encryption <type>::
-  Specifies the type of encryption to use. This flag may either be set to
-  either "half", "full", or "none". Half encryption means that passwords are
-  encrypted, but data is not. This results in faster data transfer, but less
-  security. Full encryption means that all data and passwords are encrypted
-  which increases security, but reduces overall data transfer speed. If no
+  Specifies the type of encryption to use. This flag may be set to 'half',
+  'full', or 'none'. Half encryption means that passwords are encrypted,
+  but data is not. This results in faster data transfer, but less security.
+  Full encryption means that all data and passwords are encrypted which
+  increases security, but reduces overall data transfer speed. If no
   encryption is needed then "none" can be specified.
 
 --link-username <username>::
