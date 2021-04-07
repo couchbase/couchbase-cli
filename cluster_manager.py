@@ -526,7 +526,7 @@ class ClusterManager(object):
         return self._post_form_encoded(url, dict())
 
     def failover(self, servers_to_failover, hard, force):
-        _, _, failover, _, _, errors = self._get_otps_names(failover_nodes=servers_to_failover)
+        _, _, failover, _, _, errors = self._get_otps_names(failover_nodes=servers_to_failover, get_inactive=force)
         if errors:
             return None, errors
 
@@ -667,7 +667,7 @@ class ClusterManager(object):
 
     # otpNode should only be printed out or handed back to ns_server
     # It should never be used to create a connection to a node
-    def _get_otps_names(self, eject_nodes=[], failover_nodes=[], readd_nodes=[]):  # pylint: disable=dangerous-default-value
+    def _get_otps_names(self, eject_nodes=[], failover_nodes=[], readd_nodes=[], get_inactive=False):  # pylint: disable=dangerous-default-value
         result, errors = self.pools('default')
         if errors:
             return None, None, None, None, None, errors
@@ -685,7 +685,8 @@ class ClusterManager(object):
             if node['hostname'] in eject_nodes:
                 eject.append(node['otpNode'])
             if node['hostname'] in failover_nodes:
-                if node['clusterMembership'] != 'active':
+                valid_states = ['active', 'inactiveFailed'] if get_inactive else ['active']
+                if node['clusterMembership'] not in valid_states:
                     return [], [], [], [], [], ["Can't failover a node that isn't in the cluster"]
                 failover.append((node['otpNode'], node['status']))
 

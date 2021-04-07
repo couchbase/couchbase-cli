@@ -564,6 +564,14 @@ class TestFailover(CommandTest):
         self.system_exit_run(self.command + self.basic_args + ['--force'], self.server_args)
         self.assertIn('--hard is required with --force flag', self.str_output)
 
+    def test_failover_force_inactive(self):
+        self.server_args['pools_default'] = {'nodes': [
+            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'unhealthy',
+             'clusterMembership': 'inactiveFailed'}]}
+        self.no_error_run(self.command + self.basic_args + ['--hard', '--force'], self.server_args)
+        self.assertIn('POST:/controller/failOver', self.server.trace)
+        self.assertIn('allowUnsafe=true', self.server.rest_params)
+
 
 class TestGroupManage(CommandTest):
     def setUp(self):
