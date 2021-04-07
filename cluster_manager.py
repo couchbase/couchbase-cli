@@ -685,7 +685,7 @@ class ClusterManager(object):
             if node['hostname'] in eject_nodes:
                 eject.append(node['otpNode'])
             if node['hostname'] in failover_nodes:
-                valid_states = ['active', 'inactiveFailed'] if get_inactive else ['active']
+                valid_states = ['active', 'inactiveFailed', 'inactiveAdded'] if get_inactive else ['active']
                 if node['clusterMembership'] not in valid_states:
                     return [], [], [], [], [], ["Can't failover a node that isn't in the cluster"]
                 failover.append((node['otpNode'], node['status']))
