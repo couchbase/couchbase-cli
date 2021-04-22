@@ -1,4 +1,5 @@
 = couchbase-cli-server-info(1)
+:description: Displays information and statistics about the Couchbase Server specified.
 ifndef::doctype-manpage[:doctitle: server-info]
 
 ifdef::doctype-manpage[]

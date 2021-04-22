@@ -1,8 +1,9 @@
 = Restoring with cbrestore
+:description: The cbrestore command enables the restoration of data that was backed up using the cbbackup command into a bucket on a new cluster
 :page-aliases: cli:restore-cbrestore
 
 [abstract]
-To restore bucket data that was backed up using the command [.cmd]`cbbackup`, use the command [.cmd]`cbrestore` to restore information into a bucket on a new cluster.
+The [.cmd]`cbrestore` command enables the restoration of data that was backed up using the [.cmd]`cbbackup` command into a bucket on a new cluster.
 
 When restoring a backup, you have to select the appropriate restore sequence based on the type of restore you are performing.
 The available methods when restoring a cluster depend on the method used to back up the cluster.

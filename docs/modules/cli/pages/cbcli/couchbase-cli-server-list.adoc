@@ -1,4 +1,5 @@
 = couchbase-cli-server-list(1)
+:description: Lists all servers in the cluster
 ifndef::doctype-manpage[:doctitle: server-list]
 
 ifdef::doctype-manpage[]

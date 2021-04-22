@@ -1,4 +1,5 @@
 = cbtransfer(1)
+:description: Enables the transfer of Couchbase data from clusters and various file formats
 :page-aliases: cli:cbtransfer-tool
 ifndef::doctype-manpage[:doctitle: cbtransfer]
 
@@ -7,7 +8,7 @@ ifdef::doctype-manpage[]
 
 cbtransfer -
 endif::[]
-The `cbtransfer` tool allows to transfer Couchbase data from cluster and
+The `cbtransfer` tool enables the transfer of Couchbase data from clusters and
 various file formats.
 
 == SYNOPSIS

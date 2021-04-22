@@ -1,4 +1,5 @@
 = couchbase-cli-setting-saslauthd(1)
+:description: Modifies saslauthd settings
 ifndef::doctype-manpage[:doctitle: setting-saslauthd]
 
 ifdef::doctype-manpage[]

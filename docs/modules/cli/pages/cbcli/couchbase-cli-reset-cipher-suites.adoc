@@ -1,4 +1,5 @@
 = couchbase-cli-reset-cipher-suites(1)
+:description: Resets the Couchbase Server cipher suites to the default
 ifndef::doctype-manpage[:doctitle: reset-cipher-suites]
 
 ifdef::doctype-manpage[]

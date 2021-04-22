@@ -1,4 +1,5 @@
 = couchbase-cli-setting-alert(1)
+:description: Modifies alert settings
 ifndef::doctype-manpage[:doctitle: setting-alert]
 
 ifdef::doctype-manpage[]

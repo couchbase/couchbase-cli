@@ -1,4 +1,5 @@
 = couchbase-cli-setting-query(1)
+:description: Manage query engine settings
 ifndef::doctype-manpage[:doctitle: setting-query]
 
 ifdef::doctype-manpage[]

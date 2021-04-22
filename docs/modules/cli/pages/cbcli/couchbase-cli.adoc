@@ -1,4 +1,5 @@
 = couchbase-cli(1)
+:description: The Couchbase cluster management utility.
 ifndef::doctype-manpage[:doctitle: couchbase-cli]
 
 ifdef::doctype-manpage[]

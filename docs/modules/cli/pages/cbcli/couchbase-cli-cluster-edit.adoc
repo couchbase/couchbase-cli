@@ -1,4 +1,5 @@
 = couchbase-cli-cluster-edit(1)
+:description: Edits cluster settings
 ifndef::doctype-manpage[:doctitle: cluster-edit]
 
 ifdef::doctype-manpage[]

@@ -1,4 +1,5 @@
 = couchbase-cli-server-readd(1)
+:description: Adds a node back to the cluster after a failover
 ifndef::doctype-manpage[:doctitle: server-readd]
 
 ifdef::doctype-manpage[]

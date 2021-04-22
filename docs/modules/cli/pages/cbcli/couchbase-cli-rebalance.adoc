@@ -1,4 +1,5 @@
 = couchbase-cli-rebalance(1)
+:description: Rebalances data and indexes across nodes in a cluster
 ifndef::doctype-manpage[:doctitle: rebalance]
 
 ifdef::doctype-manpage[]

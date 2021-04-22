@@ -1,4 +1,5 @@
 = couchbase-cli-enable-developer-preview(1)
+:description: Enable developer preview mode in target cluster
 ifndef::doctype-manpage[:doctitle: enable-developer-preview]
 
 ifdef::doctype-manpage[]

@@ -1,4 +1,5 @@
 = couchbase-cli-setting-notification(1)
+:description: Modifies notification settings
 ifndef::doctype-manpage[:doctitle: setting-notification]
 
 ifdef::doctype-manpage[]

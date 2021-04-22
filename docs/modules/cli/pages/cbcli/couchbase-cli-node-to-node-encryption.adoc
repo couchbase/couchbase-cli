@@ -1,4 +1,5 @@
 = couchbase-cli-node-to-node-encryption(1)
+:description: Changes node-to-node encryption
 ifndef::doctype-manpage[:doctitle: node-to-node-encryption]
 
 ifdef::doctype-manpage[]

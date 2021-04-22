@@ -1,4 +1,5 @@
 = couchbase-cli-bucket-compact(1)
+:description: Compact a bucket
 ifndef::doctype-manpage[:doctitle: bucket-compact]
 
 ifdef::doctype-manpage[]

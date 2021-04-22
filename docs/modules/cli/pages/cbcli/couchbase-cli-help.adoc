@@ -1,4 +1,5 @@
 = couchbase-cli-help(1)
+:description: Show extended couchbase-cli help
 ifndef::doctype-manpage[:doctitle: help]
 
 ifdef::doctype-manpage[]

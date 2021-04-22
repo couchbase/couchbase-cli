@@ -1,4 +1,5 @@
 = couchbase-cli-bucket-list(1)
+:description: List all buckets
 ifndef::doctype-manpage[:doctitle: bucket-list]
 
 ifdef::doctype-manpage[]
