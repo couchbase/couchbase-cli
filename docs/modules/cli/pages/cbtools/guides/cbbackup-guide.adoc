@@ -1,4 +1,5 @@
 = Backing up with cbbackup
+:description: The cbbackup tool is a flexible backup command that enables you to backup both local data and remote nodes and clusters involving different combinations of your data
 :page-aliases: cli:backup-cbbackup
 
 The `cbbackup` tool is a flexible backup command that enables you to backup both local data and remote nodes and clusters involving different combinations of your data:

@@ -1,4 +1,5 @@
 = couchbase-cli-rebalance-status(1)
+:description: Show the current rebalance status
 ifndef::doctype-manpage[:doctitle: rebalance-status]
 
 ifdef::doctype-manpage[]

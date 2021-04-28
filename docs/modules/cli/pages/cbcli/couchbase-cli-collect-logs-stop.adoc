@@ -1,4 +1,5 @@
 = couchbase-cli-collect-logs-stop(1)
+:description: Stop the current log collection task
 ifndef::doctype-manpage[:doctitle: collect-logs-stop]
 
 ifdef::doctype-manpage[]

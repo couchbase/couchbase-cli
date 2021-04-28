@@ -1,4 +1,5 @@
 = couchbase-cli-failover(1)
+:description: Failover a node in the cluster
 ifndef::doctype-manpage[:doctitle: failover]
 
 ifdef::doctype-manpage[]

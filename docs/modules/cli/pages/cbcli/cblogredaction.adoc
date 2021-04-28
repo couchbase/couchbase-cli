@@ -1,4 +1,5 @@
 = cblogredaction(1)
+:description: Redacts log files
 ifndef::doctype-manpage[:doctitle: cblogredaction]
 
 ifdef::doctype-manpage[]

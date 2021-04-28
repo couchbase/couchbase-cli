@@ -1,4 +1,5 @@
 = couchbase-cli-setting-autoreprovision(1)
+:description: Modifies auto-reprovision settings
 ifndef::doctype-manpage[:doctitle: setting-autoreprovision]
 
 ifdef::doctype-manpage[]

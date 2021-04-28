@@ -1,4 +1,5 @@
 = couchbase-cli-ssl-manage(1)
+:description: Manage SSL certificates
 ifndef::doctype-manpage[:doctitle: ssl-manage]
 
 ifdef::doctype-manpage[]

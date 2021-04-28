@@ -1,11 +1,8 @@
 """Management API's for Couchbase Cluster"""
 
-
-import csv
 import json
 import requests
 import os
-import io
 import sys
 import time
 import urllib.request, urllib.parse, urllib.error

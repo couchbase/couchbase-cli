@@ -1,4 +1,5 @@
 = couchbase-cli-setting-xdcr(1)
+:description: Modifies cross data center replication (XDCR) settings
 ifndef::doctype-manpage[:doctitle: setting-xdcr]
 
 ifdef::doctype-manpage[]

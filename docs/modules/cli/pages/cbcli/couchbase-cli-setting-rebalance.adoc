@@ -1,4 +1,5 @@
 = couchbase-cli-setting-rebalance(1)
+:description: Modifies rebalance retry settings
 ifndef::doctype-manpage[:doctitle: setting-rebalance]
 
 ifdef::doctype-manpage[]

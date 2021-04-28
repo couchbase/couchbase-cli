@@ -1,4 +1,5 @@
 = couchbase-cli-setting-security(1)
+:description: Manage security policies
 ifndef::doctype-manpage[:doctitle: setting-security]
 
 ifdef::doctype-manpage[]

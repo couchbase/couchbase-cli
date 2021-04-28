@@ -1,4 +1,5 @@
 = couchbase-cli-group-manage(1)
+:description: Manage server groups
 ifndef::doctype-manpage[:doctitle: group-manage]
 
 ifdef::doctype-manpage[]

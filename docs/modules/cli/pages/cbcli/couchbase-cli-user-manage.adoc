@@ -1,4 +1,5 @@
 = couchbase-cli-user-manage(1)
+:description: Manage RBAC users
 :page-aliases: cli:cbcli/couchbase-cli-admin-role-manage
 ifndef::doctype-manpage[:doctitle: user-manage]
 

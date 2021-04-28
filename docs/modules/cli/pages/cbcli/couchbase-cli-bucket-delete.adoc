@@ -1,4 +1,5 @@
 = couchbase-cli-bucket-delete(1)
+:description: Delete a bucket
 ifndef::doctype-manpage[:doctitle: bucket-delete]
 
 ifdef::doctype-manpage[]

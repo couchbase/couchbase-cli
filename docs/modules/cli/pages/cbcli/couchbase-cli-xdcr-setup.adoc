@@ -1,4 +1,5 @@
 = couchbase-cli-xdcr-setup(1)
+:description: Manage references to remote clusters
 ifndef::doctype-manpage[:doctitle: xdcr-setup]
 
 ifdef::doctype-manpage[]

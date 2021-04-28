@@ -1,4 +1,6 @@
 = cbrecovery(1)
+:description: Restores data to a local cluster, from a bucket on a \
+remote cluster that was previously established as an XDCR remote replica
 :page-aliases: cli:cbrecovery
 ifndef::doctype-manpage[:doctitle: cbrecovery]
 

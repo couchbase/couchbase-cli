@@ -1,4 +1,5 @@
 = cbbackup(1)
+:description: Backs up an entire running cluster, a bucket or a single node
 :page-aliases: cli:cbbackup-tool
 ifndef::doctype-manpage[:doctitle: cbbackup]
 
@@ -7,7 +8,7 @@ ifdef::doctype-manpage[]
 
 cbbackup -
 endif::[]
-Backups an entire running cluster, a bucket or a single node
+Backs up an entire running cluster, a bucket or a single node
 
 == SYNOPSIS
 [verse]

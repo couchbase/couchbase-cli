@@ -1,4 +1,5 @@
 = couchbase-cli-collect-logs-status(1)
+:description: Get log collection status
 ifndef::doctype-manpage[:doctitle: collect-logs-status]
 
 ifdef::doctype-manpage[]

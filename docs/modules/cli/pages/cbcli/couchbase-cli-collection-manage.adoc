@@ -1,4 +1,5 @@
 = couchbase-cli-collection-manage(1)
+:description: Manage collections and scopes in a bucket
 ifndef::doctype-manpage[:doctitle: collection-manage]
 
 ifdef::doctype-manpage[]

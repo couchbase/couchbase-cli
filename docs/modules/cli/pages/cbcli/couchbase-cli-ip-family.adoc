@@ -1,4 +1,5 @@
 = couchbase-cli-ip-family(1)
+:description: Edits cluster IP family settings
 ifndef::doctype-manpage[:doctitle: ip-family]
 
 ifdef::doctype-manpage[]

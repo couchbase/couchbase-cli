@@ -1,4 +1,5 @@
 = couchbase-cli-server-eshell(1)
+:description: Opens a shell to talk to the cluster manager process
 ifndef::doctype-manpage[:doctitle: server-eshell]
 
 ifdef::doctype-manpage[]

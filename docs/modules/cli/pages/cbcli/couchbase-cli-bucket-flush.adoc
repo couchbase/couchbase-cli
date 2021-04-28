@@ -1,4 +1,5 @@
 = couchbase-cli-bucket-flush(1)
+:description: Flush a bucket
 ifndef::doctype-manpage[:doctitle: bucket-flush]
 
 ifdef::doctype-manpage[]

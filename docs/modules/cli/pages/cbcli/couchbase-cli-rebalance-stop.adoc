@@ -1,4 +1,5 @@
 = couchbase-cli-rebalance-stop(1)
+:description: Stops the current rebalance task
 ifndef::doctype-manpage[:doctitle: rebalance-stop]
 
 ifdef::doctype-manpage[]

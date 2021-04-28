@@ -1,4 +1,5 @@
 = couchbase-cli-setting-ldap(1)
+:description: Configure LDAP
 ifndef::doctype-manpage[:doctitle: setting-ldap]
 
 ifdef::doctype-manpage[]

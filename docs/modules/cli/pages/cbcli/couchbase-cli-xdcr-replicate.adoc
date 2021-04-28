@@ -1,4 +1,5 @@
 = couchbase-cli-xdcr-replicate(1)
+:description: Creates a replication between two data centers
 ifndef::doctype-manpage[:doctitle: xdcr-replicate]
 
 ifdef::doctype-manpage[]

@@ -1,4 +1,5 @@
 = cbrestore(1)
+:description: Restores data backed up by cbbackup to a Couchbase cluster
 :page-aliases: cli:cbrestore-tool
 ifndef::doctype-manpage[:doctitle: cbrestore]
 
