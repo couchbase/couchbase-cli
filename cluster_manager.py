@@ -614,7 +614,6 @@ class ClusterManager(object):
             if task["type"] != "rebalance":
                 continue
 
-            err_msg = None
             if "errorMessage" in task:
                 rv["status"] = "errored"
                 rv["msg"] = task['errorMessage']
@@ -648,11 +647,12 @@ class ClusterManager(object):
             elif task["status"] == "notRunning":
                 rv["status"] = task["status"]
                 rv["msg"] = "Rebalance is not running"
-                if "statusIsStale" in task:
-                    if task["statusIsStale"] or task["statusIsStale"] == "true":
-                        rv["status"] = "stale"
-                        rv["msg"] = "Current status is stale, please retry"
-
+                if "statusIsStale" in task and (task["statusIsStale"] or task["statusIsStale"] == "true"):
+                    rv["status"] = "stale"
+                    rv["msg"] = "Current status is stale, please retry"
+                elif "masterRequestTimedOut" in task and task["masterRequestTimedOut"]:
+                    rv["status"] = "stale"
+                    rv["msg"] = "Orchestrator request timed out, please retry"
             break
 
         return rv, None
