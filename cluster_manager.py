@@ -657,7 +657,9 @@ class ClusterManager(object):
                 if "statusIsStale" in task and (task["statusIsStale"] or task["statusIsStale"] == "true"):
                     rv["status"] = "stale"
                     rv["msg"] = "Current status is stale, please retry"
-
+                elif "masterRequestTimedOut" in task and task["masterRequestTimedOut"]:
+                    rv["status"] = "stale"
+                    rv["msg"] = "Orchestrator request timed out, please retry"
             break
 
         return rv, None

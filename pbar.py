@@ -152,8 +152,8 @@ class TopologyProgressBar(object):
         if not self.hidden:
             self._report_progress(0, cur_bucket, total_buckets, cur_bucket_name, 0)
 
-        while status["status"] in ['running', 'unknown']:
-            if status["status"] == 'unknown' or self.hidden:
+        while status["status"] in ['running', 'unknown', 'stale']:
+            if status["status"] in ['unknown', 'stale'] or self.hidden:
                 time.sleep(1)
             else:
                 cur_bucket = status["details"]["curBucket"]
