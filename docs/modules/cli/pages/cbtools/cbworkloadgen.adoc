@@ -16,7 +16,7 @@ _cbworkloadgen_ [--node <host>] [--username <user>] [--password <password>]
                 [--bucket <bucket>] [--ssl] [--threads <num>]
                 [--ratio-sets <ratio>] [--max-items <num>] [--prefix <str>]
                 [--size <bytes>] [--json] [--low-compression] [--loop]
-                [--xattr] [--verbose] [--help]
+                [--xattr] [--collection <id>] [--verbose] [--help]
 
 == DESCRIPTION
 
@@ -88,6 +88,11 @@ generate test data sets. The tool is installed in the following locations:
 --xattr::
   When specified the inserted documents will have extended attributes.
 
+-c,--collection <id>::
+  The collection ID to perform the operations on. A collection with the given
+  ID must exist. The ID is expected to be a number in hex format for example
+  '0x16'.
+
 -v,--verbose::
   Verbose logging; more -Vs provide more verbosity.
 
@@ -123,3 +128,17 @@ $ cbworkloadgen -n 10.5.2.45:8091 -b my-bucket -u Administrator -p password \
 ----
 The command above will create documents with bodies of at least 20480 bytes
 (20Kb) that are hard to compress.
+
+To generate documents into the collection `my_collection` you first must find the
+collection ID. This can be done by using the command below:
+----
+$ cbstats -u Administrator -p Password -b my-bucket 10.5.2.45:11210 collections | grep ":name:.*my_collection"
+ 0x0:0x8:name:                 my_collection
+----
+
+We can see that the collection ID is `0x08`, so we can now use the `-c` flag to
+generate the documents as shown below.
+----
+$ cbworkloadgen -n 10.5.2.45:8091 -b my-bucket -u Administrator -p password \
+ -i 1000000 -j -r 1 -c 0x08
+----

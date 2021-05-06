@@ -174,15 +174,15 @@ class WorkloadGen(pump_transfer.Transfer):
         p.add_option("--low-compression",
                      action="store_true", default=False,
                      help="generate document data that is difficult to compress")
-        p.add_option("-c", "--collection", type="string", action="append",
-                     help=optparse.SUPPRESS_HELP)
+        p.add_option("-c", "--collection", type="string", action="append", metavar="id",
+                     help='The collection ID, in hex format, to do the operations on')
         p.add_option('--xattr', action="store_true", default=False,
                      help='generate extended attributes for inserted documents')
         return p
 
-
     def find_handlers(self, opts, source, sink):
         return pump_gen.GenSource, pump.PumpingStation.find_handler(opts, sink, pump_transfer.SINKS)
+
 
 if __name__ == '__main__':
     if platform.system() == "Windows":
