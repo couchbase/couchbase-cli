@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-settings-alternate-address
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2021-05-17
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2021-05-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,7 +30,6 @@
 .SH "NAME"
 couchbase\-cli\-setting\-alternate\-address \- Modify alternate addresses
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 \fIcouchbase\-cli setting\-alternate\-address\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -280,7 +279,7 @@ Used by the SDK to transfer data to and from the Eventing Service
 T}
 T{
 .sp
-\f(CReventing_debug_port\fP
+\f(CReventingDebug\fP
 T}:T{
 .sp
 N/A
@@ -290,6 +289,32 @@ Eventing
 T}:T{
 .sp
 The Eventing debugger port, this should only be set in development environments.
+T}
+T{
+.sp
+\f(CRbackupAPI\fP
+T}:T{
+.sp
+\f(CRbackupAPIHTTPS\fP
+T}:T{
+.sp
+Backup
+T}:T{
+.sp
+The backup service REST API.
+T}
+T{
+.sp
+N/A
+T}:T{
+.sp
+\f(CRbackupGRPC\fP
+T}:T{
+.sp
+Backup
+T}:T{
+.sp
+Used by backup nodes to communicate with each other.
 T}
 .TE
 .sp

@@ -106,10 +106,21 @@ All of the ports that can be configured:
 |Eventing
 |Used by the SDK to transfer data to and from the Eventing Service
 
-|`eventing_debug_port`
+|`eventingDebug`
 |N/A
 |Eventing
 |The Eventing debugger port, this should only be set in development environments.
+
+|`backupAPI`
+|`backupAPIHTTPS`
+|Backup
+|The backup service REST API.
+
+| N/A
+|`backupGRPC`
+|Backup
+|Used by backup nodes to communicate with each other.
+
 |===
 
 
