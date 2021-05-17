@@ -261,7 +261,7 @@ class TestBucketCreate(CommandTest):
 
         expected_params = [
             'bucketType=couchbase', 'databaseFragmentationThreshold%5Bpercentage%5D=25', 'name=name',
-            'evictionPolicy=fullEviction', 'autoCompactionDefined=true', 'parallelDBAndViewCompaction=1',
+            'evictionPolicy=fullEviction', 'autoCompactionDefined=true', 'parallelDBAndViewCompaction=true',
             'replicaNumber=0', 'purgeInterval=2.0', 'viewFragmentationThreshold%5Bpercentage%5D=20',
             'ramQuotaMB=100', 'storageBackend=couchstore'
         ]
@@ -352,7 +352,8 @@ class TestBucketEdit(CommandTest):
         self.command_EE_args = ['--compression-mode', 'active', '--max-ttl', '20']
         self.command_auto_compaction_args = ['--database-fragmentation-threshold-percentage', '25',
                                              '--view-fragmentation-threshold-percentage', '20',
-                                             '--parallel-db-view-compaction', '1', '--purge-interval', '2']
+                                             '--abort-outside', '1', '--parallel-db-view-compaction', '1',
+                                             '--purge-interval', '2']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
                             'buckets': []}
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
@@ -367,6 +368,20 @@ class TestBucketEdit(CommandTest):
             'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'maxTTL=20',
             'compressionMode=active', 'ramQuotaMB=100'
         ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_auto_compaction(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args +
+                          self.command_auto_compaction_args, self.server_args)
+
+        expected_params = [
+            'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'maxTTL=20',
+            'compressionMode=active', 'ramQuotaMB=100', 'databaseFragmentationThreshold%5Bpercentage%5D=25',
+            'viewFragmentationThreshold%5Bpercentage%5D=20', 'allowedTimePeriod%5BabortOutside%5D=true',
+            'parallelDBAndViewCompaction=true', 'purgeInterval=2.0', 'autoCompactionDefined=true'
+        ]
+
         self.rest_parameter_match(expected_params)
 
     def test_bucket_edit_value_only(self):

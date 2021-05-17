@@ -32,6 +32,7 @@ def one_zero_boolean_to_string(value: str) -> str:
     """Helper function to convert arguments with 1/0 string values to true or false"""
     return 'true' if value == '1' else 'false'
 
+
 # Remove this once we can verify SSL certificates
 urllib3.disable_warnings()
 
@@ -761,9 +762,9 @@ class ClusterManager(object):
             if from_hour is not None:
                 params["allowedTimePeriod[fromHour]"] = from_hour
             if abort_outside is not None:
-                params["allowedTimePeriod[abortOutside]"] = abort_outside
+                params["allowedTimePeriod[abortOutside]"] = one_zero_boolean_to_string(abort_outside)
             if paralleldb_and_view_compact is not None:
-                params["parallelDBAndViewCompaction"] = paralleldb_and_view_compact
+                params["parallelDBAndViewCompaction"] = one_zero_boolean_to_string(paralleldb_and_view_compact)
 
         if bucket_type != "memcached" and purge_interval is not None:
             params["purgeInterval"] = purge_interval
@@ -849,9 +850,9 @@ class ClusterManager(object):
         if from_hour is not None:
             params["allowedTimePeriod[fromHour]"] = from_hour
         if abort_outside is not None:
-            params["allowedTimePeriod[abortOutside]"] = abort_outside
+            params["allowedTimePeriod[abortOutside]"] = one_zero_boolean_to_string(abort_outside)
         if paralleldb_and_view_compact is not None:
-            params["parallelDBAndViewCompaction"] = paralleldb_and_view_compact
+            params["parallelDBAndViewCompaction"] = one_zero_boolean_to_string(paralleldb_and_view_compact)
         if purge_interval is not None:
             params["purgeInterval"] = purge_interval
         if durability_min_level is not None:
