@@ -17,7 +17,8 @@ _couchbase-cli setting-index_ [--cluster <url>] [--username <user>]
     [--index-stable-snapshot-interval <seconds>]
     [--index-memory-snapshot-interval <milliseconds>]
     [--index-storage-setting <type>] [--index-threads <num>]
-    [--index-log-level <level>]
+    [--index-log-level <level>] [--replicas <num>]
+    [--optimize-placement <1|0>]
 
 == DESCRIPTION
 
@@ -60,6 +61,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Sets the log level for the index service. Valid log levels include "debug",
   "silent", "fatal", "error", "warn", "info", "verbose", "timing", and
   "trace". If this option is not specified it defaults to "info".
+
+--replicas <num>::
+  Number of index replicas.
+
+--optimize-placement <1|0>::
+  When enabled (1) it will move the indexes to the new node during a rebalance
+  to eliminate the need of doing a 'swap rebalance'.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

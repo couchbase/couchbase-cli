@@ -664,7 +664,7 @@ class ClusterInit(Subcommand):
 
         if opts.index_storage_mode:
             param = index_storage_mode_to_param(opts.index_storage_mode, default)
-            _, errors = self.rest.set_index_settings(param, None, None, None, None, None)
+            _, errors = self.rest.set_index_settings(param, None, None, None, None, None, None, None)
             _exit_if_errors(errors)
 
         # Setup services
@@ -1825,7 +1825,7 @@ class ServerAdd(Subcommand):
 
         if opts.index_storage_mode:
             param = index_storage_mode_to_param(opts.index_storage_mode, default)
-            _, errors = self.rest.set_index_settings(param, None, None, None, None, None)
+            _, errors = self.rest.set_index_settings(param, None, None, None, None, None, None, None)
             _exit_if_errors(errors)
 
         servers = opts.servers.split(',')
@@ -2681,12 +2681,16 @@ class SettingIndex(Subcommand):
                            choices=["debug", "silent", "fatal", "error", "warn", "info", "verbose",
                                     "timing", "trace"],
                            help="The indexer log level")
+        group.add_argument('--replicas', metavar='<num>', type=int, help='Number of index replicas')
+        group.add_argument('--optimize-placement', metavar='<1|0>', type=str,
+                           help='Optimize index placement on a rebalance.')
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if (opts.max_rollback is None and opts.stable_snap is None
                 and opts.mem_snap is None and opts.storage_mode is None
-                and opts.threads is None and opts.log_level is None):
+                and opts.threads is None and opts.log_level is None and opts.replicas is None
+                and opts.optimize_placement is None):
             _exit_if_errors(["No settings specified to be changed"])
 
         settings, errors = self.rest.index_settings()
@@ -2699,7 +2703,7 @@ class SettingIndex(Subcommand):
 
         opts.storage_mode = index_storage_mode_to_param(opts.storage_mode, default)
         _, errors = self.rest.set_index_settings(opts.storage_mode, opts.max_rollback, opts.stable_snap, opts.mem_snap,
-                                                 opts.threads, opts.log_level)
+                                                 opts.threads, opts.log_level, opts.replicas, opts.optimize_placement)
         _exit_if_errors(errors)
 
         _success("Indexer settings modified")

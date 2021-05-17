@@ -1085,6 +1085,11 @@ class TestSettingIndex(CommandTest):
         self.system_exit_run(self.command, self.server_args)
         self.assertIn('No settings specified to be changed', self.str_output)
 
+    def test_7_0_settings(self):
+        self.no_error_run(self.command + ['--replicas', '2', '--optimize-placement', '0'], self.server_args)
+        self.assertIn('POST:/settings/indexes', self.server.trace)
+        self.rest_parameter_match(['numReplica=2', 'redistributeIndexes=false'])
+
 
 class TestSASL(CommandTest):
     def setUp(self):

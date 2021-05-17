@@ -1305,7 +1305,7 @@ class ClusterManager(object):
         return self._post_form_encoded(url, params)
 
     def set_index_settings(self, storage_mode, max_rollback_points, stable_snap_interval,
-                           mem_snap_interval, threads, log_level):
+                           mem_snap_interval, threads, log_level, replicas, optimize):
         """ Sets global index settings"""
         params = dict()
         if storage_mode is not None:
@@ -1320,6 +1320,10 @@ class ClusterManager(object):
             params["indexerThreads"] = threads
         if log_level is not None:
             params["logLevel"] = log_level
+        if replicas is not None:
+            params["numReplica"] = replicas
+        if optimize is not None:
+            params["redistributeIndexes"] = one_zero_boolean_to_string(optimize)
 
         url = f'{self.hostname}/settings/indexes'
         return self._post_form_encoded(url, params)
