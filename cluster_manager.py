@@ -1667,7 +1667,7 @@ class ClusterManager(object):
 
     def post_query_settings(self, pipeline_batch, pipeline_cap, scan_cap, timeout, prepared_limit, completed_limit,
                             complete_threshold, log_level, max_parallelism, n1ql_feature_control, temp_dir,
-                            temp_dir_max_size):
+                            temp_dir_max_size, cbo, memory_quota, tx_timeout):
         url = f'{self.hostname}/settings/querySettings'
         params = {}
         if pipeline_batch is not None:
@@ -1694,6 +1694,12 @@ class ClusterManager(object):
             params['queryTmpSpaceDir'] = temp_dir
         if temp_dir_max_size is not None:
             params['queryTmpSpaceSize'] = temp_dir_max_size
+        if cbo is not None:
+            params['queryUseCBO'] = one_zero_boolean_to_string(cbo)
+        if memory_quota is not None:
+            params['queryMemoryQuota'] = memory_quota
+        if tx_timeout is not None:
+            params['queryTxTimeout'] = tx_timeout
 
         return self._post_form_encoded(url, params)
 

@@ -21,6 +21,7 @@ cbbackupmgr
 cbcli
 cbcollect
 cblogredaction
+CBO
 cbrecovery
 cbrestore
 cbrestorewrapper
@@ -143,6 +144,7 @@ SSL
 tcp
 TCP
 tls
+transactional
 ttl
 TTL
 ui

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-query
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2021-05-17
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-QUERY" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-QUERY" "1" "2021-05-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,7 +31,6 @@
 couchbase\-cli\-setting\-query \- Manage query engine settings
 .SH "SYNOPSIS"
 .sp
-.sp
 .nf
 _couchbase\-cli setting\-query [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-get] [\-\-set] [\-\-pipeline\-batch <num>]
@@ -40,7 +39,8 @@ _couchbase\-cli setting\-query [\-\-cluster <url>] [\-\-username <user>]
     [\-\-log\-level <trace|debug|info|warn|error|server|none>]
     [\-\-max\-parallelism <max>] [\-\-n1ql\-feature\-control <num>]
     [\-\-temp\-dir <path>] [\-\-temp\-dir\-size <mebibytes>]
-    [\-\-curl\-access <restricted|unrestricted>]
+    [\-\-cost\-based\-optimizer <1|0>] [\-\-memory\-quota <mebibytes>]
+    [\-\-transaction\-timeout <duration>] [\-\-curl\-access <restricted|unrestricted>]
     [\-\-allowed\-urls <urls>] [\-\-disallowed\-urls <urls>]
 .fi
 .br
@@ -145,6 +145,25 @@ Specify the directory for temporary query data.
 \-\-temp\-dir\-size <mebibytes>
 .RS 4
 Maximum size in mebibytes for the temporary query data directory.
+.RE
+.sp
+\-\-cost\-based\-optimizer <1|0>
+.RS 4
+Enable (1) or disable (0) the Cost Based Optimizer (CBO), which uses
+statistics and metadata to estimate the amount of processing required
+and creates a query plan with the least cost. This feature is in
+Developer Preview and should not be used in production environments.
+.RE
+.sp
+\-\-memory\-quota <mebibytes>
+.RS 4
+The maximum amount of memory the query service will use in each node.
+.RE
+.sp
+\-\-transaction\-timeout <duration>
+.RS 4
+The timeout for transactional queries. The duration is a number followed
+by a unit such as (100ns, 10ms, 1s, 1m).
 .RE
 .SH "QUERY CURL ACCESS OPTIONS"
 .sp

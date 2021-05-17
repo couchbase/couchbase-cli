@@ -4500,6 +4500,12 @@ class SettingQuery(Subcommand):
                            help='This specifies the directory for temporary query data.')
         group.add_argument('--temp-dir-size', metavar='<mebibytes>', type=int, default=None,
                            help='Specify the maximum size in mebibytes for the temporary query data directory.')
+        group.add_argument('--cost-based-optimizer', metavar='<1|0>', type=str, default=None,
+                           help='Use cost-based optimizer (Developer Preview).')
+        group.add_argument('--memory-quota', metavar='<mebibytes>', type=int, default=None,
+                           help='Sets the query memory quota in MiB.')
+        group.add_argument('--transaction-timeout', metavar='<duration>', type=str, default=None,
+                           help='A duration string for the transaction timeout i.e (100ns, 10ms, 1s, 1m).')
 
         access_list_group = self.parser.add_argument_group('Query curl access settings')
         access_list_group.add_argument('--curl-access', choices=['restricted', 'unrestricted'], default=None,
@@ -4541,7 +4547,8 @@ class SettingQuery(Subcommand):
         if all(v is None for v in [opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
                                    opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
                                    opts.log_level, opts.max_parallelism, opts.n1ql_feature_control, opts.temp_dir,
-                                   opts.temp_dir_size]):
+                                   opts.temp_dir_size, opts.cost_based_optimizer, opts.memory_quota,
+                                   opts.transaction_timeout]):
             if access_list:
                 return
 
@@ -4550,7 +4557,8 @@ class SettingQuery(Subcommand):
         _, err = self.rest.post_query_settings(opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
                                                opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
                                                opts.log_level, opts.max_parallelism, opts.n1ql_feature_control,
-                                               opts.temp_dir, opts.temp_dir_size)
+                                               opts.temp_dir, opts.temp_dir_size, opts.cost_based_optimizer,
+                                               opts.memory_quota, opts.transaction_timeout)
         _exit_if_errors(err)
 
     @staticmethod

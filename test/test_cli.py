@@ -2511,6 +2511,14 @@ class TestSettingQuery(CommandTest):
         self.assertIn('Can only provide --allowed-urls or --disallowed-urls with --curl-access restricted',
                       self.str_output)
 
+    def test_7_0_query_settings(self):
+        """Test the settings added in CB 7.0.0 for the query service"""
+        self.no_error_run(self.command + ['--set', '--cost-based-optimizer', '0', '--transaction-timeout', '10ms',
+                                          '--memory-quota', '100'], self.server_args)
+
+        self.assertIn('POST:/settings/querySettings', self.server.trace)
+        self.rest_parameter_match(['queryUseCBO=false', 'queryTxTimeout=10ms', 'queryMemoryQuota=100'])
+
 
 if __name__ == '__main__':
     unittest.main()
