@@ -967,7 +967,7 @@ class BucketEdit(Subcommand):
                            metavar="<0|1>", choices=["0", "1"], help="Set parallel DB and View Compaction")
 
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
-                           metavar="<num>", help="Set parallel DB and View Compaction")
+                           metavar="<num>", help="Set the bucket metadata purge interval")
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
@@ -1030,7 +1030,8 @@ class BucketEdit(Subcommand):
                                           opts.max_ttl, opts.compression_mode, opts.remove_port, opts.db_frag_perc,
                                           opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size, opts.from_hour,
                                           opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
-                                          opts.paralleldb_and_view_compact, opts.purge_interval)
+                                          opts.paralleldb_and_view_compact, opts.purge_interval,
+                                          'bucketType' in bucket and bucket['bucketType'] == 'membase')
         _exit_if_errors(errors)
 
         _success("Bucket edited")

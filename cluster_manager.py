@@ -804,7 +804,7 @@ class ClusterManager(object):
                     replicas, threads_number, flush_enabled, max_ttl,
                     compression_mode, remove_port, db_frag_perc, db_frag_size, view_frag_perc,
                     view_frag_size, from_hour, from_min, to_hour, to_min,
-                    abort_outside, paralleldb_and_view_compact, purge_interval):
+                    abort_outside, paralleldb_and_view_compact, purge_interval, couchbase_bucket: bool = True):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -830,7 +830,7 @@ class ClusterManager(object):
         if (db_frag_perc is not None or db_frag_size is not None or view_frag_perc is not None or
                 view_frag_size is not None or from_hour is not None or from_min is not None or
                 to_hour is not None or to_min is not None or abort_outside is not None or
-                paralleldb_and_view_compact is not None or purge_interval is not None):
+                paralleldb_and_view_compact is not None or purge_interval is not None) and couchbase_bucket:
             params["autoCompactionDefined"] = "true"
             params["parallelDBAndViewCompaction"] = "false"
         if db_frag_perc is not None:
