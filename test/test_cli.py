@@ -1448,6 +1448,15 @@ class TestXdcrReplicate(CommandTest):
         expected_params = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1', 'compressionType=Auto',
                            'filterExpression=key%3A%5Ba-zA-z%5D%2B', 'replicationType=continuous']
 
+    def test_create_log_level(self):
+        self.no_error_run( self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+                                           '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:[a-zA-z]+',
+                                           '--xdcr-replication-mode', 'capi', '--enable-compression', '1',
+                                           '--log-level', 'Warn'], self.server_args)
+        self.assertIn('POST:/controller/createReplication', self.server.trace)
+        expected_params = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1', 'compressionType=Auto',
+                           'filterExpression=key%3A%5Ba-zA-z%5D%2B', 'replicationType=continuous', 'logLevel=Warn']
+
         self.rest_parameter_match(expected_params)
 
     def test_create_with_mutually_exclusive_args(self):

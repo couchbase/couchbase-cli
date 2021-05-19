@@ -3519,7 +3519,7 @@ class XdcrReplicate(Subcommand):
         group.add_argument("--enable-compression", dest="compression", metavar="<1|0>", choices=["1", "0"],
                            help="Enable/disable compression")
         group.add_argument("--log-level", dest="log_level", metavar="<level>",
-                           choices=["Error", "Info", "Debug", "Trace"],
+                           choices=["Error", "Warn", "Info", "Debug", "Trace"],
                            help="The XDCR log level")
         group.add_argument("--stats-interval", dest="stats_interval", metavar="<ms>",
                            help="The interval for statistics updates (in milliseconds)")
