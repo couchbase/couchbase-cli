@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-xdcr
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-17
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2021-05-20
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-XDCR" "1" "2021-02-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-XDCR" "1" "2021-05-20" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -30,7 +30,6 @@
 .SH "NAME"
 couchbase\-cli\-setting\-xdcr \- Modifies cross data center replication (XDCR) settings
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 \fIcouchbase\-cli setting\-xdcr\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -180,18 +179,18 @@ a port other that 8091.
 .SH "EXAMPLES"
 .sp
 If we want to change the checkpoint interval to 500 seconds, the worker batch to
-1000 documents, the document batch size to 10240KB, the failure restart interval
+1000 documents, the document batch size to 1024KB, the failure restart interval
 to 60 seconds. the optimistic replication threshold to 102400 bytes, the source
 nozzles to 8, the target nozzles to 8, the log level to info, and the stats
-interval to 100 milliseconds run the following command.
+interval to 500 milliseconds run the following command.
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli xdcr\-setup \-c 192.168.1.5 \-u Administrator \(rs
+$ couchbase\-cli setting\-xdcr \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-checkpoint\-interval 500 \-\-worker\-batch\-size 1000 \(rs
- \-\-doc\-batch\-size 10240 \-\-failure\-restart\-interval 60 \(rs
+ \-\-doc\-batch\-size 1024 \-\-failure\-restart\-interval 60 \(rs
  \-\-optimistic\-replication\-threshold 102400 \-\-source\-nozzle\-per\-node 8 \(rs
- \-\-target\-nozzle\-per\-node 8 \-\-log\-level info \-\-stats\-interval 100
+ \-\-target\-nozzle\-per\-node 8 \-\-log\-level Info \-\-stats\-interval 500
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

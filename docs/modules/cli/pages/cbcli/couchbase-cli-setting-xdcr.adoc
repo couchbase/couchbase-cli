@@ -77,16 +77,16 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 == EXAMPLES
 
 If we want to change the checkpoint interval to 500 seconds, the worker batch to
-1000 documents, the document batch size to 10240KB, the failure restart interval
+1000 documents, the document batch size to 1024KB, the failure restart interval
 to 60 seconds. the optimistic replication threshold to 102400 bytes, the source
 nozzles to 8, the target nozzles to 8, the log level to info, and the stats
-interval to 100 milliseconds run the following command.
+interval to 500 milliseconds run the following command.
 
-  $ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli setting-xdcr -c 192.168.1.5 -u Administrator \
    -p password --checkpoint-interval 500 --worker-batch-size 1000 \
-   --doc-batch-size 10240 --failure-restart-interval 60 \
+   --doc-batch-size 1024 --failure-restart-interval 60 \
    --optimistic-replication-threshold 102400 --source-nozzle-per-node 8 \
-   --target-nozzle-per-node 8 --log-level info --stats-interval 100
+   --target-nozzle-per-node 8 --log-level Info --stats-interval 500
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
