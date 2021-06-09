@@ -50,9 +50,14 @@ else:
 CB_MAN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "share"))
 
 if os.name == "nt":
-    CB_MAN_PATH = os.path.join(CB_MAN_PATH, "html")
+    CB_MAN_PATH = os.path.join(CB_MAN_PATH, "doc", "couchbase-cli")
 else:
     CB_MAN_PATH = os.path.join(CB_MAN_PATH, "man", "man1")
+
+
+def get_doc_page_name(command: str) -> str:
+    return f'{command}.{"1" if os.name != "nt" else "html"}'
+
 
 def remove_prefix(val: str, prefix: str) -> str:
     """This function removes a prefix from a string.
@@ -488,7 +493,7 @@ class CouchbaseCLI(Command):
     @staticmethod
     def get_man_page_name():
         """Returns the man page name"""
-        return "couchbase-cli" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli")
 
     @staticmethod
     def get_description():
@@ -687,7 +692,7 @@ class ClusterInit(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-cluster-init" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-cluster-init")
 
     @staticmethod
     def get_description():
@@ -723,7 +728,7 @@ class BucketCompact(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-bucket-compact" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-bucket-compact")
 
     @staticmethod
     def get_description():
@@ -874,7 +879,7 @@ class BucketCreate(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-bucket-create" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-bucket-create")
 
     @staticmethod
     def get_description():
@@ -903,7 +908,7 @@ class BucketDelete(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-bucket-delete" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-bucket-delete")
 
     @staticmethod
     def get_description():
@@ -1038,7 +1043,7 @@ class BucketEdit(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-bucket-edit" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-bucket-edit")
 
     @staticmethod
     def get_description():
@@ -1076,7 +1081,7 @@ class BucketFlush(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-bucket-flush" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-bucket-flush")
 
     @staticmethod
     def get_description():
@@ -1107,7 +1112,7 @@ class BucketList(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-bucket-list" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-bucket-list")
 
     @staticmethod
     def get_description():
@@ -1182,7 +1187,7 @@ class CollectLogsStart(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-collect-logs-start" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-collect-logs-start")
 
     @staticmethod
     def get_description():
@@ -1224,7 +1229,7 @@ class CollectLogsStatus(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-collect-logs-status" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-collect-logs-status")
 
     @staticmethod
     def get_description():
@@ -1247,7 +1252,7 @@ class CollectLogsStop(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-collect-logs-stop" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-collect-logs-stop")
 
     @staticmethod
     def get_description():
@@ -1295,7 +1300,7 @@ class Failover(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-failover" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-failover")
 
     @staticmethod
     def get_description():
@@ -1394,7 +1399,7 @@ class GroupManage(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-group-manage" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-group-manage")
 
     @staticmethod
     def get_description():
@@ -1424,7 +1429,7 @@ class HostList(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-host-list" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-host-list")
 
     @staticmethod
     def get_description():
@@ -1459,7 +1464,7 @@ class ResetCipherSuites(LocalSubcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-reset-cipher-suites" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-reset-cipher-suites")
 
     @staticmethod
     def get_description():
@@ -1550,7 +1555,7 @@ class MasterPassword(LocalSubcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-master-password" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-master-password")
 
     @staticmethod
     def get_description():
@@ -1613,7 +1618,7 @@ class NodeInit(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-node-init" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-node-init")
 
     @staticmethod
     def get_description():
@@ -1655,7 +1660,7 @@ class Rebalance(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-rebalance" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-rebalance")
 
     @staticmethod
     def get_description():
@@ -1678,7 +1683,7 @@ class RebalanceStatus(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-rebalance-status" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-rebalance-status")
 
     @staticmethod
     def get_description():
@@ -1701,7 +1706,7 @@ class RebalanceStop(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-rebalance-stop" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-rebalance-stop")
 
     @staticmethod
     def get_description():
@@ -1732,7 +1737,7 @@ class Recovery(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-recovery" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-recovery")
 
     @staticmethod
     def get_description():
@@ -1777,7 +1782,7 @@ class ResetAdminPassword(LocalSubcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-reset-admin-password" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-reset-admin-password")
 
     @staticmethod
     def get_description():
@@ -1838,7 +1843,7 @@ class ServerAdd(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-server-add" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-server-add")
 
     @staticmethod
     def get_description():
@@ -1916,7 +1921,7 @@ class ServerEshell(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-server-eshell" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-server-eshell")
 
     @staticmethod
     def get_description():
@@ -1945,7 +1950,7 @@ class ServerInfo(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-server-info" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-server-info")
 
     @staticmethod
     def get_description():
@@ -1972,7 +1977,7 @@ class ServerList(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-server-list" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-server-list")
 
     @staticmethod
     def get_description():
@@ -2009,7 +2014,7 @@ class ServerReadd(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-server-readd" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-server-readd")
 
     @staticmethod
     def get_description():
@@ -2140,7 +2145,7 @@ class SettingAlert(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-alert" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-alert")
 
     @staticmethod
     def get_description():
@@ -2269,7 +2274,7 @@ class SettingAudit(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-audit" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-audit")
 
     @staticmethod
     def get_description():
@@ -2367,7 +2372,7 @@ class SettingAutofailover(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-autofailover" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-autofailover")
 
     @staticmethod
     def get_description():
@@ -2409,7 +2414,7 @@ class SettingAutoreprovision(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-autoreprovision" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-autoreprovision")
 
     @staticmethod
     def get_description():
@@ -2465,7 +2470,7 @@ class SettingCluster(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-cluster" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-cluster")
 
     @staticmethod
     def get_description():
@@ -2485,7 +2490,7 @@ class ClusterEdit(SettingCluster):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-cluster-edit" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-cluster-edit")
 
     @staticmethod
     def is_hidden():
@@ -2653,7 +2658,7 @@ class SettingCompaction(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-compaction" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-compaction")
 
     @staticmethod
     def get_description():
@@ -2710,7 +2715,7 @@ class SettingIndex(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-index" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-index")
 
     @staticmethod
     def get_description():
@@ -2769,7 +2774,7 @@ class SettingSaslauthd(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-saslauthd" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-saslauthd")
 
     @staticmethod
     def get_description():
@@ -2900,7 +2905,7 @@ class SettingLdap(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-ldap" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-ldap")
 
     @staticmethod
     def get_description():
@@ -2932,7 +2937,7 @@ class SettingNotification(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-notification" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-notification")
 
     @staticmethod
     def get_description():
@@ -2992,7 +2997,7 @@ class SettingPasswordPolicy(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-password-policy" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-password-policy")
 
     @staticmethod
     def get_description():
@@ -3072,7 +3077,7 @@ class SettingSecurity(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-security" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-security")
 
     @staticmethod
     def get_description():
@@ -3137,7 +3142,7 @@ class SettingXdcr(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-xdcr" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-xdcr")
 
     @staticmethod
     def get_description():
@@ -3174,7 +3179,7 @@ class SettingMasterPassword(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-master-password" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-master-password")
 
     @staticmethod
     def get_description():
@@ -3255,7 +3260,7 @@ class SslManage(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-ssl-manage" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-ssl-manage")
 
     @staticmethod
     def get_description():
@@ -3454,7 +3459,7 @@ class UserManage(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-user-manage" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-user-manage")
 
     @staticmethod
     def get_description():
@@ -3668,7 +3673,7 @@ class XdcrReplicate(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-xdcr-replicate" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-xdcr-replicate")
 
     @staticmethod
     def get_description():
@@ -3808,7 +3813,7 @@ class XdcrSetup(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-xdcr-setup" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-xdcr-setup")
 
     @staticmethod
     def get_description():
@@ -3949,7 +3954,7 @@ class EventingFunctionSetup(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-eventing-function-setup" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-eventing-function-setup")
 
     @staticmethod
     def get_description():
@@ -4100,7 +4105,7 @@ class AnalyticsLinkSetup(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-analytics-link-setup" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-analytics-link-setup")
 
     @staticmethod
     def get_description():
@@ -4128,7 +4133,7 @@ class UserChangePassword(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-user-change-password" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-user-change-password")
 
     @staticmethod
     def get_description():
@@ -4267,7 +4272,7 @@ class CollectionManage(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-collection-manage" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-collection-manage")
 
     @staticmethod
     def get_description():
@@ -4316,7 +4321,7 @@ class EnableDeveloperPreview(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-enable-developer-preview" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-enable-developer-preview")
 
     @staticmethod
     def get_description():
@@ -4461,7 +4466,7 @@ class SettingAlternateAddress(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-alternate-address" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-alternate-address")
 
     @staticmethod
     def get_description():
@@ -4567,7 +4572,7 @@ class SettingQuery(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-query" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-query")
 
     @staticmethod
     def get_description():
@@ -4664,7 +4669,7 @@ class IpFamily(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-ip-family" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-ip-family")
 
     @staticmethod
     def get_description():
@@ -4760,7 +4765,7 @@ class NodeToNodeEncryption(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-node-to-node-encryption" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-node-to-node-encryption")
 
     @staticmethod
     def get_description():
@@ -4855,7 +4860,7 @@ class SettingRebalance(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return "couchbase-cli-setting-rebalance" + ".1" if os.name != "nt" else ".html"
+        return get_doc_page_name("couchbase-cli-setting-rebalance")
 
     @staticmethod
     def get_description():
