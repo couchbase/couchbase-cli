@@ -42,7 +42,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --list-filterable-events::
 ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   Returns a table or a JSON list (if --output json used) with all the event
-  IDs with there descriptions.
+  IDs with their descriptions.
 
 --get-settings::
 ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
