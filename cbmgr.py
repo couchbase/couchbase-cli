@@ -4405,6 +4405,7 @@ class SettingAlternateAddress(Subcommand):
             _exitIfErrors(error)
             _, error = rest.set_alternate_address(opts.alternate_hostname, ports)
             _exitIfErrors(error)
+            _success('Alternate address configuration updated')
         if opts.remove:
             _, error = rest.delete_alternate_address()
             _exitIfErrors(error)
@@ -4425,7 +4426,7 @@ class SettingAlternateAddress(Subcommand):
                 for port in port_names:
                     column_size = len(port) + 1
                     if column_size < 11:
-                        column_size = 11
+                        column_size = 12
                     print(f'{port:{column_size}}', end='')
                 print()
                 for node in add:
@@ -4439,7 +4440,7 @@ class SettingAlternateAddress(Subcommand):
                         for port in port_names:
                             column_size = len(port) + 1
                             if column_size < 11:
-                                column_size = 11
+                                column_size = 12
                             ports = ' '
                             if port in node['alternateAddresses']['external']['ports']:
                                 ports = f'{str(node["services"][port])}' \
