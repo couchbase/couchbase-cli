@@ -914,6 +914,12 @@ class TestSettingAudit(CommandTest):
         expected_params = ['disabledUsers=carlos%2Flocal']
         self.rest_parameter_match(expected_params)
 
+    def test_setting_audit_set_disabled_users_with_replaced_postfix(self):
+        self.no_error_run(self.command + ['--set', '--disabled-users=carlos/local,james/couchbase'], self.server_args)
+        self.assertIn('POST:/settings/audit', self.server.trace)
+        expected_params = ['disabledUsers=carlos%2Flocal%2Cjames%2Flocal']
+        self.rest_parameter_match(expected_params)
+
     def test_setting_audit_set_disable_events(self):
         self.no_error_run(self.command + ['--set', '--disable-events=4000'], self.server_args)
         self.assertIn('POST:/settings/audit', self.server.trace)

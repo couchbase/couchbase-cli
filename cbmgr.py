@@ -2205,10 +2205,10 @@ class SettingAudit(Subcommand):
                                  " --audit-log-rotate-size, --disabled-users, --disable-events] is required with"
                                  " --set"])
 
-            if opts.enabled == "1":
-                opts.enabled = "true"
-            elif opts.enabled == "0":
-                opts.enabled = "false"
+            # Match the behavior in the WebUI, which is to internally translate the '/couchbase' postfix into '/local'
+            # see MB-46970 for more information.
+            if opts.disabled_users is not None:
+                opts.disabled_users = re.sub(r'\/couchbase', '/local', opts.disabled_users)
 
             _, errors = self.rest.set_audit_settings(opts.enabled, opts.log_path, opts.rotate_interval,
                                                      opts.rotate_size, opts.disable_events, opts.disabled_users)

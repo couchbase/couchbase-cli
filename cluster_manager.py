@@ -1196,7 +1196,7 @@ class ClusterManager(object):
 
         params = dict()
         if enabled:
-            params["auditdEnabled"] = enabled
+            params["auditdEnabled"] = one_zero_boolean_to_string(enabled)
         if log_path:
             params["logPath"] = log_path
         if rotate_interval:
