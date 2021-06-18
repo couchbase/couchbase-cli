@@ -78,7 +78,9 @@ ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
 
 --disabled-users <user-list>::
 ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
-  A comma separated list of users to ignore events from.
+  A comma separated list of users to ignore events from. Local RBAC usernames
+  should be postfixed with `/local`, external LDAP users should be postfixed
+  with `/external`.
 
 --disable-events <events-list>::
 ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
@@ -171,7 +173,7 @@ run the command below.
   $ couchbase-cli setting-audit -c 192.168.1.5:8091 --username Administrator \
    --password password --set --audit-enabled 1 --audit-log-rotate-size 20971520 \
    --audit-log-path /opt/couchbase/var/lib/couchbase/logs \
-   --disabled-users backup,restore --disable-events 40964,40963
+   --disabled-users user1/local,user2/external --disable-events 40964,40963
 
 To disable auditing run the following command.
 

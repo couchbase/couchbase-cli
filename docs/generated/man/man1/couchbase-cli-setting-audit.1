@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-audit
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 2.0.14
+.\"      Date: 2021-06-18
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-AUDIT" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-AUDIT" "1" "2021-06-18" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,9 +28,8 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-setting\-audit \- Modifies audit log settings (EE only)
+couchbase-cli-setting-audit \- Modifies audit log settings (EE only)
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 \fIcouchbase\-cli setting\-audit\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -125,7 +124,9 @@ on size.
 .sp
 \-\-disabled\-users <user\-list>
 .RS 4
-A comma separated list of users to ignore events from.
+A comma separated list of users to ignore events from. Local RBAC usernames
+should be postfixed with \f(CR/local\fP, external LDAP users should be postfixed
+with \f(CR/external\fP.
 .RE
 .sp
 \-\-disable\-events <events\-list>
@@ -182,8 +183,10 @@ To get the current audit settings run the command below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \-\-get\-settings
+.fam
 .fi
 .if n .RE
 .sp
@@ -192,12 +195,14 @@ commands can return json if \f(CR\-\-output json\fP is provided):
 .sp
 .if n .RS 4
 .nf
+.fam C
 Audit enabled: False
 UUID: 44726500
 Log path: /opt/couchbase/var/lib/couchbase/logs
 Rotate interval: 86400
 Rotate size: 20971520
 Disabled users: []
+.fam
 .fi
 .if n .RE
 .sp
@@ -205,13 +210,16 @@ To retrieve the list of events that can be audited use the command:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \-\-list\-filterable\-events
+.fam
 .fi
 .if n .RE
 .sp
 .if n .RS 4
 .nf
+.fam C
 ID    | Module         | Name                                           | Description
 \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
 36865 | analytics      | Service configuration change                   | A successful service configuration change was made.
@@ -222,6 +230,7 @@ ID    | Module         | Name                                           | Descri
 40962 | view_engine    | Query DDoc Meta Data                           | Design Doc Meta Data Query Request
 40963 | view_engine    | View Query                                     | View Query Request
 40964 | view_engine    | Update Design Doc                              | Design Doc is Updated
+.fam
 .fi
 .if n .RE
 .sp
@@ -231,9 +240,11 @@ below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \-\-set \-\-audit\-enabled 1 \-\-audit\-log\-rotate\-interval 604800 \(rs
  \-\-audit\-log\-path /opt/couchbase/var/lib/couchbase/logs
+.fam
 .fi
 .if n .RE
 .sp
@@ -242,9 +253,11 @@ on a Linux installation with a log rotate size of 20MB, run the command below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \-\-set \-\-audit\-enabled 1 \-\-audit\-log\-rotate\-size 20971520 \(rs
  \-\-audit\-log\-path /opt/couchbase/var/lib/couchbase/logs
+.fam
 .fi
 .if n .RE
 .sp
@@ -255,10 +268,12 @@ run the command below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \-\-set \-\-audit\-enabled 1 \-\-audit\-log\-rotate\-size 20971520 \(rs
  \-\-audit\-log\-path /opt/couchbase/var/lib/couchbase/logs \(rs
- \-\-disabled\-users backup,restore \-\-disable\-events 40964,40963
+ \-\-disabled\-users user1/local,user2/external \-\-disable\-events 40964,40963
+.fam
 .fi
 .if n .RE
 .sp
@@ -266,8 +281,10 @@ To disable auditing run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-audit \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \-\-set \-\-audit\-enabled 0
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
