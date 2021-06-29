@@ -87,6 +87,7 @@ kv
 KV
 ldap
 localhost
+loopback
 majorityAndPersistActive
 mebibytes
 memberOf

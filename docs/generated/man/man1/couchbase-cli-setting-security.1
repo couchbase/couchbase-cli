@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-security
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 1.5.8
+.\"      Date: 2021-06-30
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2021-06-30" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,12 +31,11 @@
 couchbase\-cli\-setting\-security \- Manage security policies
 .SH "SYNOPSIS"
 .sp
-.sp
 .nf
 \fIcouchbase\-cli setting\-security\fP [\-\-cluster <url>] [\-\-username <user>]
     [\-\-password <password>] [\-\-set] [\-\-get] [\-\-disable\-http\-ui <0|1>]
     [\-\-disable\-www\-authenticate <0|1>]
-    [\-\-cluster\-encryption\-level <all|control>]
+    [\-\-cluster\-encryption\-level <all|control|strict>]
     [\-\-tls\-min\-version <tlsv1|tlsv1.1|tlsv1.2>]
     [\-\-tls\-honor\-cipher\-order <1|0>] [\-\-\-cipher\-suites <ciphers>]
 .fi
@@ -95,14 +94,15 @@ in browsers prompting the user for username/password and then caching
 the information.
 .RE
 .sp
-\-\-cluster\-encryption\-level <all|control>
+\-\-cluster\-encryption\-level <all|control|strict>
 .RS 4
 Specifies the cluster encryption level. The level is used when cluster
 encryption is turned on. If the level is "all" then both data
 and control messages between the nodes in the cluster will be sent over
 encrypted connections. If the level is "control" only control messages will
-be sent encrypted. By default when cluster encryption is turned on, the
-level will be "control".
+be sent encrypted. If the level is "strict" it is the same as having the
+level "all" but all non\-TLS ports on non\-loopback interfaces will be closed.
+By default when cluster encryption is turned on, the level will be "control".
 .RE
 .sp
 \-\-tls\-min\-version <tlsv1|tlsv1.1|tlsv1.2>

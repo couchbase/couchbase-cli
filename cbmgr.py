@@ -3018,8 +3018,8 @@ class SettingSecurity(Subcommand):
         group.add_argument("--disable-www-authenticate", dest="disable_www_authenticate",
                            metavar="<0|1>", choices=['0', '1'], default=None,
                            help="Disables use of WWW-Authenticate (0 or 1")
-        group.add_argument("--cluster-encryption-level", dest="cluster_encryption_level", metavar="<all|control>",
-                           choices=['all', 'control'], default=None,
+        group.add_argument("--cluster-encryption-level", dest="cluster_encryption_level", metavar="<all|control|strict>",
+                           choices=['all', 'control', 'strict'], default=None,
                            help="Set cluster encryption level, only used when cluster encryption enabled.")
         group.add_argument('--tls-min-version', dest='tls_min_version', metavar='<tlsv1|tlsv1.1|tlsv1.2>',
                            choices=['tlsv1', 'tlsv1.1', 'tlsv1.2'], default=None, help='Set the minimum TLS version')
