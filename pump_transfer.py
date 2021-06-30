@@ -52,6 +52,9 @@ class Transfer:
         if threading.currentThread().getName() == "MainThread":
             threading.currentThread().setName("mt")
 
+        new_executable = 'cbbackupmgr' if self.name != "cbtransfer" else 'cbdatarecovery'
+        print(f'WARN: {self.name} is deprecated please use {new_executable} instead')
+
         err, opts, source, sink = self.opt_parse(argv)
         if err:
             return err
@@ -258,6 +261,7 @@ class Backup(Transfer):
 
         if self._is_enterprise():
             self.usage = \
+                "DEPRECATED: Please use cbbackupmgr instead.\n" \
                 "%prog [options] source backup_dir\n\n" \
                 "Online backup of a couchbase cluster or server node.\n\n" \
                 "Examples:\n" \

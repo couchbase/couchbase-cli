@@ -8,7 +8,7 @@ ifdef::doctype-manpage[]
 
 cbbrestore -
 endif::[]
-The `cbrestore` tool restores data backed up by `cbbackup` to a Couchbase cluster
+(Deprecated) The `cbrestore` tool restores data backed up by `cbbackup` to a Couchbase cluster
 
 == SYNOPSIS
 [verse]
@@ -20,6 +20,8 @@ _cbrestore_ [--username <user>] [--password <password>] [--ssl]
             [--help] backup_dir destination
 
 == DESCRIPTION
+
+DEPRECATION WARNING: This tool has been deprecated please use cbbackupmgr instead.
 
 This tool restores data that was backed up using `cbbackup` the command will
 take some options as well as the `backup_dir` which is the path to the folder

@@ -235,6 +235,8 @@ def consumer(id: int, verbose: bool):
             print(f'Exception {str(e)}')
 
 if __name__ == '__main__':
+    print(f'WARN: cbbackupwrapper is deprecated please use cbbackupmgr instead')
+
     # Parse the arguments given.
     args, cluster, backup_dir = argument_parsing()
 

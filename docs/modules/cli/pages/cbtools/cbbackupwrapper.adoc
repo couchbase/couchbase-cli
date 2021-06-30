@@ -10,7 +10,7 @@ ifdef::doctype-manpage[]
 
 cbbackupwrapper -
 endif::[]
-A wrapper around `cbbackup` that was made to improve performance for
+(Deprecated) A wrapper around `cbbackup` that was made to improve performance for
 enterprise users. Superseded by `cbbackupmgr`, which should be used
 instead of this tool.
 
@@ -23,6 +23,8 @@ _cbbackupwrapper_ [--username <user>] [--password <password>] [--ssl]
                   [--extra <options>] [--help] cluster backup_dir
 
 == DESCRIPTION
+
+DEPRECATION WARNING: This tool has been deprecated please use cbbackupmgr instead.
 
 `cbbackupwrapper` divides the vBuckets between various `cbbackup` processes to
 improve performance.
