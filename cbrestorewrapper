@@ -150,6 +150,8 @@ def get_vbuckets_to_restore(path, bucket):
     return cleaned_list
 
 if __name__ == '__main__':
+    print(f'WARN: cbrestorewrapper is deprecated please use cbbackupmgr instead')
+
     # Parse the arguments given.
     args, backup_dir, cluster = argument_parsing()
 

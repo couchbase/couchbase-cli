@@ -1211,6 +1211,16 @@ class TestSettingSecurity(CommandTest):
         self.assertIn('POST:/settings/security', self.server.trace)
         self.rest_parameter_match(expected_params)
 
+    def test_set_settings_cluster_encryption_strict(self):
+        self.no_error_run(self.command + ['--set', '--disable-http-ui', '1', '--cluster-encryption-level', 'strict',
+                                          '--tls-honor-cipher-order', '1', '--tls-min-version', 'tlsv1.2'],
+                          self.server_args)
+
+        expected_params = ['disableUIOverHttp=true', 'clusterEncryptionLevel=strict', 'tlsMinVersion=tlsv1.2',
+                           'honorCipherOrder=true']
+        self.assertIn('POST:/settings/security', self.server.trace)
+        self.rest_parameter_match(expected_params)
+
 
 class TestSettingXdcr(CommandTest):
     def setUp(self):

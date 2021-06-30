@@ -15,7 +15,7 @@ Manage security policies
 _couchbase-cli setting-security_ [--cluster <url>] [--username <user>]
     [--password <password>] [--set] [--get] [--disable-http-ui <0|1>]
     [--disable-www-authenticate <0|1>]
-    [--cluster-encryption-level <all|control>]
+    [--cluster-encryption-level <all|control|strict>]
     [--tls-min-version <tlsv1|tlsv1.1|tlsv1.2>]
     [--tls-honor-cipher-order <1|0>] [---cipher-suites <ciphers>]
 
@@ -45,13 +45,14 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   in browsers prompting the user for username/password and then caching
   the information.
 
---cluster-encryption-level <all|control>::
+--cluster-encryption-level <all|control|strict>::
   Specifies the cluster encryption level. The level is used when cluster
   encryption is turned on. If the level is "all" then both data
   and control messages between the nodes in the cluster will be sent over
   encrypted connections. If the level is "control" only control messages will
-  be sent encrypted. By default when cluster encryption is turned on, the
-  level will be "control".
+  be sent encrypted. If the level is "strict" it is the same as having the
+  level "all" but all non-TLS ports on non-loopback interfaces will be closed.
+  By default when cluster encryption is turned on, the level will be "control".
 
 --tls-min-version <tlsv1|tlsv1.1|tlsv1.2>::
   Specify the minimum TLS protocol version to be used across all of the

@@ -8,7 +8,7 @@ ifdef::doctype-manpage[]
 
 cbtransfer -
 endif::[]
-The `cbtransfer` tool enables the transfer of Couchbase data from clusters and
+(Deprecated) The `cbtransfer` tool enables the transfer of Couchbase data from clusters and
 various file formats.
 
 == SYNOPSIS
@@ -24,6 +24,8 @@ _cbtransfer_ [--username <user>] [--password <password>] [--ssl]
              [--help] source destination
 
 == DESCRIPTION
+
+DEPRECATION WARNING: This tool has been deprecated please use cbdatarecovery instead.
 
 The `cbtransfer` tool is a generic tool for transferring data from various
 types of source to various types of sinks. Both `cbbackup` and `cbrestore`

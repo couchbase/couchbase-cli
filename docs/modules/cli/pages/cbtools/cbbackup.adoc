@@ -8,7 +8,7 @@ ifdef::doctype-manpage[]
 
 cbbackup -
 endif::[]
-Backs up an entire running cluster, a bucket or a single node
+(Deprecated) Backs up an entire running cluster, a bucket or a single node
 
 == SYNOPSIS
 [verse]
@@ -19,6 +19,8 @@ _cbbackup_ [--username <user>] [--password <password>] [--ssl]
            [--extra <options>] [--help] source backup_dir
 
 == DESCRIPTION
+
+DEPRECATION WARNING: This tool has been deprecated please use cbbackupmgr instead
 
 This backup tools creates a copy of the `source` data onto disk in the
 specified `backup_dir`, if the directory does not exist it will be created.
