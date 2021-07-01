@@ -1729,6 +1729,16 @@ class ClusterManager(object):
         url = f'{hosts[0]}/api/v1/functions'
         return self._get(url)
 
+    def get_functions_status(self):
+        hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(EVENT_SERVICE)
+        url = f'{hosts[0]}/api/v1/status'
+        return self._get(url)
+
     def export_functions(self):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:

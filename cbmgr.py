@@ -3940,17 +3940,25 @@ class EventingFunctionSetup(Subcommand):
     def _list(self):
         functions, errors = self.rest.list_functions()
         _exit_if_errors(errors)
+        statuses, errors = self.rest.get_functions_status()
+        _exit_if_errors(errors)
+        if statuses['apps'] is not None:
+            statuses = {x['name']: x['composite_status'] for x in statuses['apps']}
+            for function in functions:
+                if function['appname'] in statuses:
+                    print(function['appname'])
+                    print(f' Status: {statuses[function["appname"]]}')
+                    if 'source_scope' in function["depcfg"]:
+                        print(f' Source: {function["depcfg"]["source_bucket"]}.{function["depcfg"]["source_scope"]}.'
+                              f'{function["depcfg"]["source_collection"]}')
+                        print(f' Metadata: {function["depcfg"]["metadata_bucket"]}.{function["depcfg"]["metadata_scope"]}.'
+                              f'{function["depcfg"]["metadata_collection"]}')
+                    else:
+                        print(f' Source Bucket: {function["depcfg"]["source_bucket"]}')
+                        print(f' Metadata Bucket: {function["depcfg"]["metadata_bucket"]}')
+        else:
+            print('The cluster has no functions')
 
-        for function in functions:
-            print(function['appname'])
-            status = ''
-            if function['settings']['deployment_status']:
-                status = 'Deployed'
-            else:
-                status = 'Undeployed'
-            print(f' Status: {status}')
-            print(f' Source Bucket: {function["depcfg"]["source_bucket"]}')
-            print(f' Metadata Bucket: {function["depcfg"]["metadata_bucket"]}')
 
     @staticmethod
     def get_man_page_name():
