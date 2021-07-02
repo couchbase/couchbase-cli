@@ -4598,8 +4598,12 @@ class IpFamily(Subcommand):
         group.add_argument('--set', action="store_true", default=False, help='Change current used IP family')
         group.add_argument('--ipv4', dest='ipv4', default=False, action="store_true",
                            help='Set IP family to IPv4')
+        group.add_argument('--ipv4only', dest='ipv4only', default=False, action="store_true",
+                           help='Set IP family to IPv4 only')
         group.add_argument('--ipv6', dest='ipv6', default=False, action="store_true",
                            help='Set IP family to IPv6')
+        group.add_argument('--ipv6only', dest='ipv6only', default=False, action="store_true",
+                           help='Set IP family to IPv6 only')
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
@@ -4612,20 +4616,23 @@ class IpFamily(Subcommand):
         if opts.get:
             self._get(self.rest)
         if opts.set:
-            if sum([opts.ipv6, opts.ipv4]) != 1:
-                _exit_if_errors(['Provided exactly one of --ipv4 or --ipv6 together with the --set option'])
-
-            self._set(self.rest, opts.ipv6, opts.ssl)
+            if sum([opts.ipv6, opts.ipv6only, opts.ipv4, opts.ipv4only]) != 1:
+                _exit_if_errors(['Provided exactly one of --ipv4, --ipv4only, --ipv6 or --ipv6only together with the'
+                                 ' --set option'])
+            only = opts.ipv6only or opts.ipv4only
+            if opts.ipv6only:
+                opts.ipv6 = True
+            self._set(self.rest, opts.ipv6, opts.ssl, only)
 
     @staticmethod
-    def _set(rest, ipv6, ssl):
+    def _set(rest, ipv6, ssl, ip_only):
         ip_fam, ip_fam_disable = ('ipv6', 'ipv4') if ipv6 else ('ipv4', 'ipv6')
         node_data, err = rest.pools('nodes')
 
         if err and err[0] == '"unknown pool"':
             _, err = rest.enable_external_listener(ipfamily=ip_fam)
             _exit_if_errors(err)
-            _, err = rest.setup_net_config(ipfamily=ip_fam)
+            _, err = rest.setup_net_config(ipfamily=ip_fam, ipfamilyonly=ip_only)
             _exit_if_errors(err)
             _, err = rest.disable_unused_external_listeners(ipfamily=ip_fam_disable)
             _exit_if_errors(err)
@@ -4645,7 +4652,7 @@ class IpFamily(Subcommand):
             hosts.append(host)
 
         for h in hosts:
-            _, err = rest.setup_net_config(host=h, ipfamily=ip_fam)
+            _, err = rest.setup_net_config(host=h, ipfamily=ip_fam, ipfamilyonly=ip_only)
             _exit_if_errors(err)
             print(f'Switched IP family for node: {h}')
 
@@ -4659,19 +4666,26 @@ class IpFamily(Subcommand):
     def _get(rest):
         nodes, err = rest.nodes_info()
         _exit_if_errors(err)
-        fam = {}
+        ip_families = set()
         for n in nodes:
-            fam[n['addressFamily']] = True
+            if 'addressFamilyOnly' in n and n['addressFamilyOnly']:
+                ip_families.add(n['addressFamily']+'only')
+            else:
+                ip_families.add(n['addressFamily'])
 
-        family = list(fam.keys())
-        if len(family) == 1:
-            ipv_fam = 'UNKNOWN'
-            if family[0] == 'inet' or family[0] == 'inet_tls':
-                ipv_fam = 'ipv4'
-            elif family[0] == 'inet6' or family[0] == 'inet6_tls':
-                ipv_fam = 'ipv6'
+        if len(ip_families) == 1:
+            ip_family = ip_families.pop()
+            mode = 'UNKNOWN'
+            if ip_family in ['inet', 'inet_tls']:
+                mode = 'ipv4'
+            elif ip_family in ['inetonly', 'inet_tlsonly']:
+                mode = 'ipv4only'
+            elif ip_family in ['inet6', 'inet6_tls']:
+                mode = 'ipv6'
+            elif ip_family in ['inet6only', 'inet6_tlsonly']:
+                mode = 'ipv6only'
 
-            print(f'Cluster using {ipv_fam}')
+            print(f'Cluster using {mode}')
         else:
             print('Cluster is in mixed mode')
 

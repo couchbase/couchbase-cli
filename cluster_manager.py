@@ -2138,7 +2138,7 @@ class ClusterManager(object):
         # disableUnusedExternalListeners api yet. Call previous api then.
         return self.disable_external_listener(host=host, ipfamily=ipfamily, encryption=encryption)
 
-    def setup_net_config(self, host=None, ipfamily=None, encryption=None):
+    def setup_net_config(self, host=None, ipfamily=None, encryption=None, ipfamilyonly=None):
         hostname = host if host else self.hostname
         url = f'{hostname}/node/controller/setupNetConfig'
         params = {}
@@ -2146,7 +2146,8 @@ class ClusterManager(object):
             params['afamily'] = ipfamily
         if encryption:
             params['nodeEncryption'] = encryption
-
+        if ipfamilyonly:
+            params['afamilyOnly'] = 'true'
         return self._post_form_encoded(url, params)
 
     def node_get_address_family(self, host):

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-ip-family
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 2.0.15
+.\"      Date: 2021-07-05
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-IP\-FAMILY" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-IP\-FAMILY" "1" "2021-07-05" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,13 +28,13 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-ip\-family \- Edits cluster IP family settings
+couchbase-cli-ip-family \- Edits cluster IP family settings
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 \fIcouchbase\-cli ip\-family\fP [\-\-cluster <url>] [\-username <username>]
-    [\-\-password <password>] [\-\-get] [\-\-set] [\-\-ipv4] [\-\-ipv6]
+    [\-\-password <password>] [\-\-get] [\-\-set] [\-\-ipv4] [\-\-ipv4only]
+    [\-\-ipv6] [\-\-ipv6only]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -82,13 +82,27 @@ Change the cluster IP family, specify the IP family to be used using the
 \-\-ipv4
 .RS 4
 When specified together with \-\-set it will change the cluster to use IPv4 for
-communication between the nodes.
+communication between the nodes. It will still be possible for traffic to go
+over IPv6 from clients.
+.RE
+.sp
+\-\-ipv4only
+.RS 4
+When specified together with \-\-set it will change the cluster to only use IPv4.
+It will not blind to any IPv6 addresses, all traffic will be over IPv4
 .RE
 .sp
 \-\-ipv6
 .RS 4
 When specified together with \-\-set it will change the cluster to use IPv6 for
-communication between the nodes.
+communication between the nodes. It will still be possible for traffic to go
+over IPv4 from clients.
+.RE
+.sp
+\-\-ipv6only
+.RS 4
+When specified together with \-\-set it will change the cluster to only use IPv6.
+It will not blind to any IPv4 addresses, all traffic will be over IPv6.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -138,8 +152,10 @@ can change the IP family being used to IPv6 by using the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli ip\-family \-c http://cb1.com:8091 \-u Administrator \(rs
   \-p password \-\-set \-\-ipv6
+.fam
 .fi
 .if n .RE
 .sp
@@ -148,8 +164,10 @@ family is being used use the command below:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli ip\-family \-c http://cb1.com:8091 \-u Administrator \(rs
   \-p password \-\-get
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
