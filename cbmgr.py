@@ -4420,8 +4420,9 @@ class SettingAlternateAddress(Subcommand):
                         if 'ports' in node['alternateAddresses']['external']:
                             for port in node['alternateAddresses']['external']['ports'].keys():
                                 port_names.add(port)
-                print('{:20}{:20}{}'.format('Hostname', 'Alternate Address', 'Ports (Primary/Alternate)'))
-                print('{:40}'.format(' '), end='')
+                # Limiting the display of hostnames to 42, same length as a IPv6 address
+                print('{:43}{:43}{}'.format('Hostname', 'Alternate Address', 'Ports (Primary/Alternate)'))
+                print('{:86}'.format(' '), end='')
                 port_names = sorted(port_names)
                 for port in port_names:
                     column_size = len(port) + 1
@@ -4432,11 +4433,17 @@ class SettingAlternateAddress(Subcommand):
                 for node in add:
                     if 'alternateAddresses' in node:
                         # For cluster_run and single node clusters there is no hostname
-                        try:
-                            print(f'{node["hostname"]:20}{node["alternateAddresses"]["external"]["hostname"]:20}', end='')
-                        except KeyError:
+                        if 'hostname' in node:
+                            host = node["hostname"]
+                        else:
                             host = 'UNKNOWN'
-                            print(f'{host:20}{node["alternateAddresses"]["external"]["hostname"]:20}', end='')
+                        # Limiting the display of hostnames to 42 chars, same length as IPv6 address
+                        if len(host) > 42:
+                            host = host[:40] + '..'
+                        alternateAddresses = node["alternateAddresses"]["external"]["hostname"]
+                        if len(alternateAddresses) > 42:
+                            alternateAddresses = alternateAddresses[:40] + '..'
+                        print(f'{host:43}{alternateAddresses:43}', end='')
                         for port in port_names:
                             column_size = len(port) + 1
                             if column_size < 11:
