@@ -13,7 +13,8 @@ Edits cluster IP family settings
 
 [verse]
 _couchbase-cli ip-family_ [--cluster <url>] [-username <username>]
-    [--password <password>] [--get] [--set] [--ipv4] [--ipv6]
+    [--password <password>] [--get] [--set] [--ipv4] [--ipv4only]
+    [--ipv6] [--ipv6only]
 
 == DESCRIPTION
 
@@ -35,11 +36,21 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --ipv4::
   When specified together with --set it will change the cluster to use IPv4 for
-  communication between the nodes.
+  communication between the nodes. It will still be possible for traffic to go
+  over IPv6 from clients.
+
+--ipv4only::
+  When specified together with --set it will change the cluster to only use IPv4.
+  It will not blind to any IPv6 addresses, all traffic will be over IPv4
 
 --ipv6::
   When specified together with --set it will change the cluster to use IPv6 for
-  communication between the nodes.
+  communication between the nodes. It will still be possible for traffic to go
+  over IPv4 from clients.
+
+--ipv6only::
+  When specified together with --set it will change the cluster to only use IPv6.
+  It will not blind to any IPv4 addresses, all traffic will be over IPv6.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

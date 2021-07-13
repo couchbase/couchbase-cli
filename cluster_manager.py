@@ -1729,6 +1729,16 @@ class ClusterManager(object):
         url = f'{hosts[0]}/api/v1/functions'
         return self._get(url)
 
+    def get_functions_status(self):
+        hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(EVENT_SERVICE)
+        url = f'{hosts[0]}/api/v1/status'
+        return self._get(url)
+
     def export_functions(self):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
@@ -2128,7 +2138,7 @@ class ClusterManager(object):
         # disableUnusedExternalListeners api yet. Call previous api then.
         return self.disable_external_listener(host=host, ipfamily=ipfamily, encryption=encryption)
 
-    def setup_net_config(self, host=None, ipfamily=None, encryption=None):
+    def setup_net_config(self, host=None, ipfamily=None, encryption=None, ipfamilyonly=None):
         hostname = host if host else self.hostname
         url = f'{hostname}/node/controller/setupNetConfig'
         params = {}
@@ -2136,7 +2146,8 @@ class ClusterManager(object):
             params['afamily'] = ipfamily
         if encryption:
             params['nodeEncryption'] = encryption
-
+        if ipfamilyonly:
+            params['afamilyOnly'] = 'true'
         return self._post_form_encoded(url, params)
 
     def node_get_address_family(self, host):
