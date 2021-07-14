@@ -2144,10 +2144,10 @@ class ClusterManager(object):
         params = {}
         if ipfamily:
             params['afamily'] = ipfamily
+            params['afamilyOnly'] = 'true' if ipfamilyonly else 'false'
         if encryption:
             params['nodeEncryption'] = encryption
-        if ipfamilyonly:
-            params['afamilyOnly'] = 'true'
+
         return self._post_form_encoded(url, params)
 
     def node_get_address_family(self, host):
