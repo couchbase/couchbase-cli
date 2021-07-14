@@ -1767,7 +1767,7 @@ class TestIpFamily(CommandTest):
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
         self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
-        expected_params = ['afamily=ipv4', 'afamily=ipv4']
+        expected_params = ['afamily=ipv4', 'afamily=ipv4', 'afamilyOnly=false']
         self.rest_parameter_match(expected_params, True)
 
     def test_set_ipv4_only(self):
@@ -1791,7 +1791,7 @@ class TestIpFamily(CommandTest):
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
         self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
-        expected_params = ['afamily=ipv6', 'afamily=ipv6']
+        expected_params = ['afamily=ipv6', 'afamily=ipv6', 'afamilyOnly=false']
         self.rest_parameter_match(expected_params, True)
 
     def test_set_ipv6_only(self):
