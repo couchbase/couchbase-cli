@@ -1,19 +1,27 @@
 """This test do not ensure correct server side behaviour they only check that the cli makes the correct requests and
 that validates input correctly"""
+import contextlib
+import json
 import os
+import sys
 import tempfile
 import unittest
-import sys
-import json
 from io import StringIO
 from cbmgr import CouchbaseCLI, CollectionManage
-from mock_server import MockRESTServer
+from mock_server import MockRESTServer, generate_self_signed_cert
 from couchbaseConstants import parse_host_port
 
 
 host = '127.0.0.1'
 port = 6789
 cluster_connect_args = ['-c', host+":"+str(port), '-u', 'Administrator', '-p', 'asdasd']
+
+
+# setUpModule will generate new certificates for the mock HTTPS server used during unit testing.
+#
+# NOTE: We don't remove the key/cert once generted since they're included in the '.gitignore' file.
+def setUpModule():
+    generate_self_signed_cert(os.path.dirname(os.path.abspath(__file__)))
 
 
 class ExpandCollectionTest(unittest.TestCase):
@@ -1806,6 +1814,20 @@ class TestIpFamily(CommandTest):
         expected_params = ['afamily=ipv6', 'afamily=ipv6', 'afamilyOnly=true']
         self.rest_parameter_match(expected_params, True)
 
+    def test_set_force_tls(self):
+        # NOTE: We use a HTTP port that doesn't exist to ensure that we're using the HTTPS port
+        self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:12345',
+                                                       'ports': {'httpsMgmt': '6790'}}]}
+        self.server_args['/settings/security'] = {"clusterEncryptionLevel": 'strict'}
+        self.no_error_run(self.command + ['--set', '--ipv4', '--no-ssl-verify'], self.server_args)
+        self.assertIn('Switched IP family of the cluster', self.str_output)
+        self.assertIn('GET:/pools/nodes', self.server.trace)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        expected_params = ['afamily=ipv4', 'afamily=ipv4', 'afamilyOnly=false']
+        self.rest_parameter_match(expected_params, True)
+
 
 class TestClusterEncryption(CommandTest):
     def setUp(self):
@@ -1849,6 +1871,17 @@ class TestClusterEncryption(CommandTest):
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
         self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
         self.rest_parameter_match(['nodeEncryption=off', 'nodeEncryption=off'])
+
+    def test_enable_cluster_encryption_force_tls(self):
+        # NOTE: We use a HTTP port that doesn't exist to ensure that we're using the HTTPS port
+        self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:12345',
+                                                       'ports': {'httpsMgmt': '6790'}}]}
+        self.server_args['/settings/security'] = {"clusterEncryptionLevel": 'strict'}
+        self.no_error_run(self.command + ['--enable', '--no-ssl-verify'], self.server_args)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        self.rest_parameter_match(['nodeEncryption=on', 'nodeEncryption=on'])
 
 
 class TestSettingRebalance(CommandTest):

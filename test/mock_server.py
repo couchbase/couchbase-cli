@@ -1,12 +1,64 @@
 """Mock server only emulates CB rest endpoints but has no functionality"""
-import socket
-import threading
-import re
+import datetime
 import json
+import os
+import re
+import socket
+import ssl
 import sys
+import threading
+from cryptography.hazmat.backends.openssl.backend import backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes
 from urllib.parse import urlparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import requests
+
+
+# generate_self_signed_cert generates a key/self signed certificate pair which will be written to key.pem/cert.pem in
+# the given directory.
+#
+# For more information, see https://cryptography.io/en/latest/x509/tutorial.
+def generate_self_signed_cert(path: str, key_name: str = "key.pem", cert_name: str = "cert.pem"):
+    if not os.path.isdir(path):
+        raise ValueError("'path' should be an existing directory")
+
+    key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=4096,
+        backend=backend,
+    )
+
+    with open(os.path.join(path, key_name), "wb") as file:
+        file.write(key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption(),
+        ))
+
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"California"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, u"Santa Clara"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Couchbase"),
+        x509.NameAttribute(NameOID.COMMON_NAME, u"couchbase.com"),
+    ])
+
+    cert = x509.CertificateBuilder() \
+        .subject_name(subject) \
+        .issuer_name(issuer) \
+        .public_key(key.public_key()) \
+        .serial_number(x509.random_serial_number()) \
+        .not_valid_before(datetime.datetime.utcnow()) \
+        .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=365)) \
+        .add_extension(x509.SubjectAlternativeName([x509.DNSName(u"localhost")]), critical=False) \
+        .sign(key, hashes.SHA256(), backend=backend)
+
+    with open(os.path.join(path, cert_name), "wb") as file:
+        file.write(cert.public_bytes(serialization.Encoding.PEM))
 
 
 class RequestHandler(BaseHTTPRequestHandler):
@@ -99,18 +151,34 @@ class MockHTTPServer(HTTPServer):
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         HTTPServer.server_bind(self)
 
+class MockHTTPSServer(HTTPServer):
+    def __init__(self, host_port, handler, rest_server):
+        self.rest_server = rest_server  # Instance of MockRESTServer.
+        HTTPServer.__init__(self, host_port, handler)
+
+    def server_bind(self):
+        self.socket = ssl.wrap_socket(self.socket,
+                                      keyfile="./test/key.pem",
+                                      certfile="./test/cert.pem",
+                                      server_side=True)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        HTTPServer.server_bind(self)
+
 
 class MockRESTServer(object):
     def __init__(self, host, port, args={}):
         self.args = args
         self.host = host
         self.port = port
+        self.https_port = port+1
         self.trace = []
         self.rest_params = []
         self.queries = []
         self.stop = False
-        self.server = MockHTTPServer((host, port), RequestHandler, self)
-        self.t1 = threading.Thread(target=self._run)
+        self.server = MockHTTPServer((host, self.port), RequestHandler, self)
+        self.https_server = MockHTTPSServer((host, self.https_port), RequestHandler, self)
+        self.t1 = threading.Thread(target=self._run_http)
+        self.t2 = threading.Thread(target=self._run_https)
 
     def set_args(self, args):
         self.args = args
@@ -118,32 +186,41 @@ class MockRESTServer(object):
     def host_port(self):
         return f'{self.host}:{self.port!s}'
 
-    def url(self):
-        return f'http://{self.host_port()}'
+    def url(self, https=False):
+        return f"{'https://' if https else 'http://'}{self.host}:{self.https_port if https else self.port!s}"
 
-    def _run(self):
+    def _run(self, server):
         while not self.stop:
             try:
-                self.server.handle_request()
+                server.handle_request()
             except:
                 self.stop = True
+
+    def _run_http(self):
+        self._run(self.server)
+
+    def _run_https(self):
+        self._run(self.https_server)
 
     def run(self):
         self.stop = False
         self.t1.start()
+        self.t2.start()
 
     def shutdown(self):
         self.stop = True
+        self._close(self.url(), self.server, self.t1)
+        self._close(self.url(https=True), self.https_server, self.t2)
+
+    def _close(self, url, server, t):
         try:
-            requests.get(f'{self.url()}/close', timeout=0.2)
+            requests.get(f'{url}/close', timeout=0.2, verify=False)
         except Exception:
             pass
 
-        try:
-            self.server.server_close()
-            self.t1.join()
-        except Exception:
-            pass
+        server.server_close()
+        t.join()
+
 
 # ------------ Below functions that mock a superficial level of the couchbase server
 
@@ -386,7 +463,7 @@ endpoints = [
     (r'/settings/saslauthdAuth$', {'POST': do_nothing}),
     (r'/settings/ldap', {'POST': do_nothing, 'GET': get_ldap_settings}),
     (r'/settings/alerts$', {'POST': do_nothing}),
-    (r'/settings/security$', {'POST': do_nothing}),
+    (r'/settings/security$', {'POST': do_nothing, 'GET': get_by_path}),
     (r'/settings/audit$', {'POST': do_nothing, 'GET': get_audit_settings}),
     (r'/settings/audit/descriptors$', {'GET': get_by_path}),
     (r'/settings/stats$', {'POST': do_nothing}),

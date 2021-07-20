@@ -66,6 +66,28 @@ def remove_prefix(val: str, prefix: str) -> str:
     """
     return val[len(prefix):] if val.startswith(prefix) else val
 
+def force_communicate_tls(rest: ClusterManager) -> bool:
+    """force_communicate_tls returns a boolean indicating whether we should communicate with other nodes using the TLS
+    ports.
+
+    When communicating with a cluster which has 'clusterEncryptionLevel' set to 'strict' the non-tls ports will only be
+    open to 'localhost' meaning we must communicate via the non-tls ports.
+    """
+    settings, err = rest.get_security_settings()
+    _exit_if_errors(err)
+
+    # The cluster isn't using 'strict' cluster encryption, we shouldn't need to force enable TLS
+    if 'clusterEncryptionLevel' not in settings or settings['clusterEncryptionLevel'] != 'strict':
+        return False
+
+    # The user might not have used a 'https://' scheme prefix, so communicating to other nodes via the secure ports may
+    # lead to interesting/surprising errors; let them know beforehand.
+    _warning("sub-command requires multi-node communication via TLS enabled ports, '--cacert' or " \
+             "'--no-ssl-verify' may need to be supplied")
+
+    return True
+
+
 def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_check=None):
     """rest_initialiser is a decorator that does common subcommand tasks.
 
@@ -4641,11 +4663,13 @@ class IpFamily(Subcommand):
 
         _exit_if_errors(err)
 
+        ssl = ssl or force_communicate_tls(rest)
+
         hosts = []
         for n in node_data['nodes']:
             host = f'http://{n["hostname"]}'
             if ssl:
-                addr = host.rsplit(":", 1)[0]
+                addr = n["hostname"].rsplit(":", 1)[0]
                 host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
             _, err = rest.enable_external_listener(host=host, ipfamily=ip_fam)
             _exit_if_errors(err)
@@ -4742,11 +4766,13 @@ class NodeToNodeEncryption(Subcommand):
 
         _exit_if_errors(err)
 
+        ssl = ssl or force_communicate_tls(rest)
+
         hosts = []
         for n in node_data['nodes']:
             host = f'http://{n["hostname"]}'
             if ssl:
-                addr = host.rsplit(":", 1)[0]
+                addr = n["hostname"].rsplit(":", 1)[0]
                 host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
             _, err = rest.enable_external_listener(host=host, encryption=encryption)
             _exit_if_errors(err)
