@@ -38,6 +38,7 @@ class Transfer:
         self.source_alias = "source"
         self.sink_alias = "destination"
         self.usage = \
+            "DEPRECATED: Please use cbdatarecovery instead.\n" \
             "%prog [options] source destination\n\n" \
             "Transfer couchbase cluster data from source to destination.\n\n" \
             "Examples:\n" \
@@ -52,8 +53,9 @@ class Transfer:
         if threading.currentThread().getName() == "MainThread":
             threading.currentThread().setName("mt")
 
-        new_executable = 'cbbackupmgr' if self.name != "cbtransfer" else 'cbdatarecovery'
-        print(f'WARN: {self.name} is deprecated please use {new_executable} instead')
+        if self.name in ['cbbackup', 'cbbackupwrapper', 'cbrestore', 'cbrestorewrapper', 'cbtransfer']:
+            new_executable = 'cbbackupmgr' if self.name != "cbtransfer" else 'cbdatarecovery'
+            print(f'WARN: {self.name} is deprecated please use {new_executable} instead')
 
         err, opts, source, sink = self.opt_parse(argv)
         if err:
@@ -275,6 +277,7 @@ class Backup(Transfer):
                 "   no matter what backup mode is specified.\n"
         else:
             self.usage = \
+                "DEPRECATED: Please use cbbackupmgr instead.\n" \
                 "%prog [options] source backup_dir\n\n" \
                 "Online backup of a couchbase cluster or server node.\n\n" \
                 "Examples:\n" \
@@ -334,6 +337,7 @@ class Restore(Transfer):
         self.source_alias = "backup_dir"
         self.sink_alias = "destination"
         self.usage = \
+            "DEPRECATED: Please use cbbackupmgr instead.\n" \
             "%prog [options] backup_dir destination\n\n" \
             "Restores a single couchbase bucket.\n\n" \
             "Please first create the destination / bucket before restoring.\n\n" \
