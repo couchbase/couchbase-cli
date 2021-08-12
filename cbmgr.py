@@ -3050,6 +3050,17 @@ class SettingSecurity(Subcommand):
         group.add_argument('--cipher-suites', metavar='<ciphers>', default=None,
                            help='Comma separated list of ciphers to use.If an empty string (e.g "") given it will'
                                 ' reset ciphers to default.')
+        group.add_argument('--hsts-max-age', dest='hsts_max_age', metavar='<seconds>', type=int,
+                           help='Sets the max-ages directive the server uses in the Strict-Transport-Security header',
+                           default=None)
+        group.add_argument("--hsts-preload-enabled", dest="hsts_preload",
+                           metavar="<0|1>", choices=['0', '1'], default=None,
+                           help="Enables the preloadDirectives directive the server uses in the"
+                                " Strict-Transport-Security header")
+        group.add_argument("--hsts-include-sub-domains-enabled", dest="hsts_include_sub_domains",
+                           metavar="<0|1>", choices=['0', '1'], default=None,
+                           help="Enable the includeSubDomains directive the server uses in the"
+                                " Strict-Transport-Security header")
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
@@ -3062,15 +3073,18 @@ class SettingSecurity(Subcommand):
             print(json.dumps(val))
         elif opts.set:
             self._set(self.rest, opts.disable_http_ui, opts.cluster_encryption_level, opts.tls_min_version,
-                      opts.tls_honor_cipher_order, opts.cipher_suites, opts.disable_www_authenticate)
+                      opts.tls_honor_cipher_order, opts.cipher_suites, opts.disable_www_authenticate,
+                      opts.hsts_max_age, opts.hsts_preload, opts.hsts_include_sub_domains)
 
     @staticmethod
     def _set(rest, disable_http_ui, encryption_level, tls_min_version, honor_order, cipher_suites,
-             disable_www_authenticate):
+             disable_www_authenticate, hsts_max_age, hsts_preload, hsts_include_sub_domains):
         if not any([True if x is not None else False for x in [disable_http_ui, encryption_level, tls_min_version,
-                                                               honor_order, cipher_suites, disable_www_authenticate]]):
+                                                               honor_order, cipher_suites, disable_www_authenticate,
+                                                               hsts_max_age, hsts_preload, hsts_include_sub_domains]]):
             _exit_if_errors(['please provide at least one of --cluster-encryption-level, --disable-http-ui,'
-                           ' --tls-min-version, --tls-honor-cipher-order or --cipher-suites together with --set'])
+                             ' --tls-min-version, --tls-honor-cipher-order, --cipher-suites, --hsts-max-age,'
+                             ' --hsts-preload-enabled or --hsts-includeSubDomains-enabled together with --set'])
 
         if disable_http_ui == '1':
             disable_http_ui = 'true'
@@ -3092,8 +3106,19 @@ class SettingSecurity(Subcommand):
         elif cipher_suites is not None:
             cipher_suites = json.dumps(cipher_suites.split(','))
 
-        _, errors = rest.set_security_settings(disable_http_ui, encryption_level, tls_min_version,
-                                               honor_order, cipher_suites, disable_www_authenticate)
+        if hsts_preload == '1':
+            hsts_preload = True
+        elif hsts_preload == '0':
+            hsts_preload = False
+
+        if hsts_include_sub_domains == '1':
+            hsts_include_sub_domains = True
+        elif hsts_include_sub_domains == '0':
+            hsts_include_sub_domains = False
+
+        _, errors = rest.set_security_settings(disable_http_ui, encryption_level, tls_min_version, honor_order,
+                                               cipher_suites, disable_www_authenticate, hsts_max_age, hsts_preload,
+                                               hsts_include_sub_domains)
         _exit_if_errors(errors)
         _success("Security settings updated")
 

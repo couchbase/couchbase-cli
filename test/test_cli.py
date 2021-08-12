@@ -6,6 +6,7 @@ import os
 import sys
 import tempfile
 import unittest
+import urllib
 from io import StringIO
 from cbmgr import CouchbaseCLI, CollectionManage
 from mock_server import MockRESTServer, generate_self_signed_cert
@@ -1223,6 +1224,31 @@ class TestSettingSecurity(CommandTest):
         self.assertIn('POST:/settings/security', self.server.trace)
         self.rest_parameter_match(expected_params)
 
+    def test_set_settings_hsts_max_age(self):
+        self.no_error_run(self.command + ['--set', '--hsts-max-age', '42'], self.server_args)
+        expected_params = ['responseHeaders=' + urllib.parse.quote('{"Strict-Transport-Security":"max-age=42"}')]
+        self.assertIn('POST:/settings/security', self.server.trace)
+        self.rest_parameter_match(expected_params)
+
+    def test_set_settings_hsts_preload_enabled(self):
+        self.no_error_run(self.command + ['--set', '--hsts-preload-enabled', '1'], self.server_args)
+        expected_params = ['responseHeaders=' + urllib.parse.quote('{"Strict-Transport-Security":"preload"}')]
+        self.assertIn('POST:/settings/security', self.server.trace)
+        self.rest_parameter_match(expected_params)
+
+    def test_set_settings_hsts_include_sub_domains_enabled(self):
+        self.no_error_run(self.command + ['--set', '--hsts-include-sub-domains-enabled', '1'], self.server_args)
+        expected_params = ['responseHeaders=' + urllib.parse.quote('{"Strict-Transport-Security":"includeSubDomains"}')]
+        self.assertIn('POST:/settings/security', self.server.trace)
+        self.rest_parameter_match(expected_params)
+
+    def test_set_settings_hsts_max_age_and_preload_enabled(self):
+        self.no_error_run(self.command + ['--set', '--hsts-max-age', '42','--hsts-preload-enabled', '1' ],
+                          self.server_args)
+        expected_params = ['responseHeaders=' +
+                           urllib.parse.quote('{"Strict-Transport-Security":"max-age=42;preload"}')]
+        self.assertIn('POST:/settings/security', self.server.trace)
+        self.rest_parameter_match(expected_params)
 
 class TestSettingXdcr(CommandTest):
     def setUp(self):

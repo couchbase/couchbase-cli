@@ -17,7 +17,9 @@ _couchbase-cli setting-security_ [--cluster <url>] [--username <user>]
     [--disable-www-authenticate <0|1>]
     [--cluster-encryption-level <all|control|strict>]
     [--tls-min-version <tlsv1|tlsv1.1|tlsv1.2>]
-    [--tls-honor-cipher-order <1|0>] [---cipher-suites <ciphers>]
+    [--tls-honor-cipher-order <0|1>] [---cipher-suites <ciphers>]
+    [--hsts-max-age <seconds] [--hsts-preload-enabled <0|1>]
+    [--hsts-include-sub-domains-enabled <0|1>]
 
 == DESCRIPTION
 
@@ -70,6 +72,18 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   `TLS_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA`.
   If an empty string is given ("") then the cipher list will be reset to its default.
 
+--hsts-max-age <seconds>::
+  Specifies the max-ages directive in seconds the server uses in the Strict-Transport-Security
+  header.
+
+--hsts-preload-enabled <1|0>::
+  Specifies whether the preload directive for the Strict-Transport-Security header the server uses
+  should be set.
+
+--hsts-include-sub-domains-enabled <1|0>::
+  Specifies whether the includeSubDomains directive for the Strict-Transport-Security header the
+  server uses should be set.
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
@@ -77,13 +91,18 @@ include::{partialsdir}/cbcli/part-host-formats.adoc[]
 To disable the Couchbase Administration Console over HTTP run the following
 command.
 
-  $ couchbase-cli setting-security -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli setting-security -c localhost -u Administrator \
    -p password --set --disable-http-ui 1
 
 To change the encryption level to "all" run the following command.
 
-  $ couchbase-cli setting-security -c 192.168.1.5 -u Administrator \
+  $ couchbase-cli setting-security -c localhost -u Administrator \
    -p password --set --cluster-encryption-level all
+
+To change max-ages directive for Strict-Transport-Security header to 10 seconds.
+
+  $ couchbase-cli setting-security -c localhost -u Administrator \
+   -p password --set --hsts-max-age 10
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
