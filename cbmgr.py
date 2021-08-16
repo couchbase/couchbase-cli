@@ -3055,7 +3055,7 @@ class SettingSecurity(Subcommand):
                            default=None)
         group.add_argument("--hsts-preload-enabled", dest="hsts_preload",
                            metavar="<0|1>", choices=['0', '1'], default=None,
-                           help="Enables the preloadDirectives directive the server uses in the"
+                           help="Enable the preloadDirectives directive the server uses in the"
                                 " Strict-Transport-Security header")
         group.add_argument("--hsts-include-sub-domains-enabled", dest="hsts_include_sub_domains",
                            metavar="<0|1>", choices=['0', '1'], default=None,
