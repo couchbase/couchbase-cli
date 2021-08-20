@@ -1909,7 +1909,11 @@ class ServerEshell(Subcommand):
         rand_chars = ''.join(random.choice(string.ascii_letters) for _ in range(20))
         name = f'ctl-{rand_chars}@127.0.0.1'
 
-        cb_erl = os.path.join(opts.erl_path, 'erl')
+        if os.name == 'nt':
+            cb_erl = os.path.join(opts.erl_path, 'erl.exe')
+        else:
+            cb_erl = os.path.join(opts.erl_path, 'erl')
+
         if os.path.isfile(cb_erl):
             path = cb_erl
         else:
