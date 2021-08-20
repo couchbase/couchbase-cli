@@ -41,6 +41,13 @@ CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."
 CB_ETC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "etc", "couchbase"))
 CB_LIB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "lib"))
 
+if os.name == 'nt':
+    CB_NS_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "ebin")
+    CB_BABYSITTER_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_babysitter", "ebin")
+else:
+    CB_NS_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
+    CB_BABYSITTER_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_babysitter", "ebin")
+
 # On MacOS the config is store in the users home directory
 if platform.system() == "Darwin":
     CB_CFG_PATH = os.path.expanduser("~/Library/Application Support/Couchbase/var/lib/couchbase")
@@ -1529,8 +1536,6 @@ class MasterPassword(LocalSubcommand):
             _exit_if_errors(["No parameters set"])
 
     def prompt_for_master_pwd(self, node, cookie, password, cb_cfg_path):
-        ns_server_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
-        babystr_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_babysitter", "ebin")
         inetrc_file = os.path.join(CB_ETC_PATH, "hosts.cfg")
         dist_cfg_file = os.path.join(cb_cfg_path, "config", "dist_cfg")
 
@@ -1538,7 +1543,7 @@ class MasterPassword(LocalSubcommand):
             password = getpass.getpass("\nEnter master password:")
 
         name = 'executioner@cb.local'
-        args = ['-pa', ns_server_ebin_path, babystr_ebin_path, '-noinput', '-name', name,
+        args = ['-pa', CB_NS_EBIN_PATH, CB_BABYSITTER_EBIN_PATH, '-noinput', '-name', name,
                 '-proto_dist', 'cb', '-epmd_module', 'cb_epmd',
                 '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"',
                 '-setcookie', cookie,
@@ -1926,15 +1931,13 @@ class ServerEshell(Subcommand):
         else:
             inetrc_opt = []
 
-        ns_server_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
-
         with tempfile.NamedTemporaryFile() as temp:
             temp.write(f'[{{preferred_local_proto,{result["addressFamily"]}_tcp_dist}}].'.encode())
             temp.flush()
             temp_name = temp.name
 
             args = [path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist', 'cb',
-                    '-epmd_module', 'cb_epmd', '-pa', ns_server_ebin_path, '-kernel', 'dist_config_file',
+                    '-epmd_module', 'cb_epmd', '-pa', CB_NS_EBIN_PATH, '-kernel', 'dist_config_file',
                     f'"{temp_name}"'] + inetrc_opt
 
             if opts.debug:
