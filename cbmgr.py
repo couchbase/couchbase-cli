@@ -48,6 +48,13 @@ else:
     CB_NS_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
     CB_BABYSITTER_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_babysitter", "ebin")
 
+inetrc_file = os.path.join(CB_ETC_PATH, 'hosts.cfg')
+if os.path.isfile(inetrc_file):
+    inetrc_file = inetrc_file.encode('unicode-escape').decode()
+    CB_INETRC_OPT = ['inetrc', f'"{inetrc_file}"']
+else:
+    CB_INETRC_OPT = []
+
 # On MacOS the config is store in the users home directory
 if platform.system() == "Darwin":
     CB_CFG_PATH = os.path.expanduser("~/Library/Application Support/Couchbase/var/lib/couchbase")
@@ -1536,18 +1543,15 @@ class MasterPassword(LocalSubcommand):
             _exit_if_errors(["No parameters set"])
 
     def prompt_for_master_pwd(self, node, cookie, password, cb_cfg_path):
-        inetrc_file = os.path.join(CB_ETC_PATH, "hosts.cfg")
         dist_cfg_file = os.path.join(cb_cfg_path, "config", "dist_cfg")
 
         if password == '':
             password = getpass.getpass("\nEnter master password:")
 
         name = 'executioner@cb.local'
-        args = ['-pa', CB_NS_EBIN_PATH, CB_BABYSITTER_EBIN_PATH, '-noinput', '-name', name,
-                '-proto_dist', 'cb', '-epmd_module', 'cb_epmd',
-                '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"',
-                '-setcookie', cookie,
-                '-run', 'encryption_service', 'remote_set_password', node, password]
+        args = ['-pa', CB_NS_EBIN_PATH, CB_BABYSITTER_EBIN_PATH, '-noinput', '-name', name, '-proto_dist', 'cb',
+                '-epmd_module', 'cb_epmd', '-kernel', 'dist_config_file', f'"{dist_cfg_file}"', '-setcookie', cookie,
+                '-run', 'encryption_service', 'remote_set_password', node, password] + CB_INETRC_OPT
 
         rc, out, err = self.run_process("erl", args)
 
@@ -1925,11 +1929,6 @@ class ServerEshell(Subcommand):
             _warning("Cannot locate Couchbase erlang. Attempting to use non-Couchbase erlang")
             path = 'erl'
 
-        inetrc_file = os.path.join(CB_ETC_PATH, 'hosts.cfg')
-        if os.path.isfile(inetrc_file):
-            inetrc_opt = ['-kernel', 'inetrc', f'"{inetrc_file}"']
-        else:
-            inetrc_opt = []
 
         with tempfile.NamedTemporaryFile() as temp:
             temp.write(f'[{{preferred_local_proto,{result["addressFamily"]}_tcp_dist}}].'.encode())
@@ -1938,7 +1937,7 @@ class ServerEshell(Subcommand):
 
             args = [path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist', 'cb',
                     '-epmd_module', 'cb_epmd', '-pa', CB_NS_EBIN_PATH, '-kernel', 'dist_config_file',
-                    f'"{temp_name}"'] + inetrc_opt
+                    f'"{temp_name}"'] + CB_INETRC_OPT
 
             if opts.debug:
                 print(f'Running {" ".join(args)}')
