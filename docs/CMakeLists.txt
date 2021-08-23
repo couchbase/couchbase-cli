@@ -1,13 +1,10 @@
 
-SET(COUCHBASE_CLI_CMDS,
-    "cblogredaction"
-    "couchbase-cli")
+SET(COUCHBASE_CLI_CMDS cblogredaction;couchbase-cli)
 
-FOREACH(CMD COUCHBASE_CLI_CMDS)
-    FILE(GLOB CMD_HTML_PAGES generated/doc/${CMD}/*.html)
-
-    INSTALL(FILES ${CMD_HTML_PAGES}
-            DESTINATION share/doc/${CMD})
+FOREACH(CMD IN LISTS COUCHBASE_CLI_CMDS)
+    INSTALL(DIRECTORY generated/doc/${CMD}
+            DESTINATION share/doc
+            FILES_MATCHING PATTERN "*.html")
 ENDFOREACH()
 
 if(NOT WIN32)
@@ -22,10 +19,8 @@ if(NOT WIN32)
     # 9   Kernel routines [Non standard]
 
     FOREACH(SECTION RANGE 1 9)
-        FILE(GLOB CMD_MAN_PAGES generated/man/man${SECTION}/*.${SECTION})
-
-        # NOTE: Directories will only be created if the glob pattern above actually matched any files
-        INSTALL(FILES ${CMD_MAN_PAGES}
-                DESTINATION share/man/man${SECTION})
+        INSTALL(DIRECTORY generated/man/man${SECTION}
+                DESTINATION share/man
+                FILES_MATCHING PATTERN "*.${SECTION}")
     ENDFOREACH()
 ENDIF()
