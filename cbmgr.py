@@ -4989,7 +4989,7 @@ class BackupService(Subcommand):
 
     @staticmethod
     def get_man_page_name():
-        return 'couchbase-cli-backup-service' + '.1' if os.name != 'nt' else '.html'
+        return get_doc_page_name("couchbase-cli-backup-service")
 
     @staticmethod
     def get_description():
@@ -5047,7 +5047,7 @@ class BackupServiceSettings:
 
     @staticmethod
     def get_man_page_name():
-        return 'couchbase-cli-backup-service-settings' + '.1' if os.name != 'nt' else '.html'
+        return get_doc_page_name("couchbase-cli-backup-service-settings")
 
     @staticmethod
     def get_description():
@@ -5408,7 +5408,7 @@ class BackupServiceRepository:
 
     @staticmethod
     def get_man_page_name():
-        return 'couchbase-cli-backup-service-repository' + '.1' if os.name != 'nt' else '.html'
+        return get_doc_page_name("couchbase-cli-backup-service-repository")
 
     @staticmethod
     def get_description():
@@ -5637,7 +5637,7 @@ class BackupServicePlan:
 
     @staticmethod
     def get_man_page_name():
-        return 'couchbase-cli-backup-service-plan' + '.1' if os.name != 'nt' else '.html'
+        return get_doc_page_name("couchbase-cli-backup-service-plan")
 
     @staticmethod
     def get_description():
