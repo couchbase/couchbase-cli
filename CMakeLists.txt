@@ -1,5 +1,5 @@
 PROJECT(CouchbaseClient)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.13)
 
 # Generate the Version module
 CONFIGURE_FILE (cb_version.cmake.py
