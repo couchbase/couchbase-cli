@@ -27,7 +27,9 @@ agent tries to connect via a NAT'd environment such as the cloud or kubernetes.
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --list::
-  Show current alternate addresses
+  Show current alternate addresses. Please note only the first 43 characters hostname and
+  alternate address are displayed. The full hostnames are shown in the json output
+  (-o json).
 
 --set::
   Set alternate address for the node specified in the -c/--cluster option.

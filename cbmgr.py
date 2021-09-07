@@ -4445,6 +4445,7 @@ class SettingAlternateAddress(Subcommand):
             _exit_if_errors(error)
             _, error = self.rest.set_alternate_address(opts.alternate_hostname, ports)
             _exit_if_errors(error)
+            _success('Alternate address configuration updated')
         if opts.remove:
             _, error = self.rest.delete_alternate_address()
             _exit_if_errors(error)
@@ -4455,31 +4456,38 @@ class SettingAlternateAddress(Subcommand):
             if opts.output == 'standard':
                 port_names = set()
                 for node in add:
-                    if 'alternateAddresses' in node and 'ports' in node['alternateAddresses']['external']:
-                        for port in node['alternateAddresses']['external']['ports'].keys():
-                            port_names.add(port)
-                print('{:20}{:20}{}'.format('Hostname', 'Alternate Address', 'Ports (Primary/Alternate)'))
-                print('{:40}'.format(' '), end='')
+                    if 'alternateAddresses' in node:
+                        if 'ports' in node['alternateAddresses']['external']:
+                            for port in node['alternateAddresses']['external']['ports'].keys():
+                                port_names.add(port)
+                # Limiting the display of hostnames to 42, same length as a IPv6 address
+                print('{:43}{:43}{}'.format('Hostname', 'Alternate Address', 'Ports (Primary/Alternate)'))
+                print('{:86}'.format(' '), end='')
                 port_names = sorted(port_names)
                 for port in port_names:
                     column_size = len(port) + 1
                     if column_size < 11:
-                        column_size = 11
+                        column_size = 12
                     print(f'{port:{column_size}}', end='')
                 print()
                 for node in add:
                     if 'alternateAddresses' in node:
                         # For cluster_run and single node clusters there is no hostname
-                        try:
-                            print(f'{node["hostname"]:20}{node["alternateAddresses"]["external"]["hostname"]:20}',
-                                  end='')
-                        except KeyError:
+                        if 'hostname' in node:
+                            host = node["hostname"]
+                        else:
                             host = 'UNKNOWN'
-                            print(f'{host:20}{node["alternateAddresses"]["external"]["hostname"]:20}', end='')
+                        # Limiting the display of hostnames to 42 chars, same length as IPv6 address
+                        if len(host) > 42:
+                            host = host[:40] + '..'
+                        alternateAddresses = node["alternateAddresses"]["external"]["hostname"]
+                        if len(alternateAddresses) > 42:
+                            alternateAddresses = alternateAddresses[:40] + '..'
+                        print(f'{host:43}{alternateAddresses:43}', end='')
                         for port in port_names:
                             column_size = len(port) + 1
                             if column_size < 11:
-                                column_size = 11
+                                column_size = 12
                             ports = ' '
                             if port in node['alternateAddresses']['external']['ports']:
                                 ports = f'{str(node["services"][port])}' \
