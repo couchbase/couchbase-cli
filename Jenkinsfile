@@ -53,7 +53,7 @@ pipeline {
                 )
 
                 timeout(time: 10, unit: "MINUTES") {
-                    sh "pip3 install --user urllib3 pylint requests mypy==0.730 coverage==5.2 pytest==5.4.3"
+                    sh "pip3 install --user urllib3 pylint==2.10.2 requests mypy==0.730 coverage==5.2 pytest==5.4.3"
                 }
 
                 // preventively delete the cli path to avoid issues with cloning

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-security
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2021-06-30
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-08-13
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2021-06-30" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-SECURITY" "1" "2021-08-13" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,7 +28,7 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-setting\-security \- Manage security policies
+couchbase-cli-setting-security \- Manage security policies
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -38,6 +38,8 @@ couchbase\-cli\-setting\-security \- Manage security policies
     [\-\-cluster\-encryption\-level <all|control|strict>]
     [\-\-tls\-min\-version <tlsv1|tlsv1.1|tlsv1.2>]
     [\-\-tls\-honor\-cipher\-order <1|0>] [\-\-\-cipher\-suites <ciphers>]
+    [\-\-hsts\-max\-age <seconds] [\-\-hsts\-preload\-enabled <1|0>]
+    [\-\-hsts\-include\-sub\-domains\-enabled <1|0>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -126,6 +128,24 @@ The ciphers have to be a comma separated list such as:
 \f(CRTLS_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA\fP.
 If an empty string is given ("") then the cipher list will be reset to its default.
 .RE
+.sp
+\-\-hsts\-max\-age <seconds>
+.RS 4
+Specifies the max\-ages directive in seconds the server uses in the Strict\-Transport\-Security
+header.
+.RE
+.sp
+\-\-hsts\-preload\-enabled <1|0>
+.RS 4
+Specifies whether the preload directive for the Strict\-Transport\-Security header the server uses
+should be set.
+.RE
+.sp
+\-\-hsts\-include\-sub\-domains\-enabled <1|0>
+.RS 4
+Specifies whether the includeSubDomains directive for the Strict\-Transport\-Security header the
+server uses should be set.
+.RE
 .SH "HOST FORMATS"
 .sp
 When specifying a host for the couchbase\-cli command the following formats are expected:
@@ -174,8 +194,10 @@ command.
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli setting\-security \-c 192.168.1.5 \-u Administrator \(rs
+.fam C
+$ couchbase\-cli setting\-security \-c localhost \-u Administrator \(rs
  \-p password \-\-set \-\-disable\-http\-ui 1
+.fam
 .fi
 .if n .RE
 .sp
@@ -183,8 +205,21 @@ To change the encryption level to "all" run the following command.
 .sp
 .if n .RS 4
 .nf
-$ couchbase\-cli setting\-security \-c 192.168.1.5 \-u Administrator \(rs
+.fam C
+$ couchbase\-cli setting\-security \-c localhost \-u Administrator \(rs
  \-p password \-\-set \-\-cluster\-encryption\-level all
+.fam
+.fi
+.if n .RE
+.sp
+To change max\-ages directive for Strict\-Transport\-Security header to 10 seconds.
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli setting\-security \-c localhost \-u Administrator \(rs
+ \-p password \-\-set \-\-hsts\-max\-age 10
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

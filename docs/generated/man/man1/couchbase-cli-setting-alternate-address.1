@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-settings-alternate-address
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 1.5.8
-.\"      Date: 2021-05-17
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-09-07
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2021-05-17" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2021-09-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,7 +28,7 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-setting\-alternate\-address \- Modify alternate addresses
+couchbase-cli-setting-alternate-address \- Modify alternate addresses
 .SH "SYNOPSIS"
 .sp
 .nf
@@ -69,7 +69,9 @@ environment variable CB_REST_PASSWORD.
 .sp
 \-\-list
 .RS 4
-Show current alternate addresses
+Show current alternate addresses. Please note only the first 43 characters hostname and
+alternate address are displayed. The full hostnames are shown in the json output
+(\-o json).
 .RE
 .sp
 \-\-set
@@ -146,9 +148,11 @@ following command:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-alternate\-address \-c 192.168.1.5:8091 \-\-username Administrator \(rs
    \-\-password password \-\-set \-\-node 192.168.1.5 \-\-hostname 10.10.10.10 \(rs
    \-\-ports mgmt=1100,capi=2000,capiSSL=3000
+.fam
 .fi
 .if n .RE
 .sp
@@ -157,8 +161,10 @@ follows:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-alternate\-address \-c 192.168.1.5:8091 \-\-username Administrator \(rs
    \-\-password password \-\-list
+.fam
 .fi
 .if n .RE
 .SH "DISCUSSION"

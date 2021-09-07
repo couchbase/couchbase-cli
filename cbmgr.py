@@ -41,6 +41,20 @@ CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."
 CB_ETC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "etc", "couchbase"))
 CB_LIB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "lib"))
 
+if os.name == 'nt':
+    CB_NS_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "ebin")
+    CB_BABYSITTER_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_babysitter", "ebin")
+else:
+    CB_NS_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
+    CB_BABYSITTER_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_babysitter", "ebin")
+
+inetrc_file = os.path.join(CB_ETC_PATH, 'hosts.cfg')
+if os.path.isfile(inetrc_file):
+    inetrc_file = inetrc_file.encode('unicode-escape').decode()
+    CB_INETRC_OPT = ['inetrc', f'"{inetrc_file}"']
+else:
+    CB_INETRC_OPT = []
+
 # On MacOS the config is store in the users home directory
 if platform.system() == "Darwin":
     CB_CFG_PATH = os.path.expanduser("~/Library/Application Support/Couchbase/var/lib/couchbase")
@@ -223,7 +237,7 @@ def _exit_if_errors(errors):
 
 def _exit_on_file_write_failure(fname, to_write):
     try:
-        wfile = open(fname, 'w')
+        wfile = open(fname, 'w', encoding="utf-8")
         wfile.write(to_write)
         wfile.close()
     except IOError as error:
@@ -232,7 +246,7 @@ def _exit_on_file_write_failure(fname, to_write):
 
 def _exit_on_file_read_failure(fname, to_report=None):
     try:
-        rfile = open(fname, 'r')
+        rfile = open(fname, 'r', encoding="utf-8")
         read_bytes = rfile.read()
         rfile.close()
         return read_bytes
@@ -1529,20 +1543,16 @@ class MasterPassword(LocalSubcommand):
             _exit_if_errors(["No parameters set"])
 
     def prompt_for_master_pwd(self, node, cookie, password, cb_cfg_path):
-        ns_server_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
-        babystr_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_babysitter", "ebin")
-        inetrc_file = os.path.join(CB_ETC_PATH, "hosts.cfg")
         dist_cfg_file = os.path.join(cb_cfg_path, "config", "dist_cfg")
 
         if password == '':
             password = getpass.getpass("\nEnter master password:")
 
         name = 'executioner@cb.local'
-        args = ['-pa', ns_server_ebin_path, babystr_ebin_path, '-noinput', '-name', name,
-                '-proto_dist', 'cb', '-epmd_module', 'cb_epmd',
-                '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"',
-                '-setcookie', cookie,
-                '-run', 'encryption_service', 'remote_set_password', node, password]
+        args = ['-pa', CB_NS_EBIN_PATH, CB_BABYSITTER_EBIN_PATH, '-noinput', '-name', name, '-proto_dist', 'cb',
+                '-epmd_module', 'cb_epmd', '-kernel'] + CB_INETRC_OPT + \
+               ['dist_config_file', f'"{dist_cfg_file}"', '-setcookie', cookie, '-run', 'encryption_service',
+                'remote_set_password', node, password]
 
         rc, out, err = self.run_process("erl", args)
 
@@ -1909,20 +1919,17 @@ class ServerEshell(Subcommand):
         rand_chars = ''.join(random.choice(string.ascii_letters) for _ in range(20))
         name = f'ctl-{rand_chars}@127.0.0.1'
 
-        cb_erl = os.path.join(opts.erl_path, 'erl')
+        if os.name == 'nt':
+            cb_erl = os.path.join(opts.erl_path, 'erl.exe')
+        else:
+            cb_erl = os.path.join(opts.erl_path, 'erl')
+
         if os.path.isfile(cb_erl):
             path = cb_erl
         else:
             _warning("Cannot locate Couchbase erlang. Attempting to use non-Couchbase erlang")
             path = 'erl'
 
-        inetrc_file = os.path.join(CB_ETC_PATH, 'hosts.cfg')
-        if os.path.isfile(inetrc_file):
-            inetrc_opt = ['-kernel', 'inetrc', f'"{inetrc_file}"']
-        else:
-            inetrc_opt = []
-
-        ns_server_ebin_path = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
 
         with tempfile.NamedTemporaryFile() as temp:
             temp.write(f'[{{preferred_local_proto,{result["addressFamily"]}_tcp_dist}}].'.encode())
@@ -1930,8 +1937,8 @@ class ServerEshell(Subcommand):
             temp_name = temp.name
 
             args = [path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist', 'cb',
-                    '-epmd_module', 'cb_epmd', '-pa', ns_server_ebin_path, '-kernel', 'dist_config_file',
-                    f'"{temp_name}"'] + inetrc_opt
+                    '-epmd_module', 'cb_epmd', '-pa', CB_NS_EBIN_PATH, '-kernel', 'dist_config_file',
+                    f'"{temp_name}"'] + CB_INETRC_OPT
 
             if opts.debug:
                 print(f'Running {" ".join(args)}')
@@ -3050,6 +3057,17 @@ class SettingSecurity(Subcommand):
         group.add_argument('--cipher-suites', metavar='<ciphers>', default=None,
                            help='Comma separated list of ciphers to use.If an empty string (e.g "") given it will'
                                 ' reset ciphers to default.')
+        group.add_argument('--hsts-max-age', dest='hsts_max_age', metavar='<seconds>', type=int,
+                           help='Sets the max-ages directive the server uses in the Strict-Transport-Security header',
+                           default=None)
+        group.add_argument("--hsts-preload-enabled", dest="hsts_preload",
+                           metavar="<0|1>", choices=['0', '1'], default=None,
+                           help="Enable the preloadDirectives directive the server uses in the"
+                                " Strict-Transport-Security header")
+        group.add_argument("--hsts-include-sub-domains-enabled", dest="hsts_include_sub_domains",
+                           metavar="<0|1>", choices=['0', '1'], default=None,
+                           help="Enable the includeSubDomains directive the server uses in the"
+                                " Strict-Transport-Security header")
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
@@ -3062,15 +3080,18 @@ class SettingSecurity(Subcommand):
             print(json.dumps(val))
         elif opts.set:
             self._set(self.rest, opts.disable_http_ui, opts.cluster_encryption_level, opts.tls_min_version,
-                      opts.tls_honor_cipher_order, opts.cipher_suites, opts.disable_www_authenticate)
+                      opts.tls_honor_cipher_order, opts.cipher_suites, opts.disable_www_authenticate,
+                      opts.hsts_max_age, opts.hsts_preload, opts.hsts_include_sub_domains)
 
     @staticmethod
     def _set(rest, disable_http_ui, encryption_level, tls_min_version, honor_order, cipher_suites,
-             disable_www_authenticate):
+             disable_www_authenticate, hsts_max_age, hsts_preload, hsts_include_sub_domains):
         if not any([True if x is not None else False for x in [disable_http_ui, encryption_level, tls_min_version,
-                                                               honor_order, cipher_suites, disable_www_authenticate]]):
+                                                               honor_order, cipher_suites, disable_www_authenticate,
+                                                               hsts_max_age, hsts_preload, hsts_include_sub_domains]]):
             _exit_if_errors(['please provide at least one of --cluster-encryption-level, --disable-http-ui,'
-                           ' --tls-min-version, --tls-honor-cipher-order or --cipher-suites together with --set'])
+                             ' --tls-min-version, --tls-honor-cipher-order, --cipher-suites, --hsts-max-age,'
+                             ' --hsts-preload-enabled or --hsts-includeSubDomains-enabled together with --set'])
 
         if disable_http_ui == '1':
             disable_http_ui = 'true'
@@ -3092,8 +3113,19 @@ class SettingSecurity(Subcommand):
         elif cipher_suites is not None:
             cipher_suites = json.dumps(cipher_suites.split(','))
 
-        _, errors = rest.set_security_settings(disable_http_ui, encryption_level, tls_min_version,
-                                               honor_order, cipher_suites, disable_www_authenticate)
+        if hsts_preload == '1':
+            hsts_preload = True
+        elif hsts_preload == '0':
+            hsts_preload = False
+
+        if hsts_include_sub_domains == '1':
+            hsts_include_sub_domains = True
+        elif hsts_include_sub_domains == '0':
+            hsts_include_sub_domains = False
+
+        _, errors = rest.set_security_settings(disable_http_ui, encryption_level, tls_min_version, honor_order,
+                                               cipher_suites, disable_www_authenticate, hsts_max_age, hsts_preload,
+                                               hsts_include_sub_domains)
         _exit_if_errors(errors)
         _success("Security settings updated")
 
@@ -3236,7 +3268,7 @@ class SslManage(Subcommand):
     def execute(self, opts):
         if opts.regenerate is not None:
             try:
-                open(opts.regenerate, 'a').close()
+                open(opts.regenerate, 'a', encoding="utf-8").close()
             except IOError:
                 _exit_if_errors([f'Unable to create file at `{opts.regenerate}`'])
             certificate, errors = self.rest.regenerate_cluster_certificate()
@@ -4413,6 +4445,7 @@ class SettingAlternateAddress(Subcommand):
             _exit_if_errors(error)
             _, error = self.rest.set_alternate_address(opts.alternate_hostname, ports)
             _exit_if_errors(error)
+            _success('Alternate address configuration updated')
         if opts.remove:
             _, error = self.rest.delete_alternate_address()
             _exit_if_errors(error)
@@ -4423,31 +4456,38 @@ class SettingAlternateAddress(Subcommand):
             if opts.output == 'standard':
                 port_names = set()
                 for node in add:
-                    if 'alternateAddresses' in node and 'ports' in node['alternateAddresses']['external']:
-                        for port in node['alternateAddresses']['external']['ports'].keys():
-                            port_names.add(port)
-                print('{:20}{:20}{}'.format('Hostname', 'Alternate Address', 'Ports (Primary/Alternate)'))
-                print('{:40}'.format(' '), end='')
+                    if 'alternateAddresses' in node:
+                        if 'ports' in node['alternateAddresses']['external']:
+                            for port in node['alternateAddresses']['external']['ports'].keys():
+                                port_names.add(port)
+                # Limiting the display of hostnames to 42, same length as a IPv6 address
+                print('{:43}{:43}{}'.format('Hostname', 'Alternate Address', 'Ports (Primary/Alternate)'))
+                print('{:86}'.format(' '), end='')
                 port_names = sorted(port_names)
                 for port in port_names:
                     column_size = len(port) + 1
                     if column_size < 11:
-                        column_size = 11
+                        column_size = 12
                     print(f'{port:{column_size}}', end='')
                 print()
                 for node in add:
                     if 'alternateAddresses' in node:
                         # For cluster_run and single node clusters there is no hostname
-                        try:
-                            print(f'{node["hostname"]:20}{node["alternateAddresses"]["external"]["hostname"]:20}',
-                                  end='')
-                        except KeyError:
+                        if 'hostname' in node:
+                            host = node["hostname"]
+                        else:
                             host = 'UNKNOWN'
-                            print(f'{host:20}{node["alternateAddresses"]["external"]["hostname"]:20}', end='')
+                        # Limiting the display of hostnames to 42 chars, same length as IPv6 address
+                        if len(host) > 42:
+                            host = host[:40] + '..'
+                        alternateAddresses = node["alternateAddresses"]["external"]["hostname"]
+                        if len(alternateAddresses) > 42:
+                            alternateAddresses = alternateAddresses[:40] + '..'
+                        print(f'{host:43}{alternateAddresses:43}', end='')
                         for port in port_names:
                             column_size = len(port) + 1
                             if column_size < 11:
-                                column_size = 11
+                                column_size = 12
                             ports = ' '
                             if port in node['alternateAddresses']['external']['ports']:
                                 ports = f'{str(node["services"][port])}' \

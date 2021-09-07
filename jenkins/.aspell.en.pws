@@ -75,7 +75,9 @@ gsi
 GSI
 hostname
 hostnames
+hsts
 http
+includeSubDomains
 init
 intra
 ip
@@ -109,6 +111,7 @@ oom
 opsys
 ou
 persistToMajority
+preload
 ql
 QL
 rbac

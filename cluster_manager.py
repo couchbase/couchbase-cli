@@ -54,7 +54,7 @@ def request(f):
             elif str(e).startswith('[SSL]'):
                 return None, [f'Unable to connect with the given CA certificate: {str(e)}']
             return None, [f'Unable to connect to host at {cm.hostname}: {str(e)}']
-        except requests.exceptions.ReadTimeout as e:
+        except requests.exceptions.ReadTimeout:
             return None, [f'Request to host `{url}` timed out after {cm.timeout} seconds']
     return g
 
@@ -1138,8 +1138,9 @@ class ClusterManager(object):
         url = f'{self.hostname}/settings/passwordPolicy'
         return self._get(url)
 
-    def set_security_settings(self, disable_http_ui, cluster_encryption_level, tls_min_version,
-                              honor_order, cipher_suites, disable_www_authenticate):
+    def set_security_settings(self, disable_http_ui, cluster_encryption_level, tls_min_version, honor_order,
+                              cipher_suites, disable_www_authenticate, hsts_max_age, hsts_preload,
+                              hsts_includeSubDomains):
         url = f'{self.hostname}/settings/security'
         params = {}
 
@@ -1155,6 +1156,17 @@ class ClusterManager(object):
             params['cipherSuites'] = cipher_suites
         if disable_www_authenticate:
             params['disableWWWAuthenticate'] = disable_www_authenticate
+
+        if any([hsts_max_age, hsts_preload, hsts_includeSubDomains]):
+            hsts = []
+            if hsts_max_age:
+                hsts.append(f'max-age={hsts_max_age}')
+            if hsts_preload:
+                hsts.append('preload')
+            if hsts_includeSubDomains:
+                hsts.append('includeSubDomains')
+            params['responseHeaders'] = f'{{"Strict-Transport-Security":"{";".join(hsts)}"}}'
+
 
         return self._post_form_encoded(url, params)
 
