@@ -1,0 +1,18 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+python-snappy = "==0.6.0"
+requests = "==2.26.0"
+
+[dev-packages]
+autopep8 = "==1.5.7"
+cryptography = "==3.4.8"
+jedi = "==0.18.0"
+pylint = "==2.10.2"
+rope = "==0.19.0"
+
+[requires]
+python_version = "3.9"

@@ -1,0 +1,35 @@
+#!/bin/bash -e
+
+# ensure that we have the required dependencies installed
+for dep in autopep8 sponge wget; do
+    if ! type -t $dep > /dev/null; then
+        echo "Error: '$dep' is not installed" 1>&2
+        exit 1
+    fi
+done
+
+# ensure the 'commit-msg' git hook has been downloaded and is marked as executable (otherwise it will be ignored by Git)
+if [[ ! -x .githooks/commit-msg ]]; then
+    wget -q -P .githooks/ http://review.couchbase.org/tools/hooks/commit-msg
+    chmod +x .githooks/commit-msg
+fi
+
+# ensure the custom aspell dictionary is sorted correctly
+(head -n 1 jenkins/.aspell.en.pws && tail -n +2 jenkins/.aspell.en.pws | sort -f) | sponge jenkins/.aspell.en.pws
+
+# we are safe to re-add the modified dictionary
+git add jenkins/.aspell.en.pws
+
+# only modify currently staged Python files
+staged_python_files=$(git diff --cached --name-only --diff-filter=d | grep -E '\.*\.py$' || true)
+
+# we didn't edit any Python files in this commit
+if [[ ${staged_python_files} == "" ]]; then
+    exit 0
+fi
+
+# run autopep8 with the experimental/aggressive rules flags
+autopep8 --in-place --max-line-length=120 --experimental -aaa ${staged_python_files}
+
+# we are safe to re-add any files that were modified
+git add ${staged_python_files}
