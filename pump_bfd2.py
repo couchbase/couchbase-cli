@@ -17,9 +17,9 @@ class BFDSinkEx(pump_bfd.BFDSink):
         pump.Sink.check_spec(source_bucket, source_node, opts, spec, cur)
 
         seqno, dep, faillover_log, snapshot_markers = pump_bfd.BFD.find_seqno(opts, spec,
-                                                        source_bucket['name'],
-                                                        source_node['hostname'],
-                                                        getattr(opts, "mode", "diff"))
+                                                                              source_bucket['name'],
+                                                                              source_node['hostname'],
+                                                                              getattr(opts, "mode", "diff"))
         if 'seqno' in cur:
             cur['seqno'][(source_bucket['name'], source_node['hostname'])] = seqno
         else:

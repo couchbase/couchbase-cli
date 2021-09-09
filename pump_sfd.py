@@ -129,12 +129,12 @@ class SFDSource(pump.Source):
                     doc_contents = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
                 except Exception as e:
                     return f'error: could not read design doc: {doc_info.id}; source_spec: {source_spec};' \
-                               f' exception: {e}', None
+                        f' exception: {e}', None
                 try:
                     doc = json.loads(doc_contents)
                 except ValueError as e:
                     return f'error: could not parse design doc: {doc_info.id}; source_spec: {source_spec};' \
-                               f' exception: {e}', None
+                        f' exception: {e}', None
 
                 doc['id'] = doc.get('id', doc_info.id)
                 doc['_rev'] = doc.get('_rev', doc_info.revSequence)
@@ -233,7 +233,7 @@ class SFDSource(pump.Source):
                     return
 
             if (abatch[0].size() >= batch_max_size or
-                abatch[0].bytes >= batch_max_bytes):
+                    abatch[0].bytes >= batch_max_bytes):
                 self.queue.put((0, abatch[0]))
                 abatch[0] = pump.Batch(self)
 
@@ -379,7 +379,7 @@ class SFDSink(pump.Sink):
 
     @staticmethod
     def check_base(opts, spec: str) -> couchbaseConstants.PUMP_ERROR:
-        if getattr(opts, "destination_operation", None) != None:
+        if getattr(opts, "destination_operation", None) is not None:
             return f'error: --destination-operation is not supported by this destination: {spec}'
 
         # Skip immediate superclass Sink.check_base(),

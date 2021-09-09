@@ -217,7 +217,7 @@ class CSVSink(pump.Sink):
                             try:
                                 row = []
                                 doc = json.loads(val_bytes)
-                                if type(doc) == dict:
+                                if isinstance(doc, dict):
                                     for field in self.fields:
                                         if field == 'id':
                                             row.append(pump.return_string(key))

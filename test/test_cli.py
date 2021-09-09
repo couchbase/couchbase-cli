@@ -14,7 +14,7 @@ from couchbaseConstants import parse_host_port
 
 host = '127.0.0.1'
 port = 6789
-cluster_connect_args = ['-c', host+":"+str(port), '-u', 'Administrator', '-p', 'asdasd']
+cluster_connect_args = ['-c', host + ":" + str(port), '-u', 'Administrator', '-p', 'asdasd']
 
 
 # setUpModule will generate new certificates for the mock HTTPS server used during unit testing.
@@ -145,9 +145,9 @@ class TestClusterInit(CommandTest):
         self.no_error_run(self.command + full_options, self.server_args)
         self.assertIn('SUCCESS', self.str_output)
         expected_params = ['memoryQuota=512', 'eventingMemoryQuota=512', 'ftsMemoryQuota=512', 'clusterName=name',
-                          'indexMemoryQuota=512', 'storageMode=memory_optimized',
-                          'username=Administrator', 'password=asdasd', 'port=6789',
-                          'sendStats=false']
+                           'indexMemoryQuota=512', 'storageMode=memory_optimized',
+                           'username=Administrator', 'password=asdasd', 'port=6789',
+                           'sendStats=false']
         self.rest_parameter_match(expected_params, False)
 
     def test_init_cluster_notification_default(self):
@@ -192,7 +192,7 @@ class TestBucketCompact(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'bucket-compact'] + cluster_connect_args
         self.command_args = ['--bucket', 'name']
-        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, 'buckets':[]}
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, 'buckets': []}
 
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
         self.bucket_memcached = {'name': 'name', 'bucketType': 'memcached'}
@@ -201,14 +201,14 @@ class TestBucketCompact(CommandTest):
     def test_basic_bucket_compact(self):
         self.server_args['buckets'].append(self.bucket_membase)
         self.no_error_run(self.command + self.command_args, self.server_args)
-        self.assertIn('POST:/pools/default/buckets/'+self.bucket_membase['name']+'/controller/compactBucket',
+        self.assertIn('POST:/pools/default/buckets/' + self.bucket_membase['name'] + '/controller/compactBucket',
                       self.server.trace)
 
     def test_bucket_view_compact(self):
         self.server_args['buckets'].append(self.bucket_membase)
         self.no_error_run(self.command + self.command_args + ['--view-only'], self.server_args)
         self.assertNotIn('POST:/pools/default/buckets/' + self.bucket_membase['name'] + '/controller/compactBucket',
-                        self.server.trace)
+                         self.server.trace)
         self.assertNotIn('POST:/pools/default/buckets/' + self.bucket_membase['name'] + '/controller/compactDatabases',
                          self.server.trace)
         self.assertIn('GET:/pools/default/buckets/' + self.bucket_membase['name'] + '/ddocs', self.server.trace)
@@ -395,32 +395,32 @@ class TestBucketEdit(CommandTest):
     def test_bucket_edit_value_only(self):
         self.server_args['buckets'].append(self.bucket_membase)
         self.no_error_run(self.command + self.command_args + ['--bucket-eviction-policy', 'valueOnly'],
-                self.server_args)
+                          self.server_args)
         self.rest_parameter_match(['evictionPolicy=valueOnly'])
 
     def test_bucket_edit_full_eviction(self):
         self.server_args['buckets'].append(self.bucket_membase)
         self.no_error_run(self.command + self.command_args + ['--bucket-eviction-policy', 'fullEviction'],
-                self.server_args)
+                          self.server_args)
         self.rest_parameter_match(['evictionPolicy=fullEviction'])
 
     def test_bucket_edit_no_eviction(self):
         self.server_args['buckets'].append(self.bucket_membase)
         self.no_error_run(self.command + self.command_args + ['--bucket-eviction-policy', 'noEviction'],
-                self.server_args)
+                          self.server_args)
         self.rest_parameter_match(['evictionPolicy=noEviction'])
 
     def test_bucket_edit_nru_eviction(self):
         self.server_args['buckets'].append(self.bucket_membase)
         self.no_error_run(self.command + self.command_args + ['--bucket-eviction-policy', 'nruEviction'],
-                self.server_args)
+                          self.server_args)
         self.rest_parameter_match(['evictionPolicy=nruEviction'])
 
     def test_bucket_edit_invalid_policy(self):
         self.server_args['buckets'].append(self.bucket_membase)
         self.system_exit_run(self.command + self.command_args + ['--bucket-eviction-policy', 'nope'], self.server_args)
-        self.assertIn("ERROR: argument --bucket-eviction-policy: invalid choice: 'nope'"+
-                " (choose from 'valueOnly', 'fullEviction')", self.str_output)
+        self.assertIn("ERROR: argument --bucket-eviction-policy: invalid choice: 'nope'" +
+                      " (choose from 'valueOnly', 'fullEviction')", self.str_output)
 
     def test_memcached_bucket_edit(self):
         self.server_args['buckets'].append(self.bucket_memcached)
@@ -462,7 +462,7 @@ class TestBucketList(CommandTest):
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase', 'replicaNumber': '0',
                                'quota': {'ram': '100'}, 'basicStats': {'memUsed': '100'}}
         self.bucket_memcached = {'name': 'name1', 'bucketType': 'memcached', 'replicaNumber': '0',
-                               'quota': {'ram': '100'}, 'basicStats': {'memUsed': '100'}}
+                                 'quota': {'ram': '100'}, 'basicStats': {'memUsed': '100'}}
         super(TestBucketList, self).setUp()
 
     def test_bucket_list(self):
@@ -778,8 +778,12 @@ class TestServerAdd(CommandTest):
             {'name': 'name1', 'uri': '/pools/default/serverGroups/1',
              'addNodeURI': '/pools/default/serverGroups/1/addNode', 'nodes': []}
         ], 'uri': '/pools/default/serverGroups/rev=1'}
-        self.server_args['indexes-settings'] = {'logLevel': 'info', 'indexerThreads': 0, 'storageMode': 'plasma',
-                                'stableSnapshotInterval': 5000, 'maxRollbackPoints': 2, 'memorySnapshotInterval': 200}
+        self.server_args['indexes-settings'] = {'logLevel': 'info',
+                                                'indexerThreads': 0,
+                                                'storageMode': 'plasma',
+                                                'stableSnapshotInterval': 5000,
+                                                'maxRollbackPoints': 2,
+                                                'memorySnapshotInterval': 200}
 
         super(TestServerAdd, self).setUp()
 
@@ -1058,17 +1062,26 @@ class TestSettingCompaction(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_all_settings_circular(self):
-        self.no_error_run(self.command + self.basic_args+ self.circular_args, self.server_args)
-        expected_params = ['allowedTimePeriod%5BtoMinute%5D=0', 'databaseFragmentationThreshold%5Bpercentage%5D=10',
-         'allowedTimePeriod%5BtoHour%5D=15', 'indexCircularCompaction%5Binterval%5D%5BabortOutside%5D=true',
-         'indexCompactionMode=circular', 'allowedTimePeriod%5BfromMinute%5D=0',
-         'viewFragmentationThreshold%5Bsize%5D=31457280', 'indexCircularCompaction%5Binterval%5D%5BfromMinute%5D=0',
-         'parallelDBAndViewCompaction=false', 'databaseFragmentationThreshold%5Bsize%5D=20971520',
-         'allowedTimePeriod%5BabortOutside%5D=true', 'allowedTimePeriod%5BfromHour%5D=12',
-         'indexCircularCompaction%5Binterval%5D%5BtoMinute%5D=0', 'purgeInterval=3.0',
-         'viewFragmentationThreshold%5Bpercentage%5D=25', 'indexCircularCompaction%5Binterval%5D%5BtoHour%5D=12',
-         'indexCircularCompaction%5Binterval%5D%5BfromHour%5D=0',
-         'indexCircularCompaction%5BdaysOfWeek%5D=Monday%2CTuesday%2CSunday']
+        self.no_error_run(self.command + self.basic_args + self.circular_args, self.server_args)
+        expected_params = [
+            'allowedTimePeriod%5BtoMinute%5D=0',
+            'databaseFragmentationThreshold%5Bpercentage%5D=10',
+            'allowedTimePeriod%5BtoHour%5D=15',
+            'indexCircularCompaction%5Binterval%5D%5BabortOutside%5D=true',
+            'indexCompactionMode=circular',
+            'allowedTimePeriod%5BfromMinute%5D=0',
+            'viewFragmentationThreshold%5Bsize%5D=31457280',
+            'indexCircularCompaction%5Binterval%5D%5BfromMinute%5D=0',
+            'parallelDBAndViewCompaction=false',
+            'databaseFragmentationThreshold%5Bsize%5D=20971520',
+            'allowedTimePeriod%5BabortOutside%5D=true',
+            'allowedTimePeriod%5BfromHour%5D=12',
+            'indexCircularCompaction%5Binterval%5D%5BtoMinute%5D=0',
+            'purgeInterval=3.0',
+            'viewFragmentationThreshold%5Bpercentage%5D=25',
+            'indexCircularCompaction%5Binterval%5D%5BtoHour%5D=12',
+            'indexCircularCompaction%5Binterval%5D%5BfromHour%5D=0',
+            'indexCircularCompaction%5BdaysOfWeek%5D=Monday%2CTuesday%2CSunday']
         self.assertIn('POST:/controller/setAutoCompaction', self.server.trace)
         self.rest_parameter_match(expected_params)
 
@@ -1248,12 +1261,13 @@ class TestSettingSecurity(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_set_settings_hsts_max_age_and_preload_enabled(self):
-        self.no_error_run(self.command + ['--set', '--hsts-max-age', '42','--hsts-preload-enabled', '1' ],
+        self.no_error_run(self.command + ['--set', '--hsts-max-age', '42', '--hsts-preload-enabled', '1'],
                           self.server_args)
         expected_params = ['responseHeaders=' +
                            urllib.parse.quote('{"Strict-Transport-Security":"max-age=42;preload"}')]
         self.assertIn('POST:/settings/security', self.server.trace)
         self.rest_parameter_match(expected_params)
+
 
 class TestSettingXdcr(CommandTest):
     def setUp(self):
@@ -1299,46 +1313,46 @@ class TestUserManage(CommandTest):
         self.command = ['couchbase-cli', 'user-manage'] + cluster_connect_args
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         self.server_args['rbac-users'] = [
-          {
-            "id": "read",
-            "domain": "local",
-            "roles": [
-              {
-                "role": "ro_admin",
-                "origins": [{"type": "group"}, {"type": "user"}],
-              },
-              {
-                "role": "admin",
-                "origins": [{"type": "group"}],
-              }
-            ],
-            "name": "name",
-            "password_change_date": "2018-11-15T15:01:16.000Z",
-            "groups": ["group1", "group2"]
-          },
-          {
-            "id": "write",
-            "domain": "local",
-            "roles": [],
-            "name": "name",
-            "password_change_date": "2018-11-15T15:19:55.000Z"
-          }
+            {
+                "id": "read",
+                "domain": "local",
+                "roles": [
+                    {
+                        "role": "ro_admin",
+                        "origins": [{"type": "group"}, {"type": "user"}],
+                    },
+                    {
+                        "role": "admin",
+                        "origins": [{"type": "group"}],
+                    }
+                ],
+                "name": "name",
+                "password_change_date": "2018-11-15T15:01:16.000Z",
+                "groups": ["group1", "group2"]
+            },
+            {
+                "id": "write",
+                "domain": "local",
+                "roles": [],
+                "name": "name",
+                "password_change_date": "2018-11-15T15:19:55.000Z"
+            }
         ]
         self.server_args['rbac-groups'] = [
-          {
-            "id": "group1",
-            "roles": [
-              {
-                "role": "bucket_full_access",
-                "bucket_name": "*"
-              },
-              {
-                "role": "replication_admin"
-              }
-            ],
-            "ldap_group_ref": "test=ldap",
-            "description": "descr"
-          }
+            {
+                "id": "group1",
+                "roles": [
+                    {
+                        "role": "bucket_full_access",
+                        "bucket_name": "*"
+                    },
+                    {
+                        "role": "replication_admin"
+                    }
+                ],
+                "ldap_group_ref": "test=ldap",
+                "description": "descr"
+            }
         ]
         super(TestUserManage, self).setUp()
 
@@ -1395,8 +1409,8 @@ class TestUserManage(CommandTest):
 
     def test_set_external_user(self):
         self.no_error_run(self.command + ['--set', '--rbac-username', 'username', '--auth-domain',
-                                         'external', '--roles', 'admin', '--rbac-name', 'name', '--user-groups', ''],
-                                         self.server_args)
+                                          'external', '--roles', 'admin', '--rbac-name', 'name', '--user-groups', ''],
+                          self.server_args)
         self.assertIn('PUT:/settings/rbac/users/external/username', self.server.trace)
         expected_params = ['name=name', 'roles=admin', 'groups=']
         self.rest_parameter_match(expected_params)
@@ -1421,8 +1435,8 @@ class TestUserManage(CommandTest):
 
     def test_create_group_no_name(self):
         self.system_exit_run(self.command + ['--set-group', '--roles', 'ro_admin',
-                                          '--group-description', 'Lorem ipsum dolor', '--ldap-ref', 'some-ref'],
-                          self.server_args)
+                                             '--group-description', 'Lorem ipsum dolor', '--ldap-ref', 'some-ref'],
+                             self.server_args)
         self.assertIn('--group-name is required with --set-group', self.str_output)
 
     def test_create_group_non_ldap(self):
@@ -1498,10 +1512,10 @@ class TestXdcrReplicate(CommandTest):
                            'filterExpression=key%3A%5Ba-zA-z%5D%2B', 'replicationType=continuous']
 
     def test_create_log_level(self):
-        self.no_error_run( self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
-                                           '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:[a-zA-z]+',
-                                           '--xdcr-replication-mode', 'capi', '--enable-compression', '1',
-                                           '--log-level', 'Warn'], self.server_args)
+        self.no_error_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+                                          '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:[a-zA-z]+',
+                                          '--xdcr-replication-mode', 'capi', '--enable-compression', '1',
+                                          '--log-level', 'Warn'], self.server_args)
         self.assertIn('POST:/controller/createReplication', self.server.trace)
         expected_params = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1', 'compressionType=Auto',
                            'filterExpression=key%3A%5Ba-zA-z%5D%2B', 'replicationType=continuous', 'logLevel=Warn']
@@ -1512,16 +1526,26 @@ class TestXdcrReplicate(CommandTest):
         self.system_exit_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket',
                                              'bucket2', '--xdcr-from-bucket', 'bucket1', '--filter-expression',
                                              'key:[a-zA-z]+', '--xdcr-replication-mode', 'capi', '--enable-compression',
-                                             '1', '--collection-explicit-mappings','1', '--collection-migration', '1'],
+                                             '1', '--collection-explicit-mappings', '1', '--collection-migration', '1'],
                              self.server_args)
         self.assertIn('cannot enable both collection migration and explicit mappings', self.str_output)
 
     def test_create_CE_with_EE(self):
         self.server_args['enterprise'] = False
-        self.system_exit_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
-                                          '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:[a-zA-z]+',
-                                          '--xdcr-replication-mode', 'capi', '--enable-compression', '1'],
-                          self.server_args)
+        self.system_exit_run(self.command + ['--create',
+                                             '--xdcr-cluster-name',
+                                             'cluster1',
+                                             '--xdcr-to-bucket',
+                                             'bucket2',
+                                             '--xdcr-from-bucket',
+                                             'bucket1',
+                                             '--filter-expression',
+                                             'key:[a-zA-z]+',
+                                             '--xdcr-replication-mode',
+                                             'capi',
+                                             '--enable-compression',
+                                             '1'],
+                             self.server_args)
         self.assertIn('can only be configured on enterprise edition', self.str_output)
 
     def test_delete_replicate(self):
@@ -1672,7 +1696,7 @@ class TestCollectionManage(CommandTest):
         self.server_args['collection_manifest'] = {
             'scopes': [{
                 'name': 'scope_1',
-                'collections':[{'name': 'collection_1'}, {'name': 'collection_2'}]
+                'collections': [{'name': 'collection_1'}, {'name': 'collection_2'}]
             }]
         }
         self.no_error_run(self.command + ['--list-collections', 'scope_1'], self.server_args)
@@ -1686,7 +1710,7 @@ class TestCollectionManage(CommandTest):
             'scopes': [
                 {
                     'name': 'scope_1',
-                    'collections':[{'name': 'collection_1'}, {'name': 'collection_2'}]
+                    'collections': [{'name': 'collection_1'}, {'name': 'collection_2'}]
                 },
                 {
                     'name': 'scope_2',
@@ -1696,8 +1720,8 @@ class TestCollectionManage(CommandTest):
         }
         self.no_error_run(self.command + ['--list-collections', 'scope_1', '-o', 'json'], self.server_args)
         self.assertIn('GET:/pools/default/buckets/name/scopes', self.server.trace)
-        expected = json.dumps({'scope_1':['collection_1', 'collection_2'], 'scope_2': ['collection_1', 'collection_2']},
-                              sort_keys=True)
+        expected = json.dumps({'scope_1': ['collection_1', 'collection_2'], 'scope_2': [
+                              'collection_1', 'collection_2']}, sort_keys=True)
 
         out = json.dumps(json.loads(self.str_output), sort_keys=True)
         self.assertEqual(expected, out)
@@ -1962,7 +1986,7 @@ class TestSettingRebalance(CommandTest):
 
     def test_set_wait_for_out_of_range(self):
         self.system_exit_run(self.command + ['--set', '--enable', '1', '--wait-for', '1', '--max-attempts', '3'],
-                          self.server_args)
+                             self.server_args)
         self.assertIn('--wait-for must be a value between 5 and 3600', self.str_output)
 
     def test_set_rebalance_moves_per_node_above_64(self):
@@ -2118,11 +2142,21 @@ class TestAnalyticsLinkSetup(CommandTest):
 
     def testFailEditCouchbase(self):
         self.server_args['fail'] = True
-        self.system_exit_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
-                                             '--link-username', 'user', '--link-password', 'secret', '--encryption',
-                                              'none'], self.server_args)
+        self.system_exit_run(self.command + ['--edit',
+                                             '--dataverse',
+                                             'Default',
+                                             '--name',
+                                             'east',
+                                             '--type',
+                                             'couchbase',
+                                             '--link-username',
+                                             'user',
+                                             '--link-password',
+                                             'secret',
+                                             '--encryption',
+                                             'none'],
+                             self.server_args)
         self.assertIn('ERROR: "CBAS0054: Operation cannot be performed while the link is connected"', self.str_output)
-
 
     def testEditWithCerts(self):
         # create fake cert file

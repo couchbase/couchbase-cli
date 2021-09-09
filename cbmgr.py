@@ -80,6 +80,7 @@ def remove_prefix(val: str, prefix: str) -> str:
     """
     return val[len(prefix):] if val.startswith(prefix) else val
 
+
 def force_communicate_tls(rest: ClusterManager) -> bool:
     """force_communicate_tls returns a boolean indicating whether we should communicate with other nodes using the TLS
     ports.
@@ -96,7 +97,7 @@ def force_communicate_tls(rest: ClusterManager) -> bool:
 
     # The user might not have used a 'https://' scheme prefix, so communicating to other nodes via the secure ports may
     # lead to interesting/surprising errors; let them know beforehand.
-    _warning("sub-command requires multi-node communication via TLS enabled ports, '--cacert' or " \
+    _warning("sub-command requires multi-node communication via TLS enabled ports, '--cacert' or "
              "'--no-ssl-verify' may need to be supplied")
 
     return True
@@ -439,7 +440,7 @@ class CBHelpAction(Action):
                 subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
             except OSError:
                 _exit_if_errors(["Unable to open man page using the 'man' command, ensure it is on your path or"
-                               + "install a manual reader"])
+                                 + "install a manual reader"])
 
 
 class CliParser(ArgumentParser):
@@ -502,7 +503,7 @@ class CouchbaseCLI(Command):
         group = self.parser.add_argument_group("Options")
         group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
                            help="Prints the short or long help message")
-        group.add_argument("--version",  help="Get couchbase-cli version")
+        group.add_argument("--version", help="Get couchbase-cli version")
 
     def parse(self, args):
         if len(sys.argv) == 1:
@@ -515,8 +516,8 @@ class CouchbaseCLI(Command):
 
         if not args[1] in ["-h", "--help", "--version"] and args[1].startswith("-"):
             _exit_if_errors([f"Unknown subcommand: '{args[1]}'. The first argument has to be a subcommand like"
-                           f" 'bucket-list' or 'rebalance', please see couchbase-cli -h for the full list of commands"
-                           f" and options"])
+                             f" 'bucket-list' or 'rebalance', please see couchbase-cli -h for the full list of commands"
+                             f" and options"])
 
         l1_args = self.parser.parse_args(args[1:2])
         l2_args = l1_args.klass().parse(args[2:])
@@ -876,10 +877,10 @@ class BucketCreate(Subcommand):
 
         if ((opts.type == "memcached" or opts.type == "ephemeral")
                 and (opts.db_frag_perc is not None
-                or opts.db_frag_size is not None or opts.view_frag_perc is not None
-                or opts.view_frag_size is not None or opts.from_hour is not None or opts.from_min is not None
-                or opts.to_hour is not None or opts.to_min is not None or opts.abort_outside is not None
-                or opts.paralleldb_and_view_compact is not None)):
+                     or opts.db_frag_size is not None or opts.view_frag_perc is not None
+                     or opts.view_frag_size is not None or opts.from_hour is not None or opts.from_min is not None
+                     or opts.to_hour is not None or opts.to_min is not None or opts.abort_outside is not None
+                     or opts.paralleldb_and_view_compact is not None)):
             _warning(f'ignoring compaction settings as bucket type {opts.type} does not accept it')
 
         storage_type = "couchstore"
@@ -1023,8 +1024,8 @@ class BucketEdit(Subcommand):
         # message from 'ns_server'. See MB-39036 for more information.
         if (opts.eviction_policy is not None
                 and opts.eviction_policy not in ["valueOnly", "fullEviction", "noEviction", "nruEviction"]):
-            _exit_if_errors([f"argument --bucket-eviction-policy: invalid choice: '{opts.eviction_policy}'"+
-                " (choose from 'valueOnly', 'fullEviction')"])
+            _exit_if_errors([f"argument --bucket-eviction-policy: invalid choice: '{opts.eviction_policy}'" +
+                             " (choose from 'valueOnly', 'fullEviction')"])
 
         bucket, errors = self.rest.get_bucket(opts.bucket_name)
         _exit_if_errors(errors)
@@ -1371,10 +1372,10 @@ class GroupManage(Subcommand):
         cmds = [opts.create, opts.delete, opts.list, opts.rename, opts.move_servers]
         if sum(cmd is not None for cmd in cmds) == 0:
             _exit_if_errors(["Must specify one of the following: --create, "
-                           + "--delete, --list, --move-servers, or --rename"])
+                             + "--delete, --list, --move-servers, or --rename"])
         elif sum(cmd is not None for cmd in cmds) != 1:
             _exit_if_errors(["Only one of the following may be specified: --create"
-                           + ", --delete, --list, --move-servers, or --rename"])
+                             + ", --delete, --list, --move-servers, or --rename"])
 
         if opts.create:
             self._create(opts)
@@ -1551,8 +1552,8 @@ class MasterPassword(LocalSubcommand):
         name = 'executioner@cb.local'
         args = ['-pa', CB_NS_EBIN_PATH, CB_BABYSITTER_EBIN_PATH, '-noinput', '-name', name, '-proto_dist', 'cb',
                 '-epmd_module', 'cb_epmd', '-kernel'] + CB_INETRC_OPT + \
-               ['dist_config_file', f'"{dist_cfg_file}"', '-setcookie', cookie, '-run', 'encryption_service',
-                'remote_set_password', node, password]
+            ['dist_config_file', f'"{dist_cfg_file}"', '-setcookie', cookie, '-run', 'encryption_service',
+             'remote_set_password', node, password]
 
         rc, out, err = self.run_process("erl", args)
 
@@ -1929,7 +1930,6 @@ class ServerEshell(Subcommand):
         else:
             _warning("Cannot locate Couchbase erlang. Attempting to use non-Couchbase erlang")
             path = 'erl'
-
 
         with tempfile.NamedTemporaryFile() as temp:
             temp.write(f'[{{preferred_local_proto,{result["addressFamily"]}_tcp_dist}}].'.encode())
@@ -2379,10 +2379,12 @@ class SettingAutofailover(Subcommand):
 
         if opts.enabled == "false" or opts.enabled is None:
             if opts.enable_failover_on_data_disk_issues or opts.failover_on_data_disk_period:
-                _exit_if_errors(["--enable-auto-failover must be set to 1 when auto-failover on Data Service disk issues"
-                                 " settings are being configured"])
+                _exit_if_errors([
+                    "--enable-auto-failover must be set to 1 when auto-failover on Data Service disk issues"
+                    " settings are being configured"])
             if opts.enable_failover_of_server_groups:
-                _exit_if_errors(["--enable-auto-failover must be set to 1 when enabling auto-failover of Server Groups"])
+                _exit_if_errors(
+                    ["--enable-auto-failover must be set to 1 when enabling auto-failover of Server Groups"])
             if opts.timeout:
                 _warning("Timeout specified will not take affect because auto-failover is being disabled")
 
@@ -2639,7 +2641,7 @@ class SettingCompaction(Subcommand):
             opts.gsi_mode = "full"
             if opts.gsi_perc is None:
                 _exit_if_errors(['--compaction-gsi-percentage must be specified when --gsi-compaction-mode is set '
-                               'to append'])
+                                 'to append'])
         elif opts.gsi_mode == "circular":
             if opts.gsi_from_period is not None and opts.gsi_to_period is None:
                 _exit_if_errors(["--compaction-gsi-period-to is required with --compaction-gsi-period-from"])
@@ -3047,9 +3049,16 @@ class SettingSecurity(Subcommand):
         group.add_argument("--disable-www-authenticate", dest="disable_www_authenticate",
                            metavar="<0|1>", choices=['0', '1'], default=None,
                            help="Disables use of WWW-Authenticate (0 or 1")
-        group.add_argument("--cluster-encryption-level", dest="cluster_encryption_level", metavar="<all|control|strict>",
-                           choices=['all', 'control', 'strict'], default=None,
-                           help="Set cluster encryption level, only used when cluster encryption enabled.")
+        group.add_argument(
+            "--cluster-encryption-level",
+            dest="cluster_encryption_level",
+            metavar="<all|control|strict>",
+            choices=[
+                'all',
+                'control',
+                'strict'],
+            default=None,
+            help="Set cluster encryption level, only used when cluster encryption enabled.")
         group.add_argument('--tls-min-version', dest='tls_min_version', metavar='<tlsv1|tlsv1.1|tlsv1.2>',
                            choices=['tlsv1', 'tlsv1.1', 'tlsv1.2'], default=None, help='Set the minimum TLS version')
         group.add_argument('--tls-honor-cipher-order', dest='tls_honor_cipher_order', metavar='<1|0>',
@@ -3369,10 +3378,10 @@ class UserManage(Subcommand):
                              opts.list_group, opts.delete_group, opts.set_group])
         if num_selectors == 0:
             _exit_if_errors(['Must specify --delete, --list, --my_roles, --set, --get, --get-group, --set-group, '
-                           '--list-groups or --delete-group'])
+                             '--list-groups or --delete-group'])
         elif num_selectors != 1:
             _exit_if_errors(['Only one of the following can be specified:--delete, --list, --my_roles, --set, --get,'
-                           ' --get-group, --set-group, --list-groups or --delete-group'])
+                             ' --get-group, --set-group, --list-groups or --delete-group'])
 
         if opts.delete:
             self._delete(opts)
@@ -3597,7 +3606,7 @@ class XdcrReplicate(Subcommand):
         collection_group.add_argument('--collection-explicit-mappings', choices=['1', '0'], metavar='<1|0>',
                                       default=None, help='If explicit collection mappings is to be used. '
                                                          '(Enterprise Edition Only)')
-        collection_group.add_argument('--collection-migration',  choices=['1', '0'], metavar='<1|0>',
+        collection_group.add_argument('--collection-migration', choices=['1', '0'], metavar='<1|0>',
                                       default=None, help='If XDCR is to run in collection migration mode. '
                                                          '(Enterprise Edition only)')
         collection_group.add_argument('--collection-mapping-rules', type=str, default=None, metavar='<mappings>',
@@ -3623,7 +3632,7 @@ class XdcrReplicate(Subcommand):
             _exit_if_errors(['Must specify one of --create, --delete, --pause, --list, --resume, --settings, --get'])
         elif actions > 1:
             _exit_if_errors(['The --create, --delete, --pause, --list, --resume, --settings, --get flags may not be '
-                           'specified at the same time'])
+                             'specified at the same time'])
         elif opts.create:
             self._create(opts)
         elif opts.delete:
@@ -3799,7 +3808,7 @@ class XdcrSetup(Subcommand):
             _exit_if_errors([f'--xdcr-password is required to {cmd} a cluster connections'])
         if (opts.encrypt is not None or opts.encryption_type is not None) and opts.secure_connection is not None:
             _exit_if_errors(["Cannot use deprecated flags --xdcr-demand-encryption or --xdcr-encryption-type with"
-                           " --xdcr-secure-connection"])
+                             " --xdcr-secure-connection"])
 
         if opts.secure_connection == "none":
             opts.encrypt = "0"
@@ -3912,10 +3921,10 @@ class EventingFunctionSetup(Subcommand):
                        opts.pause, opts.resume])
         if actions == 0:
             _exit_if_errors(["Must specify one of --import, --export, --export-all, --delete, --list, --deploy,"
-                           " --undeploy, --pause, --resume"])
+                             " --undeploy, --pause, --resume"])
         elif actions > 1:
             _exit_if_errors(['The --import, --export, --export-all, --delete, --list, --deploy, --undeploy, --pause, '
-                           '--resume flags may not be specified at the same time'])
+                             '--resume flags may not be specified at the same time'])
         elif opts._import:  # pylint: disable=protected-access
             self._import(opts)
         elif opts.export:
@@ -4005,14 +4014,14 @@ class EventingFunctionSetup(Subcommand):
                     if 'source_scope' in function["depcfg"]:
                         print(f' Source: {function["depcfg"]["source_bucket"]}.{function["depcfg"]["source_scope"]}.'
                               f'{function["depcfg"]["source_collection"]}')
-                        print(f' Metadata: {function["depcfg"]["metadata_bucket"]}.{function["depcfg"]["metadata_scope"]}.'
-                              f'{function["depcfg"]["metadata_collection"]}')
+                        print(
+                            f' Metadata: {function["depcfg"]["metadata_bucket"]}.{function["depcfg"]["metadata_scope"]}.'
+                            f'{function["depcfg"]["metadata_collection"]}')
                     else:
                         print(f' Source Bucket: {function["depcfg"]["source_bucket"]}')
                         print(f' Metadata Bucket: {function["depcfg"]["metadata_bucket"]}')
         else:
             print('The cluster has no functions')
-
 
     @staticmethod
     def get_man_page_name():
@@ -4733,7 +4742,7 @@ class IpFamily(Subcommand):
         ip_families = set()
         for n in nodes:
             if 'addressFamilyOnly' in n and n['addressFamilyOnly']:
-                ip_families.add(n['addressFamily']+'only')
+                ip_families.add(n['addressFamily'] + 'only')
             else:
                 ip_families.add(n['addressFamily'])
 
@@ -4908,7 +4917,7 @@ class SettingRebalance(Subcommand):
                 print(f'Maximum number of vBucket move per node: {settings["rebalanceMovesPerNode"]}')
         elif opts.set:
             if (not self.enterprise and (opts.enable is not None or opts.wait_for is not None
-                    or opts.max_attempts is not None)):
+                                         or opts.max_attempts is not None)):
                 _exit_if_errors(["Automatic rebalance retry configuration is an Enterprise Edition only feature"])
             if opts.enable == '1':
                 opts.enable = 'true'
@@ -5070,7 +5079,7 @@ class BackupServiceRepository:
         """setup the parser"""
         self.rest = None
         repository_parser = subparser.add_parser('repository', help='Manage backup repositories', add_help=False,
-                                               allow_abbrev=False)
+                                                 allow_abbrev=False)
 
         # action flags are mutually exclusive
         action_group = repository_parser.add_mutually_exclusive_group(required=True)
@@ -5123,11 +5132,11 @@ class BackupServiceRepository:
             self.remove_repository(opts.id, opts.state, opts.remove_data)
         elif opts.add:
             self.add_active_repository(opts.id, opts.plan, opts.backup_archive, bucket_name=opts.bucket_name,
-                                     credentials_name=opts.cloud_credentials_name,
-                                     credentials_id=opts.cloud_credentials_id,
-                                     credentials_key=opts.cloud_credentials_key,
-                                     cloud_region=opts.cloud_credentials_region, staging_dir=opts.cloud_staging_dir,
-                                     cloud_endpoint=opts.cloud_endpoint, s3_path_style=opts.s3_force_path_style)
+                                       credentials_name=opts.cloud_credentials_name,
+                                       credentials_id=opts.cloud_credentials_id,
+                                       credentials_key=opts.cloud_credentials_key,
+                                       cloud_region=opts.cloud_credentials_region, staging_dir=opts.cloud_staging_dir,
+                                       cloud_endpoint=opts.cloud_endpoint, s3_path_style=opts.s3_force_path_style)
 
     def remove_repository(self, repository_id: str, state: str, delete_repo: bool = False):
         """Removes the repository in state 'state' and with id 'repository_id'
@@ -5143,8 +5152,9 @@ class BackupServiceRepository:
         if not state:
             _exit_if_errors(['--state is required'])
         if state not in ['archived', 'imported']:
-            _exit_if_errors(['can only delete archived or imported repositories to delete an active repository it needs to '
-                             'be archived first'])
+            _exit_if_errors([
+                'can only delete archived or imported repositories to delete an active repository it needs to '
+                'be archived first'])
         # can only delete repo of archived repositories
         if delete_repo and state == 'imported':
             _exit_if_errors(['cannot delete the repository for an imported repository'])
@@ -5428,7 +5438,7 @@ class BackupServicePlan:
         """setup the parser"""
         self.rest = None
         plan_parser = subparser.add_parser('plan', help='Manage backup plans', add_help=False,
-                                              allow_abbrev=False)
+                                           allow_abbrev=False)
 
         # action flags are mutually exclusive
         action_group = plan_parser.add_mutually_exclusive_group(required=True)

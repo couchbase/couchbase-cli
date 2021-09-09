@@ -171,14 +171,14 @@ class TestJSONSource(unittest.TestCase):
             f1 = open(os.path.join(tmpdirname, 'design_docs'), 'w')
             f1.write('design doc')
             f1.close()
-            rv, des = self.source.provide_design(None, 'json://'+tmpdirname, None, None)
+            rv, des = self.source.provide_design(None, 'json://' + tmpdirname, None, None)
             self.assertEqual(rv, 0)
             self.assertListEqual(des, [b'design doc'])
             os.remove(os.path.join(tmpdirname, 'design_docs'))
 
         # Test scenario where no design doc in the dir
         with tempfile.TemporaryDirectory() as tmpdirname:
-            rv, des = self.source.provide_design(None, 'json://'+tmpdirname, None, None)
+            rv, des = self.source.provide_design(None, 'json://' + tmpdirname, None, None)
             self.assertEqual(rv, 0)
             self.assertListEqual(des, [])
 
@@ -268,7 +268,7 @@ class TestGenSource(unittest.TestCase):
                             'min-value-size': 10,
                             'prefix': "",
                             'ratio-sets': 1,
-                            'json':  True,
+                            'json': True,
                             'low-compression': False,
                             'xattr': False}
                            }
@@ -337,7 +337,7 @@ class TestBFDSource(unittest.TestCase):
 
     @staticmethod
     def create_folder_struct(base, mode, base_time='1996-10-07T070000Z', time='1996-10-07T070000Z', bucket='default'):
-        path = os.path.join(base, base_time, time + '-' + mode, 'bucket-'+bucket, 'node-1')
+        path = os.path.join(base, base_time, time + '-' + mode, 'bucket-' + bucket, 'node-1')
         os.makedirs(path, exist_ok=True)
         f = open(os.path.join(path, 'data-1.cbb'), 'w')
         f.close()
@@ -392,13 +392,13 @@ class TestBFDSource(unittest.TestCase):
         # empty dir
         with tempfile.TemporaryDirectory() as tmpdirname, self.subTest(i='empty dir structure'):
             rv, _ = self.source.check(None, tmpdirname)
-            self.assertEqual(rv, "error: no backup directory found: "+tmpdirname)
+            self.assertEqual(rv, "error: no backup directory found: " + tmpdirname)
 
         # Valid structure but with no full backup
         with tempfile.TemporaryDirectory() as tmpdirname, self.subTest(i='valid dir structure, no full backup'):
             self.create_folder_struct(tmpdirname, 'accu')
             rv, _ = self.source.check(None, tmpdirname)
-            self.assertEqual(rv, "error: no valid backup directory found: "+tmpdirname+'/1996-10-07T070000Z')
+            self.assertEqual(rv, "error: no valid backup directory found: " + tmpdirname + '/1996-10-07T070000Z')
 
     def test_provide_json_files(self):
         for (file, fn) in [(DDOC_FILE_NAME, self.source.provide_design),
@@ -497,7 +497,7 @@ class DCPHelperClass:
                        extra_meta=extra_meta)
 
     def _send_msg(self, cmd, key, val, opaque, extra_header=b'', cas=0, dtype=0, vbucket_id=0, extra_meta=b'',
-                 fmt=cbcs.REQ_PKT_FMT, magic=cbcs.REQ_MAGIC_BYTE):
+                  fmt=cbcs.REQ_PKT_FMT, magic=cbcs.REQ_MAGIC_BYTE):
         self.msgs.append((cmd, key, val, opaque, extra_header, cas, dtype, vbucket_id, extra_meta, fmt, magic))
 
     def get(self):
@@ -651,7 +651,7 @@ class TestDCPSource(unittest.TestCase):
         extra1 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 1, 1, 0, 0, 0, 0, 0)
         extra2 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 2, 1, 0, 0, 0, 0, 0)
         # Test MB-38683: MAX rev minus one
-        extra3 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 3, (2**64-1), 0, 0, 0, 0, 0)
+        extra3 = struct.pack(cbcs.DCP_MUTATION_PKT_FMT, 3, (2**64 - 1), 0, 0, 0, 0, 0)
         data1 = extra1 + b'KEY:1' + b'{"field1":"value1"}'
         data2 = extra2 + b'KEY:2' + b'{"field2":"value2"}'
         data3 = extra3 + b'KEY:3' + b'{"field3":"value3"}'
@@ -677,11 +677,13 @@ class TestDCPSource(unittest.TestCase):
         # Batch should contain 3 mutations
         self.assertEqual(batch.size(), 3)
 
-        expected_out = [
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field1":"value1"}', 1, 0, 0, 0),
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:2', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field2":"value2"}', 2, 0, 0, 0),
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:3', 0, 0, 0, bytes([255,255,255,255,255,255,255,254]), b'{"field3":"value3"}', 3, 0, 0, 0)
-        ]
+        expected_out = [(cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]),
+                         b'{"field1":"value1"}', 1, 0, 0, 0),
+                        (cbcs.CMD_DCP_MUTATION, 0, b'KEY:2', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]),
+                         b'{"field2":"value2"}', 2, 0, 0, 0),
+                        (cbcs.CMD_DCP_MUTATION, 0, b'KEY:3', 0, 0, 0, bytes(
+                            [255, 255, 255, 255, 255, 255, 255, 254]),
+                         b'{"field3":"value3"}', 3, 0, 0, 0)]
 
         for m in batch.msgs:
             self.assertIn(m, expected_out)
@@ -839,10 +841,10 @@ class TestDCPSource(unittest.TestCase):
         self.assertEqual(batch.size(), 4)
 
         expected_out = [
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:0', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field":"value"}', 1, 0, 0, 0),
-            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field1":"value1"}', 2, 0, 0, 0),
-            (cbcs.CMD_DCP_MUTATION, 1, b'KEY:2', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'{"field":"value"}', 1, 0, 0, 0),
-            (cbcs.CMD_DCP_DELETE, 1, b'KEY:2', 0, 0, 0, bytes([0,0,0,0,0,0,0,1]), b'', 2, 0, 0, 0)
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:0', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]), b'{"field":"value"}', 1, 0, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 0, b'KEY:1', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]), b'{"field1":"value1"}', 2, 0, 0, 0),
+            (cbcs.CMD_DCP_MUTATION, 1, b'KEY:2', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]), b'{"field":"value"}', 1, 0, 0, 0),
+            (cbcs.CMD_DCP_DELETE, 1, b'KEY:2', 0, 0, 0, bytes([0, 0, 0, 0, 0, 0, 0, 1]), b'', 2, 0, 0, 0)
         ]
 
         for m in batch.msgs:
@@ -878,7 +880,7 @@ class TestCSVSink(unittest.TestCase):
     def test_consume_batch(self):
         # setup sink
         with tempfile.TemporaryDirectory() as tmpdirname, self.subTest(i='basic test'):
-            self.sink = CSVSink(self.opts, 'csv:'+os.path.join(tmpdirname, 'test-out.csv'),
+            self.sink = CSVSink(self.opts, 'csv:' + os.path.join(tmpdirname, 'test-out.csv'),
                                 {'name': 'default'}, {'hostname': 'node1'}, None, None, None, None)
             # test data
             msgs = [
@@ -914,7 +916,7 @@ class TestCSVSink(unittest.TestCase):
                 self.assertEqual(count, len(msgs))
 
         with tempfile.TemporaryDirectory() as tmpdirname, self.subTest(i='batch with gets'):
-            self.sink = CSVSink(self.opts, 'csv:'+os.path.join(tmpdirname, 'test-out.csv'),
+            self.sink = CSVSink(self.opts, 'csv:' + os.path.join(tmpdirname, 'test-out.csv'),
                                 {'name': 'default'}, {'hostname': 'node1'}, None, None, None, None)
             # test data
             msgs = [
@@ -974,7 +976,7 @@ class TestBFDSinkEx(unittest.TestCase):
 
         with tempfile.NamedTemporaryFile() as f, self.subTest(i='file given as backup dir'):
             rv, _ = BFDSinkEx.check(None, f.name, None)
-            self.assertEqual(rv, "error: backup directory is not a directory: "+f.name)
+            self.assertEqual(rv, "error: backup directory is not a directory: " + f.name)
 
         with tempfile.TemporaryDirectory() as tempdirname, self.subTest(i='given a golder'):
             rv, _ = BFDSinkEx.check(None, tempdirname, None)
@@ -1032,7 +1034,7 @@ class TestBFDSinkEx(unittest.TestCase):
                                dtype, meta_size, conf_res FROM cbb_msg ORDER BY seqno'):
                 cmd, vbid, key, flg, exp, cas, meta, val, seqno, dtype, meta_size, conf_res = msgs[count][:]
                 cmd_o, vbid_o, key_o, flg_o, exp_o, cas_o, meta_o, val_o, seqno_o, dtype_o, meta_size_o,\
-                conf_res_o = row[:]
+                    conf_res_o = row[:]
                 self.assertEqual(cmd, cmd_o)
                 self.assertEqual(vbid, vbid_o)
                 self.assertEqual(key, key_o)
@@ -1138,7 +1140,7 @@ class MCHelper:
     @staticmethod
     def res(req, cmd, key=b'', extra_header=b'', dtype=0, errcode=0, body=b'', opaque=0, cas=0):
         res = struct.pack(cbcs.RES_PKT_FMT, cbcs.RES_MAGIC_BYTE, cmd, len(key), len(extra_header),
-                          dtype, errcode, len(key)+len(body)+len(extra_header), opaque, cas)
+                          dtype, errcode, len(key) + len(body) + len(extra_header), opaque, cas)
         res = res + key + extra_header + body
         req.sendall(res)
 
@@ -1237,7 +1239,7 @@ class MCHelper:
         magic, cmd, keylen, extraheaderlen, dtype, vbid, bodylen, opaque, cas = \
             struct.unpack(cbcs.REQ_PKT_FMT, data[0][:cbcs.MIN_RECV_PACKET])
 
-        errcode =0
+        errcode = 0
         if cmd != cbcs.CMD_SELECT_BUCKET:
             self.failed = True
             self.reason = "Got command {} expected {}".format(cmd, cbcs.CMD_SELECT_BUCKET)
@@ -1247,7 +1249,7 @@ class MCHelper:
             self.reason = "Expected keylen to be {} got {}".format(len(self.test_data['bucket']), keylen)
             errcode = cbcs.ERR_EINVAL
 
-        key = data[0][cbcs.MIN_RECV_PACKET:cbcs.MIN_RECV_PACKET+keylen]
+        key = data[0][cbcs.MIN_RECV_PACKET:cbcs.MIN_RECV_PACKET + keylen]
         if not self.failed and key != self.test_data['bucket']:
             self.failed = True
             self.reason = "Expected key to be {} got {}".format(self.test_data['bucket'], key)
@@ -1270,8 +1272,8 @@ class MCHelper:
             self.reason = "Got command {} expected {}".format(cmd, cbcs.CMD_HELLO)
             errcode = cbcs.ERR_EINVAL
 
-        key = data[0][cbcs.MIN_RECV_PACKET:cbcs.MIN_RECV_PACKET+keylen]
-        features = data[0][cbcs.MIN_RECV_PACKET+keylen:cbcs.MIN_RECV_PACKET+bodylen]
+        key = data[0][cbcs.MIN_RECV_PACKET:cbcs.MIN_RECV_PACKET + keylen]
+        features = data[0][cbcs.MIN_RECV_PACKET + keylen:cbcs.MIN_RECV_PACKET + bodylen]
         if features != self.test_data['packed_features']:
             self.failed = True
             self.reason = "Got features {} expected {}".format(features, self.test_data['packed_features'])
@@ -1394,7 +1396,7 @@ class TestMemcachedClient(unittest.TestCase):
 
     def test_helo(self):
         features = [cbcs.HELO_COLLECTIONS, cbcs.HELO_XATTR, cbcs.HELO_XERROR]
-        self.helper_class.set_test_data('packed_features', struct.pack('>'+ ('H' * len(features)), *features))
+        self.helper_class.set_test_data('packed_features', struct.pack('>' + ('H' * len(features)), *features))
         self.server.set_handler(self.helper_class.test_helo)
         self.server.start()
 

@@ -201,7 +201,7 @@ from a source cluster into the caching layer at the destination""")
         p.add_option("", "--no-ssl-verify", default=True, action="store_false",
                      help="Skips SSL verification of certificates against the CA")
         p.add_option("", "--cacert", dest="cacert", default=None, action="store",
-                           help="Verifies the cluster identity with this certificate")
+                     help="Verifies the cluster identity with this certificate")
         p.add_option("-t", "--threads",
                      action="store", type="int", default=4,
                      help="""Number of concurrent workers threads performing the transfer""")
@@ -220,28 +220,28 @@ from a source cluster into the caching layer at the destination""")
 
     def opt_extra_defaults(self, add_hidden=True):
         rv = {
-            "batch_max_size":  (1000,   "Transfer this # of documents per batch"),
+            "batch_max_size": (1000, "Transfer this # of documents per batch"),
             "batch_max_bytes": (400000, "Transfer this # of bytes per batch"),
-            "cbb_max_mb":      (100000, "Split backup file on destination cluster if it exceeds MiB"),
-            "max_retry":       (10,     "Max number of sequential retries if transfer fails"),
-            "report":          (5,      "Number batches transferred before updating progress bar in console"),
-            "report_full":     (2000,   "Number batches transferred before emitting progress information in console"),
-            "recv_min_bytes":  (4096,   "Amount of bytes for every TCP/IP call transferred"),
-            "try_xwm":         (1,      "Transfer documents with metadata. 0 should only be used if you transfer from 1.8.x to 1.8.x"),
-            "nmv_retry":       (1,      "0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message"),
-            "rehash":          (0,      "For value 1, rehash the partition id's of each item; \
+            "cbb_max_mb": (100000, "Split backup file on destination cluster if it exceeds MiB"),
+            "max_retry": (10, "Max number of sequential retries if transfer fails"),
+            "report": (5, "Number batches transferred before updating progress bar in console"),
+            "report_full": (2000, "Number batches transferred before emitting progress information in console"),
+            "recv_min_bytes": (4096, "Amount of bytes for every TCP/IP call transferred"),
+            "try_xwm": (1, "Transfer documents with metadata. 0 should only be used if you transfer from 1.8.x to 1.8.x"),
+            "nmv_retry": (1, "0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message"),
+            "rehash": (0, "For value 1, rehash the partition id's of each item; \
 this is needed when transferring data between clusters with different number of partitions, \
 such as when transferring data from an OSX server to a non-OSX cluster"),
-            "data_only":       (0,      "For value 1, only transfer data from a backup file or cluster"),
-            "design_doc_only": (0,      "For value 1, transfer design documents only from a backup file or cluster"),
-            "conflict_resolve":(1,      "By default, enable conflict resolution."),
-            "seqno":           (0,      "By default, start seqno from beginning."),
-            "mcd_compatible":  (1,      "For value 0, display extended fields for stdout output."),
-            "uncompress":      (0,      "For value 1, restore data in uncompressed mode"),
-            "backoff_cap":     (10,     "Max backoff time during rebalance period"),
-            "flow_control":    (1,      "For value 0, disable flow control to improve throughput"),
-            "dcp_consumer_queue_length": (1000,"A DCP client needs a queue for incoming documents/messages. A large length is more efficient, but memory proportional to length*avg. doc size. Below length 150, performance degrades significantly."),
-            }
+            "data_only": (0, "For value 1, only transfer data from a backup file or cluster"),
+            "design_doc_only": (0, "For value 1, transfer design documents only from a backup file or cluster"),
+            "conflict_resolve": (1, "By default, enable conflict resolution."),
+            "seqno": (0, "By default, start seqno from beginning."),
+            "mcd_compatible": (1, "For value 0, display extended fields for stdout output."),
+            "uncompress": (0, "For value 1, restore data in uncompressed mode"),
+            "backoff_cap": (10, "Max backoff time during rebalance period"),
+            "flow_control": (1, "For value 0, disable flow control to improve throughput"),
+            "dcp_consumer_queue_length": (1000, "A DCP client needs a queue for incoming documents/messages. A large length is more efficient, but memory proportional to length*avg. doc size. Below length 150, performance degrades significantly."),
+        }
 
         if add_hidden:
             rv["allow_recovery_vb_remap"] = (0, "Allows the vbucket list to override the vbucket map from the server.")
@@ -298,19 +298,19 @@ class Backup(Transfer):
                              this single server node is defined by the source URL""")
         if self._is_enterprise():
             p.add_option("-m", "--mode",
-                        action="store", type="string", default="diff",
-                        help="backup mode: full, diff or accu [default:%default]")
+                         action="store", type="string", default="diff",
+                         help="backup mode: full, diff or accu [default:%default]")
 
         else:
             p.add_option("-m", "--mode",
-                        action="store", type="string", default="full",
-                        help=optparse.SUPPRESS_HELP)
+                         action="store", type="string", default="full",
+                         help=optparse.SUPPRESS_HELP)
 
         Transfer.opt_parser_options_common(self, p)
 
     def find_handlers(self, opts, source, sink):
         return PumpingStation.find_handler(opts, source, SOURCES), \
-               PumpingStation.find_handler(opts, sink, SINKS)
+            PumpingStation.find_handler(opts, sink, SINKS)
 
     def check_opts(self, opts):
         mode = getattr(opts, "mode", None)
@@ -366,12 +366,12 @@ class Restore(Transfer):
                              to a different bucket; defaults to the same as the
                              bucket-source""")
         p.add_option("", "--from-date",
-                    action="store", type="string", default=None,
-                    help="""restore data from the date specified as yyyy-mm-dd. By default,
+                     action="store", type="string", default=None,
+                     help="""restore data from the date specified as yyyy-mm-dd. By default,
 all data from the very beginning will be restored""")
         p.add_option("", "--to-date",
-                    action="store", type="string", default=None,
-                    help="""restore data till the date specified as yyyy-mm-dd. By default,
+                     action="store", type="string", default=None,
+                     help="""restore data till the date specified as yyyy-mm-dd. By default,
 all data that are collected will be restored""")
         Transfer.opt_parser_options_common(self, p)
 
@@ -407,6 +407,7 @@ def opt_parse_helper(opts):
         opts_x.password = "<xxx>"
     return opts_x
 
+
 def opt_parse_extra(extra, extra_defaults):
     """Convert an extra string (comma-separated key=val pairs) into
        a dict, using default values from extra_defaults dict."""
@@ -419,15 +420,14 @@ def opt_parse_extra(extra, extra_defaults):
     return dict([(k, float(extra_in.get(k, extra_defaults[k][0])))
                  for k in extra_defaults.keys()])
 
-def opt_extra_help(parser, extra_defaults):
-    extra_help = "; ".join([f'{k}={extra_defaults[k][0]} ({extra_defaults[k][1]})'
-                           for k in sorted(extra_defaults.keys())])
 
-    group = optparse.OptionGroup(parser, "Available extra config parameters (-x)",
-                        extra_help)
-    parser.add_option_group(group)
+def opt_extra_help(parser, extra_defaults):
+    extra_help = "; ".join(
+        [f'{k}={extra_defaults[k][0]} ({extra_defaults[k][1]})' for k in sorted(extra_defaults.keys())])
+    parser.add_option_group(optparse.OptionGroup(parser, "Available extra config parameters (-x)", extra_help))
 
 # --------------------------------------------------
+
 
 SOURCES = [pump_bfd.BFDSource,
            pump_csv.CSVSource,

@@ -64,5 +64,3 @@ class TopologyBarTest(unittest.TestCase):
 
         self.assertEqual(['it broke'], err)
         self.assertEqual(tasks.calls, 6)
-
-

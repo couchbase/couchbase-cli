@@ -150,10 +150,10 @@ class PumpingStation(ProgressReporter):
         self.sink_spec = sink_spec
         self.queue = None
         tmstamp = time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime())
-        self.ctl = { 'stop': False,
-                     'rv': 0,
-                     'new_session': True,
-                     'new_timestamp': tmstamp}
+        self.ctl = {'stop': False,
+                    'rv': 0,
+                    'new_session': True,
+                    'new_timestamp': tmstamp}
         self.cur = defaultdict(int)
 
     def run(self):
@@ -257,7 +257,9 @@ class PumpingStation(ProgressReporter):
         logging.debug(f' source_nodes: {",".join([return_string(n.get("hostname", NA)) for n in source_nodes])}')
         return source_nodes
 
-    def transfer_bucket_msgs(self, source_bucket: Dict[str, Any], source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
+    def transfer_bucket_msgs(
+            self, source_bucket: Dict[str, Any],
+            source_map, sink_map) -> couchbaseConstants.PUMP_ERROR:
         source_nodes = self.filter_source_nodes(source_bucket, source_map)
         # Transfer bucket msgs with a Pump per source server.
         self.start_workers(len(source_nodes))
@@ -283,7 +285,7 @@ class PumpingStation(ProgressReporter):
             ix = host.rfind(":")
             if ix != -1:
                 try:
-                    _ = int(host[ix+1:])
+                    _ = int(host[ix + 1:])
                     host = host[:ix]
                 except ValueError:
                     pass
@@ -566,7 +568,7 @@ class EndPoint(object):
         if k:
             try:
                 re.compile(k)
-            except:
+            except BaseException:
                 return f'error: could not parse key regexp: {k}'
         return 0
 
@@ -654,7 +656,7 @@ class Source(EndPoint):
 
     @staticmethod
     def total_msgs(opts, source_bucket, source_node, source_map):
-        return 0, None # Subclasses can return estimate # msgs.
+        return 0, None  # Subclasses can return estimate # msgs.
 
 
 class Sink(EndPoint):
@@ -679,7 +681,7 @@ class Sink(EndPoint):
             return rv
         if getattr(opts, "destination_vbucket_state", "active") != "active":
             return f'error: only --destination-vbucket-state=active is supported by this destination: {spec}'
-        if getattr(opts, "destination_operation", None) != None:
+        if getattr(opts, "destination_operation", None) is not None:
             return f'error: --destination-operation is not supported by this destination: {spec}'
         return 0
 
@@ -695,7 +697,7 @@ class Sink(EndPoint):
 
     @staticmethod
     def consume_index(opts, sink_spec, sink_map,
-                       source_bucket, source_map, source_design) -> couchbaseConstants.PUMP_ERROR:
+                      source_bucket, source_map, source_design) -> couchbaseConstants.PUMP_ERROR:
         return 0
 
     @staticmethod
@@ -729,7 +731,7 @@ class Sink(EndPoint):
 
     def init_worker(self, target):
         self.worker_go = threading.Event()
-        self.worker_work = None # May be None or (batch, future) tuple.
+        self.worker_work = None  # May be None or (batch, future) tuple.
         self.worker = threading.Thread(target=target, args=(self,),
                                        name="s" + threading.currentThread().getName()[1:])
         self.worker.daemon = True
@@ -781,7 +783,7 @@ class StdInSource(Source):
     def check(opts, spec):
         return 0, {'spec': spec,
                    'buckets': [{'name': 'stdin:',
-                                'nodes': [{'hostname': 'N/A'}]}] }
+                                'nodes': [{'hostname': 'N/A'}]}]}
 
     @staticmethod
     def provide_design(opts, source_spec, source_bucket, source_map):
@@ -1024,7 +1026,7 @@ def rest_request(host: str, port: int, user: Optional[str], pswd: Optional[str],
         resp = conn.getresponse()
     except Exception as e:
         return f'error: could not access REST API: {host}:{port}{path}; please check source URL, server status,' \
-                   f' username (-u) and password (-p); exception: {e}{reason}', None, b''
+            f' username (-u) and password (-p); exception: {e}{reason}', None, b''
 
     if resp.status in [200, 201, 202, 204, 302]:
         return None, conn, resp.read()
@@ -1065,8 +1067,8 @@ def rest_request_json(host: str, port: int, user: Optional[str], pswd: Optional[
             f' please check URL, username (-u) and password (-p)', None, None
 
 
-def rest_couchbase(opts, spec: str, check_sink_credential: bool =False) -> Tuple[couchbaseConstants.PUMP_ERROR,
-                                                                                 Optional[Dict[str, Any]]]:
+def rest_couchbase(opts, spec: str, check_sink_credential: bool = False) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                                                  Optional[Dict[str, Any]]]:
     spec = spec.replace('couchbase://', 'http://')
 
     username = opts.username
@@ -1120,7 +1122,7 @@ def get_ip() -> str:
                 if ip.find('@'):
                     ip = ip.split('@')[1]
                 break
-        except:
+        except BaseException:
             pass
     if not ip or not len(ip):
         ip = '127.0.0.1'
@@ -1134,7 +1136,7 @@ def find_source_bucket_name(opts, source_map) -> Tuple[couchbaseConstants.PUMP_E
     if (not source_bucket and
         source_map and
         source_map['buckets'] and
-        len(source_map['buckets']) == 1):
+            len(source_map['buckets']) == 1):
         source_bucket = source_map['buckets'][0]['name']
     if not source_bucket:
         return "error: please specify a bucket_source", ''
@@ -1156,7 +1158,7 @@ def mkdirs(targetpath: str) -> couchbaseConstants.PUMP_ERROR:
     if upperdirs and not os.path.exists(upperdirs):
         try:
             os.makedirs(upperdirs)
-        except:
+        except BaseException:
             return f'Cannot create upper directories for file: {targetpath}'
     return 0
 

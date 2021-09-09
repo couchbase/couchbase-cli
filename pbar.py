@@ -23,7 +23,7 @@ if platform.system() == "Windows":
                 size_x = right - left
                 size_y = bottom - top
                 return size_x, size_y, cur_x, cur_y
-        except:
+        except BaseException:
             pass
 
         return None, None, None, None
@@ -66,7 +66,7 @@ elif platform.system() in ['Linux', 'Darwin'] or platform.system().startswith('C
             """Gets the windows size for a given file descriptor"""
             try:
                 return struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
-            except:
+            except BaseException:
                 return None
 
         window_size = ioctl_gwinsz(0) or ioctl_gwinsz(1) or ioctl_gwinsz(2)
@@ -75,7 +75,7 @@ elif platform.system() in ['Linux', 'Darwin'] or platform.system().startswith('C
                 fd = os.open(os.ctermid(), os.O_RDONLY)
                 window_size = ioctl_gwinsz(fd)
                 os.close(fd)
-            except:
+            except BaseException:
                 return None, None, None, None
 
         return int(window_size[1]), int(window_size[0]), 0, 0
@@ -91,7 +91,7 @@ elif platform.system() in ['Linux', 'Darwin'] or platform.system().startswith('C
         if rows > 0:
             sys.stdout.write(("\033[%dA" % rows))
         else:
-            sys.stdout.write(("\033[%dA" % (rows*-1)))
+            sys.stdout.write(("\033[%dA" % (rows * -1)))
 
     def move_cursor_absolute_x(cols):
         """Moves the terminal cursor absolute column position"""
@@ -183,7 +183,7 @@ class TopologyProgressBar(object):
 
     def _report_progress(self, perc_complete, cur_bucket, total_buckets, bucket_name, remaining):
         bar_size = self.term_width - 10
-        bars = int(perc_complete/100.0 * (bar_size))
+        bars = int(perc_complete / 100.0 * (bar_size))
         spaces = int(bar_size - bars)
 
         cur_buckets_str = str(cur_bucket)

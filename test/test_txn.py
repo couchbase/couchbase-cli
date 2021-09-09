@@ -86,11 +86,11 @@ class TestFilterOutTXN(unittest.TestCase):
     def generate_test_set(data_set_type, size):
         data_set = []
         for i in range(size):
-            item = DataSetItem(b'KEY:'+str(i).encode(), b'rawbytes', 0, 0, 0x00)
+            item = DataSetItem(b'KEY:' + str(i).encode(), b'rawbytes', 0, 0, 0x00)
             if data_set_type == DataSetType.NO_XATTRS:
                 pass
             elif data_set_type == DataSetType.NO_TXN_XATTRS:
-                item.val = get_value_with_XATTR(get_XATTR_pair(b'xattrs:'+str(i).encode(), i), item.val)
+                item.val = get_value_with_XATTR(get_XATTR_pair(b'xattrs:' + str(i).encode(), i), item.val)
                 item.data_type = cbcs.DATATYPE_HAS_XATTR
                 item.set_expected(item.val, data_type=cbcs.DATATYPE_HAS_XATTR)
             elif data_set_type == DataSetType.TXN_XATTRS:

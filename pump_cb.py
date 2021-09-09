@@ -27,6 +27,7 @@ class CBSink(pump_mc.MCSink):
     DDOC_HEAD = "_design/"
 
     """Smart client sink to couchbase cluster."""
+
     def __init__(self, opts, spec, source_bucket, source_node,
                  source_map, sink_map, ctl, cur):
         if spec.startswith("https://"):
@@ -41,12 +42,12 @@ class CBSink(pump_mc.MCSink):
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
                                  "user": pump.return_string(sasl_user),
-                                },
+                                 },
                  "mode": getattr(self.opts, "mode", "diff"),
                  "source_bucket": pump.return_string(self.source_bucket['name']),
                  "source_node": pump.return_string(self.source_node['hostname']),
                  "target_bucket": pump.return_string(self.sink_map['buckets'][0]['name'])
-                }
+                 }
         if conn:
             try:
                 conn.audit(couchbaseConstants.AUDIT_EVENT_RESTORE_SINK_START, json.dumps(event))
@@ -59,11 +60,11 @@ class CBSink(pump_mc.MCSink):
         event = {"timestamp": self.get_timestamp(),
                  "real_userid": {"source": "internal",
                                  "user": pump.return_string(sasl_user)
-                                },
+                                 },
                  "source_bucket": pump.return_string(self.source_bucket['name']),
                  "source_node": pump.return_string(self.source_node['hostname']),
                  "target_bucket": pump.return_string(self.sink_map['buckets'][0]['name'])
-                }
+                 }
         if conn:
             try:
                 conn.audit(couchbaseConstants.AUDIT_EVENT_RESTORE_SINK_STOP, json.dumps(event))
@@ -88,7 +89,7 @@ class CBSink(pump_mc.MCSink):
                 return rv, None, None
             if conn is not None:
                 rv, skipped = self.send_msgs(conn, msgs, self.operation(),
-                                    vbucket_id=vbucket_id)
+                                             vbucket_id=vbucket_id)
                 if rv != 0:
                     return rv, None, None
                 if len(skipped) > 0:
@@ -127,7 +128,7 @@ class CBSink(pump_mc.MCSink):
         looks at the recovery plan and modifies the vbucket map in order to ensure
         that we send the recovery data to the right server."""
         vbucket_list_dict: Dict[Any, Any] = json.loads(vbucket_list)
-        if type(vbucket_list_dict) is not dict:
+        if not isinstance(vbucket_list_dict, dict):
             return "Expected recovery map to be a dictionary"
 
         server_vb_map = None
@@ -299,7 +300,7 @@ class CBSink(pump_mc.MCSink):
         if (not sink_map['buckets'] or
             len(sink_map['buckets']) != 1 or
             not sink_map['buckets'][0] or
-            not sink_map['buckets'][0]['name']):
+                not sink_map['buckets'][0]['name']):
             return "error: design sink incorrect sink_map bucket"
         spec_parts = pump.parse_spec(opts, sink_spec, 8091)
         if not spec_parts:
@@ -322,7 +323,7 @@ class CBSink(pump_mc.MCSink):
         if opts.username_dest is not None and opts.password_dest is not None:
             user = opts.username_dest
             user = opts.password_dest
-        if type(sd) is dict:
+        if isinstance(sd, dict):
             id = sd.get('_id', None)
             if id:
                 str_source = _to_string(source_design)
@@ -349,7 +350,7 @@ class CBSink(pump_mc.MCSink):
                                 logging.error(f'N1QL query {stmt["statement"]} failed due to error `{error["msg"]}`')
                 except ServiceNotAvailableException as e:
                     logging.error("Failed to restore indexes, cluster does not contain a query node")
-        elif type(sd) is list:
+        elif isinstance(sd, list):
             for row in sd:
                 logging.debug(f'design_doc row: {row!s}')
 

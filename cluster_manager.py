@@ -5,7 +5,9 @@ import requests
 import os
 import sys
 import time
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import urllib3
 from typing import Dict, Optional, List, Any
 
@@ -36,6 +38,7 @@ def one_zero_boolean_to_string(value: str) -> str:
 # Remove this once we can verify SSL certificates
 urllib3.disable_warnings()
 
+
 def request(f):
     def g(*args, **kwargs):
         cm = args[0]
@@ -45,12 +48,12 @@ def request(f):
         except requests.exceptions.ConnectionError as e:
             if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(e):
                 return None, ['Certificate verification failed.\n' +
-                'If you are using self-signed certificates you can re-run this command with\n' +
-                'the --no-ssl-verify flag. Note however that disabling ssl verification\n' +
-                'means that couchbase-cli will be vulnerable to man-in-the-middle attacks.\n\n' +
-                'For the most secure access to Couchbase make sure that you have X.509\n' +
-                'certificates set up in your cluster and use the --cacert flag to specify\n' +
-                'your client certificate.']
+                              'If you are using self-signed certificates you can re-run this command with\n' +
+                              'the --no-ssl-verify flag. Note however that disabling ssl verification\n' +
+                              'means that couchbase-cli will be vulnerable to man-in-the-middle attacks.\n\n' +
+                              'For the most secure access to Couchbase make sure that you have X.509\n' +
+                              'certificates set up in your cluster and use the --cacert flag to specify\n' +
+                              'your client certificate.']
             elif str(e).startswith('[SSL]'):
                 return None, [f'Unable to connect with the given CA certificate: {str(e)}']
             return None, [f'Unable to connect to host at {cm.hostname}: {str(e)}']
@@ -220,7 +223,7 @@ class ClusterManager(object):
     def is_cluster_initialized(self):
         data, errors = self.pools()
         if (errors and len(errors) == 1 and errors[0] == ERR_AUTH) or \
-            (data and data['pools'] and len(data['pools']) > 0):
+                (data and data['pools'] and len(data['pools']) > 0):
             return True, None
         return False, errors
 
@@ -1167,7 +1170,6 @@ class ClusterManager(object):
                 hsts.append('includeSubDomains')
             params['responseHeaders'] = f'{{"Strict-Transport-Security":"{";".join(hsts)}"}}'
 
-
         return self._post_form_encoded(url, params)
 
     def get_security_settings(self):
@@ -1397,8 +1399,8 @@ class ClusterManager(object):
         return self._get(url)
 
     def ldap_settings(self, authentication_enabled, authorization_enabled, hosts, port, encryption, user_dn_mapping,
-                    timeout, max_parallel, max_cache, cache_lifetime, query_dn, query_pass, cert, key, group_query,
-                    nested_groups, nested_groups_max_depth, server_ca_ver, ca):
+                      timeout, max_parallel, max_cache, cache_lifetime, query_dn, query_pass, cert, key, group_query,
+                      nested_groups, nested_groups_max_depth, server_ca_ver, ca):
         url = f'{self.hostname}/settings/ldap'
 
         params = {}
@@ -2314,7 +2316,7 @@ def _handle_response(response, debug):
         errors = response.json()
         return None, [errors["message"] + ": " + ", ".join(errors["permissions"])]
     # Error codes from Eventing service
-    elif response.status_code  in [406, 422, 423]:
+    elif response.status_code in [406, 422, 423]:
         errors = response.json()
         if "description" in errors:
             return None, [errors["description"]]

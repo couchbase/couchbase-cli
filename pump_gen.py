@@ -206,7 +206,7 @@ class GenSource(pump.Source):
             ops = 0
             sets = 0
             while sets != source_map['cfg']['max-items']:
-                if ratio >= float(sets)/float(ops or 1):
+                if ratio >= float(sets) / float(ops or 1):
                     sets += 1
                 ops += 1
             return 0, ops

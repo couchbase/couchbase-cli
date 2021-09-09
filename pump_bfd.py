@@ -151,13 +151,13 @@ class BFD:
         rootpath, _ = BFD.find_latest_dir(parent_dir, None)
         if not rootpath or not mode or mode == "full":
             # no any backup roots exists
-            path = os.path.join(parent_dir, tmstamp, tmstamp+"-full")
+            path = os.path.join(parent_dir, tmstamp, tmstamp + "-full")
             return BFD.construct_dir(path, bucket_name, node_name)
 
         # check if any full backup exists
         path, _ = BFD.find_latest_dir(rootpath, "full")  # type: ignore
         if not path:
-            path = os.path.join(rootpath, tmstamp+"-full")
+            path = os.path.join(rootpath, tmstamp + "-full")
             return BFD.construct_dir(path, bucket_name, node_name)
 
         # further check full backup for this bucket and node
@@ -168,27 +168,27 @@ class BFD:
         if mode.find("diff") >= 0:
             path, _ = BFD.find_latest_dir(rootpath, "diff")  # type: ignore
             if not path or new_session:
-                path = os.path.join(rootpath, tmstamp+"-diff")
+                path = os.path.join(rootpath, tmstamp + "-diff")
                 return BFD.construct_dir(path, bucket_name, node_name)
 
             path = BFD.construct_dir(path, bucket_name, node_name)
             if not os.path.isdir(path):
                 return path
 
-            path = os.path.join(rootpath, tmstamp+"-diff")
+            path = os.path.join(rootpath, tmstamp + "-diff")
             return BFD.construct_dir(path, bucket_name, node_name)
 
         if mode.find("accu") >= 0:
             path, _ = BFD.find_latest_dir(rootpath, "accu")  # type: ignore
             if not path or new_session:
-                path = os.path.join(rootpath, tmstamp+"-accu")
+                path = os.path.join(rootpath, tmstamp + "-accu")
                 return BFD.construct_dir(path, bucket_name, node_name)
 
             path = BFD.construct_dir(path, bucket_name, node_name)
             if not os.path.isdir(path):
                 return path
 
-            path = os.path.join(rootpath, tmstamp+"-accu")
+            path = os.path.join(rootpath, tmstamp + "-accu")
             return BFD.construct_dir(path, bucket_name, node_name)
 
         return parent_dir
@@ -205,7 +205,7 @@ class BFD:
                 if os.path.isdir(bd):
                     all_subdirs.append(bd)
         if all_subdirs:
-            all_subdirs = sorted(all_subdirs,key=os.path.getmtime, reverse=True)
+            all_subdirs = sorted(all_subdirs, key=os.path.getmtime, reverse=True)
             latest_dir = all_subdirs[0]
         return latest_dir, all_subdirs
 
@@ -263,7 +263,7 @@ class BFD:
         if mode.find("diff") >= 0:
             diffdir, diff_dirs = BFD.find_latest_dir(timedir, "diff")
             if diff_dirs:
-                last_backup = BFD.construct_dir(diffdir, bucket_name, node_name) # type: ignore
+                last_backup = BFD.construct_dir(diffdir, bucket_name, node_name)  # type: ignore
                 for dir in diff_dirs:
                     path = BFD.construct_dir(dir, bucket_name, node_name)
                     if os.path.isdir(path):
@@ -566,16 +566,16 @@ class BFDSource(BFD, pump.Source):
     def total_msgs(opts, source_bucket, source_node, source_map) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[int]]:
         t = 0
         file_list = glob.glob(BFD.db_dir(
-                                 source_map['spec'],
-                                 source_bucket['name'],
-                                 source_node['hostname']) + "/data-*.cbb")
+            source_map['spec'],
+            source_bucket['name'],
+            source_node['hostname']) + "/data-*.cbb")
         if not file_list:
             # check 3.0 directory structure
             rv, file_list = BFDSource.list_files(opts,
-                                        source_map['spec'],
-                                        source_bucket['name'],
-                                        source_node['hostname'],
-                                        "data-*.cbb")
+                                                 source_map['spec'],
+                                                 source_bucket['name'],
+                                                 source_node['hostname'],
+                                                 "data-*.cbb")
             if rv != 0:
                 return rv, None
 
@@ -683,8 +683,8 @@ class BFDSink(BFD, pump.Sink):
                 meta_file = os.path.join(db_dir, "meta.json")
                 json_file = open(meta_file, "w")
                 to_write = {'pred': dep,
-                           'conflict_resolution_type': conf_res_type,
-                           'version': version}
+                            'conflict_resolution_type': conf_res_type,
+                            'version': version}
                 json.dump(to_write, json_file, ensure_ascii=False)
                 json_file.close()
 
@@ -930,7 +930,7 @@ def connect_db(db_path, opts, version):
         if cur not in version:
             logging.debug(f'db_path is not empty: {db_path}')
             return f'error: unexpected db user version: {cur!s} vs {version!s}, maybe a backup directory created by' \
-                       f' older releases is reused', None, None
+                f' older releases is reused', None, None
 
         return 0, db, version.index(cur)
 
@@ -945,10 +945,10 @@ def cleanse(d):
 
 def cleanse_helper(d):
     """Recursively, destructively elide passwords from hierarchy of dict/list's."""
-    if type(d) is list:
+    if isinstance(d, list):
         for x in d:
             cleanse_helper(x)
-    elif type(d) is dict:
+    elif isinstance(d, dict):
         for k, v in d.items():
             if "assword" in k:
                 d[k] = '<...ELIDED...>'

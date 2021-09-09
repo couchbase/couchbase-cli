@@ -98,7 +98,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         self.not_found()
 
-    def  do_DELETE(self):
+    def do_DELETE(self):
         parsed = urlparse(self.path)
         self.server.rest_server.trace.append(f'DELETE:{parsed.path}')
         if parsed.query:
@@ -151,6 +151,7 @@ class MockHTTPServer(HTTPServer):
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         HTTPServer.server_bind(self)
 
+
 class MockHTTPSServer(HTTPServer):
     def __init__(self, host_port, handler, rest_server):
         self.rest_server = rest_server  # Instance of MockRESTServer.
@@ -170,7 +171,7 @@ class MockRESTServer(object):
         self.args = args
         self.host = host
         self.port = port
-        self.https_port = port+1
+        self.https_port = port + 1
         self.trace = []
         self.rest_params = []
         self.queries = []
@@ -193,7 +194,7 @@ class MockRESTServer(object):
         while not self.stop:
             try:
                 server.handle_request()
-            except:
+            except BaseException:
                 self.stop = True
 
     def _run_http(self):
@@ -238,8 +239,8 @@ def get_pools(rest_params=None, server_args=None, path="", endpoint_match=None):
         enterprise = server_args['enterprise']
 
     response_init = {'uuid': '5f8b140987f4e46c950e3fa82e7fcb48', 'settings':
-        {'viewUpdateDaemon': '/settings/viewUpdateDaemon?uuid=5f8b140987f4e46c950e3fa82e7fcb48',
-         'maxParallelIndexers': '/settings/maxParallelIndexers?uuid=5f8b140987f4e46c950e3fa82e7fcb48'},
+                     {'viewUpdateDaemon': '/settings/viewUpdateDaemon?uuid=5f8b140987f4e46c950e3fa82e7fcb48',
+                      'maxParallelIndexers': '/settings/maxParallelIndexers?uuid=5f8b140987f4e46c950e3fa82e7fcb48'},
                      'pools': [{'streamingUri': '/poolsStreaming/default?uuid=5f8b140987f4e46c950e3fa82e7fcb48',
                                 'name': 'default', 'uri': '/pools/default?uuid=5f8b140987f4e46c950e3fa82e7fcb48'}],
                      'isEnterprise': enterprise,
@@ -266,7 +267,7 @@ def do_nothing(rest_params=None, server_args=None, path="", endpoint_match=None)
     return 200, None
 
 
-def set_analytics_link (rest_params=None, server_args=None, path="", endpointMatch=None):
+def set_analytics_link(rest_params=None, server_args=None, path="", endpointMatch=None):
     if 'fail' in server_args and server_args['fail']:
         return 409, "CBAS0054: Operation cannot be performed while the link is connected"
     return 200, None
@@ -284,7 +285,7 @@ def get_ddocs(rest_params=None, server_args=None, path="", endpoint_match=None):
 
 
 def delete_bucket(rest_params=None, server_args=None, path="", endpoint_match=None):
-    bucket = path[path.rfind('/')+1:]
+    bucket = path[path.rfind('/') + 1:]
     if 'buckets' not in server_args:
         return 404, ['Bucket not found']
 
@@ -427,6 +428,7 @@ def get_audit_settings(rest_params=None, server_args=None, path="", endpoint_mat
         return 200, server_args['audit_settings']
     return 200, {}
 
+
 endpoints = [
     (r'/close$', {'GET': do_nothing}),
     (r'/whoami', {'GET': get_my_roles}),
@@ -499,7 +501,11 @@ endpoints = [
     (r'/api/index', {'GET': get_by_path}),
 
     # analytics api
-    (r'/analytics/link', {'GET': get_by_path, 'POST': set_analytics_link, 'PUT': set_analytics_link, 'DELETE': do_nothing}),
+    (r'/analytics/link',
+     {'GET': get_by_path,
+      'POST': set_analytics_link,
+      'PUT': set_analytics_link,
+      'DELETE': do_nothing}),
 
     # backup server API
     (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing}),

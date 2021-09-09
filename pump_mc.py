@@ -8,7 +8,7 @@ import struct
 import time
 import sys
 from typing import Tuple, Any, Optional, Dict, List
-import snappy # pylint: disable=import-error
+import snappy  # pylint: disable=import-error
 import cb_bin_client
 import couchbaseConstants
 import pump
@@ -32,14 +32,14 @@ OP_MAP = {
     'set': couchbaseConstants.CMD_SET,
     'add': couchbaseConstants.CMD_ADD,
     'delete': couchbaseConstants.CMD_DELETE,
-    }
+}
 
 OP_MAP_WITH_META = {
     'get': couchbaseConstants.CMD_GET,
     'set': couchbaseConstants.CMD_SET_WITH_META,
     'add': couchbaseConstants.CMD_ADD_WITH_META,
     'delete': couchbaseConstants.CMD_DELETE_WITH_META
-    }
+}
 
 ATR_EXP = re.compile(r'_txn:atr-\d+-#([a-f1-9]+)$')
 
@@ -274,7 +274,7 @@ class MCSink(pump.Sink):
             return False, val, cas, exp, revid, data_type
 
         # look for a txn on the xattrs
-        xattrs = val[4:xattr_len_int+7]
+        xattrs = val[4:xattr_len_int + 7]
         txn_marker: Optional[txnMarker] = None
         ix = 0
         while ix < len(xattrs):
@@ -287,7 +287,8 @@ class MCSink(pump.Sink):
 
             # check if the key is txn if it matches create a marker and break
             if xattr_key == 'txn':
-                txn_marker = txnMarker(ix, pair_len, xattrs[ix+len(xattr_key)+1: pair_len+ix-len(xattr_key)+2])
+                txn_marker = txnMarker(ix, pair_len, xattrs
+                                       [ix + len(xattr_key) + 1: pair_len + ix - len(xattr_key) + 2])
                 break
 
             # otherwise skip body and move on to next xattr
@@ -332,7 +333,7 @@ class MCSink(pump.Sink):
         # check if the are any xattrs left
         if new_xattr_len <= 0:
             # copy everything after the xattrs
-            val = val[xattr_len_int+4:]
+            val = val[xattr_len_int + 4:]
             data_type = 0x00  # Raw bytes
             try:
                 _ = json.loads(val.decode())
@@ -346,7 +347,7 @@ class MCSink(pump.Sink):
         if txn_marker.start != 4:
             new_val += val[4: txn_marker.start]
 
-        new_val += val[4+txn_marker.start + txn_marker.length:]
+        new_val += val[4 + txn_marker.start + txn_marker.length:]
         return False, new_val, cas, exp, revid, data_type
 
     @staticmethod
@@ -383,7 +384,7 @@ class MCSink(pump.Sink):
                                1, 0, vbucket_id, total_body_len, opaque, cas)
         extras = struct.pack(">B", couchbaseConstants.SUBDOC_FLAG_MKDOC)
 
-        return 0, (msg_head+extras+key+subcmd_msg0+subcmd_msg1, None, None, None, None)
+        return 0, (msg_head + extras + key + subcmd_msg0 + subcmd_msg1, None, None, None, None)
 
     @staticmethod
     def format_multipath_lookup(key: bytes, value: bytes, vbucket_id: int, cas: int = 0, opaque: int = 0) -> \
@@ -410,7 +411,7 @@ class MCSink(pump.Sink):
                                couchbaseConstants.CMD_SUBDOC_MULTIPATH_LOOKUP, len(key),
                                0, 0, vbucket_id, total_body_len, opaque, cas)
 
-        return 0, (msg_head+key+subcmd_msg0+subcmd_msg1, None, None, None, None)
+        return 0, (msg_head + key + subcmd_msg0 + subcmd_msg1, None, None, None, None)
 
     @staticmethod
     def join_str_and_bytes(lst: List[bytes]) -> bytes:
@@ -451,7 +452,7 @@ class MCSink(pump.Sink):
                     continue
                 elif r_status == couchbaseConstants.ERR_KEY_ENOENT:
                     if (cmd != couchbaseConstants.CMD_TAP_DELETE and
-                        cmd != couchbaseConstants.CMD_GET):
+                            cmd != couchbaseConstants.CMD_GET):
                         logging.warning(f'item not found: {self.spec}, key: {tag_user_data(key)}')
                     continue
                 elif (r_status == couchbaseConstants.ERR_ETMPFAIL or
@@ -478,7 +479,7 @@ class MCSink(pump.Sink):
                     else:
                         if not retry:
                             logging.warning("destination does not take XXX-WITH-META"
-                                         " commands; will use META-less commands")
+                                            " commands; will use META-less commands")
                         self.op_map = OP_MAP
                         retry = True
                 elif r_status == couchbaseConstants.ERR_ACCESS:
@@ -566,21 +567,34 @@ class MCSink(pump.Sink):
 
     @staticmethod
     def connect_mc(host: str, port: int, username: str, password: str, bucket: Optional[str], use_ssl: bool = False,
-                   verify: bool = True, ca_cert: str = None, collections: bool = False)-> \
+                   verify: bool = True, ca_cert: str = None, collections: bool = False) -> \
             Tuple[couchbaseConstants.PUMP_ERROR, Optional[cb_bin_client.MemcachedClient]]:
         return pump.get_mcd_conn(host, port, username, password, bucket, use_ssl=use_ssl, verify=verify,
                                  ca_cert=ca_cert, collections=collections)
 
-    def cmd_request(self, cmd: int, vbucket_id: int, key: bytes, val: bytes, flg: int, exp: int, cas: int,
+    def cmd_request(self,
+                    cmd: int,
+                    vbucket_id: int,
+                    key: bytes,
+                    val: bytes,
+                    flg: int,
+                    exp: int,
+                    cas: int,
                     meta: Optional[bytes],
-                    opaque: int, dtype: int, nmeta: Any, conf_res: Optional[str]) -> Tuple[couchbaseConstants.PUMP_ERROR,
-                                                                                           Tuple[bytes, bytes, bytes,
-                                                                                                 bytes, bytes]]:
+                    opaque: int,
+                    dtype: int,
+                    nmeta: Any,
+                    conf_res: Optional[str]) -> Tuple[couchbaseConstants.PUMP_ERROR,
+                                                      Tuple[bytes,
+                                                            bytes,
+                                                            bytes,
+                                                            bytes,
+                                                            bytes]]:
         ext_meta = b''
         empty_tuple = (b'', b'', b'', b'', b'')
         if (cmd == couchbaseConstants.CMD_SET_WITH_META or
             cmd == couchbaseConstants.CMD_ADD_WITH_META or
-            cmd == couchbaseConstants.CMD_DELETE_WITH_META):
+                cmd == couchbaseConstants.CMD_DELETE_WITH_META):
 
             force = 0
             if int(self.conflict_resolve) == 0:
@@ -609,10 +623,10 @@ class MCSink(pump.Sink):
                 ext = struct.pack(">IIQQI", flg, exp, 1, cas, force)
             if conf_res:
                 extra_meta = struct.pack(">BBHH",
-                                couchbaseConstants.DCP_EXTRA_META_VERSION,
-                                couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION,
-                                len(conf_res),
-                                conf_res)
+                                         couchbaseConstants.DCP_EXTRA_META_VERSION,
+                                         couchbaseConstants.DCP_EXTRA_META_CONFLICT_RESOLUTION,
+                                         len(conf_res),
+                                         conf_res)
                 ext += struct.pack(">H", len(extra_meta))
         elif (cmd == couchbaseConstants.CMD_SET or
               cmd == couchbaseConstants.CMD_ADD):
@@ -646,8 +660,8 @@ class MCSink(pump.Sink):
 
         if data:
             ext = data[0:extlen]
-            key = data[extlen:extlen+keylen]
-            val = data[extlen+keylen:]
+            key = data[extlen:extlen + keylen]
+            val = data[extlen + keylen:]
 
         return cmd, errcode, ext, key, val, cas, opaque
 
