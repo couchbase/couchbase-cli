@@ -9,7 +9,11 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import urllib3
+
+from pathlib import Path
 from typing import Dict, Optional, List, Any
+
+from x509_adapter import X509Adapter, X509AdapterFactory
 
 N1QL_SERVICE = 'n1ql'
 INDEX_SERVICE = 'index'
@@ -72,8 +76,9 @@ class ServiceNotAvailableException(Exception):
 class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
-    def __init__(self, hostname, username, password, ssl_flag=False, verify_cert=True,
-                 ca_cert=True, debug=False, timeout=DEFAULT_REQUEST_TIMEOUT, cert=None):
+    def __init__(self, hostname, username, password, ssl_flag=False, verify_cert=True, ca_cert=True, debug=False,
+                 timeout=DEFAULT_REQUEST_TIMEOUT, client_ca: Optional[Path] = None, client_pk: Optional[Path] = None,
+                 client_pk_password=""):
         hostname = hostname.replace("couchbase://", "http://", 1)
         hostname = hostname.replace("couchbases://", "https://", 1)
 
@@ -85,8 +90,6 @@ class ClusterManager(object):
         self.ca_cert = ca_cert
         if not verify_cert:
             self.ca_cert = False
-        # This is for client side certs which is currently not used.
-        self.cert = cert
 
         parsed = urllib.parse.urlparse(hostname)
         if ssl_flag:
@@ -112,6 +115,24 @@ class ClusterManager(object):
                 'User-Agent': f'{os.path.basename(sys.argv[0])}  {VERSION}',
             }
         )
+
+        self.session = requests.Session()
+
+        adapter = self._generate_x509_adapter(hostname, client_ca, client_pk, client_pk_password)
+        if adapter:
+            self.username, self.password = "", ""  # Only use a single method of authentication at once
+            self.session.mount("https://", adapter)
+
+    @classmethod
+    def _generate_x509_adapter(cls,
+                               hostname: str,
+                               client_ca: Optional[Path],
+                               client_pk: Optional[Path],
+                               password: str = "") -> Optional[X509Adapter]:
+        if client_ca is None:
+            return None
+
+        return X509AdapterFactory(hostname, client_ca, client_pk=client_pk, password=password).generate()
 
     def restore_index_metadata(self, bucket, index_defs):
         hosts, errors = self.get_hostnames_for_service(INDEX_SERVICE)
@@ -2212,139 +2233,127 @@ class ClusterManager(object):
 
     # Low level methods for basic HTML operations
 
+    @classmethod
+    def _url_encode_params(cls, params):
+        return urllib.parse.urlencode(params if params is not None else {})
+
+    @classmethod
+    def _json_encode_params(cls, params):
+        return json.dumps(params if params is not None else {})
+
     @request
     def _get(self, url, params=None):
         if self.debug:
-            if params is None:
-                params = {}
-            print(f'GET {url} {urllib.parse.urlencode(params)}')
+            print(f'GET {url} {self._url_encode_params(params)}')
 
-        response = requests.get(url, params, auth=(self.username, self.password), verify=self.ca_cert,
-                                cert=self.cert, timeout=self.timeout,
-                                headers=self.headers)
-        return _handle_response(response, self.debug)
+        return self._handle_response(self.session.get(url, params=params, auth=(self.username, self.password),
+                                                      verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
     def _post_form_encoded(self, url, params):
         if self.debug:
-            if params is None:
-                params = {}
-            print(f'POST {url} {urllib.parse.urlencode(params)}')
-        response = requests.post(url, auth=(self.username, self.password), data=params,
-                                 cert=self.cert, verify=self.ca_cert, timeout=self.timeout,
-                                 headers=self.headers)
-        return _handle_response(response, self.debug)
+            print(f'POST {url} {self._url_encode_params(params)}')
+
+        return self._handle_response(self.session.post(url, auth=(self.username, self.password), data=params,
+                                                       verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
     def _post_json(self, url, params):
         if self.debug:
-            if params is None:
-                params = {}
-            print(f'POST {url} {json.dumps(params)}')
-        response = requests.post(url, auth=(self.username, self.password), json=params,
-                                 cert=self.cert, verify=self.ca_cert, timeout=self.timeout,
-                                 headers=self.headers)
-        return _handle_response(response, self.debug)
+            print(f'POST {url} {self._json_encode_params(params)}')
+
+        return self._handle_response(self.session.post(url, auth=(self.username, self.password), json=params,
+                                                       verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
     def _patch_json(self, url, params):
         if self.debug:
-            if params is None:
-                params = {}
-            print(f'PATCH {url} {json.dumps(params)}')
-        response = requests.patch(url, auth=(self.username, self.password), json=params, cert=self.cert,
-                                  verify=self.ca_cert, timeout=self.timeout, headers=self.headers)
-        return _handle_response(response, self.debug)
+            print(f'PATCH {url} {self._json_encode_params(params)}')
+
+        return self._handle_response(self.session.patch(url, auth=(self.username, self.password), json=params,
+                                                        verify=self.ca_cert, timeout=self.timeout,
+                                                        headers=self.headers))
 
     @request
     def _put(self, url, params):
         if self.debug:
-            if params is None:
-                params = {}
-            print(f'PUT {url} {urllib.parse.urlencode(params)}')
-        response = requests.put(url, params, auth=(self.username, self.password),
-                                cert=None, verify=self.ca_cert, timeout=self.timeout,
-                                headers=self.headers)
-        return _handle_response(response, self.debug)
+            print(f'PUT {url} {self._url_encode_params(params)}')
+
+        return self._handle_response(self.session.put(url, params, auth=(self.username, self.password),
+                                                      verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
     def _put_json(self, url, params):
         if self.debug:
-            if params is None:
-                params = {}
-            print(f'PUT {url} {json.dumps(params)}')
-        response = requests.put(url, auth=(self.username, self.password), json=params,
-                                cert=None, verify=self.ca_cert, timeout=self.timeout,
-                                headers=self.headers)
-        return _handle_response(response, self.debug)
+            print(f'PUT {url} {self._json_encode_params(params)}')
+
+        return self._handle_response(self.session.put(url, None, auth=(self.username, self.password), json=params,
+                                                      verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
     def _delete(self, url, params):
         if self.debug:
-            if params is None:
-                params = {}
-            print(f'DELETE {url} {urllib.parse.urlencode(params)}')
-        response = requests.delete(url, auth=(self.username, self.password), data=params,
-                                   cert=None, verify=self.ca_cert, timeout=self.timeout,
-                                   headers=self.headers)
-        return _handle_response(response, self.debug)
+            print(f'DELETE {url} {self._url_encode_params(params)}')
 
+        return self._handle_response(self.session.delete(url, auth=(self.username, self.password), data=params,
+                                                         verify=self.ca_cert, timeout=self.timeout,
+                                                         headers=self.headers))
 
-def _handle_response(response, debug):
-    if debug:
-        output = str(response.status_code)
-        if response.headers:
-            output += f', {response.headers}'
-        if response.content:
-            response.encoding = 'utf-8'
-            output += f', {response.content}'
-        print(output)
-    if response.status_code in [200, 202]:
-        if 'Content-Type' not in response.headers:
-            return "", None
-        if not response.content:
-            return "", None
-        if 'application/json' in response.headers['Content-Type']:
-            return response.json(), None
-        else:
-            response.encoding = 'utf-8'
-            return response.text, None
-    elif response.status_code in [400, 404, 405, 409]:
-        if 'Content-Type' not in response.headers:
-            return None, ["Not a Couchbase Server, please check hostname and port"]
-        if 'application/json' in response.headers['Content-Type']:
+    def _handle_response(self, response):
+        if self.debug:
+            output = str(response.status_code)
+            if response.headers:
+                output += f', {response.headers}'
+            if response.content:
+                response.encoding = 'utf-8'
+                output += f', {response.content}'
+            print(output)
+        if response.status_code in [200, 202]:
+            if 'Content-Type' not in response.headers:
+                return "", None
+            if not response.content:
+                return "", None
+            if 'application/json' in response.headers['Content-Type']:
+                return response.json(), None
+            else:
+                response.encoding = 'utf-8'
+                return response.text, None
+        elif response.status_code in [400, 404, 405, 409]:
+            if 'Content-Type' not in response.headers:
+                return None, ["Not a Couchbase Server, please check hostname and port"]
+            if 'application/json' in response.headers['Content-Type']:
+                errors = response.json()
+                if isinstance(errors, list):
+                    return None, errors
+                if "errors" in errors and isinstance(errors["errors"], list):
+                    return None, errors["errors"]
+                if "errors" in errors and isinstance(errors["errors"], dict):
+                    return None, [f"{key} - {str(value)}" for key, value in errors["errors"].items()]
+                return None, [errors]
+            return None, [response.text]
+        elif response.status_code == 401:
+            return None, [ERR_AUTH]
+        elif response.status_code == 403:
+            errors = response.json()
+            return None, [errors["message"] + ": " + ", ".join(errors["permissions"])]
+        # Error codes from Eventing service
+        elif response.status_code in [406, 422, 423]:
+            errors = response.json()
+            if "description" in errors:
+                return None, [errors["description"]]
+            return None, ['Received unexpected status %d' % response.status_code]
+        # Error code from Eventing Service
+        elif response.status_code == 207:
             errors = response.json()
             if isinstance(errors, list):
-                return None, errors
-            if "errors" in errors and isinstance(errors["errors"], list):
-                return None, errors["errors"]
-            if "errors" in errors and isinstance(errors["errors"], dict):
-                return None, [f"{key} - {str(value)}" for key, value in errors["errors"].items()]
-            return None, [errors]
-        return None, [response.text]
-    elif response.status_code == 401:
-        return None, [ERR_AUTH]
-    elif response.status_code == 403:
-        errors = response.json()
-        return None, [errors["message"] + ": " + ", ".join(errors["permissions"])]
-    # Error codes from Eventing service
-    elif response.status_code in [406, 422, 423]:
-        errors = response.json()
-        if "description" in errors:
-            return None, [errors["description"]]
-        return None, ['Received unexpected status %d' % response.status_code]
-    # Error code from Eventing Service
-    elif response.status_code == 207:
-        errors = response.json()
-        if isinstance(errors, list):
-            rv = list()
-            for error in errors:
-                if error['code'] == 20:
-                    rv.append(error['info'])
-            return None, rv
+                rv = list()
+                for error in errors:
+                    if error['code'] == 20:
+                        rv.append(error['info'])
+                return None, rv
+            else:
+                return None, ['Received unexpected status %d' % response.status_code]
+        elif response.status_code == 500:
+            return None, [ERR_INTERNAL]
         else:
             return None, ['Received unexpected status %d' % response.status_code]
-    elif response.status_code == 500:
-        return None, [ERR_INTERNAL]
-    else:
-        return None, ['Received unexpected status %d' % response.status_code]

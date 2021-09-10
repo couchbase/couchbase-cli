@@ -4,15 +4,22 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
+cryptography = "==3.4.8"
+pem = "==21.2.0"
+pycryptodome = "==3.10.1"
+pyopenssl = "==20.0.1"
 python-snappy = "==0.6.0"
 requests = "==2.26.0"
+requests-toolbelt = "==0.9.1"
 
 [dev-packages]
 autopep8 = "==1.5.7"
-cryptography = "==3.4.8"
 jedi = "==0.18.0"
+mypy = "==0.910"
 pylint = "==2.10.2"
 rope = "==0.19.0"
+types-pyopenssl = "==20.0.5"
+types-requests = "==2.25.6"
 
 [requires]
 python_version = "3.9"

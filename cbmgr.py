@@ -20,6 +20,7 @@ from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPR
 from operator import itemgetter
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
+from x509_adapter import X509AdapterError
 
 try:
     from cb_version import VERSION  # pylint: disable=import-error
@@ -115,8 +116,12 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
     """
     def inner(fn):
         def decorator(self, opts):
-            self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                                       opts.cacert, opts.debug)
+            try:
+                self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
+                                           opts.cacert, opts.debug)
+            except X509AdapterError as error:
+                _exit_if_errors([f"failed to setup client certificate encryption, {error}"])
+
             if cluster_init_check:
                 check_cluster_initialized(self.rest)
             if version_check:
