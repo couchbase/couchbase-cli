@@ -1801,11 +1801,12 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
 
-        params = {}
-        params["deployment_status"] = deploy
-        params["processing_status"] = deploy
+        params = {
+            "deployment_status": deploy,
+            "processing_status": deploy,
+        }
 
-        if deploy:
+        if deploy and boundary:
             params["feed-boundary"] = boundary
 
         url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}/settings'
@@ -2193,6 +2194,21 @@ class ClusterManager(object):
             return None, err
 
         return node_data['nodes'], None
+
+    def min_version(self):
+        data, err = self.pools("default")
+        if err:
+            return None, err
+
+        min_version = data["nodes"][0]["version"].split("-")[0]
+
+        for node in data["nodes"][1:]:
+            node_version = node["version"].split("-")[0]
+
+            if node_version < min_version:
+                min_version = node_version
+
+        return min_version, None
 
     # Low level methods for basic HTML operations
 

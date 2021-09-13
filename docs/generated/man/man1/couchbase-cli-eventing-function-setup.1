@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-eventing-function-setup
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-09-13
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-EVENTING\-FUNCTION\-SETUP" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-EVENTING\-FUNCTION\-SETUP" "1" "2021-09-13" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,9 +28,8 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-eventing\-function\-setup \- Manage Events
+couchbase-cli-eventing-function-setup \- Manage Events
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 \fIcouchbase\-cli eventing\-function\-setup\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -126,9 +125,9 @@ The name of the function to take a action against. This is used by
 .sp
 \-\-boundary <from\-everything|from\-now>
 .RS 4
-The place to start at when deploying a new function. Accepts \(aqfrom\-now\(aq or
-\(aqfrom\-everything\(aq defaulting to \(aqfrom\-everything\(aq if the \-\-boundary flag
-is omitted.
+(Deprecated) The place to start at when deploying a new function. Accepts
+\*(Aqfrom\-now\*(Aq or \*(Aqfrom\-everything\*(Aq defaulting to \*(Aqfrom\-everything\*(Aq if the
+\-\-boundary flag is omitted.
 .RE
 .sp
 \-\-file <file>
@@ -183,8 +182,10 @@ To import functions from a file called \fIfunctions.json\fP:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-import \-\-file functions.json
+.fam
 .fi
 .if n .RE
 .sp
@@ -193,8 +194,10 @@ To export a function called \fIalert_function\fP to a file called
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-export \-\-name alert_function \-\-file functions.json
+.fam
 .fi
 .if n .RE
 .sp
@@ -202,8 +205,10 @@ To export all functions to a file called \fIfunctions.json\fP:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-export\-all \-\-file functions.json
+.fam
 .fi
 .if n .RE
 .sp
@@ -211,8 +216,10 @@ To list all functions:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-list
+.fam
 .fi
 .if n .RE
 .sp
@@ -220,8 +227,10 @@ To delete a function called \fIalert_function\fP:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-delete \-\-name alert_function
+.fam
 .fi
 .if n .RE
 .sp
@@ -230,8 +239,10 @@ new data:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-deploy \-\-name alert_function \-\-boundary from\-everything
+.fam
 .fi
 .if n .RE
 .sp
@@ -239,8 +250,10 @@ To deploy a function called \fIalert_function\fP and process only new data:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-deploy \-\-name alert_function \-\-boundary from\-now
+.fam
 .fi
 .if n .RE
 .sp
@@ -248,8 +261,10 @@ To undeploy a function called \fIalert_function\fP:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-undeploy \-\-name alert_function
+.fam
 .fi
 .if n .RE
 .sp
@@ -257,8 +272,10 @@ To pause a function called \fIalert_function\fP:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-pause \-\-name alert_function
+.fam
 .fi
 .if n .RE
 .sp
@@ -266,8 +283,10 @@ To resume a function called \fIalert_function\fP:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli eventing\-function\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-resume \-\-name alert_function
+.fam
 .fi
 .if n .RE
 .SH "UNDEPLOY VS PAUSE"

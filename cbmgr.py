@@ -3906,7 +3906,7 @@ class EventingFunctionSetup(Subcommand):
                            default=False, help="Undeploy a function")
         group.add_argument("--boundary", dest="boundary", metavar="<from-everything|from-now>",
                            choices=["from-everything", "from-now"], default=False,
-                           help="Set the function deployment boundary")
+                           help="Set the function deployment boundary (Deprecated)")
         group.add_argument("--name", dest="name", metavar="<name>",
                            default=False, help="The name of the function to take an action on")
         group.add_argument("--file", dest="filename", metavar="<file>",
@@ -3994,11 +3994,25 @@ class EventingFunctionSetup(Subcommand):
     def _deploy_undeploy(self, opts, deploy):
         if not opts.name:
             _exit_if_errors([f"--name is needed to {'deploy' if deploy else 'undeploy'} a function"])
-        if deploy and not opts.boundary:
-            _exit_if_errors(["--boundary is needed to deploy a function"])
+        if deploy:
+            self._handle_boundary(opts)
         _, errors = self.rest.deploy_undeploy_function(opts.name, deploy, opts.boundary)
         _exit_if_errors(errors)
         _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
+
+    def _handle_boundary(self, opts):
+        min_version, errors = self.rest.min_version()
+        _exit_if_errors(errors)
+
+        deprecated = min_version == "0.0.0" or min_version >= "6.6.2"
+
+        if not (deprecated or opts.boundary):
+            _exit_if_errors(["--boundary is needed to deploy a function"])
+
+        if deprecated and opts.boundary:
+            opts.boundary = False  # The is the default value, it'll be ignored by the REST client
+            _deprecated("The --boundary option is deprecated and will be ignored; the function definition itself now"
+                        " defines the feed boundary")
 
     def _list(self):
         functions, errors = self.rest.list_functions()

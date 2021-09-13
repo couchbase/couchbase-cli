@@ -507,6 +507,9 @@ endpoints = [
       'PUT': set_analytics_link,
       'DELETE': do_nothing}),
 
+    # eventing api
+    (r'/api/v1/functions/(.*)/settings', {'POST': do_nothing}),
+
     # backup server API
     (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing}),
     (r'/api/v1/cluster/self/repository/(:?active|archived|imported)$', {'GET': get_by_path}),

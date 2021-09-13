@@ -1641,7 +1641,46 @@ class TestXdcrSetup(CommandTest):
         for p in expected_out:
             self.assertIn(p, self.str_output)
 
-# TODO: TestEventingFunctionSetup
+
+class TestEventingFunctionSetup(CommandTest):
+    def setUp(self):
+        self.command = ["couchbase-cli", "eventing-function-setup"] + cluster_connect_args
+        self.command_args = ["--deploy", "--name", "function_name"]
+        self.server_args = {"enterprise": True, "init": True, "is_admin": True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'eventingAdminPort': port,
+                                }
+                            }]}}
+        super().setUp()
+
+    def test_deploy_deprecated(self):
+        self.command_args += ["--boundary", "from-now"]
+        self.server_args["pools_default"] = {"nodes": [{"version": "6.6.2-0000-enterprise"}]}
+        self.no_error_run(self.command + self.command_args, self.server_args)
+        self.rest_parameter_match([json.dumps({"deployment_status": True, "processing_status": True})])
+        self.assertIn("The --boundary option is deprecated and will be ignored; the function definition itself"
+                      " now defines the feed boundary", self.str_output)
+
+    def test_deploy_deprecated_unknown_version(self):
+        self.command_args += ["--boundary", "from-now"]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.no_error_run(self.command + self.command_args, self.server_args)
+        self.rest_parameter_match([json.dumps({"deployment_status": True, "processing_status": True})])
+        self.assertIn("The --boundary option is deprecated and will be ignored; the function definition itself"
+                      " now defines the feed boundary", self.str_output)
+
+    def test_deploy_not_deprecated_still_required(self):
+        self.server_args["pools_default"] = {"nodes": [{"version": "6.6.1-0000-enterprise"}]}
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("--boundary is needed to deploy a function", self.str_output)
+
+    def test_deploy_mixed_mode(self):
+        self.server_args["pools_default"] = {"nodes": [
+            {"version": "6.6.1-0000-enterprise"}, {"version": "7.0.0-0000-enteenterprise"}]}
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("--boundary is needed to deploy a function", self.str_output)
 
 
 class TestUserChangePassword(CommandTest):

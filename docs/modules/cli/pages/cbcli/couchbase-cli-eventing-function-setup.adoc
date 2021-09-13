@@ -63,9 +63,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   --export, --delete, --deploy and --undeploy options only.
 
 --boundary <from-everything|from-now>::
-  The place to start at when deploying a new function. Accepts 'from-now' or
-  'from-everything' defaulting to 'from-everything' if the --boundary flag
-  is omitted.
+  (Deprecated) The place to start at when deploying a new function. Accepts
+  'from-now' or 'from-everything' defaulting to 'from-everything' if the
+  --boundary flag is omitted.
 
 --file <file>::
   The file to import and export functions to. This is used by --export and
