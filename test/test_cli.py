@@ -2195,7 +2195,7 @@ class TestAnalyticsLinkSetup(CommandTest):
                                              '--encryption',
                                              'none'],
                              self.server_args)
-        self.assertIn('ERROR: "CBAS0054: Operation cannot be performed while the link is connected"', self.str_output)
+        self.assertIn('ERROR: CBAS0054: Operation cannot be performed while the link is connected', self.str_output)
 
     def testEditWithCerts(self):
         # create fake cert file

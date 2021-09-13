@@ -227,13 +227,20 @@ def _warning(msg):
     print(f'WARNING: {msg}')
 
 
+def _error(msg):
+    print(f"ERROR: {msg}")
+
+
 def _exit_if_errors(errors):
-    if errors:
-        for error in errors:
-            # Some endpoint return errors prefixed with '_ -' this has to be stripped out. For more information see
-            # MB-42801
-            print(f'ERROR: {remove_prefix(error, "_ -").lstrip(" ")}')
-        sys.exit(1)
+    if not errors:
+        return
+
+    for error in errors:
+        # Some endpoints return errors prefixed with '_ -' this has to be stripped out. For more information see
+        # MB-42801.
+        _error(remove_prefix(str(error), "_ -").strip())
+
+    sys.exit(1)
 
 
 def _exit_on_file_write_failure(fname, to_write):

@@ -1061,7 +1061,7 @@ class ClusterManager(object):
         url = f'{self.hostname}/settings/rbac/users/{auth_domain}/{username}'
 
         defaults, errors = self._get(url)
-        if errors and errors[0] == '"Unknown user."':
+        if errors and errors[0] == 'Unknown user.':
             defaults = {}
         elif errors:
             return None, errors
@@ -1112,7 +1112,7 @@ class ClusterManager(object):
         url = f'{self.hostname}/settings/rbac/groups/{group}'
 
         defaults, errors = self._get(url)
-        if errors and errors[0] == '"Unknown group."':
+        if errors and errors[0] == 'Unknown group.':
             defaults = {}
         elif errors:
             return None, errors
@@ -2318,13 +2318,9 @@ def _handle_response(response, debug):
                 return None, errors
             if "errors" in errors and isinstance(errors["errors"], list):
                 return None, errors["errors"]
-            if isinstance(errors, dict):
-                if "errors" in errors and isinstance(errors["errors"], dict):
-                    errors = errors["errors"]
-                rv = list()
-                for key, value in errors.items():
-                    rv.append(key + " - " + str(value))
-                return None, rv
+            if "errors" in errors and isinstance(errors["errors"], dict):
+                return [f"{key} - {str(value)}" for key, value in errors["errors"].items()]
+            return None, [errors]
         return None, [response.text]
     elif response.status_code == 401:
         return None, [ERR_AUTH]
