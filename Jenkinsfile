@@ -53,7 +53,7 @@ pipeline {
                 )
 
                 timeout(time: 10, unit: "MINUTES") {
-                    sh "pip3 install --user urllib3 pylint==2.10.2 requests mypy==0.730 coverage==5.2 pytest==5.4.3"
+                    sh "pip3 install --user urllib3 pylint==2.10.2 requests mypy==0.730 coverage==5.2 pytest==5.4.3 autopep8==1.5.7"
                 }
 
                 // preventively delete the cli path to avoid issues with cloning
@@ -102,6 +102,7 @@ pipeline {
                     dir("${PROJECTPATH}") {
                         sh "python3 -m pylint -E --disable=import-error cbbackup cbbackupwrapper cblogredaction cbrecovery cbrestore cbrestorewrapper cbtransfer cbworkloadgen couchbase-cli pump*.py"
                         sh "python3 -m pylint --disable=import-error,unused-import --disable C,R cbmgr.py cluster_manager.py"
+                        sh "python3 -m autopep8 --diff --max-line-length=120 --experimental --exit-code -aaa $(find -name '*.py')"
                     }
                 }
             }
