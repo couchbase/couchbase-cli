@@ -1,15 +1,17 @@
+PIPENV=pipenv --bare
+
 TESTS=
 
 install:
-	@pipenv --bare install --dev
+	@$(PIPENV) install --dev
 
 shell: install
-	@pipenv --bare shell
+	@$(PIPENV) shell
 
 test: install
-	@pipenv run python3 -m unittest discover --start-directory ./test --catch --failfast -k=$(TESTS)
+	@$(PIPENV) run python3 -m unittest discover --start-directory ./test --catch --failfast -k=$(TESTS)
 
 clean:
-	@pipenv --bare --rm
+	@$(PIPENV) --rm
 
 .PHONY: clean install shell test
