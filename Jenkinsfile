@@ -102,7 +102,7 @@ pipeline {
                     dir("${PROJECTPATH}") {
                         sh "python3 -m pylint -E --disable=import-error cbbackup cbbackupwrapper cblogredaction cbrecovery cbrestore cbrestorewrapper cbtransfer cbworkloadgen couchbase-cli pump*.py"
                         sh "python3 -m pylint --disable=import-error,unused-import --disable C,R cbmgr.py cluster_manager.py"
-                        sh "python3 -m autopep8 --diff --max-line-length=120 --experimental --exit-code -aaa $(find -name '*.py')"
+                        sh "python3 -m autopep8 --diff --max-line-length=120 --experimental --exit-code -aaa \$(find -name '*.py')"
                     }
                 }
             }
