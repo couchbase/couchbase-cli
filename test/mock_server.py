@@ -7,15 +7,15 @@ import socket
 import ssl
 import sys
 import threading
-from cryptography.hazmat.backends.openssl.backend import backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography import x509
-from cryptography.x509.oid import NameOID
-from cryptography.hazmat.primitives import hashes
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
-from http.server import HTTPServer, BaseHTTPRequestHandler
+
 import requests
+from cryptography import x509
+from cryptography.hazmat.backends.openssl.backend import backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
 
 
 # generate_self_signed_cert generates a key/self signed certificate pair which will be written to key.pem/cert.pem in

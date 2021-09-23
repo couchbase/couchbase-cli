@@ -5,7 +5,7 @@ Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 """
 
 import struct
-from typing import Union, Tuple, Optional
+from typing import Optional, Tuple, Union
 
 PUMP_ERROR = Union[str, int]
 # batch message: (cmd, vbucket_id, key, flg, exp, cas, rev_seqno/rev, val, seqno, dtype, metalen, conf_res/notthis)

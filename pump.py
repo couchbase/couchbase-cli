@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
 
-import os
 import base64
 import copy
 import http.client
-import logging
-import re
-import queue
 import json
+import logging
+import os
+import queue
+import re
+import socket
+import ssl
 import sys
 import threading
 import time
-import urllib.request
-import urllib.parse
 import urllib.error
+import urllib.parse
+import urllib.request
 import zlib
-import socket
-import ssl
-from typing import List, Dict, Optional, Any, Tuple, Union, Sequence
 from collections import defaultdict
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import snappy  # pylint: disable=import-error
-import couchbaseConstants
+
 import cb_bin_client
+import couchbaseConstants
 from cb_util import tag_user_data
 from cluster_manager import ClusterManager
 

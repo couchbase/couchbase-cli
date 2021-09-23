@@ -5,8 +5,10 @@
 couchbase-cli - command-line cluster administration tool
 """
 
-import cbmgr
 import sys
+
+import cbmgr
+
 
 def main():
     try:

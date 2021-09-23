@@ -5,8 +5,9 @@
 Restore tool for Couchbase.
 """
 
-import pump_transfer
 import sys
+
+import pump_transfer
 
 if __name__ == '__main__':
     pump_transfer.exit_handler(pump_transfer.Restore().main(sys.argv))

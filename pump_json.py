@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
+import json
 import logging
 import os
-import json
 import zipfile
-from typing import Tuple, Any, List, Optional, Dict
+from typing import Any, Dict, List, Optional, Tuple
+
 import couchbaseConstants
 import pump
 

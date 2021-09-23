@@ -2,14 +2,16 @@
 # -*-python-*-
 
 import base64
+import json
 import optparse
 import os
 import platform
 import re
-import json
 import subprocess
 import sys
-import urllib.request, urllib.error, urllib.parse
+import urllib.error
+import urllib.parse
+import urllib.request
 
 """Written by Daniel Owen owend@couchbase.com on 27 June 2014
 Version 1.4    Last Updated 17 Sept 2014 (Ian McCloy)

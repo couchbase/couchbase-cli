@@ -1,6 +1,6 @@
-import threading
-import socketserver
 import socket
+import socketserver
+import threading
 
 
 class MockMemSession(socketserver.BaseRequestHandler):

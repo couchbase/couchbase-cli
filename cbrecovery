@@ -6,23 +6,22 @@ Recover missing vbuckets from remote cluster due to failed rebalancing operation
 """
 
 import copy
+import json
 import logging
 import os
 import platform
 import re
 import sys
 import time
-import urllib.request
-import urllib.parse
 import urllib.error
-
-import json
-
+import urllib.parse
+import urllib.request
 from collections import defaultdict
-import pump_transfer
+
 import pump
-import pump_dcp
 import pump_cb
+import pump_dcp
+import pump_transfer
 
 
 class Recovery(pump_transfer.Transfer):

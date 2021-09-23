@@ -7,10 +7,11 @@ import tempfile
 import unittest
 import urllib
 from io import StringIO
-from cbmgr import CouchbaseCLI, CollectionManage
-from mock_server import MockRESTServer, generate_self_signed_cert
-from couchbaseConstants import parse_host_port
 
+from mock_server import MockRESTServer, generate_self_signed_cert
+
+from cbmgr import CollectionManage, CouchbaseCLI
+from couchbaseConstants import parse_host_port
 
 host = '127.0.0.1'
 port = 6789

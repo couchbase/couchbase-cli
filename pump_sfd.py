@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 
 import glob
+import json
 import logging
 import os
 import queue
 import re
-import json
 import struct
 import threading
-from typing import Tuple, Any, List, Dict, Optional
+from collections import defaultdict
+from typing import Any, Dict, List, Optional, Tuple
 
 import couchstore  # pylint: disable=import-error
+
 import couchbaseConstants
 import pump
 from cb_bin_client import decode_collection_id, encode_collection_id
-from collections import defaultdict
 
 SFD_SCHEME = "couchstore-files://"
 SFD_VBUCKETS = 1024

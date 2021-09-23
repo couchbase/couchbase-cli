@@ -13,7 +13,7 @@ if platform.system() == "Windows":
     def get_terminal_width():
         """Get windows terminal size on standard windows terminal"""
         try:
-            from ctypes import windll, create_string_buffer
+            from ctypes import create_string_buffer, windll
             std_handle = windll.kernel32.GetStdHandle(-12)
             csbi = create_string_buffer(22)
             res = windll.kernel32.GetConsoleScreenBufferInfo(std_handle, csbi)
@@ -57,8 +57,8 @@ if platform.system() == "Windows":
 
 elif platform.system() in ['Linux', 'Darwin'] or platform.system().startswith('CYGWIN'):
     import fcntl
-    import termios
     import os
+    import termios
 
     def get_terminal_width():
         """Get linux/osx terminal size on standard linux/osx terminal"""

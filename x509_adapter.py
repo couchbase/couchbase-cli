@@ -15,23 +15,17 @@
 # limitations under the License.
 
 import ssl
-
-from typing import Tuple, Optional
 from pathlib import Path
+from typing import Optional, Tuple
 
-import pem
 import Crypto.IO.PKCS8 as pkcs8
-
-from OpenSSL.SSL import Error as OpenSSLError
-from OpenSSL.crypto import PKey, X509
+import pem
 from cryptography import x509
 from cryptography.exceptions import UnsupportedAlgorithm
-from cryptography.hazmat.primitives.serialization import (pkcs12,
-                                                          load_pem_private_key,
-                                                          load_der_private_key,
-                                                          Encoding,
-                                                          PrivateFormat,
-                                                          NoEncryption)
+from cryptography.hazmat.primitives.serialization import (Encoding, NoEncryption, PrivateFormat, load_der_private_key,
+                                                          load_pem_private_key, pkcs12)
+from OpenSSL.crypto import X509, PKey
+from OpenSSL.SSL import Error as OpenSSLError
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
 

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
 import csv
+import json
 import logging
 import os
-import json
-import sys
 import struct
-import urllib.request
-import urllib.parse
+import sys
 import urllib.error
-import snappy  # pylint: disable=import-error
-
-from typing import Tuple, Any, Dict, Optional
+import urllib.parse
+import urllib.request
 from ast import literal_eval
+from typing import Any, Dict, Optional, Tuple
+
+import snappy  # pylint: disable=import-error
 
 import couchbaseConstants
 import pump

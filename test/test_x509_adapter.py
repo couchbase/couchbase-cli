@@ -14,12 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
 import re
-
+import unittest
 from pathlib import Path
 
-from x509_adapter import X509AdapterError, X509Adapter, X509AdapterFactory
+from x509_adapter import X509Adapter, X509AdapterError, X509AdapterFactory
 
 
 class X509AdapterFactoryTest(unittest.TestCase):

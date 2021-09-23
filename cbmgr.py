@@ -11,13 +11,13 @@ import re
 import string
 import subprocess
 import sys
-import urllib.parse
 import tempfile
 import time
-
-from typing import Optional, List, Any, Dict
-from argparse import ArgumentError, ArgumentParser, HelpFormatter, Action, SUPPRESS
+import urllib.parse
+from argparse import SUPPRESS, Action, ArgumentError, ArgumentParser, HelpFormatter
 from operator import itemgetter
+from typing import Any, Dict, List, Optional
+
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
 from x509_adapter import X509AdapterError

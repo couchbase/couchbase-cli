@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
-import logging
 import json
+import logging
 import re
 import socket
 import struct
-import time
 import sys
-from typing import Tuple, Any, Optional, Dict, List
+import time
+from typing import Any, Dict, List, Optional, Tuple
+
 import snappy  # pylint: disable=import-error
+
 import cb_bin_client
 import couchbaseConstants
 import pump

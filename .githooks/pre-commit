@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # ensure that we have the required dependencies installed
-for dep in autopep8 sponge wget; do
+for dep in autopep8 isort sponge wget; do
     if ! type -t $dep > /dev/null; then
         echo "Error: '$dep' is not installed" 1>&2
         exit 1
@@ -30,6 +30,7 @@ fi
 
 # run autopep8 with the experimental/aggressive rules flags
 autopep8 --in-place --max-line-length=120 --experimental -aaa ${staged_python_files}
+isort --quiet -l 120 ${staged_python_files}
 
 # we are safe to re-add any files that were modified
 git add ${staged_python_files}

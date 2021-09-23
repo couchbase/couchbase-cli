@@ -5,14 +5,15 @@
 Workload generator tool for Couchbase 2.0.
 """
 
-import sys
 import optparse
-import platform
 import os
+import platform
+import sys
 
-import pump_transfer
 import pump
 import pump_gen
+import pump_transfer
+
 
 class WorkloadGen(pump_transfer.Transfer):
     """Entry point for 2.0 cbworkloadgen."""

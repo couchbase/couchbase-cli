@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 
+import json
 import logging
 import queue
 import random
-import json
+import select
 import socket
 import struct
-import time
 import threading
-import select
-import snappy
+import time
+from typing import Any, Dict, List, Optional, Tuple
 
-from typing import Dict, List, Any, Optional, Tuple
+import snappy
 
 import cb_bin_client
 import couchbaseConstants
 import pump
-import pump_mc
 import pump_cb
-
+import pump_mc
 from cluster_manager import ClusterManager, ServiceNotAvailableException
 
 

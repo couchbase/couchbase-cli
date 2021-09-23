@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 
 import copy
+import datetime
 import errno
+import fnmatch
 import glob
+import json
 import logging
 import os
-import json
-import datetime
-import time
-import urllib.request
-import urllib.parse
-import urllib.error
-import fnmatch
 import sqlite3
-from typing import List, Dict, Optional, Any, Tuple, Union
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import couchbaseConstants
 import pump

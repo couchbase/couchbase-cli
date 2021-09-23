@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 
-import logging
 import json
+import logging
 import time
-import urllib.request
-import urllib.parse
 import urllib.error
+import urllib.parse
+import urllib.request
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from typing import Optional, Tuple, Dict, Union, Any, List
-
-import couchbaseConstants
 import cb_bin_client
+import couchbaseConstants
 import pump
 import pump_mc
-
 from cluster_manager import ClusterManager, ServiceNotAvailableException
 
 

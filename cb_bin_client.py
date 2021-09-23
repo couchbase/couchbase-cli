@@ -6,16 +6,15 @@ Copyright (c) 2007  Dustin Sallings <dustin@spy.net>
 """
 
 import array
-import socket
 import random
-import struct
+import socket
 import ssl
-from typing import Optional, Tuple, Iterable, List, Union
-from couchbaseConstants import REQ_MAGIC_BYTE, RES_MAGIC_BYTE
-from couchbaseConstants import REQ_PKT_FMT, RES_PKT_FMT, MIN_RECV_PACKET
-from couchbaseConstants import SET_PKT_FMT, INCRDECR_RES_FMT
-from couchbaseConstants import AUDIT_PKT_FMT
+import struct
+from typing import Iterable, List, Optional, Tuple, Union
+
 import couchbaseConstants
+from couchbaseConstants import (AUDIT_PKT_FMT, INCRDECR_RES_FMT, MIN_RECV_PACKET, REQ_MAGIC_BYTE, REQ_PKT_FMT,
+                                RES_MAGIC_BYTE, RES_PKT_FMT, SET_PKT_FMT)
 
 try:
     from cb_version import VERSION  # pylint: disable=import-error

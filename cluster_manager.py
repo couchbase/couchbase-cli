@@ -1,17 +1,17 @@
 """Management API's for Couchbase Cluster"""
 
 import json
-import requests
 import os
 import sys
 import time
-import urllib.request
-import urllib.parse
 import urllib.error
-import urllib3
-
+import urllib.parse
+import urllib.request
 from pathlib import Path
-from typing import Dict, Optional, List, Any
+from typing import Any, Dict, List, Optional
+
+import requests
+import urllib3
 
 from x509_adapter import X509Adapter, X509AdapterFactory
 

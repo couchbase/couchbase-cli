@@ -3,27 +3,27 @@ import csv
 import json
 import os
 import sqlite3
-import snappy
 import struct
 import tempfile
 import time
 import unittest
 import zipfile
 from collections import defaultdict
-import snappy
 
-import couchbaseConstants as cbcs
-from pump_csv import CSVSource, CSVSink
-from pump_dcp import DCPStreamSource
-from pump_json import JSONSource
-from pump_gen import GenSource
-from pump_bfd import BFDSource, DDOC_FILE_NAME, INDEX_FILE_NAME, FTS_FILE_NAME, CBB_VERSION, BFD
-from pump_bfd2 import BFDSinkEx
-from pump_mc import MCSink
-from cb_bin_client import MemcachedClient
-from pump import Batch, filter_bucket_nodes
+import snappy
 from mock_binary_server import MockMemcachedServer
 from mock_server import MockRESTServer
+
+import couchbaseConstants as cbcs
+from cb_bin_client import MemcachedClient
+from pump import Batch, filter_bucket_nodes
+from pump_bfd import BFD, CBB_VERSION, DDOC_FILE_NAME, FTS_FILE_NAME, INDEX_FILE_NAME, BFDSource
+from pump_bfd2 import BFDSinkEx
+from pump_csv import CSVSink, CSVSource
+from pump_dcp import DCPStreamSource
+from pump_gen import GenSource
+from pump_json import JSONSource
+from pump_mc import MCSink
 
 
 # ----------------- support classes -----------------

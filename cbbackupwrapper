@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 # -*-python-*-
 
-import pump_transfer
-import pump
-
 import base64
+import json
 import optparse
 import os
 import platform
 import queue
 import re
-import json
 import subprocess
 import sys
 import threading
 import time
-import urllib.request, urllib.error, urllib.parse
+import urllib.error
+import urllib.parse
+import urllib.request
 from typing import Any, List
 
+import pump
+import pump_transfer
 from cluster_manager import ClusterManager
 from couchbaseConstants import parse_host_port
 

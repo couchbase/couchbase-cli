@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
-import couchbaseConstants
 import json
-import pump
 import random
 import string
 import struct
-from typing import Tuple, Optional, Dict, Any
+from typing import Any, Dict, Optional, Tuple
+
+import couchbaseConstants
+import pump
 from cb_bin_client import encode_collection_id
 
 
