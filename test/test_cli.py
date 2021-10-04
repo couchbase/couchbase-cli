@@ -1830,6 +1830,14 @@ class TestIpFamily(CommandTest):
         self.assertIn('Cluster using ipv4', self.str_output)
         self.assertIn('GET:/pools/nodes', self.server.trace)
 
+    def test_get_single_node_unknown_pool(self):
+        self.server_args['/pools/nodes'] = 'unknown pool'
+        self.server_args['override-status'] = 400
+        self.server_args['node-info'] = {'addressFamily': 'inet'}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Cluster using ipv4', self.str_output)
+        self.assertIn('GET:/pools/nodes', self.server.trace)
+
     def test_get_single_node_ipv4_only(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'addressFamily': 'inet', 'addressFamilyOnly': True}]}
         self.no_error_run(self.command + ['--get'], self.server_args)
@@ -1863,6 +1871,18 @@ class TestIpFamily(CommandTest):
     def test_set_ipv4(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
                                                        'ports': {'httpsMgmt': '6789'}}]}
+        self.no_error_run(self.command + ['--set', '--ipv4'], self.server_args)
+        self.assertIn('Switched IP family of the cluster', self.str_output)
+        self.assertIn('GET:/pools/nodes', self.server.trace)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        expected_params = ['afamily=ipv4', 'afamily=ipv4', 'afamilyOnly=false']
+        self.rest_parameter_match(expected_params, True)
+
+    def test_set_ipv4_unknown_pool(self):
+        self.server_args['/pools/nodes'] = 'unknown pool'
+        self.server_args['override-status'] = 400
         self.no_error_run(self.command + ['--set', '--ipv4'], self.server_args)
         self.assertIn('Switched IP family of the cluster', self.str_output)
         self.assertIn('GET:/pools/nodes', self.server.trace)
@@ -1951,6 +1971,15 @@ class TestClusterEncryption(CommandTest):
     def test_enable_cluster_encryption_ipv4(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789',
                                                        'ports': {'httpsMgmt': '6789'}}]}
+        self.no_error_run(self.command + ['--enable'], self.server_args)
+        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
+        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
+        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        self.rest_parameter_match(['nodeEncryption=on', 'nodeEncryption=on'])
+
+    def test_enable_cluster_encryption_ipv4_unknown_pool(self):
+        self.server_args['/pools/nodes'] = 'unknown pool'
+        self.server_args['override-status'] = 400
         self.no_error_run(self.command + ['--enable'], self.server_args)
         self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
         self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)

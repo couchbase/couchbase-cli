@@ -416,11 +416,15 @@ def get_ldap_settings(rest_params=None, server_args=None, path="", endpoint_matc
 
 
 def get_by_path(rest_params=None, server_args=None, path="", endpoint_match=None):
+    status = 200
+    if 'override-status' in server_args:
+        status = int(server_args['override-status'])
+
     if path in server_args:
         if endpoint_match:
             server_args['query'] = endpoint_match
-        return 200, server_args[path]
-    return 200, {}
+        return status, server_args[path]
+    return status, {}
 
 
 def get_audit_settings(rest_params=None, server_args=None, path="", endpoint_match=None):

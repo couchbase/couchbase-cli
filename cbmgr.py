@@ -4721,7 +4721,7 @@ class IpFamily(Subcommand):
         ip_fam, ip_fam_disable = ('ipv6', 'ipv4') if ipv6 else ('ipv4', 'ipv6')
         node_data, err = rest.pools('nodes')
 
-        if err and err[0] == '"unknown pool"':
+        if err and err[0] == 'unknown pool':
             _, err = rest.enable_external_listener(ipfamily=ip_fam)
             _exit_if_errors(err)
             _, err = rest.setup_net_config(ipfamily=ip_fam, ipfamilyonly=ip_only)
@@ -4824,7 +4824,7 @@ class NodeToNodeEncryption(Subcommand):
         node_data, err = rest.pools('nodes')
         encryption_disable = 'off' if encryption == 'on' else 'on'
 
-        if err and err[0] == '"unknown pool"':
+        if err and err[0] == 'unknown pool':
             _, err = rest.enable_external_listener(encryption=encryption)
             _exit_if_errors(err)
             _, err = rest.setup_net_config(encryption=encryption)

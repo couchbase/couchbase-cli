@@ -2185,7 +2185,7 @@ class ClusterManager(object):
     # returns info about nodes even if cluster is not initialized yet
     def nodes_info(self):
         node_data, err = self.pools('nodes')
-        if err and err[0] == '"unknown pool"':
+        if err and err[0] == 'unknown pool':
             result, err = self.node_info()
             if err:
                 return None, err
@@ -2319,7 +2319,7 @@ def _handle_response(response, debug):
             if "errors" in errors and isinstance(errors["errors"], list):
                 return None, errors["errors"]
             if "errors" in errors and isinstance(errors["errors"], dict):
-                return [f"{key} - {str(value)}" for key, value in errors["errors"].items()]
+                return None, [f"{key} - {str(value)}" for key, value in errors["errors"].items()]
             return None, [errors]
         return None, [response.text]
     elif response.status_code == 401:
