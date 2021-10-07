@@ -11,8 +11,9 @@ Manages the Couchbase backup service
 == SYNOPSIS
 
 [verse]
-_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
-    [--password <password>] <settings|instance|profile>
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] <settings|instance|profile>
 
 == DESCRIPTION
 
@@ -34,6 +35,8 @@ man:couchbase-cli-backup-service-plan[1]::
   Manage backup plans.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

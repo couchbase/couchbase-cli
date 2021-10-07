@@ -12,8 +12,9 @@ Manage query engine settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-query [--cluster <url>] [--username <user>]
-    [--password <password>] [--get] [--set] [--pipeline-batch <num>]
+_couchbase-cli setting-query [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--get] [--set] [--pipeline-batch <num>]
     [--pipeline-cap <num>] [--scan-cap <size>] [--timeout <ms>]
     [--prepared-limit <max>] [--completed-limit <max>]
     [--log-level <trace|debug|info|warn|error|server|none>]
@@ -108,6 +109,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   If allowed-urls also provided then the disallowed list takes precedence.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

@@ -13,7 +13,8 @@ Start log collection
 
 [verse]
 _couchbase-cli collect-logs-start_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--all-nodes] [--nodes <node_list>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] [--all-nodes] [--nodes <node_list>]
     [--redaction-level <level>] [--salt <string>]
     [--output-directory <directory>] [--temporary-directory <directory>]
     [--upload] [--upload-host <host>] [--upload-proxy <host>]
@@ -104,6 +105,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   recommended if you have a ticket number.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

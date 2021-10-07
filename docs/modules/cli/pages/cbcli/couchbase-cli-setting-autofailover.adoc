@@ -12,8 +12,9 @@ Modifies auto-failover settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-autofailover_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--enable-auto-failover <num>]
+_couchbase-cli setting-autofailover_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--enable-auto-failover <num>]
     [--auto-failover-timeout <seconds>]
     [--enable-failover-on-data-disk-issues <num>]
     [--failover-data-disk-period <seconds>] [--can-abort-rebalance <1|0>]
@@ -82,6 +83,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   This feature is only available in Couchbase Enterprise Edition.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

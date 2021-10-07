@@ -12,9 +12,9 @@ Manage server groups
 == SYNOPSIS
 
 [verse]
-_couchbase-cli group-manage_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--create] [--delete] [--list] [--rename <group>]
-    [--move-servers] [--group-name <name>] [--from-group <name>]
+_couchbase-cli group-manage_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>] [--client-key-password <password>]
+    [--create] [--delete] [--list] [--rename <group>] [--move-servers] [--group-name <name>] [--from-group <name>]
     [--to-group <name>]
 
 == DESCRIPTION
@@ -53,6 +53,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The group to move servers to. This group must already exists.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

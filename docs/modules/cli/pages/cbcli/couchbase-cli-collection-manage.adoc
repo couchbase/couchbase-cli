@@ -13,10 +13,11 @@ Manage collections and scopes in a bucket
 
 [verse]
 _couchbase-cli collection-manage_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--bucket <bucket>] [--create-scope <scope>]
-    [--drop-scope <scope>] [--list-scopes] [--create-collection <collection>]
-    [--drop-collection <collection>] [--list-collections [<scope_list>]]
-    [--max-ttl <seconds>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] [--bucket <bucket>]
+    [--create-scope <scope>] [--drop-scope <scope>] [--list-scopes]
+    [--create-collection <collection>] [--drop-collection <collection>]
+    [--list-collections [<scope_list>]] [--max-ttl <seconds>]
 
 == DESCRIPTION
 
@@ -75,6 +76,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

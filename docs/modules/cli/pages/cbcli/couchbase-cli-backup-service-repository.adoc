@@ -12,7 +12,9 @@ Manage the backup service repositories.
 
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
-    [--password <password>] [--output] repository [--list] [--get] [--archive]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>]
+    [--output] repository [--list] [--get] [--archive]
     [--add] [--remove] [--id <id>] [--new-id <id>] [--state <state>]
     [--profile <name>] [--backup-archive <archive>] [--bucket-name <name>]
     [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]

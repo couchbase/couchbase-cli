@@ -55,6 +55,7 @@ dest
 dir
 dn
 doctitle
+DSA
 EE
 erl
 erlang
@@ -99,6 +100,8 @@ memcached
 MiB
 moxi
 msg
+MTLS
+mTLS
 namespace
 NAT'd
 NFS
@@ -110,7 +113,9 @@ num
 oom
 opsys
 ou
+pem
 persistToMajority
+PKCS
 preload
 QL
 ql
@@ -127,6 +132,7 @@ reprovisioned
 reprovisioning
 ro
 roadmins
+RSA
 runtime
 SASL
 sasl
@@ -160,6 +166,7 @@ UNDEPLOY
 undeploy
 undeployed
 undeploys
+unencrypted
 url
 urls
 UUID

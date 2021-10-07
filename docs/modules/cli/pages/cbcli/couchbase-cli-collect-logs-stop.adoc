@@ -12,8 +12,9 @@ Stop the current log collection task
 == SYNOPSIS
 
 [verse]
-_couchbase-cli collect-logs-stop_ [--cluster <url>] [--username <user>]
-    [--password <password>]
+_couchbase-cli collect-logs-stop_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>]
 
 == DESCRIPTION
 
@@ -24,6 +25,8 @@ This command cancels the currently running log collection task.
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

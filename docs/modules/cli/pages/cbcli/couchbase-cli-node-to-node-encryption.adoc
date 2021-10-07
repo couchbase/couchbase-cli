@@ -12,8 +12,9 @@ Changes node-to-node encryption
 == SYNOPSIS
 
 [verse]
-_couchbase-cli node-to-node-encryption_ [--cluster <url>] [-username <username>]
-    [--password <password>] [--get] [--enable] [--disable]
+_couchbase-cli node-to-node-encryption_ [--cluster <url>] [-username <username>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--get] [--enable] [--disable]
 
 == DESCRIPTION
 
@@ -37,6 +38,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Will disable node-to-node encryption
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

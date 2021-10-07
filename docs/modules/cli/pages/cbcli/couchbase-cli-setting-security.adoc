@@ -12,8 +12,9 @@ Manage security policies
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-security_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--set] [--get] [--disable-http-ui <0|1>]
+_couchbase-cli setting-security_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--set] [--get] [--disable-http-ui <0|1>]
     [--disable-www-authenticate <0|1>]
     [--cluster-encryption-level <all|control|strict>]
     [--tls-min-version <tlsv1|tlsv1.1|tlsv1.2>]
@@ -85,6 +86,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   server uses should be set.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

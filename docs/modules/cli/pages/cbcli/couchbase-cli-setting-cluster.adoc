@@ -12,8 +12,9 @@ Modifies cluster settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-cluster_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--cluster-username <username>]
+_couchbase-cli setting-cluster_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--cluster-username <username>]
     [--cluster-password <password>] [--cluster-port <port>]
     [--cluster-ramsize <mebibytes>] [--cluster-name <name>]
     [--cluster-index-ramsize <mebibytes>] [--cluster-fts-ramsize <mebibytes>]
@@ -73,6 +74,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   port 8091.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

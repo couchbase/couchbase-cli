@@ -12,8 +12,9 @@ Modifies cross data center replication (XDCR) settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-xdcr_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--checkpoint-interval <seconds>]
+_couchbase-cli setting-xdcr_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--checkpoint-interval <seconds>]
     [--worker-batch-size <num>] [--doc-batch-size <kilobytes>]
     [--failure-restart-interval <seconds>] [--source-nozzle-per-node <num>]
     [--target-nozzle-per-node <num>] [--bandwidth-usage-limit <num>]
@@ -80,6 +81,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   This option allows to allocate more resources to XDCR.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

@@ -12,8 +12,9 @@ Flush a bucket
 == SYNOPSIS
 
 [verse]
-_couchbase-cli bucket-flush_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--bucket <name>]
+_couchbase-cli bucket-flush_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--bucket <name>]
 
 == DESCRIPTION
 
@@ -29,6 +30,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The name of the bucket to flush.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

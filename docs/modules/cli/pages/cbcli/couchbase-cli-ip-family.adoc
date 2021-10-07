@@ -12,9 +12,10 @@ Edits cluster IP family settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli ip-family_ [--cluster <url>] [-username <username>]
-    [--password <password>] [--get] [--set] [--ipv4] [--ipv4only]
-    [--ipv6] [--ipv6only]
+_couchbase-cli ip-family_ [--cluster <url>] [-username <username>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--get] [--set] [--ipv4] [--ipv4only] [--ipv6]
+    [--ipv6only]
 
 == DESCRIPTION
 
@@ -53,6 +54,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   It will not blind to any IPv4 addresses, all traffic will be over IPv6.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

@@ -13,9 +13,9 @@ Manage Events
 
 [verse]
 _couchbase-cli eventing-function-setup_ [--cluster <url>] [--username <user>]
-    [--password <password>]  [--import] [--export] [--export-all]
-    [--delete] [--list] [--deploy] [--undeploy] [--boundary <from-everything|from-now>]
-    [--pause] [--resume] [--name <name>] [--file <file>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--import] [--export] [--export-all] [--delete] [--list] [--deploy]
+    [--undeploy] [--boundary <from-everything|from-now>] [--pause] [--resume] [--name <name>] [--file <file>]
 
 == DESCRIPTION
 
@@ -73,6 +73,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

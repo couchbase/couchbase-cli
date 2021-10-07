@@ -11,8 +11,9 @@ Configure LDAP
 
 == SYNOPSIS
 [verse]
-_couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--authentication-enabled <1|0>]
+_couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--authentication-enabled <1|0>]
     [--authorization-enabled <1|0>] [--hosts <host_list>] [--port <port>]
     [--encryption <tls|startTLS|none>] [--server-cert-validation <1|0>]
     [--ldap-cacert <path>] [--request-timeout <ms>]
@@ -114,6 +115,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   integer between 1 and 100, default is 10.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

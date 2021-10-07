@@ -12,8 +12,9 @@ Modifies alert settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-alert_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--enable-email-alert <num>]
+_couchbase-cli setting-alert_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--enable-email-alert <num>]
     [--email-recipients <email_list>] [--email-sender <email>]
     [--email-user <user>] [--email-password <password>] [--email-host <host>]
     [--email-port <port>] [--enable-email-encrypt <num>]
@@ -129,6 +130,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   communication issues.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

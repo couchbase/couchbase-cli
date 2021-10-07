@@ -13,7 +13,9 @@ Edit a bucket
 
 [verse]
 _couchbase-cli bucket-edit_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--bucket <name>] [--bucket-ramsize <size>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>]
+    [--bucket <name>] [--bucket-ramsize <size>]
     [--bucket-replica <num>] [--bucket-priority <priority>]
     [--bucket-eviction-policy <policy>] [--enable-flush <num>]
     [--max-ttl <seconds>] [--compression-mode <mode>]
@@ -200,6 +202,8 @@ Run index and data compaction in parallel. Global setting only.
   on those nodes.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

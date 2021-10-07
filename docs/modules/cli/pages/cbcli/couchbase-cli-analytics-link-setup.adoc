@@ -13,8 +13,9 @@ Manage Analytics links
 
 [verse]
 _couchbase-cli analytics-link-setup_ [--cluster <cluster>] [--username <username>]
-    [--password <password>] [--create] [--delete] [--edit] [--list]
-    [--dataverse <name>] [--scope <name>] [--name <name>] [--type <type>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] [--create] [--delete]
+    [--edit] [--list] [--dataverse <name>] [--scope <name>] [--name <name>] [--type <type>]
     [--hostname <hostname>] [--link-username <username>] [--link-password <password>]
     [--user-certificate <path>] [--user-key <path>] [--certificate <path>]
     [--encryption <type>] [--access-key-id <id>] [--secret-access-key <key>]
@@ -146,6 +147,8 @@ Following are the options specific to *--type azureblob*, i.e. Azure Blob links
   The endpoint suffix of the link (optional).
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

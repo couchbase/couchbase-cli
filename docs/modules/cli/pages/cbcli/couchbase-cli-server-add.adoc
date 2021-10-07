@@ -12,8 +12,9 @@ Adds a server to the cluster
 == SYNOPSIS
 
 [verse]
-_couchbase-cli server-add_ [--cluster <url>] [--username <username>]
-    [--password <password>] [--server-add <servers>] [--group-name <name>]
+_couchbase-cli server-add_ [--cluster <url>] [--username <username>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>] [--client-key-password <password>]
+    [--server-add <servers>] [--group-name <name>]
     [--server-add-username <username>] [--server-add-password <password>]
     [--services <services>] [--index-storage-setting <mode>]
 
@@ -62,6 +63,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   based indexes or `memopt` for memory optimized indexes.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

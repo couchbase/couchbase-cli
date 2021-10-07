@@ -12,8 +12,9 @@ Rebalances data and indexes across nodes in a cluster
 == SYNOPSIS
 
 [verse]
-_couchbase-cli rebalance_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--server-remove <servers>] [--no-progress-bar]
+_couchbase-cli rebalance_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--server-remove <servers>] [--no-progress-bar]
     [--no-wait]
 
 == DESCRIPTION
@@ -50,6 +51,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   before exiting.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

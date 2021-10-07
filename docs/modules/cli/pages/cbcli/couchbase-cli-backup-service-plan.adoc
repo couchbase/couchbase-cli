@@ -12,7 +12,9 @@ Manage the backup service plans.
 
 [verse]
 _couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--output] plan [--list] [--get]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--output] plan [--list] [--get]
     [--remove] [--add] [--name <name>] [--description <text>]
     [--services <list>] [--task [<task> ...]]
 

@@ -14,3 +14,25 @@ include::part-common-cluster.adoc[]
   given then the command will prompt the user for a password through
   non-echoed stdin. You may also specify your password by using the
   environment variable CB_REST_PASSWORD.
+
+--client-cert <path>::
+  The path to a client certificate used to authenticate when connecting to a
+  cluster. May be supplied with `--client-key` as an alternative to the
+  `--username` and `--password` flags.  See the CERTIFICATE AUTHENTICATION
+  section for more information.
+
+--client-cert-password <password>::
+  The password for the certificate provided to the `--client-cert` flag, when
+  using this flag, the certificate/key pair is expected to be in the PKCS#12
+  format. See the CERTIFICATE AUTHENTICATION section for more information.
+
+--client-key <path>::
+  The path to the client private key whose public key is contained in the
+  certificate provided to the `--client-cert` flag. May be supplied with
+  `--client-cert` as an alternative to the `--username` and `--password`
+  flags. See the CERTIFICATE AUTHENTICATION section for more information.
+
+--client-key-password <password>::
+  The password for the key provided to the `--client-key` flag, when using this
+  flag, the key is expected to be in the PKCS#8 format.  See the CERTIFICATE
+  AUTHENTICATION section for more information.

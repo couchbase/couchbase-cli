@@ -12,8 +12,9 @@ Initializes a node
 == SYNOPSIS
 
 [verse]
-_couchbase-cli node-init_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--node-init-data-path <path>]
+_couchbase-cli node-init_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--node-init-data-path <path>]
     [--node-init-index-path <path>] [--node-init-analytics-path <path>]
     [--node-init-eventing-path <path>] [--node-init-hostname <hostname>]
     [--node-init-java-home <path>] [--ipv4] [--ipv6]
@@ -66,6 +67,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Switch the node to use ipv6 for node to node communication
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

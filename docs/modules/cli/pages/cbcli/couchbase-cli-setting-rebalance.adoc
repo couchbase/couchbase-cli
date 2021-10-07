@@ -12,8 +12,9 @@ Modifies rebalance retry settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-rebalance [--cluster <url>] [--username <user>]
-    [--set] [--get] [--cancel] [--pending-info] [--enable <1|0>]
+_couchbase-cli setting-rebalance [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--set] [--get] [--cancel] [--pending-info] [--enable <1|0>]
     [--wait-for <sec>] [--moves-per-node <num>] [--max-attempts <num>]
     [--rebalance-id <id>]
 
@@ -71,6 +72,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

@@ -12,8 +12,9 @@ Manage references to remote clusters
 == SYNOPSIS
 
 [verse]
-_couchbase-cli xdcr-setup_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--create] [--delete] [--edit] [--list]
+_couchbase-cli xdcr-setup_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--create] [--delete] [--edit] [--list]
     [--xdcr-cluster-name <name>] [--xdcr-hostname <hostname>]
     [--xdcr-username <username>] [--xdcr-password <password>]
     [--xdcr-user-certificate <path>] [--xdcr-user-key <path>]
@@ -71,6 +72,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
     "none" if it is not specified.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

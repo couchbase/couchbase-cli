@@ -12,8 +12,9 @@ Modifies compaction settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-compaction_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--compaction-db-percentage <num>]
+_couchbase-cli setting-compaction_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--compaction-db-percentage <num>]
     [--compaction-db-size <mebibytes>] [--compaction-view-percentage <num>]
     [--compaction-view-size <mebibytes>] [--compaction-period-from <HH:MM>]
     [--compaction-period-to <HH:MM>] [--enable-compaction-abort <num>]
@@ -155,6 +156,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   applies if circular compaction mode is used.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

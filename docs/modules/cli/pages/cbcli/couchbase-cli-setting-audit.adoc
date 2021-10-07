@@ -12,8 +12,9 @@ Modifies audit log settings (EE only)
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-audit_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--list-filterable-events] [--get-settings]
+_couchbase-cli setting-audit_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--list-filterable-events] [--get-settings]
     [--set] [--audit-enabled <1|0>] [--audit-log-path <path>]
     [--audit-log-rotate-interval <seconds>] [--audit-log-rotate-size <bytes>]
     [--disabled-users <user-list>] [--disable-events <event-list>]
@@ -90,6 +91,8 @@ ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   descriptions.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

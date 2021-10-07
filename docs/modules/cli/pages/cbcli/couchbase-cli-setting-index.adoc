@@ -12,8 +12,9 @@ Modifies index settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-index_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--index-max-rollback-points <num>]
+_couchbase-cli setting-index_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--index-max-rollback-points <num>]
     [--index-stable-snapshot-interval <seconds>]
     [--index-memory-snapshot-interval <milliseconds>]
     [--index-storage-setting <type>] [--index-threads <num>]
@@ -70,6 +71,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   to eliminate the need of doing a 'swap rebalance'.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

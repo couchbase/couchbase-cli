@@ -13,8 +13,9 @@ Manage RBAC users
 == SYNOPSIS
 
 [verse]
-_couchbase-cli user-manage_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--delete] [--list] [--my-roles] [--set]
+_couchbase-cli user-manage_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--delete] [--list] [--my-roles] [--set]
     [--set-group] [--delete-group] [--list-groups] [--get-group]
     [-- get] [--rbac-username <username>] [--rbac-password <password>]
     [--rbac-name <name>] [--roles <roles_list>]
@@ -105,6 +106,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   with the LDAP one.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 === ROLES
 

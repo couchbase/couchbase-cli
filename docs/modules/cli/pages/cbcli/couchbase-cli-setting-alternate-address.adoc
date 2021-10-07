@@ -12,8 +12,9 @@ Modify alternate addresses
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-alternate-address_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--list] [--set] [--remove] [--hostname <host>]
+_couchbase-cli setting-alternate-address_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--list] [--set] [--remove] [--hostname <host>]
     [--ports <ports>]
 
 == DESCRIPTION
@@ -49,6 +50,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
  e.g. `--ports kv=9000,kvSSL=9999.`
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

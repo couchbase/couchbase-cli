@@ -13,8 +13,9 @@ Create a new bucket
 
 [verse]
 _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--bucket <name>] [--bucket-type <type>]
-    [--storage-backend <storage>] [--durability-min-level <level>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] [--bucket <name>]
+    [--bucket-type <type>] [--storage-backend <storage>] [--durability-min-level <level>]
     [--bucket-ramsize <size>] [--bucket-replica <num>]
     [--bucket-priority <priority>] [--bucket-eviction-policy <policy>]
     [--max-ttl <seconds>] [--compression-mode <mode>] [--enable-flush <num>]
@@ -237,6 +238,8 @@ Run index and data compaction in parallel. Global setting only.
   value is three days.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

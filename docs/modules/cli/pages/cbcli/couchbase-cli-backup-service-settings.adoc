@@ -12,8 +12,9 @@ Manage the backup service settings
 
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
-    [--password <password>] settings [--get] [--set] [--history-rotation-period <days>]
-    [--history-rotation-size <mebibytes>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] settings [--get]
+    [--set] [--history-rotation-period <days>] [--history-rotation-size <mebibytes>]
 
 == DESCRIPTION
 

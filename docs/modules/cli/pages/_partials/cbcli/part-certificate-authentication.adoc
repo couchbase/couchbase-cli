@@ -1,0 +1,49 @@
+== CERTIFICATE AUTHENTICATION (MTLS AUTHENTICATION)
+
+This tool supports authenticating against a Couchbase Cluster by using certificate based authentication (mTLS
+authentication). To use certificate based authentication a certificate/key must be supplied, there a currently
+multiple ways this may be done.
+
+=== PEM ENCODED CERTIFICATE/KEY
+
+An unencrypted PEM encoded certificate/key may be supplied by using:
+- `--client-cert <path>`
+- `--client-key <path>`
+
+The file passed to `--client-cert` must contain the client certificate, and an optional chain required to authenticate
+the client certificate.
+
+The file passed to `--client-key` must contain at most one private key, the key can be in one of the following formats:
+- PKCS#1
+- PKCS#8
+
+Currently, only the following key types are supported:
+- RSA
+- DSA
+
+=== PEM ENCODED CERTIFICATE/ENCRYPTED PKCS#8 KEY
+
+An encrypted PKCS#8 formatted key may be provided using:
+- `--client-cert <path>`
+- `--client-key <path>`
+- `--client-key-password <password>`
+
+The file passed to `--client-cert` must contain the client certificate, and an optional chain required to authenticate
+the client certificate.
+
+Currently, only the following key types are supported:
+- RSA
+- DSA
+
+=== ENCRYPTED PKCS#12 CERTIFICATE/KEY
+
+An encrypted PKCS#12 certificate/key may be provided using:
+- `--client-cert <path>`
+- `--client-cert-password <password>`
+
+The file passed to `--client-cert` must contain the client certificate and exactly one private key. It may also contain
+the chain required to authenticate the client certificate.
+
+Currently, only the following key types are supported:
+- RSA
+- DSA

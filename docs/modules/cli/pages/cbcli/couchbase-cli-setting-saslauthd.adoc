@@ -12,8 +12,9 @@ Modifies saslauthd settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-saslauthd_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--admins <admins_list>]
+_couchbase-cli setting-saslauthd_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--admins <admins_list>]
     [--roadmins <ro_admin_list>] [--default <default>]
     [--enabled <1|0>]
 
@@ -51,6 +52,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   option default to "none".
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

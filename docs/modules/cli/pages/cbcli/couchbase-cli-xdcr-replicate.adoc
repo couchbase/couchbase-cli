@@ -12,8 +12,9 @@ Creates a replication between two data centers
 == SYNOPSIS
 
 [verse]
-_couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--create] [--delete] [--pause] [--list]
+_couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--create] [--delete] [--pause] [--list]
     [--resume] [--settings] [--get] [--xdcr-from-bucket <bucket>]
     [--xdcr-to-bucket <bucket>] [--xdcr-cluster-name <name>]
     [--filter-expression <regex>] [--xdcr-replicator <id>]
@@ -158,6 +159,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   This is an Enterprise Edition only feature.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 

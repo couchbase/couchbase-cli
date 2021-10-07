@@ -12,8 +12,9 @@ Displays information and statistics about the Couchbase Server specified.
 == SYNOPSIS
 
 [verse]
-_couchbase-cli server-info_ [--cluster <url>] [--username <username>]
-    [--password <password>]
+_couchbase-cli server-info_ [--cluster <url>] [--username <username>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>]
 
 == DESCRIPTION
 
@@ -22,6 +23,8 @@ This command prints information about the Couchbase Server specified.
 == OPTIONS
 
 include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

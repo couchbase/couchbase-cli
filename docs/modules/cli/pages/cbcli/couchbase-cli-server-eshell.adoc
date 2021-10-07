@@ -12,8 +12,9 @@ Opens a shell to talk to the cluster manager process
 == SYNOPSIS
 
 [verse]
-_couchbase-cli server-eshell_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--vm <vm_name>] [--erl <path>]
+_couchbase-cli server-eshell_ [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--vm <vm_name>] [--erl <path>]
 
 == DESCRIPTION
 
@@ -46,6 +47,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   correct executable to connect to the cluster manager with.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 
