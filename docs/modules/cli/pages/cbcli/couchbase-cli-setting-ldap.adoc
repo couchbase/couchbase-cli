@@ -20,7 +20,7 @@ _couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>] [--password <
     [--user-dn-query <query> | --user-dn-template <template>]
     [--max-parallel <max>] [--max-cache-size <size>]
     [--cache-value-lifetime <ms>] [--bind-dn <dn>] [--bind-password <password>]
-    [--client-cert <path>] [--client-key <path>]
+    [--ldap-client-cert <path>] [--ldap-client-key <path>]
     [--group-query <query>] [--enable-nested-groups <0|1>]
     [--nested-group-max-depth <depth>]
 
@@ -85,15 +85,16 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --bind-password <password>::
   The bind user password
 
---client-cert <path>::
+--ldap-client-cert <path>::
   The client TLS certificate to be used to bind against the LDAP Server to
   allow user and groups synchronization. If bind details or client TLS
   certificate are not provided anonymous bind will be used instead.
-  '--client-cert' and '--client-key' need to be set together.
+  '--ldap-client-cert' and '--ldap-client-key' need to be set together.
 
---client-key <path>::
-  The client TLS key. This is used with '--client-cert' flag for certificate
-  authentication. '--client-cert' and '--client-key' need to be set together.
+--ldap-client-key <path>::
+  The client TLS key. This is used with '--ldap-client-cert' flag for
+  certificate authentication. '--ldap-client-cert' and '--ldap-client-key' need
+  to be set together.
 
 --group-query <query>::
   LDAP query, to get the users' groups by username in RFC4516 format.

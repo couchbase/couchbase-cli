@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-cluster-init
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-10-07
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-CLUSTER\-INIT" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-CLUSTER\-INIT" "1" "2021-10-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,13 +28,13 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-cluster\-init \- Initializes a Couchbase Server cluster
+couchbase-cli-cluster-init \- Initializes a Couchbase Server cluster
 .SH "SYNOPSIS"
 .sp
-.sp
 .nf
-\fIcouchbase\-cli cluster\-init\fP [\-\-cluster <url>] [\-\-cluster\-username <username>]
-    [\-\-cluster\-password <password>] [\-\-cluster\-port <port>]
+\fIcouchbase\-cli cluster\-init\fP [\-\-cluster <url>] [\-\-cluster\-username <username>] [\-\-cluster\-password <password>]
+    [\-\-client\-cert <path>] [\-\-client\-cert\-password <password>] [\-\-client\-key <path>]
+    [\-\-client\-key\-password <password>] [\-\-cluster\-port <port>]
     [\-\-cluster\-ramsize <mebibytes>] [\-\-cluster\-name <name>]
     [\-\-cluster\-index\-ramsize <mebibytes>] [\-\-cluster\-fts\-ramsize <mebibytes>]
     [\-\-cluster\-eventing\-ramsize <mebibytes>]
@@ -171,7 +171,7 @@ IP address, inferred geolocation only at the city level, and browser type).
 This does not allow Couchbase to track your specific interactions or usage
 of Couchbase Server. Couchbase, Inc never accesses or collects any data
 stored within Couchbase Server. This feature can be disabled at any time by
-using \(aqcouchbase\-cli\-setting\-notification.\(aq For more information on this
+using \*(Aqcouchbase\-cli\-setting\-notification.\*(Aq For more information on this
 feature, please see the “Couchbase Server Privacy FAQ” in the product
 documentation, which supplements the Couchbase Privacy Policy available
 online.
@@ -217,6 +217,52 @@ It is recommended to use the couchbase://<addr> format for standard
 installations. The other two formats allow an option to take a port number which
 is needed for non\-default installations where the admin port has been set up on
 a port other that 8091.
+.SH "CERTIFICATE AUTHENTICATION (MTLS AUTHENTICATION)"
+.sp
+This tool supports authenticating against a Couchbase Cluster by using certificate based authentication (mTLS
+authentication). To use certificate based authentication a certificate/key must be supplied, there a currently
+multiple ways this may be done.
+.SS "PEM ENCODED CERTIFICATE/KEY"
+.sp
+An unencrypted PEM encoded certificate/key may be supplied by using:
+\- \f(CR\-\-client\-cert <path>\fP
+\- \f(CR\-\-client\-key <path>\fP
+.sp
+The file passed to \f(CR\-\-client\-cert\fP must contain the client certificate, and an optional chain required to authenticate
+the client certificate.
+.sp
+The file passed to \f(CR\-\-client\-key\fP must contain at most one private key, the key can be in one of the following formats:
+\- PKCS#1
+\- PKCS#8
+.sp
+Currently, only the following key types are supported:
+\- RSA
+\- DSA
+.SS "PEM ENCODED CERTIFICATE/ENCRYPTED PKCS#8 KEY"
+.sp
+An encrypted PKCS#8 formatted key may be provided using:
+\- \f(CR\-\-client\-cert <path>\fP
+\- \f(CR\-\-client\-key <path>\fP
+\- \f(CR\-\-client\-key\-password <password>\fP
+.sp
+The file passed to \f(CR\-\-client\-cert\fP must contain the client certificate, and an optional chain required to authenticate
+the client certificate.
+.sp
+Currently, only the following key types are supported:
+\- RSA
+\- DSA
+.SS "ENCRYPTED PKCS#12 CERTIFICATE/KEY"
+.sp
+An encrypted PKCS#12 certificate/key may be provided using:
+\- \f(CR\-\-client\-cert <path>\fP
+\- \f(CR\-\-client\-cert\-password <password>\fP
+.sp
+The file passed to \f(CR\-\-client\-cert\fP must contain the client certificate and exactly one private key. It may also contain
+the chain required to authenticate the client certificate.
+.sp
+Currently, only the following key types are supported:
+\- RSA
+\- DSA
 .SH "EXAMPLES"
 .sp
 To create a Couchbase Server cluster with only the data service on the first node
@@ -224,8 +270,10 @@ and a memory quota of 4096MiB run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli cluster\-init \-c 127.0.0.1 \-\-cluster\-username Administrator \(rs
  \-\-cluster\-password password \-\-services data \-\-cluster\-ramsize 4096
+.fam
 .fi
 .if n .RE
 .sp
@@ -239,9 +287,11 @@ command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli cluster\-init \-c 127.0.0.1 \-\-cluster\-username Administrator \(rs
  \-\-cluster\-password password \-\-services data,index \-\-cluster\-ramsize 2048 \(rs
  \-\-cluster\-index\-ramsize 1024 \-\-index\-storage\-setting memopt
+.fam
 .fi
 .if n .RE
 .sp
@@ -255,12 +305,14 @@ first node.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli cluster\-init \-c 127.0.0.1 \-\-cluster\-username Administrator \(rs
  \-\-cluster\-password password \-\-services data,index,query,fts,analytics \(rs
  \-\-cluster\-ramsize 2048 \-\-cluster\-index\-ramsize 1024 \(rs
  \-\-cluster\-eventing\-ramsize 1024 \-\-cluster\-fts\-ramsize 1024 \(rs
  \-\-cluster\-analytics\-ramsize 1024 \-\-cluster\-fts\-ramsize 1024 \(rs
  \-\-index\-storage\-setting default
+.fam
 .fi
 .if n .RE
 .sp
@@ -270,9 +322,11 @@ only the data service. The memory quota of the data service is set to 2048MiB.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli cluster\-init \-c 127.0.0.1 \-\-cluster\-username Administrator \(rs
  \-\-cluster\-password password \-\-services data \-\-cluster\-ramsize 2048 \(rs
  \-\-cluster\-port 5000
+.fam
 .fi
 .if n .RE
 .SH "DISCUSSION"

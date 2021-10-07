@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-failover
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-10-07
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-FAILOVER" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-FAILOVER" "1" "2021-10-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,13 +28,13 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-failover \- Failover a node in the cluster
+couchbase-cli-failover \- Failover a node in the cluster
 .SH "SYNOPSIS"
 .sp
-.sp
 .nf
-\fIcouchbase\-cli failover\fP [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>][\-\-server\-failover <server_list>] [\-\-hard]
+\fIcouchbase\-cli failover\fP [\-\-cluster <url>] [\-\-username <user>] [\-\-password <password>]
+    [\-\-client\-cert <path>] [\-\-client\-cert\-password <password>] [\-\-client\-key <path>]
+    [\-\-client\-key\-password <password>] [\-\-server\-failover <server_list>] [\-\-hard]
     [\-\-force] [\-\-no\-progress\-bar] [\-\-no\-wait]
 .fi
 .br
@@ -71,6 +71,36 @@ non\-echoed stdin. You may also specify your password by using the
 environment variable CB_REST_PASSWORD.
 .RE
 .sp
+\-\-client\-cert <path>
+.RS 4
+The path to a client certificate used to authenticate when connecting to a
+cluster. May be supplied with \f(CR\-\-client\-key\fP as an alternative to the
+\f(CR\-\-username\fP and \f(CR\-\-password\fP flags.  See the CERTIFICATE AUTHENTICATION
+section for more information.
+.RE
+.sp
+\-\-client\-cert\-password <password>
+.RS 4
+The password for the certificate provided to the \f(CR\-\-client\-cert\fP flag, when
+using this flag, the certificate/key pair is expected to be in the PKCS#12
+format. See the CERTIFICATE AUTHENTICATION section for more information.
+.RE
+.sp
+\-\-client\-key <path>
+.RS 4
+The path to the client private key whose public key is contained in the
+certificate provided to the \f(CR\-\-client\-cert\fP flag. May be supplied with
+\f(CR\-\-client\-cert\fP as an alternative to the \f(CR\-\-username\fP and \f(CR\-\-password\fP
+flags. See the CERTIFICATE AUTHENTICATION section for more information.
+.RE
+.sp
+\-\-client\-key\-password <password>
+.RS 4
+The password for the key provided to the \f(CR\-\-client\-key\fP flag, when using this
+flag, the key is expected to be in the PKCS#8 format.  See the CERTIFICATE
+AUTHENTICATION section for more information.
+.RE
+.sp
 \-\-server\-failover <server_list>
 .RS 4
 A comma separated list of nodes to failover.
@@ -92,7 +122,7 @@ Specifying this flag forces a hard failover. This option should should only
 be used when needed. To be able to do a failover the cluster need a quorum
 of nodes. There are case where the majority of nodes are unavailable and it
 will be impossible to get a quorum. In those case this flag can be used to
-force a hard failover. This flag has to be used with \(aq\-\-hard\(aq flag.
+force a hard failover. This flag has to be used with \*(Aq\-\-hard\*(Aq flag.
 .RE
 .sp
 \-\-no\-progress\-bar
@@ -151,15 +181,63 @@ It is recommended to use the couchbase://<addr> format for standard
 installations. The other two formats allow an option to take a port number which
 is needed for non\-default installations where the admin port has been set up on
 a port other that 8091.
+.SH "CERTIFICATE AUTHENTICATION (MTLS AUTHENTICATION)"
+.sp
+This tool supports authenticating against a Couchbase Cluster by using certificate based authentication (mTLS
+authentication). To use certificate based authentication a certificate/key must be supplied, there a currently
+multiple ways this may be done.
+.SS "PEM ENCODED CERTIFICATE/KEY"
+.sp
+An unencrypted PEM encoded certificate/key may be supplied by using:
+\- \f(CR\-\-client\-cert <path>\fP
+\- \f(CR\-\-client\-key <path>\fP
+.sp
+The file passed to \f(CR\-\-client\-cert\fP must contain the client certificate, and an optional chain required to authenticate
+the client certificate.
+.sp
+The file passed to \f(CR\-\-client\-key\fP must contain at most one private key, the key can be in one of the following formats:
+\- PKCS#1
+\- PKCS#8
+.sp
+Currently, only the following key types are supported:
+\- RSA
+\- DSA
+.SS "PEM ENCODED CERTIFICATE/ENCRYPTED PKCS#8 KEY"
+.sp
+An encrypted PKCS#8 formatted key may be provided using:
+\- \f(CR\-\-client\-cert <path>\fP
+\- \f(CR\-\-client\-key <path>\fP
+\- \f(CR\-\-client\-key\-password <password>\fP
+.sp
+The file passed to \f(CR\-\-client\-cert\fP must contain the client certificate, and an optional chain required to authenticate
+the client certificate.
+.sp
+Currently, only the following key types are supported:
+\- RSA
+\- DSA
+.SS "ENCRYPTED PKCS#12 CERTIFICATE/KEY"
+.sp
+An encrypted PKCS#12 certificate/key may be provided using:
+\- \f(CR\-\-client\-cert <path>\fP
+\- \f(CR\-\-client\-cert\-password <password>\fP
+.sp
+The file passed to \f(CR\-\-client\-cert\fP must contain the client certificate and exactly one private key. It may also contain
+the chain required to authenticate the client certificate.
+.sp
+Currently, only the following key types are supported:
+\- RSA
+\- DSA
 .SH "EXAMPLES"
 .sp
 To hard fail over two nodes run the following command:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli failover \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \(rs
  \-\-server\-failover 192.168.1.6:8091,192.168.1.7:8091
+.fam
 .fi
 .if n .RE
 .sp
@@ -167,8 +245,10 @@ To gracefully failover a node run the following command:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli failover \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \-\-server\-failover 192.168.1.6:8091
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-query
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-03-16
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-10-07
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-SETTINGS" "1" "2021-03-16" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-SETTINGS" "1" "2021-10-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,14 +28,14 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-backup\-service\-settings \- Manage the backup service settings
+couchbase-cli-backup-service-settings \- Manage the backup service settings
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 _couchbase\-cli backup\-service [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>] settings [\-\-get] [\-\-set] [\-\-history\-rotation\-period <days>]
-    [\-\-history\-rotation\-size <mebibytes>]
+    [\-\-password <password>] [\-\-client\-cert <path>] [\-\-client\-cert\-password <password>]
+    [\-\-client\-key <path>] [\-\-client\-key\-password <password>] settings [\-\-get]
+    [\-\-set] [\-\-history\-rotation\-period <days>] [\-\-history\-rotation\-size <mebibytes>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -111,11 +111,13 @@ To retrieve the backup service settings:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
   settings \-\-get
 \-\- Backup service configuration \-\-
 History rotation size: 70 MiB
 History rotation period: 28 days
+.fam
 .fi
 .if n .RE
 .sp
@@ -123,9 +125,11 @@ To set the backup service configuration use the \f(CR\-\-set\fP flag and any of 
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
   settings \-\-set \-\-history\-rotation\-size 70 \-\-history\-rotation\-period 365
 SUCCESS: Backup service settings set
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

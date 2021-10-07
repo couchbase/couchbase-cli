@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-backup-service-plan
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-01
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-10-07
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-PLAN" "1" "2021-02-01" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-PLAN" "1" "2021-10-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,13 +28,14 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-backup\-service\-plan \- Manage the backup service plans.
+couchbase-cli-backup-service-plan \- Manage the backup service plans.
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 \fIcouchbase\-cli backup\-service\fP [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>] [\-\-output] plan [\-\-list] [\-\-get]
+    [\-\-password <password>] [\-\-client\-cert <path>]
+    [\-\-client\-cert\-password <password>] [\-\-client\-key <path>]
+    [\-\-client\-key\-password <password>] [\-\-output] plan [\-\-list] [\-\-get]
     [\-\-remove] [\-\-add] [\-\-name <name>] [\-\-description <text>]
     [\-\-services <list>] [\-\-task [<task> ...]]
 .fi
@@ -132,12 +133,14 @@ To retrieve a summary of all plans run:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
   plan \-\-list
   Name     | # Tasks | Services  | Default
   \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
   _daily   | 3       | all       | True
   custom   | 9       | Data      | False
+.fam
 .fi
 .if n .RE
 .sp
@@ -149,6 +152,7 @@ action argument as shown below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
   plan \-\-get \-\-name _daily
 Name: _daily
@@ -162,6 +166,7 @@ Name                 | Schedule                      | Options
 backup_hourly        | backup every hour at 00:00    | N/A
 merge_every_6_hours  | merge every 6 hours at 00:30  | Merge from 0 to 0
 merge_week           | merge every sunday at 23:40   | Merge from 0 to 7
+.fam
 .fi
 .if n .RE
 .sp
@@ -174,8 +179,10 @@ plan that is being used, all the plans that use it must be archived first.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
   plan \-\-remove \-\-name _daily
+.fam
 .fi
 .if n .RE
 .sp
@@ -183,11 +190,13 @@ To add a plan  use the action argument \f(CR\-\-add\fP as seen below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
   plan \-\-add \-\-name new\-plan \-\-description "Optional description"
-  \-\-task \(aq{"name":"t1", "task_type":"BACKUP", "full_backup": true, \(rs
-  "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}\(aq
+  \-\-task \*(Aq{"name":"t1", "task_type":"BACKUP", "full_backup": true, \(rs
+  "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}\*(Aq
    \-\-services data
+.fam
 .fi
 .if n .RE
 .sp
@@ -199,6 +208,7 @@ task objects. The task objects have the following schema:
 .sp
 .if n .RS 4
 .nf
+.fam C
 {
     "name": "task\-name",
     "task_type": "BACKUP", // it can be either BACKUP or MERGE
@@ -214,6 +224,7 @@ task objects. The task objects have the following schema:
         "time": "22:00"       // Optional time at which to run the tasks
     }
 }
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

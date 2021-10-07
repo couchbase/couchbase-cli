@@ -452,8 +452,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_synopsis">SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<pre class="content"><em>couchbase-cli setting-alternate-address</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;]
-    [--password &lt;password&gt;] [--list] [--set] [--remove] [--hostname &lt;host&gt;]
+<pre class="content"><em>couchbase-cli setting-alternate-address</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;] [--password &lt;password&gt;]
+    [--client-cert &lt;path&gt;] [--client-cert-password &lt;password&gt;] [--client-key &lt;path&gt;]
+    [--client-key-password &lt;password&gt;] [--list] [--set] [--remove] [--hostname &lt;host&gt;]
     [--ports &lt;ports&gt;]</pre>
 </div>
 </div>
@@ -495,6 +496,32 @@ an unauthorized error. If this argument is specified, but no password is
 given then the command will prompt the user for a password through
 non-echoed stdin. You may also specify your password by using the
 environment variable CB_REST_PASSWORD.</p>
+</dd>
+<dt class="hdlist1">--client-cert &lt;path&gt;</dt>
+<dd>
+<p>The path to a client certificate used to authenticate when connecting to a
+cluster. May be supplied with <code>--client-key</code> as an alternative to the
+<code>--username</code> and <code>--password</code> flags.  See the CERTIFICATE AUTHENTICATION
+section for more information.</p>
+</dd>
+<dt class="hdlist1">--client-cert-password &lt;password&gt;</dt>
+<dd>
+<p>The password for the certificate provided to the <code>--client-cert</code> flag, when
+using this flag, the certificate/key pair is expected to be in the PKCS#12
+format. See the CERTIFICATE AUTHENTICATION section for more information.</p>
+</dd>
+<dt class="hdlist1">--client-key &lt;path&gt;</dt>
+<dd>
+<p>The path to the client private key whose public key is contained in the
+certificate provided to the <code>--client-cert</code> flag. May be supplied with
+<code>--client-cert</code> as an alternative to the <code>--username</code> and <code>--password</code>
+flags. See the CERTIFICATE AUTHENTICATION section for more information.</p>
+</dd>
+<dt class="hdlist1">--client-key-password &lt;password&gt;</dt>
+<dd>
+<p>The password for the key provided to the <code>--client-key</code> flag, when using this
+flag, the key is expected to be in the PKCS#8 format.  See the CERTIFICATE
+AUTHENTICATION section for more information.</p>
 </dd>
 <dt class="hdlist1">--list</dt>
 <dd>
@@ -552,6 +579,73 @@ e.g. <code>--ports kv=9000,kvSSL=9999.</code></p>
 installations. The other two formats allow an option to take a port number which
 is needed for non-default installations where the admin port has been set up on
 a port other that 8091.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_certificate_authentication_mtls_authentication">CERTIFICATE AUTHENTICATION (MTLS AUTHENTICATION)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This tool supports authenticating against a Couchbase Cluster by using certificate based authentication (mTLS
+authentication). To use certificate based authentication a certificate/key must be supplied, there a currently
+multiple ways this may be done.</p>
+</div>
+<div class="sect2">
+<h3 id="_pem_encoded_certificatekey">PEM ENCODED CERTIFICATE/KEY</h3>
+<div class="paragraph">
+<p>An unencrypted PEM encoded certificate/key may be supplied by using:
+- <code>--client-cert &lt;path&gt;</code>
+- <code>--client-key &lt;path&gt;</code></p>
+</div>
+<div class="paragraph">
+<p>The file passed to <code>--client-cert</code> must contain the client certificate, and an optional chain required to authenticate
+the client certificate.</p>
+</div>
+<div class="paragraph">
+<p>The file passed to <code>--client-key</code> must contain at most one private key, the key can be in one of the following formats:
+- PKCS#1
+- PKCS#8</p>
+</div>
+<div class="paragraph">
+<p>Currently, only the following key types are supported:
+- RSA
+- DSA</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_pem_encoded_certificateencrypted_pkcs8_key">PEM ENCODED CERTIFICATE/ENCRYPTED PKCS#8 KEY</h3>
+<div class="paragraph">
+<p>An encrypted PKCS#8 formatted key may be provided using:
+- <code>--client-cert &lt;path&gt;</code>
+- <code>--client-key &lt;path&gt;</code>
+- <code>--client-key-password &lt;password&gt;</code></p>
+</div>
+<div class="paragraph">
+<p>The file passed to <code>--client-cert</code> must contain the client certificate, and an optional chain required to authenticate
+the client certificate.</p>
+</div>
+<div class="paragraph">
+<p>Currently, only the following key types are supported:
+- RSA
+- DSA</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_encrypted_pkcs12_certificatekey">ENCRYPTED PKCS#12 CERTIFICATE/KEY</h3>
+<div class="paragraph">
+<p>An encrypted PKCS#12 certificate/key may be provided using:
+- <code>--client-cert &lt;path&gt;</code>
+- <code>--client-cert-password &lt;password&gt;</code></p>
+</div>
+<div class="paragraph">
+<p>The file passed to <code>--client-cert</code> must contain the client certificate and exactly one private key. It may also contain
+the chain required to authenticate the client certificate.</p>
+</div>
+<div class="paragraph">
+<p>Currently, only the following key types are supported:
+- RSA
+- DSA</p>
+</div>
 </div>
 </div>
 </div>

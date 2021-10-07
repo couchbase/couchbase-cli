@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-backup-service-repository
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-01
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-10-07
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-REPOSITORY" "1" "2021-02-01" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-BACKUP\-SERVICE\-REPOSITORY" "1" "2021-10-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,13 +28,14 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-backup\-service\-repository \- Manage the backup service repositories.
+couchbase-cli-backup-service-repository \- Manage the backup service repositories.
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 _couchbase\-cli backup\-service [\-\-cluster <url>] [\-\-username <user>]
-    [\-\-password <password>] [\-\-output] repository [\-\-list] [\-\-get] [\-\-archive]
+    [\-\-password <password>] [\-\-client\-cert <path>] [\-\-client\-cert\-password <password>]
+    [\-\-client\-key <path>] [\-\-client\-key\-password <password>]
+    [\-\-output] repository [\-\-list] [\-\-get] [\-\-archive]
     [\-\-add] [\-\-remove] [\-\-id <id>] [\-\-new\-id <id>] [\-\-state <state>]
     [\-\-profile <name>] [\-\-backup\-archive <archive>] [\-\-bucket\-name <name>]
     [\-\-cloud\-credentials\-name <name>] [\-\-cloud\-staging\-dir <path>]
@@ -88,7 +89,7 @@ once it is archived.
 .sp
 \-\-state <state>
 .RS 4
-Specifies the repository state. Valid states are \(aqactive\(aq, \(aqarchived\(aq or \(aqimported\(aq
+Specifies the repository state. Valid states are \*(Aqactive\*(Aq, \*(Aqarchived\*(Aq or \*(Aqimported\*(Aq
 .RE
 .sp
 \-\-profile <profile_name>
@@ -194,6 +195,7 @@ To retrieve a summary of all repositories run:
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password \(rs
   repository \-\-list
 ID            | State    | Profile | Healthy | Repository"
@@ -201,6 +203,7 @@ ID            | State    | Profile | Healthy | Repository"
 weekly\-all    | active   | _weekly |  True   | a8059549\-7fc3\-401a\-8fb8\-008d1e20f1b0
 old\-data      | archived | _daily  |  True   | d6ccec04\-6f03\-4599\-94c5\-b95ac10a4f80
 test\-data\-set | imported | N/A     |  True   | provider
+.fam
 .fi
 .if n .RE
 .sp
@@ -211,6 +214,7 @@ To set the backup service configuration use the \f(CR\-\-set\fP flag and any of 
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p password  \-\-output json \(rs
   repository \-\-list \-\-state active
 {
@@ -247,6 +251,7 @@ $ couchbase\-cli backup\-service \-c 127.0.0.1:8091 \-u Administrator \-p passwo
     }
   ]
 }
+.fam
 .fi
 .if n .RE
 .sp
@@ -255,6 +260,7 @@ illustrated below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
   repository \-\-get \-\-id weekly\-all \-\-state active
 ID: weekly\-all
@@ -271,6 +277,7 @@ Name               | Task type | Next run
 backup_monday_full | Backup    | 2020\-07\-13T22:00:00+01:00
 backup_wednesday   | Backup    | 2020\-07\-15T22:00:00+01:00
 merge_week         | Merge     | 2020\-07\-12T23:20:00+01:00
+.fam
 .fi
 .if n .RE
 .sp
@@ -282,8 +289,10 @@ To add an repository one can use the \f(CR\-\-add action\fP flag as shown below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
   repository \-\-add \-\-id new\-repository \-\-profile _weekly \-\-backup\-archive /backup/service
+.fam
 .fi
 .if n .RE
 .sp
@@ -300,9 +309,11 @@ which bucket the repository should backup. An example can be seen below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
   repository \-\-add \-\-id new\-repository \-\-profile _weekly \-\-backup\-archive /backup/service \(rs
   \-\-bucket\-name beer\-sample
+.fam
 .fi
 .if n .RE
 .sp
@@ -313,10 +324,12 @@ as illustrated in the example below.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
   repository \-\-add \-\-id cloud\-repository \-\-profile _daily \-\-backup\-archive s3://cloud\-bucket/archive \(rs
   \-\-cloud\-staging\-dir /backup/staging \-\-cloud\-credentials\-id id \-\-cloud\-credentials\-key key \(rs
   \-\-cloud\-credentials\-region us\-east\-1
+.fam
 .fi
 .if n .RE
 .sp
@@ -343,8 +356,10 @@ reversible.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
   repository \-\-archive \-\-id active\-repository \-\-new\-id deprecated
+.fam
 .fi
 .if n .RE
 .sp
@@ -355,8 +370,10 @@ operation cannot be undone.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
   repository \-\-remove \-\-id repository \-\-state imported
+.fam
 .fi
 .if n .RE
 .sp
@@ -368,8 +385,10 @@ below, note that once the data is deleted it cannot be recovered.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli backup\-service \-c http://127.0.0.1:8091 \-u Administrator \-p password \(rs
   repository \-\-remove \-\-id other_repository \-\-state archived \-\-remove\-data
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
