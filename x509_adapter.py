@@ -91,13 +91,16 @@ class X509Adapter(HTTPAdapter):
         for ca_cert in chain:
             ctx._ctx.add_extra_chain_cert(X509.from_cryptography(ca_cert))
 
+        def remove_underscore(val: str) -> str:
+            return val[len('_'):] if val.startswith('_') else val
+
         try:
             ctx._ctx.use_privatekey(PKey.from_cryptography_key(key))
         except OpenSSLError as error:
             raise X509AdapterError(str(error)) from error
         except TypeError as error:
             raise X509AdapterError(f"unsupported key type, expected RSAPrivateKey/DSAPrivateKey got"
-                                   f" {type(key).__name__.removeprefix('_')}") from error
+                                   f" {remove_underscore(type(key).__name__)}") from error
 
         return ctx
 
