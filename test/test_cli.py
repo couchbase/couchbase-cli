@@ -10,7 +10,7 @@ from io import StringIO
 
 from mock_server import MockRESTServer, generate_self_signed_cert
 
-from cbmgr import CollectionManage, CouchbaseCLI
+from cbmgr import CollectionManage, CouchbaseCLI, validate_credential_flags
 from couchbaseConstants import parse_host_port
 
 host = '127.0.0.1'
@@ -23,6 +23,136 @@ cluster_connect_args = ['-c', host + ":" + str(port), '-u', 'Administrator', '-p
 # NOTE: We don't remove the key/cert once generted since they're included in the '.gitignore' file.
 def setUpModule():
     generate_self_signed_cert(os.path.dirname(os.path.abspath(__file__)))
+
+
+class ValidateCredentialFlags(unittest.TestCase):
+    def test_validate_credential_flags(self):
+        tests = {
+            "ValidUsernameAndPassword": {
+                "username": "username",
+                "password": "password",
+            },
+            "ValidCertAuthWithHTTPS": {
+                "host": "https://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+            },
+            "ValidCertAuthWithCouchbases": {
+                "host": "couchbases://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+            },
+            "OnlyUsername": {
+                "username": "username",
+                "errors": ["the --username/--password flags must be supplied together"],
+            },
+            "OnlyPassword": {
+                "password": "password",
+                "errors": ["the --username/--password flags must be supplied together"],
+            },
+            "OnlyClientCert": {
+                "host": "https://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "errors": ["when no cert/key password is provided, the --client-cert/--client-key flags must be supplied together"],
+            },
+            "OnlyClientKey": {
+                "host": "https://localhost:8091",
+                "client_pk": "/path/to/key",
+                "errors": ["certificate authentication requires a certificate to be supplied with the --client-cert flag"],
+            },
+            "CertAuthWithUsername": {
+                "host": "https://localhost:8091",
+                "username": "username",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+                "errors": ["expected either --username and --password or --client-cert and --client-key but not both"],
+            },
+            "CertAuthWithPassword": {
+                "host": "https://localhost:8091",
+                "password": "password",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+                "errors": ["expected either --username and --password or --client-cert and --client-key but not both"],
+            },
+            "InsecureConnectionEmpty": {
+                "host": "",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+                "errors": ["certificate authentication requires a secure connection, use https:// or couchbases://"],
+            },
+            "InsecureConnectionEmpty": {
+                "host": "hostname",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+                "errors": ["certificate authentication requires a secure connection, use https:// or couchbases://"],
+            },
+            "InsecureConnectionHTTP": {
+                "host": "http://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+                "errors": ["certificate authentication requires a secure connection, use https:// or couchbases://"],
+            },
+            "InsecureConnectionCouchbase": {
+                "host": "couchbase://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+                "errors": ["certificate authentication requires a secure connection, use https:// or couchbases://"],
+            },
+            "DoNotWantBothPasswords": {
+                "host": "https://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "client_ca_password": "password",
+                "client_pk": "/path/to/key",
+                "client_pk_password": "password",
+                "errors": ["--client-cert-password and  --client-key-password can't be supplied together"],
+            },
+            "BothUnencrypted": {
+                "host": "https://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+            },
+            "EncryptedPKCS#8": {
+                "host": "https://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+                "client_pk_password": "password",
+            },
+            "EncryptedPKCS#12": {
+                "host": "https://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "client_ca_password": "password",
+            },
+            "CertPasswordWithoutCert": {
+                "host": "https://localhost:8091",
+                "client_ca_password": "password",
+                "errors": ["certificate authentication requires a certificate to be supplied with the --client-cert flag"],
+            },
+            "KeyPasswordWithoutKey": {
+                "host": "https://localhost:8091",
+                "client_ca": "/path/to/cert",
+                "client_pk_password": "password",
+                "errors": ["--client-key-password provided without --client-key"],
+            },
+            "NoCredentials": {
+                "host": "https://localhost:8091",
+                "errors": ["cluster credentials required, expected --username/--password or --client-cert/--client-key"],
+            },
+        }
+
+        def value(test, key):
+            return test[key] if key in test else None
+
+        for name, test in tests.items():
+            with self.subTest(name):
+                self.assertEqual(value(test, "errors"), validate_credential_flags(
+                    value(test, "host"),
+                    value(test, "username"),
+                    value(test, "password"),
+                    value(test, "client_ca"),
+                    value(test, "client_ca_password"),
+                    value(test, "client_pk"),
+                    value(test, "client_pk_password"),
+                ))
 
 
 class ExpandCollectionTest(unittest.TestCase):
@@ -1799,7 +1929,7 @@ class TestSettingLdap(CommandTest):
         user_key_file_name = user_key_file.name
         user_key_file.write(b'this-is-the-user-key-file')
         user_key_file.close()
-        cert_args = ['--client-cert', user_cert_file_name, '--client-key', user_key_file_name]
+        cert_args = ['--ldap-client-cert', user_cert_file_name, '--ldap-client-key', user_key_file_name]
 
         self.no_error_run(self.command + self.authentication_args + self.authorization_args + cert_args,
                           self.server_args)

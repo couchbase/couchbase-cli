@@ -74,13 +74,14 @@ class X509AdapterFactoryTest(unittest.TestCase):
             },
         }
 
-        for _, test in tests.items():
-            if "valid" in test and test["valid"]:
-                X509AdapterFactory(**test["kwargs"])
-                return
+        for name, test in tests.items():
+            with self.subTest(name=name):
+                if "valid" in test and test["valid"]:
+                    X509AdapterFactory(**test["kwargs"])
+                    return
 
-            with self.assertRaisesRegex(X509AdapterError, re.escape(test["message"]) if "message" in test else ""):
-                X509AdapterFactory(**test["kwargs"])
+                with self.assertRaisesRegex(X509AdapterError, re.escape(test["message"]) if "message" in test else ""):
+                    X509AdapterFactory(**test["kwargs"])
 
     def test_valid_cert_key_pair(self):
         adapter = X509AdapterFactory(host="https://localhost:19000",

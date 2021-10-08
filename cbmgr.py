@@ -116,9 +116,14 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
     """
     def inner(fn):
         def decorator(self, opts):
+            _exit_if_errors(validate_credential_flags(opts.cluster, opts.username, opts.password, opts.client_ca,
+                                                      opts.client_ca_password, opts.client_pk, opts.client_pk_password))
+
             try:
                 self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                                           opts.cacert, opts.debug)
+                                           opts.cacert, opts.debug, client_ca=opts.client_ca,
+                                           client_ca_password=opts.client_ca_password, client_pk=opts.client_pk,
+                                           client_pk_password=opts.client_pk_password)
             except X509AdapterError as error:
                 _exit_if_errors([f"failed to setup client certificate encryption, {error}"])
 
@@ -138,6 +143,60 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
             return fn(self, opts)
         return decorator
     return inner
+
+
+def validate_credential_flags(host, username, password, client_ca, client_ca_password, client_pk, client_pk_password):
+    """ValidateCredentialFlags - Performs validation to ensure the user has provided the flags required to connect to
+    their cluster.
+    """
+    using_cert_auth = not (client_ca is None and
+                           client_ca_password is None and
+                           client_pk is None and
+                           client_pk_password is None)
+
+    if using_cert_auth:
+        return validate_certificate_flags(
+            host,
+            username,
+            password,
+            client_ca,
+            client_ca_password,
+            client_pk,
+            client_pk_password)
+
+    if (username is None and password is None):
+        return ["cluster credentials required, expected --username/--password or --client-cert/--client-key"]
+
+    if (username is None or password is None):
+        return ["the --username/--password flags must be supplied together"]
+
+    return None
+
+
+def validate_certificate_flags(host, username, password, client_ca, client_ca_password, client_pk, client_pk_password):
+    """Validate that the user is correctly using certificate authentication.
+    """
+    if username is not None or password is not None:
+        return ["expected either --username and --password or --client-cert and --client-key but not both"]
+
+    if not (host.startswith("https://") or host.startswith("couchbases://")):
+        return ["certificate authentication requires a secure connection, use https:// or couchbases://"]
+
+    if client_ca is None:
+        return ["certificate authentication requires a certificate to be supplied with the --client-cert flag"]
+
+    if client_ca_password is not None and client_pk_password is not None:
+        return ["--client-cert-password and  --client-key-password can't be supplied together"]
+
+    unencrypted = client_ca_password is None and client_pk_password is None
+
+    if unencrypted and (client_ca is None or client_pk is None):
+        return ["when no cert/key password is provided, the --client-cert/--client-key flags must be supplied together"]
+
+    if client_pk_password is not None and client_pk is None:
+        return ["--client-key-password provided without --client-key"]
+
+    return None
 
 
 def check_cluster_initialized(rest):
@@ -391,7 +450,7 @@ class CBHostAction(Action):
 class CBEnvAction(Action):
     """Allows the custom handling of environment variables for command line options"""
 
-    def __init__(self, envvar, required=True, default=None, **kwargs):
+    def __init__(self, envvar, required=False, default=None, **kwargs):
         if not default and envvar and envvar in os.environ:
             default = os.environ[envvar]
         if required and default:
@@ -408,7 +467,7 @@ class CBNonEchoedAction(CBEnvAction):
     stdin, through an environment variable, or as a value to the argument"""
 
     def __init__(self, envvar, prompt_text="Enter password:", confirm_text=None,
-                 required=True, default=None, nargs='?', **kwargs):
+                 required=False, default=None, nargs='?', **kwargs):
         self.prompt_text = prompt_text
         self.confirm_text = confirm_text
         super(CBNonEchoedAction, self).__init__(envvar, required=required, default=default,
@@ -551,7 +610,7 @@ class CouchbaseCLI(Command):
 
 class Subcommand(Command):
     """
-    A Couchbase CLI Subcommand: This is for subcommand that interact with a remote Couchbase Server over the REST API.
+    A Couchbase CLI Subcommand: This is for subcommand that interacts with a remote Couchbase Server over the REST API.
     """
 
     def __init__(self, deprecate_username=False, deprecate_password=False, cluster_default=None):
@@ -570,7 +629,7 @@ class Subcommand(Command):
             group.add_argument("-u", "--username", dest="username",
                                action=CBDeprecatedAction, help=SUPPRESS)
         else:
-            group.add_argument("-u", "--username", dest="username", required=True,
+            group.add_argument("-u", "--username", dest="username",
                                action=CBEnvAction, envvar='CB_REST_USERNAME',
                                metavar="<username>", help="The username for the Couchbase cluster")
 
@@ -578,7 +637,7 @@ class Subcommand(Command):
             group.add_argument("-p", "--password", dest="password",
                                action=CBDeprecatedAction, help=SUPPRESS)
         else:
-            group.add_argument("-p", "--password", dest="password", required=True,
+            group.add_argument("-p", "--password", dest="password",
                                action=CBNonEchoedAction, envvar='CB_REST_PASSWORD',
                                metavar="<password>", help="The password for the Couchbase cluster")
 
@@ -595,6 +654,17 @@ class Subcommand(Command):
                            help="Verifies the cluster identity with this certificate")
         group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
                            help="Prints the short or long help message")
+
+        # Certificate based authentication
+        group.add_argument("--client-cert", dest="client_ca", default=None,
+                           help="The path to a client certificate used during certificate authentication")
+        group.add_argument("--client-cert-password", dest="client_ca_password", default=None,
+                           help="The password for the client certificate provided to '--client-cert'")
+
+        group.add_argument("--client-key", dest="client_pk", default=None,
+                           help="The path to the client private key used during certificate authentication")
+        group.add_argument("--client-key-password", dest="client_pk_password", default=None,
+                           help="The password for the client key provided to '--client-key'")
 
     def execute(self, opts):  # pylint: disable=useless-super-delegation
         super(Subcommand, self).execute(opts)
@@ -2851,9 +2921,9 @@ class SettingLdap(Subcommand):
                            help="LDAP query to get user's DN. Must contains at least one instance of %%u")
         group.add_argument("--user-dn-template", metavar="<template>", dest="user_dn_template",
                            help="Template to construct user's DN. Must contain at least one instance of %%u")
-        group.add_argument("--client-cert", metavar="<path>", dest="client_cert",
+        group.add_argument("--ldap-client-cert", metavar="<path>", dest="ldap_client_cert",
                            help="The client TLS certificate for authentication")
-        group.add_argument("--client-key", metavar="<path>", dest="client_key",
+        group.add_argument("--ldap-client-key", metavar="<path>", dest="ldap_client_key",
                            help="The client TLS key for authentication")
         group.add_argument("--request-timeout", metavar="<ms>", dest="timeout",
                            help="Request time out in milliseconds")
@@ -2927,19 +2997,19 @@ class SettingLdap(Subcommand):
         if opts.user_dn_template is not None:
             mapping = f'{{"template": "{opts.user_dn_template}"}}'
 
-        if (opts.client_cert and not opts.client_key) or (not opts.client_cert and opts.client_key):
+        if (opts.ldap_client_cert and not opts.ldap_client_key) or (not opts.ldap_client_cert and opts.ldap_client_key):
             _exit_if_errors(['--client-cert and --client--key have to be used together'])
 
-        if opts.client_cert is not None:
-            opts.client_cert = _exit_on_file_read_failure(opts.client_cert)
+        if opts.ldap_client_cert is not None:
+            opts.ldap_client_cert = _exit_on_file_read_failure(opts.ldap_client_cert)
 
-        if opts.client_key is not None:
-            opts.client_key = _exit_on_file_read_failure(opts.client_key)
+        if opts.ldap_client_key is not None:
+            opts.ldap_client_key = _exit_on_file_read_failure(opts.ldap_client_key)
 
         _, errors = self.rest.ldap_settings(opts.authentication_enabled, opts.authorization_enabled, opts.hosts,
                                             opts.port, opts.encryption, mapping, opts.timeout, opts.max_parallel,
                                             opts.max_cache_size, opts.cache_value_lifetime, opts.bind_dn,
-                                            opts.bind_password, opts.client_cert, opts.client_key, opts.group_query,
+                                            opts.bind_password, opts.ldap_client_cert, opts.ldap_client_key, opts.group_query,
                                             opts.nested_groups, opts.nested_max_depth, opts.server_cert_val,
                                             opts.cacert_ldap)
 

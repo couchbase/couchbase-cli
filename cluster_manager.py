@@ -77,8 +77,9 @@ class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
     def __init__(self, hostname, username, password, ssl_flag=False, verify_cert=True, ca_cert=True, debug=False,
-                 timeout=DEFAULT_REQUEST_TIMEOUT, client_ca: Optional[Path] = None, client_pk: Optional[Path] = None,
-                 client_pk_password=""):
+                 timeout=DEFAULT_REQUEST_TIMEOUT, client_ca: Optional[Path] = None,
+                 client_ca_password: Optional[str] = None,
+                 client_pk: Optional[Path] = None, client_pk_password: Optional[str] = None):
         hostname = hostname.replace("couchbase://", "http://", 1)
         hostname = hostname.replace("couchbases://", "https://", 1)
 
@@ -104,8 +105,8 @@ class ClusterManager(object):
             self.verify_cert = False
             self.ca_cert = False
 
-        self.username = username.encode('utf-8').decode('latin1')
-        self.password = password.encode('utf-8').decode('latin1')
+        self.username = username.encode('utf-8').decode('latin1') if username is not None else ""
+        self.password = password.encode('utf-8').decode('latin1') if password is not None else ""
         self.timeout = timeout
         self.ssl = self.hostname.startswith("https://")
         self.debug = debug
@@ -118,19 +119,22 @@ class ClusterManager(object):
 
         self.session = requests.Session()
 
-        adapter = self._generate_x509_adapter(hostname, client_ca, client_pk, client_pk_password)
+        adapter = self._generate_x509_adapter(hostname, client_ca, client_ca_password, client_pk, client_pk_password)
         if adapter:
-            self.username, self.password = "", ""  # Only use a single method of authentication at once
             self.session.mount("https://", adapter)
 
     @classmethod
     def _generate_x509_adapter(cls,
                                hostname: str,
-                               client_ca: Optional[Path],
-                               client_pk: Optional[Path],
-                               password: str = "") -> Optional[X509Adapter]:
+                               client_ca: Optional[Path] = None,
+                               client_ca_password: Optional[str] = None,
+                               client_pk: Optional[Path] = None,
+                               client_pk_password: Optional[str] = None) -> Optional[X509Adapter]:
         if client_ca is None:
             return None
+
+        password = client_pk_password if client_pk_password is not None else client_ca_password
+        password = password if password is not None else ""
 
         return X509AdapterFactory(hostname, client_ca, client_pk=client_pk, password=password).generate()
 
