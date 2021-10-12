@@ -889,6 +889,7 @@ class TestRebalance(CommandTest):
         expected_params = ['ejectedNodes=ns1%40localhost', 'knownNodes=ns1%40localhost%2Cns1%40some-host']
         self.rest_parameter_match(expected_params)
 
+
 # TODO: test rebalance status
 # TODO: Test rebalance stop
 # TODO: test recovery
@@ -1433,10 +1434,122 @@ class TestSettingXdcr(CommandTest):
         self.system_exit_run(self.command + self.cmd_args + self.EE_args, self.server_args)
         self.assertIn('can only be configured on enterprise edition', self.str_output)
 
+
 # TODO: TestSettingMasterPassword
-# TODO: TestSslManage
 # TODO: TestRestCipherSuites
 # TODO: TestResetAdminPassword
+
+
+class TestSslManage(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'ssl-manage'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        super().setUp()
+
+    def test_cluster_cert_info(self):
+        certificates = [{"node": "127.0.0.1:9000",
+                         "warnings": [{"message": "Out-of-the-box certificates are self-signed. To further secure your "
+                                                  "system, you must create new X.509 certificates signed by a trusted "
+                                                  "CA."}],
+                         "subject": "CN=Couchbase Server Node (127.0.0.1)",
+                         "expires": "2049-12-31T23:59:59.000Z",
+                         "type": "generated",
+                         "pem": "-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n",
+                         "privateKeyPassphrase": {}},
+                        {"node": "127.0.0.1:9001",
+                         "warnings": [{"message": "Out-of-the-box certificates are self-signed. To further secure your "
+                                                  "system, you must create new X.509 certificates signed by a trusted "
+                                                  "CA."}],
+                         "subject": "CN=Couchbase Server Node (127.0.0.1)",
+                         "expires": "2049-12-31T23:59:59.000Z",
+                         "type": "generated",
+                         "pem": "-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n",
+                         "privateKeyPassphrase": {}}]
+        self.server_args['/pools/default/certificates'] = certificates
+        self.no_error_run(self.command + ['--cluster-cert-info'], self.server_args)
+        self.assertIn('GET:/pools/default/certificates', self.server.trace)
+        self.assertIn('127.0.0.1:9000', self.str_output)
+        self.assertIn('127.0.0.1:9001', self.str_output)
+
+    def test_cluster_ca_info(self):
+        ca = [{"nodes": ["172.18.1.75:9000", "127.0.0.1:9001"],
+               "warnings": [
+                   {"message": "Out-of-the-box certificates are self-signed. To further secure your system, you "
+                               "must create new X.509 certificates signed by a trusted CA."}],
+               "subject": "CN=Couchbase Server e5b5a918",
+               "id": 1,
+               "loadTimestamp": "2021-10-11T13:49:52.000Z",
+               "notBefore": "2013-01-01T00:00:00.000Z",
+               "notAfter": "2049-12-31T23:59:59.000Z",
+               "type": "generated",
+               "pem": "-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n\n", }]
+        self.server_args['/pools/default/trustedCAs'] = ca
+        self.no_error_run(self.command + ['--cluster-ca-info'], self.server_args)
+        self.assertIn('GET:/pools/default/trustedCAs', self.server.trace)
+        self.assertIn('CN=Couchbase Server e5b5a918', self.str_output)
+
+    def test_cluster_ca_load(self):
+        self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789', 'ports': {'httpsMgmt': '6789'}},
+                                                      {'hostname': '127.0.0.1:6789', 'ports': {'httpsMgmt': '6789'}}]}
+        self.no_error_run(self.command + ['--cluster-ca-load'], self.server_args)
+        self.assertIn('POST:/node/controller/loadTrustedCAs', self.server.trace)
+        self.assertIn('localhost', self.str_output)
+        self.assertIn('127.0.0.1', self.str_output)
+
+    def test_cluster_ca_delete(self):
+        self.no_error_run(self.command + ['--cluster-ca-delete', '0'], self.server_args)
+        self.assertIn('DELETE:/pools/default/trustedCAs/0', self.server.trace)
+        self.assertIn('Certificate Authority with ID 0 has been deleted', self.str_output)
+
+    def test_upload_cluster_ca(self):
+        cert_file = tempfile.NamedTemporaryFile(delete=False)
+        cert_file.write(b'this-is-the-cert-file')
+        cert_file.close()
+        self.no_error_run(self.command + ['--upload-cluster-ca', cert_file.name], self.server_args)
+        os.remove(cert_file.name)
+        self.assertIn('POST:/controller/uploadClusterCA', self.server.trace)
+        self.assertIn('DEPRECATED:', self.str_output)
+        self.assertIn('Uploaded cluster certificate to http://127.0.0.1:6789', self.str_output)
+
+    def test_node_cert_info(self):
+        certificate = {'warnings': [{'message': 'Out-of-the-box certificates are self-signed. To further secure your '
+                                                'system, you must create new X.509 certificates signed by a trusted '
+                                                'CA.'}],
+                       'subject': f'CN=Couchbase Server Node ({host})',
+                       'expires': '2049-12-31T23:59:59.000Z',
+                       'type': 'generated',
+                       'pem': '-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n',
+                       'privateKeyPassphrase': {}}
+        self.server_args[f'/pools/default/certificate/node/{host}:{port}'] = certificate
+        self.no_error_run(self.command + ['--node-cert-info'], self.server_args)
+        self.assertIn(f'GET:/pools/default/certificate/node/{host}:{port}', self.server.trace)
+        self.assertIn('127.0.0.1', self.str_output)
+
+    def test_regenerate_cert(self):
+        self.server_args['/controller/regenerateCertificate'] = 'This is a cert'
+        self.no_error_run(self.command + ['--regenerate-cert', 'node1.pem'], self.server_args)
+        os.remove('node1.pem')
+        self.assertIn('POST:/controller/regenerateCertificate', self.server.trace)
+        self.assertIn('Certificate regenerate and copied to `node1.pem`', self.str_output)
+
+    def test_set_node_certificate(self):
+        self.no_error_run(self.command + ['--set-node-certificate'], self.server_args)
+        self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
+        self.assertIn('Node certificate set', self.str_output)
+
+    def test_set_client_auth(self):
+        client_json = tempfile.NamedTemporaryFile(delete=False)
+        client_json.write(b'{"name":"json"}')
+        client_json.close()
+        self.no_error_run(self.command + ['--set-client-auth', client_json.name], self.server_args)
+        self.assertIn('POST:/settings/clientCertAuth', self.server.trace)
+        self.assertIn('SSL client auth updated', self.str_output)
+
+    def test_client_auth(self):
+        self.server_args['/settings/clientCertAuth'] = {'prefixes': [], 'state': 'disable'}
+        self.no_error_run(self.command + ['--client-auth'], self.server_args)
+        self.assertIn('GET:/settings/clientCertAuth', self.server.trace)
+        self.assertIn('prefixes', self.str_output)
 
 
 class TestUserManage(CommandTest):
@@ -1891,7 +2004,7 @@ class TestCollectionManage(CommandTest):
         self.no_error_run(self.command + ['--list-collections', 'scope_1', '-o', 'json'], self.server_args)
         self.assertIn('GET:/pools/default/buckets/name/scopes', self.server.trace)
         expected = json.dumps({'scope_1': ['collection_1', 'collection_2'], 'scope_2': [
-                              'collection_1', 'collection_2']}, sort_keys=True)
+            'collection_1', 'collection_2']}, sort_keys=True)
 
         out = json.dumps(json.loads(self.str_output), sort_keys=True)
         self.assertEqual(expected, out)
@@ -2452,7 +2565,7 @@ class TestBackupServiceSettings(CommandTest):
                           self.server_args)
         self.assertIn('PATCH:/api/v1/config', self.server.trace)
         self.rest_parameter_match([json.dumps({'history_rotation_size': 10, 'history_rotation_period': 30},
-                                  sort_keys=True)])
+                                              sort_keys=True)])
 
 
 class TestBackupServiceRepository(CommandTest):

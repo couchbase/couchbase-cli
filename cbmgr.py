@@ -3342,22 +3342,27 @@ class SslManage(Subcommand):
         super(SslManage, self).__init__()
         self.parser.prog = "couchbase-cli ssl-manage"
         group = self.parser.add_argument_group("SSL manage options")
-        group.add_argument("--cluster-cert-info", dest="cluster_cert", action="store_true",
-                           default=False, help="Gets the cluster certificate")
-        group.add_argument("--node-cert-info", dest="node_cert", action="store_true",
-                           default=False, help="Gets the node certificate")
-        group.add_argument("--regenerate-cert", dest="regenerate", metavar="<path>",
-                           help="Regenerate the cluster certificate and save it to a file")
-        group.add_argument("--set-node-certificate", dest="set_cert", action="store_true",
-                           default=False, help="Sets the node certificate")
-        group.add_argument("--upload-cluster-ca", dest="upload_cert", metavar="<path>",
-                           help="Upload a new cluster certificate")
-        group.add_argument("--set-client-auth", dest="client_auth_path", metavar="<path>",
-                           help="A path to a file containing the client auth configuration")
-        group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
-                           help="Show ssl client certificate authentication value")
-        group.add_argument("--extended", dest="extended", action="store_true",
-                           default=False, help="Print extended certificate information")
+        me_group = group.add_mutually_exclusive_group(required=True)
+        me_group.add_argument("--cluster-cert-info", dest="cluster_cert", action="store_true",
+                              default=False, help="Gets the cluster certificate(s)")
+        me_group.add_argument("--cluster-ca-info", dest="cluster_ca", action="store_true",
+                              default=False, help="Displays the Certificate Authorities the cluster is using")
+        me_group.add_argument("--cluster-ca-load", dest="load_ca", action="store_true",
+                              default=False, help="Loads the Certificate Authorities")
+        me_group.add_argument("--cluster-ca-delete", dest="delete_ca", metavar="<id>",
+                              help="Delete a Certificate Authorities")
+        me_group.add_argument("--upload-cluster-ca", dest="upload_cert", metavar="<path>",
+                              help="Upload a new cluster certificate", action=CBDeprecatedAction)
+        me_group.add_argument("--node-cert-info", dest="node_cert", action="store_true",
+                              default=False, help="Gets the node certificate")
+        me_group.add_argument("--regenerate-cert", dest="regenerate", metavar="<path>",
+                              help="Regenerate the cluster certificate and save it to a file")
+        me_group.add_argument("--set-node-certificate", dest="set_cert", action="store_true",
+                              default=False, help="Sets the node certificate")
+        me_group.add_argument("--set-client-auth", dest="client_auth_path", metavar="<path>",
+                              help="A path to a file containing the client auth configuration")
+        me_group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
+                              help="Show ssl client certificate authentication value")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -3371,17 +3376,69 @@ class SslManage(Subcommand):
             _exit_on_file_write_failure(opts.regenerate, certificate)
             _success(f'Certificate regenerate and copied to `{opts.regenerate}`')
         elif opts.cluster_cert:
-            certificate, errors = self.rest.retrieve_cluster_certificate(opts.extended)
+            certificates, errors = self.rest.retrieve_cluster_certificates()
             _exit_if_errors(errors)
-            if isinstance(certificate, dict):
-                print(json.dumps(certificate, sort_keys=True, indent=2))
+            if opts.output == 'standard':
+                print("The certificate being used by the cluster")
+                print(f'{"Node":21.21} {"Expires":24} {"Type":9} Subject')
+                for cert in certificates:
+                    print(f'{cert["node"]:21.21} {cert["expires"]:24} {cert["type"]:9} {cert["subject"]}')
+                    if 'warnings' in cert:
+                        for warning in cert["warnings"]:
+                            print(f'{" ":4} Warning: {warning["message"]}')
             else:
-                print(certificate)
+                print(json.dumps(certificates, sort_keys=True, indent=2))
+        elif opts.cluster_ca:
+            cert_authorities, errors = self.rest.retrieve_cluster_ca()
+            _exit_if_errors(errors)
+            if opts.output == 'standard':
+                print("The Certificate Authorities being used by the cluster")
+                print(f'{"ID":4} {"NotBefore":24} {"NotAfter":24} {"Loaded Date":24} {"Type":9} Subject')
+                for ca in cert_authorities:
+                    print(
+                        f'{ca["id"]:<4} {ca["notBefore"]:24} {ca["notAfter"]:24} {ca["loadTimestamp"]} {ca["type"]:9}'
+                        f' {ca["subject"]}')
+                    if 'warnings' in ca:
+                        for warning in ca["warnings"]:
+                            print(f'{" ":4} Warning: {warning["message"]}')
+            else:
+                print(json.dumps(cert_authorities, sort_keys=True, indent=2))
+        elif opts.load_ca:
+            nodes_data, errors = self.rest.pools('nodes')
+            _exit_if_errors(errors)
+            loaded_none = True
+            for node in nodes_data['nodes']:
+                hostname = f'http://{node["hostname"]}'
+                if opts.ssl:
+                    hostname = f'https://{node["hostname"]}'
+                _, errors = self.rest.load_cluster_ca(hostname)
+                if not errors:
+                    loaded_none = False
+                    print(f'{node["hostname"]}: Successfully load CA from inbox/CA')
+                # If a CA is not loaded ns_server returns a error, this error is handled and the next node is tried
+                elif "Couldn't load CA certificate" in errors[0]:
+                    break
+                else:
+                    _exit_if_errors(errors)
+            if loaded_none:
+                _exit_if_errors(['Could not load CA from any nodes, please place the CA placed at ./inbox/CA'])
+        elif opts.delete_ca:
+            _, errors = self.rest.delete_cluster_ca(opts.delete_ca)
+            _exit_if_errors(errors)
+            _success(f'Certificate Authority with ID {opts.delete_ca} has been deleted')
         elif opts.node_cert:
             host = urllib.parse.urlparse(opts.cluster).netloc
-            certificate, errors = self.rest.retrieve_node_certificate(host)
+            cert, errors = self.rest.retrieve_node_certificate(host)
             _exit_if_errors(errors)
-            print(json.dumps(certificate, sort_keys=True, indent=2))
+            if opts.output == 'standard':
+                print(f'The certificate being used by node {host}')
+                print(f'{"Expires":24} {"Type":9} Subject')
+                print(f'{cert["expires"]:24} {cert["type"]:9} {cert["subject"]}')
+                if 'warnings' in cert:
+                    for warning in cert["warnings"]:
+                        print(f'{" ":4} Warning: {warning["message"]}')
+            else:
+                print(json.dumps(cert, sort_keys=True, indent=2))
         elif opts.upload_cert:
             certificate = _exit_on_file_read_failure(opts.upload_cert)
             _, errors = self.rest.upload_cluster_certificate(certificate)
@@ -3404,8 +3461,6 @@ class SslManage(Subcommand):
             result, errors = self.rest.retrieve_client_cert_auth()
             _exit_if_errors(errors)
             print(json.dumps(result, sort_keys=True, indent=2))
-        else:
-            _exit_if_errors(["No options specified"])
 
     @staticmethod
     def get_man_page_name():

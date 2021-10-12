@@ -13,11 +13,11 @@ Manage SSL certificates
 
 [verse]
 _couchbase-cli ssl-manage_ [--cluster <url>] [--username <user>] [--password <password>]
-    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--cluster-cert-info] [--node-cert-info]
-    [--regenerate-cert <file>] [--set-node-certificate]
-    [--upload-cluster-ca <file>] [--set-client-auth <path>]
-    [--client-auth] [--extended]
+  [--client-cert <path>] [--client-cert-password <password>] [--client-key <path]
+  [--client-key-password <password>]
+  [--cluster-cert-info] [ --cluster-ca-info] [--cluster-ca-load] [--cluster-ca-delete <id>]
+  [ --upload-cluster-ca <path>] [--node-cert-info] [--regenerate-cert <path>]
+  [--set-node-certificate] [--set-client-auth <path>] [--client-auth]
 
 == DESCRIPTION
 
@@ -28,7 +28,19 @@ This command allows users to manage their SSL and X.509 certificates.
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --cluster-cert-info::
-  Retrieves the cluster certificate and prints it to stdout.
+  Retrieves the cluster certificates and prints it to stdout.
+
+--cluster-ca-info::
+  Retrieves the cluster certificates authorities and prints it to stdout.
+
+--cluster-ca-load::
+  Tries to the certificate authority on every node in the cluster. Before
+  running this command the certificate authority has to be copy to the
+  install location at './inbox/CA' on a node in the cluster. Once loaded
+  all nodes in the cluster will be able to view it.
+
+--cluster-ca-delete <id>::
+  Deletes a certificate authority specified by the id.
 
 --node-cert-info::
   Retrieves the node certificate and prints it to stdout.
@@ -93,10 +105,6 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --client-auth::
   This options used to get the client cert auth value
 
---extended::
-  This option is used with the --cluster-cert-info and specifies that extended
-  cluster certificate information should be printed to stdout.
-
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
@@ -108,17 +116,11 @@ To get cluster certificate information run the following command.
   $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
    -p password --cluster-cert-info
 
-Note that you can also get extended cluster certificate information by adding the
---extended flag as shown below.
-
-  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
-   -p password --cluster-cert-info --extended
-
 To get node certificate information run the following command. Note that the
 node certificate will be from the node specified by the -c option.
 
   $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
-   -p password --node-cert-info --extended
+   -p password --node-cert-info
 
 To automatically regenerate the cluster certificate and save the new certificate
 to a file at /root/new_cluster.cert run the following command.
@@ -153,6 +155,16 @@ To get the client cert auth value, following command should be run.
 
   $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
    -p password --client-auth
+
+To view all certificate authorities
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --cluster-ca-info
+
+To delete certificate authority with ID 1
+
+  $ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+   -p password --cluster-ca-delete 1
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

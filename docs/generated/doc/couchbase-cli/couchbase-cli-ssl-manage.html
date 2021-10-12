@@ -453,11 +453,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="verseblock">
 <pre class="content"><em>couchbase-cli ssl-manage</em> [--cluster &lt;url&gt;] [--username &lt;user&gt;] [--password &lt;password&gt;]
-    [--client-cert &lt;path&gt;] [--client-cert-password &lt;password&gt;] [--client-key &lt;path&gt;]
-    [--client-key-password &lt;password&gt;] [--cluster-cert-info] [--node-cert-info]
-    [--regenerate-cert &lt;file&gt;] [--set-node-certificate]
-    [--upload-cluster-ca &lt;file&gt;] [--set-client-auth &lt;path&gt;]
-    [--client-auth] [--extended]</pre>
+  [--client-cert &lt;path&gt;] [--client-cert-password &lt;password&gt;] [--client-key &lt;path]
+  [--client-key-password &lt;password&gt;]
+  [--cluster-cert-info] [ --cluster-ca-info] [--cluster-ca-load] [--cluster-ca-delete &lt;id&gt;]
+  [ --upload-cluster-ca &lt;path&gt;] [--node-cert-info] [--regenerate-cert &lt;path&gt;]
+  [--set-node-certificate] [--set-client-auth &lt;path&gt;] [--client-auth]</pre>
 </div>
 </div>
 </div>
@@ -525,7 +525,22 @@ AUTHENTICATION section for more information.</p>
 </dd>
 <dt class="hdlist1">--cluster-cert-info</dt>
 <dd>
-<p>Retrieves the cluster certificate and prints it to stdout.</p>
+<p>Retrieves the cluster certificates and prints it to stdout.</p>
+</dd>
+<dt class="hdlist1">--cluster-ca-info</dt>
+<dd>
+<p>Retrieves the cluster certificates authorities and prints it to stdout.</p>
+</dd>
+<dt class="hdlist1">--cluster-ca-load</dt>
+<dd>
+<p>Tries to the certificate authority on every node in the cluster. Before
+running this command the certificate authority has to be copy to the
+install location at './inbox/CA' on a node in the cluster. Once loaded
+all nodes in the cluster will be able to view it.</p>
+</dd>
+<dt class="hdlist1">--cluster-ca-delete &lt;id&gt;</dt>
+<dd>
+<p>Deletes a certificate authority specified by the id.</p>
 </dd>
 <dt class="hdlist1">--node-cert-info</dt>
 <dd>
@@ -617,11 +632,6 @@ like:</p>
 <dt class="hdlist1">--client-auth</dt>
 <dd>
 <p>This options used to get the client cert auth value</p>
-</dd>
-<dt class="hdlist1">--extended</dt>
-<dd>
-<p>This option is used with the --cluster-cert-info and specifies that extended
-cluster certificate information should be printed to stdout.</p>
 </dd>
 </dl>
 </div>
@@ -734,23 +744,13 @@ the chain required to authenticate the client certificate.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Note that you can also get extended cluster certificate information by adding the
---extended flag as shown below.</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
- -p password --cluster-cert-info --extended</pre>
-</div>
-</div>
-<div class="paragraph">
 <p>To get node certificate information run the following command. Note that the
 node certificate will be from the node specified by the -c option.</p>
 </div>
 <div class="literalblock">
 <div class="content">
 <pre>$ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
- -p password --node-cert-info --extended</pre>
+ -p password --node-cert-info</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -806,6 +806,24 @@ certificate is located at /root/new_cluster.cert in this example.</p>
 <div class="content">
 <pre>$ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
  -p password --client-auth</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To view all certificate authorities</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+ -p password --cluster-ca-info</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To delete certificate authority with ID 1</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ couchbase-cli ssl-manage -c 192.168.1.5 -u Administrator \
+ -p password --cluster-ca-delete 1</pre>
 </div>
 </div>
 </div>

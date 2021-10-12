@@ -1474,16 +1474,30 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def retrieve_cluster_certificate(self, extended=False):
-        """ Retrieves the current cluster certificate
-
-        Gets the current cluster certificate. If extended is set tot True then
-        we return the extended certificate which contains the certificate type,
-        certicicate key, expiration, subject, and warnings."""
-        url = f'{self.hostname}/pools/default/certificate'
-        if extended:
-            url += '?extended=true'
+    def retrieve_cluster_certificates(self):
+        """ Retrieves the current cluster certificates"""
+        url = f'{self.hostname}/pools/default/certificates'
         return self._get(url)
+
+    def retrieve_cluster_ca(self):
+        """ Retrieves the current cluster CAs"""
+        url = f'{self.hostname}/pools/default/trustedCAs'
+        return self._get(url)
+
+    def load_cluster_ca(self, node):
+        """ Load a CA from ./inbox/CA on a node. Making it available to all nodes in the cluster"""
+        url = f'{node}/node/controller/loadTrustedCAs'
+        return self._post_form_encoded(url, None)
+
+    def delete_cluster_ca(self, ca_id):
+        """ Deletes ta CA from the cluster via ID"""
+        url = f'{self.hostname}/pools/default/trustedCAs/{ca_id}'
+        return self._delete(url, None)
+
+    def upload_cluster_certificate(self, certificate):
+        """ Uploads a new cluster certificate, In 7.1 this endpoint is deprecated"""
+        url = f'{self.hostname}/controller/uploadClusterCA'
+        return self._post_form_encoded(url, certificate)
 
     def regenerate_cluster_certificate(self):
         """ Regenerates the cluster certificate
@@ -1491,11 +1505,6 @@ class ClusterManager(object):
         Regenerates the cluster certificate and returns the new certificate."""
         url = f'{self.hostname}/controller/regenerateCertificate'
         return self._post_form_encoded(url, None)
-
-    def upload_cluster_certificate(self, certificate):
-        """ Uploads a new cluster certificate"""
-        url = f'{self.hostname}/controller/uploadClusterCA'
-        return self._post_form_encoded(url, certificate)
 
     def retrieve_node_certificate(self, node):
         """ Retrieves the current node certificate
