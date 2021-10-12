@@ -1502,15 +1502,18 @@ class MasterPassword(LocalSubcommand):
         if password == '':
             password = getpass.getpass("\nEnter master password:")
 
-        name = f'executioner@cb.local'
-        args = ['-pa', ns_server_ebin_path, babystr_ebin_path, '-noinput', '-name', name, \
-                '-proto_dist', 'cb', '-epmd_module', 'cb_epmd', \
-                '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"', \
-                '-setcookie', cookie, \
-                '-run', 'encryption_service', 'remote_set_password', node, password]
+        args = [
+            '-pa', ns_server_ebin_path, babystr_ebin_path,
+            '-noinput',
+            '-name', 'executioner@cb.local',
+            '-proto_dist', 'cb',
+            '-epmd_module', 'cb_epmd',
+            '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"',
+            '-setcookie', cookie,
+            '-run', 'encryption_service', 'remote_set_password', node,
+        ]
 
-        rc, out, err = self.run_process("erl", args)
-
+        rc, out, err = self.run_process("erl", args, extra_env={'SETPASSWORD': password})
         if rc == 0:
             print("SUCCESS: Password accepted. Node started booting.")
         elif rc == 101:
@@ -1525,13 +1528,17 @@ class MasterPassword(LocalSubcommand):
         else:
             _exitIfErrors([f'Unknown error: {rc} {out}, {err}'])
 
-    def run_process(self, name, args):
+    def run_process(self, name, args, extra_env=None):
         try:
             if os.name == "nt":
                 name = name + ".exe"
 
+            env = None
+            if extra_env is not None:
+                env = os.environ.copy()
+                env.update(extra_env)
             args.insert(0, name)
-            p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
             output = p.stdout.read()
             error = p.stderr.read()
             p.wait()
