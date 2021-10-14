@@ -751,6 +751,11 @@ class ClusterInit(Subcommand):
                            help="The services to run on this server")
         group.add_argument("--update-notifications", dest="notifications", metavar="<1|0>", choices=["0", "1"],
                            default="1", help="Enables/disable software update notifications")
+        group.add_argument("--ip-family", dest="ip_family", metavar="<ipv4|ipv6|ipv4-only|ipv6-only>", default="ipv4",
+                           choices=["ipv4", "ipv6", "ipv4-only", "ipv6-only"],
+                           help="Set the IP family for the cluster")
+        group.add_argument("--node-to-node-encryption", dest="encryption", metavar="<on|off>", default="off",
+                           choices=["on", "off"], help="Enable node to node encryption")
 
     @rest_initialiser(enterprise_check=False)
     def execute(self, opts):
@@ -777,6 +782,9 @@ class ClusterInit(Subcommand):
             _, errors = self.rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
                                                     opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
         _exit_if_errors(errors)
+
+        # Setup IP-Family and Node to Node encryption
+        self.setup_ip_family_and_encryption(opts)
 
         # Set the index storage mode
         if not opts.index_storage_mode and 'index' in services.split(','):
@@ -808,6 +816,24 @@ class ClusterInit(Subcommand):
         _exit_if_errors(errors)
 
         _success("Cluster initialized")
+
+    def setup_ip_family_and_encryption(self, opts):
+        """Setups the IP family and node to node encryption"""
+        if 'ipv4' in opts.ip_family:
+            ip_family = 'ipv4'
+        elif 'ipv6' in opts.ip_family:
+            ip_family = 'ipv6'
+        ip_only = True if 'only' in opts.ip_family else False
+
+        _, errors = self.rest.enable_external_listener(ipfamily=ip_family, encryption=opts.encryption)
+        _exit_if_errors(errors)
+
+        _, errors = self.rest.setup_net_config(ipfamily=opts.ip_family, encryption=opts.encryption,
+                                               ipfamilyonly=ip_only)
+        _exit_if_errors(errors)
+
+        _, errors = self.rest.disable_unused_external_listeners()
+        _exit_if_errors(errors)
 
     @staticmethod
     def get_man_page_name():

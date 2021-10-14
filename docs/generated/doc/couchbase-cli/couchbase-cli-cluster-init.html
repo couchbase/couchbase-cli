@@ -460,7 +460,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--cluster-eventing-ramsize &lt;mebibytes&gt;]
     [--cluster-analytics-ramsize &lt;mebibytes&gt;]
     [--index-storage-setting &lt;setting&gt;] [--services &lt;services&gt;]
-    [--update-notifications &lt;1|0&gt;]</pre>
+    [--update-notifications &lt;1|0&gt;]
+    [--ip-family &lt;ipv4|ipv6|ipv4-only|ipv6-only&gt;] [--node-to-node-encryption &lt;on|off&gt;]</pre>
 </div>
 </div>
 </div>
@@ -593,6 +594,18 @@ using 'couchbase-cli-setting-notification.' For more information on this
 feature, please see the “Couchbase Server Privacy FAQ” in the product
 documentation, which supplements the Couchbase Privacy Policy available
 online.</p>
+</dd>
+<dt class="hdlist1">--ip-family</dt>
+<dd>
+<p>Specifies what IP family the cluster should used. The default option is
+'ipv4'. When 'ipv4-only' or 'ipv6-only' is used the cluster will only listen
+on that address.</p>
+</dd>
+<dt class="hdlist1">--node-to-node-encryption</dt>
+<dd>
+<p>Specifies if node to node encryption should be used. The default option is
+'off'. When set to 'on' all communications between nodes will be over a
+encrypted connection.</p>
 </dd>
 </dl>
 </div>

@@ -270,7 +270,8 @@ class TestClusterInit(CommandTest):
             '--cluster-ramsize', '512', '--services', 'data,query,fts,eventing,analytics,backup',
             '--cluster-index-ramsize', '512', '--cluster-fts-ramsize', '512',
             '--cluster-eventing-ramsize', '512', '--cluster-name', 'name',
-            '--index-storage-setting', 'memopt', '--update-notifications', '0'
+            '--index-storage-setting', 'memopt', '--update-notifications', '0',
+            '--ip-family', 'ipv6-only', '--node-to-node-encryption', 'on'
         ]
 
         self.no_error_run(self.command + full_options, self.server_args)

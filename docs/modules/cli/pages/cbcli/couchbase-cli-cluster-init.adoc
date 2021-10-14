@@ -21,6 +21,7 @@ _couchbase-cli cluster-init_ [--cluster <url>] [--cluster-username <username>] [
     [--cluster-analytics-ramsize <mebibytes>]
     [--index-storage-setting <setting>] [--services <services>]
     [--update-notifications <1|0>]
+    [--ip-family <ipv4|ipv6|ipv4-only|ipv6-only>] [--node-to-node-encryption <on|off>]
 
 == DESCRIPTION
 
@@ -131,6 +132,16 @@ which will determine how the global secondary indexes (GSI) are stored.
   feature, please see the “Couchbase Server Privacy FAQ” in the product
   documentation, which supplements the Couchbase Privacy Policy available
   online.
+
+--ip-family::
+  Specifies what IP family the cluster should used. The default option is
+  'ipv4'. When 'ipv4-only' or 'ipv6-only' is used the cluster will only listen
+  on that address.
+
+--node-to-node-encryption::
+  Specifies if node to node encryption should be used. The default option is
+  'off'. When set to 'on' all communications between nodes will be over a
+  encrypted connection.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
