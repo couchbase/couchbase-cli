@@ -228,44 +228,63 @@ The service endpoint of the link (optional).
 .RE
 .SS "Azure Blob Link Options"
 .sp
-Following are the options specific to \fB\-\-type azureblob\fP, i.e. Azure Blob links
-.sp
-\-\-connection\-string <key>
-.RS 4
-The connection string of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &
-account key, or account name & shared access signature.
-.RE
+Following are the options specific to \fB\-\-type azureblob\fP, i.e. Azure Blob links. Only a single authentication
+method is allowed to be provided at the same time. If anonymous authentication (no authentication) is desired,
+then none of the authentication parameters should be provided.
 .sp
 \-\-account\-name <id>
 .RS 4
-The account name of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &
-account key, or account name & shared access signature.
+The account name of the link. This property needs to be provided together with the \-\-account\-key.
 .RE
 .sp
 \-\-account\-key <key>
 .RS 4
-The account key of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &
-account key, or account name & shared access signature.
+The account key of the link. This property needs to be provided together with the \-\-account\-name.
 .RE
 .sp
 \-\-shared\-access\-signature <token>
 .RS 4
-The shared access signature of the link. Only a single authentication method
-can be used at a time. Authentication method can be connection string, account
-name & account key, or account name & shared access signature.
+The shared access signature of the link.
 .RE
 .sp
-\-\-blob\-endpoint <url>
+\-\-managed\-identity\-id <id>
 .RS 4
-The blob endpoint of the link (optional).
+The managed identity id of the link.
 .RE
 .sp
-\-\-endpoint\-suffix <url>
+\-\-client\-id <id>
 .RS 4
-The endpoint suffix of the link (optional).
+The client id of the link. This property needs to be provided together with the \-\-tenant\-id and either
+the \-\-client\-secret or \-\-client\-certificate.
+.RE
+.sp
+\-\-client\-secret <key>
+.RS 4
+The client secret of the link. This property needs to be provided together with the \-\-client\-id and
+the \-\-tenant\-id.
+.RE
+.sp
+\-\-client\-certificate <key>
+.RS 4
+The client certificate of the link. This property needs to be provided together with the \-\-client\-id and
+the \-\-tenant\-id. If the client certificate is password protected, then the \-\-client\-certificate\-password
+property needs to be provided as well.
+.RE
+.sp
+\-\-client\-certificate\-password <key>
+.RS 4
+The client certificate password of the link. This property is provided if the provided \-\-client\-certificate
+is password protected.
+.RE
+.sp
+\-\-tenant\-id <id>
+.RS 4
+The tenant id of the link. This property is provided together with the \-\-client\-id.
+.RE
+.sp
+\-\-endpoint <url>
+.RS 4
+The endpoint of the link (required).
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -414,23 +433,7 @@ $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
 .fi
 .if n .RE
 .sp
-\fBNote: Azure Blob links are supported only in \f(CRDeveloper Preview\fP mode.\fP
-.sp
-To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.s3"
-scope, using \fB"connection string"\fP for authentication, run the following
-command:
-.sp
-.if n .RS 4
-.nf
-.fam C
-$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAzureBlobLink \-\-type \(rs
- azureblob \-\-connection\-string myConnectionString
-.fam
-.fi
-.if n .RE
-.sp
-To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.s3"
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.azure"
 scope, using \fB"account name and account key"\fP for authentication, run the
 following command:
 .sp
@@ -438,38 +441,61 @@ following command:
 .nf
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAzureBlobLink \-\-type \(rs
- azureblob \-\-account\-name myAccountName \-\-account\-key myAccountKey
+ \-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureBlobLink \-\-type \(rs
+ azureblob \-\-account\-name myAccountName \-\-account\-key myAccountKey \-\-endpoint myendpoint.com
 .fam
 .fi
 .if n .RE
 .sp
-To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.s3"
-scope, using \fB"account name and shared access signature"\fP for authentication,
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.azure"
+scope, using \fB"shared access signature"\fP for authentication,
 run the following command:
 .sp
 .if n .RS 4
 .nf
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAzureBlobLink \-\-type \(rs
- azureblob \-\-account\-name myAccountName \-\-shared\-access\-signature \(rs
- mySharedAccessSignature
+ \-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureBlobLink \-\-type \(rs
+ azureblob \-\-shared\-access\-signature mySharedAccessSignature \-\-endpoint myendpoint.com
 .fam
 .fi
 .if n .RE
 .sp
-To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.s3"
-scope, using \fB"account name and shared access signature"\fP for authentication,
-and using a \fBcustom endpoint\fP, run the following command:
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.azure"
+scope, using \fB"managed identity id"\fP for authentication, run the following command:
 .sp
 .if n .RS 4
 .nf
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
- \-p password \-\-create \-\-scope remote.links/s3 \-\-name myAzureBlobLink \-\-type \(rs
- azureblob \-\-account\-name myAccountName \-\-shared\-access\-signature \(rs
- mySharedAccessSignature \-\-blob\-endpoint my\-custom\-endpoint.com
+ \-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureBlobLink \-\-type \(rs
+ azureblob \-\-managed\-identity\-id myManagedIdentityId \-\-endpoint myendpoint.com
+.fam
+.fi
+.if n .RE
+.sp
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.azure"
+scope, using \fB"client id and client secret"\fP for authentication, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+\-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureBlobLink \-\-type \(rs
+azureblob \-\-client\-id myClientId \-\-client\-secret myClientSecret \-\-endpoint myendpoint.com
+.fam
+.fi
+.if n .RE
+.sp
+To create an AzureBlob link named \f(CRmyAzureBlobLink\fP in the "`remote.links`.azure"
+scope, using \fB"client id and client certificate"\fP for authentication, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+\-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureBlobLink \-\-type \(rs
+azureblob \-\-client\-id myClientId \-\-client\-certificate myClientCertificate \-\-endpoint myendpoint.com
 .fam
 .fi
 .if n .RE

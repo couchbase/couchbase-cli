@@ -1881,18 +1881,26 @@ class ClusterManager(object):
             params['region'] = opts.region
         if opts.service_endpoint:
             params['serviceEndpoint'] = opts.service_endpoint
-        if opts.connection_string:
-            params['connectionString'] = opts.connection_string
         if opts.account_name:
             params['accountName'] = opts.account_name
         if opts.account_key:
             params['accountKey'] = opts.account_key
         if opts.shared_access_signature:
             params['sharedAccessSignature'] = opts.shared_access_signature
-        if opts.blob_endpoint:
-            params['blobEndpoint'] = opts.blob_endpoint
-        if opts.endpoint_suffix:
-            params['endpointSuffix'] = opts.endpoint_suffix
+        if opts.managed_identity_id:
+            params['managedIdentityId'] = opts.managed_identity_id
+        if opts.client_id:
+            params['clientId'] = opts.client_id
+        if opts.client_secret:
+            params['clientSecret'] = opts.client_secret
+        if opts.client_certificate:
+            params['clientCertificate'] = opts.client_certificate
+        if opts.client_certificate_password:
+            params['clientCertificatePassword'] = opts.client_certificate_password
+        if opts.tenant_id:
+            params['tenantId'] = opts.tenant_id
+        if opts.endpoint:
+            params['endpoint'] = opts.endpoint
 
         return params
 

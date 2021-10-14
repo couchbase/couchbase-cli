@@ -118,33 +118,44 @@ Following are the options specific to *--type s3*, i.e. S3 links
   The service endpoint of the link (optional).
 
 === Azure Blob Link Options
-Following are the options specific to *--type azureblob*, i.e. Azure Blob links
-
---connection-string <key>::
-  The connection string of the link. Only a single authentication method can be
-  used at a time. Authentication method can be connection string, account name &
-  account key, or account name & shared access signature.
+Following are the options specific to *--type azureblob*, i.e. Azure Blob links. Only a single authentication
+method is allowed to be provided at the same time. If anonymous authentication (no authentication) is desired,
+then none of the authentication parameters should be provided.
 
 --account-name <id>::
-  The account name of the link. Only a single authentication method can be
-  used at a time. Authentication method can be connection string, account name &
-  account key, or account name & shared access signature.
+  The account name of the link. This property needs to be provided together with the --account-key.
 
 --account-key <key>::
-  The account key of the link. Only a single authentication method can be
-  used at a time. Authentication method can be connection string, account name &
-  account key, or account name & shared access signature.
+  The account key of the link. This property needs to be provided together with the --account-name.
 
 --shared-access-signature <token>::
-  The shared access signature of the link. Only a single authentication method
-  can be used at a time. Authentication method can be connection string, account
-  name & account key, or account name & shared access signature.
+  The shared access signature of the link.
 
---blob-endpoint <url>::
-  The blob endpoint of the link (optional).
+--managed-identity-id <id>::
+  The managed identity id of the link.
 
---endpoint-suffix <url>::
-  The endpoint suffix of the link (optional).
+--client-id <id>::
+  The client id of the link. This property needs to be provided together with the --tenant-id and either
+  the --client-secret or --client-certificate.
+
+--client-secret <key>::
+  The client secret of the link. This property needs to be provided together with the --client-id and
+  the --tenant-id.
+
+--client-certificate <key>::
+  The client certificate of the link. This property needs to be provided together with the --client-id and
+  the --tenant-id. If the client certificate is password protected, then the --client-certificate-password
+  property needs to be provided as well.
+
+--client-certificate-password <key>::
+  The client certificate password of the link. This property is provided if the provided --client-certificate
+  is password protected.
+
+--tenant-id <id>::
+  The tenant id of the link. This property is provided together with the --client-id.
+
+--endpoint <url>::
+  The endpoint of the link (required).
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
@@ -186,41 +197,42 @@ $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  --secret-access-key myTemporarySecretAccessKey \
  --session-token myTemporarySessionToken
 ----
-*Note: Azure Blob links are supported only in `Developer Preview` mode.*
-
-To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.s3"
-scope, using *"connection string"* for authentication, run the following
-command:
-----
-$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
- azureblob --connection-string myConnectionString
-----
-To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.s3"
+To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.azure"
 scope, using *"account name and account key"* for authentication, run the
 following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
- azureblob --account-name myAccountName --account-key myAccountKey
+ -p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+ azureblob --account-name myAccountName --account-key myAccountKey --endpoint myendpoint.com
 ----
-To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.s3"
-scope, using *"account name and shared access signature"* for authentication,
+To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.azure"
+scope, using *"shared access signature"* for authentication,
 run the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
- azureblob --account-name myAccountName --shared-access-signature \
- mySharedAccessSignature
+ -p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+ azureblob --shared-access-signature mySharedAccessSignature --endpoint myendpoint.com
 ----
-To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.s3"
-scope, using *"account name and shared access signature"* for authentication,
-and using a *custom endpoint*, run the following command:
+To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.azure"
+scope, using *"managed identity id"* for authentication, run the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
- azureblob --account-name myAccountName --shared-access-signature \
- mySharedAccessSignature --blob-endpoint my-custom-endpoint.com
+ -p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+ azureblob --managed-identity-id myManagedIdentityId --endpoint myendpoint.com
+----
+To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.azure"
+scope, using *"client id and client secret"* for authentication, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+-p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+azureblob --client-id myClientId --client-secret myClientSecret --endpoint myendpoint.com
+----
+To create an AzureBlob link named `myAzureBlobLink` in the "`remote.links`.azure"
+scope, using *"client id and client certificate"* for authentication, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+-p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+azureblob --client-id myClientId --client-certificate myClientCertificate --endpoint myendpoint.com
 ----
 To list all current links, run the following command:
 ----

@@ -653,41 +653,56 @@ Required with <strong>--encryption full</strong>.</p>
 <div class="sect2">
 <h3 id="_azure_blob_link_options">Azure Blob Link Options</h3>
 <div class="paragraph">
-<p>Following are the options specific to <strong>--type azureblob</strong>, i.e. Azure Blob links</p>
+<p>Following are the options specific to <strong>--type azureblob</strong>, i.e. Azure Blob links. Only a single authentication
+method is allowed to be provided at the same time. If anonymous authentication (no authentication) is desired,
+then none of the authentication parameters should be provided.</p>
 </div>
 <div class="dlist">
 <dl>
-<dt class="hdlist1">--connection-string &lt;key&gt;</dt>
-<dd>
-<p>The connection string of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &amp;
-account key, or account name &amp; shared access signature.</p>
-</dd>
 <dt class="hdlist1">--account-name &lt;id&gt;</dt>
 <dd>
-<p>The account name of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &amp;
-account key, or account name &amp; shared access signature.</p>
+<p>The account name of the link. This property needs to be provided together with the --account-key.</p>
 </dd>
 <dt class="hdlist1">--account-key &lt;key&gt;</dt>
 <dd>
-<p>The account key of the link. Only a single authentication method can be
-used at a time. Authentication method can be connection string, account name &amp;
-account key, or account name &amp; shared access signature.</p>
+<p>The account key of the link. This property needs to be provided together with the --account-name.</p>
 </dd>
 <dt class="hdlist1">--shared-access-signature &lt;token&gt;</dt>
 <dd>
-<p>The shared access signature of the link. Only a single authentication method
-can be used at a time. Authentication method can be connection string, account
-name &amp; account key, or account name &amp; shared access signature.</p>
+<p>The shared access signature of the link.</p>
 </dd>
-<dt class="hdlist1">--blob-endpoint &lt;url&gt;</dt>
+<dt class="hdlist1">--managed-identity-id &lt;id&gt;</dt>
 <dd>
-<p>The blob endpoint of the link (optional).</p>
+<p>The managed identity id of the link.</p>
 </dd>
-<dt class="hdlist1">--endpoint-suffix &lt;url&gt;</dt>
+<dt class="hdlist1">--client-id &lt;id&gt;</dt>
 <dd>
-<p>The endpoint suffix of the link (optional).</p>
+<p>The client id of the link. This property needs to be provided together with the --tenant-id and either
+the --client-secret or --client-certificate.</p>
+</dd>
+<dt class="hdlist1">--client-secret &lt;key&gt;</dt>
+<dd>
+<p>The client secret of the link. This property needs to be provided together with the --client-id and
+the --tenant-id.</p>
+</dd>
+<dt class="hdlist1">--client-certificate &lt;key&gt;</dt>
+<dd>
+<p>The client certificate of the link. This property needs to be provided together with the --client-id and
+the --tenant-id. If the client certificate is password protected, then the --client-certificate-password
+property needs to be provided as well.</p>
+</dd>
+<dt class="hdlist1">--client-certificate-password &lt;key&gt;</dt>
+<dd>
+<p>The client certificate password of the link. This property is provided if the provided --client-certificate
+is password protected.</p>
+</dd>
+<dt class="hdlist1">--tenant-id &lt;id&gt;</dt>
+<dd>
+<p>The tenant id of the link. This property is provided together with the --client-id.</p>
+</dd>
+<dt class="hdlist1">--endpoint &lt;url&gt;</dt>
+<dd>
+<p>The endpoint of the link (required).</p>
 </dd>
 </dl>
 </div>
@@ -842,56 +857,60 @@ temporary S3 credentials, run the following command:</p>
 </div>
 </div>
 <div class="paragraph">
-<p><strong>Note: Azure Blob links are supported only in <code>Developer Preview</code> mode.</strong></p>
-</div>
-<div class="paragraph">
-<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "`remote.links`.s3"
-scope, using <strong>"connection string"</strong> for authentication, run the following
-command:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
- azureblob --connection-string myConnectionString</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "`remote.links`.s3"
+<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "`remote.links`.azure"
 scope, using <strong>"account name and account key"</strong> for authentication, run the
 following command:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
- azureblob --account-name myAccountName --account-key myAccountKey</pre>
+ -p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+ azureblob --account-name myAccountName --account-key myAccountKey --endpoint myendpoint.com</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "`remote.links`.s3"
-scope, using <strong>"account name and shared access signature"</strong> for authentication,
+<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "`remote.links`.azure"
+scope, using <strong>"shared access signature"</strong> for authentication,
 run the following command:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
- azureblob --account-name myAccountName --shared-access-signature \
- mySharedAccessSignature</pre>
+ -p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+ azureblob --shared-access-signature mySharedAccessSignature --endpoint myendpoint.com</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "`remote.links`.s3"
-scope, using <strong>"account name and shared access signature"</strong> for authentication,
-and using a <strong>custom endpoint</strong>, run the following command:</p>
+<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "`remote.links`.azure"
+scope, using <strong>"managed identity id"</strong> for authentication, run the following command:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --scope remote.links/s3 --name myAzureBlobLink --type \
- azureblob --account-name myAccountName --shared-access-signature \
- mySharedAccessSignature --blob-endpoint my-custom-endpoint.com</pre>
+ -p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+ azureblob --managed-identity-id myManagedIdentityId --endpoint myendpoint.com</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "`remote.links`.azure"
+scope, using <strong>"client id and client secret"</strong> for authentication, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+-p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+azureblob --client-id myClientId --client-secret myClientSecret --endpoint myendpoint.com</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To create an AzureBlob link named <code>myAzureBlobLink</code> in the "`remote.links`.azure"
+scope, using <strong>"client id and client certificate"</strong> for authentication, run the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+-p password --create --scope remote.links/azure --name myAzureBlobLink --type \
+azureblob --client-id myClientId --client-certificate myClientCertificate --endpoint myendpoint.com</pre>
 </div>
 </div>
 <div class="paragraph">

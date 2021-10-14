@@ -2363,7 +2363,7 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.assertIn('POST:/analytics/link/Default/east', self.server.trace)
         self.rest_parameter_match(['type=s3'])
 
-    def test_create_S3(self):
+    def test_create_s3(self):
         self.no_error_run(self.command + ['--create', '--scope', 'my/Scope', '--name', 'east', '--type', 's3',
                                           '--access-key-id', 'id-1', '--secret-access-key', 'my-secret', '--region',
                                           'us-east-0', '--service-endpoint', 'my-cool-endpoint.com'], self.server_args)
@@ -2380,63 +2380,269 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.rest_parameter_match(['type=s3', 'accessKeyId=id-1', 'secretAccessKey=my-secret', 'region=us-east-0',
                                    'sessionToken=my-token', 'serviceEndpoint=my-cool-endpoint.com'])
 
-    def test_create_azureblob_using_connection_string(self):
-        self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
-                                          'azureblob', '--connection-string', 'myConnectionString', '--blob-endpoint',
-                                          'my-cool-endpoint.com', '--endpoint-suffix', 'cool-suffix'],
-                          self.server_args)
-        self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
-        self.rest_parameter_match(['type=azureblob', 'connectionString=myConnectionString',
-                                   'blobEndpoint=my-cool-endpoint.com', 'endpointSuffix=cool-suffix'])
-
-    def test_create_azureblob_using_accountname_accountkey(self):
+    def test_create_azureblob_account_name_present_account_key_present(self):
         self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
                                           'azureblob', '--account-name', 'myAccountName', '--account-key',
-                                          'myAccountKey', '--blob-endpoint', 'my-cool-endpoint.com',
-                                          '--endpoint-suffix', 'cool-suffix'], self.server_args)
+                                          'myAccountKey', '--endpoint', 'my-endpoint.com'], self.server_args)
         self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
-        self.rest_parameter_match(['type=azureblob', 'accountName=myAccountName',
-                                   'accountKey=myAccountKey', 'blobEndpoint=my-cool-endpoint.com',
-                                   'endpointSuffix=cool-suffix'])
+        self.rest_parameter_match(['type=azureblob', 'accountName=myAccountName', 'accountKey=myAccountKey',
+                                   'endpoint=my-endpoint.com'])
 
-    def test_create_azureblob_using_accountname_sharedaccesssignature(self):
+    def test_create_azureblob_shared_access_signature_present(self):
         self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
-                                          'azureblob', '--account-name', 'myAccountName', '--shared-access-signature',
-                                          'mySharedAccessSignature', '--blob-endpoint', 'my-cool-endpoint.com',
-                                          '--endpoint-suffix', 'cool-suffix'], self.server_args)
+                                          'azureblob', '--shared-access-signature', 'mySharedAccessSignature',
+                                          '--endpoint', 'my-endpoint.com'], self.server_args)
         self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
-        self.rest_parameter_match(['type=azureblob', 'accountName=myAccountName',
-                                   'sharedAccessSignature=mySharedAccessSignature', 'blobEndpoint=my-cool-endpoint.com',
-                                   'endpointSuffix=cool-suffix'])
+        self.rest_parameter_match(['type=azureblob', 'sharedAccessSignature=mySharedAccessSignature',
+                                   'endpoint=my-endpoint.com'])
 
-    def test_create_azureblob_no_auth_bad(self):
-        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
-                                             'azureblob', '--blob-endpoint', 'my-cool-endpoint.com',
-                                             '--endpoint-suffix', 'cool-suffix'],
-                             self.server_args)
-        self.assertIn('No authentication parameters provided', self.str_output)
+    def test_create_azureblob_managed_identity_id_present(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                          'azureblob', '--managed-identity-id', 'myManagedIdentityId', '--endpoint',
+                                          'my-endpoint.com'], self.server_args)
+        self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
+        self.rest_parameter_match(['type=azureblob', 'managedIdentityId=myManagedIdentityId',
+                                   'endpoint=my-endpoint.com'])
 
-    def test_create_azureblob_multiple_auth_bad_1(self):
-        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
-                                             'azureblob', '--connection-string', 'myConnectionString', '--account-name',
-                                             'myAccountName', '--account-key', 'myAccountKey', '--blob-endpoint',
-                                             'my-cool-endpoint.com', '--endpoint-suffix', 'cool-suffix'],
-                             self.server_args)
-        self.assertIn('Only a single authentication method is allowed', self.str_output)
+    def test_create_azureblob_client_id_present_client_secret_present(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                          'azureblob', '--client-id', 'myClientId', '--client-secret',
+                                          'myClientSecret', '--tenant-id', 'myTenantId', '--endpoint',
+                                          'my-endpoint.com'], self.server_args)
+        self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
+        self.rest_parameter_match(['type=azureblob', 'clientId=myClientId', 'clientSecret=myClientSecret',
+                                   'tenantId=myTenantId', 'endpoint=my-endpoint.com'])
 
-    def test_create_azureblob_multiple_auth_bad_2(self):
+    def test_create_azureblob_client_id_present_client_certificate_present(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                          'azureblob', '--client-id', 'myClientId', '--client-certificate',
+                                          'myClientCertificate', '--tenant-id', 'myTenantId', '--endpoint',
+                                          'my-endpoint.com'], self.server_args)
+        self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
+        self.rest_parameter_match(['type=azureblob', 'clientId=myClientId', 'clientCertificate=myClientCertificate',
+                                   'tenantId=myTenantId', 'endpoint=my-endpoint.com'])
+
+    def test_create_azureblob_client_id_present_client_certificate_present_client_certificate_password(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                          'azureblob', '--client-id', 'myClientId', '--client-certificate',
+                                          'myClientCertificate', '--client-certificate-password',
+                                          'myClientCertificatePassword', '--tenant-id', 'myTenantId', '--endpoint',
+                                          'my-endpoint.com'], self.server_args)
+        self.assertIn('POST:/analytics/link/Default/myLink', self.server.trace)
+        self.rest_parameter_match(['type=azureblob', 'clientId=myClientId', 'clientCertificate=myClientCertificate',
+                                   'clientCertificatePassword=myClientCertificatePassword', 'tenantId=myTenantId',
+                                   'endpoint=my-endpoint.com'])
+
+    def test_create_azureblob_account_name_present_account_key_present_endpoint_missing(self):
         self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
                                              'azureblob', '--account-name', 'myAccountName', '--account-key',
-                                             'myAccountKey', '--shared-access-signature', 'mySharedAccessSignature',
-                                             '--blob-endpoint', 'my-cool-endpoint.com', '--endpoint-suffix',
-                                             'cool-suffix'],
+                                             'myAccountKey'], self.server_args)
+        self.assertIn('Required parameter --endpoint not supplied', self.str_output)
+
+    def test_create_azureblob_account_name_present_account_key_present_shared_access_signature_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--account-name', 'myAccountName', '--account-key',
+                                             'myAccountKey', '--endpoint', 'my-endpoint.com',
+                                             '--shared-access-signature', 'mySharedAccessSignature'],
                              self.server_args)
-        self.assertIn('Only a single authentication method is allowed', self.str_output)
+        self.assertIn('Parameter --shared--access-signature is not allowed if --account-key is provided',
+                      self.str_output)
+
+    def test_create_azureblob_account_name_present_account_key_present_managed_identity_id_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--account-name', 'myAccountName', '--account-key',
+                                             'myAccountKey', '--endpoint', 'my-endpoint.com', '--managed-identity-id',
+                                             'myManagedIdentityId'], self.server_args)
+        self.assertIn('Parameter --managed-identity-id is not allowed if --account-key is provided', self.str_output)
+
+    def test_create_azureblob_account_name_present_account_key_present_client_id_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--account-name', 'myAccountName', '--account-key',
+                                             'myAccountKey', '--endpoint', 'my-endpoint.com', '--client-id',
+                                             'myClientId'], self.server_args)
+        self.assertIn('Parameter --client-id is not allowed if --account-key is provided', self.str_output)
+
+    def test_create_azureblob_account_name_present_account_key_present_client_secret_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--account-name', 'myAccountName', '--account-key',
+                                             'myAccountKey', '--endpoint', 'my-endpoint.com', '--client-secret',
+                                             'myClientSecret'], self.server_args)
+        self.assertIn('Parameter --client-secret is not allowed if --account-key is provided', self.str_output)
+
+    def test_create_azureblob_account_name_present_account_key_present_client_certificate_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--account-name', 'myAccountName', '--account-key',
+                                             'myAccountKey', '--endpoint', 'my-endpoint.com', '--client-certificate',
+                                             'myClientCertificate'], self.server_args)
+        self.assertIn('Parameter --client-certificate is not allowed if --account-key is provided', self.str_output)
+
+    def test_create_azureblob_account_name_present_account_key_present_client_certificate_password_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--account-name', 'myAccountName', '--account-key',
+                                             'myAccountKey', '--endpoint', 'my-endpoint.com',
+                                             '--client-certificate-password', 'myClientCertificatePassword'],
+                             self.server_args)
+        self.assertIn('Parameter --client-certificate-password is not allowed if --account-key is provided',
+                      self.str_output)
+
+    def test_create_azureblob_account_name_present_account_key_present_tenant_id_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--account-name', 'myAccountName', '--account-key',
+                                             'myAccountKey', '--endpoint', 'my-endpoint.com', '--tenant-id',
+                                             'myTenantId'], self.server_args)
+        self.assertIn('Parameter --tenant-id is not allowed if --account-key is provided', self.str_output)
+
+    def test_create_azureblob_shared_access_signature_present_managed_identity_id_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--shared-access-signature', 'mySharedAccessSignature',
+                                             '--endpoint', 'my-endpoint.com', '--managed-identity-id',
+                                             'myManagedIdentityId'], self.server_args)
+        self.assertIn('Parameter --managed-identity-id is not allowed if --shared-access-signature is provided',
+                      self.str_output)
+
+    def test_create_azureblob_shared_access_signature_present_client_id_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--shared-access-signature', 'mySharedAccessSignature',
+                                             '--endpoint', 'my-endpoint.com', '--client-id', 'myClientId'],
+                             self.server_args)
+        self.assertIn('Parameter --client-id is not allowed if --shared-access-signature is provided',
+                      self.str_output)
+
+    def test_create_azureblob_shared_access_signature_client_secret_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--shared-access-signature', 'mySharedAccessSignature',
+                                             '--endpoint', 'my-endpoint.com', '--client-secret',
+                                             'myClientSecret'], self.server_args)
+        self.assertIn('Parameter --client-secret is not allowed if --shared-access-signature is provided',
+                      self.str_output)
+
+    def test_create_azureblob_shared_access_signature_present_client_certificate_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--shared-access-signature', 'mySharedAccessSignature',
+                                             '--endpoint', 'my-endpoint.com', '--client-certificate',
+                                             'myClientCertificate'], self.server_args)
+        self.assertIn('Parameter --client-certificate is not allowed if --shared-access-signature is provided',
+                      self.str_output)
+
+    def test_create_azureblob_shared_access_signature_present_client_certificate_password_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--shared-access-signature', 'mySharedAccessSignature',
+                                             '--endpoint', 'my-endpoint.com', '--client-certificate-password',
+                                             'myClientCertificatePassword'], self.server_args)
+        self.assertIn('Parameter --client-certificate-password is not allowed if --shared-access-signature is '
+                      'provided', self.str_output)
+
+    def test_create_azureblob_shared_access_signature_key_present_tenant_id_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--shared-access-signature', 'mySharedAccessSignature',
+                                             '--endpoint', 'my-endpoint.com', '--tenant-id', 'myTenantId'],
+                             self.server_args)
+        self.assertIn('Parameter --tenant-id is not allowed if --shared-access-signature is provided',
+                      self.str_output)
+
+    def test_create_azureblob_managed_identity_id_present_client_id_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--managed-identity-id', 'myManagedIdentityId',
+                                             '--endpoint', 'my-endpoint.com', '--client-id', 'myClientId'],
+                             self.server_args)
+        self.assertIn('Parameter --client-id is not allowed if --managed-identity-id is provided', self.str_output)
+
+    def test_create_azureblob_managed_identity_id_present_client_secret_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--managed-identity-id', 'myManagedIdentityId',
+                                             '--endpoint', 'my-endpoint.com', '--client-secret',
+                                             'myClientSecret'], self.server_args)
+        self.assertIn('Parameter --client-secret is not allowed if --managed-identity-id is provided',
+                      self.str_output)
+
+    def test_create_azureblob_managed_identity_id_present_client_certificate_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--managed-identity-id', 'myManagedIdentityId',
+                                             '--endpoint', 'my-endpoint.com', '--client-certificate',
+                                             'myClientCertificate'], self.server_args)
+        self.assertIn('Parameter --client-certificate is not allowed if --managed-identity-id is provided',
+                      self.str_output)
+
+    def test_create_azureblob_managed_identity_id_present_client_certificate_password_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--managed-identity-id', 'myManagedIdentityId',
+                                             '--endpoint', 'my-endpoint.com', '--client-certificate-password',
+                                             'myClientCertificatePassword'], self.server_args)
+        self.assertIn('Parameter --client-certificate-password is not allowed if --managed-identity-id is provided',
+                      self.str_output)
+
+    def test_create_azureblob_managed_identity_id_present_tenant_id_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--managed-identity-id', 'myManagedIdentityId',
+                                             '--endpoint', 'my-endpoint.com', '--tenant-id', 'myTenantId'],
+                             self.server_args)
+        self.assertIn('Parameter --tenant-id is not allowed if --managed-identity-id is provided', self.str_output)
+
+    def test_create_azureblob_client_id_missing_client_secret_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--endpoint', 'my-endpoint.com', '--client-secret',
+                                             'myClientSecret'], self.server_args)
+        self.assertIn('Parameter --client-id is required if --client-secret is provided', self.str_output)
+
+    def test_create_azureblob_client_id_missing_client_certificate_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--endpoint', 'my-endpoint.com', '--client-certificate',
+                                             'myClientCertificate'], self.server_args)
+        self.assertIn('Parameter --client-id is required if --client-certificate is provided', self.str_output)
+
+    def test_create_azureblob_client_id_missing_client_certificate_password_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--endpoint', 'my-endpoint.com',
+                                             '--client-certificate-password', 'myClientCertificatePassword'],
+                             self.server_args)
+        self.assertIn('Parameter --client-id is required if --client-certificate-password is provided',
+                      self.str_output)
+
+    def test_create_azureblob_client_id_missing_tenant_id_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--endpoint', 'my-endpoint.com', '--tenant-id',
+                                             'myTenantId'],
+                             self.server_args)
+        self.assertIn('Parameter --client-id is required if --tenant-id is provided', self.str_output)
+
+    def test_create_azureblob_client_id_present_client_secret_present_tenant_id_missing(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--endpoint', 'my-endpoint.com',
+                                             '--client-id', 'myClientId', '--client-secret', 'myClientSecret'],
+                             self.server_args)
+        self.assertIn('Required parameter --tenant-id not supplied', self.str_output)
+
+    def test_create_azureblob_client_id_present_client_secret_present_client_certificate_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--endpoint', 'my-endpoint.com',
+                                             '--client-id', 'myClientId', '--client-secret', 'myClientSecret',
+                                             '--client-certificate', 'myClientCertificate', '--tenant-id',
+                                             'myTenantId'],
+                             self.server_args)
+        self.assertIn('The parameters --client-secret and --client-certificate cannot be provided at the same time',
+                      self.str_output)
+
+    def test_create_azureblob_client_id_present_client_secret_missing_client_certificate_missing(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--endpoint', 'my-endpoint.com',
+                                             '--client-id', 'myClientId', '--tenant-id', 'myTenantId'],
+                             self.server_args)
+        self.assertIn('Parameter --client-secret or --client-certificate is required if --client-id is provided',
+                      self.str_output)
+
+    def test_create_azureblob_client_id_present_client_secret_present_client_certificate_password_present(self):
+        self.system_exit_run(self.command + ['--create', '--scope', 'Default', '--name', 'myLink', '--type',
+                                             'azureblob', '--endpoint', 'my-endpoint.com',
+                                             '--client-id', 'myClientId', '--client-secret', 'myClientSecret',
+                                             '--client-certificate-password', 'myClientCertificatePassword',
+                                             '--tenant-id', 'myTenantId'], self.server_args)
+        self.assertIn('Parameter --client-certificate-password is not allowed if --client-secret is provided',
+                      self.str_output)
 
     def test_create_couchbase(self):
-        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
-                                          '--link-username', 'user', '--link-password', 'secret', '--encryption',
-                                          'none'], self.server_args)
+        self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type',
+                                          'couchbase', '--link-username', 'user', '--link-password', 'secret',
+                                          '--encryption', 'none'], self.server_args)
         self.assertIn('POST:/analytics/link/Default/east', self.server.trace)
         self.rest_parameter_match(['type=couchbase', 'username=user',
                                    'password=secret', 'encryption=none'])

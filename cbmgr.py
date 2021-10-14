@@ -4241,18 +4241,26 @@ class AnalyticsLinkSetup(Subcommand):
                            help="The service endpoint of the link (optional)")
 
         group = self.parser.add_argument_group("Analytics Service Azure Blob link setup options")
-        group.add_argument("--connection-string", dest="connection_string", metavar="<key>",
-                           help="The connection string of the link")
         group.add_argument("--account-name", dest="account_name", metavar="<id>",
                            help="The account name of the link")
         group.add_argument("--account-key", dest="account_key", metavar="<key>",
                            help="The account key of the link")
         group.add_argument("--shared-access-signature", dest="shared_access_signature", metavar="<token>",
                            help="The shared access signature of the link")
-        group.add_argument("--blob-endpoint", dest="blob_endpoint", metavar="<url>",
-                           help="The blob endpoint of the link (optional)")
-        group.add_argument("--endpoint-suffix", dest="endpoint_suffix", metavar="<url>",
-                           help="The endpoint suffix of the link (optional)")
+        group.add_argument("--managed-identity-id", dest="managed_identity_id", metavar="<id>",
+                           help="The managed identity id of the link")
+        group.add_argument("--client-id", dest="client_id", metavar="<id>",
+                           help="The client id of the link")
+        group.add_argument("--client-secret", dest="client_secret", metavar="<key>",
+                           help="The client secret of the link")
+        group.add_argument("--client-certificate", dest="client_certificate", metavar="<key>",
+                           help="The client certificate of the link")
+        group.add_argument("--client-certificate-password", dest="client_certificate_password", metavar="<key>",
+                           help="The client certificate password of the link")
+        group.add_argument("--tenant-id", dest="tenant_id", metavar="<id>",
+                           help="The tenant id of the link")
+        group.add_argument("--endpoint", dest="endpoint", metavar="<url>",
+                           help="The blob endpoint of the link (required)")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -4285,12 +4293,7 @@ class AnalyticsLinkSetup(Subcommand):
             _exit_if_errors([f'--type is required to {cmd} a link'])
 
         if opts.type == 'azureblob':
-            if opts.connection_string is None and opts.account_key is None and opts.shared_access_signature is None:
-                _exit_if_errors(['No authentication parameters provided'])
-            if opts.connection_string and (opts.account_key or opts.shared_access_signature):
-                _exit_if_errors(['Only a single authentication method is allowed'])
-            if opts.account_key and opts.shared_access_signature:
-                _exit_if_errors(['Only a single authentication method is allowed'])
+            self._verify_azure_options(opts)
 
         if opts.dataverse:
             opts.scope = opts.dataverse
@@ -4328,6 +4331,97 @@ class AnalyticsLinkSetup(Subcommand):
         clusters, errors = self.rest.list_analytics_links(opts.scope, opts.name, opts.type)
         _exit_if_errors(errors)
         print(json.dumps(clusters, sort_keys=True, indent=2))
+
+    @staticmethod
+    def _verify_azure_options(opts):
+        # --endpoint is required
+        if opts.endpoint is None:
+            _exit_if_errors(['Required parameter --endpoint not supplied'])
+
+        # --account-name and --account-key need to be provided together
+        if opts.account_name and opts.account_key is None:
+            _exit_if_errors(['Parameter --account-key is required if --account-name is provided'])
+        if opts.account_name is None and opts.account_key:
+            _exit_if_errors(['Parameter --account-name is required if --account-key is provided'])
+
+        # No other authentication method is allowed with --account-name and --account-key
+        if opts.account_name and opts.account_key:
+            if opts.shared_access_signature:
+                _exit_if_errors(['Parameter --shared--access-signature is not allowed if --account-key is '
+                                 'provided'])
+            if opts.managed_identity_id:
+                _exit_if_errors(['Parameter --managed-identity-id is not allowed if --account-key is provided'])
+            if opts.client_id:
+                _exit_if_errors(['Parameter --client-id is not allowed if --account-key is provided'])
+            if opts.client_secret:
+                _exit_if_errors(['Parameter --client-secret is not allowed if --account-key is provided'])
+            if opts.client_certificate:
+                _exit_if_errors(['Parameter --client-certificate is not allowed if --account-key is provided'])
+            if opts.client_certificate_password:
+                _exit_if_errors(['Parameter --client-certificate-password is not allowed if --account-key is '
+                                 'provided'])
+            if opts.tenant_id:
+                _exit_if_errors(['Parameter --tenant-id is not allowed if --account-key is provided'])
+
+        # No other authentication method is allowed with --shared-access-signature
+        if opts.shared_access_signature:
+            if opts.managed_identity_id:
+                _exit_if_errors(['Parameter --managed-identity-id is not allowed if --shared-access-signature is '
+                                 'provided'])
+            if opts.client_id:
+                _exit_if_errors(['Parameter --client-id is not allowed if --shared-access-signature is provided'])
+            if opts.client_secret:
+                _exit_if_errors(['Parameter --client-secret is not allowed if --shared-access-signature '
+                                 'is provided'])
+            if opts.client_certificate:
+                _exit_if_errors(['Parameter --client-certificate is not allowed if --shared-access-signature is '
+                                 'provided'])
+            if opts.client_certificate_password:
+                _exit_if_errors(['Parameter --client-certificate-password is not allowed if '
+                                 '--shared-access-signature is provided'])
+            if opts.tenant_id:
+                _exit_if_errors(['Parameter --tenant-id is not allowed if --shared-access-signature is provided'])
+
+        # No other authentication method is allowed with --managed-identity-id
+        if opts.managed_identity_id:
+            if opts.client_id:
+                _exit_if_errors(['Parameter --client-id is not allowed if --managed-identity-id is provided'])
+            if opts.client_secret:
+                _exit_if_errors(['Parameter --client-secret is not allowed if --managed-identity-id is provided'])
+            if opts.client_certificate:
+                _exit_if_errors(['Parameter --client-certificate is not allowed if --managed-identity-id is '
+                                 'provided'])
+            if opts.client_certificate_password:
+                _exit_if_errors(['Parameter --client-certificate-password is not allowed if --managed-identity-id '
+                                 'is provided'])
+            if opts.tenant_id:
+                _exit_if_errors(['Parameter --tenant-id is not allowed if --managed-identity-id is provided'])
+
+        # --client-secret, --client-certificate, --client-certificate-password and --tenant-id not allowed if
+        # --client-id is not present
+        if opts.client_id is None:
+            if opts.client_secret:
+                _exit_if_errors(['Parameter --client-id is required if --client-secret is provided'])
+            if opts.client_certificate:
+                _exit_if_errors(['Parameter --client-id is required if --client-certificate is provided'])
+            if opts.client_certificate_password:
+                _exit_if_errors(['Parameter --client-id is required if --client-certificate-password is provided'])
+            if opts.tenant_id:
+                _exit_if_errors(['Parameter --client-id is required if --tenant-id is provided'])
+
+        # --client-secret and --client-certificate are not allowed to be passed together
+        if opts.client_id:
+            if opts.tenant_id is None:
+                _exit_if_errors(['Required parameter --tenant-id not supplied'])
+            if opts.client_secret is None and opts.client_certificate is None:
+                _exit_if_errors(['Parameter --client-secret or --client-certificate is required if --client-id '
+                                 'is provided'])
+            if opts.client_secret and opts.client_certificate:
+                _exit_if_errors(['The parameters --client-secret and --client-certificate cannot be provided at '
+                                 'the same time'])
+            if opts.client_secret and opts.client_certificate_password:
+                _exit_if_errors(['Parameter --client-certificate-password is not allowed if --client-secret is '
+                                 'provided'])
 
     @staticmethod
     def get_man_page_name():
