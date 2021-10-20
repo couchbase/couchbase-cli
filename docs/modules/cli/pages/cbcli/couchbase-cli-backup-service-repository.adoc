@@ -96,6 +96,8 @@ Manage backup service repositories
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
 == EXAMPLES
 
 === Retrieving repository information

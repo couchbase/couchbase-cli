@@ -38,6 +38,8 @@ Manage the backup service settings
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
 == EXAMPLES
 
 To retrieve the backup service settings:

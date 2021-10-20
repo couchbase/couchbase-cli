@@ -21,7 +21,7 @@ Currently, only the following key types are supported:
 - RSA
 - DSA
 
-=== PEM ENCODED CERTIFICATE/ENCRYPTED PKCS#8 KEY
+=== PEM ENCODED CERTIFICATE/PEM OR DER ENCRYPTED PKCS#8 KEY
 
 An encrypted PKCS#8 formatted key may be provided using:
 - `--client-cert <path>`

@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import base64
 import ssl
 from pathlib import Path
 from typing import Optional, Tuple
@@ -57,7 +58,7 @@ class X509Adapter(HTTPAdapter):
         Args:
             cert: A PEM encoded x509 certificate.
             chain: PEM encoded certificate chain containing any certificates needed to verify 'cert'.
-            key: An unencrypted DER encoded private key in the PKCS#8 format.
+            key: An unencrypted PEM encoded private key or a PEM/DER encoded private key in the PKCS#8 format.
 
         Raises:
             X509AdapterError: An error occurred constructing the 'pyopenssl' context.
@@ -201,14 +202,16 @@ class X509AdapterFactory():
     def _parse_key_unencrypted(cls, data: bytes) -> bytes:
         try:
             key = load_pem_private_key(data, password=None)
-        except ValueError as error:
+        except (TypeError, ValueError, UnsupportedAlgorithm) as error:
             raise X509AdapterError("invalid key, perhaps it's an unsupported format or encrypted") from error
-        except (TypeError, UnsupportedAlgorithm) as error:
-            raise X509AdapterError("unsupported encrypted key format") from error
 
         return key.private_bytes(Encoding.DER, PrivateFormat.PKCS8, NoEncryption())
 
     def _parse_key_pkcs8(self, data: bytes) -> bytes:
+        parsed = pem.parse(data)
+        if parsed and len(parsed) == 1:
+            data = base64.b64decode(''.join(parsed[0].as_text().strip().split("\n")[1:-1]))
+
         try:
             (_, key, _) = pkcs8.unwrap(data, self.password.encode("utf-8"))
         except ValueError as error:

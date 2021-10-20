@@ -150,34 +150,38 @@ class X509AdapterFactoryTest(unittest.TestCase):
                                password="asdasd").generate()
 
     def test_valid_encrypted_pkcs8(self):
-        adapter = X509AdapterFactory(host="https://localhost:19000",
-                                     client_ca=self.path_to("valid_cert.pem"),
-                                     client_pk=self.path_to("valid_key.p8"),
-                                     password="asdasd").generate()
+        for key in ["valid_key_p8.pem", "valid_key_p8.der"]:
+            adapter = X509AdapterFactory(host="https://localhost:19000",
+                                         client_ca=self.path_to("valid_cert.pem"),
+                                         client_pk=self.path_to(key),
+                                         password="asdasd").generate()
 
-        self.assertIsNotNone(adapter)
+            self.assertIsNotNone(adapter)
 
     def test_valid_encrypted_pkcs8_wrong_password(self):
-        with self.assertRaisesRegex(X509AdapterError, re.escape("invalid password or PKCS#8 data")):
-            X509AdapterFactory(host="https://localhost:19000",
-                               client_ca=self.path_to("valid_cert.pem"),
-                               client_pk=self.path_to("valid_key.p8"),
-                               password="not-the-password").generate()
+        for key in ["valid_key_p8.pem", "valid_key_p8.der"]:
+            with self.assertRaisesRegex(X509AdapterError, re.escape("invalid password or PKCS#8 data")):
+                X509AdapterFactory(host="https://localhost:19000",
+                                   client_ca=self.path_to("valid_cert.pem"),
+                                   client_pk=self.path_to(key),
+                                   password="not-the-password").generate()
 
     def test_valid_encrypted_pkcs8_without_password(self):
         msg = "invalid key, perhaps it's an unsupported format or encrypted"
 
-        with self.assertRaisesRegex(X509AdapterError, re.escape(msg)):
-            X509AdapterFactory(host="https://localhost:19000",
-                               client_ca=self.path_to("valid_cert.pem"),
-                               client_pk=self.path_to("valid_key.p8")).generate()
+        for key in ["valid_key_p8.pem", "valid_key_p8.der"]:
+            with self.assertRaisesRegex(X509AdapterError, re.escape(msg)):
+                X509AdapterFactory(host="https://localhost:19000",
+                                   client_ca=self.path_to("valid_cert.pem"),
+                                   client_pk=self.path_to(key)).generate()
 
     def test_invalid_encrypted_pkcs8(self):
-        with self.assertRaisesRegex(X509AdapterError, re.escape("invalid password or PKCS#8 data")):
-            X509AdapterFactory(host="https://localhost:19000",
-                               client_ca=self.path_to("valid_cert.pem"),
-                               client_pk=self.path_to("invalid_key.p8"),
-                               password="asdasd").generate()
+        for key in ["invalid_key_p8.pem", "invalid_key_p8.der"]:
+            with self.assertRaisesRegex(X509AdapterError, re.escape("invalid password or PKCS#8 data")):
+                X509AdapterFactory(host="https://localhost:19000",
+                                   client_ca=self.path_to("valid_cert.pem"),
+                                   client_pk=self.path_to(key),
+                                   password="asdasd").generate()
 
     def test_multiple_certs_pem(self):
         adapter = X509AdapterFactory(host="https://localhost:19000",

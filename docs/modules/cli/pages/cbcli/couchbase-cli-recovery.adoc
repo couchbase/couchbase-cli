@@ -42,9 +42,9 @@ on rebalancing a cluster.
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --server-recovery <servers>::
-  A command separated list of servers to recover. The each server should
-  correspond to the hostname or IP address of a server to be added back to
-  the cluster.
+  A comma separated list of servers to recover. The each server should
+  correspond to the hostname or IP address of a server to be added back to the
+  cluster.
 
 --recovery-type <type>::
   Specifies whether or not we should do full or delta recovery of data on the

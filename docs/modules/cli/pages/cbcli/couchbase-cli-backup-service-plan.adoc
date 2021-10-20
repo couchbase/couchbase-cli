@@ -54,6 +54,8 @@ Manage backup service plans.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
 == EXAMPLES
 
 To retrieve a summary of all plans run:

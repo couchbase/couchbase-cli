@@ -606,6 +606,73 @@ a port other that 8091.</p>
 </div>
 </div>
 <div class="sect1">
+<h2 id="_certificate_authentication_mtls_authentication">CERTIFICATE AUTHENTICATION (MTLS AUTHENTICATION)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This tool supports authenticating against a Couchbase Cluster by using certificate based authentication (mTLS
+authentication). To use certificate based authentication a certificate/key must be supplied, there a currently
+multiple ways this may be done.</p>
+</div>
+<div class="sect2">
+<h3 id="_pem_encoded_certificatekey">PEM ENCODED CERTIFICATE/KEY</h3>
+<div class="paragraph">
+<p>An unencrypted PEM encoded certificate/key may be supplied by using:
+- <code>--client-cert &lt;path&gt;</code>
+- <code>--client-key &lt;path&gt;</code></p>
+</div>
+<div class="paragraph">
+<p>The file passed to <code>--client-cert</code> must contain the client certificate, and an optional chain required to authenticate
+the client certificate.</p>
+</div>
+<div class="paragraph">
+<p>The file passed to <code>--client-key</code> must contain at most one private key, the key can be in one of the following formats:
+- PKCS#1
+- PKCS#8</p>
+</div>
+<div class="paragraph">
+<p>Currently, only the following key types are supported:
+- RSA
+- DSA</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_pem_encoded_certificatepem_or_der_encrypted_pkcs8_key">PEM ENCODED CERTIFICATE/PEM OR DER ENCRYPTED PKCS#8 KEY</h3>
+<div class="paragraph">
+<p>An encrypted PKCS#8 formatted key may be provided using:
+- <code>--client-cert &lt;path&gt;</code>
+- <code>--client-key &lt;path&gt;</code>
+- <code>--client-key-password &lt;password&gt;</code></p>
+</div>
+<div class="paragraph">
+<p>The file passed to <code>--client-cert</code> must contain the client certificate, and an optional chain required to authenticate
+the client certificate.</p>
+</div>
+<div class="paragraph">
+<p>Currently, only the following key types are supported:
+- RSA
+- DSA</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_encrypted_pkcs12_certificatekey">ENCRYPTED PKCS#12 CERTIFICATE/KEY</h3>
+<div class="paragraph">
+<p>An encrypted PKCS#12 certificate/key may be provided using:
+- <code>--client-cert &lt;path&gt;</code>
+- <code>--client-cert-password &lt;password&gt;</code></p>
+</div>
+<div class="paragraph">
+<p>The file passed to <code>--client-cert</code> must contain the client certificate and exactly one private key. It may also contain
+the chain required to authenticate the client certificate.</p>
+</div>
+<div class="paragraph">
+<p>Currently, only the following key types are supported:
+- RSA
+- DSA</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_examples">EXAMPLES</h2>
 <div class="sectionbody">
 <div class="sect2">
