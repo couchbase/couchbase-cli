@@ -3567,10 +3567,10 @@ class UserManage(Subcommand):
         num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get, opts.get_group,
                              opts.list_group, opts.delete_group, opts.set_group])
         if num_selectors == 0:
-            _exit_if_errors(['Must specify --delete, --list, --my_roles, --set, --get, --get-group, --set-group, '
+            _exit_if_errors(['Must specify --delete, --list, --my-roles, --set, --get, --get-group, --set-group, '
                              '--list-groups or --delete-group'])
         elif num_selectors != 1:
-            _exit_if_errors(['Only one of the following can be specified:--delete, --list, --my_roles, --set, --get,'
+            _exit_if_errors(['Only one of the following can be specified:--delete, --list, --my-roles, --set, --get,'
                              ' --get-group, --set-group, --list-groups or --delete-group'])
 
         if opts.delete:
