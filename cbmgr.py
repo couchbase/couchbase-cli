@@ -329,6 +329,27 @@ def _exit_on_file_read_failure(fname, to_report=None):
             _exit_if_errors([to_report])
 
 
+def _exit_on_json_file_read_failure(fname, to_report=None):
+    raw = _exit_on_file_read_failure(fname, to_report)
+
+    try:
+        decoded = json.loads(raw)
+    except ValueError as error:
+        if to_report is None:
+            _exit_if_errors([f'`{fname}` does not contain valid JSON data: {error}'])
+        else:
+            _exit_if_errors([to_report])
+
+    return decoded
+
+
+def _read_json_file_if_provided(fname, to_report=None):
+    if fname is None or fname == "":
+        return None
+
+    return _exit_on_json_file_read_failure(fname, to_report)
+
+
 def apply_default_port(nodes):
     """
     Adds the default port if the port is missing.
@@ -656,14 +677,14 @@ class Subcommand(Command):
                            help="Prints the short or long help message")
 
         # Certificate based authentication
-        group.add_argument("--client-cert", dest="client_ca", default=None,
+        group.add_argument("--client-cert", dest="client_ca", default=None, metavar="<path>",
                            help="The path to a client certificate used during certificate authentication")
-        group.add_argument("--client-cert-password", dest="client_ca_password", default=None,
+        group.add_argument("--client-cert-password", dest="client_ca_password", default=None, metavar="<path>",
                            help="The password for the client certificate provided to '--client-cert'")
 
-        group.add_argument("--client-key", dest="client_pk", default=None,
+        group.add_argument("--client-key", dest="client_pk", default=None, metavar="<password>",
                            help="The path to the client private key used during certificate authentication")
-        group.add_argument("--client-key-password", dest="client_pk_password", default=None,
+        group.add_argument("--client-key-password", dest="client_pk_password", default=None, metavar="<password>",
                            help="The password for the client key provided to '--client-key'")
 
     def execute(self, opts):  # pylint: disable=useless-super-delegation
@@ -3385,6 +3406,8 @@ class SslManage(Subcommand):
                               help="Regenerate the cluster certificate and save it to a file")
         me_group.add_argument("--set-node-certificate", dest="set_cert", action="store_true",
                               default=False, help="Sets the node certificate")
+        group.add_argument("--pkey-passphrase-settings", dest="pkey_settings", metavar="<path>",
+                           help="Optional path to a JSON file containing private key passphrase settings")
         me_group.add_argument("--set-client-auth", dest="client_auth_path", metavar="<path>",
                               help="A path to a file containing the client auth configuration")
         me_group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
@@ -3471,7 +3494,7 @@ class SslManage(Subcommand):
             _exit_if_errors(errors)
             _success(f'Uploaded cluster certificate to {opts.cluster}')
         elif opts.set_cert:
-            _, errors = self.rest.set_node_certificate()
+            _, errors = self.rest.set_node_certificate(_read_json_file_if_provided(opts.pkey_settings))
             _exit_if_errors(errors)
             _success("Node certificate set")
         elif opts.client_auth_path:

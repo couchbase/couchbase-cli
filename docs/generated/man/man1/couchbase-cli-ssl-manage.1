@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-ssl-manage
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.16
-.\"      Date: 2021-10-20
+.\"      Date: 2021-10-21
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SSL\-MANAGE" "1" "2021-10-20" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SSL\-MANAGE" "1" "2021-10-21" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -37,7 +37,8 @@ couchbase-cli-ssl-manage \- Manage SSL certificates
   [\-\-client\-key\-password <password>]
   [\-\-cluster\-cert\-info] [ \-\-cluster\-ca\-info] [\-\-cluster\-ca\-load] [\-\-cluster\-ca\-delete <id>]
   [ \-\-upload\-cluster\-ca <path>] [\-\-node\-cert\-info] [\-\-regenerate\-cert <path>]
-  [\-\-set\-node\-certificate] [\-\-set\-client\-auth <path>] [\-\-client\-auth]
+  [\-\-set\-node\-certificate] [\-\-pkey\-passphrase\-settings <path>] [\-\-set\-client\-auth <path>]
+  [\-\-client\-auth]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -139,6 +140,68 @@ node certificate into your installation. When this command is invoked the
 cluster will read the node certificate from the node specified and set it
 as the node certificate for that node.
 .RE
+.sp
+\-\-pkey\-passphrase\-settings <path>
+.RS 4
+The path to a JSON file containing the private key passphrase settings, see
+below for examples for the accepted configurations.
+.RE
+.sp
+When sending a plain text password, the file may look something like the one
+below. Note that plain passphrases will be encrypted with secret management
+when arrives to the server, but will be transmitted unencrypted (unless HTTPS
+is used)
+.sp
+.if n .RS 4
+.nf
+.fam C
+{
+  "type": "plain",
+  "password": "asdasd"
+}
+.fam
+.fi
+.if n .RE
+.sp
+When using a script, the file might look similar to the below. Note that the
+node will verify that the script is present, and that script is located in
+data/scripts directory.
+.sp
+.if n .RS 4
+.nf
+.fam C
+{
+  "type": "script",
+  "path": "<path to script>",
+  "args": [
+    "arg1",
+    "arg2"
+  ],
+  "trim": "false",
+  "timeout": 5000
+}
+.fam
+.fi
+.if n .RE
+.sp
+When using a REST call to fetch the password, the file may look similar to the
+one below.
+.sp
+.if n .RS 4
+.nf
+.fam C
+{
+  "type": "rest",
+  "url": "<url to call>",
+  "addressFamily": "inet6",
+  "httpsOpts": {
+    "verifyPeer": true
+  },
+  "timeout": 5000
+}
+.fam
+.fi
+.if n .RE
 .sp
 \-\-upload\-cluster\-ca <file>
 .RS 4

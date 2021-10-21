@@ -1538,6 +1538,16 @@ class TestSslManage(CommandTest):
         self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
         self.assertIn('Node certificate set', self.str_output)
 
+    def test_set_node_certificate_with_pkey_settings(self):
+        pkey_settings_file = tempfile.NamedTemporaryFile(delete=False)
+        pkey_settings_file.write(b'{"type":"plain","password":"asdf"}')
+        pkey_settings_file.close()
+        self.no_error_run(self.command + ['--set-node-certificate', '--pkey-passphrase-settings',
+                                          pkey_settings_file.name], self.server_args)
+        os.remove(pkey_settings_file.name)
+        self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
+        self.assertIn('Node certificate set', self.str_output)
+
     def test_set_client_auth(self):
         client_json = tempfile.NamedTemporaryFile(delete=False)
         client_json.write(b'{"name":"json"}')

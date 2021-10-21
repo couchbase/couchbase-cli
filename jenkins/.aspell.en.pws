@@ -79,6 +79,7 @@ hostname
 hostnames
 hsts
 http
+HTTPS
 includeSubDomains
 init
 intra
@@ -117,6 +118,7 @@ ou
 pem
 persistToMajority
 PKCS
+pkey
 preload
 QL
 ql

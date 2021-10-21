@@ -17,7 +17,8 @@ _couchbase-cli ssl-manage_ [--cluster <url>] [--username <user>] [--password <pa
   [--client-key-password <password>]
   [--cluster-cert-info] [ --cluster-ca-info] [--cluster-ca-load] [--cluster-ca-delete <id>]
   [ --upload-cluster-ca <path>] [--node-cert-info] [--regenerate-cert <path>]
-  [--set-node-certificate] [--set-client-auth <path>] [--client-auth]
+  [--set-node-certificate] [--pkey-passphrase-settings <path>] [--set-client-auth <path>]
+  [--client-auth]
 
 == DESCRIPTION
 
@@ -54,6 +55,55 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   node certificate into your installation. When this command is invoked the
   cluster will read the node certificate from the node specified and set it
   as the node certificate for that node.
+
+--pkey-passphrase-settings <path>::
+  The path to a JSON file containing the private key passphrase settings, see
+  below for examples for the accepted configurations.
+
+[normal]
+When sending a plain text password, the file may look something like the one
+below. Note that plain passphrases will be encrypted with secret management
+when arrives to the server, but will be transmitted unencrypted (unless HTTPS
+is used)
+
+----
+{
+  "type": "plain",
+  "password": "asdasd"
+}
+----
+
+When using a script, the file might look similar to the below. Note that the
+node will verify that the script is present, and that script is located in
+data/scripts directory.
+
+----
+{
+  "type": "script",
+  "path": "<path to script>",
+  "args": [
+    "arg1",
+    "arg2"
+  ],
+  "trim": "false",
+  "timeout": 5000
+}
+----
+
+When using a REST call to fetch the password, the file may look similar to the
+one below.
+
+----
+{
+  "type": "rest",
+  "url": "<url to call>",
+  "addressFamily": "inet6",
+  "httpsOpts": {
+    "verifyPeer": true
+  },
+  "timeout": 5000
+}
+----
 
 --upload-cluster-ca <file>::
   Uploads the certificate specified to the cluster. The uploaded certificate

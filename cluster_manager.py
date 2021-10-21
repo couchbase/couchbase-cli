@@ -1513,7 +1513,7 @@ class ClusterManager(object):
         url = f'{self.hostname}/pools/default/certificate/node/{node}'
         return self._get(url)
 
-    def set_node_certificate(self):
+    def set_node_certificate(self, pkey_settings):
         """Activates the current node certificate
 
         Grabs chain.pem and pkey.pem from the <data folder>/inbox/ directory and
@@ -1522,8 +1522,12 @@ class ClusterManager(object):
         certificate before cluster CA. pkey.pem contains the pem encoded private
         key for node certifiactes. Both files should exist on the server before
         this API is called."""
-        url = f'{self.hostname}/node/controller/reloadCertificate'
-        return self._post_form_encoded(url, None)
+        params = {}
+
+        if pkey_settings:
+            params["privateKeyPassphrase"] = pkey_settings
+
+        return self._post_json(f'{self.hostname}/node/controller/reloadCertificate', params)
 
     def set_client_cert_auth(self, config):
         """Enable/disable the client cert auth"""

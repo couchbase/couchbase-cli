@@ -457,7 +457,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
   [--client-key-password &lt;password&gt;]
   [--cluster-cert-info] [ --cluster-ca-info] [--cluster-ca-load] [--cluster-ca-delete &lt;id&gt;]
   [ --upload-cluster-ca &lt;path&gt;] [--node-cert-info] [--regenerate-cert &lt;path&gt;]
-  [--set-node-certificate] [--set-client-auth &lt;path&gt;] [--client-auth]</pre>
+  [--set-node-certificate] [--pkey-passphrase-settings &lt;path&gt;] [--set-client-auth &lt;path&gt;]
+  [--client-auth]</pre>
 </div>
 </div>
 </div>
@@ -558,6 +559,65 @@ node certificate into your installation. When this command is invoked the
 cluster will read the node certificate from the node specified and set it
 as the node certificate for that node.</p>
 </dd>
+<dt class="hdlist1">--pkey-passphrase-settings &lt;path&gt;</dt>
+<dd>
+<p>The path to a JSON file containing the private key passphrase settings, see
+below for examples for the accepted configurations.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>When sending a plain text password, the file may look something like the one
+below. Note that plain passphrases will be encrypted with secret management
+when arrives to the server, but will be transmitted unencrypted (unless HTTPS
+is used)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>{
+  "type": "plain",
+  "password": "asdasd"
+}</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When using a script, the file might look similar to the below. Note that the
+node will verify that the script is present, and that script is located in
+data/scripts directory.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>{
+  "type": "script",
+  "path": "&lt;path to script&gt;",
+  "args": [
+    "arg1",
+    "arg2"
+  ],
+  "trim": "false",
+  "timeout": 5000
+}</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When using a REST call to fetch the password, the file may look similar to the
+one below.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>{
+  "type": "rest",
+  "url": "&lt;url to call&gt;",
+  "addressFamily": "inet6",
+  "httpsOpts": {
+    "verifyPeer": true
+  },
+  "timeout": 5000
+}</pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
 <dt class="hdlist1">--upload-cluster-ca &lt;file&gt;</dt>
 <dd>
 <p>Uploads the certificate specified to the cluster. The uploaded certificate
