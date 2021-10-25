@@ -15,7 +15,7 @@ if [[ ! -x .githooks/commit-msg ]]; then
 fi
 
 # ensure the custom aspell dictionary is sorted correctly
-(head -n 1 jenkins/.aspell.en.pws && tail -n +2 jenkins/.aspell.en.pws | sort -f) | sponge jenkins/.aspell.en.pws
+(head -n 1 jenkins/.aspell.en.pws && tail -n +2 jenkins/.aspell.en.pws | LC_COLLATE="C" sort -f) | sponge jenkins/.aspell.en.pws
 
 # we are safe to re-add the modified dictionary
 git add jenkins/.aspell.en.pws
