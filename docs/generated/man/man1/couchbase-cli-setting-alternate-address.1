@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-settings-alternate-address
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.16
-.\"      Date: 2021-10-20
+.\"      Date: 2021-10-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2021-10-20" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-ALTERNATE\-ADDRESS" "1" "2021-10-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -416,6 +416,37 @@ Specifies the password of the user executing the command. This environment
 variable allows you to specify a default argument for the \-p/\-\-password
 argument on the command line. It also allows the user to ensure that their
 password are not cached in their command line history.
+.RE
+.sp
+CB_CLIENT_CERT
+.RS 4
+The path to a client certificate used to authenticate when connecting to a
+cluster. May be supplied with \f(CRCB_CLIENT_KEY\fP as an alternative to the
+\f(CRCB_USERNAME\fP and \f(CRCB_PASSWORD\fP variables. See the CERTIFICATE AUTHENTICATION
+section for more information.
+.RE
+.sp
+CB_CLIENT_CERT_PASSWORD
+.RS 4
+The password for the certificate provided to the \f(CRCB_CLIENT_CERT\fP variable,
+when using this variable, the certificate/key pair is expected to be in the
+PKCS#12 format. See the CERTIFICATE AUTHENTICATION section for more
+information.
+.RE
+.sp
+CB_CLIENT_KEY
+.RS 4
+The path to the client private key whose public key is contained in the
+certificate provided to the \f(CRCB_CLIENT_CERT\fP variable. May be supplied with
+\f(CRCB_CLIENT_CERT\fP as an alternative to the \f(CRCB_USERNAME\fP and \f(CRCB_PASSWORD\fP
+variables. See the CERTIFICATE AUTHENTICATION section for more information.
+.RE
+.sp
+CB_CLIENT_KEY_PASSWORD
+.RS 4
+The password for the key provided to the \f(CRCB_CLIENT_KEY\fP variable, when using
+this variable, the key is expected to be in the PKCS#8 format.  See the
+CERTIFICATE AUTHENTICATION section for more information.
 .RE
 .SH "SEE ALSO"
 .sp

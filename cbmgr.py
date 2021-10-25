@@ -487,7 +487,7 @@ class CBNonEchoedAction(CBEnvAction):
     """Allows an argument to be specified by use of a non-echoed value passed through
     stdin, through an environment variable, or as a value to the argument"""
 
-    def __init__(self, envvar, prompt_text="Enter password:", confirm_text=None,
+    def __init__(self, envvar, prompt_text="Enter password: ", confirm_text=None,
                  required=False, default=None, nargs='?', **kwargs):
         self.prompt_text = prompt_text
         self.confirm_text = confirm_text
@@ -678,13 +678,19 @@ class Subcommand(Command):
 
         # Certificate based authentication
         group.add_argument("--client-cert", dest="client_ca", default=None, metavar="<path>",
+                           action=CBEnvAction, envvar="CB_CLIENT_CERT",
                            help="The path to a client certificate used during certificate authentication")
         group.add_argument("--client-cert-password", dest="client_ca_password", default=None, metavar="<password>",
+                           action=CBNonEchoedAction, prompt_text="Enter password for --client-cert-password: ",
+                           envvar="CB_CLIENT_CERT_PASSWORD",
                            help="The password for the client certificate provided to '--client-cert'")
 
         group.add_argument("--client-key", dest="client_pk", default=None, metavar="<path>",
+                           action=CBEnvAction, envvar="CB_CLIENT_KEY",
                            help="The path to the client private key used during certificate authentication")
         group.add_argument("--client-key-password", dest="client_pk_password", default=None, metavar="<password>",
+                           action=CBNonEchoedAction, prompt_text="Enter password for --client-key-password: ",
+                           envvar="CB_CLIENT_KEY_PASSWORD",
                            help="The password for the client key provided to '--client-key'")
 
     def execute(self, opts):  # pylint: disable=useless-super-delegation
