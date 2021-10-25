@@ -679,10 +679,10 @@ class Subcommand(Command):
         # Certificate based authentication
         group.add_argument("--client-cert", dest="client_ca", default=None, metavar="<path>",
                            help="The path to a client certificate used during certificate authentication")
-        group.add_argument("--client-cert-password", dest="client_ca_password", default=None, metavar="<path>",
+        group.add_argument("--client-cert-password", dest="client_ca_password", default=None, metavar="<password>",
                            help="The password for the client certificate provided to '--client-cert'")
 
-        group.add_argument("--client-key", dest="client_pk", default=None, metavar="<password>",
+        group.add_argument("--client-key", dest="client_pk", default=None, metavar="<path>",
                            help="The path to the client private key used during certificate authentication")
         group.add_argument("--client-key-password", dest="client_pk_password", default=None, metavar="<password>",
                            help="The password for the client key provided to '--client-key'")
