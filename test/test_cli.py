@@ -2700,6 +2700,12 @@ class TestAnalyticsLinkSetup(CommandTest):
         user_key_file.write(b'this-is-the-user-key-file')
         user_key_file.close()
 
+        # create fake user key passphrase file
+        user_key_passphrase_file = tempfile.NamedTemporaryFile(delete=False)
+        user_key_passphrase_file_name = user_key_passphrase_file.name
+        user_key_passphrase_file.write(b'{"type": "plain","password": "asdasd"}')
+        user_key_passphrase_file.close()
+
         # create fake user certificate file
         user_cert_file = tempfile.NamedTemporaryFile(delete=False)
         user_cert_file_name = user_cert_file.name
@@ -2709,17 +2715,21 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.no_error_run(self.command + ['--edit', '--dataverse', 'Default', '--name', 'east', '--type', 'couchbase',
                                           '--link-username', 'user', '--link-password', 'secret', '--encryption',
                                           'full', '--user-certificate', user_cert_file_name, '--certificate',
-                                          cert_file_name, '--user-key', user_key_file_name], self.server_args)
+                                          cert_file_name, '--user-key', user_key_file_name, '--user-key-passphrase',
+                                          user_key_passphrase_file_name], self.server_args)
 
         # clean up the test files
         os.remove(cert_file_name)
         os.remove(user_cert_file_name)
         os.remove(user_key_file_name)
+        os.remove(user_key_passphrase_file_name)
 
         self.assertIn('PUT:/analytics/link/Default/east', self.server.trace)
-        self.rest_parameter_match(['type=couchbase', 'username=user', 'password=secret', 'encryption=full',
-                                   'certificate=this-is-the-cert-file', 'clientKey=this-is-the-user-key-file',
-                                   'clientCertificate=this-is-the-user-cert-file'])
+        self.rest_parameter_match(
+            ['type=couchbase', 'username=user', 'password=secret', 'encryption=full',
+             'certificate=this-is-the-cert-file', 'clientKey=this-is-the-user-key-file',
+             'clientCertificate=this-is-the-user-cert-file',
+             'clientKeyPassphrase=%7B%22type%22%3A+%22plain%22%2C%22password%22%3A+%22asdasd%22%7D'])
 
     def test_set_with_certs_that_dont_exist(self):
         # create fake cert file and deleted immediately guaranteeing it does not exists

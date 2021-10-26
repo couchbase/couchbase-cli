@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-analytics-link-setup
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.16
-.\"      Date: 2021-10-22
+.\"      Date: 2021-10-26
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2021-10-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2021-10-26" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -37,11 +37,12 @@ couchbase-cli-analytics-link-setup \- Manage Analytics links
     [\-\-client\-key <path>] [\-\-client\-key\-password <password>] [\-\-create] [\-\-delete]
     [\-\-edit] [\-\-list] [\-\-dataverse <name>] [\-\-scope <name>] [\-\-name <name>] [\-\-type <type>]
     [\-\-hostname <hostname>] [\-\-link\-username <username>] [\-\-link\-password <password>]
-    [\-\-user\-certificate <path>] [\-\-user\-key <path>] [\-\-certificate <path>]
-    [\-\-encryption <type>] [\-\-access\-key\-id <id>] [\-\-secret\-access\-key <key>]
-    [\-\-session\-token <token>] [\-\-region <region>] [\-\-service\-endpoint <url>]
-    [\-\-connection\-string <key>] [\-\-account\-name <id>] [\-\-account\-key <key>]
-    [\-\-shared\-access\-signature <token>] [\-\-blob\-endpoint <url>] [\-\-endpoint\-suffix <url>]
+    [\-\-user\-certificate <path>] [\-\-user\-key <path>] [\-\-user\-key\-passphrase <path>]
+    [\-\-certificate <path>] [\-\-encryption <type>] [\-\-access\-key\-id <id>]
+    [\-\-secret\-access\-key <key>] [\-\-session\-token <token>] [\-\-region <region>]
+    [\-\-service\-endpoint <url>] [\-\-connection\-string <key>] [\-\-account\-name <id>]
+    [\-\-account\-key <key>] [\-\-shared\-access\-signature <token>] [\-\-blob\-endpoint <url>]
+    [\-\-endpoint\-suffix <url>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -191,6 +192,48 @@ and \fB\-\-user\-certificate\fP are used in place of \fB\-\-link\-username\fP an
 \fB\-\-link\-password\fP when utilizing certificate\-based authentication.
 Certificate\-based auth requires \fB\-\-encryption full\fP.
 .RE
+.sp
+\-\-user\-key\-passphrase <path>
+.RS 4
+The local path to a JSON file containing the private key passphrase settings,
+see below for examples for the accepted configurations.  Required when using
+\fB\-\-encryption full\fP with Certificate\-based auth, where the specified
+\fB\-\-user\-key\fP is encrypted.
+.RE
+.sp
+When sending a plain text password, the file may look something like the one
+below. Note that plain passphrases will be encrypted with secret management
+when arrives to the server, but will be transmitted unencrypted (unless HTTPS
+is used)
+.sp
+.if n .RS 4
+.nf
+.fam C
+{
+  "type": "plain",
+  "password": "asdasd"
+}
+.fam
+.fi
+.if n .RE
+.sp
+When using a REST call to fetch the password, the file may look similar to the
+one below.
+.sp
+.if n .RS 4
+.nf
+.fam C
+{
+  "type": "rest",
+  "url": "<url to call>",
+  "httpsOpts": {
+    "verifyPeer": true
+  },
+  "timeout": 5000
+}
+.fam
+.fi
+.if n .RE
 .sp
 \-\-certificate <path>
 .RS 4

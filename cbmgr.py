@@ -4277,6 +4277,8 @@ class AnalyticsLinkSetup(Subcommand):
                            help="The user certificate for authentication")
         group.add_argument("--user-key", dest="user_key", metavar="<path>",
                            help="The user key for authentication")
+        group.add_argument("--user-key-passphrase", dest="user_key_passphrase", metavar="<path>",
+                           help="Optional path to a JSON file containing user key passphrase settings")
         group.add_argument("--certificate", dest="certificate", metavar="<path>",
                            help="The certificate used for encryption")
         group.add_argument("--encryption", dest="encryption", choices=["none", "full", "half"],
@@ -4356,6 +4358,8 @@ class AnalyticsLinkSetup(Subcommand):
             opts.certificate = _exit_on_file_read_failure(opts.certificate)
         if opts.user_key:
             opts.user_key = _exit_on_file_read_failure(opts.user_key)
+        if opts.user_key_passphrase:
+            opts.user_key_passphrase = _exit_on_file_read_failure(opts.user_key_passphrase)
         if opts.user_certificate:
             opts.user_certificate = _exit_on_file_read_failure(opts.user_certificate)
 

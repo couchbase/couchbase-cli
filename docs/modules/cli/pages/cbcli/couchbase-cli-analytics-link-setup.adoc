@@ -17,11 +17,12 @@ _couchbase-cli analytics-link-setup_ [--cluster <cluster>] [--username <username
     [--client-key <path>] [--client-key-password <password>] [--create] [--delete]
     [--edit] [--list] [--dataverse <name>] [--scope <name>] [--name <name>] [--type <type>]
     [--hostname <hostname>] [--link-username <username>] [--link-password <password>]
-    [--user-certificate <path>] [--user-key <path>] [--certificate <path>]
-    [--encryption <type>] [--access-key-id <id>] [--secret-access-key <key>]
-    [--session-token <token>] [--region <region>] [--service-endpoint <url>]
-    [--connection-string <key>] [--account-name <id>] [--account-key <key>]
-    [--shared-access-signature <token>] [--blob-endpoint <url>] [--endpoint-suffix <url>]
+    [--user-certificate <path>] [--user-key <path>] [--user-key-passphrase <path>]
+    [--certificate <path>] [--encryption <type>] [--access-key-id <id>]
+    [--secret-access-key <key>] [--session-token <token>] [--region <region>]
+    [--service-endpoint <url>] [--connection-string <key>] [--account-name <id>]
+    [--account-key <key>] [--shared-access-signature <token>] [--blob-endpoint <url>]
+    [--endpoint-suffix <url>]
 
 == DESCRIPTION
 
@@ -93,6 +94,39 @@ links
   and *--user-certificate* are used in place of *--link-username* and
   *--link-password* when utilizing certificate-based authentication.
   Certificate-based auth requires *--encryption full*.
+
+--user-key-passphrase <path>::
+  The local path to a JSON file containing the private key passphrase settings,
+  see below for examples for the accepted configurations.  Required when using
+  *--encryption full* with Certificate-based auth, where the specified
+  *--user-key* is encrypted.
+
+[normal]
+When sending a plain text password, the file may look something like the one
+below. Note that plain passphrases will be encrypted with secret management
+when arrives to the server, but will be transmitted unencrypted (unless HTTPS
+is used)
+
+----
+{
+  "type": "plain",
+  "password": "asdasd"
+}
+----
+
+When using a REST call to fetch the password, the file may look similar to the
+one below.
+
+----
+{
+  "type": "rest",
+  "url": "<url to call>",
+  "httpsOpts": {
+    "verifyPeer": true
+  },
+  "timeout": 5000
+}
+----
 
 --certificate <path>::
   The local path to the file containing the certificate used for encryption.

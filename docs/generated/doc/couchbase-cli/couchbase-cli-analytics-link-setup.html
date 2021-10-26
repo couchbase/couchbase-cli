@@ -457,11 +457,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--client-key &lt;path&gt;] [--client-key-password &lt;password&gt;] [--create] [--delete]
     [--edit] [--list] [--dataverse &lt;name&gt;] [--scope &lt;name&gt;] [--name &lt;name&gt;] [--type &lt;type&gt;]
     [--hostname &lt;hostname&gt;] [--link-username &lt;username&gt;] [--link-password &lt;password&gt;]
-    [--user-certificate &lt;path&gt;] [--user-key &lt;path&gt;] [--certificate &lt;path&gt;]
-    [--encryption &lt;type&gt;] [--access-key-id &lt;id&gt;] [--secret-access-key &lt;key&gt;]
-    [--session-token &lt;token&gt;] [--region &lt;region&gt;] [--service-endpoint &lt;url&gt;]
-    [--connection-string &lt;key&gt;] [--account-name &lt;id&gt;] [--account-key &lt;key&gt;]
-    [--shared-access-signature &lt;token&gt;] [--blob-endpoint &lt;url&gt;] [--endpoint-suffix &lt;url&gt;]</pre>
+    [--user-certificate &lt;path&gt;] [--user-key &lt;path&gt;] [--user-key-passphrase &lt;path&gt;]
+    [--certificate &lt;path&gt;] [--encryption &lt;type&gt;] [--access-key-id &lt;id&gt;]
+    [--secret-access-key &lt;key&gt;] [--session-token &lt;token&gt;] [--region &lt;region&gt;]
+    [--service-endpoint &lt;url&gt;] [--connection-string &lt;key&gt;] [--account-name &lt;id&gt;]
+    [--account-key &lt;key&gt;] [--shared-access-signature &lt;token&gt;] [--blob-endpoint &lt;url&gt;]
+    [--endpoint-suffix &lt;url&gt;]</pre>
 </div>
 </div>
 </div>
@@ -611,6 +612,47 @@ and <strong>--user-certificate</strong> are used in place of <strong>--link-user
 <strong>--link-password</strong> when utilizing certificate-based authentication.
 Certificate-based auth requires <strong>--encryption full</strong>.</p>
 </dd>
+<dt class="hdlist1">--user-key-passphrase &lt;path&gt;</dt>
+<dd>
+<p>The local path to a JSON file containing the private key passphrase settings,
+see below for examples for the accepted configurations.  Required when using
+<strong>--encryption full</strong> with Certificate-based auth, where the specified
+<strong>--user-key</strong> is encrypted.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>When sending a plain text password, the file may look something like the one
+below. Note that plain passphrases will be encrypted with secret management
+when arrives to the server, but will be transmitted unencrypted (unless HTTPS
+is used)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>{
+  "type": "plain",
+  "password": "asdasd"
+}</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When using a REST call to fetch the password, the file may look similar to the
+one below.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>{
+  "type": "rest",
+  "url": "&lt;url to call&gt;",
+  "httpsOpts": {
+    "verifyPeer": true
+  },
+  "timeout": 5000
+}</pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
 <dt class="hdlist1">--certificate &lt;path&gt;</dt>
 <dd>
 <p>The local path to the file containing the certificate used for encryption.

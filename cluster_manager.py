@@ -1869,6 +1869,8 @@ class ClusterManager(object):
             params["certificate"] = opts.certificate
         if opts.user_key:
             params['clientKey'] = opts.user_key
+        if opts.user_key_passphrase:
+            params['clientKeyPassphrase'] = opts.user_key_passphrase
         if opts.user_certificate:
             params['clientCertificate'] = opts.user_certificate
         if opts.link_username:
