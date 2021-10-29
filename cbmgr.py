@@ -3403,7 +3403,7 @@ class SslManage(Subcommand):
         me_group.add_argument("--cluster-ca-load", dest="load_ca", action="store_true",
                               default=False, help="Loads the Certificate Authorities")
         me_group.add_argument("--cluster-ca-delete", dest="delete_ca", metavar="<id>",
-                              help="Delete a Certificate Authorities")
+                              help="Deletes a Certificate Authority")
         me_group.add_argument("--upload-cluster-ca", dest="upload_cert", metavar="<path>",
                               help="Upload a new cluster certificate", action=CBDeprecatedAction)
         me_group.add_argument("--node-cert-info", dest="node_cert", action="store_true",
