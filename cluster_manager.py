@@ -2335,7 +2335,7 @@ class ClusterManager(object):
                 response.encoding = 'utf-8'
                 output += f', {response.content}'
             print(output)
-        if response.status_code in [200, 202]:
+        if response.status_code in [200, 202, 204]:
             if 'Content-Type' not in response.headers:
                 return "", None
             if not response.content:

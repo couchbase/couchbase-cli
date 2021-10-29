@@ -1502,6 +1502,13 @@ class TestSslManage(CommandTest):
         self.assertIn('DELETE:/pools/default/trustedCAs/0', self.server.trace)
         self.assertIn('Certificate Authority with ID 0 has been deleted', self.str_output)
 
+    def test_cluster_ca_delete_with_204(self):
+        self.server_args['/pools/default/trustedCAs/0'] = 'unknown pool'
+        self.server_args['override-status'] = 204
+        self.no_error_run(self.command + ['--cluster-ca-delete', '0'], self.server_args)
+        self.assertIn('DELETE:/pools/default/trustedCAs/0', self.server.trace)
+        self.assertIn('Certificate Authority with ID 0 has been deleted', self.str_output)
+
     def test_upload_cluster_ca(self):
         cert_file = tempfile.NamedTemporaryFile(delete=False)
         cert_file.write(b'this-is-the-cert-file')
