@@ -3439,18 +3439,29 @@ class SslManage(Subcommand):
         elif opts.cluster_ca:
             cert_authorities, errors = self.rest.retrieve_cluster_ca()
             _exit_if_errors(errors)
-            if opts.output == 'standard':
-                print("The Certificate Authorities being used by the cluster")
-                print(f'{"ID":4} {"NotBefore":24} {"NotAfter":24} {"Loaded Date":24} {"Type":9} Subject')
-                for ca in cert_authorities:
-                    print(
-                        f'{ca["id"]:<4} {ca["notBefore"]:24} {ca["notAfter"]:24} {ca["loadTimestamp"]} {ca["type"]:9}'
-                        f' {ca["subject"]}')
-                    if 'warnings' in ca:
-                        for warning in ca["warnings"]:
-                            print(f'{" ":4} Warning: {warning["message"]}')
-            else:
+
+            if opts.output != 'standard':
                 print(json.dumps(cert_authorities, sort_keys=True, indent=2))
+                return
+
+            print("The Certificate Authorities being used by the cluster")
+            print(f'{"ID":4} {"NotBefore":24} {"NotAfter":24} {"Loaded Date":24} {"Type":9} Subject')
+
+            def val_or_unknown(ca, key):
+                return ca[key] if key in ca else "unknown"  # Must be less than 9 characters
+
+            for ca in cert_authorities:
+                print(f'{ca["id"]:<4} '
+                      f'{val_or_unknown(ca, "notBefore"):24} '
+                      f'{val_or_unknown(ca, "notAfter"):24} '
+                      f'{val_or_unknown(ca, "loadTimestamp"):24} '
+                      f'{val_or_unknown(ca, "type"):9} '
+                      f'{val_or_unknown(ca, "subject")}')
+
+                if 'warnings' in ca:
+                    for warning in ca["warnings"]:
+                        print(f'{" ":4} Warning: {warning["message"]}')
+
         elif opts.load_ca:
             nodes_data, errors = self.rest.pools('nodes')
             _exit_if_errors(errors)

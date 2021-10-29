@@ -1489,6 +1489,22 @@ class TestSslManage(CommandTest):
         self.assertIn('GET:/pools/default/trustedCAs', self.server.trace)
         self.assertIn('CN=Couchbase Server e5b5a918', self.str_output)
 
+    def test_cluster_ca_info_missing_info(self):
+        ca = [{"nodes": ["172.18.1.75:9000", "127.0.0.1:9001"],
+               "warnings": [
+                   {"message": "Out-of-the-box certificates are self-signed. To further secure your system, you "
+                               "must create new X.509 certificates signed by a trusted CA."}],
+               "subject": "CN=Couchbase Server e5b5a918",
+               "id": 1,
+               "notBefore": "2013-01-01T00:00:00.000Z",
+               "notAfter": "2049-12-31T23:59:59.000Z",
+               "type": "generated",
+               "pem": "-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n\n", }]
+        self.server_args['/pools/default/trustedCAs'] = ca
+        self.no_error_run(self.command + ['--cluster-ca-info'], self.server_args)
+        self.assertIn('GET:/pools/default/trustedCAs', self.server.trace)
+        self.assertIn('unknown', self.str_output)
+
     def test_cluster_ca_load(self):
         self.server_args['/pools/nodes'] = {'nodes': [{'hostname': 'localhost:6789', 'ports': {'httpsMgmt': '6789'}},
                                                       {'hostname': '127.0.0.1:6789', 'ports': {'httpsMgmt': '6789'}}]}
