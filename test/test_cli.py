@@ -277,7 +277,7 @@ class TestClusterInit(CommandTest):
         self.no_error_run(self.command + full_options, self.server_args)
         self.assertIn('SUCCESS', self.str_output)
         expected_params = ['memoryQuota=512', 'eventingMemoryQuota=512', 'ftsMemoryQuota=512', 'clusterName=name',
-                           'indexMemoryQuota=512', 'storageMode=memory_optimized',
+                           'indexMemoryQuota=512', 'indexerStorageMode=memory_optimized',
                            'username=Administrator', 'password=asdasd', 'port=6789',
                            'sendStats=false']
         self.rest_parameter_match(expected_params, False)
@@ -294,7 +294,7 @@ class TestClusterInit(CommandTest):
         self.no_error_run(self.command + full_options, self.server_args)
         self.assertIn('SUCCESS', self.str_output)
         expected_params = ['memoryQuota=512', 'eventingMemoryQuota=512', 'ftsMemoryQuota=512', 'clusterName=name',
-                           'indexMemoryQuota=512', 'storageMode=memory_optimized',
+                           'indexMemoryQuota=512', 'indexerStorageMode=memory_optimized',
                            'username=Administrator', 'password=asdasd', 'port=6789',
                            'sendStats=true']
         self.rest_parameter_match(expected_params, False)

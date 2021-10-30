@@ -786,10 +786,6 @@ class ClusterInit(Subcommand):
 
     @rest_initialiser(enterprise_check=False)
     def execute(self, opts):
-        # We need to ensure that creating the REST username/password is the
-        # last REST API that is called because once that API succeeds the
-        # cluster is initialized and cluster-init cannot be run again.
-
         initialized, errors = self.rest.is_cluster_initialized()
         _exit_if_errors(errors)
         if initialized:
@@ -804,16 +800,12 @@ class ClusterInit(Subcommand):
         if 'kv' not in services.split(','):
             _exit_if_errors(["Cannot set up first cluster node without the data service"])
 
-        if opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota \
-                or opts.eventing_mem_quota or opts.name is not None:
-            _, errors = self.rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
-                                                    opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
-        _exit_if_errors(errors)
+        if 'ipv4' in opts.ip_family:
+            ip_family = 'ipv4'
+        elif 'ipv6' in opts.ip_family:
+            ip_family = 'ipv6'
+        ip_only = True if 'only' in opts.ip_family else False
 
-        # Setup IP-Family and Node to Node encryption
-        self.setup_ip_family_and_encryption(opts)
-
-        # Set the index storage mode
         if not opts.index_storage_mode and 'index' in services.split(','):
             opts.index_storage_mode = "default"
 
@@ -821,25 +813,26 @@ class ClusterInit(Subcommand):
         if not self.enterprise:
             default = "forestdb"
 
+        indexer_storage = None
         if opts.index_storage_mode:
-            param = index_storage_mode_to_param(opts.index_storage_mode, default)
-            _, errors = self.rest.set_index_settings(param, None, None, None, None, None, None, None)
-            _exit_if_errors(errors)
+            indexer_storage = index_storage_mode_to_param(opts.index_storage_mode, default)
 
-        # Setup services
-        _, errors = self.rest.setup_services(services)
-        _exit_if_errors(errors)
-
-        # Enable notifications
-        if opts.notifications == "1":
-            _, errors = self.rest.enable_notifications(True)
-        else:
-            _, errors = self.rest.enable_notifications(False)
-        _exit_if_errors(errors)
-
-        # Setup Administrator credentials and Admin Console port
-        _, errors = self.rest.set_admin_credentials(opts.username, opts.password,
-                                                    opts.port)
+        _, errors = self.rest.cluster_init(
+            services=services,
+            username=opts.username,
+            password=opts.password,
+            port=opts.port,
+            cluster_name=opts.name,
+            data_ramsize=opts.data_mem_quota,
+            index_ramsize=opts.index_mem_quota,
+            fts_ramsize=opts.fts_mem_quota,
+            cbas_ramsize=opts.cbas_mem_quota,
+            eventing_ramsize=opts.eventing_mem_quota,
+            ipfamily=ip_family,
+            ipfamilyonly=ip_only,
+            encryption=opts.encryption,
+            indexer_storage_mode=indexer_storage,
+            send_stats=opts.notifications == "1")
         _exit_if_errors(errors)
 
         _success("Cluster initialized")

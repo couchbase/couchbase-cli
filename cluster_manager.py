@@ -415,17 +415,6 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def setup_services(self, services):
-        """ Sets the services on a node
-
-        Options:
-        services - A string containing a comma separated list of services
-        """
-        url = f'{self.hostname}/node/controller/setupServices'
-        params = {"services": services}
-
-        return self._post_form_encoded(url, params)
-
     def set_admin_credentials(self, username, password, port):
         """Sets the admin credentials and port for a cluster
 
@@ -974,6 +963,64 @@ class ClusterManager(object):
 
         if java_home is not None:
             params["javaHome"] = java_home
+
+        return self._post_form_encoded(url, params)
+
+    def cluster_init(self, services=None, username=None, password=None, port=None,
+                     cluster_name=None, data_ramsize=None, index_ramsize=None,
+                     fts_ramsize=None, cbas_ramsize=None, eventing_ramsize=None,
+                     ipfamily=None, ipfamilyonly=None, encryption=None,
+                     indexer_storage_mode=None,
+                     send_stats=None):
+        url = f'{self.hostname}/clusterInit'
+        params = dict()
+
+        if services is not None:
+            params["services"] = services
+
+        if username is not None:
+            params["username"] = username
+
+        if password is not None:
+            params["password"] = password
+
+        if port is not None:
+            params["port"] = port
+        else:
+            params["port"] = "SAME"
+
+        if cluster_name is not None:
+            params["clusterName"] = cluster_name
+
+        if data_ramsize is not None:
+            params["memoryQuota"] = data_ramsize
+
+        if index_ramsize is not None:
+            params["indexMemoryQuota"] = index_ramsize
+
+        if fts_ramsize is not None:
+            params["ftsMemoryQuota"] = fts_ramsize
+
+        if cbas_ramsize is not None:
+            params["cbasMemoryQuota"] = cbas_ramsize
+
+        if eventing_ramsize is not None:
+            params["eventingMemoryQuota"] = eventing_ramsize
+
+        if ipfamily is not None:
+            params["afamily"] = ipfamily
+
+        if ipfamilyonly is not None:
+            params["afamilyOnly"] = "true" if ipfamilyonly else "false"
+
+        if encryption is not None:
+            params["nodeEncryption"] = encryption
+
+        if indexer_storage_mode is not None:
+            params["indexerStorageMode"] = indexer_storage_mode
+
+        if send_stats is not None:
+            params["sendStats"] = "true" if send_stats else "false"
 
         return self._post_form_encoded(url, params)
 
