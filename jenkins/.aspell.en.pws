@@ -10,6 +10,8 @@ autofailover
 autoreprovision
 AzureBlob
 azureblob
+AzureDataLake
+azuredatalake
 backend
 backoff
 bashrc

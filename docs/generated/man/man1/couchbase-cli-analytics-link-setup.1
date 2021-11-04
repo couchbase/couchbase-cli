@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-analytics-link-setup
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.16
-.\"      Date: 2021-10-26
+.\"      Date: 2021-11-01
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2021-10-26" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-ANALYTICS\-LINK\-SETUP" "1" "2021-11-01" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -40,9 +40,10 @@ couchbase-cli-analytics-link-setup \- Manage Analytics links
     [\-\-user\-certificate <path>] [\-\-user\-key <path>] [\-\-user\-key\-passphrase <path>]
     [\-\-certificate <path>] [\-\-encryption <type>] [\-\-access\-key\-id <id>]
     [\-\-secret\-access\-key <key>] [\-\-session\-token <token>] [\-\-region <region>]
-    [\-\-service\-endpoint <url>] [\-\-connection\-string <key>] [\-\-account\-name <id>]
-    [\-\-account\-key <key>] [\-\-shared\-access\-signature <token>] [\-\-blob\-endpoint <url>]
-    [\-\-endpoint\-suffix <url>]
+    [\-\-service\-endpoint <url>] [\-\-account\-name <id>] [\-\-account\-key <key>]
+    [\-\-shared\-access\-signature <token>] [\-\-managed\-identity\-id <id>] [\-\-client\-id <id>]
+    [\-\-tenant\-id <id>] [\-\-client\-secret <key>] [\-\-client\-certificate <key>]
+    [\-\-client\-certificate\-password <key>] [\-\-endpoint <url>]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -329,6 +330,68 @@ The tenant id of the link. This property is provided together with the \-\-clien
 .RS 4
 The endpoint of the link (required).
 .RE
+.SS "Azure Data Lake Link Options (Developer Preview)"
+.sp
+Note: Azure Data Lake links are available only in \fBDeveloper Preview\fP mode.
+.sp
+Following are the options specific to \fB\-\-type azuredatalake\fP, i.e. Azure Data Lake links. Only a single authentication
+method is allowed to be provided at the same time. If anonymous authentication (no authentication) is desired,
+then none of the authentication parameters should be provided.
+.sp
+\-\-account\-name <id>
+.RS 4
+The account name of the link. This property needs to be provided together with the \-\-account\-key.
+.RE
+.sp
+\-\-account\-key <key>
+.RS 4
+The account key of the link. This property needs to be provided together with the \-\-account\-name.
+.RE
+.sp
+\-\-shared\-access\-signature <token>
+.RS 4
+The shared access signature of the link.
+.RE
+.sp
+\-\-managed\-identity\-id <id>
+.RS 4
+The managed identity id of the link.
+.RE
+.sp
+\-\-client\-id <id>
+.RS 4
+The client id of the link. This property needs to be provided together with the \-\-tenant\-id and either
+the \-\-client\-secret or \-\-client\-certificate.
+.RE
+.sp
+\-\-client\-secret <key>
+.RS 4
+The client secret of the link. This property needs to be provided together with the \-\-client\-id and
+the \-\-tenant\-id.
+.RE
+.sp
+\-\-client\-certificate <key>
+.RS 4
+The client certificate of the link. This property needs to be provided together with the \-\-client\-id and
+the \-\-tenant\-id. If the client certificate is password protected, then the \-\-client\-certificate\-password
+property needs to be provided as well.
+.RE
+.sp
+\-\-client\-certificate\-password <key>
+.RS 4
+The client certificate password of the link. This property is provided if the provided \-\-client\-certificate
+is password protected.
+.RE
+.sp
+\-\-tenant\-id <id>
+.RS 4
+The tenant id of the link. This property is provided together with the \-\-client\-id.
+.RE
+.sp
+\-\-endpoint <url>
+.RS 4
+The endpoint of the link (required).
+.RE
 .SH "HOST FORMATS"
 .sp
 When specifying a host for the couchbase\-cli command the following formats are expected:
@@ -543,6 +606,73 @@ azureblob \-\-client\-id myClientId \-\-client\-certificate myClientCertificate 
 .fi
 .if n .RE
 .sp
+To create an Azure Data Lake link named \f(CRmyAzureDataLakeLink\fP in the "`remote.links`.azure"
+scope, using \fB"account name and account key"\fP for authentication, run the
+following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureDataLakeLink \-\-type \(rs
+ azuredatalake \-\-account\-name myAccountName \-\-account\-key myAccountKey \-\-endpoint myendpoint.com
+.fam
+.fi
+.if n .RE
+.sp
+To create an Azure Data Lake link named \f(CRmyAzureDataLakeLink\fP in the "`remote.links`.azure"
+scope, using \fB"shared access signature"\fP for authentication,
+run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureDataLakeLink \-\-type \(rs
+ azuredatalake \-\-shared\-access\-signature mySharedAccessSignature \-\-endpoint myendpoint.com
+.fam
+.fi
+.if n .RE
+.sp
+to create an Azure Data Lake link named \f(CRmyAzureDataLakeLink\fP in the "`remote.links`.azure"
+scope, using \fB"managed identity id"\fP for authentication, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+ \-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureDataLakeLink \-\-type \(rs
+ azuredatalake \-\-managed\-identity\-id myManagedIdentityId \-\-endpoint myendpoint.com
+.fam
+.fi
+.if n .RE
+.sp
+to create an Azure Data Lake link named \f(CRmyAzureDataLakeLink\fP in the "`remote.links`.azure"
+scope, using \fB"client id and client secret"\fP for authentication, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+\-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureDataLakeLink \-\-type \(rs
+azuredatalake \-\-client\-id myClientId \-\-client\-secret myClientSecret \-\-endpoint myendpoint.com
+.fam
+.fi
+.if n .RE
+.sp
+to create an Azure Data Lake link named \f(CRmyAzureDataLakeLink\fP in the "`remote.links`.azure"
+scope, using \fB"client id and client certificate"\fP for authentication, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+\-p password \-\-create \-\-scope remote.links/azure \-\-name myAzureDataLakeLink \-\-type \(rs
+azuredatalake \-\-client\-id myClientId \-\-client\-certificate myClientCertificate \-\-endpoint myendpoint.com
+.fam
+.fi
+.if n .RE
+.sp
 To list all current links, run the following command:
 .sp
 .if n .RS 4
@@ -572,6 +702,17 @@ To list current AzureBlob links, run the following command:
 .fam C
 $ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
  \-p password \-\-list \-\-type azureblob
+.fam
+.fi
+.if n .RE
+.sp
+To list current Azure Data Lake links, run the following command:
+.sp
+.if n .RS 4
+.nf
+.fam C
+$ couchbase\-cli analytics\-link\-setup \-c 192.168.1.5 \-u Administrator \(rs
+\-p password \-\-list \-\-type azuredatalake
 .fam
 .fi
 .if n .RE

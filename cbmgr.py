@@ -4267,8 +4267,9 @@ class AnalyticsLinkSetup(Subcommand):
                            help="The analytics scope of the link in its canonical form")
         group.add_argument("--name", dest="name", metavar="<name>",
                            help="The name of the link")
-        group.add_argument("--type", dest="type", metavar="<type>", choices=["couchbase", "s3", "azureblob"],
-                           help="The type of the link ('couchbase', 's3' or 'azureblob')")
+        group.add_argument("--type", dest="type", metavar="<type>", choices=["couchbase", "s3", "azureblob",
+                                                                             "azuredatalake"],
+                           help="The type of the link ('couchbase', 's3', 'azureblob' or 'azuredatalake')")
 
         group = self.parser.add_argument_group("Analytics Service Couchbase link setup options")
         group.add_argument("--hostname", dest="hostname", metavar="<hostname>",
@@ -4301,7 +4302,7 @@ class AnalyticsLinkSetup(Subcommand):
         group.add_argument("--service-endpoint", dest="service_endpoint", metavar="<url>",
                            help="The service endpoint of the link (optional)")
 
-        group = self.parser.add_argument_group("Analytics Service Azure Blob link setup options")
+        group = self.parser.add_argument_group("Analytics Service Azure Blob and Azure Data Lake link setup options")
         group.add_argument("--account-name", dest="account_name", metavar="<id>",
                            help="The account name of the link")
         group.add_argument("--account-key", dest="account_key", metavar="<key>",
@@ -4353,7 +4354,7 @@ class AnalyticsLinkSetup(Subcommand):
         if opts.create and opts.type is None:
             _exit_if_errors([f'--type is required to {cmd} a link'])
 
-        if opts.type == 'azureblob':
+        if opts.type == 'azureblob' or opts.type == 'azuredatalake':
             self._verify_azure_options(opts)
 
         if opts.dataverse:
@@ -4399,92 +4400,82 @@ class AnalyticsLinkSetup(Subcommand):
     def _verify_azure_options(opts):
         # --endpoint is required
         if opts.endpoint is None:
-            _exit_if_errors(['Required parameter --endpoint not supplied'])
+            return ['Required parameter --endpoint not supplied']
 
         # --account-name and --account-key need to be provided together
         if opts.account_name and opts.account_key is None:
-            _exit_if_errors(['Parameter --account-key is required if --account-name is provided'])
+            return ['Parameter --account-key is required if --account-name is provided']
         if opts.account_name is None and opts.account_key:
-            _exit_if_errors(['Parameter --account-name is required if --account-key is provided'])
+            return ['Parameter --account-name is required if --account-key is provided']
 
         # No other authentication method is allowed with --account-name and --account-key
         if opts.account_name and opts.account_key:
             if opts.shared_access_signature:
-                _exit_if_errors(['Parameter --shared--access-signature is not allowed if --account-key is '
-                                 'provided'])
+                return ['Parameter --shared--access-signature is not allowed if --account-key is provided']
             if opts.managed_identity_id:
-                _exit_if_errors(['Parameter --managed-identity-id is not allowed if --account-key is provided'])
+                return ['Parameter --managed-identity-id is not allowed if --account-key is provided']
             if opts.client_id:
-                _exit_if_errors(['Parameter --client-id is not allowed if --account-key is provided'])
+                return ['Parameter --client-id is not allowed if --account-key is provided']
             if opts.client_secret:
-                _exit_if_errors(['Parameter --client-secret is not allowed if --account-key is provided'])
+                return ['Parameter --client-secret is not allowed if --account-key is provided']
             if opts.client_certificate:
-                _exit_if_errors(['Parameter --client-certificate is not allowed if --account-key is provided'])
+                return ['Parameter --client-certificate is not allowed if --account-key is provided']
             if opts.client_certificate_password:
-                _exit_if_errors(['Parameter --client-certificate-password is not allowed if --account-key is '
-                                 'provided'])
+                return ['Parameter --client-certificate-password is not allowed if --account-key is provided']
             if opts.tenant_id:
-                _exit_if_errors(['Parameter --tenant-id is not allowed if --account-key is provided'])
+                return ['Parameter --tenant-id is not allowed if --account-key is provided']
 
         # No other authentication method is allowed with --shared-access-signature
         if opts.shared_access_signature:
             if opts.managed_identity_id:
-                _exit_if_errors(['Parameter --managed-identity-id is not allowed if --shared-access-signature is '
-                                 'provided'])
+                return ['Parameter --managed-identity-id is not allowed if --shared-access-signature is provided']
             if opts.client_id:
-                _exit_if_errors(['Parameter --client-id is not allowed if --shared-access-signature is provided'])
+                return ['Parameter --client-id is not allowed if --shared-access-signature is provided']
             if opts.client_secret:
-                _exit_if_errors(['Parameter --client-secret is not allowed if --shared-access-signature '
-                                 'is provided'])
+                return ['Parameter --client-secret is not allowed if --shared-access-signature is provided']
             if opts.client_certificate:
-                _exit_if_errors(['Parameter --client-certificate is not allowed if --shared-access-signature is '
-                                 'provided'])
+                return ['Parameter --client-certificate is not allowed if --shared-access-signature is provided']
             if opts.client_certificate_password:
-                _exit_if_errors(['Parameter --client-certificate-password is not allowed if '
-                                 '--shared-access-signature is provided'])
+                return ['Parameter --client-certificate-password is not allowed if '
+                        '--shared-access-signature is provided']
             if opts.tenant_id:
-                _exit_if_errors(['Parameter --tenant-id is not allowed if --shared-access-signature is provided'])
+                return ['Parameter --tenant-id is not allowed if --shared-access-signature is provided']
 
         # No other authentication method is allowed with --managed-identity-id
         if opts.managed_identity_id:
             if opts.client_id:
-                _exit_if_errors(['Parameter --client-id is not allowed if --managed-identity-id is provided'])
+                return ['Parameter --client-id is not allowed if --managed-identity-id is provided']
             if opts.client_secret:
-                _exit_if_errors(['Parameter --client-secret is not allowed if --managed-identity-id is provided'])
+                return ['Parameter --client-secret is not allowed if --managed-identity-id is provided']
             if opts.client_certificate:
-                _exit_if_errors(['Parameter --client-certificate is not allowed if --managed-identity-id is '
-                                 'provided'])
+                return ['Parameter --client-certificate is not allowed if --managed-identity-id is provided']
             if opts.client_certificate_password:
-                _exit_if_errors(['Parameter --client-certificate-password is not allowed if --managed-identity-id '
-                                 'is provided'])
+                return ['Parameter --client-certificate-password is not allowed if --managed-identity-id is provided']
             if opts.tenant_id:
-                _exit_if_errors(['Parameter --tenant-id is not allowed if --managed-identity-id is provided'])
+                return ['Parameter --tenant-id is not allowed if --managed-identity-id is provided']
 
         # --client-secret, --client-certificate, --client-certificate-password and --tenant-id not allowed if
         # --client-id is not present
         if opts.client_id is None:
             if opts.client_secret:
-                _exit_if_errors(['Parameter --client-id is required if --client-secret is provided'])
+                return ['Parameter --client-id is required if --client-secret is provided']
             if opts.client_certificate:
-                _exit_if_errors(['Parameter --client-id is required if --client-certificate is provided'])
+                return ['Parameter --client-id is required if --client-certificate is provided']
             if opts.client_certificate_password:
-                _exit_if_errors(['Parameter --client-id is required if --client-certificate-password is provided'])
+                return ['Parameter --client-id is required if --client-certificate-password is provided']
             if opts.tenant_id:
-                _exit_if_errors(['Parameter --client-id is required if --tenant-id is provided'])
+                return ['Parameter --client-id is required if --tenant-id is provided']
 
         # --client-secret and --client-certificate are not allowed to be passed together
         if opts.client_id:
             if opts.tenant_id is None:
-                _exit_if_errors(['Required parameter --tenant-id not supplied'])
+                return ['Required parameter --tenant-id not supplied']
             if opts.client_secret is None and opts.client_certificate is None:
-                _exit_if_errors(['Parameter --client-secret or --client-certificate is required if --client-id '
-                                 'is provided'])
+                return ['Parameter --client-secret or --client-certificate is required if --client-id is provided']
             if opts.client_secret and opts.client_certificate:
-                _exit_if_errors(['The parameters --client-secret and --client-certificate cannot be provided at '
-                                 'the same time'])
+                return ['The parameters --client-secret and --client-certificate cannot be provided at the same time']
             if opts.client_secret and opts.client_certificate_password:
-                _exit_if_errors(['Parameter --client-certificate-password is not allowed if --client-secret is '
-                                 'provided'])
+                return ['Parameter --client-certificate-password is not allowed if --client-secret is provided']
 
     @staticmethod
     def get_man_page_name():

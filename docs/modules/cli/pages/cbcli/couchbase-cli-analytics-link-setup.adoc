@@ -20,9 +20,10 @@ _couchbase-cli analytics-link-setup_ [--cluster <cluster>] [--username <username
     [--user-certificate <path>] [--user-key <path>] [--user-key-passphrase <path>]
     [--certificate <path>] [--encryption <type>] [--access-key-id <id>]
     [--secret-access-key <key>] [--session-token <token>] [--region <region>]
-    [--service-endpoint <url>] [--connection-string <key>] [--account-name <id>]
-    [--account-key <key>] [--shared-access-signature <token>] [--blob-endpoint <url>]
-    [--endpoint-suffix <url>]
+    [--service-endpoint <url>] [--account-name <id>] [--account-key <key>]
+    [--shared-access-signature <token>] [--managed-identity-id <id>] [--client-id <id>]
+    [--tenant-id <id>] [--client-secret <key>] [--client-certificate <key>]
+    [--client-certificate-password <key>] [--endpoint <url>]
 
 == DESCRIPTION
 
@@ -191,6 +192,48 @@ then none of the authentication parameters should be provided.
 --endpoint <url>::
   The endpoint of the link (required).
 
+=== Azure Data Lake Link Options (Developer Preview)
+Note: Azure Data Lake links are available only in *Developer Preview* mode.
+
+Following are the options specific to *--type azuredatalake*, i.e. Azure Data Lake links. Only a single authentication
+method is allowed to be provided at the same time. If anonymous authentication (no authentication) is desired,
+then none of the authentication parameters should be provided.
+
+--account-name <id>::
+The account name of the link. This property needs to be provided together with the --account-key.
+
+--account-key <key>::
+The account key of the link. This property needs to be provided together with the --account-name.
+
+--shared-access-signature <token>::
+The shared access signature of the link.
+
+--managed-identity-id <id>::
+The managed identity id of the link.
+
+--client-id <id>::
+The client id of the link. This property needs to be provided together with the --tenant-id and either
+the --client-secret or --client-certificate.
+
+--client-secret <key>::
+The client secret of the link. This property needs to be provided together with the --client-id and
+the --tenant-id.
+
+--client-certificate <key>::
+The client certificate of the link. This property needs to be provided together with the --client-id and
+the --tenant-id. If the client certificate is password protected, then the --client-certificate-password
+property needs to be provided as well.
+
+--client-certificate-password <key>::
+The client certificate password of the link. This property is provided if the provided --client-certificate
+is password protected.
+
+--tenant-id <id>::
+The tenant id of the link. This property is provided together with the --client-id.
+
+--endpoint <url>::
+The endpoint of the link (required).
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
@@ -268,6 +311,43 @@ $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
 -p password --create --scope remote.links/azure --name myAzureBlobLink --type \
 azureblob --client-id myClientId --client-certificate myClientCertificate --endpoint myendpoint.com
 ----
+to create an Azure Data Lake link named `myAzureDataLakeLink` in the "`remote.links`.azure"
+scope, using *"account name and account key"* for authentication, run the
+following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope remote.links/azure --name myAzureDataLakeLink --type \
+ azuredatalake --account-name myAccountName --account-key myAccountKey --endpoint myendpoint.com
+----
+to create an Azure Data Lake link named `myAzureDataLakeLink` in the "`remote.links`.azure"
+scope, using *"shared access signature"* for authentication,
+run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope remote.links/azure --name myAzureDataLakeLink --type \
+ azuredatalake --shared-access-signature mySharedAccessSignature --endpoint myendpoint.com
+----
+to create an Azure Data Lake link named `myAzureDataLakeLink` in the "`remote.links`.azure"
+scope, using *"managed identity id"* for authentication, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --scope remote.links/azure --name myAzureDataLakeLink --type \
+ azuredatalake --managed-identity-id myManagedIdentityId --endpoint myendpoint.com
+----
+to create an Azure Data Lake link named `myAzureDataLakeLink` in the "`remote.links`.azure"
+scope, using *"client id and client secret"* for authentication, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+-p password --create --scope remote.links/azure --name myAzureDataLakeLink --type \
+azuredatalake --client-id myClientId --client-secret myClientSecret --endpoint myendpoint.com
+----
+to create an Azure Data Lake link named `myAzureDataLakeLink` in the "`remote.links`.azure"
+scope, using *"client id and client certificate"* for authentication, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+-p password --create --scope remote.links/azure --name myAzureDataLakeLink --type \
+azuredatalake --client-id myClientId --client-certificate myClientCertificate --endpoint myendpoint.com
+----
 To list all current links, run the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
@@ -282,6 +362,11 @@ To list current AzureBlob links, run the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --list --type azureblob
+----
+To list current Azure Data Lake links, run the following command:
+----
+$ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
+-p password --list --type azuredatalake
 ----
 If you need to edit a link named "east" and change the password, run the
 following command:
