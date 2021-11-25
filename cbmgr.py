@@ -1939,16 +1939,19 @@ class ServerEshell(Subcommand):
             temp.write(f'[{{preferred_local_proto,{result["addressFamily"]}_tcp_dist}}].'.encode())
             temp.flush()
             temp_name = temp.name
+            env = os.environ.copy()
+            env["CB_COOKIE"] = cookie
 
-            args = [path, '-name', name, '-setcookie', cookie, '-hidden', '-remsh', node, '-proto_dist', 'cb',
-                    '-epmd_module', 'cb_epmd', '-pa', CB_NS_EBIN_PATH, '-kernel', 'dist_config_file',
-                    f'"{temp_name}"'] + CB_INETRC_OPT
+            args = [path, '-name', name, '-setcookie', 'nocookie', '-hidden', '-eval',
+                    'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))).',
+                    '-remsh', node, '-proto_dist', 'cb', '-epmd_module', 'cb_epmd', '-pa', CB_NS_EBIN_PATH, '-kernel',
+                    'dist_config_file', f'"{temp_name}"'] + CB_INETRC_OPT
 
             if opts.debug:
                 print(f'Running {" ".join(args)}')
 
             try:
-                subprocess.call(args)
+                subprocess.call(args, env=env)
             except OSError:
                 _exit_if_errors(["Unable to find the erl executable"])
 
