@@ -3197,5 +3197,27 @@ class TestSettingQuery(CommandTest):
         self.rest_parameter_match(['queryUseCBO=false', 'queryTxTimeout=10ms', 'queryMemoryQuota=100'])
 
 
+class TestSettingAnalytics(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'setting-analytics'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        super().setUp()
+
+    def test_get_and_set(self):
+        self.system_exit_run(self.command + ['--get', '--set'], self.server_args)
+        self.assertIn('ERROR: Please provide --set or --get, both cannot be provided at the same time', self.str_output)
+
+    def test_get(self):
+        self.server_args['/settings/analytics'] = {'numReplicas': 3}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('GET:/settings/analytics', self.server.trace)
+        self.assertIn('numReplicas: 3', self.str_output)
+
+    def test_setting_replicas(self):
+        self.no_error_run(self.command + ['--set', '--replicas', '3'], self.server_args)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.rest_parameter_match(['numReplicas=3'])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -5278,6 +5278,51 @@ class SettingRebalance(Subcommand):
         return "Configure automatic rebalance settings"
 
 
+class SettingAnalytics(Subcommand):
+    """The setting-analytics subcommand"""
+
+    def __init__(self):
+        super().__init__()
+        self.parser.prog = 'couchbase-cli setting-analytics'
+        group = self.parser.add_argument_group('Analytics Service Settings')
+        group.add_argument('--get', action='store_true', help='Retrieve the current Analytics settings')
+        group.add_argument('--set', action='store_true', help='Set the Analytics settings')
+        group.add_argument('--replicas', action='store', type=int, choices=[0, 1, 2, 3],
+                           help='Sets the number of replicas')
+
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
+    def execute(self, opts):
+        if sum([opts.get, opts.set]) != 1:
+            _exit_if_errors(['Please provide --set or --get, both cannot be provided at the same time'])
+
+        if opts.get:
+            settings, err = self.rest.get_analytics_settings()
+            _exit_if_errors(err)
+            if opts.output == 'json':
+                print(json.dumps(settings))
+                return
+            for k, v in settings.items():
+                print(f'{k}: {v}')
+            return
+
+        if opts.replicas is None:
+            _exit_if_errors(['Please provide at least one other option with --set'])
+
+        _, err = self.rest.set_analytics_settings(opts.replicas)
+        _exit_if_errors(err)
+        if opts.replicas:
+            print('A rebalance is required for the replica change to take affect')
+        _success('Analytics settings updated')
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-setting-analytics")
+
+    @staticmethod
+    def get_description():
+        return "Modify Analytics settings"
+
+
 class BackupService(Subcommand):
     """BackupService class is a subcommand that will contain other commands to configure the service as well as manage
     it. This approach attempts to make the interface more intuitive by keeping a hierarchical structure where the

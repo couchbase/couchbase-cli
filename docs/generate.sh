@@ -73,6 +73,7 @@ gen_docs couchbase-cli-server-eshell.adoc 1
 gen_docs couchbase-cli-server-info.adoc 1
 gen_docs couchbase-cli-server-list.adoc 1
 gen_docs couchbase-cli-server-readd.adoc 1
+gen_docs couchbase-cli-setting-analytics.adoc 1
 gen_docs couchbase-cli-setting-alert.adoc 1
 gen_docs couchbase-cli-setting-audit.adoc 1
 gen_docs couchbase-cli-setting-autofailover.adoc 1

@@ -1,0 +1,62 @@
+= couchbase-cli-setting-analytics(1)
+:description: Manage Analytics service settings
+ifndef::doctype-manpage[:doctitle: setting-analytics]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-setting-analytics -
+endif::[]
+Manage Analytics service settings
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli setting-analytics [--cluster <url>] [--username <user>] [--password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--get] [--set] [--replicas <num>]
+
+== DESCRIPTION
+
+Manage Analytics service settings
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--get::
+  Retrieve current Analytics service settings.
+
+--set::
+  Set Analytics settings.
+
+--replicas <0,1,2,3>::
+  Number of copies of the data the Analytics service will create. This increases the high
+  availability of the service, allowing more nodes to be offline. Changing this setting will
+  require a rebalance.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To retrieve the Analytics service settings:
+
+  $ couchbase-cli setting-analytics -c 127.0.01:8091 -u Administrator \
+   -p password --get
+
+To set the number of replicas to 3:
+
+  $ couchbase-cli setting-analytics -c 127.0.01:8091 -u Administrator \
+   -p password --set --replicas 3
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

@@ -2305,6 +2305,23 @@ class ClusterManager(object):
 
         return min_version, None
 
+    def get_analytics_settings(self):
+        """Gets the Analytics Service Settings """
+        url = f'{self.hostname}/settings/analytics'
+        return self._get(url)
+
+    def set_analytics_settings(self, replicas=None):
+        """ Set the Analytics Settings
+        Args:
+            replicas (int): The number of replicas.
+        """
+        url = f'{self.hostname}/settings/analytics'
+        params = {
+            'numReplicas': replicas
+        }
+        params = dict(filter(lambda x: x[1], params.items()))
+        return self._post_form_encoded(url, params)
+
     # Low level methods for basic HTML operations
 
     @classmethod
