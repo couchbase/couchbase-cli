@@ -433,6 +433,12 @@ def get_audit_settings(rest_params=None, server_args=None, path="", endpoint_mat
     return 200, {}
 
 
+def do_eventing_setup_subcommand(rest_params=None, server_args=None, path="", endpoint_match=None):
+    if 'override_eventing_setup_status' in server_args and 'override_eventing_setup_payload' in server_args:
+        return server_args['override_eventing_setup_status'], server_args['override_eventing_setup_payload']
+    return 200, {}
+
+
 endpoints = [
     (r'/close$', {'GET': do_nothing}),
     (r'/whoami', {'GET': get_my_roles}),
@@ -524,6 +530,7 @@ endpoints = [
 
     # eventing api
     (r'/api/v1/functions/(.*)/settings', {'POST': do_nothing}),
+    (r'/api/v1/functions/\w+/pause$', {'POST': do_eventing_setup_subcommand}),
 
     # backup server API
     (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing}),

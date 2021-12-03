@@ -2425,8 +2425,15 @@ class ClusterManager(object):
         elif response.status_code == 401:
             return None, [ERR_AUTH]
         elif response.status_code == 403:
-            errors = response.json()
-            return None, [errors["message"] + ": " + ", ".join(errors["permissions"])]
+            if 'Content-Type' not in response.headers:
+                return None, ["Not a Couchbase Server, please check hostname and port"]
+            if 'application/json' in response.headers['Content-Type']:
+                errors = response.json()
+                if 'message' in errors and 'permissions' in errors:
+                    return None, [errors['message'] + ": " + ", ".join(errors["permissions"])]
+                elif 'runtime_info' in errors and 'info' in errors['runtime_info']:
+                    return None, [errors['runtime_info']['info']]
+            return None, [f"Unexpected response for error 403: {response.text}"]
         # Error codes from Eventing service
         elif response.status_code in [406, 422, 423]:
             errors = response.json()

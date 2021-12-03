@@ -1963,6 +1963,42 @@ class TestEventingFunctionSetup(CommandTest):
         self.assertIn("--boundary is needed to deploy a function", self.str_output)
 
 
+class TestEventingFunctionSetupSubcommandErrors(CommandTest):
+    def setUp(self):
+        self.command = ["couchbase-cli", "eventing-function-setup"] + cluster_connect_args
+        self.server_args = {"enterprise": True, "init": True, "is_admin": True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'eventingAdminPort': port,
+                                }
+                            }]}}
+        super().setUp()
+
+    def test_handling_of_expected_error_payload_type_1(self):
+        self.command_args = ['--pause', '--name', 'test_func']
+        self.server_args['override_eventing_setup_status'] = 403
+        self.server_args['override_eventing_setup_payload'] = {"message": "Expected payload type 1",
+                                                               "permissions": ["Insufficient permission example"]}
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("ERROR: Expected payload type 1: Insufficient permission example\n", self.str_output)
+
+    def test_handling_of_expected_error_payload_type_2(self):
+        self.command_args = ['--pause', '--name', 'test_func']
+        self.server_args['override_eventing_setup_status'] = 403
+        self.server_args['override_eventing_setup_payload'] = {"runtime_info": {
+            "info": "Expected payload type 2: Insufficient permission example"}}
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("ERROR: Expected payload type 2: Insufficient permission example\n", self.str_output)
+
+    def test_handling_of_unexpected_error_payload(self):
+        self.command_args = ['--pause', '--name', 'test_func']
+        self.server_args['override_eventing_setup_status'] = 403
+        self.server_args['override_eventing_setup_payload'] = "Unexpected response"
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("Unexpected response", self.str_output)
+
+
 class TestUserChangePassword(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'user-change-password', '--new-password', 'pwd'] + cluster_connect_args
