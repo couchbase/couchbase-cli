@@ -18,6 +18,9 @@ _couchbase-cli setting-saslauthd_ [--cluster <url>] [--username <user>]
 
 == DESCRIPTION
 
+This command is only available for clusters running Enterprise Edition on
+GNU/Linux.
+
 This command allows users to enable SASL on their cluster as well as add
 administrator and read-only administrator SASL users to their cluster.
 
