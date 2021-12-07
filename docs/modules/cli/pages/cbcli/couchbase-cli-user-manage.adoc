@@ -140,7 +140,7 @@ ro_admin::
   the ability to create or view documents), XDCR cluster references, XDCR
   replications, and cluster settings.
 
-view_admin[...]::
+views_admin[...]::
   Gives the user privileges to define views and then run these views on data
   to ensure that views are defined properly. This applies both to the
   map-reduce and spatial views. To give a user the ability to manage views on
@@ -292,7 +292,7 @@ views for all bucket run the following command
 ----
 $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
  -p password --set --rbac-username jdoe --rbac-name "John Doe" \
- --roles view_admin[*] --auth-domain external
+ --roles views_admin[*] --auth-domain external
 ----
 To list the current RBAC user profiles run the following command.
 ----
