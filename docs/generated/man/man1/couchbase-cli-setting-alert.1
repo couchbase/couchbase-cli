@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-setting-alert
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.16
-.\"      Date: 2021-10-22
+.\"      Date: 2021-12-07
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-ALERT" "1" "2021-10-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-ALERT" "1" "2021-12-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -43,7 +43,7 @@ couchbase-cli-setting-alert \- Modifies alert settings
     [\-\-alert\-auto\-failover\-disable] [\-\-alert\-ip\-changed] [\-\-alert\-disk\-space]
     [\-\-alert\-meta\-overhead] [\-\-alert\-meta\-oom] [\-\-alert\-write\-failed]
     [\-\-alert\-audit\-msg\-dropped] [\-\-alert\-indexer\-max\-ram]
-    [\-\-alert\-timestamp\-drift\-exceeded]
+    [\-\-alert\-timestamp\-drift\-exceeded] [\-\-alert\-node\-time] [\-\-alert\-disk\-analyzer]
 .fi
 .br
 .SH "DESCRIPTION"
@@ -234,14 +234,26 @@ Indexes (MOI).
 .sp
 \-\-alert\-timestamp\-drift\-exceeded
 .RS 4
-Specifies that an email alert should be sent if the clocks on two different
-machines in the cluster are more that five seconds apart.
+Specifies that an email alert should be sent if the remote mutation timestamps
+exceeds drift threshold. Default is 5 seconds.
 .RE
 .sp
 \-\-alert\-communication\-issue
 .RS 4
 Specifies that an email alert should be sent when nodes are experiencing
 communication issues.
+.RE
+.sp
+\-\-alert\-node\-time
+.RS 4
+Specifies that an email alert should be sent if the clock on a node is out of
+sync with other nodes in the cluster.
+.RE
+.sp
+\-\-alert\-disk\-analyzer
+.RS 4
+Specifies that an email alert should be sent if the disk analyzer process
+gets stuck and cannot fetch disk usage data.
 .RE
 .SH "HOST FORMATS"
 .sp
@@ -365,6 +377,7 @@ $ couchbase\-cli setting\-alert \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-alert\-ip\-changed \-\-alert\-disk\-space \-\-alert\-meta\-overhead \(rs
  \-\-alert\-meta\-oom \-\-alert\-write\-failed \-\-alert\-audit\-msg\-dropped \(rs
  \-\-alert\-indexer\-max\-ram \-\-alert\-timestamp\-drift\-exceeded \(rs
+ \-\-alert\-node\-time \-\-alert\-disk\-analyzer
 .fam
 .fi
 .if n .RE

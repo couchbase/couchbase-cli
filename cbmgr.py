@@ -2244,11 +2244,15 @@ class SettingAlert(Subcommand):
                            action="store_true", help="Alert when writing event to audit log failed")
         group.add_argument("--alert-indexer-max-ram", dest="alert_indexer_max_ram",
                            action="store_true", help="Alert when indexer is using all of its allocated memory")
-        group.add_argument("--alert-timestamp-drift-exceeded", dest="alert_cas_drift",
-                           action="store_true", help="Alert when clocks on two servers are more than five seconds"
-                           + "apart")
+        group.add_argument("--alert-timestamp-drift-exceeded", dest="alert_cas_drift", action="store_true",
+                           help="Alert when should be sent if the remote mutation timestamps exceeds drift threshold")
         group.add_argument("--alert-communication-issue", dest="alert_communication_issue",
                            action="store_true", help="Alert when nodes are experiencing communication issues")
+        group.add_argument("--alert-node-time", dest="alert_node_time", action="store_true",
+                           help="Alert when time on one node is out of sync with time on another "
+                                                     "node")
+        group.add_argument("--alert-disk-analyzer", dest="alert_disk_analyzer", action="store_true",
+                           help="Alert when the disk analyzer gets stuck")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -2291,6 +2295,10 @@ class SettingAlert(Subcommand):
             alerts.append('ep_clock_cas_drift_threshold_exceeded')
         if opts.alert_communication_issue:
             alerts.append('communication_issue')
+        if opts.alert_node_time:
+            alerts.append('time_out_of_sync')
+        if opts.alert_disk_analyzer:
+            alerts.append('disk_usage_analyzer_stuck')
 
         enabled = "true"
         if opts.enabled == "0":

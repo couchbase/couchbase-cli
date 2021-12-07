@@ -23,7 +23,7 @@ _couchbase-cli setting-alert_ [--cluster <url>] [--username <user>] [--password 
     [--alert-auto-failover-disable] [--alert-ip-changed] [--alert-disk-space]
     [--alert-meta-overhead] [--alert-meta-oom] [--alert-write-failed]
     [--alert-audit-msg-dropped] [--alert-indexer-max-ram]
-    [--alert-timestamp-drift-exceeded]
+    [--alert-timestamp-drift-exceeded] [--alert-node-time] [--alert-disk-analyzer]
 
 == DESCRIPTION
 
@@ -122,12 +122,20 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Indexes (MOI).
 
 --alert-timestamp-drift-exceeded::
-  Specifies that an email alert should be sent if the clocks on two different
-  machines in the cluster are more that five seconds apart.
+  Specifies that an email alert should be sent if the remote mutation timestamps
+  exceeds drift threshold. Default is 5 seconds.
 
 --alert-communication-issue::
   Specifies that an email alert should be sent when nodes are experiencing
   communication issues.
+
+--alert-node-time::
+  Specifies that an email alert should be sent if the clock on a node is out of
+  sync with other nodes in the cluster.
+
+--alert-disk-analyzer::
+  Specifies that an email alert should be sent if the disk analyzer process
+  gets stuck and cannot fetch disk usage data.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
@@ -159,6 +167,7 @@ following command below:
    --alert-ip-changed --alert-disk-space --alert-meta-overhead \
    --alert-meta-oom --alert-write-failed --alert-audit-msg-dropped \
    --alert-indexer-max-ram --alert-timestamp-drift-exceeded \
+   --alert-node-time --alert-disk-analyzer
 
 To disable email alerts run the following command:
 

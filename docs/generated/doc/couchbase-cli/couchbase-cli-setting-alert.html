@@ -463,7 +463,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
     [--alert-auto-failover-disable] [--alert-ip-changed] [--alert-disk-space]
     [--alert-meta-overhead] [--alert-meta-oom] [--alert-write-failed]
     [--alert-audit-msg-dropped] [--alert-indexer-max-ram]
-    [--alert-timestamp-drift-exceeded]</pre>
+    [--alert-timestamp-drift-exceeded] [--alert-node-time] [--alert-disk-analyzer]</pre>
 </div>
 </div>
 </div>
@@ -639,13 +639,23 @@ Indexes (MOI).</p>
 </dd>
 <dt class="hdlist1">--alert-timestamp-drift-exceeded</dt>
 <dd>
-<p>Specifies that an email alert should be sent if the clocks on two different
-machines in the cluster are more that five seconds apart.</p>
+<p>Specifies that an email alert should be sent if the remote mutation timestamps
+exceeds drift threshold. Default is 5 seconds.</p>
 </dd>
 <dt class="hdlist1">--alert-communication-issue</dt>
 <dd>
 <p>Specifies that an email alert should be sent when nodes are experiencing
 communication issues.</p>
+</dd>
+<dt class="hdlist1">--alert-node-time</dt>
+<dd>
+<p>Specifies that an email alert should be sent if the clock on a node is out of
+sync with other nodes in the cluster.</p>
+</dd>
+<dt class="hdlist1">--alert-disk-analyzer</dt>
+<dd>
+<p>Specifies that an email alert should be sent if the disk analyzer process
+gets stuck and cannot fetch disk usage data.</p>
 </dd>
 </dl>
 </div>
@@ -778,7 +788,8 @@ following command below:</p>
  --alert-auto-failover-cluster-small --alert-auto-failover-disable \
  --alert-ip-changed --alert-disk-space --alert-meta-overhead \
  --alert-meta-oom --alert-write-failed --alert-audit-msg-dropped \
- --alert-indexer-max-ram --alert-timestamp-drift-exceeded \</pre>
+ --alert-indexer-max-ram --alert-timestamp-drift-exceeded \
+ --alert-node-time --alert-disk-analyzer</pre>
 </div>
 </div>
 <div class="paragraph">

@@ -995,7 +995,7 @@ class TestSettingAlert(CommandTest):
                             '--alert-auto-failover-disable', '--alert-ip-changed', '--alert-disk-space',
                             '--alert-meta-overhead', '--alert-meta-oom', '--alert-write-failed',
                             '--alert-audit-msg-dropped', '--alert-indexer-max-ram', '--alert-timestamp-drift-exceeded',
-                            '--alert-communication-issue']
+                            '--alert-communication-issue', '--alert-node-time', '--alert-disk-analyzer']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestSettingAlert, self).setUp()
 
@@ -1004,8 +1004,8 @@ class TestSettingAlert(CommandTest):
         expected_params = ['alerts=auto_failover_node%2Cauto_failover_maximum_reached%2Cauto_failover_other' +
                            '_nodes_down%2Cauto_failover_cluster_too_small%2Cauto_failover_disabled%2Cip%2Cdisk%2' +
                            'Coverhead%2Cep_oom_errors%2Cep_item_commit_failed%2Caudit_dropped_events%2Cindexer_ram_' +
-                           'max_usage%2Cep_clock_cas_drift_threshold_exceeded%2Ccommunication_issue', 'enabled=false',
-                           'emailEncrypt=false']
+                           'max_usage%2Cep_clock_cas_drift_threshold_exceeded%2Ccommunication_issue' +
+                           '%2Ctime_out_of_sync%2Cdisk_usage_analyzer_stuck', 'enabled=false', 'emailEncrypt=false']
 
         self.assertIn('POST:/settings/alerts', self.server.trace)
         self.rest_parameter_match(expected_params)
@@ -1015,7 +1015,8 @@ class TestSettingAlert(CommandTest):
         expected_params = ['alerts=auto_failover_node%2Cauto_failover_maximum_reached%2Cauto_failover_other' +
                            '_nodes_down%2Cauto_failover_cluster_too_small%2Cauto_failover_disabled%2Cip%2Cdisk%2' +
                            'Coverhead%2Cep_oom_errors%2Cep_item_commit_failed%2Caudit_dropped_events%2Cindexer_ram_' +
-                           'max_usage%2Cep_clock_cas_drift_threshold_exceeded%2Ccommunication_issue', 'enabled=true',
+                           'max_usage%2Cep_clock_cas_drift_threshold_exceeded%2Ccommunication_issue' +
+                           '%2Ctime_out_of_sync%2Cdisk_usage_analyzer_stuck', 'enabled=true',
                            'emailEncrypt=true', 'sender=email2', 'recipients=email1', 'emailUser=emailuser',
                            'emailPass=emailpwd', 'emailHost=emailhost', 'emailPort=3000']
 
