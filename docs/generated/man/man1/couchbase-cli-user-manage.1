@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-user-manage
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-10-22
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-USER\-MANAGE" "1" "2021-10-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,9 +28,8 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-user\-manage \- Manage RBAC users
+couchbase-cli-user-manage \- Manage RBAC users
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 \fIcouchbase\-cli user\-manage\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -641,10 +640,12 @@ XDCR replication run the following command
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u Administrator \(rs
  \-p password \-\-set \-\-rbac\-username jdoe \-\-rbac\-password cbpass \(rs
  \-\-rbac\-name "John Doe" \-\-roles bucket_admin[default],replication_admin \(rs
  \-\-auth\-domain local
+.fam
 .fi
 .if n .RE
 .sp
@@ -654,9 +655,11 @@ views for all bucket run the following command
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u Administrator \(rs
  \-p password \-\-set \-\-rbac\-username jdoe \-\-rbac\-name "John Doe" \(rs
- \-\-roles view_admin[*] \-\-auth\-domain external
+ \-\-roles views_admin[*] \-\-auth\-domain external
+.fam
 .fi
 .if n .RE
 .sp
@@ -664,8 +667,10 @@ To list the current RBAC user profiles run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u Administrator \(rs
  \-p password \-\-list
+.fam
 .fi
 .if n .RE
 .sp
@@ -673,8 +678,10 @@ To delete an external user named \f(CRjdoe\fP run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u Administrator \(rs
  \-p password \-\-delete \-\-rbac\-username jdoe \-\-auth\-domain external
+.fam
 .fi
 .if n .RE
 .sp
@@ -682,8 +689,10 @@ To delete a local user named \f(CRjdoe\fP run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u Administrator \(rs
  \-p password \-\-delete \-\-rbac\-username jdoe \-\-auth\-domain local
+.fam
 .fi
 .if n .RE
 .sp
@@ -692,8 +701,10 @@ run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u jdoe \-p cbpass \(rs
  \-\-my\-roles
+.fam
 .fi
 .if n .RE
 .sp
@@ -702,9 +713,11 @@ LDAP group reference \f(CRadmins\fP run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u Administrator \(rs
  \-p password \-\-set\-group \-\-group\-name admins \-\-roles admin \(rs
  \-\-group\-description "CB admins" \-\-ldap\-ref admins
+.fam
 .fi
 .if n .RE
 .sp
@@ -712,8 +725,10 @@ To delete a user group \f(CRadmins\fP you have to run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u Administrator \(rs
   \-p password \-\-delete\-group \-\-group\-name admins
+.fam
 .fi
 .if n .RE
 .sp
@@ -722,8 +737,10 @@ will show the associated roles.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u Administrator \(rs
   \-p password \-\-get\-group \-\-group\-name admins
+.fam
 .fi
 .if n .RE
 .sp
@@ -733,9 +750,11 @@ an amended version of the roles.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli user\-manage \-c 127.0.0.1:8091 \-u Administrator \(rs
  \-p password \-\-set\-group \-\-group\-name admins \-\-roles admin \(rs
  \-\-group\-description "CB admins" \-\-ldap\-ref ro_admin
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

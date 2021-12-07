@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-setting-saslauthd
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-04-22
+.\" Generator: Asciidoctor 2.0.16
+.\"      Date: 2021-12-07
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SETTING\-SASLAUTHD" "1" "2021-04-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SETTING\-SASLAUTHD" "1" "2021-12-07" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,9 +28,8 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase\-cli\-setting\-saslauthd \- Modifies saslauthd settings
+couchbase-cli-setting-saslauthd \- Modifies saslauthd settings
 .SH "SYNOPSIS"
-.sp
 .sp
 .nf
 \fIcouchbase\-cli setting\-saslauthd\fP [\-\-cluster <url>] [\-\-username <user>]
@@ -40,6 +39,9 @@ couchbase\-cli\-setting\-saslauthd \- Modifies saslauthd settings
 .fi
 .br
 .SH "DESCRIPTION"
+.sp
+This command is only available for clusters running Enterprise Edition on
+GNU/Linux.
 .sp
 This command allows users to enable SASL on their cluster as well as add
 administrator and read\-only administrator SASL users to their cluster.
@@ -146,8 +148,10 @@ To enable SASL on a cluster run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-saslauthd \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-password password \-\-enabled 1
+.fam
 .fi
 .if n .RE
 .sp
@@ -156,9 +160,11 @@ Read\-Only Administrators run the following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-saslauthd \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-password password \-\-enabled 1 \-\-admins alice,barry \(rs
  \-\-roadmins clair,daniel
+.fam
 .fi
 .if n .RE
 .sp
@@ -167,8 +173,10 @@ following command.
 .sp
 .if n .RS 4
 .nf
+.fam C
 $ couchbase\-cli setting\-saslauthd \-c 192.168.1.5 \-\-username Administrator \(rs
  \-\-password password \-\-enabled 1 \-\-default admins
+.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"

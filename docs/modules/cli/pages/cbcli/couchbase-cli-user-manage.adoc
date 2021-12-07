@@ -453,7 +453,7 @@ views for all bucket run the following command
 ----
 $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
  -p password --set --rbac-username jdoe --rbac-name "John Doe" \
- --roles view_admin[*] --auth-domain external
+ --roles views_admin[*] --auth-domain external
 ----
 To list the current RBAC user profiles run the following command.
 ----
