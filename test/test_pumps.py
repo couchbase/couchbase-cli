@@ -67,6 +67,15 @@ class TestCSVSource(unittest.TestCase):
             self.assertEqual(v, {'spec': f.name, 'buckets': [{'name': os.path.basename(f.name),
                                                               'nodes': [{'hostname': 'N/A'}]}]})
 
+    def test_provide_batch_nonexistent_file(self):
+        # non-existent file name
+        file_name = '/tmp/this_file_does_not_exist.csv'
+        self.source = CSVSource(self.opts, file_name, None, None, None, None, None, None)
+        rv, _ = self.source.provide_batch()
+        self.assertEqual(
+            "error: could not open csv: {}; exception: [Errno 2] No such file or directory: '{}'".format(file_name,
+                                                                                                         file_name), rv)
+
     def test_provide_batch_empty_file(self):
         with tempfile.NamedTemporaryFile(suffix=".csv") as f:
             # empty file

@@ -65,11 +65,14 @@ class CSVSource(pump.Source):
 
         if not self.r:
             try:
-                self.r = csv.reader(open(self.spec, 'r', encoding='utf-8'))
+                csvfile = open(self.spec, 'r', encoding='utf-8')
+                self.r = csv.reader(csvfile)
                 self.fields = next(self.r)
                 if 'id' not in self.fields:
+                    csvfile.close()
                     return f'error: no \'id\' field in 1st line of csv: {self.spec}', None
             except StopIteration:
+                csvfile.close()
                 return f'error: could not read 1st line of csv: {self.spec}', None
             except IOError as e:
                 return f'error: could not open csv: {self.spec}; exception: {e!s}', None
@@ -83,8 +86,8 @@ class CSVSource(pump.Source):
         vbucket_id = 0x0000ffff
 
         while (self.r
-               and batch.size() < batch_max_size
-               and batch.bytes < batch_max_bytes):
+                and batch.size() < batch_max_size
+                and batch.bytes < batch_max_bytes):
             try:
                 vals = next(self.r)
                 doc = {}
@@ -105,6 +108,8 @@ class CSVSource(pump.Source):
             except Exception as e:
                 logging.error(f'error: fails to read from csv file {e}')
                 continue
+
+        csvfile.close()
 
         if batch.size() <= 0:
             return 0, None
