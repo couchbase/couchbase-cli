@@ -5559,7 +5559,7 @@ class BackupServiceRepository:
         if kwargs.get('credentials_key', False):
             add_request_body['cloud_credentials_key'] = kwargs.get('credentials_key')
         if kwargs.get('cloud_region', False):
-            add_request_body['cloud_credentials_region'] = kwargs.get('cloud_region')
+            add_request_body['cloud_region'] = kwargs.get('cloud_region')
         if kwargs.get('cloud_endpoint', False):
             add_request_body['cloud_endpoint'] = kwargs.get('cloud_endpoint')
         if kwargs.get('s3_path_style', False):

@@ -3039,7 +3039,7 @@ class TestBackupServiceRepository(CommandTest):
                                           'bucket'], self.server_args)
         self.assertIn('POST:/api/v1/cluster/self/repository/active/a', self.server.trace)
         self.rest_parameter_match([json.dumps({'plan': 'p', 'archive': 's3://b/a', 'cloud_credentials_id': 'id',
-                                               'cloud_credentials_key': 'key', 'cloud_credentials_region': 'region',
+                                               'cloud_credentials_key': 'key', 'cloud_region': 'region',
                                                'cloud_endpoint': 'endpoint', 'cloud_force_path_style': True,
                                                'bucket_name': 'bucket'}, sort_keys=True)])
 
