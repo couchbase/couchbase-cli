@@ -5562,6 +5562,8 @@ class BackupServiceRepository:
             add_request_body['cloud_region'] = kwargs.get('cloud_region')
         if kwargs.get('cloud_endpoint', False):
             add_request_body['cloud_endpoint'] = kwargs.get('cloud_endpoint')
+        if kwargs.get('staging_dir', False):
+            add_request_body['cloud_staging_dir'] = kwargs.get('staging_dir')
         if kwargs.get('s3_path_style', False):
             add_request_body['cloud_force_path_style'] = kwargs.get('s3_path_style')
 

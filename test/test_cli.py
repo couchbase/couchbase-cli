@@ -3040,8 +3040,9 @@ class TestBackupServiceRepository(CommandTest):
         self.assertIn('POST:/api/v1/cluster/self/repository/active/a', self.server.trace)
         self.rest_parameter_match([json.dumps({'plan': 'p', 'archive': 's3://b/a', 'cloud_credentials_id': 'id',
                                                'cloud_credentials_key': 'key', 'cloud_region': 'region',
-                                               'cloud_endpoint': 'endpoint', 'cloud_force_path_style': True,
-                                               'bucket_name': 'bucket'}, sort_keys=True)])
+                                               'cloud_staging_dir': 'dir', 'cloud_endpoint': 'endpoint',
+                                               'cloud_force_path_style': True, 'bucket_name': 'bucket'},
+                                              sort_keys=True)])
 
     def test_remove_fails_with_no_id(self):
         """Test that the remove action fails if no id is given and that a valid error message is returned"""
