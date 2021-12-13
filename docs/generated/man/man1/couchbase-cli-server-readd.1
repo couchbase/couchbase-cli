@@ -2,12 +2,12 @@
 .\"     Title: couchbase-cli-server-readd
 .\"    Author: Couchbase
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2021-02-01
+.\"      Date: 2021-12-13
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SERVER\-READD" "1" "2021-02-01" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SERVER\-READD" "1" "2021-12-13" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -169,7 +169,7 @@ following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli server\-readd \-c 192.168.1.5:8091 \-\-username Administrator \(rs
- \-\-password password \-\-server\-readd 192.168.1.6:8091 \(rs
+ \-\-password password \-\-server\-add 192.168.1.6:8091 \(rs
  \-\-server\-username Administrator \-\-server\-password password
 .fi
 .if n .RE
@@ -179,7 +179,7 @@ If you need to add back multiple nodes then you would run the following command.
 .if n .RS 4
 .nf
 $ couchbase\-cli server\-readd \-c 192.168.1.5:8091 \-\-username Administrator \(rs
- \-\-password password \-\-server\-readd 192.168.1.6:8091,192.168.1.7:8091 \(rs
+ \-\-password password \-\-server\-add 192.168.1.6:8091,192.168.1.7:8091 \(rs
  \-\-server\-username Administrator \-\-server\-password password
 .fi
 .if n .RE
@@ -190,7 +190,7 @@ If you wanted the nodes being added back to the cluster to be a part of the
 .if n .RS 4
 .nf
 $ couchbase\-cli server\-readd \-c 192.168.1.5:8091 \-\-username Administrator \(rs
- \-\-password password \-\-server\-readd 192.168.1.6:8091 \-\-group\-name East \(rs
+ \-\-password password \-\-server\-add 192.168.1.6:8091 \-\-group\-name East \(rs
  \-\-server\-username Administrator \-\-server\-password password
 .fi
 .if n .RE

@@ -84,7 +84,7 @@ the first time so we need to specify the index storage mode. If we want to index
 storage mode to be memory optimized then we would run the following command.
 ----
 $ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
- --password password --server-readd http://192.168.1.6:8091,http://192.168.1.7:8091 \
+ --password password --server-add http://192.168.1.6:8091,http://192.168.1.7:8091 \
  --server-username Administrator --server-password password
  --services data,fts --group-name --index-storage-setting memopt
 ----
