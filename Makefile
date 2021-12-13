@@ -9,7 +9,7 @@ shell: install
 	@$(PIPENV) shell
 
 test: install
-	@$(PIPENV) run python3 -m unittest discover --start-directory ./test --catch --failfast -k=$(TESTS)
+	@$(PIPENV) run python3 -m unittest discover --verbose --start-directory ./test --catch --failfast -k=$(TESTS)
 
 clean:
 	@$(PIPENV) --rm
