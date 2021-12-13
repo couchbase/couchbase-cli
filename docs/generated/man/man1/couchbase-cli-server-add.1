@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: couchbase-cli-server-add
 .\"    Author: Couchbase
-.\" Generator: Asciidoctor 2.0.16
-.\"      Date: 2021-10-22
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2021-12-13
 .\"    Manual: Couchbase CLI Manual
 .\"    Source: Couchbase CLI 1.0.0
 .\"  Language: English
 .\"
-.TH "COUCHBASE\-CLI\-SERVER\-ADD" "1" "2021-10-22" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
+.TH "COUCHBASE\-CLI\-SERVER\-ADD" "1" "2021-12-13" "Couchbase CLI 1.0.0" "Couchbase CLI Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -28,8 +28,9 @@
 .  LINKSTYLE blue R < >
 .\}
 .SH "NAME"
-couchbase-cli-server-add \- Adds a server to the cluster
+couchbase\-cli\-server\-add \- Adds a server to the cluster
 .SH "SYNOPSIS"
+.sp
 .sp
 .nf
 \fIcouchbase\-cli server\-add\fP [\-\-cluster <url>] [\-\-username <username>] [\-\-password <password>]
@@ -238,12 +239,10 @@ service on it then we would run the command below.
 .sp
 .if n .RS 4
 .nf
-.fam C
 $ couchbase\-cli server\-add \-c 192.168.1.5:8091 \-\-username Administrator \(rs
  \-\-password password \-\-server\-add http://192.168.1.6:8091 \(rs
  \-\-server\-add\-username Administrator \-\-server\-add\-password password
  \-\-services data,index,query
-.fam
 .fi
 .if n .RE
 .sp
@@ -260,12 +259,10 @@ storage mode to be memory optimized then we would run the following command.
 .sp
 .if n .RS 4
 .nf
-.fam C
 $ couchbase\-cli server\-add \-c 192.168.1.5:8091 \-\-username Administrator \(rs
- \-\-password password \-\-server\-readd http://192.168.1.6:8091,http://192.168.1.7:8091 \(rs
+ \-\-password password \-\-server\-add http://192.168.1.6:8091,http://192.168.1.7:8091 \(rs
  \-\-server\-username Administrator \-\-server\-password password
  \-\-services data,fts \-\-group\-name \-\-index\-storage\-setting memopt
-.fam
 .fi
 .if n .RE
 .SH "ENVIRONMENT AND CONFIGURATION VARIABLES"
