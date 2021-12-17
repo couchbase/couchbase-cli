@@ -59,6 +59,8 @@ else:
 # On MacOS the config is store in the users home directory
 if platform.system() == "Darwin":
     CB_CFG_PATH = os.path.expanduser("~/Library/Application Support/Couchbase/var/lib/couchbase")
+    # erl script fails in OSX as it is unable to find COUCHBASE_TOP
+    os.environ["COUCHBASE_TOP"] = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 else:
     CB_CFG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "var", "lib", "couchbase"))
 
