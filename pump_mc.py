@@ -539,7 +539,7 @@ class MCSink(pump.Sink):
         host, port, user, pswd, _ = pump.parse_spec(opts, spec, int(getattr(opts, "port", 11211)))
         if opts.ssl:
             port = couchbaseConstants.SSL_PORT
-        rv, conn = MCSink.connect_mc(host, port, user, pswd, None, opts.ssl, opts.no_ssl_verify, opts.cacert)
+        rv, conn = MCSink.connect_mc(host, port, user, pswd, None, opts.ssl, not opts.no_ssl_verify, opts.cacert)
         if rv != 0:
             return rv, None
         conn.close()  # type: ignore

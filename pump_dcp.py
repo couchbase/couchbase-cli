@@ -108,7 +108,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
             pump.rest_request_json(host, int(port), user, pswd, opts.ssl,
                                    "/pools/default/buckets/%s/ddocs" %
                                    (source_bucket['name']),
-                                   reason="provide_design", verify=opts.no_ssl_verify, cacert=opts.cacert)
+                                   reason="provide_design", verify=not opts.no_ssl_verify, cacert=opts.cacert)
         if err and "response: 404" in err:  # A 404/not-found likely means 2.0-DP4.
             ddocs_url = f'{couch_api_base}/_all_docs'
             ddocs_qry = "?startkey=\"_design/\"&endkey=\"_design0\"&include_docs=true"
@@ -116,10 +116,10 @@ class DCPStreamSource(pump.Source, threading.Thread):
             host, port, user, pswd, path = \
                 pump.parse_spec(opts, ddocs_url, 8092)
             # Not using user/pwd as 2.0-DP4 CAPI did not support auth.
-            err, _, ddocs = \
-                pump.rest_request_json(host, int(port), None, None, opts.ssl,
-                                       path + ddocs_qry,
-                                       reason="provide_design-2.0DP4", verify=opts.no_ssl_verify, cacert=opts.cacert)
+            err, _, ddocs = pump.rest_request_json(host, int(port),
+                                                   None, None, opts.ssl, path + ddocs_qry,
+                                                   reason="provide_design-2.0DP4", verify=not opts.no_ssl_verify,
+                                                   cacert=opts.cacert)
         if err is not None:
             return err, None
 
@@ -135,7 +135,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
     def provide_index(opts, source_spec: str, source_bucket: Dict[str, Any], source_map) -> \
             Tuple[couchbaseConstants.PUMP_ERROR, Optional[str]]:
         try:
-            rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, opts.no_ssl_verify,
+            rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, not opts.no_ssl_verify,
                                   opts.cacert, False)
             result, errors = rest.get_index_metadata(source_bucket['name'])
             if errors:
@@ -148,7 +148,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
     def provide_fts_index(opts, source_spec: str, source_bucket: Dict[str, Any], source_map) -> \
             Tuple[couchbaseConstants.PUMP_ERROR, Optional[str]]:
         try:
-            rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, opts.no_ssl_verify,
+            rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, not opts.no_ssl_verify,
                                   opts.cacert, False)
             result, errors = rest.get_fts_index_metadata(source_bucket['name'])
             if errors:
@@ -161,7 +161,7 @@ class DCPStreamSource(pump.Source, threading.Thread):
     def provide_fts_alias(opts, source_spec: str, source_bucket: Dict[str, Any], source_map) -> \
             Tuple[couchbaseConstants.PUMP_ERROR, Optional[str]]:
         try:
-            rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, opts.no_ssl_verify,
+            rest = ClusterManager(source_spec, opts.username, opts.password, opts.ssl, not opts.no_ssl_verify,
                                   opts.cacert, False)
             result, errors = rest.get_fts_index_alias()
             if errors:
@@ -548,12 +548,12 @@ class DCPStreamSource(pump.Source, threading.Thread):
             logging.debug(f'  DCPStreamSource connecting mc: {host}:{port!s}')
 
             err, self.dcp_conn = pump.get_mcd_conn(host, port, username, password, bucket, self.opts.ssl,
-                                                   self.opts.no_ssl_verify, self.opts.cacert)
+                                                   not self.opts.no_ssl_verify, self.opts.cacert)
             if err:
                 return err, None
 
             err, self.mem_conn = pump.get_mcd_conn(host, port, username, password, bucket, self.opts.ssl,
-                                                   self.opts.no_ssl_verify, self.opts.cacert)
+                                                   not self.opts.no_ssl_verify, self.opts.cacert)
             if err:
                 return err, None
 
@@ -762,8 +762,8 @@ class DCPStreamSource(pump.Source, threading.Thread):
         for stats in ["curr_items", "vb_active_resident_items_ratio"]:
             path = f'/pools/default/buckets/{name}/stats/{stats}'
             err, json, data = pump.rest_request_json(host, int(port),
-                                                     user, pswd, opts.ssl, path,
-                                                     reason="total_msgs", verify=opts.no_ssl_verify, cacert=opts.cacert)
+                                                     user, pswd, opts.ssl, path, reason="total_msgs",
+                                                     verify=not opts.no_ssl_verify, cacert=opts.cacert)
             if err:
                 return 0, None
 

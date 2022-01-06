@@ -224,7 +224,7 @@ class CBSink(pump_mc.MCSink):
             if opts.username_dest is not None and opts.password_dest is not None:
                 username = opts.username_dest
                 password = opts.password_dest
-            rest = ClusterManager(sink_spec, username, password, opts.ssl, opts.no_ssl_verify,
+            rest = ClusterManager(sink_spec, username, password, opts.ssl, not opts.no_ssl_verify,
                                   opts.cacert, False)
             _, errors = rest.restore_fts_index_metadata(index_defs)
             return errors
@@ -249,7 +249,7 @@ class CBSink(pump_mc.MCSink):
             if opts.username_dest is not None and opts.password_dest is not None:
                 username = opts.username_dest
                 password = opts.password_dest
-            rest = ClusterManager(sink_spec, username, password, opts.ssl, opts.no_ssl_verify,
+            rest = ClusterManager(sink_spec, username, password, opts.ssl, not opts.no_ssl_verify,
                                   opts.cacert, False)
             _, errors = rest.restore_fts_index_metadata(index_defs)
             return errors
@@ -276,7 +276,7 @@ class CBSink(pump_mc.MCSink):
             if opts.username_dest is not None and opts.password_dest is not None:
                 username = opts.username_dest
                 password = opts.password_dest
-            rest = ClusterManager(sink_spec, username, password, opts.ssl, opts.no_ssl_verify,
+            rest = ClusterManager(sink_spec, username, password, opts.ssl, not opts.no_ssl_verify,
                                   opts.cacert, False)
             _, errors = rest.restore_index_metadata(sink_bucket['name'], sd)
             return errors
@@ -328,7 +328,7 @@ class CBSink(pump_mc.MCSink):
                 err, conn, response = \
                     pump.rest_request(host, int(port), user, pswd, opts.ssl,
                                       f'{path}/{id}', method='PUT', body=str_source,
-                                      reason="consume_design", verify=opts.no_ssl_verify, ca_cert=opts.cacert)
+                                      reason="consume_design", verify=not opts.no_ssl_verify, ca_cert=opts.cacert)
                 if conn:
                     conn.close()
                 if err:
@@ -387,7 +387,7 @@ class CBSink(pump_mc.MCSink):
                     err, conn, response = \
                         pump.rest_request(host, int(port), user, pswd, opts.ssl,
                                           f'{path}/{id}', method='PUT', body=js_doc,
-                                          reason="consume_design", verify=opts.no_ssl_verify, ca_cert=opts.cacert)
+                                          reason="consume_design", verify=not opts.no_ssl_verify, ca_cert=opts.cacert)
                     if conn:
                         conn.close()
                     if err:
@@ -471,7 +471,7 @@ class CBSink(pump_mc.MCSink):
                 username = self.opts.username_dest
                 password = self.opts.password_dest
             rv, conn = CBSink.connect_mc(host, port, username, password, bucket, self.opts.ssl,
-                                         self.opts.no_ssl_verify, self.opts.cacert,
+                                         not self.opts.no_ssl_verify, self.opts.cacert,
                                          collections=self.opts.collection is not None)
             if rv != 0:
                 logging.error(f'error: CBSink.connect() for send: {rv}')

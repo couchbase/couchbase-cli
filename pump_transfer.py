@@ -196,7 +196,7 @@ from a source cluster into the caching layer at the destination""")
         p.add_option("-s", "--ssl",
                      action="store_true", default=False,
                      help="Transfer data with SSL enabled")
-        p.add_option("", "--no-ssl-verify", default=True, action="store_false",
+        p.add_option("", "--no-ssl-verify", default=False, action="store_true",
                      help="Skips SSL verification of certificates against the CA")
         p.add_option("", "--cacert", dest="cacert", default=None, action="store",
                      help="Verifies the cluster identity with this certificate")
