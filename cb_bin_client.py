@@ -92,6 +92,7 @@ class MemcachedClient(object):
     def __init__(self, host='127.0.0.1', port=11211, family=socket.AF_UNSPEC, use_ssl=False, verify=True, cacert=None):
         self.host = host
         self.port = port
+        sock_error = None
         for info in socket.getaddrinfo(self.host, self.port, family,
                                        socket.SOCK_STREAM):
             _family, socktype, proto, _, sockaddr = info
@@ -108,7 +109,8 @@ class MemcachedClient(object):
                 self.s = sock
                 self.s.connect_ex(sockaddr)
                 break
-            except socket.error as sock_error:
+            except socket.error as e:
+                sock_error = e
                 # If we get here socket objects will be close()d via
                 # garbage collection.
                 pass
