@@ -42,6 +42,7 @@ class CSVSource(pump.Source):
         super(CSVSource, self).__init__(opts, spec, source_bucket, source_node,
                                         source_map, sink_map, ctl, cur)
         self.done = False
+        self.file = None
         self.r = None  # An iterator of csv.reader()
 
     @staticmethod
@@ -59,20 +60,24 @@ class CSVSource(pump.Source):
                                                                               Optional[str]]:
         return 0, None
 
+    def close_file(self):
+        self.file.close()
+        self.file = None
+
     def provide_batch(self) -> Tuple[couchbaseConstants.PUMP_ERROR, Optional[pump.Batch]]:
         if self.done:
             return 0, None
 
         if not self.r:
             try:
-                csvfile = open(self.spec, 'r', encoding='utf-8')
-                self.r = csv.reader(csvfile)
+                self.file = open(self.spec, 'r', encoding='utf-8')
+                self.r = csv.reader(self.file)
                 self.fields = next(self.r)
                 if 'id' not in self.fields:
-                    csvfile.close()
+                    self.close_file()
                     return f'error: no \'id\' field in 1st line of csv: {self.spec}', None
             except StopIteration:
-                csvfile.close()
+                self.close_file()
                 return f'error: could not read 1st line of csv: {self.spec}', None
             except IOError as e:
                 return f'error: could not open csv: {self.spec}; exception: {e!s}', None
@@ -104,12 +109,11 @@ class CSVSource(pump.Source):
                     batch.append(msg, len(doc))
             except StopIteration:
                 self.done = True
+                self.close_file()
                 self.r = None
             except Exception as e:
                 logging.error(f'error: fails to read from csv file {e}')
                 continue
-
-        csvfile.close()
 
         if batch.size() <= 0:
             return 0, None
