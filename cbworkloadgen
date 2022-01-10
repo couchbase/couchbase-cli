@@ -13,7 +13,14 @@ import sys
 import pump
 import pump_gen
 import pump_transfer
+import couchbaseConstants
 
+from urllib.parse import urlparse
+
+
+class OptConstructError(Exception):
+    """Class of validation exceptions that can be thrown by opt_construct function"""
+    pass
 
 class WorkloadGen(pump_transfer.Transfer):
     """Entry point for 2.0 cbworkloadgen."""
@@ -32,8 +39,10 @@ class WorkloadGen(pump_transfer.Transfer):
             "         -s 100 -b my-other-bucket --threads=10\n\n"
 
     def main(self, argv):
-
-        src, sink, common_opts, count_opts, bool_opts = self.opt_construct(argv)
+        try:
+            src, sink, common_opts, count_opts, bool_opts = self.opt_construct(argv)
+        except OptConstructError as e:
+            sys.exit(f"{self.name}: error: {e}")
 
         local_args = [argv[0]]
         local_args.append(src)
@@ -63,14 +72,13 @@ class WorkloadGen(pump_transfer.Transfer):
                     "xattr":"xattr"
                    }
 
-        sink_opts = {"node" : "http://"}
-
         common_opts = {"bucket" : ["-B", None],
                        "threads" : ["-t", None],
                        "username" : ["-u", None],
                        "password" : ["-p", None],
                        "extra" : ["-x", "backoff_cap=0.1"],
-                       "collection" : ["-c", None]
+                       "collection" : ["-c", None],
+                       "cacert" : ["--cacert", None]
                       }
 
         list_opts =   {"collection" : ["-c", None]
@@ -79,7 +87,8 @@ class WorkloadGen(pump_transfer.Transfer):
         count_opts = {"verbose" : ["-v", None]}
 
         bool_opts = {"ssl": ["-s", None],
-                     "force_txn": ["--force-txn", None]
+                     "force_txn": ["--force-txn", None],
+                     "no_ssl_verify": ["--no-ssl-verify", None]
                     }
 
         p = optparse.OptionParser(usage=self.usage)
@@ -98,11 +107,6 @@ class WorkloadGen(pump_transfer.Transfer):
                 gen_str += f'{gen_opts[key]}={val!s},'
         if gen_str[-1] == ",":
             gen_str = gen_str[:-1]
-        sink_str = ""
-        for key in sink_opts.keys():
-            val = getattr(opts, key, None)
-            if val:
-                sink_str += sink_opts[key] + val
 
         for key in common_opts.keys():
             val = getattr(opts, key, None)
@@ -124,7 +128,65 @@ class WorkloadGen(pump_transfer.Transfer):
             if val:
                 bool_opts[key][1] = True
 
+        sink_str = ""
+        val = getattr(opts, 'node', None)
+        if val:
+            sink_str = self.construct_sink(val, bool_opts['ssl'][1])
+
         return gen_str, sink_str, common_opts, count_opts, bool_opts
+
+    def construct_sink(self, sink_str, ssl):
+        if sink_str == "":
+            # This error case should not be reachable since the flag parser should not allow empty values for the
+            # --node/-n flag, added for consistency and completeness
+            raise OptConstructError("the ip:port of a node seems to not be supplied, please check your CLI command")
+
+        sink_str_split = sink_str.split('://')
+
+        if len(sink_str_split) > 2:
+            raise OptConstructError("the supplied ip:port of a node has incorrect format, check if a scheme is " \
+                "supplied more than once")
+
+        if len(sink_str_split) == 1:
+            sink_str = f"http{'s' if ssl else ''}://" + sink_str
+            self.validate_urlparse(urlparse(sink_str), ssl)
+        else:
+            sink_str = sink_str.replace("couchbase://", "http://")
+            sink_str = sink_str.replace("couchbases://", "https://")
+
+            sink_str_parsed = urlparse(sink_str)
+            scheme = sink_str_parsed.scheme
+
+            if scheme == "https":
+                ssl = True
+            elif scheme == "http":
+                if ssl:
+                    raise OptConstructError("the ip:port of a node is supplied with 'http' scheme, which is not " \
+                        "supported with the --ssl flag, please use 'https' or remove the scheme entirely")
+            else:
+                raise OptConstructError(f"the ip:port of a node is supplied with an unsupported scheme '{scheme}' " \
+                    "(only 'http', 'https', 'couchbase' and 'couchbases' are supported)")
+
+            self.validate_urlparse(sink_str_parsed, ssl)
+
+        return sink_str
+
+    def validate_urlparse(self, urlparse_result, ssl):
+        try:
+            port = urlparse_result.port
+        except Exception as e:
+            raise OptConstructError(f"failed to get the port from the supplied ip:port of a node: {e}")
+
+        self.validate_port(port, ssl)
+
+    def validate_port(self, port, ssl):
+        if port is None:
+            raise OptConstructError("the ip:port of a node is supplied without a port")
+        elif (ssl and port != couchbaseConstants.SSL_REST_PORT) or \
+            (not ssl and port != couchbaseConstants.REST_PORT):
+                raise OptConstructError(f"the ip:port of a node is supplied with a bad port '{port}', you " \
+                    f"must use '{couchbaseConstants.REST_PORT}' or '{couchbaseConstants.SSL_REST_PORT}' if you are " \
+                    f"using SSL encryption")
 
     def add_parser_options(self, p):
         p.add_option("-r", "--ratio-sets",
@@ -141,6 +203,10 @@ class WorkloadGen(pump_transfer.Transfer):
         p.add_option("--ssl",
                      action="store_true", default=False,
                      help="Transfer data with SSL enabled")
+        p.add_option("--no-ssl-verify", default=False, action="store_true",
+                     help="Skips SSL verification of certificates against the CA")
+        p.add_option("--cacert", default=None, action="store",
+                     help="Verifies the cluster identity with this certificate")
         p.add_option("-i", "--max-items",
                      action="store", type="int", default=10000,
                      metavar="10000",

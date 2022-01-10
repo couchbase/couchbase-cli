@@ -57,7 +57,22 @@ generate test data sets. The tool is installed in the following locations:
   Specifies the bucket to operate on. If non provided it will use default.
 
 --ssl::
-  Use SSL for transferring and reading data.
+  Use SSL for transferring and reading data. You can also use SSL encryption
+  by specifying the cluster host name using either _couchbases://_ or
+  _https://_. Each of these connection schemes will ensure that the connection
+  is encrypted with SSL. You may then use either --no-ssl-verify or --cacert
+  in order to customize how your SSL connection is set up.
+
+--no-ssl-verify::
+  Specifies that SSL verification should be used but that verifying that the
+  cluster certificate is valid should be skipped. Use of this flag is not
+  recommended for production environments because it does not protect the user
+  from a man-in-the-middle attack.
+
+--cacert <path>::
+  Specifies that the SSL connection should use the cacert provided when
+  connecting to the cluster. This argument takes the path the certificate
+  file as its value. This is the most secure way to connect to your cluster.
 
 -t,--threads <num>::
   Number of concurrent threads use to insert or get data. By default it

@@ -14,6 +14,7 @@ REQUEST = Tuple[bytes, Optional[bytes], Optional[bytes], Optional[bytes], Option
 
 SSL_PORT = 11207
 SSL_REST_PORT = 18091
+REST_PORT = 8091
 QUERY_PORT = 8093
 SSL_QUERY_PORT = 18093
 INDEX_PORT = 9102
