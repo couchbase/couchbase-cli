@@ -78,7 +78,7 @@ class X509AdapterFactoryTest(unittest.TestCase):
             with self.subTest(name=name):
                 if "valid" in test and test["valid"]:
                     X509AdapterFactory(**test["kwargs"])
-                    return
+                    continue
 
                 with self.assertRaisesRegex(X509AdapterError, re.escape(test["message"]) if "message" in test else ""):
                     X509AdapterFactory(**test["kwargs"])
