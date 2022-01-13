@@ -182,11 +182,9 @@ class WorkloadGen(pump_transfer.Transfer):
     def validate_port(self, port, ssl):
         if port is None:
             raise OptConstructError("the ip:port of a node is supplied without a port")
-        elif (ssl and port != couchbaseConstants.SSL_REST_PORT) or \
-            (not ssl and port != couchbaseConstants.REST_PORT):
+        elif (ssl and port != couchbaseConstants.SSL_REST_PORT):
                 raise OptConstructError(f"the ip:port of a node is supplied with a bad port '{port}', you " \
-                    f"must use '{couchbaseConstants.REST_PORT}' or '{couchbaseConstants.SSL_REST_PORT}' if you are " \
-                    f"using SSL encryption")
+                    f"must use '{couchbaseConstants.SSL_REST_PORT}' if you are using SSL encryption")
 
     def add_parser_options(self, p):
         p.add_option("-r", "--ratio-sets",

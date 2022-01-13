@@ -132,21 +132,13 @@ class WorkloadGenTest(unittest.TestCase):
                 },
                 "message": "the ip:port of a node is supplied without a port",
             },
-            "BadPortNoSSL": {
-                "kwargs": {
-                    "sink_str": "http://localhost:18091",
-                    "ssl": False,
-                },
-                "message": "the ip:port of a node is supplied with a bad port '18091', you "
-                "must use '8091' or '18091' if you are using SSL encryption"
-            },
             "BadPortWithSSL": {
                 "kwargs": {
                     "sink_str": "https://localhost:8091",
                     "ssl": True,
                 },
-                "message": "the ip:port of a node is supplied with a bad port '8091', you "
-                "must use '8091' or '18091' if you are using SSL encryption"
+                "message": "the ip:port of a node is supplied with a bad port '8091', you must use '18091' if you are "
+                "using SSL encryption"
             },
         }
 
