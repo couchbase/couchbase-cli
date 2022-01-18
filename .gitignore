@@ -32,3 +32,6 @@ test/*.pem
 
 # gerrit git hooks
 .githooks/commit-msg
+
+# generated documentation
+docs/generated
