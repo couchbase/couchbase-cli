@@ -1,4 +1,4 @@
-= couchbase-cli-settings-alternate-address(1)
+= couchbase-cli-setting-alternate-address(1)
 :description: Modify alternate addresses
 ifndef::doctype-manpage[:doctitle: setting-alternate-address]
 

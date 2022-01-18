@@ -1,0 +1,1 @@
+* xref:cli:cbrecovery.adoc[cbrecovery]

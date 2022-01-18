@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # ensure that we have the required dependencies installed
-for dep in autopep8 isort sponge wget; do
+for dep in asciidoctor autopep8 isort sponge wget; do
     if ! type -t $dep > /dev/null; then
         echo "Error: '$dep' is not installed" 1>&2
         exit 1
@@ -19,6 +19,9 @@ fi
 
 # we are safe to re-add the modified dictionary
 git add jenkins/.aspell.en.pws
+
+# generate and add the Antora nav files
+git add $(python3 docs/generate.py --navs --verbose)
 
 # only modify currently staged Python files
 staged_python_files=$(git diff --cached --name-only --diff-filter=d | grep -E '\.*\.py$' || true)

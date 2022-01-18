@@ -1,4 +1,4 @@
-= couchbase-cli-setting-query(1)
+= couchbase-cli-backup-service-settings(1)
 ifndef::doctype-manpage[:doctitle: backup-service-settings]
 
 ifdef::doctype-manpage[]
