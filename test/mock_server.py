@@ -471,7 +471,7 @@ endpoints = [
     (r'/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
     (r'/settings/passwordPolicy$', {'POST': do_nothing, 'GET': get_password_policy}),
     (r'/settings/querySettings$', {'POST': do_nothing}),
-    (r'/settings/querySettings/curlWhitelist$', {'POST': do_nothing}),
+    (r'/settings/querySettings/curlAllowlist$', {'POST': do_nothing}),
     (r'/settings/rbac/users$', {'POST': do_nothing, 'GET': get_rbac_user}),
     (r'/settings/rbac/users/\w+$', {'PUT': do_nothing, 'GET': get_user_groups}),
     (r'/settings/rbac/groups/(\w|-)+', {'PUT': do_nothing, 'DELETE': do_nothing, 'GET': get_group}),

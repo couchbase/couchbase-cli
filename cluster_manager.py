@@ -1809,7 +1809,7 @@ class ClusterManager(object):
     def post_query_curl_access_settings(self, restricted: bool, allowed_urls: Optional[List[str]],
                                         disallowed_urls: Optional[List[str]]):
         """POST query curl access settings."""
-        url = f'{self.hostname}/settings/querySettings/curlWhitelist'
+        url = f'{self.hostname}/settings/querySettings/curlAllowlist'
         params: Dict[str, Any] = {'all_access': not restricted}
         if allowed_urls is not None:
             params['allowed_urls'] = allowed_urls

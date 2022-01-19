@@ -3258,14 +3258,14 @@ class TestSettingQuery(CommandTest):
     def test_access_list(self):
         self.no_error_run(self.command + ['--set', '--curl-access', 'restricted', '--allowed-urls', 'url1,url2',
                                           '--disallowed-urls', 'url3,url4'], self.server_args)
-        self.assertIn('POST:/settings/querySettings/curlWhitelist', self.server.trace)
+        self.assertIn('POST:/settings/querySettings/curlAllowlist', self.server.trace)
         self.rest_parameter_match([json.dumps({'all_access': False, 'allowed_urls': ['url1', 'url2'],
                                                'disallowed_urls': ['url3', 'url4']}, sort_keys=True)])
 
     def test_access_list_and_temp_query_dir(self):
         self.no_error_run(self.command + ['--set', '--curl-access', 'unrestricted', '--temp-dir', 'location',
                                           '--temp-dir-size', '9000'], self.server_args)
-        self.assertIn('POST:/settings/querySettings/curlWhitelist', self.server.trace)
+        self.assertIn('POST:/settings/querySettings/curlAllowlist', self.server.trace)
         self.assertIn('POST:/settings/querySettings', self.server.trace)
         self.rest_parameter_match([json.dumps({'all_access': True}, sort_keys=True),
                                    'queryTmpSpaceDir=location', 'queryTmpSpaceSize=9000'])
