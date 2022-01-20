@@ -3425,8 +3425,11 @@ class SslManage(Subcommand):
         me_group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
                               help="Show ssl client certificate authentication value")
 
-    @rest_initialiser(cluster_init_check=True, version_check=True)
+    @rest_initialiser(version_check=True)
     def execute(self, opts):
+        if not (opts.cluster_ca or opts.cluster_cert or opts.delete_ca or opts.upload_cert):
+            check_cluster_initialized(self.rest)
+
         if opts.regenerate is not None:
             try:
                 open(opts.regenerate, 'a', encoding="utf-8").close()

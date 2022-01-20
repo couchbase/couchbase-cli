@@ -1474,6 +1474,32 @@ class TestSslManage(CommandTest):
         self.assertIn('127.0.0.1:9000', self.str_output)
         self.assertIn('127.0.0.1:9001', self.str_output)
 
+    def test_cluster_cert_info_not_init(self):
+        certificates = [{"node": "127.0.0.1:9000",
+                         "warnings": [{"message": "Out-of-the-box certificates are self-signed. To further secure your "
+                                                  "system, you must create new X.509 certificates signed by a trusted "
+                                                  "CA."}],
+                         "subject": "CN=Couchbase Server Node (127.0.0.1)",
+                         "expires": "2049-12-31T23:59:59.000Z",
+                         "type": "generated",
+                         "pem": "-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n",
+                         "privateKeyPassphrase": {}},
+                        {"node": "127.0.0.1:9001",
+                         "warnings": [{"message": "Out-of-the-box certificates are self-signed. To further secure your "
+                                                  "system, you must create new X.509 certificates signed by a trusted "
+                                                  "CA."}],
+                         "subject": "CN=Couchbase Server Node (127.0.0.1)",
+                         "expires": "2049-12-31T23:59:59.000Z",
+                         "type": "generated",
+                         "pem": "-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n",
+                         "privateKeyPassphrase": {}}]
+        self.server_args['/pools/default/certificates'] = certificates
+        self.server_args['init'] = False
+        self.no_error_run(self.command + ['--cluster-cert-info'], self.server_args)
+        self.assertIn('GET:/pools/default/certificates', self.server.trace)
+        self.assertIn('127.0.0.1:9000', self.str_output)
+        self.assertIn('127.0.0.1:9001', self.str_output)
+
     def test_cluster_ca_info(self):
         ca = [{"nodes": ["172.18.1.75:9000", "127.0.0.1:9001"],
                "warnings": [
@@ -1487,6 +1513,24 @@ class TestSslManage(CommandTest):
                "type": "generated",
                "pem": "-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n\n", }]
         self.server_args['/pools/default/trustedCAs'] = ca
+        self.no_error_run(self.command + ['--cluster-ca-info'], self.server_args)
+        self.assertIn('GET:/pools/default/trustedCAs', self.server.trace)
+        self.assertIn('CN=Couchbase Server e5b5a918', self.str_output)
+
+    def test_cluster_ca_info_not_init(self):
+        ca = [{"nodes": ["172.18.1.75:9000", "127.0.0.1:9001"],
+               "warnings": [
+                   {"message": "Out-of-the-box certificates are self-signed. To further secure your system, you "
+                               "must create new X.509 certificates signed by a trusted CA."}],
+               "subject": "CN=Couchbase Server e5b5a918",
+               "id": 1,
+               "loadTimestamp": "2021-10-11T13:49:52.000Z",
+               "notBefore": "2013-01-01T00:00:00.000Z",
+               "notAfter": "2049-12-31T23:59:59.000Z",
+               "type": "generated",
+               "pem": "-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n\n", }]
+        self.server_args['/pools/default/trustedCAs'] = ca
+        self.server_args['init'] = False
         self.no_error_run(self.command + ['--cluster-ca-info'], self.server_args)
         self.assertIn('GET:/pools/default/trustedCAs', self.server.trace)
         self.assertIn('CN=Couchbase Server e5b5a918', self.str_output)
@@ -1520,6 +1564,12 @@ class TestSslManage(CommandTest):
         self.assertIn('DELETE:/pools/default/trustedCAs/0', self.server.trace)
         self.assertIn('Certificate Authority with ID 0 has been deleted', self.str_output)
 
+    def test_cluster_ca_delete_not_init(self):
+        self.server_args['init'] = False
+        self.no_error_run(self.command + ['--cluster-ca-delete', '0'], self.server_args)
+        self.assertIn('DELETE:/pools/default/trustedCAs/0', self.server.trace)
+        self.assertIn('Certificate Authority with ID 0 has been deleted', self.str_output)
+
     def test_cluster_ca_delete_with_204(self):
         self.server_args['/pools/default/trustedCAs/0'] = 'unknown pool'
         self.server_args['override-status'] = 204
@@ -1528,6 +1578,17 @@ class TestSslManage(CommandTest):
         self.assertIn('Certificate Authority with ID 0 has been deleted', self.str_output)
 
     def test_upload_cluster_ca(self):
+        cert_file = tempfile.NamedTemporaryFile(delete=False)
+        cert_file.write(b'this-is-the-cert-file')
+        cert_file.close()
+        self.no_error_run(self.command + ['--upload-cluster-ca', cert_file.name], self.server_args)
+        os.remove(cert_file.name)
+        self.assertIn('POST:/controller/uploadClusterCA', self.server.trace)
+        self.assertIn('DEPRECATED:', self.str_output)
+        self.assertIn('Uploaded cluster certificate to http://127.0.0.1:6789', self.str_output)
+
+    def test_upload_cluster_ca_not_init(self):
+        self.server_args['init'] = False
         cert_file = tempfile.NamedTemporaryFile(delete=False)
         cert_file.write(b'this-is-the-cert-file')
         cert_file.close()
