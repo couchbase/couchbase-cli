@@ -314,7 +314,7 @@ class SFDSink(pump.Sink):
                     if cmd in [couchbaseConstants.CMD_TAP_MUTATION, couchbaseConstants.CMD_DCP_MUTATION]:
                         try:
                             v = val
-                            if dtype & 0x01:
+                            if dtype & couchbaseConstants.DATATYPE_JSON:
                                 d.contentType = couchstore.DocumentInfo.IS_JSON
                             # Why do this when we have a flag for it?
                             # if re.match('^\\s*{', v) and json.loads(v) is not None:

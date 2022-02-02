@@ -907,7 +907,7 @@ class StdOutSink(Sink):
                 seqno, dtype, nmeta, conf_res = msg[8:]
             if self.skip(key, vbucket_id):
                 continue
-            if dtype > 2:
+            if dtype & couchbaseConstants.DATATYPE_COMPRESSED != 0:
                 try:
                     val = snappy.uncompress(val)
                 except Exception:

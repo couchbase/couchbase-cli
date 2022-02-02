@@ -213,7 +213,7 @@ class CSVSink(pump.Sink):
             seqno = dtype = nmeta = 0
             if msg_tuple_format > 8:
                 seqno, dtype, nmeta, conf_res = msg[8:12]
-            if dtype > 2:
+            if dtype & couchbaseConstants.DATATYPE_COMPRESSED != 0:
                 try:
                     val_bytes = snappy.uncompress(val_bytes)
                 except Exception:

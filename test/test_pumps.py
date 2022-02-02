@@ -967,6 +967,45 @@ class TestCSVSink(unittest.TestCase):
 
                 self.assertEqual(count, len(msgs))
 
+    def test_consume_compressed_batch(self):
+        with tempfile.TemporaryDirectory() as tmpdirname, self.subTest(i='compressed batch'):
+            self.sink = CSVSink(self.opts, 'csv:' + os.path.join(tmpdirname, 'test-out.csv'),
+                                {'name': 'default'}, {'hostname': 'node1'}, None, None, None, None)
+            # test data
+            values = [json.dumps({'field': 'new_value'}).encode(), json.dumps({'field': 'value'}).encode()]
+            msgs = [
+                (cbcs.CMD_DCP_MUTATION, 0, 'KEY:0'.encode(), 0x02000006, 0, 0, ''.encode(),
+                 snappy.compress(values[0]), 0, 0x02, 0, 0),
+                (cbcs.CMD_DCP_MUTATION, 1, 'KEY:8'.encode(), 0x02000006, 0, 0, ''.encode(),
+                 snappy.compress(values[1]), 1, 0x02, 0, 0),
+            ]
+            batch = Batch(None)
+            batch.msgs = msgs
+
+            rv, _ = self.sink.consume_batch_async(batch)
+            self.assertEqual(0, rv)
+            self.sink.close()
+
+            with open(os.path.join(tmpdirname, 'test-out_default_node1.csv'), 'r') as rf:
+                reader = csv.reader(rf)
+                count = 0
+                next(reader)  # skip headers
+                for i, row in enumerate(reader):
+                    self.assertEqual(len(row), 8)
+                    _, vbid, key, flg, exp, cas, meta, val, seqno, dtype = msgs[count][:10]
+                    self.assertEqual(row[0], key.decode())
+                    self.assertEqual(int(row[1]), flg)
+                    self.assertEqual(int(row[2]), exp)
+                    self.assertEqual(int(row[3]), cas)
+                    self.assertEqual(ast.literal_eval(row[4]), values[i])
+                    # meta is not being stored properly at the moment see MB-32975
+                    # self.assertEqual(row[5].encode(), meta)
+                    self.assertEqual(int(row[6]), vbid)
+                    self.assertEqual(int(row[7]), dtype)
+                    count += 1
+
+                self.assertEqual(count, len(msgs))
+
 
 class TestBFDSinkEx(unittest.TestCase):
     def setUp(self):
