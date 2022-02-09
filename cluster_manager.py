@@ -2,13 +2,16 @@
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 import requests
 import urllib3
@@ -488,7 +491,11 @@ class ClusterManager(object):
         )
 
     def readd_server(self, server):
-        _, _, _, readd, _, errors = self._get_otps_names(readd_nodes=[server])
+        all_cluster_nodes_info, errors = self._get_all_cluster_nodes_info()
+        if errors:
+            return None, errors
+
+        readd, errors = self._get_otp_names_of_matched_nodes(all_cluster_nodes_info, [server])
         if errors:
             return None, errors
 
@@ -513,7 +520,12 @@ class ClusterManager(object):
             params["nodes"] = servers
         else:
             nodes = servers.split(",")
-            _, _, _, readd, _, errors = self._get_otps_names(readd_nodes=nodes)
+
+            all_cluster_nodes_info, errors = self._get_all_cluster_nodes_info()
+            if errors:
+                return None, errors
+
+            readd, errors = self._get_otp_names_of_matched_nodes(all_cluster_nodes_info, nodes)
             if errors:
                 return None, errors
 
@@ -548,16 +560,26 @@ class ClusterManager(object):
         return self._post_form_encoded(url, dict())
 
     def failover(self, servers_to_failover, hard, force):
-        _, _, failover, _, _, errors = self._get_otps_names(failover_nodes=servers_to_failover, get_inactive=force)
+        all_cluster_nodes_info, errors = self._get_all_cluster_nodes_info()
+        if errors:
+            return None, errors
+
+        failover, errors = self._get_otp_names_of_matched_nodes(all_cluster_nodes_info, servers_to_failover)
         if errors:
             return None, errors
 
         if len(failover) != len(servers_to_failover):
             if len(servers_to_failover) == 1:
-                return None, ["Server can't be failed over because it's not part of the cluster"]
+                return None, [f"Server {servers_to_failover[0]} can't be failed over because it's not part of the "
+                              "cluster"]
             return None, ["Some nodes specified to be failed over are not part of the cluster"]
 
-        params = {"otpNode": [server for server, _ in failover]}
+        failover_with_statuses, errors = self._get_nodes_to_failover_statuses_by_otp(all_cluster_nodes_info, failover,
+                                                                                     get_inactive=force)
+        if errors:
+            return None, errors
+
+        params = {"otpNode": [server for server, _ in failover_with_statuses]}
 
         if hard:
             if force:
@@ -565,14 +587,18 @@ class ClusterManager(object):
             url = f'{self.hostname}/controller/failOver'
             return self._post_form_encoded(url, params)
 
-        for server, server_status in failover:
+        for server, server_status in failover_with_statuses:
             if server_status != 'healthy':
-                return None, ["% can't be gracefully failed over because it is not healthy", server]
+                return None, [f"{server} can't be gracefully failed over because it is not healthy"]
         url = f'{self.hostname}/controller/startGracefulFailover'
         return self._post_form_encoded(url, params)
 
     def recovery(self, server, recovery_type):
-        _, _, _, readd, _, errors = self._get_otps_names(readd_nodes=[server])
+        all_cluster_nodes_info, errors = self._get_all_cluster_nodes_info()
+        if errors:
+            return None, errors
+
+        readd, errors = self._get_otp_names_of_matched_nodes(all_cluster_nodes_info, [server])
         if errors:
             return None, errors
 
@@ -586,14 +612,22 @@ class ClusterManager(object):
         return self._post_form_encoded(url, params)
 
     def rebalance(self, remove_nodes):
-        url = f'{self.hostname}/controller/rebalance'
-        all_nodes, eject, _, _, _, errors = self._get_otps_names(eject_nodes=remove_nodes)
+        all_cluster_nodes_info, errors = self._get_all_cluster_nodes_info()
+        if errors:
+            return None, errors
+
+        all_nodes, errors = self._get_all_nodes_otp_names(all_cluster_nodes_info)
+        if errors:
+            return None, errors
+
+        eject, errors = self._get_otp_names_of_matched_nodes(all_cluster_nodes_info, remove_nodes)
         if errors:
             return None, errors
 
         if len(eject) != len(remove_nodes):
             return None, ["Some nodes specified to be removed are not part of the cluster"]
 
+        url = f'{self.hostname}/controller/rebalance'
         params = {"knownNodes": ','.join(all_nodes),
                   "ejectedNodes": ','.join(eject)}
 
@@ -689,37 +723,107 @@ class ClusterManager(object):
 
         return rv, None
 
-    # otpNode should only be printed out or handed back to ns_server
-    # It should never be used to create a connection to a node
-    def _get_otps_names(self, eject_nodes=[], failover_nodes=[], readd_nodes=[], get_inactive=False):  # pylint: disable=dangerous-default-value
+    def _get_all_cluster_nodes_info(self):
         result, errors = self.pools('default')
         if errors:
-            return None, None, None, None, None, errors
+            return None, errors
 
-        all_list = list()
-        eject = list()
-        failover = list()
-        readd = list()
-        hostnames = list()
-        for node in result["nodes"]:
-            if "otpNode" not in node:
-                return [], [], [], [], [], ["Unable to get otp names"]
-            all_list.append(node['otpNode'])
-            hostnames.append(node['hostname'])
-            if node['hostname'] in eject_nodes:
-                eject.append(node['otpNode'])
-            if node['hostname'] in failover_nodes:
+        if "nodes" not in result:
+            return None, ["Could not get info about the nodes in the cluster"]
+
+        return result["nodes"], None
+
+    @classmethod
+    def _get_all_nodes_otp_names(cls, all_cluster_nodes_info):
+        all_cluster_nodes_otp_names = []
+
+        for node in all_cluster_nodes_info:
+            err = cls._check_otp_name_in_node(node)
+            if err is not None:
+                return None, [err]
+            all_cluster_nodes_otp_names.append(node['otpNode'])
+
+        return all_cluster_nodes_otp_names, None
+
+    # otpNode should only be printed out or handed back to ns_server
+    # It should never be used to create a connection to a node
+    @classmethod
+    def _get_otp_names_of_matched_nodes(cls, all_cluster_nodes_info, nodes_to_match):
+        matched_nodes_otp_names = []
+        nodes_to_match = cls._remove_schemes_from_nodes(nodes_to_match)
+
+        for node in all_cluster_nodes_info:
+            err = cls._check_otp_name_in_node(node)
+            if err is not None:
+                return None, [err]
+            otp_name = node['otpNode']
+
+            if "hostname" not in node:
+                return None, [f"Unable to get the hostname of the {otp_name} node"]
+            hostname = node['hostname']
+
+            if 'ports' not in node:
+                return None, [f"Unable to get the ports of the {hostname} node"]
+            ports = node['ports']
+            ports_to_check = []
+
+            if 'httpsMgmt' not in ports:
+                return None, [f"Unable to get the HTTPS port of the {hostname} node"]
+            ports_to_check.append(ports['httpsMgmt'])
+
+            _, otp_hostname = otp_name.split('@')
+            node_hostname, node_port = cls._get_hostname_and_port(hostname)
+            if node_hostname is None or node_port is None:
+                return None, [f"Failed to get hostname and port of the {hostname} node"]
+            ports_to_check.append(node_port)
+
+            for port in ports_to_check:
+                if f'{node_hostname}:{port}' in nodes_to_match or f'{otp_hostname}:{port}' in nodes_to_match:
+                    matched_nodes_otp_names.append(otp_name)
+
+        return matched_nodes_otp_names, None
+
+    @classmethod
+    def _check_otp_name_in_node(cls, node):
+        if "otpNode" not in node:
+            # Try to provide the hostname of the node to help with investigating why its Otp name could not be
+            # retrieved from the default cluster management pool
+            if "hostname" not in node:
+                return "Unable to get the Otp name or the hostname of a cluster node"
+            return f"Unable to get the Otp name of the {node['hostname']} node"
+        return None
+
+    @classmethod
+    def _remove_schemes_from_nodes(cls, nodes):
+        return [re.sub('.*//', '', node_url) for node_url in nodes]
+
+    @classmethod
+    def _get_hostname_and_port(cls, node):
+        # We need to support node urls without schemes, prepending '//' makes urlparse() correctly identify hostnames
+        if '//' not in node:
+            node = f'//{node}'
+        parse_result = urlparse(node)
+        hostname = parse_result.hostname
+        try:
+            port = parse_result.port
+        except ValueError:
+            return None, None
+
+        return hostname, port
+
+    @classmethod
+    def _get_nodes_to_failover_statuses_by_otp(cls, all_cluster_nodes_info, nodes_otp_names, get_inactive=False):
+        nodes_otp_names_with_states = []
+
+        for node in all_cluster_nodes_info:
+            otp_name = node['otpNode']
+            if otp_name in nodes_otp_names:
                 valid_states = ['active', 'inactiveFailed', 'inactiveAdded'] if get_inactive else ['active']
                 if node['clusterMembership'] not in valid_states:
-                    return [], [], [], [], [], ["Can't failover a node that isn't in the cluster"]
-                failover.append((node['otpNode'], node['status']))
+                    return None, ["Can't failover a node that isn't in the cluster"]
+                nodes_otp_names_with_states.append((otp_name, node['status']))
 
-            _, host = node['otpNode'].split('@')
-            hostport = f'{host}:8091'
-            if node['hostname'] in readd_nodes or hostport in readd_nodes:
-                readd.append(node['otpNode'])
-
-        return all_list, eject, failover, readd, hostnames, None
+        return nodes_otp_names_with_states, None
 
     def create_bucket(self, name, bucket_type, storage_type, memory_quota,
                       durability_min_level,

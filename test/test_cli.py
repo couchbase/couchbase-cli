@@ -682,10 +682,10 @@ class TestFailover(CommandTest):
         self.basic_args = ['--server-failover', 'localhost:6789', '--no-progress-bar']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         self.server_args['pools_default'] = {'nodes': [
-            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'healthy',
-             'clusterMembership': 'active'},
-            {'otpNode': 'ns1@some-host', 'hostname': 'some-host:6789', 'status': 'healthy',
-             'clusterMembership': 'active'}
+            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'healthy', 'ports':
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'active'},
+            {'otpNode': 'ns1@some-host', 'hostname': 'some-host:6789', 'status': 'healthy', 'ports':
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'active'}
         ]}
         self.server_args['tasks'] = [{'type': 'rebalance', 'status': 'notRunning'}]
         super(TestFailover, self).setUp()
@@ -702,12 +702,13 @@ class TestFailover(CommandTest):
     def test_failover_hard_non_existent_node(self):
         self.basic_args[1] = 'random-node:6789'
         self.system_exit_run(self.command + self.basic_args + ['--hard'], self.server_args)
-        self.assertIn('Server can\'t be failed over because it\'s not part of the cluster', self.str_output)
+        self.assertIn('Server random-node:6789 can\'t be failed over because it\'s not part of the cluster',
+                      self.str_output)
 
     def test_failover_force_unhealthy_node(self):
         self.server_args['pools_default'] = {'nodes': [
-            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'unhealthy',
-             'clusterMembership': 'active'}]}
+            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'unhealthy', 'ports':
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'active'}]}
         self.system_exit_run(self.command + self.basic_args, self.server_args)
         self.assertIn('can\'t be gracefully failed over because it is not healthy', self.str_output)
 
@@ -722,16 +723,16 @@ class TestFailover(CommandTest):
 
     def test_failover_force_inactive_failed(self):
         self.server_args['pools_default'] = {'nodes': [
-            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'unhealthy',
-             'clusterMembership': 'inactiveFailed'}]}
+            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'unhealthy', 'ports':
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'inactiveFailed'}]}
         self.no_error_run(self.command + self.basic_args + ['--hard', '--force'], self.server_args)
         self.assertIn('POST:/controller/failOver', self.server.trace)
         self.assertIn('allowUnsafe=true', self.server.rest_params)
 
     def test_failover_force_inactive_added(self):
         self.server_args['pools_default'] = {'nodes': [
-            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'unhealthy',
-             'clusterMembership': 'inactiveAdded'}]}
+            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'unhealthy', 'ports':
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'inactiveAdded'}]}
         self.no_error_run(self.command + self.basic_args + ['--hard', '--force'], self.server_args)
         self.assertIn('POST:/controller/failOver', self.server.trace)
         self.assertIn('allowUnsafe=true', self.server.rest_params)
@@ -877,10 +878,10 @@ class TestRebalance(CommandTest):
 
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         self.server_args['pools_default'] = {'nodes': [
-            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'healthy',
-             'clusterMembership': 'active'},
-            {'otpNode': 'ns1@some-host', 'hostname': 'some-host:6789', 'status': 'healthy',
-             'clusterMembership': 'active'}
+            {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'healthy', 'ports':
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'active'},
+            {'otpNode': 'ns1@some-host', 'hostname': 'some-host:6789', 'status': 'healthy', 'ports':
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'active'}
         ]}
         self.server_args['tasks'] = [{'type': 'rebalance', 'status': 'notRunning'}]
         super(TestRebalance, self).setUp()
