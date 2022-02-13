@@ -1912,8 +1912,8 @@ class ClusterManager(object):
             params["hostname"] = opts.hostname
         if opts.encryption:
             params["encryption"] = opts.encryption
-        if opts.certificate:
-            params["certificate"] = opts.certificate
+        if opts.certificates:
+            params["certificate"] = '\n'.join(opts.certificates)
         if opts.user_key:
             params['clientKey'] = opts.user_key
         if opts.user_key_passphrase:

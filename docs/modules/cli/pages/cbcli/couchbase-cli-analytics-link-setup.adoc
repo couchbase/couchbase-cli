@@ -131,7 +131,9 @@ one below.
 
 --certificate <path>::
   The local path to the file containing the certificate used for encryption.
-  Required with *--encryption full*.
+  Multiple certificates can be configured by specifying --certificate <path>
+  for each certificate.
+  At least one certificate required with *--encryption full*.
 
 === S3 Link Options
 Following are the options specific to *--type s3*, i.e. S3 links
@@ -248,14 +250,15 @@ $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  --hostname 192.168.1.6 --link-username Administrator \
  --link-password password --encryption none
 ----
-If the new remote reference should be fully encrypted then make sure to enable
-encryption:
+If the new remote reference should be fully encrypted then make sure to
+enable encryption. Two certificates are specified for the remote cluster
+in the following command:
 ----
 $ couchbase-cli analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --create --scope Default --name east --type couchbase \
  --hostname 192.168.1.6 --link-username Administrator \
  --link-password password --encryption full \
- --certificate /root/cluster.cert
+ --certificate /root/cert1.pem --certificate /root/cert2.pem
 ----
 To create an S3 link named `myAwsLink` in the "`remote.links`.s3" scope, run
 the following command:

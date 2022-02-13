@@ -42,7 +42,7 @@ into the main documentation for Couchbase Server, hosted at https://docs.couchba
 
 # Testing
 
-Running the unit tests contained in this repository can be done by running `make tests`, this will setup a Python
+Running the unit tests contained in this repository can be done by running `make test`, this will setup a Python
 virtual environment using `pipenv` and run any unit tests contained in the `test` directory. This may be run inside or
 outside of a shell created using `make shell`.
 
