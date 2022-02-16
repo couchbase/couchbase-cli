@@ -201,6 +201,8 @@ Run index and data compaction in parallel. Global setting only.
   majority of the Data Service nodes. Accordingly, it will be written to disk
   on those nodes.
 
+include::{partialsdir}/cbcli/part-common-pitr-options.adoc[]
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]

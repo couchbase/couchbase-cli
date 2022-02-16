@@ -237,6 +237,8 @@ Run index and data compaction in parallel. Global setting only.
   Sets the frequency of the tombstone (metadata) purge interval. The default
   value is three days.
 
+include::{partialsdir}/cbcli/part-common-pitr-options.adoc[]
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]

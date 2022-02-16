@@ -727,7 +727,8 @@ class ClusterManager(object):
                       threads_number, conflict_resolution, flush_enabled,
                       max_ttl, compression_mode, sync, db_frag_perc, db_frag_size, view_frag_perc,
                       view_frag_size, from_hour, from_min, to_hour, to_min,
-                      abort_outside, paralleldb_and_view_compact, purge_interval, timeout=60):
+                      abort_outside, paralleldb_and_view_compact, purge_interval,
+                      pitr_enabled, pitr_granularity, pitr_max_history_age, timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
         if name is None:
@@ -761,6 +762,12 @@ class ClusterManager(object):
             params["storageBackend"] = storage_type
         if durability_min_level is not None:
             params["durabilityMinLevel"] = durability_min_level
+        if pitr_enabled is not None:
+            params["pitrEnabled"] = one_zero_boolean_to_string(pitr_enabled)
+        if pitr_granularity is not None:
+            params["pitrGranularity"] = pitr_granularity
+        if pitr_max_history_age is not None:
+            params["pitrMaxHistoryAge"] = pitr_max_history_age
 
         if bucket_type == "couchbase":
             if (db_frag_perc is not None or db_frag_size is not None or view_frag_perc is not None or
@@ -828,7 +835,8 @@ class ClusterManager(object):
                     replicas, threads_number, flush_enabled, max_ttl,
                     compression_mode, remove_port, db_frag_perc, db_frag_size, view_frag_perc,
                     view_frag_size, from_hour, from_min, to_hour, to_min,
-                    abort_outside, paralleldb_and_view_compact, purge_interval, couchbase_bucket: bool = True):
+                    abort_outside, paralleldb_and_view_compact, purge_interval,
+                    pitr_enabled, pitr_granularity, pitr_max_history_age, couchbase_bucket: bool = True):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -881,6 +889,12 @@ class ClusterManager(object):
             params["purgeInterval"] = purge_interval
         if durability_min_level is not None:
             params["durabilityMinLevel"] = durability_min_level
+        if pitr_enabled is not None:
+            params["pitrEnabled"] = one_zero_boolean_to_string(pitr_enabled)
+        if pitr_granularity is not None:
+            params["pitrGranularity"] = pitr_granularity
+        if pitr_max_history_age is not None:
+            params["pitrMaxHistoryAge"] = pitr_max_history_age
 
         return self._post_form_encoded(url, params)
 

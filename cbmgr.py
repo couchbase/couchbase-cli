@@ -975,6 +975,16 @@ class BucketCreate(Subcommand):
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
                            metavar="<float>", help="Sets the frequency of the tombstone purge interval")
 
+        group.add_argument("--enable-point-in-time", dest="enable_pitr", metavar="<0|1>",
+                           choices=["0", "1"], help="Enable the Point-In-Time feature on this bucket, which allows "
+                           "taking Point-In-Time backups of it (0 or 1)")
+        group.add_argument("--point-in-time-granularity", dest="pitr_granularity", default=None, type=(int),
+                           metavar="<seconds>", help="Set the granularity of Point-In-Time backups that can be taken "
+                           "of this bucket (in seconds)")
+        group.add_argument("--point-in-time-max-history-age", dest="pitr_max_history_age", default=None, type=(int),
+                           metavar="<seconds>", help="Set the maximum history age of Point-In-Time backups that can "
+                           "be taken of this bucket (in seconds)")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1013,6 +1023,10 @@ class BucketCreate(Subcommand):
                      or opts.paralleldb_and_view_compact is not None)):
             _warning(f'ignoring compaction settings as bucket type {opts.type} does not accept it')
 
+        if opts.type != "couchbase" and (opts.enable_pitr is not None or opts.pitr_granularity is not None or
+                                         opts.pitr_max_history_age is not None):
+            _exit_if_errors(["Point-In-Time options are only supported for 'couchbase' buckets"])
+
         storage_type = "couchstore"
         if opts.storage is not None:
             if opts.type != "couchbase":
@@ -1040,7 +1054,8 @@ class BucketCreate(Subcommand):
                                             opts.max_ttl, opts.compression_mode, opts.wait, opts.db_frag_perc,
                                             opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
                                             opts.from_hour, opts.from_min, opts.to_hour, opts.to_min,
-                                            opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval)
+                                            opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval,
+                                            opts.enable_pitr, opts.pitr_granularity, opts.pitr_max_history_age)
         _exit_if_errors(errors)
         _success("Bucket created")
 
@@ -1141,6 +1156,13 @@ class BucketEdit(Subcommand):
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
                            metavar="<num>", help="Set the bucket metadata purge interval")
 
+        group.add_argument("--enable-point-in-time", dest="enable_pitr", metavar="<0|1>",
+                           choices=["0", "1"], help="Enable Point-In-Time backups and restores on this bucket (0 or 1)")
+        group.add_argument("--point-in-time-granularity", dest="pitr_granularity", default=None, type=(int),
+                           metavar="<seconds>", help="Set the granularity of Point-In-Time backups in seconds")
+        group.add_argument("--point-in-time-max-history-age", dest="pitr_max_history_age", default=None, type=(int),
+                           metavar="<seconds>", help="Set the maximum history age of Point-In-Time backups in seconds")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1184,6 +1206,12 @@ class BucketEdit(Subcommand):
                      or opts.abort_outside is not None or opts.paralleldb_and_view_compact is not None)):
             _exit_if_errors([f'compaction settings can not be specified for a {bucket["bucketType"]} bucket'])
 
+        is_couchbase_bucket = "bucketType" in bucket and bucket["bucketType"] == "membase"
+
+        if not is_couchbase_bucket and (opts.enable_pitr is not None or opts.pitr_granularity is not None or
+                                        opts.pitr_max_history_age is not None):
+            _exit_if_errors(["Point-In-Time options are only supported for 'couchbase' buckets"])
+
         priority = None
         if opts.priority is not None:
             if opts.priority == BUCKET_PRIORITY_HIGH_STR:
@@ -1202,8 +1230,8 @@ class BucketEdit(Subcommand):
                                           opts.max_ttl, opts.compression_mode, opts.remove_port, opts.db_frag_perc,
                                           opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size, opts.from_hour,
                                           opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
-                                          opts.paralleldb_and_view_compact, opts.purge_interval,
-                                          'bucketType' in bucket and bucket['bucketType'] == 'membase')
+                                          opts.paralleldb_and_view_compact, opts.purge_interval, opts.enable_pitr,
+                                          opts.pitr_granularity, opts.pitr_max_history_age, is_couchbase_bucket)
         _exit_if_errors(errors)
 
         _success("Bucket edited")
