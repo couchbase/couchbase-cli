@@ -45,22 +45,38 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   List all functions.
 
 --deploy::
-  Deploys the named function. This option requires --name to be specified.
+  Deploys the named function. This option requires --name to be specified,
+  as well as --bucket and --scope for collection-aware functions.
 
 --undeploy::
-  Undeploys the named function. This option requires --name to be specified.
+  Undeploys the named function. This option requires --name to be specified,
+  as well as --bucket and --scope for collection-aware functions.
 
 --pause::
-  Pause the named function. This option requires --name to be specified. See
-  the PAUSE VS UNDEPLOY section for more information.
+  Pause the named function. This option requires --name to be specified, as
+  well as --bucket and --scope for collection-aware functions. See the PAUSE
+  VS UNDEPLOY section for more information.
 
 --resume::
-  Resume the named function. This option requires --name to be specified. See
-  the PAUSE VS UNDEPLOY section for more information.
+  Resume the named function. This option requires --name to be specified, as
+  well as --bucket and --scope for collection-aware functions. See the PAUSE
+  VS UNDEPLOY section for more information.
 
 --name <name>::
-  The name of the function to take a action against. This is used by
-  --export, --delete, --deploy and --undeploy options only.
+  The name of the function to take a action against. This is used by --deploy,
+  --undeploy, --pause, --resume and --delete options.
+
+--bucket <bucket>::
+  The bucket to which the function to take an action against belongs. This
+  needs to be specified together with --scope or both should be omitted for
+  collection-unaware functions. This is used by --deploy, --undeploy, --pause,
+  --resume and --delete options.
+
+--scope <scope>::
+  The scope to which the function to take an action against belongs. This
+  needs to be specified together with --bucket or both should be omitted for
+  collection-unaware functions. This is used by --deploy, --undeploy, --pause,
+  --resume and --delete options.
 
 --boundary <from-everything|from-now>::
   (Deprecated) The place to start at when deploying a new function. Accepts

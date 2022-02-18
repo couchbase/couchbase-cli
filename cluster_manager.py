@@ -1864,17 +1864,18 @@ class ClusterManager(object):
         url = f'{hosts[0]}/api/v1/import'
         return self._post_json(url, parms)
 
-    def delete_function(self, function):
+    def delete_function(self, function, bucket, scope):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
 
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
-        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}'
+        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}' \
+            f'?bucket={urllib.parse.quote_plus(bucket)}&scope={urllib.parse.quote_plus(scope)}'
         return self._delete(url, None)
 
-    def pause_resume_function(self, function_name, pause):
+    def pause_resume_function(self, function_name, bucket, scope, pause):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
@@ -1882,10 +1883,11 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
 
-        url = f"{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function_name)}/{'pause' if pause else 'resume'}"
+        url = f"{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function_name)}/{'pause' if pause else 'resume'}" \
+            f"?bucket={urllib.parse.quote_plus(bucket)}&scope={urllib.parse.quote_plus(scope)}"
         return self._post_json(url, None)
 
-    def deploy_undeploy_function(self, function, deploy, boundary):
+    def deploy_undeploy_function(self, function, bucket, scope, deploy, boundary):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
@@ -1901,7 +1903,8 @@ class ClusterManager(object):
         if deploy and boundary:
             params["feed-boundary"] = boundary
 
-        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}/settings'
+        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}/settings' \
+            f'?bucket={urllib.parse.quote_plus(bucket)}&scope={urllib.parse.quote_plus(scope)}'
         return self._post_json(url, params)
 
     def create_analytics_link(self, opts):
