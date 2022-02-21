@@ -444,6 +444,7 @@ endpoints = [
     (r'/whoami', {'GET': get_my_roles}),
     (r'/pools$', {'GET': get_pools}),
     (r'/pools/default$', {'POST': do_nothing, 'GET': get_default_pool}),
+    (r'/pools/default/controller/addNode$', {'POST': do_nothing}),
     (r'/pools/default/certificates', {'GET': get_by_path}),
     (r'/pools/default/certificate/node/[\w\d.:]+$', {'GET': get_by_path}),
     (r'/pools/default/remoteClusters(/)?$', {'POST': do_nothing, 'GET': get_remote_cluster}),
