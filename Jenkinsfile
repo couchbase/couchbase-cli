@@ -34,7 +34,7 @@ pipeline {
                             gerritProjects: [
                                 [
                                     compareType: "PLAIN", disableStrictForbiddenFileVerification: false, pattern: "couchbase-cli",
-                                    branches: [[ compareType: "PLAIN", pattern: "master" ]]
+                                    branches: [[ compareType: "PLAIN", pattern: "neo" ]]
                                 ],
                              ],
                             triggerOnEvents: [
