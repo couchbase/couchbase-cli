@@ -277,3 +277,25 @@ a regular expression to the `-k` flag will result in only documents that have
 
 The command above will only restore documents with keys that have the prefix
 'user:'.
+
+== Rehash=1
+
+Couchbase Server on Mac OS X uses a different number of configured vBuckets than Linux and Windows installations.
+Because of this, restoring to Mac OS X from a Linux or Windows backup or restoring to Linux/Windows from a Mac OS X backup requires the `rehash=1` option.
+
+To backup the data (from any operating system), use the standard `cbbackup` tool and options.
+
+To restore the data to a cluster with a different operating system, connect to the 8091 port, and use the `rehash=1` option to rehash the information and distribute the data to the appropriate node within the cluster.
+`rehash=1` rehashes the partition IDs of each item.
+This is required when transferring data between clusters with a different number of partitions, such as when transferring data from a Mac OS X cluster to a non-Mac OS X cluster.
+
+----
+cbrestore /path/to/backup -u [username] -p [password]
+  -x rehash=1
+  http://[host]:8091
+  --bucket-source [my_bucket]
+  --bucket-destination [my_bucket]gen_docs couchbase-cli-backup-service.adoc 1
+
+----
+
+NOTE: If you backed up multiple buckets from Mac OS X and are restoring to either Linux or Windows, each bucket must be restored individually.
