@@ -923,7 +923,7 @@ class TestServerAdd(CommandTest):
 
     def test_server_add_basic(self):
         self.no_error_run(self.command + self.cmd_args, self.server_args)
-        self.assertIn('POST:/pools/default/controller/addNode', self.server.trace)
+        self.assertIn('POST:/controller/addNode', self.server.trace)
         expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd', 'services=kv']
         self.rest_parameter_match(expected_params)
 
@@ -936,7 +936,7 @@ class TestServerAdd(CommandTest):
     def test_server_add_services(self):
         self.no_error_run(self.command + self.cmd_args + ['--services', 'data,analytics,eventing,query,fts,backup'],
                           self.server_args)
-        self.assertIn('POST:/pools/default/controller/addNode', self.server.trace)
+        self.assertIn('POST:/controller/addNode', self.server.trace)
         expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd',
                            ['services=kv%2Cfts%2Ccbas%2Cn1ql%2Ceventing%2Cbackup']]
         self.assertEqual(len(expected_params), len(self.server.rest_params))

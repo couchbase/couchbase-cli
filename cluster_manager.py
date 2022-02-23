@@ -469,7 +469,7 @@ class ClusterManager(object):
         # Not given a group, use the default 'addNode' API; this avoids using the 'serverGroups' API on CE. See MB-51094
         # for more information.
         if group_name is None or group_name == "":
-            return f"{self.hostname}/pools/default/controller/addNode", None
+            return f"{self.hostname}/controller/addNode", None
 
         group, errors = self.get_server_group(group_name)
         if errors:
