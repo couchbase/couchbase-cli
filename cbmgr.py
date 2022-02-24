@@ -4125,6 +4125,10 @@ class EventingFunctionSetup(Subcommand):
                            help="Set the function deployment boundary (Deprecated)")
         group.add_argument("--name", dest="name", metavar="<name>",
                            default=False, help="The name of the function to take an action on")
+        group.add_argument("--bucket", dest="bucket", metavar="<bucket>",
+                           default="", help="The bucket to which the function to take an action against belongs")
+        group.add_argument("--scope", dest="scope", metavar="<scope>",
+                           default="", help="The scope to which the function to take an action against belongs")
         group.add_argument("--file", dest="filename", metavar="<file>",
                            default=False, help="The file to export and import function(s) to and from")
         group.add_argument("--pause", dest="pause", action="store_true", help="Pause a function")
@@ -4163,7 +4167,8 @@ class EventingFunctionSetup(Subcommand):
     def _pause_resume(self, opts, pause):
         if not opts.name:
             _exit_if_errors([f"Flag --name is required with the {'--pause' if pause else '--resume'} flag"])
-        _, err = self.rest.pause_resume_function(opts.name, pause)
+        self._check_bucket_and_scope(opts)
+        _, err = self.rest.pause_resume_function(opts.name, opts.bucket, opts.scope, pause)
         _exit_if_errors(err)
         _success(f"Function was {'paused' if pause else 'resumed'}")
 
@@ -4203,7 +4208,8 @@ class EventingFunctionSetup(Subcommand):
     def _delete(self, opts):
         if not opts.name:
             _exit_if_errors(["--name is needed to delete a function"])
-        _, errors = self.rest.delete_function(opts.name)
+        self._check_bucket_and_scope(opts)
+        _, errors = self.rest.delete_function(opts.name, opts.bucket, opts.scope)
         _exit_if_errors(errors)
         _success("Request to delete the function was accepted")
 
@@ -4212,7 +4218,8 @@ class EventingFunctionSetup(Subcommand):
             _exit_if_errors([f"--name is needed to {'deploy' if deploy else 'undeploy'} a function"])
         if deploy:
             self._handle_boundary(opts)
-        _, errors = self.rest.deploy_undeploy_function(opts.name, deploy, opts.boundary)
+        self._check_bucket_and_scope(opts)
+        _, errors = self.rest.deploy_undeploy_function(opts.name, opts.bucket, opts.scope, deploy, opts.boundary)
         _exit_if_errors(errors)
         _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
 
@@ -4229,6 +4236,13 @@ class EventingFunctionSetup(Subcommand):
             opts.boundary = False  # The is the default value, it'll be ignored by the REST client
             _deprecated("The --boundary option is deprecated and will be ignored; the function definition itself now"
                         " defines the feed boundary")
+
+    def _check_bucket_and_scope(self, opts):
+        # --bucket and --scope can only be supplied together
+        # If neither bucket nor scope is supplied, the eventing service will assume collection-unaware defaults "*"
+        if opts.bucket == "" and opts.scope != "" or opts.bucket != "" and opts.scope == "":
+            _exit_if_errors(["You need to supply both --bucket and --scope, or neither for collection-unaware eventing "
+                             "functions"])
 
     def _list(self):
         functions, errors = self.rest.list_functions()

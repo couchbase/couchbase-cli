@@ -8,7 +8,7 @@ import ssl
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 import requests
 from cryptography import x509
@@ -76,7 +76,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.server.rest_server.trace.append(f'POST:{parsed.path}')
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'POST' in fns:
-                return self.handle_fn(fns['POST'], parsed.path)
+                return self.handle_fn(fns['POST'], parsed.path, parsed.query)
 
         self.not_found()
 
@@ -106,7 +106,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'DELETE' in fns:
-                return self.handle_fn(fns['DELETE'], parsed.path)
+                return self.handle_fn(fns['DELETE'], parsed.path, parsed.query)
         self.not_found()
 
     def not_found(self):
@@ -434,6 +434,11 @@ def get_audit_settings(rest_params=None, server_args=None, path="", endpoint_mat
 
 
 def do_eventing_setup_subcommand(rest_params=None, server_args=None, path="", endpoint_match=None):
+    if 'expected_query_parameters' in server_args:
+        if server_args['expected_query_parameters'] == parse_qs(endpoint_match):
+            return 200, {}
+        return 404, {}
+
     if 'override_eventing_setup_status' in server_args and 'override_eventing_setup_payload' in server_args:
         return server_args['override_eventing_setup_status'], server_args['override_eventing_setup_payload']
     return 200, {}
@@ -503,6 +508,7 @@ endpoints = [
     (r'/node/controller/loadTrustedCAs', {'POST': do_nothing}),
     (r'/node/controller/reloadCertificate', {'POST': do_nothing}),
     (r'/node/controller/setupNetConfig', {'POST': do_nothing}),
+    (r'/controller/addNode$', {'POST': do_nothing}),
     (r'/controller/failOver$', {'POST': do_nothing}),
     (r'/controller/rebalance$', {'POST': do_nothing}),
     (r'/controller/changePassword', {'POST': do_nothing}),
@@ -529,8 +535,7 @@ endpoints = [
       'DELETE': do_nothing}),
 
     # eventing api
-    (r'/api/v1/functions/(.*)/settings', {'POST': do_nothing}),
-    (r'/api/v1/functions/\w+/pause$', {'POST': do_eventing_setup_subcommand}),
+    (r'/api/v1/functions/\w+', {'POST': do_eventing_setup_subcommand, 'DELETE': do_eventing_setup_subcommand}),
 
     # backup server API
     (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing}),

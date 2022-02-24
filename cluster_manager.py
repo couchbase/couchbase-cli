@@ -459,26 +459,33 @@ class ClusterManager(object):
         if not groups or not groups["groups"] or groups["groups"] == 0:
             return None, ["No server groups found"]
 
-        if group_name:
-            for group in groups["groups"]:
-                if group["name"] == group_name:
-                    return group, None
-            return None, [f'Group `{group_name}` not found']
-        else:
-            return groups["groups"][0], None
+        for group in groups["groups"]:
+            if group["name"] == group_name:
+                return group, None
 
-    def add_server(self, add_server, group_name, username, password, services):
+        return None, [f'Group `{group_name}` not found']
+
+    def get_add_node_uri(self, group_name):
+        # Not given a group, use the default 'addNode' API; this avoids using the 'serverGroups' API on CE. See MB-51094
+        # for more information.
+        if group_name is None or group_name == "":
+            return f"{self.hostname}/controller/addNode", None
+
         group, errors = self.get_server_group(group_name)
         if errors:
             return None, errors
 
-        url = f'{self.hostname}{group["addNodeURI"]}'
-        params = {"hostname": add_server,
-                  "user": username,
-                  "password": password,
-                  "services": services}
+        return f'{self.hostname}{group["addNodeURI"]}', None
 
-        return self._post_form_encoded(url, params)
+    def add_server(self, add_server, group_name, username, password, services):
+        uri, errors = self.get_add_node_uri(group_name)
+        if errors:
+            return None, errors
+
+        return self._post_form_encoded(
+            uri,
+            {"hostname": add_server, "user": username, "password": password, "services": services},
+        )
 
     def readd_server(self, server):
         _, _, _, readd, _, errors = self._get_otps_names(readd_nodes=[server])
@@ -1857,17 +1864,18 @@ class ClusterManager(object):
         url = f'{hosts[0]}/api/v1/import'
         return self._post_json(url, parms)
 
-    def delete_function(self, function):
+    def delete_function(self, function, bucket, scope):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
 
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
-        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}'
+        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}' \
+            f'?bucket={urllib.parse.quote_plus(bucket)}&scope={urllib.parse.quote_plus(scope)}'
         return self._delete(url, None)
 
-    def pause_resume_function(self, function_name, pause):
+    def pause_resume_function(self, function_name, bucket, scope, pause):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
@@ -1875,10 +1883,11 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
 
-        url = f"{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function_name)}/{'pause' if pause else 'resume'}"
+        url = f"{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function_name)}/{'pause' if pause else 'resume'}" \
+            f"?bucket={urllib.parse.quote_plus(bucket)}&scope={urllib.parse.quote_plus(scope)}"
         return self._post_json(url, None)
 
-    def deploy_undeploy_function(self, function, deploy, boundary):
+    def deploy_undeploy_function(self, function, bucket, scope, deploy, boundary):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
@@ -1894,7 +1903,8 @@ class ClusterManager(object):
         if deploy and boundary:
             params["feed-boundary"] = boundary
 
-        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}/settings'
+        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}/settings' \
+            f'?bucket={urllib.parse.quote_plus(bucket)}&scope={urllib.parse.quote_plus(scope)}'
         return self._post_json(url, params)
 
     def create_analytics_link(self, opts):

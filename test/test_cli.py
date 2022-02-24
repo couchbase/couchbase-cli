@@ -923,7 +923,7 @@ class TestServerAdd(CommandTest):
 
     def test_server_add_basic(self):
         self.no_error_run(self.command + self.cmd_args, self.server_args)
-        self.assertIn('POST:/pools/default/serverGroups/0/addNode', self.server.trace)
+        self.assertIn('POST:/controller/addNode', self.server.trace)
         expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd', 'services=kv']
         self.rest_parameter_match(expected_params)
 
@@ -936,7 +936,7 @@ class TestServerAdd(CommandTest):
     def test_server_add_services(self):
         self.no_error_run(self.command + self.cmd_args + ['--services', 'data,analytics,eventing,query,fts,backup'],
                           self.server_args)
-        self.assertIn('POST:/pools/default/serverGroups/0/addNode', self.server.trace)
+        self.assertIn('POST:/controller/addNode', self.server.trace)
         expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd',
                            ['services=kv%2Cfts%2Ccbas%2Cn1ql%2Ceventing%2Cbackup']]
         self.assertEqual(len(expected_params), len(self.server.rest_params))
@@ -2022,6 +2022,91 @@ class TestEventingFunctionSetup(CommandTest):
             {"version": "6.6.1-0000-enterprise"}, {"version": "7.0.0-0000-enteenterprise"}]}
         self.system_exit_run(self.command + self.command_args, self.server_args)
         self.assertIn("--boundary is needed to deploy a function", self.str_output)
+
+    def test_deploy_with_no_bucket_and_scope_flags(self):
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.no_error_run(self.command + self.command_args, self.server_args)
+        self.assertIn("Request to deploy the function was accepted", self.str_output)
+
+    def test_deploy_with_only_bucket_flag(self):
+        self.command_args += ["--bucket", "default"]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("You need to supply both --bucket and --scope, or neither for collection-unaware eventing "
+                      "functions", self.str_output)
+
+    def test_deploy_with_only_scope_flag(self):
+        self.command_args += ["--scope", "default"]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("You need to supply both --bucket and --scope, or neither for collection-unaware eventing "
+                      "functions", self.str_output)
+
+    def test_deploy_with_both_bucket_and_scope_flags(self):
+        self.command_args += ["--bucket", "default", "--scope", "default"]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.no_error_run(self.command + self.command_args, self.server_args)
+        self.assertIn("Request to deploy the function was accepted", self.str_output)
+
+
+class TestEventingFunctionQueryParameters(CommandTest):
+    def setUp(self):
+        self.command = ["couchbase-cli", "eventing-function-setup"] + cluster_connect_args
+        self.command_args = ["--name", "function_name"]
+        self.server_args = {"enterprise": True, "init": True, "is_admin": True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'eventingAdminPort': port,
+                                }
+                            }]}}
+        super().setUp()
+
+    def test_expected_parameters_deploy_no_bucket_and_scope(self):
+        self.command_args += ["--deploy"]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.server_args['expected_query_parameters'] = {}
+        self.no_error_run(self.command + self.command_args, self.server_args)
+
+    def test_expected_parameters_deploy_bucket_and_scope(self):
+        bucket_name = "test_bucket_deploy"
+        scope_name = "test_scope_deploy"
+        self.command_args += ["--deploy", "--bucket", bucket_name, "--scope", scope_name]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.server_args['expected_query_parameters'] = {'bucket': [bucket_name], 'scope': [scope_name]}
+        self.no_error_run(self.command + self.command_args, self.server_args)
+
+    def test_expected_parameters_undeploy_bucket_and_scope(self):
+        bucket_name = "test_bucket_undeploy"
+        scope_name = "test_scope_undeploy"
+        self.command_args += ["--undeploy", "--bucket", bucket_name, "--scope", scope_name]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.server_args['expected_query_parameters'] = {'bucket': [bucket_name], 'scope': [scope_name]}
+        self.no_error_run(self.command + self.command_args, self.server_args)
+
+    def test_expected_parameters_delete_bucket_and_scope(self):
+        bucket_name = "test_bucket_delete"
+        scope_name = "test_scope_delete"
+        self.command_args += ["--delete", "--bucket", bucket_name, "--scope", scope_name]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.server_args['expected_query_parameters'] = {'bucket': [bucket_name], 'scope': [scope_name]}
+        self.no_error_run(self.command + self.command_args, self.server_args)
+
+    def test_expected_parameters_pause_bucket_and_scope(self):
+        bucket_name = "test_bucket_pause"
+        scope_name = "test_scope_pause"
+        self.command_args += ["--pause", "--bucket", bucket_name, "--scope", scope_name]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.server_args['expected_query_parameters'] = {'bucket': [bucket_name], 'scope': [scope_name]}
+        self.no_error_run(self.command + self.command_args, self.server_args)
+
+    def test_expected_parameters_resume_bucket_and_scope(self):
+        bucket_name = "test_bucket_resume"
+        scope_name = "test_scope_resume"
+        self.command_args += ["--resume", "--bucket", bucket_name, "--scope", scope_name]
+        self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
+        self.server_args['expected_query_parameters'] = {'bucket': [bucket_name], 'scope': [scope_name]}
+        self.no_error_run(self.command + self.command_args, self.server_args)
 
 
 class TestEventingFunctionSetupSubcommandErrors(CommandTest):
