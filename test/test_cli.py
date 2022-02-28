@@ -2109,6 +2109,270 @@ class TestEventingFunctionQueryParameters(CommandTest):
         self.no_error_run(self.command + self.command_args, self.server_args)
 
 
+class TestEventingFunctionList(CommandTest):
+    def setUp(self):
+        self.command = ["couchbase-cli", "eventing-function-setup", "--list"] + cluster_connect_args
+        self.command_args = ["--name", "function_name"]
+        self.server_args = {"enterprise": True, "init": True, "is_admin": True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'eventingAdminPort': port,
+                                }
+                            }]}}
+        super().setUp()
+
+    def test_eventing_function_list_one_function_collection_aware(self):
+        self.server_args["functions_status_payload"] = {
+            'apps':
+            [
+                {
+                    'composite_status': 'undeployed',
+                    'name': 'func_0',
+                    'function_scope':
+                    {
+                        'bucket': 'bucket_0',
+                        'scope': 'scope_0'
+                    },
+                }
+            ],
+        }
+        self.server_args['functions_list_payload'] = [
+            {
+                'depcfg':
+                {
+                    'source_bucket': 'bucket_0',
+                    'source_scope': '_default',
+                    'source_collection': '_default',
+                    'metadata_bucket': 'bucket_1',
+                    'metadata_scope': '_default',
+                    'metadata_collection': '_default'
+                },
+                'appname': 'func_0',
+                'function_scope':
+                {
+                    'bucket': 'bucket_0',
+                    'scope': 'scope_0'
+                }
+            }
+        ]
+        self.no_error_run(self.command + self.command_args, self.server_args)
+        self.assertIn(
+            "bucket_0/scope_0/func_0\n Status: undeployed\n Source: bucket_0._default._default\n " +
+            "Metadata: bucket_1._default._default\n",
+            self.str_output)
+
+    def test_eventing_function_list_one_function_collection_unaware(self):
+        self.server_args["functions_status_payload"] = {
+            'apps':
+            [
+                {
+                    'composite_status': 'undeployed',
+                    'name': 'func_0',
+                    'function_scope':
+                    {
+                        'bucket': '*',
+                        'scope': '*'
+                    },
+                }
+            ],
+        }
+        self.server_args['functions_list_payload'] = [
+            {
+                'depcfg':
+                {
+                    'source_bucket': 'bucket_0',
+                    'source_scope': '_default',
+                    'source_collection': '_default',
+                    'metadata_bucket': 'bucket_1',
+                    'metadata_scope': '_default',
+                    'metadata_collection': '_default'
+                },
+                'appname': 'func_0',
+                'function_scope':
+                {
+                    'bucket': '*',
+                    'scope': '*'
+                }
+            }
+        ]
+        self.no_error_run(self.command + self.command_args, self.server_args)
+        self.assertIn(
+            "func_0\n Status: undeployed\n Source: bucket_0._default._default\n " +
+            "Metadata: bucket_1._default._default\n",
+            self.str_output)
+
+    def test_eventing_function_list_one_function_legacy(self):
+        self.server_args["functions_status_payload"] = {
+            'apps':
+            [
+                {
+                    'composite_status': 'undeployed',
+                    'name': 'func_0',
+                }
+            ],
+        }
+        self.server_args['functions_list_payload'] = [
+            {
+                'depcfg':
+                {
+                    'source_bucket': 'bucket_0',
+                    'source_scope': '_default',
+                    'source_collection': '_default',
+                    'metadata_bucket': 'bucket_1',
+                    'metadata_scope': '_default',
+                    'metadata_collection': '_default'
+                },
+                'appname': 'func_0',
+            }
+        ]
+        self.no_error_run(self.command + self.command_args, self.server_args)
+        self.assertIn(
+            "func_0\n Status: undeployed\n Source: bucket_0._default._default\n " +
+            "Metadata: bucket_1._default._default\n",
+            self.str_output)
+
+    def test_eventing_function_list_two_functions(self):
+        self.server_args["functions_status_payload"] = {
+            'apps':
+            [
+                {
+                    'composite_status': 'undeployed',
+                    'name': 'func_0',
+                    'function_scope':
+                    {
+                        'bucket': 'bucket_0',
+                        'scope': 'scope_0'
+                    },
+                },
+                {
+                    'composite_status': 'deployed',
+                    'name': 'func_1',
+                    'function_scope':
+                    {
+                        'bucket': 'bucket_1',
+                        'scope': 'scope_1'
+                    },
+                }
+            ],
+        }
+        self.server_args['functions_list_payload'] = [
+            {
+                'depcfg':
+                {
+                    'source_bucket': 'bucket_0',
+                    'source_scope': '_default',
+                    'source_collection': '_default',
+                    'metadata_bucket': 'bucket_1',
+                    'metadata_scope': '_default',
+                    'metadata_collection': '_default'
+                },
+                'appname': 'func_0',
+                'function_scope':
+                {
+                    'bucket': 'bucket_0',
+                    'scope': 'scope_0'
+                }
+            },
+            {
+                'depcfg':
+                {
+                    'source_bucket': 'bucket_1',
+                    'source_scope': '_default',
+                    'source_collection': '_default',
+                    'metadata_bucket': 'bucket_0',
+                    'metadata_scope': '_default',
+                    'metadata_collection': '_default'
+                },
+                'appname': 'func_1',
+                'function_scope':
+                {
+                    'bucket': 'bucket_1',
+                    'scope': 'scope_1'
+                }
+            }
+        ]
+        self.no_error_run(self.command + self.command_args, self.server_args)
+        self.assertIn(
+            "bucket_0/scope_0/func_0\n Status: undeployed\n Source: bucket_0._default._default\n " +
+            "Metadata: bucket_1._default._default\n",
+            self.str_output)
+        self.assertIn(
+            "bucket_1/scope_1/func_1\n Status: deployed\n Source: bucket_1._default._default\n " +
+            "Metadata: bucket_0._default._default\n",
+            self.str_output)
+
+    def test_eventing_function_list_two_functions_same_name(self):
+        self.server_args["functions_status_payload"] = {
+            'apps':
+            [
+                {
+                    'composite_status': 'undeployed',
+                    'name': 'func_0',
+                    'function_scope':
+                    {
+                        'bucket': 'bucket_0',
+                        'scope': 'scope_0'
+                    },
+                },
+                {
+                    'composite_status': 'undeployed',
+                    'name': 'func_0',
+                    'function_scope':
+                    {
+                        'bucket': 'bucket_1',
+                        'scope': 'scope_1'
+                    },
+                }
+            ],
+        }
+        self.server_args['functions_list_payload'] = [
+            {
+                'depcfg':
+                {
+                    'source_bucket': 'bucket_0',
+                    'source_scope': '_default',
+                    'source_collection': '_default',
+                    'metadata_bucket': 'bucket_1',
+                    'metadata_scope': '_default',
+                    'metadata_collection': '_default'
+                },
+                'appname': 'func_0',
+                'function_scope':
+                {
+                    'bucket': 'bucket_0',
+                    'scope': 'scope_0'
+                }
+            },
+            {
+                'depcfg':
+                {
+                    'source_bucket': 'bucket_1',
+                    'source_scope': '_default',
+                    'source_collection': '_default',
+                    'metadata_bucket': 'bucket_0',
+                    'metadata_scope': '_default',
+                    'metadata_collection': '_default'
+                },
+                'appname': 'func_0',
+                'function_scope':
+                {
+                    'bucket': 'bucket_1',
+                    'scope': 'scope_1'
+                }
+            }
+        ]
+        self.no_error_run(self.command + self.command_args, self.server_args)
+        self.assertIn(
+            "bucket_0/scope_0/func_0\n Status: undeployed\n Source: bucket_0._default._default\n " +
+            "Metadata: bucket_1._default._default\n",
+            self.str_output)
+        self.assertIn(
+            "bucket_1/scope_1/func_0\n Status: undeployed\n Source: bucket_1._default._default\n " +
+            "Metadata: bucket_0._default._default\n",
+            self.str_output)
+
+
 class TestEventingFunctionSetupSubcommandErrors(CommandTest):
     def setUp(self):
         self.command = ["couchbase-cli", "eventing-function-setup"] + cluster_connect_args
