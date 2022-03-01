@@ -444,6 +444,18 @@ def do_eventing_setup_subcommand(rest_params=None, server_args=None, path="", en
     return 200, {}
 
 
+def get_eventing_functions_statuses(rest_params=None, server_args=None, path="", endpoint_match=None):
+    if 'functions_status_payload' in server_args:
+        return 200, server_args['functions_status_payload']
+    return 404, {}
+
+
+def get_eventing_functions_list(rest_params=None, server_args=None, path="", endpoint_match=None):
+    if 'functions_list_payload' in server_args:
+        return 200, server_args['functions_list_payload']
+    return 404, []
+
+
 endpoints = [
     (r'/close$', {'GET': do_nothing}),
     (r'/whoami', {'GET': get_my_roles}),
@@ -536,6 +548,9 @@ endpoints = [
 
     # eventing api
     (r'/api/v1/functions/\w+', {'POST': do_eventing_setup_subcommand, 'DELETE': do_eventing_setup_subcommand}),
+    (r'/api/v1/status$', {'GET': get_eventing_functions_statuses}),
+    (r'/api/v1/functions$', {'GET': get_eventing_functions_list}),
+
 
     # backup server API
     (r'/api/v1/config', {'GET': get_by_path, 'PATCH': do_nothing}),

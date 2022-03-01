@@ -4278,11 +4278,12 @@ class EventingFunctionSetup(Subcommand):
         statuses, errors = self.rest.get_functions_status()
         _exit_if_errors(errors)
         if statuses['apps'] is not None:
-            statuses = {x['name']: x['composite_status'] for x in statuses['apps']}
+            statuses = self._get_eventing_functions_paths_to_statuses_map(statuses['apps'])
             for function in functions:
-                if function['appname'] in statuses:
-                    print(function['appname'])
-                    print(f' Status: {statuses[function["appname"]]}')
+                function_path = self._get_function_path_from_list_functions_endpoint(function)
+                if function_path in statuses:
+                    print(function_path)
+                    print(f' Status: {statuses[function_path]}')
                     if 'source_scope' in function["depcfg"]:
                         print(f' Source: {function["depcfg"]["source_bucket"]}.{function["depcfg"]["source_scope"]}.'
                               f'{function["depcfg"]["source_collection"]}')
@@ -4294,6 +4295,26 @@ class EventingFunctionSetup(Subcommand):
                         print(f' Metadata Bucket: {function["depcfg"]["metadata_bucket"]}')
         else:
             print('The cluster has no functions')
+
+    def _get_eventing_functions_paths_to_statuses_map(self, apps_list):
+        path_to_status_map = {}
+        for function in apps_list:
+            # Statuses of collection-aware functions should be mapped to their full paths (includes bucket and scope)
+            path = self._get_function_path_from_functions_statuses_endpoint(function)
+            path_to_status_map[path] = function['composite_status']
+        return path_to_status_map
+
+    def _get_function_path_from_list_functions_endpoint(self, function):
+        """Gets full path of the given function retuned in a list from the /api/v1/functions endpoint"""
+        if 'function_scope' in function and function['function_scope']['bucket'] != '*':
+            return f"{function['function_scope']['bucket']}/{function['function_scope']['scope']}/{function['appname']}"
+        return function['appname']
+
+    def _get_function_path_from_functions_statuses_endpoint(self, function):
+        """Gets full path of the given function retuned in a list from the /api/v1/status endpoint"""
+        if 'function_scope' in function and function['function_scope']['bucket'] != '*':
+            return f"{function['function_scope']['bucket']}/{function['function_scope']['scope']}/{function['name']}"
+        return function['name']
 
     @staticmethod
     def get_man_page_name():
