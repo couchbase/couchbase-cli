@@ -5512,6 +5512,8 @@ class BackupServiceRepository:
                                  help='The ID to use to communicate with the object store')
         cloud_group.add_argument('--cloud-credentials-key', metavar='<key>',
                                  help='The key to use to communicate with the object store')
+        cloud_group.add_argument('--cloud-credentials-refresh-token', metavar='<token>',
+                                 help='Used to refresh oauth2 tokens when accessing remote storage')
         cloud_group.add_argument('--cloud-credentials-region', metavar='<region>',
                                  help='The region for the object store')
         cloud_group.add_argument('--cloud-endpoint', metavar='<endpoint>',
@@ -5536,6 +5538,7 @@ class BackupServiceRepository:
                                        credentials_name=opts.cloud_credentials_name,
                                        credentials_id=opts.cloud_credentials_id,
                                        credentials_key=opts.cloud_credentials_key,
+                                       credentials_refresh_token=opts.cloud_credentials_refresh_token,
                                        cloud_region=opts.cloud_credentials_region, staging_dir=opts.cloud_staging_dir,
                                        cloud_endpoint=opts.cloud_endpoint, s3_path_style=opts.s3_force_path_style)
 
@@ -5600,6 +5603,8 @@ class BackupServiceRepository:
             add_request_body['cloud_credentials_id'] = kwargs.get('credentials_id')
         if kwargs.get('credentials_key', False):
             add_request_body['cloud_credentials_key'] = kwargs.get('credentials_key')
+        if kwargs.get('credentials_refresh_token', False):
+            add_request_body['cloud_credentials_refresh_token'] = kwargs.get('credentials_refresh_token')
         if kwargs.get('cloud_region', False):
             add_request_body['cloud_region'] = kwargs.get('cloud_region')
         if kwargs.get('cloud_endpoint', False):

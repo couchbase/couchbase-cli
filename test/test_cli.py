@@ -3496,14 +3496,16 @@ class TestBackupServiceRepository(CommandTest):
         """Test that creating a cloud repository with the maximum amount of options is allowed"""
         self.no_error_run(self.command + ['--add', '--id', 'a', '--plan', 'p', '--backup-archive', 's3://b/a',
                                           '--cloud-credentials-id', 'id', '--cloud-credentials-key', 'key',
-                                          '--cloud-credentials-region', 'region', '--cloud-staging-dir', 'dir',
-                                          '--cloud-endpoint', 'endpoint', '--s3-force-path-style', '--bucket-name',
+                                          '--cloud-credentials-refresh-token', 'token', '--cloud-credentials-region',
+                                          'region', '--cloud-staging-dir', 'dir', '--cloud-endpoint', 'endpoint',
+                                          '--s3-force-path-style', '--bucket-name',
                                           'bucket'], self.server_args)
         self.assertIn('POST:/api/v1/cluster/self/repository/active/a', self.server.trace)
         self.rest_parameter_match([json.dumps({'plan': 'p', 'archive': 's3://b/a', 'cloud_credentials_id': 'id',
-                                               'cloud_credentials_key': 'key', 'cloud_region': 'region',
-                                               'cloud_staging_dir': 'dir', 'cloud_endpoint': 'endpoint',
-                                               'cloud_force_path_style': True, 'bucket_name': 'bucket'},
+                                               'cloud_credentials_key': 'key', 'cloud_credentials_refresh_token':
+                                               'token', 'cloud_region': 'region', 'cloud_staging_dir': 'dir',
+                                               'cloud_endpoint': 'endpoint', 'cloud_force_path_style': True,
+                                               'bucket_name': 'bucket'},
                                               sort_keys=True)])
 
     def test_remove_fails_with_no_id(self):

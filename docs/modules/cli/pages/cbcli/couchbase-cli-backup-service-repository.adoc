@@ -19,8 +19,8 @@ _couchbase-cli backup-service [--cluster <url>] [--username <user>]
     [--profile <name>] [--backup-archive <archive>] [--bucket-name <name>]
     [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
     [--cloud-credentials-id <id>] [--cloud-credentials-key <key>]
-    [--cloud-credentials-region <region>] [--cloud-endpoint <endpoint>]
-    [--s3-force-path-style] [--remove-data]
+    [--cloud-credentials-refresh-token <token>] [--cloud-credentials-region <region>]
+    [--cloud-endpoint <endpoint>] [--s3-force-path-style] [--remove-data]
 
 == DESCRIPTION
 
@@ -82,6 +82,9 @@ Manage backup service repositories
 
 --cloud-credentials-key <key>::
     The key to use with the object store.
+
+--cloud-credentials-refresh-token <token>::
+    Used to refresh oauth2 tokens when accessing remote storage.
 
 --cloud-credentials-region <region>::
     The region for the object store.
