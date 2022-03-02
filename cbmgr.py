@@ -4182,7 +4182,7 @@ class EventingFunctionSetup(Subcommand):
         elif opts.delete:
             self._delete(opts)
         elif opts.list:
-            self._list()
+            self._list(opts)
         elif opts.deploy:
             self._deploy_undeploy(opts, True)
         elif opts.undeploy:
@@ -4201,6 +4201,9 @@ class EventingFunctionSetup(Subcommand):
         _success(f"Function was {'paused' if pause else 'resumed'}")
 
     def _import(self, opts):
+        # Ensure users don't try to supply the bucket/scope since it's not supported for this function
+        self._check_bucket_and_scope(opts, supported=False)
+
         if not opts.filename:
             _exit_if_errors(["--file is needed to import functions"])
         import_functions = _exit_on_file_read_failure(opts.filename)
@@ -4212,20 +4215,53 @@ class EventingFunctionSetup(Subcommand):
     def _export(self, opts):
         if not opts.filename:
             _exit_if_errors(["--file is needed to export a function"])
+
         if not opts.name:
             _exit_if_errors(["--name is needed to export a function"])
+
+        self._check_bucket_and_scope(opts)
+
         functions, errors = self.rest.export_functions()
         _exit_if_errors(errors)
-        exported_function = None
-        for function in functions:
-            if function["appname"] == opts.name:
-                exported_function = [function]
-        if not exported_function:
-            _exit_if_errors([f'Function {opts.name} does not exist'])
-        _exit_on_file_write_failure(opts.filename, json.dumps(exported_function, separators=(',', ':')))
+
+        # Filter the functions to only export the one requested by the user
+        exported = self._filter_functions(functions, opts.bucket, opts.scope, opts.name)
+
+        if len(exported) > 1:
+            _exit_if_errors(['Unexpectedly found more than one function matching the name ' +
+                             f'"{self._function_name(opts.bucket, opts.scope, opts.name)}"'])
+
+        if len(exported) == 0:
+            _exit_if_errors([f'Function "{self._function_name(opts.bucket, opts.scope, opts.name)}" does not exist'])
+
+        _exit_on_file_write_failure(opts.filename, json.dumps(exported[-1:], separators=(',', ':')))
         _success("Function exported to: " + opts.filename)
 
+    @classmethod
+    def _filter_functions(cls, functions, bucket, scope, name):
+        return [fn for fn in functions if cls._should_export(fn, bucket, scope, name)]
+
+    @classmethod
+    def _should_export(cls, fn, bucket, scope, name):
+        # Indicates whether this is a backwards compatible export e.g. unaware of collections
+        bc = 'function_scope' not in fn or \
+            fn['function_scope']['bucket'] == '*' and fn['function_scope']['scope'] == '*'
+
+        if bucket == "" and scope == "":
+            return bc and fn['appname'] == name
+
+        return fn['function_scope']['bucket'] == bucket and \
+            fn['function_scope']['scope'] == scope and \
+            fn['appname'] == name
+
+    @classmethod
+    def _function_name(cls, bucket, scope, name):
+        return (name if bucket == "" and scope == "" else f"{bucket}/{scope}/{name}")
+
     def _export_all(self, opts):
+        # Ensure users don't try to supply the bucket/scope since it's not supported for this function
+        self._check_bucket_and_scope(opts, supported=False)
+
         if not opts.filename:
             _exit_if_errors(["--file is needed to export all functions"])
         exported_functions, errors = self.rest.export_functions()
@@ -4265,18 +4301,36 @@ class EventingFunctionSetup(Subcommand):
             _deprecated("The --boundary option is deprecated and will be ignored; the function definition itself now"
                         " defines the feed boundary")
 
-    def _check_bucket_and_scope(self, opts):
+    def _check_bucket_and_scope(self, opts, supported=True):
         # --bucket and --scope can only be supplied together
         # If neither bucket nor scope is supplied, the eventing service will assume collection-unaware defaults "*"
         if opts.bucket == "" and opts.scope != "" or opts.bucket != "" and opts.scope == "":
             _exit_if_errors(["You need to supply both --bucket and --scope, or neither for collection-unaware eventing "
                              "functions"])
 
-    def _list(self):
+        if opts.bucket == "" and opts.scope == "":
+            return
+
+        # sub-command does not support collection aware flags but they've been supplied
+        if not supported:
+            _exit_if_errors(["This operation does not support the --bucket/--scope flags"])
+
+        min_version, errors = self.rest.min_version()
+        _exit_if_errors(errors)
+
+        if min_version != "0.0.0" and min_version < "7.1.0":
+            _exit_if_errors(["The --bucket/--scope flags can only be used against >= 7.1.0 clusters"])
+
+    def _list(self, opts):
+        # Ensure users don't try to supply the bucket/scope since it's not supported for this function
+        self._check_bucket_and_scope(opts, supported=False)
+
         functions, errors = self.rest.list_functions()
         _exit_if_errors(errors)
+
         statuses, errors = self.rest.get_functions_status()
         _exit_if_errors(errors)
+
         if statuses['apps'] is not None:
             statuses = self._get_eventing_functions_paths_to_statuses_map(statuses['apps'])
             for function in functions:
@@ -5540,6 +5594,8 @@ class BackupServiceRepository:
                                  help='The ID to use to communicate with the object store')
         cloud_group.add_argument('--cloud-credentials-key', metavar='<key>',
                                  help='The key to use to communicate with the object store')
+        cloud_group.add_argument('--cloud-credentials-refresh-token', metavar='<token>',
+                                 help='Used to refresh oauth2 tokens when accessing remote storage')
         cloud_group.add_argument('--cloud-credentials-region', metavar='<region>',
                                  help='The region for the object store')
         cloud_group.add_argument('--cloud-endpoint', metavar='<endpoint>',
@@ -5564,6 +5620,7 @@ class BackupServiceRepository:
                                        credentials_name=opts.cloud_credentials_name,
                                        credentials_id=opts.cloud_credentials_id,
                                        credentials_key=opts.cloud_credentials_key,
+                                       credentials_refresh_token=opts.cloud_credentials_refresh_token,
                                        cloud_region=opts.cloud_credentials_region, staging_dir=opts.cloud_staging_dir,
                                        cloud_endpoint=opts.cloud_endpoint, s3_path_style=opts.s3_force_path_style)
 
@@ -5628,6 +5685,8 @@ class BackupServiceRepository:
             add_request_body['cloud_credentials_id'] = kwargs.get('credentials_id')
         if kwargs.get('credentials_key', False):
             add_request_body['cloud_credentials_key'] = kwargs.get('credentials_key')
+        if kwargs.get('credentials_refresh_token', False):
+            add_request_body['cloud_credentials_refresh_token'] = kwargs.get('credentials_refresh_token')
         if kwargs.get('cloud_region', False):
             add_request_body['cloud_region'] = kwargs.get('cloud_region')
         if kwargs.get('cloud_endpoint', False):

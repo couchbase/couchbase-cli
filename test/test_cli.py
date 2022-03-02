@@ -1987,6 +1987,138 @@ class TestXdcrSetup(CommandTest):
 class TestEventingFunctionSetup(CommandTest):
     def setUp(self):
         self.command = ["couchbase-cli", "eventing-function-setup"] + cluster_connect_args
+        self.server_args = {"enterprise": True, "init": True, "is_admin": True,
+                            'pools_default': {"nodes": [{"version": "0.0.0-0000-enterprise"}]},
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'eventingAdminPort': port,
+                                }
+                            }]}}
+        super().setUp()
+
+    def test_import_with_bucket_and_scope(self):
+        self.command_args = ["--import", "--bucket", "bucket", "--scope", "scope", "--name", "function_name"]
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("This operation does not support the --bucket/--scope flags", self.str_output)
+
+    def test_export_all_with_bucket_and_scope(self):
+        self.command_args = ["--export-all", "--bucket", "bucket", "--scope", "scope"]
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("This operation does not support the --bucket/--scope flags", self.str_output)
+
+    def test_list_with_bucket_and_scope(self):
+        self.command_args = ["--list", "--bucket", "bucket", "--scope", "scope"]
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+        self.assertIn("This operation does not support the --bucket/--scope flags", self.str_output)
+
+    def test_export_collection_unaware(self):
+        self.server_args['eventing_export_payload'] = [
+            {"appname": "name1"},
+            {"appname": "name2"},
+            {"appname": "name3"},
+        ]
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        self.command_args = ["--export", "--name", "name1", "--file", tmp.name]
+
+        self.no_error_run(self.command + self.command_args, self.server_args)
+
+        with open(tmp.name) as f:
+            dmp = json.loads(f.read())
+            self.assertEqual(dmp, [{"appname": "name1"}])
+
+        os.remove(tmp.name)
+
+    def test_export_collection_unaware_7_1_0(self):
+        self.server_args['eventing_export_payload'] = [
+            {"appname": "name", "function_scope": {"bucket": "*", "scope": "*"}}]
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        self.command_args = ["--export", "--name", "name", "--file", tmp.name]
+
+        self.no_error_run(self.command + self.command_args, self.server_args)
+
+        with open(tmp.name) as f:
+            dmp = json.loads(f.read())
+            self.assertEqual(dmp, [{'appname': 'name', 'function_scope': {'bucket': '*', 'scope': '*'}}])
+
+        os.remove(tmp.name)
+
+    def test_export_collection_unaware_not_found(self):
+        self.server_args['eventing_export_payload'] = [{"appname": "name"}]
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        self.command_args = ["--export", "--name", "not-the-name", "--file", tmp.name]
+
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+
+        self.assertIn('Function "not-the-name" does not exist', self.str_output)
+
+        os.remove(tmp.name)
+
+    def test_export_collection_aware(self):
+        self.server_args['eventing_export_payload'] = [
+            {"appname": "name1", "function_scope": {"bucket": "*", "scope": "*"}},
+            {"appname": "name1", "function_scope": {"bucket": "bucket1", "scope": "scope1"}},
+            {"appname": "name2", "function_scope": {"bucket": "bucket2", "scope": "scope2"}},
+        ]
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        self.command_args = [
+            "--export",
+            "--bucket",
+            "bucket1",
+            "--scope",
+            "scope1",
+            "--name",
+            "name1",
+            "--file",
+            tmp.name]
+
+        self.no_error_run(self.command + self.command_args, self.server_args)
+
+        with open(tmp.name) as f:
+            dmp = json.loads(f.read())
+            self.assertEqual(dmp, [{'appname': 'name1', 'function_scope': {'bucket': 'bucket1', 'scope': 'scope1'}}])
+
+        os.remove(tmp.name)
+
+    def test_export_too_many_matches(self):
+        self.server_args['eventing_export_payload'] = [
+            {"appname": "name", "function_scope": {"bucket": "bucket", "scope": "scope"}},
+            {"appname": "name", "function_scope": {"bucket": "bucket", "scope": "scope"}},
+        ]
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        self.command_args = ["--export", "--bucket", "bucket", "--scope", "scope", "--name", "name", "--file", tmp.name]
+
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+
+        self.assertIn('Unexpectedly found more than one function matching the name "bucket/scope/name"', self.str_output)
+
+        os.remove(tmp.name)
+
+    def test_export_collection_aware_not_found(self):
+        self.server_args['eventing_export_payload'] = [
+            {"appname": "name", "function_scope": {"bucket": "bucket", "scope": "scope"}}]
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        self.command_args = [
+            "--export",
+            "--bucket",
+            "bucket",
+            "--scope",
+            "scope",
+            "--name",
+            "not-the-name",
+            "--file",
+            tmp.name]
+
+        self.system_exit_run(self.command + self.command_args, self.server_args)
+
+        self.assertIn('Function "bucket/scope/not-the-name" does not exist', self.str_output)
+
+        os.remove(tmp.name)
+
+
+class TestEventingFunctionSetupDeploy(CommandTest):
+    def setUp(self):
+        self.command = ["couchbase-cli", "eventing-function-setup"] + cluster_connect_args
         self.command_args = ["--deploy", "--name", "function_name"]
         self.server_args = {"enterprise": True, "init": True, "is_admin": True,
                             '/pools/default/nodeServices': {'nodesExt': [{
@@ -3497,14 +3629,16 @@ class TestBackupServiceRepository(CommandTest):
         """Test that creating a cloud repository with the maximum amount of options is allowed"""
         self.no_error_run(self.command + ['--add', '--id', 'a', '--plan', 'p', '--backup-archive', 's3://b/a',
                                           '--cloud-credentials-id', 'id', '--cloud-credentials-key', 'key',
-                                          '--cloud-credentials-region', 'region', '--cloud-staging-dir', 'dir',
-                                          '--cloud-endpoint', 'endpoint', '--s3-force-path-style', '--bucket-name',
+                                          '--cloud-credentials-refresh-token', 'token', '--cloud-credentials-region',
+                                          'region', '--cloud-staging-dir', 'dir', '--cloud-endpoint', 'endpoint',
+                                          '--s3-force-path-style', '--bucket-name',
                                           'bucket'], self.server_args)
         self.assertIn('POST:/api/v1/cluster/self/repository/active/a', self.server.trace)
         self.rest_parameter_match([json.dumps({'plan': 'p', 'archive': 's3://b/a', 'cloud_credentials_id': 'id',
-                                               'cloud_credentials_key': 'key', 'cloud_region': 'region',
-                                               'cloud_staging_dir': 'dir', 'cloud_endpoint': 'endpoint',
-                                               'cloud_force_path_style': True, 'bucket_name': 'bucket'},
+                                               'cloud_credentials_key': 'key', 'cloud_credentials_refresh_token':
+                                               'token', 'cloud_region': 'region', 'cloud_staging_dir': 'dir',
+                                               'cloud_endpoint': 'endpoint', 'cloud_force_path_style': True,
+                                               'bucket_name': 'bucket'},
                                               sort_keys=True)])
 
     def test_remove_fails_with_no_id(self):

@@ -453,7 +453,14 @@ def get_eventing_functions_statuses(rest_params=None, server_args=None, path="",
 def get_eventing_functions_list(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'functions_list_payload' in server_args:
         return 200, server_args['functions_list_payload']
-    return 404, []
+    return 404, {}
+
+
+def export_eventing_functions(rest_params=None, server_args=None, path="", endpoint_match=None):
+    if 'eventing_export_payload' in server_args:
+        return 200, server_args['eventing_export_payload']
+
+    return 404, {}
 
 
 endpoints = [
@@ -550,6 +557,7 @@ endpoints = [
     (r'/api/v1/functions/\w+', {'POST': do_eventing_setup_subcommand, 'DELETE': do_eventing_setup_subcommand}),
     (r'/api/v1/status$', {'GET': get_eventing_functions_statuses}),
     (r'/api/v1/functions$', {'GET': get_eventing_functions_list}),
+    (r'/api/v1/export$', {'GET': export_eventing_functions}),
 
 
     # backup server API
