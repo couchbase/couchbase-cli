@@ -212,8 +212,14 @@ class SFDSource(pump.Source):
                     cmd = couchbaseConstants.CMD_DCP_DELETE
                 else:
                     cmd = couchbaseConstants.CMD_DCP_MUTATION
-                # Deletes/Tombstone can contains a body
-                val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
+
+                # Deletes/tombstones may contain a body if they contain xattrs; a 'KeyError' from 'couchstore' indicates
+                # when this is not the case.
+                try:
+                    val = doc_info.getContents(options=couchstore.CouchStore.DECOMPRESS)
+                except KeyError:
+                    val = b''
+
                 try:
                     rev_meta_bytes = doc_info.revMeta.get_bytes()
                     if len(rev_meta_bytes) == 18:
