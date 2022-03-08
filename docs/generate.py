@@ -141,7 +141,7 @@ class Generator:
     def generate_navs(self) -> List[Optional[Path]]:
         commands = []
         subcommands = defaultdict(list)
-        subsubcommands = dict()
+        subsubcommands = defaultdict(lambda: defaultdict(list))
 
         for adoc in self.adocs():
             if adoc.meta.subcommand == "":
@@ -149,12 +149,10 @@ class Generator:
             elif adoc.meta.subsubcommand == "":
                 subcommands[adoc.meta.command].append(adoc)
             else:
-                if adoc.meta.command not in subsubcommands:
-                    subsubcommands[adoc.meta.command] = defaultdict(list)
                 subsubcommands[adoc.meta.command][adoc.meta.subcommand].append(adoc)
 
         return [self._generate_nav(command, subcommands[command.meta.command],
-                                   subsubcommands[adoc.meta.command]) for command in commands]
+                                   subsubcommands[command.meta.command]) for command in commands]
 
     def _generate_nav(self, command: ADoc, subcommands: List[ADoc], subsubcommands: Dict[List]) -> Optional[Path]:
         if self._command_hidden(command):
