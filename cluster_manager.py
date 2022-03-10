@@ -2013,15 +2013,12 @@ class ClusterManager(object):
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
 
-        params = {
-            "deployment_status": deploy,
-            "processing_status": deploy,
-        }
+        params = {}
 
         if deploy and boundary:
             params["feed-boundary"] = boundary
 
-        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}/settings' \
+        url = f'{hosts[0]}/api/v1/functions/{urllib.parse.quote_plus(function)}/{"deploy" if deploy else "undeploy"}' \
             f'?bucket={urllib.parse.quote_plus(bucket)}&scope={urllib.parse.quote_plus(scope)}'
         return self._post_json(url, params)
 

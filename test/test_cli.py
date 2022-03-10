@@ -2133,7 +2133,8 @@ class TestEventingFunctionSetupDeploy(CommandTest):
         self.command_args += ["--boundary", "from-now"]
         self.server_args["pools_default"] = {"nodes": [{"version": "6.6.2-0000-enterprise"}]}
         self.no_error_run(self.command + self.command_args, self.server_args)
-        self.rest_parameter_match([json.dumps({"deployment_status": True, "processing_status": True})])
+        self.assertIn('POST:/api/v1/functions/function_name/deploy', self.server.trace)
+        self.rest_parameter_match([json.dumps({})])
         self.assertIn("The --boundary option is deprecated and will be ignored; the function definition itself"
                       " now defines the feed boundary", self.str_output)
 
@@ -2141,7 +2142,8 @@ class TestEventingFunctionSetupDeploy(CommandTest):
         self.command_args += ["--boundary", "from-now"]
         self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
         self.no_error_run(self.command + self.command_args, self.server_args)
-        self.rest_parameter_match([json.dumps({"deployment_status": True, "processing_status": True})])
+        self.assertIn('POST:/api/v1/functions/function_name/deploy', self.server.trace)
+        self.rest_parameter_match([json.dumps({})])
         self.assertIn("The --boundary option is deprecated and will be ignored; the function definition itself"
                       " now defines the feed boundary", self.str_output)
 
@@ -2208,6 +2210,7 @@ class TestEventingFunctionQueryParameters(CommandTest):
         self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
         self.server_args['expected_query_parameters'] = {'bucket': [bucket_name], 'scope': [scope_name]}
         self.no_error_run(self.command + self.command_args, self.server_args)
+        self.assertIn('POST:/api/v1/functions/function_name/deploy', self.server.trace)
 
     def test_expected_parameters_undeploy_bucket_and_scope(self):
         bucket_name = "test_bucket_undeploy"
@@ -2216,6 +2219,7 @@ class TestEventingFunctionQueryParameters(CommandTest):
         self.server_args["pools_default"] = {"nodes": [{"version": "0.0.0-0000-enterprise"}]}
         self.server_args['expected_query_parameters'] = {'bucket': [bucket_name], 'scope': [scope_name]}
         self.no_error_run(self.command + self.command_args, self.server_args)
+        self.assertIn('POST:/api/v1/functions/function_name/undeploy', self.server.trace)
 
     def test_expected_parameters_delete_bucket_and_scope(self):
         bucket_name = "test_bucket_delete"
