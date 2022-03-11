@@ -4284,8 +4284,13 @@ class EventingFunctionSetup(Subcommand):
             self._handle_boundary(opts)
         self._check_bucket_and_scope(opts)
         _, errors = self.rest.deploy_undeploy_function(opts.name, opts.bucket, opts.scope, deploy, opts.boundary)
-        _exit_if_errors(errors)
-        _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
+        # For backwards compatability we don't want to error if you try to (un)deploy an (un)deployed function
+        if errors is not None and len(errors) == 1 and errors[0].endswith(
+                f'already in {"deployed" if deploy else "undeployed"} state.'):
+            _success(f'Function is already in {"deployed" if deploy else "undeployed"} state')
+        else:
+            _exit_if_errors(errors)
+            _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
 
     def _handle_boundary(self, opts):
         min_version, errors = self.rest.min_version()
