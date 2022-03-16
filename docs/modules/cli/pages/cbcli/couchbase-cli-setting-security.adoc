@@ -40,7 +40,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Specifies whether the Couchbase Web Console can be accessible
   over http. To disable access set this option to "1". To enable access
   set this option to "0". By default, access to the UI over http is
-  enabled.
+  enabled. Notice that this will only disable http access to the endpoints
+  that are used by the Web UI and not all endpoints that use the http port
+  (e.g. setting this option to "1" will disable access to the `http://<addr>:8091`
+  endpoint but will not disable access to the `http://<addr>:8091/logs` endpoint
+  since it is used by the REST API and not Web UI). If your goal is to disable
+  non-local http access completely, you should use the `--cluster-encryption-level`
+  flag and set it's value to "strict".
 
 --disable-www-authenticate <0|1>::
   Specifies whether Couchbase Server will respond with WWW-Authenticate to
