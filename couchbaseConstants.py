@@ -333,6 +333,11 @@ ERR_UNKNOWN_COLLECTION = 0x88
 
 META_REVID = 0x01
 
+# From couchbase eventing
+
+ERR_APP_NOT_FOUND_TS = 13
+ERR_APP_DEPLOYED = 20
+
 
 def parse_host_port(host: str) -> Tuple[str, int]:
     """parse_host_port giving a host with ot without port will attempt to split the port

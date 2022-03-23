@@ -17,6 +17,7 @@ import requests
 import urllib3
 
 from x509_adapter import X509Adapter, X509AdapterFactory
+import couchbaseConstants
 
 N1QL_SERVICE = 'n1ql'
 INDEX_SERVICE = 'index'
@@ -2571,7 +2572,7 @@ class ClusterManager(object):
             if isinstance(errors, list):
                 rv = list()
                 for error in errors:
-                    if error['code'] == 20:
+                    if 'code' in error and error['code'] == couchbaseConstants.ERR_APP_DEPLOYED:
                         rv.append(error['info'])
                 return None, rv
             else:

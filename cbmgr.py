@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
 from x509_adapter import X509AdapterError
+import couchbaseConstants
 
 try:
     from cb_version import VERSION  # pylint: disable=import-error
@@ -4198,6 +4199,7 @@ class EventingFunctionSetup(Subcommand):
             _exit_if_errors([f"Flag --name is required with the {'--pause' if pause else '--resume'} flag"])
         self._check_bucket_and_scope(opts)
         _, err = self.rest.pause_resume_function(opts.name, opts.bucket, opts.scope, pause)
+        self._exit_if_function_not_found(opts, err)
         _exit_if_errors(err)
         _success(f"Function was {'paused' if pause else 'resumed'}")
 
@@ -4233,10 +4235,27 @@ class EventingFunctionSetup(Subcommand):
                              f'"{self._function_name(opts.bucket, opts.scope, opts.name)}"'])
 
         if len(exported) == 0:
-            _exit_if_errors([f'Function "{self._function_name(opts.bucket, opts.scope, opts.name)}" does not exist'])
+            _exit_if_errors([self._function_not_found_message(opts)])
 
         _exit_on_file_write_failure(opts.filename, json.dumps(exported[-1:], separators=(',', ':')))
         _success("Function exported to: " + opts.filename)
+
+    @classmethod
+    def _function_not_found_message(cls, opts):
+        function_name = cls._function_name(opts.bucket, opts.scope, opts.name)
+        bucket_scope_warning = ''
+        if opts.bucket == '' and opts.scope == '':
+            bucket_scope_warning = ' - perhaps you need to specify --bucket and --scope'
+        return f'Function "{function_name}" does not exist{bucket_scope_warning}'
+
+    @classmethod
+    def _exit_if_function_not_found(cls, opts, errors):
+        if errors is None or len(errors) != 1:
+            return
+
+        err = errors[0]
+        if isinstance(err, dict) and 'code' in err and err['code'] == couchbaseConstants.ERR_APP_NOT_FOUND_TS:
+            _exit_if_errors([cls._function_not_found_message(opts)])
 
     @classmethod
     def _filter_functions(cls, functions, bucket, scope, name):
@@ -4275,6 +4294,7 @@ class EventingFunctionSetup(Subcommand):
             _exit_if_errors(["--name is needed to delete a function"])
         self._check_bucket_and_scope(opts)
         _, errors = self.rest.delete_function(opts.name, opts.bucket, opts.scope)
+        self._exit_if_function_not_found(opts, errors)
         _exit_if_errors(errors)
         _success("Request to delete the function was accepted")
 
@@ -4284,14 +4304,17 @@ class EventingFunctionSetup(Subcommand):
         if deploy:
             self._handle_boundary(opts)
         self._check_bucket_and_scope(opts)
+
         _, errors = self.rest.deploy_undeploy_function(opts.name, opts.bucket, opts.scope, deploy, opts.boundary)
+        self._exit_if_function_not_found(opts, errors)
         # For backwards compatability we don't want to error if you try to (un)deploy an (un)deployed function
-        if errors is not None and len(errors) == 1 and errors[0].endswith(
-                f'already in {"deployed" if deploy else "undeployed"} state.'):
+        if errors is not None and len(errors) == 1 and isinstance(errors[0], str) and \
+                errors[0].endswith(f'already in {"deployed" if deploy else "undeployed"} state.'):
             _success(f'Function is already in {"deployed" if deploy else "undeployed"} state')
-        else:
-            _exit_if_errors(errors)
-            _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
+            return
+        _exit_if_errors(errors)
+
+        _success(f"Request to {'deploy' if deploy else 'undeploy'} the function was accepted")
 
     def _handle_boundary(self, opts):
         min_version, errors = self.rest.min_version()
