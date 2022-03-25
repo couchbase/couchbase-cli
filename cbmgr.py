@@ -18,10 +18,10 @@ from argparse import SUPPRESS, Action, ArgumentError, ArgumentParser, HelpFormat
 from operator import itemgetter
 from typing import Any, Dict, List, Optional
 
+import couchbaseConstants
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
 from x509_adapter import X509AdapterError
-import couchbaseConstants
 
 try:
     from cb_version import VERSION  # pylint: disable=import-error
@@ -2804,9 +2804,6 @@ class SettingCompaction(Subcommand):
             opts.enable_parallel = "true"
         else:
             opts.enable_parallel = "false"
-
-        if opts.purge_interval is not None and (opts.purge_interval < 0.04 or opts.purge_interval > 60.0):
-            _exit_if_errors(["--metadata-purge-interval must be between 0.04 and 60.0"])
 
         g_from_hour = None
         g_from_min = None
