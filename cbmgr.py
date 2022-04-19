@@ -1681,7 +1681,7 @@ class MasterPassword(LocalSubcommand):
 
         name = 'executioner@cb.local'
         args = ['-pa', CB_NS_EBIN_PATH, CB_BABYSITTER_EBIN_PATH, '-noinput', '-name', name, '-proto_dist', 'cb',
-                '-eval', 'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))).', '-epmd_module', 'cb_epmd',
+                '-eval', 'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).', '-epmd_module', 'cb_epmd',
                 '-kernel'] + CB_INETRC_OPT + \
             ['dist_config_file', f'"{dist_cfg_file}"', '-run', 'encryption_service',
              'remote_set_password', node]
@@ -2074,7 +2074,7 @@ class ServerEshell(Subcommand):
             env["CB_COOKIE"] = cookie
 
             args = [path, '-name', name, '-setcookie', 'nocookie', '-hidden', '-eval',
-                    'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))).',
+                    'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).',
                     '-remsh', node, '-proto_dist', 'cb', '-epmd_module', 'cb_epmd', '-pa', CB_NS_EBIN_PATH, '-kernel',
                     'dist_config_file', f'"{temp_name}"'] + CB_INETRC_OPT
 
