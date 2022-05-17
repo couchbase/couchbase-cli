@@ -3428,9 +3428,6 @@ class SslManage(Subcommand):
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
-        if not (opts.cluster_ca or opts.cluster_cert or opts.delete_ca or opts.upload_cert):
-            check_cluster_initialized(self.rest)
-
         if opts.regenerate is not None:
             try:
                 open(opts.regenerate, 'a', encoding="utf-8").close()
@@ -3481,16 +3478,20 @@ class SslManage(Subcommand):
 
         elif opts.load_ca:
             nodes_data, errors = self.rest.pools('nodes')
-            _exit_if_errors(errors)
-            loaded_none = True
-            for node in nodes_data['nodes']:
-                hostname = f'http://{node["hostname"]}'
+            if errors and errors[0] == 'unknown pool':
+                hostnames = [self.rest.hostname]
+            else:
+                _exit_if_errors(errors)
+                scheme = 'http'
                 if opts.ssl:
-                    hostname = f'https://{node["hostname"]}'
+                    scheme = 'https'
+                hostnames = [f'{scheme}://{n["hostname"]}' for n in nodes_data['nodes']]
+            loaded_none = True
+            for hostname in hostnames:
                 _, errors = self.rest.load_cluster_ca(hostname)
                 if not errors:
                     loaded_none = False
-                    print(f'{node["hostname"]}: Successfully load CA from inbox/CA')
+                    print(f'{hostname}: Successfully load CA from inbox/CA')
                 # If a CA is not loaded ns_server returns a error, this error is handled and the next node is tried
                 elif "Couldn't load CA certificate" in errors[0]:
                     break

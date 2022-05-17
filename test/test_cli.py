@@ -1559,6 +1559,15 @@ class TestSslManage(CommandTest):
         self.assertIn('localhost', self.str_output)
         self.assertIn('127.0.0.1', self.str_output)
 
+    def test_cluster_ca_load_not_init(self):
+        self.server_args['/pools/nodes'] = 'unknown pool'
+        self.server_args['override-status'] = 400
+        self.server_args['init'] = False
+        self.no_error_run(self.command + ['--cluster-ca-load'], self.server_args)
+        self.assertIn('POST:/node/controller/loadTrustedCAs', self.server.trace)
+        self.assertIn('127.0.0.1', self.str_output)
+        self.assertIn('Successfully load CA from inbox/CA', self.str_output)
+
     def test_cluster_ca_delete(self):
         self.no_error_run(self.command + ['--cluster-ca-delete', '0'], self.server_args)
         self.assertIn('DELETE:/pools/default/trustedCAs/0', self.server.trace)
@@ -1612,6 +1621,21 @@ class TestSslManage(CommandTest):
         self.assertIn(f'GET:/pools/default/certificate/node/{host}:{port}', self.server.trace)
         self.assertIn('127.0.0.1', self.str_output)
 
+    def test_node_cert_info_not_init(self):
+        self.server_args['init'] = False
+        certificate = {'warnings': [{'message': 'Out-of-the-box certificates are self-signed. To further secure your '
+                                                'system, you must create new X.509 certificates signed by a trusted '
+                                                'CA.'}],
+                       'subject': f'CN=Couchbase Server Node ({host})',
+                       'expires': '2049-12-31T23:59:59.000Z',
+                       'type': 'generated',
+                       'pem': '-----BEGIN CERTIFICATE-----\nCert String\n-----END CERTIFICATE-----\n',
+                       'privateKeyPassphrase': {}}
+        self.server_args[f'/pools/default/certificate/node/{host}:{port}'] = certificate
+        self.no_error_run(self.command + ['--node-cert-info'], self.server_args)
+        self.assertIn(f'GET:/pools/default/certificate/node/{host}:{port}', self.server.trace)
+        self.assertIn('127.0.0.1', self.str_output)
+
     def test_regenerate_cert(self):
         self.server_args['/controller/regenerateCertificate'] = 'This is a cert'
         self.no_error_run(self.command + ['--regenerate-cert', 'node1.pem'], self.server_args)
@@ -1619,7 +1643,21 @@ class TestSslManage(CommandTest):
         self.assertIn('POST:/controller/regenerateCertificate', self.server.trace)
         self.assertIn('Certificate regenerate and copied to `node1.pem`', self.str_output)
 
+    def test_regenerate_cert_not_init(self):
+        self.server_args['init'] = False
+        self.server_args['/controller/regenerateCertificate'] = 'This is a cert'
+        self.no_error_run(self.command + ['--regenerate-cert', 'node1.pem'], self.server_args)
+        os.remove('node1.pem')
+        self.assertIn('POST:/controller/regenerateCertificate', self.server.trace)
+        self.assertIn('Certificate regenerate and copied to `node1.pem`', self.str_output)
+
     def test_set_node_certificate(self):
+        self.no_error_run(self.command + ['--set-node-certificate'], self.server_args)
+        self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
+        self.assertIn('Node certificate set', self.str_output)
+
+    def test_set_node_certificate_not_init(self):
+        self.server_args['init'] = False
         self.no_error_run(self.command + ['--set-node-certificate'], self.server_args)
         self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
         self.assertIn('Node certificate set', self.str_output)
@@ -1642,7 +1680,23 @@ class TestSslManage(CommandTest):
         self.assertIn('POST:/settings/clientCertAuth', self.server.trace)
         self.assertIn('SSL client auth updated', self.str_output)
 
+    def test_set_client_auth_not_init(self):
+        self.server_args['init'] = False
+        client_json = tempfile.NamedTemporaryFile(delete=False)
+        client_json.write(b'{"name":"json"}')
+        client_json.close()
+        self.no_error_run(self.command + ['--set-client-auth', client_json.name], self.server_args)
+        self.assertIn('POST:/settings/clientCertAuth', self.server.trace)
+        self.assertIn('SSL client auth updated', self.str_output)
+
     def test_client_auth(self):
+        self.server_args['/settings/clientCertAuth'] = {'prefixes': [], 'state': 'disable'}
+        self.no_error_run(self.command + ['--client-auth'], self.server_args)
+        self.assertIn('GET:/settings/clientCertAuth', self.server.trace)
+        self.assertIn('prefixes', self.str_output)
+
+    def test_client_auth_not_init(self):
+        self.server_args['init'] = False
         self.server_args['/settings/clientCertAuth'] = {'prefixes': [], 'state': 'disable'}
         self.no_error_run(self.command + ['--client-auth'], self.server_args)
         self.assertIn('GET:/settings/clientCertAuth', self.server.trace)
