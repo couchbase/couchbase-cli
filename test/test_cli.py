@@ -3114,6 +3114,26 @@ class TestAnalyticsLinkSetup(CommandTest):
                                    'clientCertificatePassword=myClientCertificatePassword', 'tenantId=myTenantId',
                                    'endpoint=my-endpoint.com'])
 
+    def test_create_gcs_anonymous(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'myScope', '--name', 'myLink', '--type', 'gcs'],
+                          self.server_args)
+        self.assertIn('POST:/analytics/link/myScope/myLink', self.server.trace)
+        self.rest_parameter_match(['type=gcs'])
+
+    def test_create_gcs_json_credentials(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'myScope', '--name', 'myLink', '--type', 'gcs',
+                                          '--json-credentials', 'myJsonCredentials'], self.server_args)
+        self.assertIn('POST:/analytics/link/myScope/myLink', self.server.trace)
+        self.rest_parameter_match(['type=gcs', 'jsonCredentials=myJsonCredentials'])
+
+    def test_create_gcs_json_credentials_endpoint(self):
+        self.no_error_run(self.command + ['--create', '--scope', 'myScope', '--name', 'myLink', '--type', 'gcs',
+                                          '--json-credentials', 'myJsonCredentials', '--endpoint',
+                                          'https://storage.googleapis.com'], self.server_args)
+        self.assertIn('POST:/analytics/link/myScope/myLink', self.server.trace)
+        self.rest_parameter_match(['type=gcs', 'jsonCredentials=myJsonCredentials',
+                                   'endpoint=https%3A%2F%2Fstorage.googleapis.com'])
+
     def test_create_couchbase(self):
         self.no_error_run(self.command + ['--create', '--dataverse', 'Default', '--name', 'east', '--type',
                                           'couchbase', '--link-username', 'user', '--link-password', 'secret',

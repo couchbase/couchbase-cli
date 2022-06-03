@@ -4428,8 +4428,8 @@ class AnalyticsLinkSetup(Subcommand):
         group.add_argument("--name", dest="name", metavar="<name>",
                            help="The name of the link")
         group.add_argument("--type", dest="type", metavar="<type>", choices=["couchbase", "s3", "azureblob",
-                                                                             "azuredatalake"],
-                           help="The type of the link ('couchbase', 's3', 'azureblob' or 'azuredatalake')")
+                                                                             "azuredatalake", "gcs"],
+                           help="The type of the link ('couchbase', 's3', 'azureblob', 'azuredatalake' or 'gcs')")
 
         group = self.parser.add_argument_group("Analytics Service Couchbase link setup options")
         group.add_argument("--hostname", dest="hostname", metavar="<hostname>",
@@ -4484,6 +4484,10 @@ class AnalyticsLinkSetup(Subcommand):
                            help="The tenant id of the link")
         group.add_argument("--endpoint", dest="endpoint", metavar="<url>",
                            help="The blob endpoint of the link (required)")
+
+        group = self.parser.add_argument_group("Analytics Service GCS link setup options")
+        group.add_argument("--json-credentials", dest="json_credentials", metavar="<key>",
+                           help="The JSON credentials of the link (optional)")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):

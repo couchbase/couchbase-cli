@@ -23,7 +23,7 @@ _couchbase-cli analytics-link-setup_ [--cluster <cluster>] [--username <username
     [--service-endpoint <url>] [--account-name <id>] [--account-key <key>]
     [--shared-access-signature <token>] [--managed-identity-id <id>] [--client-id <id>]
     [--tenant-id <id>] [--client-secret <key>] [--client-certificate <key>]
-    [--client-certificate-password <key>] [--endpoint <url>]
+    [--client-certificate-password <key>] [--endpoint <url>] [--json-credentials <key>]
 
 == DESCRIPTION
 
@@ -52,7 +52,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The name for the link.
 
 --type <type>::
-  The type of the link. It can be 'couchbase', 's3' or 'azureblob'.
+  The type of the link. It can be 'couchbase', 's3', 'azureblob', 'azuredatalake' or 'gcs'.
 
 --dataverse <name>::
   (Deprecated) The dataverse of the link. Use --scope instead.
@@ -235,6 +235,15 @@ The tenant id of the link. This property is provided together with the --client-
 
 --endpoint <url>::
 The endpoint of the link (required).
+
+=== GCS Link Options (Developer Preview)
+Following are the options specific to *--type gcs*, i.e. Google Cloud Storage links
+
+--json-credentials <key>::
+  The JSON credentials of the link.
+
+--endpoint <url>::
+  The endpoint of the link (optional).
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

@@ -2034,6 +2034,8 @@ class ClusterManager(object):
         params = {}
         if opts.type:
             params["type"] = opts.type
+
+        # couchbase link params
         if opts.hostname:
             params["hostname"] = opts.hostname
         if opts.encryption:
@@ -2050,6 +2052,8 @@ class ClusterManager(object):
             params["username"] = opts.link_username
         if opts.link_password:
             params["password"] = opts.link_password
+
+        # s3 link params
         if opts.access_key_id:
             params['accessKeyId'] = opts.access_key_id
         if opts.secret_access_key:
@@ -2060,6 +2064,8 @@ class ClusterManager(object):
             params['region'] = opts.region
         if opts.service_endpoint:
             params['serviceEndpoint'] = opts.service_endpoint
+
+        # azure blob and datalake link params
         if opts.account_name:
             params['accountName'] = opts.account_name
         if opts.account_key:
@@ -2080,6 +2086,10 @@ class ClusterManager(object):
             params['tenantId'] = opts.tenant_id
         if opts.endpoint:
             params['endpoint'] = opts.endpoint
+
+        # gcs link params
+        if opts.json_credentials:
+            params['jsonCredentials'] = opts.json_credentials
 
         return params
 
