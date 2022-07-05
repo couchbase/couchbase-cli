@@ -16,6 +16,7 @@ from cryptography.hazmat.backends.openssl.backend import backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
+from requests.auth import HTTPBasicAuth
 
 
 # generate_self_signed_cert generates a key/self signed certificate pair which will be written to key.pem/cert.pem in
@@ -65,6 +66,10 @@ class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         self.server.rest_server.trace.append(f'GET:{parsed.path}')
+
+        if not self.authenticated():
+            return
+
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'GET' in fns:
                 return self.handle_fn(fns['GET'], parsed.path, parsed.query)
@@ -74,6 +79,10 @@ class RequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         self.server.rest_server.trace.append(f'POST:{parsed.path}')
+
+        if not self.authenticated():
+            return
+
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'POST' in fns:
                 return self.handle_fn(fns['POST'], parsed.path, parsed.query)
@@ -83,6 +92,10 @@ class RequestHandler(BaseHTTPRequestHandler):
     def do_PATCH(self):
         parsed = urlparse(self.path)
         self.server.rest_server.trace.append(f'PATCH:{parsed.path}')
+
+        if not self.authenticated():
+            return
+
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'PATCH' in fns:
                 return self.handle_fn(fns['PATCH'], parsed.path)
@@ -92,6 +105,10 @@ class RequestHandler(BaseHTTPRequestHandler):
     def do_PUT(self):
         parsed = urlparse(self.path)
         self.server.rest_server.trace.append(f'PUT:{parsed.path}')
+
+        if not self.authenticated():
+            return
+
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'PUT' in fns:
                 return self.handle_fn(fns['PUT'], parsed.path)
@@ -104,10 +121,22 @@ class RequestHandler(BaseHTTPRequestHandler):
         if parsed.query:
             self.server.rest_server.queries.append(parsed.query)
 
+        if not self.authenticated():
+            return
+
         for (endpoint, fns) in endpoints:
             if re.search(endpoint, parsed.path) is not None and 'DELETE' in fns:
                 return self.handle_fn(fns['DELETE'], parsed.path, parsed.query)
         self.not_found()
+
+    def authenticated(self):
+        # Username/password == Administrator/asdasd
+        if self.headers.get('Authorization') == f"Basic QWRtaW5pc3RyYXRvcjphc2Rhc2Q=":
+            return True
+
+        self.send_response(401)
+
+        return False
 
     def not_found(self):
         self.send_response(404)
@@ -117,7 +146,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len).decode('utf-8')
 
-        if self.headers.get('Content-Type', 'application/x-www-form-urlencoded') == 'application/json':
+        if post_body and self.headers.get('Content-Type', 'application/x-www-form-urlencoded') == 'application/json':
             # to help with verifying later on we are going to load this json and then dump it again but with sorted keys
             # to ensure stable serializing so then we can do string comparison on the results
             self.server.rest_server.rest_params.append(json.dumps(json.loads(post_body), sort_keys=True))
@@ -215,7 +244,7 @@ class MockRESTServer(object):
 
     def _close(self, url, server, t):
         try:
-            requests.get(f'{url}/close', timeout=0.2, verify=False)
+            requests.get(f'{url}/close', auth=HTTPBasicAuth('Administrator', 'asdasd'), timeout=0.2, verify=False)
         except Exception:
             pass
 
@@ -541,6 +570,9 @@ endpoints = [
     (r'/controller/uploadClusterCA', {'POST': do_nothing}),
     (r'/controller/regenerateCertificate', {'POST': get_by_path}),
 
+    # cbrecovery
+    (r'/pools/default/buckets/\w+/controller/startRecovery', {'POST': get_by_path}),
+    (r'/pools/default/buckets/\w+/controller/commitVBucket', {'POST': get_by_path}),
 
     # index api
     (r'/getIndexMetadata$', {'GET': get_by_path}),
