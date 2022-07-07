@@ -126,8 +126,10 @@ class Recovery(pump_transfer.Transfer):
         sys.stderr.write(f'{total_vbucket} vbuckets recovered with elapsed time {delta:0.2f} seconds\n')
 
     def pre_transfer(self, opts, source, sink):
+        host, port, _, _, path = pump.parse_spec(opts, sink, 8091)
 
-        host, port, user, pwd, path = pump.parse_spec(opts, sink, 8091)
+        # NOTE: Request is going to the destination cluster e.g. the one being recovered. Use the correct credentials.
+        user, pwd = opts.username_dest, opts.password_dest
 
         # retrieve a list of missing vbucket
         cmd = "startRecovery"
@@ -148,9 +150,8 @@ class Recovery(pump_transfer.Transfer):
 
     def post_transfer(self, opts, source, sink, vbucket):
         if not self.sink_bucket:
-            return "Should specify destionation bucket for restore"
+            return "Should specify destination bucket for restore", None
 
-        host, port, user, pwd, path = pump.parse_spec(opts, sink, 8091)
         if opts.dry_run:
             cmd = "stopRecovery"
             reason_msg = "Stop recovery"
@@ -161,6 +162,12 @@ class Recovery(pump_transfer.Transfer):
             params = urllib.parse.urlencode({"vbucket": vbucket})
         else:
             params = None
+
+        host, port, _, _, path = pump.parse_spec(opts, sink, 8091)
+
+        # NOTE: Request is going to the destination cluster e.g. the one being recovered. Use the correct credentials.
+        user, pwd = opts.username_dest, opts.password_dest
+
         url = f'/pools/default/buckets/{self.sink_bucket}/controller/{cmd}?recovery_uuid={self.recovery_uuid}'
         post_headers = {"Content-type": "application/x-www-form-urlencoded"}
         err, _, _ = pump.rest_request(host, int(port), user, pwd, False, url, method='POST', body=params,

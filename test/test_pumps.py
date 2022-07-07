@@ -546,7 +546,8 @@ class TestDCPSource(unittest.TestCase):
                        '/getIndexMetadata': {'result': 'INDEX'}}
         server.set_args(server_args)
         server.run()
-        opts = Ditto({'username': 'admin', 'password': 'asdasd', 'ssl': False, 'no_ssl_verify': True, 'cacert': None})
+        opts = Ditto({'username': 'Administrator', 'password': 'asdasd',
+                     'ssl': False, 'no_ssl_verify': True, 'cacert': None})
         error, index = DCPStreamSource.provide_index(opts, 'http://127.0.0.1:9211', {'name': 'default'}, None)
         server.shutdown()
         self.assertEqual(0, error, 'Got unexpected error: {}'.format(error))
@@ -562,7 +563,8 @@ class TestDCPSource(unittest.TestCase):
                        }}}}
         server.set_args(server_args)
         server.run()
-        opts = Ditto({'username': 'admin', 'password': 'asdasd', 'ssl': False, 'no_ssl_verify': True, 'cacert': None})
+        opts = Ditto({'username': 'Administrator', 'password': 'asdasd',
+                     'ssl': False, 'no_ssl_verify': True, 'cacert': None})
         error, index = DCPStreamSource.provide_fts_index(opts, 'http://127.0.0.1:9211', {'name': 'default'}, None)
         server.shutdown()
         self.assertEqual(0, error, 'Got unexpected error: {}'.format(error))
@@ -1248,9 +1250,9 @@ class MCHelper:
                      cas=cas)
             return
         user_pass = body[keylen:]
-        if user_pass != b'\x00admin\x00asdasd':
+        if user_pass != b'\x00Administrator\x00asdasd':
             self.failed = True
-            self.reason = "Received {} expected {}".format(user_pass, b'\x00admin\x00asdasd')
+            self.reason = "Received {} expected {}".format(user_pass, b'\x00Administrator\x00asdasd')
             self.res(req, cbcs.CMD_SASL_AUTH, errcode=cbcs.ERR_EINTERNAL, body=self.reason.encode(), opaque=opaque,
                      cas=cas)
             return
@@ -1339,7 +1341,7 @@ class TestMemcachedClient(unittest.TestCase):
     def setUp(self):
         self.server = MockMemcachedServer(debug=False)
         self.host, self.port = self.server.get_host_address()
-        self.helper_class = MCHelper({'response': b'res_data', 'user': 'admin', 'pass': 'asdasd'})
+        self.helper_class = MCHelper({'response': b'res_data', 'user': 'Administrator', 'pass': 'asdasd'})
 
     def tearDown(self):
         self.server.stop()
@@ -1397,7 +1399,7 @@ class TestMemcachedClient(unittest.TestCase):
 
         try:
             client = MemcachedClient(self.host, self.port)
-            opaque_o, cas_o, data = client.sasl_auth_plain('admin', 'asdasd')
+            opaque_o, cas_o, data = client.sasl_auth_plain('Administrator', 'asdasd')
         except Exception as e:
             client.close()
             self.server.stop()
