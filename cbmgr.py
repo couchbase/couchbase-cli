@@ -2122,6 +2122,8 @@ class SettingAlert(Subcommand):
                            + "apart")
         group.add_argument("--alert-communication-issue", dest="alert_communication_issue",
                            action="store_true", help="Alert when nodes are experiencing communication issues")
+        group.add_argument("--alert-memory-threshold", dest="alert_memory_threshold",
+                           action="store_true", help="Alert when system memory usage exceeds threshold")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -2164,6 +2166,8 @@ class SettingAlert(Subcommand):
             alerts.append('ep_clock_cas_drift_threshold_exceeded')
         if opts.alert_communication_issue:
             alerts.append('communication_issue')
+        if opts.alert_memory_threshold:
+            alerts.append('memory_threshold')
 
         enabled = "true"
         if opts.enabled == "0":

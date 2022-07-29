@@ -128,6 +128,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Specifies that an email alert should be sent when nodes are experiencing
   communication issues.
 
+--alert-memory-threshold::
+  Specifies that an email alert should be sent when any node's system memory
+  usage exceeds a threshold
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 == EXAMPLES
