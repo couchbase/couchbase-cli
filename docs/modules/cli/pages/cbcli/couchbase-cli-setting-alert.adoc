@@ -24,6 +24,7 @@ _couchbase-cli setting-alert_ [--cluster <url>] [--username <user>] [--password 
     [--alert-meta-overhead] [--alert-meta-oom] [--alert-write-failed]
     [--alert-audit-msg-dropped] [--alert-indexer-max-ram]
     [--alert-timestamp-drift-exceeded] [--alert-node-time] [--alert-disk-analyzer]
+    [--alert-memory-threshold]
 
 == DESCRIPTION
 
@@ -137,6 +138,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Specifies that an email alert should be sent if the disk analyzer process
   gets stuck and cannot fetch disk usage data.
 
+--alert-memory-threshold::
+  Specifies that an email alert should be sent when any node's system memory
+  usage exceeds a threshold
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
@@ -167,7 +172,7 @@ following command below:
    --alert-ip-changed --alert-disk-space --alert-meta-overhead \
    --alert-meta-oom --alert-write-failed --alert-audit-msg-dropped \
    --alert-indexer-max-ram --alert-timestamp-drift-exceeded \
-   --alert-node-time --alert-disk-analyzer
+   --alert-node-time --alert-disk-analyzer --alert-memory-threshold
 
 To disable email alerts run the following command:
 
