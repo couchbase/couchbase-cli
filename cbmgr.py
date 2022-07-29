@@ -2256,6 +2256,8 @@ class SettingAlert(Subcommand):
                                                      "node")
         group.add_argument("--alert-disk-analyzer", dest="alert_disk_analyzer", action="store_true",
                            help="Alert when the disk analyzer gets stuck")
+        group.add_argument("--alert-memory-threshold", dest="alert_memory_threshold",
+                           action="store_true", help="Alert when system memory usage exceeds threshold")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -2302,6 +2304,8 @@ class SettingAlert(Subcommand):
             alerts.append('time_out_of_sync')
         if opts.alert_disk_analyzer:
             alerts.append('disk_usage_analyzer_stuck')
+        if opts.alert_memory_threshold:
+            alerts.append('memory_threshold')
 
         enabled = "true"
         if opts.enabled == "0":
