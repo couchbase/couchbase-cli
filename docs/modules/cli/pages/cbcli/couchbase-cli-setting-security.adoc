@@ -46,7 +46,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   endpoint but will not disable access to the `http://<addr>:8091/logs` endpoint
   since it is used by the REST API and not Web UI). If your goal is to disable
   non-local http access completely, you should use the `--cluster-encryption-level`
-  flag and set it's value to "strict".
+  flag and set its value to "strict".
 
 --disable-www-authenticate <0|1>::
   Specifies whether Couchbase Server will respond with WWW-Authenticate to
@@ -62,6 +62,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   be sent encrypted. If the level is "strict" it is the same as having the
   level "all" but all non-TLS ports on non-loopback interfaces will be closed.
   By default when cluster encryption is turned on, the level will be "control".
+  Before setting the level to "strict" you will need to perform a number of
+  important actions, see
+  https://docs.couchbase.com/server/current/manage/manage-security/manage-tls.html#enforcing-tls[Enforcing TLS].
 
 --tls-min-version <tlsv1|tlsv1.1|tlsv1.2>::
   Specify the minimum TLS protocol version to be used across all of the
