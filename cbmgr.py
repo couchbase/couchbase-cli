@@ -8,6 +8,7 @@ import os
 import platform
 import random
 import re
+import socket
 import string
 import subprocess
 import sys
@@ -1681,55 +1682,47 @@ class MasterPassword(LocalSubcommand):
 
     def execute(self, opts):
         if opts.send_password is not None:
-            path = [CB_BIN_PATH, os.environ['PATH']]
-            if os.name == 'posix':
-                os.environ['PATH'] = ':'.join(path)
-            else:
-                os.environ['PATH'] = ';'.join(path)
-
-            cookiefile = os.path.join(opts.config_path, "couchbase-server.babysitter.cookie")
-            if not os.path.isfile(cookiefile):
+            portfile = os.path.join(opts.config_path, "couchbase-server.babysitter.smport")
+            if not os.path.isfile(portfile):
                 _exit_if_errors(["The node is down"])
-            cookie = _exit_on_file_read_failure(cookiefile, "Insufficient privileges to send master password - Please"
-                                                            " execute this command as a operating system user who has"
-                                                            " file system read permission on the Couchbase Server "
-                                                            " configuration").rstrip()
-
-            nodefile = os.path.join(opts.config_path, "couchbase-server.babysitter.node")
-            node = _exit_on_file_read_failure(nodefile).rstrip()
-
-            self.prompt_for_master_pwd(node, cookie, opts.send_password, opts.config_path)
+            familyport = _exit_on_file_read_failure(
+                portfile, "Insufficient privileges to send master password - Please"
+                " execute this command as an operating system user who has"
+                " file system read permission on the Couchbase Server "
+                " configuration").rstrip()
+            [afamilystr, portstr] = familyport.split()
+            port = int(portstr)
+            afamily = socket.AF_INET6 if afamilystr == "inet6" else socket.AF_INET
+            self.prompt_for_master_pwd(afamily, port, opts.send_password)
         else:
             _exit_if_errors(["No parameters set"])
 
-    def prompt_for_master_pwd(self, node, cookie, password, cb_cfg_path):
-        dist_cfg_file = os.path.join(cb_cfg_path, "config", "dist_cfg")
-
+    def prompt_for_master_pwd(self, afamily, port, password):
         if password == '':
             password = getpass.getpass("\nEnter master password:")
 
-        name = 'executioner@cb.local'
-        args = ['-pa', CB_NS_EBIN_PATH, CB_BABYSITTER_EBIN_PATH, '-noinput', '-name', name, '-proto_dist', 'cb',
-                '-eval', 'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).', '-epmd_module', 'cb_epmd',
-                '-kernel'] + CB_INETRC_OPT + \
-            ['dist_config_file', f'"{dist_cfg_file}"', '-run', 'encryption_service',
-             'remote_set_password', node]
+        sock = socket.socket(afamily, socket.SOCK_DGRAM)
+        try:
+            sock.settimeout(5)
+            addr = "::1" if afamily == socket.AF_INET6 else "127.0.0.1"
+            sock.sendto(password.encode('utf-8'), (addr, port))
+            (result, _) = sock.recvfrom(128)
+        except socket.timeout:
+            result = b'timeout'
+        finally:
+            sock.close()
 
-        rc, out, err = self.run_process("erl", args, extra_env={'SETPASSWORD': password, 'CB_COOKIE': cookie})
-
-        if rc == 0:
+        if result == b'ok':
             print("SUCCESS: Password accepted. Node started booting.")
-        elif rc == 101:
+        elif result == b'retry':
             print("Incorrect password.")
-            self.prompt_for_master_pwd(node, cookie, '', cb_cfg_path)
-        elif rc == 102:
-            _exit_if_errors(["Password was already supplied"])
-        elif rc == 103:
-            _exit_if_errors(["The node is down"])
-        elif rc == 104:
+            self.prompt_for_master_pwd(afamily, port, '')
+        elif result == b'timeout':
+            _exit_if_errors(["Timeout"])
+        elif result == b'auth_failure':
             _exit_if_errors(["Incorrect password. Node shuts down."])
         else:
-            _exit_if_errors([f'Unknown error: {rc} {out}, {err}'])
+            _exit_if_errors([f'Unknown error: {result}'])
 
     def run_process(self, name, args, extra_env=None):
         try:

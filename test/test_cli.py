@@ -2,8 +2,10 @@
 that validates input correctly"""
 import json
 import os
+import socket
 import sys
 import tempfile
+import threading
 import unittest
 import urllib
 from argparse import Namespace
@@ -1867,22 +1869,55 @@ class TestUserManage(CommandTest):
 class TestMasterPassword(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'master-password']
-        self.cmd_args = ['--config-path', '.', '--send-password', 'password']
+        self.cmd_args = ['--config-path', '.', '--send-password', 'asdasd']
         self.server_args = {}
         super(TestMasterPassword, self).setUp()
 
-    def test_missing_cookie(self):
+    def test_missing_portfile(self):
         self.system_exit_run(self.command + self.cmd_args, self.server_args)
         self.assertIn('The node is down', self.str_output)
 
-    def test_cannot_read_cookie(self):
-        cookie = open("couchbase-server.babysitter.cookie", "x")
-        cookie.write("cookie-monster")
-        cookie.close()
-        os.chmod(cookie.name, 0000)
-        self.system_exit_run(self.command + self.cmd_args, self.server_args)
-        os.remove(cookie.name)
-        self.assertIn('ERROR: Insufficient privileges', self.str_output)
+    def test_cannot_read_port(self):
+        portfile = open('couchbase-server.babysitter.smport', 'x')
+        try:
+            portfile.write('inet 12345')
+            portfile.close()
+            os.chmod(portfile.name, 0000)
+            self.system_exit_run(self.command + self.cmd_args, self.server_args)
+            self.assertIn('ERROR: Insufficient privileges', self.str_output)
+        finally:
+            os.remove(portfile.name)
+
+    def test_succ_cmd_ipv4(self):
+        self.succ_cmd(socket.AF_INET)
+
+    def test_succ_cmd_ipv6(self):
+        self.succ_cmd(socket.AF_INET6)
+
+    def succ_cmd(self, addrFamily):
+        with socket.socket(addrFamily, socket.SOCK_DGRAM) as sock:
+            sock.bind(('', 0))
+            port = sock.getsockname()[1]
+            portfile = open('couchbase-server.babysitter.smport', 'x')
+            try:
+                addrFamilyStr = 'inet' if addrFamily == socket.AF_INET else "inet6"
+                portfile.write(addrFamilyStr + ' ' + str(port))
+                portfile.close()
+
+                thread = threading.Thread(target=read_password, args=(sock,))
+                thread.start()
+
+                self.no_error_run(self.command + self.cmd_args, self.server_args)
+                thread.join()
+                self.assertIn('SUCCESS: Password accepted', self.str_output)
+            finally:
+                os.remove(portfile.name)
+
+
+def read_password(sock):
+    (result, remoteaddr) = sock.recvfrom(128)
+    assert(result == b'asdasd')
+    sock.sendto(b'ok', remoteaddr)
 
 
 class TestXdcrReplicate(CommandTest):
