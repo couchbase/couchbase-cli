@@ -46,7 +46,7 @@ class Recovery(pump_transfer.Transfer):
 
         self.err_map = {
             "startRecovery": {
-                "400": "No recovery needed",
+                "400": "Could not start recovery",
                 "404": "Specified bucket not found",
                 "500": "Could not start recovery because some nodes failed",
                 "503": "Could not start recovery because rebalance is running"
@@ -60,6 +60,12 @@ class Recovery(pump_transfer.Transfer):
             }
         }
 
+        self.bad_request_code_err_map = {
+            "not_needed": "No recovery needed",
+            "recovery_running": "Recovery is already running against one of the buckets on the destination cluster," \
+                "only one can run at a time",
+        }
+
     def main(self, argv):
 
         err, opts, source, sink = self.opt_parse(argv)
@@ -69,9 +75,9 @@ class Recovery(pump_transfer.Transfer):
         self.source_bucket = getattr(opts, "bucket_source", "default")
 
         # communicate with destination before data transferring
-        err, cmd = self.pre_transfer(opts, source, sink)
+        err, cmd, bad_request_code = self.pre_transfer(opts, source, sink)
         if err:
-            return self.explain_error(err, cmd)
+            return self.explain_error(err, cmd, bad_request_code)
         if self.recovery_map:
             sys.stderr.write(f'Missing vbuckets to be recovered:{json.dumps(self.recovery_map)}\n')
         else:
@@ -136,17 +142,25 @@ class Recovery(pump_transfer.Transfer):
         url = f'/pools/default/buckets/{self.sink_bucket}/controller/{cmd}'
         err, conn, response = pump.rest_request(host, int(port), user, pwd, opts.ssl, url, method='POST',
                                                 reason='start_recovery')
+
         if err:
-            return err, cmd
+            if response != b'':
+                response = json.loads(response)
+                bad_request_code = response.get('code', None)
+                if bad_request_code:
+                    return err, cmd, bad_request_code
+
+            return err, cmd, None
+
         response = json.loads(response)
         recovery_map = response.get('recoveryMap', None)
         if not recovery_map:
-            return "Missing recovery map from response", None
-        else:
-            self.recovery_map = recovery_map
+            return "Missing recovery map from response", None, None
+
+        self.recovery_map = recovery_map
         self.recovery_uuid = response.get('uuid', None)
 
-        return None, None
+        return None, None, None
 
     def post_transfer(self, opts, source, sink, vbucket):
         if not self.sink_bucket:
@@ -196,7 +210,7 @@ class Recovery(pump_transfer.Transfer):
     def find_handlers(self, opts, source, sink):
         return pump_dcp.DCPStreamSource, pump_cb.CBSink
 
-    def explain_error(self, err, cmd):
+    def explain_error(self, err, cmd, bad_request_code=None):
         if cmd not in self.err_map:
             logging.error(err)
             return
@@ -205,7 +219,13 @@ class Recovery(pump_transfer.Transfer):
         if m:
             errcode = m.groups()[0]
             if errcode in self.err_map[cmd]:
-                logging.error(f'Error: {self.err_map[cmd][errcode]}')
+                if errcode == "400":
+                    if bad_request_code in self.bad_request_code_err_map:
+                        logging.error(f'Error: {self.bad_request_code_err_map[bad_request_code]}')
+                    else:
+                        logging.error(f'Error: could not start recovery for unknown reason: {bad_request_code}')
+                else:
+                    logging.error(f'Error: {self.err_map[cmd][errcode]}')
             else:
                 logging.error(f'Error: unknown error code:{errcode}')
         else:

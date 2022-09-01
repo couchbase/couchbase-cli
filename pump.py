@@ -1032,7 +1032,12 @@ def rest_request(host: str, port: int, user: Optional[str], pswd: Optional[str],
     if resp.status in [200, 201, 202, 204, 302]:
         return None, conn, resp.read()
 
+    if resp.status == 400 and "start_recovery" in reason:
+        return f'error: unable to access REST API: {host}:{port}{path}; please check source URL, server status,' \
+            f' username (-u) and password (-p); response: {resp.status}{reason}', None, resp.read()
+
     conn.close()
+
     if resp.status == 401:
         return f'error: unable to access REST API: {host}:{port}{path}; please check source URL, server status,' \
             f' username (-u) and password (-p) {reason}', None, b''
