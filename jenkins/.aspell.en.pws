@@ -74,8 +74,8 @@ FTS
 fts
 fullEviction
 gamesim
-gcs
 GCS
+gcs
 geolocation
 GSI
 gsi
@@ -151,6 +151,7 @@ sdk
 SDKs
 seqno
 SIGINT
+sqlpp
 SSL
 ssl
 startTLS

@@ -70,7 +70,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The default is 1.
 
 --n1ql-feature-control <num>::
-  N1QL Feature Controls.
+  {sqlpp} Feature Controls.
   0x0001 (1) Disable Index Aggregation
 
 --temp-dir <path>::

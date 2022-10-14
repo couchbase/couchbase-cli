@@ -279,9 +279,9 @@ query_execute_external_functions[...]::
   query_execute_external_functions[default:scope0].
 
 query_execute_functions[...]::
-  Allows the user to execute N1QL functions for a given scope. To allow the
-  user to execute N1QL functions for all scopes in bucket _default_ use the
-  role query_execute_functions[default]. If the user needs to execute N1QL
+  Allows the user to execute {sqlpp} functions for a given scope. To allow the
+  user to execute {sqlpp} functions for all scopes in bucket _default_ use the
+  role query_execute_functions[default]. If the user needs to execute {sqlpp}
   functions for a scope _scope0_ of bucket _default_ then give them the role
   query_execute_functions[default:scope0].
 
@@ -289,7 +289,7 @@ query_execute_global_external_functions::
   Allows the user to execute global external language functions.
 
 query_execute_global_functions::
-  Allows the user to execute global N1QL functions.
+  Allows the user to execute global {sqlpp} functions.
 
 query_insert[...]::
   Allows the user to execute INSERT query statements on the specified bucket,
@@ -313,9 +313,9 @@ query_manage_external_functions[...]::
   query_manage_external_functions[default:scope0].
 
 query_manage_functions[...]::
-  Allows the user to manage N1QL functions for a given scope. To allow the user
-  to manage N1QL functions for all scopes in bucket _default_ use the
-  role query_manage_functions[default]. If the user needs to manage N1QL
+  Allows the user to manage {sqlpp} functions for a given scope. To allow the user
+  to manage {sqlpp} functions for all scopes in bucket _default_ use the
+  role query_manage_functions[default]. If the user needs to manage {sqlpp}
   functions for a scope _scope0_ of bucket _default_ then give them the role
   query_manage_functions[default:scope0].
 
@@ -323,7 +323,7 @@ query_manage_global_external_functions::
   Allows the user to manage global external language functions.
 
 query_manage_global_functions::
-  Allows the user to manage global N1QL functions.
+  Allows the user to manage global {sqlpp} functions.
 
 query_manage_index[...]::
   Allows the user to create and delete indexes on the specified bucket, scope
