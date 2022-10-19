@@ -44,14 +44,14 @@ include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 == EXAMPLES
 
 To enable node-to-node encryption in a cluster with two host
-`[cb1.mydomain.com:8091, cb2.mydomain.com:8091]` ran the following
+`[cb1.mydomain.com:8091, cb2.mydomain.com:8091]` run the following
 commands:
 
   $ couchbase-cli node-to-node-encryption -c cb1.mydomain.com:8091 --username Administrator \
    --password password --enable
 
 
-To check if node-to-node encryption is on or off ran:
+To check if node-to-node encryption is on or off run:
 
  $ couchbase-cli node-to-node-encryption -c cb1.mydomain.com:8091 --username Administrator \
    --password password --get
