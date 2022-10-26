@@ -3228,8 +3228,8 @@ class SettingSecurity(Subcommand):
                 'strict'],
             default=None,
             help="Set cluster encryption level, only used when cluster encryption enabled.")
-        group.add_argument('--tls-min-version', dest='tls_min_version', metavar='<tlsv1|tlsv1.1|tlsv1.2>',
-                           choices=['tlsv1', 'tlsv1.1', 'tlsv1.2'], default=None, help='Set the minimum TLS version')
+        group.add_argument('--tls-min-version', dest='tls_min_version', default=None,
+                           help='Set the minimum TLS version')
         group.add_argument('--tls-honor-cipher-order', dest='tls_honor_cipher_order', metavar='<1|0>',
                            choices=['1', '0'], help='Specify or not the cipher order has to be followed.', default=None)
         group.add_argument('--cipher-suites', metavar='<ciphers>', default=None,

@@ -1353,9 +1353,6 @@ class TestSettingSecurity(CommandTest):
         self.assertIn('POST:/settings/security', self.server.trace)
         self.rest_parameter_match(expected_params)
 
-    def test_invalid_choice(self):
-        self.system_exit_run(self.command + ['--set', '--tls-min-version', 'tlsv2'], self.server_args)
-
     def test_cipher_suites_empty(self):
         self.no_error_run(self.command + ['--set', '--cipher-suites', ''],
                           self.server_args)
