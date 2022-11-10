@@ -180,11 +180,11 @@ class Generator:
                 continue
 
             nav += (f" ** xref:{self.module}:{'cbcli/' if command.meta.command == 'couchbase-cli' else ''}"
-                    f"{subcommand.path.name}[{subcommand.meta.command} {subcommand.meta.subcommand}]\n")
+                    f"{subcommand.path.name}[{subcommand.meta.subcommand}]\n")
 
             for subsubcommand in sorted(subsubcommands[subcommand.meta.subcommand]):
                 nav += (f" ** xref:{self.module}:{'cbcli/' if command.meta.command == 'couchbase-cli' else ''}"
-                        f"{subsubcommand.path.name}[{subcommand.meta.command} {subcommand.meta.subcommand} "
+                        f"{subsubcommand.path.name}[{subcommand.meta.subcommand} "
                         f"{subsubcommand.meta.subsubcommand}]\n")
 
         return nav
