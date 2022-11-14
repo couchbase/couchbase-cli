@@ -1509,11 +1509,11 @@ class MasterPassword(LocalSubcommand):
             '-proto_dist', 'cb',
             '-epmd_module', 'cb_epmd',
             '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"',
-            '-setcookie', cookie,
+            '-eval' 'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))).',
             '-run', 'encryption_service', 'remote_set_password', node,
         ]
 
-        rc, out, err = self.run_process("erl", args, extra_env={'SETPASSWORD': password})
+        rc, out, err = self.run_process("erl", args, extra_env={'SETPASSWORD': password, 'CB_COOKIE': cookie})
         if rc == 0:
             print("SUCCESS: Password accepted. Node started booting.")
         elif rc == 101:
