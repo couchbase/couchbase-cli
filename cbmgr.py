@@ -1548,15 +1548,18 @@ class MasterPassword(LocalSubcommand):
         if password == '':
             password = getpass.getpass("\nEnter master password:")
 
-        name = 'executioner@cb.local'
-        args = ['-pa', CB_NS_EBIN_PATH, CB_BABYSITTER_EBIN_PATH, '-noinput', '-name', name, '-proto_dist', 'cb',
-                '-eval', 'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).', '-epmd_module', 'cb_epmd',
-                '-kernel'] + CB_INETRC_OPT + \
-            ['dist_config_file', f'"{dist_cfg_file}"', '-run', 'encryption_service',
-             'remote_set_password', node]
+        args = [
+            '-pa', CB_NS_EBIN_PATH, CB_BABYSITTER_EBIN_PATH,
+            '-noinput',
+            '-name', 'executioner@cb.local',
+            '-proto_dist', 'cb',
+            '-epmd_module', 'cb_epmd',
+            '-kernel', *CB_INETRC_OPT, 'dist_config_file', f'"{dist_cfg_file}"',
+            '-eval', 'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).',
+            '-run', 'encryption_service', 'remote_set_password', node,
+        ]
 
         rc, out, err = self.run_process("erl", args, extra_env={'SETPASSWORD': password, 'CB_COOKIE': cookie})
-
         if rc == 0:
             print("SUCCESS: Password accepted. Node started booting.")
         elif rc == 101:
