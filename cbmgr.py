@@ -1509,7 +1509,7 @@ class MasterPassword(LocalSubcommand):
             '-proto_dist', 'cb',
             '-epmd_module', 'cb_epmd',
             '-kernel', 'inetrc', f'"{inetrc_file}"', 'dist_config_file', f'"{dist_cfg_file}"',
-            '-eval' 'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))).',
+            '-eval', 'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).',
             '-run', 'encryption_service', 'remote_set_password', node,
         ]
 
