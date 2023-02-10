@@ -25,9 +25,10 @@ as last resort in order to address uncommon production issues. Check with the
 Couchbase Support team before running this command because improper use can lead
 to the cluster being placed in an unusable state.
 
-When this command is executed it connects to the cluster manager process
+When this command is executed it connects to the local cluster manager process
 specified and starts a shell so that the user can interact with the cluster
-manager.
+manager. This command only works for localhost and can't connect to any other
+host.
 
 == OPTIONS
 

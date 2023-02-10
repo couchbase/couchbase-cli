@@ -2101,7 +2101,8 @@ class ServerEshell(Subcommand):
         _exit_if_errors(errors)
 
         node = result['otpNode']
-        cookie = result['otpCookie']
+        cookie, errors = self.rest.get_ns_server_cookie()
+        _exit_if_errors(errors)
 
         if opts.vm != 'ns_server':
             cookie, errors = self.rest.get_babysitter_cookie()

@@ -1057,6 +1057,12 @@ class ClusterManager(object):
             '{json, atom_to_binary(ns_server:get_babysitter_cookie(), latin1)}.'
         return self._post_form_encoded(url, payload)
 
+    def get_ns_server_cookie(self):
+        url = f'{self.hostname}/diag/eval'
+        payload = \
+            '{json, atom_to_binary(erlang:get_cookie(), latin1)}.'
+        return self._post_form_encoded(url, payload)
+
     def stop_rebalance(self):
         params = {"allowUnsafe": "true"}
         url = f'{self.hostname}/controller/stopRebalance'
