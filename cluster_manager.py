@@ -727,7 +727,9 @@ class ClusterManager(object):
                       threads_number, conflict_resolution, flush_enabled,
                       max_ttl, compression_mode, sync, db_frag_perc, db_frag_size, view_frag_perc,
                       view_frag_size, from_hour, from_min, to_hour, to_min,
-                      abort_outside, paralleldb_and_view_compact, purge_interval, timeout=60):
+                      abort_outside, paralleldb_and_view_compact, purge_interval,
+                      history_retention_bytes, history_retention_seconds,
+                      history_retention_default, timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
         if name is None:
@@ -761,6 +763,12 @@ class ClusterManager(object):
             params["storageBackend"] = storage_type
         if durability_min_level is not None:
             params["durabilityMinLevel"] = durability_min_level
+        if history_retention_bytes is not None:
+            params["historyRetentionBytes"] = history_retention_bytes
+        if history_retention_seconds is not None:
+            params["historyRetentionSeconds"] = history_retention_seconds
+        if history_retention_default is not None:
+            params["historyRetentionCollectionDefault"] = one_zero_boolean_to_string(history_retention_default)
 
         if bucket_type == "couchbase":
             if (db_frag_perc is not None or db_frag_size is not None or view_frag_perc is not None or
@@ -828,7 +836,9 @@ class ClusterManager(object):
                     replicas, threads_number, flush_enabled, max_ttl,
                     compression_mode, remove_port, db_frag_perc, db_frag_size, view_frag_perc,
                     view_frag_size, from_hour, from_min, to_hour, to_min,
-                    abort_outside, paralleldb_and_view_compact, purge_interval, couchbase_bucket: bool = True):
+                    abort_outside, paralleldb_and_view_compact, purge_interval,
+                    history_retention_bytes, history_retention_seconds,
+                    history_retention_default, couchbase_bucket: bool = True):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -881,6 +891,12 @@ class ClusterManager(object):
             params["purgeInterval"] = purge_interval
         if durability_min_level is not None:
             params["durabilityMinLevel"] = durability_min_level
+        if history_retention_bytes is not None:
+            params["historyRetentionBytes"] = history_retention_bytes
+        if history_retention_seconds is not None:
+            params["historyRetentionSeconds"] = history_retention_seconds
+        if history_retention_default is not None:
+            params["historyRetentionCollectionDefault"] = one_zero_boolean_to_string(history_retention_default)
 
         return self._post_form_encoded(url, params)
 
@@ -2188,12 +2204,15 @@ class ClusterManager(object):
             f'{urllib.parse.quote_plus(scope)}'
         return self._delete(url, None)
 
-    def create_collection(self, bucket, scope, collection, max_ttl):
+    def create_collection(self, bucket, scope, collection, max_ttl, enable_history):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/' \
             f'{urllib.parse.quote_plus(scope)}/collections'
         params = {"name": collection}
         if max_ttl:
             params["maxTTL"] = max_ttl
+        if enable_history:
+            params["history"] = one_zero_boolean_to_string(enable_history)
+
         return self._post_form_encoded(url, params)
 
     def drop_collection(self, bucket, scope, collection):

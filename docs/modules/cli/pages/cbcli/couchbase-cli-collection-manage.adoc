@@ -18,6 +18,7 @@ _couchbase-cli collection-manage_ [--cluster <url>] [--username <user>]
     [--create-scope <scope>] [--drop-scope <scope>] [--list-scopes]
     [--create-collection <collection>] [--drop-collection <collection>]
     [--list-collections [<scope_list>]] [--max-ttl <seconds>]
+    [--enable-history-retention <0|1>]
 
 == DESCRIPTION
 
@@ -73,6 +74,11 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   no TTL or a TTL greater than than the maximum, its TTL will be set
   to the maximum TTL. Setting this option to 0 disables the use of
   max-TTL, and the largest TTL that is allowed is 2147483647.
+
+--enable-history-retention <0|1>::
+  Specifies whether or not the document history retention should be enabled for
+  the collection. To enable the document history retention, set this option to
+  "1". To disable the document history retention, set this option to "0".
 
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]

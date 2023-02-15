@@ -975,6 +975,15 @@ class BucketCreate(Subcommand):
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
                            metavar="<float>", help="Sets the frequency of the tombstone purge interval")
 
+        group.add_argument("--history-retention-bytes", dest="history_retention_bytes", default=None, type=(int),
+                           metavar="<bytes>", help="Set the maximum size of retained document history in bytes")
+        group.add_argument("--history-retention-seconds", dest="history_retention_seconds", default=None, type=(int),
+                           metavar="<seconds>", help="Set the maximum age of retained document history in seconds")
+        group.add_argument("--enable-history-retention-by-default",
+                           dest="enable_history_retention", metavar="<0|1>", choices=["0", "1"],
+                           help="Enable history retention for new collections created in this bucket by default "
+                           "(0 or 1)")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1020,6 +1029,25 @@ class BucketCreate(Subcommand):
             if opts.storage == "magma":
                 storage_type = "magma"
 
+        if opts.type != "couchbase":
+            if opts.history_retention_bytes is not None:
+                _exit_if_errors([f"--history-retention-bytes cannot be specified for a {opts.type} bucket"])
+            if opts.history_retention_seconds is not None:
+                _exit_if_errors([f"--history-retention-seconds cannot be specified for a {opts.type} bucket"])
+            if opts.enable_history_retention is not None:
+                _exit_if_errors([f"--enable-history-retention-by-default cannot be specified for a {opts.type} bucket"])
+
+        if storage_type != "magma":
+            if opts.history_retention_bytes is not None:
+                _exit_if_errors([f"--history-retention-bytes cannot be specified for a bucket with {storage_type} "
+                                 "backend"])
+            if opts.history_retention_seconds is not None:
+                _exit_if_errors([f"--history-retention-seconds cannot be specified for a bucket with {storage_type} "
+                                 "backend"])
+            if opts.enable_history_retention is not None:
+                _exit_if_errors(["--enable-history-retention-by-default cannot be specified for a bucket with "
+                                 f"{storage_type} backend"])
+
         priority = None
         if opts.priority is not None:
             if opts.priority == BUCKET_PRIORITY_HIGH_STR:
@@ -1040,7 +1068,9 @@ class BucketCreate(Subcommand):
                                             opts.max_ttl, opts.compression_mode, opts.wait, opts.db_frag_perc,
                                             opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
                                             opts.from_hour, opts.from_min, opts.to_hour, opts.to_min,
-                                            opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval)
+                                            opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval,
+                                            opts.history_retention_bytes, opts.history_retention_seconds,
+                                            opts.enable_history_retention)
         _exit_if_errors(errors)
         _success("Bucket created")
 
@@ -1141,6 +1171,15 @@ class BucketEdit(Subcommand):
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
                            metavar="<num>", help="Set the bucket metadata purge interval")
 
+        group.add_argument("--history-retention-bytes", dest="history_retention_bytes", default=None, type=(int),
+                           metavar="<bytes>", help="Set the maximum size of retained document history in bytes")
+        group.add_argument("--history-retention-seconds", dest="history_retention_seconds", default=None, type=(int),
+                           metavar="<seconds>", help="Set the maximum age of retained document history in seconds")
+        group.add_argument("--enable-history-retention-by-default",
+                           dest="enable_history_retention", metavar="<0|1>", choices=["0", "1"],
+                           help="Enable history retention for new collections created in this bucket by default "
+                           "(0 or 1)")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1184,6 +1223,26 @@ class BucketEdit(Subcommand):
                      or opts.abort_outside is not None or opts.paralleldb_and_view_compact is not None)):
             _exit_if_errors([f'compaction settings can not be specified for a {bucket["bucketType"]} bucket'])
 
+        if "bucketType" in bucket and bucket["bucketType"] != "membase":
+            if opts.history_retention_bytes is not None:
+                _exit_if_errors([f"--history-retention-bytes cannot be specified for a {bucket['bucketType']} bucket"])
+            if opts.history_retention_seconds is not None:
+                _exit_if_errors([f"--history-retention-seconds cannot be specified for a {bucket['bucketType']} "
+                                 "bucket"])
+            if opts.enable_history_retention is not None:
+                _exit_if_errors(["--enable-history-retention-by-default cannot be specified for a "
+                                 f"{bucket['bucketType']} bucket"])
+        if "storageBackend" in bucket and bucket["storageBackend"] != "magma":
+            if opts.history_retention_bytes is not None:
+                _exit_if_errors(["--history-retention-bytes cannot be specified for a bucket with "
+                                 f"{bucket['storageBackend']} backend"])
+            if opts.history_retention_seconds is not None:
+                _exit_if_errors(["--history-retention-seconds cannot be specified for a bucket with "
+                                 f"{bucket['storageBackend']} backend"])
+            if opts.enable_history_retention is not None:
+                _exit_if_errors(["--enable-history-retention-by-default cannot be specified for a bucket with "
+                                 f"{bucket['storageBackend']} backend"])
+
         priority = None
         if opts.priority is not None:
             if opts.priority == BUCKET_PRIORITY_HIGH_STR:
@@ -1203,6 +1262,8 @@ class BucketEdit(Subcommand):
                                           opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size, opts.from_hour,
                                           opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
                                           opts.paralleldb_and_view_compact, opts.purge_interval,
+                                          opts.history_retention_bytes, opts.history_retention_seconds,
+                                          opts.enable_history_retention,
                                           'bucketType' in bucket and bucket['bucketType'] == 'membase')
         _exit_if_errors(errors)
 
@@ -4653,6 +4714,8 @@ class CollectionManage(Subcommand):
                                                      "are provided it will print all collections")
         group.add_argument("--max-ttl", dest="max_ttl", metavar="<seconds>", type=int,
                            help="Set the maximum TTL the collection will accept")
+        group.add_argument("--enable-history-retention", dest="enable_history", metavar="<0|1>", choices=["0", "1"],
+                           help="Enable history retention (0 or 1)")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -4669,6 +4732,9 @@ class CollectionManage(Subcommand):
 
         if opts.max_ttl is not None and opts.create_collection is None:
             _exit_if_errors(["--max-ttl can only be set with --create-collection"])
+
+        if opts.enable_history is not None and opts.create_collection is None:
+            _exit_if_errors(["--enable-history-retention can only be set with --create-collection"])
 
         if opts.create_scope:
             self._create_scope(opts)
@@ -4701,7 +4767,7 @@ class CollectionManage(Subcommand):
 
     def _create_collection(self, opts):
         scope, collection = self._get_scope_collection(opts.create_collection)
-        _, errors = self.rest.create_collection(opts.bucket, scope, collection, opts.max_ttl)
+        _, errors = self.rest.create_collection(opts.bucket, scope, collection, opts.max_ttl, opts.enable_history)
         _exit_if_errors(errors)
         _success("Collection created")
 

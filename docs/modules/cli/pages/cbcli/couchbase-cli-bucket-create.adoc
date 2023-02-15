@@ -26,7 +26,9 @@ _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
     [--view-fragmentation-threshold-size <mebibytes>] [--from-hour <hour>]
     [--from-minute <min>] [--to-hour <hour>] [--to-minute <min>]
     [--abort-outside <0|1>] [--parallel-db-view-compaction <0|1>]
-    [--purge-interval <float>]
+    [--purge-interval <float>] [--history-retention-bytes <bytes>]
+    [--history-retention-seconds <seconds>]
+    [--enable-history-retention-by-default <0|1>]
 
 == DESCRIPTION
 
@@ -236,6 +238,8 @@ Run index and data compaction in parallel. Global setting only.
 --purge-interval <float>::
   Sets the frequency of the tombstone (metadata) purge interval. The default
   value is three days.
+
+include::{partialsdir}/cbcli/part-common-history-retention.adoc[]
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

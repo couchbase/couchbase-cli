@@ -461,6 +461,62 @@ class TestBucketCreate(CommandTest):
         self.system_exit_run(self.command + self.command_args + args, self.server_args)
         self.assertIn('--durability-min-level cannot be specified for a memcached bucket', self.str_output)
 
+    def test_bucket_create_ephemeral_with_history_retention_bytes(self):
+        args = ['--bucket-type', 'ephemeral', '--bucket-ramsize', '100', '--history-retention-bytes', '1024']
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("--history-retention-bytes cannot be specified for a ephemeral bucket", self.str_output)
+
+    def test_bucket_create_couchstore_backend_with_history_retention_bytes(self):
+        args = [
+            '--bucket-type', 'couchbase', '--storage-backend', 'couchstore', '--bucket-ramsize', '1024',
+            '--history-retention-bytes', '1024',
+        ]
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("--history-retention-bytes cannot be specified for a bucket with couchstore backend",
+                      self.str_output)
+
+    def test_bucket_create_ephemeral_with_history_retention_seconds(self):
+        args = ['--bucket-type', 'ephemeral', '--bucket-ramsize', '100', '--history-retention-seconds', '10']
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("--history-retention-seconds cannot be specified for a ephemeral bucket", self.str_output)
+
+    def test_bucket_create_couchstore_backend_with_history_retention_seconds(self):
+        args = [
+            '--bucket-type', 'couchbase', '--storage-backend', 'couchstore', '--bucket-ramsize', '1024',
+            '--history-retention-seconds', '10',
+        ]
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("--history-retention-seconds cannot be specified for a bucket with couchstore backend",
+                      self.str_output)
+
+    def test_bucket_create_ephemeral_with_enable_history_retention_by_default(self):
+        args = ['--bucket-type', 'ephemeral', '--bucket-ramsize', '100', '--enable-history-retention-by-default', '0']
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("--enable-history-retention-by-default cannot be specified for a ephemeral bucket",
+                      self.str_output)
+
+    def test_bucket_create_couchstore_backend_with_enable_history_retention_by_default(self):
+        args = [
+            '--bucket-type', 'couchbase', '--storage-backend', 'couchstore', '--bucket-ramsize', '1024',
+            '--enable-history-retention-by-default', '0',
+        ]
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("--enable-history-retention-by-default cannot be specified for a bucket with couchstore backend",
+                      self.str_output)
+
+    def test_bucket_create_history_retention_options(self):
+        args = [
+            '--bucket-type', 'couchbase', '--storage-backend', 'magma', '--bucket-ramsize', '1024',
+            '--history-retention-bytes', '1024', '--history-retention-seconds', '10',
+            '--enable-history-retention-by-default', '0',
+        ]
+        self.no_error_run(self.command + self.command_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'storageBackend=magma', 'name=name', 'ramQuotaMB=1024',
+            "historyRetentionBytes=1024", "historyRetentionSeconds=10", "historyRetentionCollectionDefault=false"
+        ]
+        self.rest_parameter_match(expected_params)
+
 
 class TestBucketDelete(CommandTest):
     def setUp(self):
@@ -567,6 +623,54 @@ class TestBucketEdit(CommandTest):
     def test_error_bucket_does_not_exist(self):
         self.system_exit_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args,
                              self.server_args)
+
+    def test_bucket_edit_ephemeral_with_history_retention_bytes(self):
+        self.server_args['buckets'].append({'name': 'name', 'bucketType': 'ephemeral'})
+        self.system_exit_run(self.command + self.command_args + ['--history-retention-bytes', '1024'], self.server_args)
+        self.assertIn("--history-retention-bytes cannot be specified for a ephemeral bucket", self.str_output)
+
+    def test_bucket_edit_couchstore_backend_with_history_retention_bytes(self):
+        self.server_args['buckets'].append({'name': 'name', 'bucketType': 'membase', 'storageBackend': 'couchstore'})
+        self.system_exit_run(self.command + self.command_args + ['--history-retention-bytes', '1024'], self.server_args)
+        self.assertIn("--history-retention-bytes cannot be specified for a bucket with couchstore backend",
+                      self.str_output)
+
+    def test_bucket_edit_ephemeral_with_history_retention_seconds(self):
+        self.server_args['buckets'].append({'name': 'name', 'bucketType': 'ephemeral'})
+        self.system_exit_run(self.command + self.command_args + ['--history-retention-seconds', '10'], self.server_args)
+        self.assertIn("--history-retention-seconds cannot be specified for a ephemeral bucket", self.str_output)
+
+    def test_bucket_edit_couchstore_backend_with_history_retention_seconds(self):
+        self.server_args['buckets'].append({'name': 'name', 'bucketType': 'membase', 'storageBackend': 'couchstore'})
+        self.system_exit_run(self.command + self.command_args + ['--history-retention-seconds', '10'], self.server_args)
+        self.assertIn("--history-retention-seconds cannot be specified for a bucket with couchstore backend",
+                      self.str_output)
+
+    def test_bucket_edit_ephemeral_with_enable_history_retention_by_default(self):
+        self.server_args['buckets'].append({'name': 'name', 'bucketType': 'ephemeral'})
+        self.system_exit_run(self.command + self.command_args + ['--enable-history-retention-by-default', '0'],
+                             self.server_args)
+        self.assertIn("--enable-history-retention-by-default cannot be specified for a ephemeral bucket",
+                      self.str_output)
+
+    def test_bucket_edit_couchstore_backend_with_enable_history_retention_by_default(self):
+        self.server_args['buckets'].append({'name': 'name', 'bucketType': 'membase', 'storageBackend': 'couchstore'})
+        self.system_exit_run(self.command + self.command_args + ['--enable-history-retention-by-default', '0'],
+                             self.server_args)
+        self.assertIn("--enable-history-retention-by-default cannot be specified for a bucket with couchstore backend",
+                      self.str_output)
+
+    def test_bucket_edit_history_retention_options(self):
+        self.server_args['buckets'].append({'name': 'name', 'bucketType': 'membase', 'storageBackend': 'magma'})
+        args = [
+            '--history-retention-bytes', '1024', '--history-retention-seconds', '10',
+            '--enable-history-retention-by-default', '0',
+        ]
+        self.no_error_run(self.command + self.command_args + args, self.server_args)
+        expected_params = [
+            "historyRetentionBytes=1024", "historyRetentionSeconds=10", "historyRetentionCollectionDefault=false"
+        ]
+        self.rest_parameter_match(expected_params)
 
 
 class TestBucketFlush(CommandTest):
@@ -2633,10 +2737,10 @@ class TestCollectionManage(CommandTest):
             self.assertIn(p, self.str_output)
 
     def test_create_collection(self):
-        self.no_error_run(self.command + ['--create-collection', 'scope_1.collection_1', '--max-ttl', '100'],
-                          self.server_args)
+        self.no_error_run(self.command + ['--create-collection', 'scope_1.collection_1', '--max-ttl', '100',
+                          '--enable-history-retention', '1'], self.server_args)
         self.assertIn('POST:/pools/default/buckets/name/scopes/scope_1/collections', self.server.trace)
-        expected_params = ['name=collection_1', 'maxTTL=100']
+        expected_params = ['name=collection_1', 'maxTTL=100', 'history=true']
         self.rest_parameter_match(expected_params)
 
     def test_delete_collection(self):
