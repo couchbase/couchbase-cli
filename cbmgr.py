@@ -4444,8 +4444,8 @@ class AnalyticsLinkSetup(Subcommand):
         group.add_argument("--name", dest="name", metavar="<name>",
                            help="The name of the link")
         group.add_argument("--type", dest="type", metavar="<type>", choices=["couchbase", "s3", "azureblob",
-                                                                             "azuredatalake"],
-                           help="The type of the link ('couchbase', 's3', 'azureblob' or 'azuredatalake')")
+                                                                             "azuredatalake", "gcs"],
+                           help="The type of the link ('couchbase', 's3', 'azureblob', 'azuredatalake' or 'gcs')")
 
         group = self.parser.add_argument_group("Analytics Service Couchbase link setup options")
         group.add_argument("--hostname", dest="hostname", metavar="<hostname>",
@@ -4501,6 +4501,13 @@ class AnalyticsLinkSetup(Subcommand):
         group.add_argument("--endpoint", dest="endpoint", metavar="<url>",
                            help="The blob endpoint of the link (required)")
 
+        group = self.parser.add_argument_group("Analytics Service GCS link setup options")
+        group.add_argument("--application-default-credentials", dest="application_default_credentials",
+                           action="store_true",
+                           help="The option to use application default credentials for authentication (optional)")
+        group.add_argument("--json-credentials", dest="json_credentials", metavar="<key>",
+                           help="The JSON credentials of the link (optional)")
+
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         actions = sum([opts.create, opts.delete, opts.edit, opts.list])
@@ -4533,6 +4540,12 @@ class AnalyticsLinkSetup(Subcommand):
 
         if opts.type == 'azureblob' or opts.type == 'azuredatalake':
             self._verify_azure_options(opts)
+
+        if opts.type == 'gcs':
+            # --application-default-credentials and --json-credentials are not allowed to be passed together
+            if opts.application_default_credentials and opts.json_credentials:
+                _exit_if_errors(['Parameter --json-credentials is not allowed if --application-default-credentials '
+                                 'is provided'])
 
         if opts.dataverse:
             opts.scope = opts.dataverse
