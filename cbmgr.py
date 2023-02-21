@@ -976,6 +976,14 @@ class BucketCreate(Subcommand):
 
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
                            metavar="<float>", help="Sets the frequency of the tombstone purge interval")
+        group.add_argument("--history-retention-bytes", dest="history_retention_bytes", default=None, type=(int),
+                           metavar="<bytes>", help="Set the maximum size of retained document history in bytes")
+        group.add_argument("--history-retention-seconds", dest="history_retention_seconds", default=None, type=(int),
+                           metavar="<seconds>", help="Set the maximum age of retained document history in seconds")
+        group.add_argument("--enable-history-retention-by-default",
+                           dest="enable_history_retention", metavar="<0|1>", choices=["0", "1"],
+                           help="Enable history retention for new collections created in this bucket by default "
+                           "(0 or 1)")
 
         group.add_argument("--enable-point-in-time", dest="enable_pitr", metavar="<0|1>",
                            choices=["0", "1"], help="Enable the Point-In-Time feature on this bucket, which allows "
@@ -1036,6 +1044,25 @@ class BucketCreate(Subcommand):
             if opts.storage == "magma":
                 storage_type = "magma"
 
+        if opts.type != "couchbase":
+            if opts.history_retention_bytes is not None:
+                _exit_if_errors([f"--history-retention-bytes cannot be specified for a {opts.type} bucket"])
+            if opts.history_retention_seconds is not None:
+                _exit_if_errors([f"--history-retention-seconds cannot be specified for a {opts.type} bucket"])
+            if opts.enable_history_retention is not None:
+                _exit_if_errors([f"--enable-history-retention-by-default cannot be specified for a {opts.type} bucket"])
+
+        if storage_type != "magma":
+            if opts.history_retention_bytes is not None:
+                _exit_if_errors([f"--history-retention-bytes cannot be specified for a bucket with {storage_type} "
+                                 "backend"])
+            if opts.history_retention_seconds is not None:
+                _exit_if_errors([f"--history-retention-seconds cannot be specified for a bucket with {storage_type} "
+                                 "backend"])
+            if opts.enable_history_retention is not None:
+                _exit_if_errors(["--enable-history-retention-by-default cannot be specified for a bucket with "
+                                 f"{storage_type} backend"])
+
         priority = None
         if opts.priority is not None:
             if opts.priority == BUCKET_PRIORITY_HIGH_STR:
@@ -1057,7 +1084,9 @@ class BucketCreate(Subcommand):
                                             opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size,
                                             opts.from_hour, opts.from_min, opts.to_hour, opts.to_min,
                                             opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval,
-                                            opts.enable_pitr, opts.pitr_granularity, opts.pitr_max_history_age)
+                                            opts.history_retention_bytes, opts.history_retention_seconds,
+                                            opts.enable_history_retention, opts.enable_pitr, opts.pitr_granularity,
+                                            opts.pitr_max_history_age)
         _exit_if_errors(errors)
         _success("Bucket created")
 
@@ -1158,6 +1187,15 @@ class BucketEdit(Subcommand):
         group.add_argument("--purge-interval", dest="purge_interval", type=(float),
                            metavar="<num>", help="Set the bucket metadata purge interval")
 
+        group.add_argument("--history-retention-bytes", dest="history_retention_bytes", default=None, type=(int),
+                           metavar="<bytes>", help="Set the maximum size of retained document history in bytes")
+        group.add_argument("--history-retention-seconds", dest="history_retention_seconds", default=None, type=(int),
+                           metavar="<seconds>", help="Set the maximum age of retained document history in seconds")
+        group.add_argument("--enable-history-retention-by-default",
+                           dest="enable_history_retention", metavar="<0|1>", choices=["0", "1"],
+                           help="Enable history retention for new collections created in this bucket by default "
+                           "(0 or 1)")
+
         group.add_argument("--enable-point-in-time", dest="enable_pitr", metavar="<0|1>",
                            choices=["0", "1"], help="Enable Point-In-Time backups and restores on this bucket (0 or 1)")
         group.add_argument("--point-in-time-granularity", dest="pitr_granularity", default=None, type=(int),
@@ -1210,6 +1248,26 @@ class BucketEdit(Subcommand):
 
         is_couchbase_bucket = "bucketType" in bucket and bucket["bucketType"] == "membase"
 
+        if "bucketType" in bucket and bucket["bucketType"] != "membase":
+            if opts.history_retention_bytes is not None:
+                _exit_if_errors([f"--history-retention-bytes cannot be specified for a {bucket['bucketType']} bucket"])
+            if opts.history_retention_seconds is not None:
+                _exit_if_errors([f"--history-retention-seconds cannot be specified for a {bucket['bucketType']} "
+                                 "bucket"])
+            if opts.enable_history_retention is not None:
+                _exit_if_errors(["--enable-history-retention-by-default cannot be specified for a "
+                                 f"{bucket['bucketType']} bucket"])
+        if "storageBackend" in bucket and bucket["storageBackend"] != "magma":
+            if opts.history_retention_bytes is not None:
+                _exit_if_errors(["--history-retention-bytes cannot be specified for a bucket with "
+                                 f"{bucket['storageBackend']} backend"])
+            if opts.history_retention_seconds is not None:
+                _exit_if_errors(["--history-retention-seconds cannot be specified for a bucket with "
+                                 f"{bucket['storageBackend']} backend"])
+            if opts.enable_history_retention is not None:
+                _exit_if_errors(["--enable-history-retention-by-default cannot be specified for a bucket with "
+                                 f"{bucket['storageBackend']} backend"])
+
         if not is_couchbase_bucket and (opts.enable_pitr is not None or opts.pitr_granularity is not None or
                                         opts.pitr_max_history_age is not None):
             _exit_if_errors(["Point-In-Time options are only supported for 'couchbase' buckets"])
@@ -1232,8 +1290,11 @@ class BucketEdit(Subcommand):
                                           opts.max_ttl, opts.compression_mode, opts.remove_port, opts.db_frag_perc,
                                           opts.db_frag_size, opts.view_frag_perc, opts.view_frag_size, opts.from_hour,
                                           opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
-                                          opts.paralleldb_and_view_compact, opts.purge_interval, opts.enable_pitr,
-                                          opts.pitr_granularity, opts.pitr_max_history_age, is_couchbase_bucket)
+                                          opts.paralleldb_and_view_compact, opts.purge_interval,
+                                          opts.history_retention_bytes, opts.history_retention_seconds,
+                                          opts.enable_history_retention,
+                                          opts.enable_pitr, opts.pitr_granularity, opts.pitr_max_history_age,
+                                          is_couchbase_bucket)
         _exit_if_errors(errors)
 
         _success("Bucket edited")
@@ -2059,7 +2120,8 @@ class ServerEshell(Subcommand):
         _exit_if_errors(errors)
 
         node = result['otpNode']
-        cookie = result['otpCookie']
+        cookie, errors = self.rest.get_ns_server_cookie()
+        _exit_if_errors(errors)
 
         if opts.vm != 'ns_server':
             cookie, errors = self.rest.get_babysitter_cookie()
@@ -4483,6 +4545,9 @@ class AnalyticsLinkSetup(Subcommand):
                            help="The blob endpoint of the link (required)")
 
         group = self.parser.add_argument_group("Analytics Service GCS link setup options")
+        group.add_argument("--application-default-credentials", dest="application_default_credentials",
+                           action="store_true",
+                           help="The option to use application default credentials for authentication (optional)")
         group.add_argument("--json-credentials", dest="json_credentials", metavar="<key>",
                            help="The JSON credentials of the link (optional)")
 
@@ -4518,6 +4583,12 @@ class AnalyticsLinkSetup(Subcommand):
 
         if opts.type == 'azureblob' or opts.type == 'azuredatalake':
             self._verify_azure_options(opts)
+
+        if opts.type == 'gcs':
+            # --application-default-credentials and --json-credentials are not allowed to be passed together
+            if opts.application_default_credentials and opts.json_credentials:
+                _exit_if_errors(['Parameter --json-credentials is not allowed if --application-default-credentials '
+                                 'is provided'])
 
         if opts.dataverse:
             opts.scope = opts.dataverse
@@ -4700,6 +4771,8 @@ class CollectionManage(Subcommand):
                                                      "are provided it will print all collections")
         group.add_argument("--max-ttl", dest="max_ttl", metavar="<seconds>", type=int,
                            help="Set the maximum TTL the collection will accept")
+        group.add_argument("--enable-history-retention", dest="enable_history", metavar="<0|1>", choices=["0", "1"],
+                           help="Enable history retention (0 or 1)")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -4716,6 +4789,9 @@ class CollectionManage(Subcommand):
 
         if opts.max_ttl is not None and opts.create_collection is None:
             _exit_if_errors(["--max-ttl can only be set with --create-collection"])
+
+        if opts.enable_history is not None and opts.create_collection is None:
+            _exit_if_errors(["--enable-history-retention can only be set with --create-collection"])
 
         if opts.create_scope:
             self._create_scope(opts)
@@ -4748,7 +4824,7 @@ class CollectionManage(Subcommand):
 
     def _create_collection(self, opts):
         scope, collection = self._get_scope_collection(opts.create_collection)
-        _, errors = self.rest.create_collection(opts.bucket, scope, collection, opts.max_ttl)
+        _, errors = self.rest.create_collection(opts.bucket, scope, collection, opts.max_ttl, opts.enable_history)
         _exit_if_errors(errors)
         _success("Collection created")
 

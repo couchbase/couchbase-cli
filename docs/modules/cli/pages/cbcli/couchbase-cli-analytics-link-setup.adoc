@@ -23,7 +23,8 @@ _couchbase-cli analytics-link-setup_ [--cluster <cluster>] [--username <username
     [--service-endpoint <url>] [--account-name <id>] [--account-key <key>]
     [--shared-access-signature <token>] [--managed-identity-id <id>] [--client-id <id>]
     [--tenant-id <id>] [--client-secret <key>] [--client-certificate <key>]
-    [--client-certificate-password <key>] [--endpoint <url>] [--json-credentials <key>]
+    [--client-certificate-password <key>] [--endpoint <url>] [--application-default-credentials]
+    [--json-credentials <key>]
 
 == DESCRIPTION
 
@@ -236,11 +237,14 @@ The tenant id of the link. This property is provided together with the --client-
 --endpoint <url>::
 The endpoint of the link (required).
 
-=== GCS Link Options (Developer Preview)
-Following are the options specific to *--type gcs*, i.e. Google Cloud Storage links
+=== GCS Link Options
+Following are the options specific to *--type gcs*, i.e. Google Cloud Storage links.
+
+--application-default-credentials::
+  Indicates that the link should use the Google Application Default Credentials for authenticating (optional).
 
 --json-credentials <key>::
-  The JSON credentials of the link.
+  The JSON credentials of the link (optional).
 
 --endpoint <url>::
   The endpoint of the link (optional).

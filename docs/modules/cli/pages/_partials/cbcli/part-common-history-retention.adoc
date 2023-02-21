@@ -1,0 +1,21 @@
+--history-retention-bytes <bytes>::
+  Specifies how many bytes of document history the bucket should aim to retain
+  on disk. This option is valid for Couchbase buckets with Magma storage backend
+  only. By default, history retention in bytes is set to 0, which means that no
+  history is retained and all stale data is removed during compaction.
+
+--history-retention-seconds <seconds>::
+  Specifies how many seconds of document history the bucket should aim to retain
+  on disk. This option is valid for Couchbase buckets with Magma storage backend
+  only. By default, history retention in seconds is set to 0, which means that
+  no history is retained and all stale data is removed during compaction.
+
+--enable-history-retention-by-default <0|1>::
+  Specifies whether or not the document history retention should be enabled by
+  default for new collections in this bucket. This option is valid for Couchbase
+  buckets with Magma storage backend only. To enable the document history
+  retention for new collections, set this option to "1". To disable the document
+  history retention for new collections, set this option to "0". By default, the
+  document history retention for new collections is enabled. To create a
+  collection with a non-default history retention setting use the *collection-manage*
+  command with *--enable-history* flag set to either "0" or "1".

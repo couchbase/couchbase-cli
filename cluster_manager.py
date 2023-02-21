@@ -833,7 +833,8 @@ class ClusterManager(object):
                       max_ttl, compression_mode, sync, db_frag_perc, db_frag_size, view_frag_perc,
                       view_frag_size, from_hour, from_min, to_hour, to_min,
                       abort_outside, paralleldb_and_view_compact, purge_interval,
-                      pitr_enabled, pitr_granularity, pitr_max_history_age, timeout=60):
+                      history_retention_bytes, history_retention_seconds,
+                      history_retention_default, pitr_enabled, pitr_granularity, pitr_max_history_age, timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
         if name is None:
@@ -867,6 +868,12 @@ class ClusterManager(object):
             params["storageBackend"] = storage_type
         if durability_min_level is not None:
             params["durabilityMinLevel"] = durability_min_level
+        if history_retention_bytes is not None:
+            params["historyRetentionBytes"] = history_retention_bytes
+        if history_retention_seconds is not None:
+            params["historyRetentionSeconds"] = history_retention_seconds
+        if history_retention_default is not None:
+            params["historyRetentionCollectionDefault"] = one_zero_boolean_to_string(history_retention_default)
         if pitr_enabled is not None:
             params["pitrEnabled"] = one_zero_boolean_to_string(pitr_enabled)
         if pitr_granularity is not None:
@@ -941,6 +948,7 @@ class ClusterManager(object):
                     compression_mode, remove_port, db_frag_perc, db_frag_size, view_frag_perc,
                     view_frag_size, from_hour, from_min, to_hour, to_min,
                     abort_outside, paralleldb_and_view_compact, purge_interval,
+                    history_retention_bytes, history_retention_seconds, history_retention_default,
                     pitr_enabled, pitr_granularity, pitr_max_history_age, couchbase_bucket: bool = True):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
@@ -994,6 +1002,12 @@ class ClusterManager(object):
             params["purgeInterval"] = purge_interval
         if durability_min_level is not None:
             params["durabilityMinLevel"] = durability_min_level
+        if history_retention_bytes is not None:
+            params["historyRetentionBytes"] = history_retention_bytes
+        if history_retention_seconds is not None:
+            params["historyRetentionSeconds"] = history_retention_seconds
+        if history_retention_default is not None:
+            params["historyRetentionCollectionDefault"] = one_zero_boolean_to_string(history_retention_default)
         if pitr_enabled is not None:
             params["pitrEnabled"] = one_zero_boolean_to_string(pitr_enabled)
         if pitr_granularity is not None:
@@ -1158,6 +1172,12 @@ class ClusterManager(object):
         url = f'{self.hostname}/diag/eval'
         payload = \
             '{json, atom_to_binary(ns_server:get_babysitter_cookie(), latin1)}.'
+        return self._post_form_encoded(url, payload)
+
+    def get_ns_server_cookie(self):
+        url = f'{self.hostname}/diag/eval'
+        payload = \
+            '{json, atom_to_binary(erlang:get_cookie(), latin1)}.'
         return self._post_form_encoded(url, payload)
 
     def stop_rebalance(self):
@@ -2088,6 +2108,8 @@ class ClusterManager(object):
             params['endpoint'] = opts.endpoint
 
         # gcs link params
+        if opts.application_default_credentials:
+            params['applicationDefaultCredentials'] = opts.application_default_credentials
         if opts.json_credentials:
             params['jsonCredentials'] = opts.json_credentials
 
@@ -2314,12 +2336,15 @@ class ClusterManager(object):
             f'{urllib.parse.quote_plus(scope)}'
         return self._delete(url, None)
 
-    def create_collection(self, bucket, scope, collection, max_ttl):
+    def create_collection(self, bucket, scope, collection, max_ttl, enable_history):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/' \
             f'{urllib.parse.quote_plus(scope)}/collections'
         params = {"name": collection}
         if max_ttl:
             params["maxTTL"] = max_ttl
+        if enable_history:
+            params["history"] = one_zero_boolean_to_string(enable_history)
+
         return self._post_form_encoded(url, params)
 
     def drop_collection(self, bucket, scope, collection):
