@@ -2390,7 +2390,10 @@ class ClusterManager(object):
     @request
     def _post_form_encoded(self, url, params):
         if self.debug:
-            print(f'POST {url} {self._url_encode_params(params)}')
+            if len(params) and not isinstance(params[0], tuple):
+                print(f'POST {url} {params}')
+            else:
+                print(f'POST {url} {self._url_encode_params(params)}')
 
         return self._handle_response(self.session.post(url, auth=(self.username, self.password), data=params,
                                                        verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
