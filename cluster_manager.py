@@ -2399,7 +2399,7 @@ class ClusterManager(object):
     @request
     def _post_form_encoded(self, url, params):
         if self.debug:
-            if len(params) and not isinstance(params[0], tuple):
+            if params is not None and isinstance(params, str):
                 print(f'POST {url} {params}')
             else:
                 print(f'POST {url} {self._url_encode_params(params)}')
