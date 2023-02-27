@@ -2718,6 +2718,36 @@ class TestCollectionManage(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestCollectionManage, self).setUp()
 
+    def test_missing_cmd(self):
+        self.system_exit_run(self.command + ['--max-ttl', '100'], self.server_args)
+        self.assertIn("Must specify one of the following: --create-scope, --drop-scope, --list-scopes, "
+                      "--create-collection, --edit-collection, --drop-collection, or --list-collections",
+                      self.str_output)
+
+    def test_more_than_one_cmd(self):
+        self.system_exit_run(self.command + ['--create-scope', 'scope_1', '--list-collections'], self.server_args)
+        self.assertIn("Only one of the following may be specified: --create-scope, --drop-scope, --list-scopes, "
+                      "--create-collection, --edit-collection, --drop-collection, or --list-collections",
+                      self.str_output)
+
+    def test_max_ttl_set_with_not_create_collection(self):
+        self.system_exit_run(self.command + ['--list-collections', '--max-ttl', '100'], self.server_args)
+        self.assertIn("--max-ttl can only be set with --create-collection", self.str_output)
+
+    def test_enable_history_set_with_not_create_collection_or_edit_collection(self):
+        self.system_exit_run(self.command + ['--list-collections', '--enable-history-retention', '1'], self.server_args)
+        self.assertIn("--enable-history-retention can only be set with --create-collection or --edit-collection",
+                      self.str_output)
+
+    def test_enable_history_should_be_set_with_edit_collection(self):
+        self.system_exit_run(self.command + ['--edit-collection', 'scope_1.collection_1'], self.server_args)
+        self.assertIn("--enable-history-retention should be set with --edit-collection", self.str_output)
+
+    def test_max_ttl_cannot_be_set_with_edit_collection(self):
+        self.system_exit_run(self.command + ['--edit-collection', 'scope_1.collection_1', "--max-ttl", "100"],
+                             self.server_args)
+        self.assertIn("--max-ttl can only be set with --create-collection", self.str_output)
+
     def test_create_scope(self):
         self.no_error_run(self.command + ['--create-scope', 'scope_1'], self.server_args)
         self.assertIn('POST:/pools/default/buckets/name/scopes', self.server.trace)
@@ -2741,6 +2771,13 @@ class TestCollectionManage(CommandTest):
                           '--enable-history-retention', '1'], self.server_args)
         self.assertIn('POST:/pools/default/buckets/name/scopes/scope_1/collections', self.server.trace)
         expected_params = ['name=collection_1', 'maxTTL=100', 'history=true']
+        self.rest_parameter_match(expected_params)
+
+    def test_edit_collection(self):
+        self.no_error_run(self.command + ['--edit-collection', 'scope_1.collection_1', '--enable-history-retention',
+                                          '1'], self.server_args)
+        self.assertIn('PATCH:/pools/default/buckets/name/scopes/scope_1/collections/collection_1', self.server.trace)
+        expected_params = ['history=true']
         self.rest_parameter_match(expected_params)
 
     def test_delete_collection(self):
