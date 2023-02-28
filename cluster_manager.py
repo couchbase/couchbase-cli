@@ -2347,8 +2347,17 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def edit_collection(self, bucket, scope, collection, enable_history):
+        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/' \
+            f'{urllib.parse.quote_plus(scope)}/collections/{urllib.parse.quote_plus(collection)}'
+        params = {}
+        if enable_history:
+            params["history"] = one_zero_boolean_to_string(enable_history)
+
+        return self._patch_form_encoded(url, params)
+
     def drop_collection(self, bucket, scope, collection):
-        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/'\
+        url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/' \
             f'{urllib.parse.quote_plus(scope)}/collections/{urllib.parse.quote_plus(collection)}'
         return self._delete(url, None)
 
@@ -2504,7 +2513,10 @@ class ClusterManager(object):
     @request
     def _post_form_encoded(self, url, params):
         if self.debug:
-            print(f'POST {url} {self._url_encode_params(params)}')
+            if len(params) and not isinstance(params[0], tuple):
+                print(f'POST {url} {params}')
+            else:
+                print(f'POST {url} {self._url_encode_params(params)}')
 
         return self._handle_response(self.session.post(url, auth=(self.username, self.password), data=params,
                                                        verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
@@ -2516,6 +2528,21 @@ class ClusterManager(object):
 
         return self._handle_response(self.session.post(url, auth=(self.username, self.password), json=params,
                                                        verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
+
+    @request
+    def _patch_form_encoded(self, url, params):
+        if self.debug:
+            print(f'PATCH {url} {self._url_encode_params(params)}')
+
+        return self._handle_response(
+            self.session.patch(
+                url, auth=(
+                    self.username,
+                    self.password),
+                data=params,
+                verify=self.ca_cert,
+                timeout=self.timeout,
+                headers=self.headers))
 
     @request
     def _patch_json(self, url, params):

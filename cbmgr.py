@@ -2342,12 +2342,14 @@ class SettingAlert(Subcommand):
                            help="Alert when the disk analyzer gets stuck")
         group.add_argument("--alert-memory-threshold", dest="alert_memory_threshold",
                            action="store_true", help="Alert when system memory usage exceeds threshold")
+        group.add_argument("--alert-bucket-history-size", dest="alert_bucket_history_size",
+                           action="store_true", help="Alert when history size for a bucket reaches 90%%")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         if opts.enabled == "1":
             if opts.email_recipients is None:
-                _exit_if_errors(["--email-recipient must be set when email alerts are enabled"])
+                _exit_if_errors(["--email-recipients must be set when email alerts are enabled"])
             if opts.email_sender is None:
                 _exit_if_errors(["--email-sender must be set when email alerts are enabled"])
             if opts.email_host is None:
@@ -2390,6 +2392,8 @@ class SettingAlert(Subcommand):
             alerts.append('disk_usage_analyzer_stuck')
         if opts.alert_memory_threshold:
             alerts.append('memory_threshold')
+        if opts.alert_bucket_history_size:
+            alerts.append('history_size_warning')
 
         enabled = "true"
         if opts.enabled == "0":
@@ -4764,6 +4768,8 @@ class CollectionManage(Subcommand):
                            help="List all of the scopes in the bucket")
         group.add_argument("--create-collection", dest="create_collection", metavar="<collection>", default=None,
                            help="The path to the collection to make")
+        group.add_argument("--edit-collection", dest="edit_collection", metavar="<collection>", default=None,
+                           help="The path to the collection to edit")
         group.add_argument("--drop-collection", dest="drop_collection", metavar="<collection>", default=None,
                            help="The path to the collection to remove")
         group.add_argument("--list-collections", dest="list_collections", metavar="<scope_list>", default=None,
@@ -4776,12 +4782,12 @@ class CollectionManage(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        cmds = [opts.create_scope, opts.drop_scope, opts.list_scopes, opts.create_collection, opts.drop_collection,
-                opts.list_collections]
+        cmds = [opts.create_scope, opts.drop_scope, opts.list_scopes, opts.create_collection, opts.edit_collection,
+                opts.drop_collection, opts.list_collections]
         cmd_total = sum(cmd is not None for cmd in cmds)
 
-        args = "--create-scope, --drop-scope, --list-scopes, --create-collection, --drop-collection, or " \
-               "--list-collections"
+        args = "--create-scope, --drop-scope, --list-scopes, --create-collection, --edit-collection, " \
+               "--drop-collection, or --list-collections"
         if cmd_total == 0:
             _exit_if_errors([f'Must specify one of the following: {args}'])
         elif cmd_total != 1:
@@ -4790,8 +4796,14 @@ class CollectionManage(Subcommand):
         if opts.max_ttl is not None and opts.create_collection is None:
             _exit_if_errors(["--max-ttl can only be set with --create-collection"])
 
-        if opts.enable_history is not None and opts.create_collection is None:
-            _exit_if_errors(["--enable-history-retention can only be set with --create-collection"])
+        if opts.enable_history is not None and opts.create_collection is None and opts.edit_collection is None:
+            _exit_if_errors(["--enable-history-retention can only be set with --create-collection or "
+                             "--edit-collection"])
+
+        if opts.edit_collection is not None and opts.enable_history is None:
+            _exit_if_errors(["--enable-history-retention should be set with --edit-collection"])
+        if opts.edit_collection is not None and opts.max_ttl is not None:
+            _exit_if_errors(["--max-ttl cannot be set with --edit-collection"])
 
         if opts.create_scope:
             self._create_scope(opts)
@@ -4801,6 +4813,8 @@ class CollectionManage(Subcommand):
             self._list_scopes(opts)
         if opts.create_collection:
             self._create_collection(opts)
+        if opts.edit_collection:
+            self._edit_collection(opts)
         if opts.drop_collection:
             self._drop_collection(opts)
         if opts.list_collections is not None:
@@ -4827,6 +4841,12 @@ class CollectionManage(Subcommand):
         _, errors = self.rest.create_collection(opts.bucket, scope, collection, opts.max_ttl, opts.enable_history)
         _exit_if_errors(errors)
         _success("Collection created")
+
+    def _edit_collection(self, opts):
+        scope, collection = self._get_scope_collection(opts.edit_collection)
+        _, errors = self.rest.edit_collection(opts.bucket, scope, collection, opts.enable_history)
+        _exit_if_errors(errors)
+        _success("Collection edited")
 
     def _drop_collection(self, opts):
         scope, collection = self._get_scope_collection(opts.drop_collection)

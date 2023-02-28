@@ -518,6 +518,7 @@ endpoints = [
     (r'/pools/default/buckets/\w+/scopes/\w+$', {'DELETE': do_nothing}),
     (r'/pools/default/buckets/\w+/scopes/\w+/collections$', {'POST': do_nothing}),
     (r'/pools/default/buckets/\w+/scopes/\w+/collections/\w+$', {'DELETE': do_nothing}),
+    (r'/pools/default/buckets/\w+/scopes/\w+/collections/\w+$', {'PATCH': do_nothing}),
     (r'/pools/default/trustedCAs/\d+$', {'DELETE': get_by_path}),
     (r'/pools/nodes', {'GET': get_by_path}),
     (r'/settings/analytics', {'POST': do_nothing, 'GET': get_by_path}),

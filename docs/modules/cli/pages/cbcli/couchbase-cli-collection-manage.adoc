@@ -16,9 +16,9 @@ _couchbase-cli collection-manage_ [--cluster <url>] [--username <user>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
     [--client-key <path>] [--client-key-password <password>] [--bucket <bucket>]
     [--create-scope <scope>] [--drop-scope <scope>] [--list-scopes]
-    [--create-collection <collection>] [--drop-collection <collection>]
-    [--list-collections [<scope_list>]] [--max-ttl <seconds>]
-    [--enable-history-retention <0|1>]
+    [--create-collection <collection>] [--edit-collection <collection>]
+    [--drop-collection <collection>] [--list-collections [<scope_list>]]
+    [--max-ttl <seconds>] [--enable-history-retention <0|1>]
 
 == DESCRIPTION
 
@@ -58,6 +58,11 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   format (scope.collection), specifying the scope in which the
   collection and the name to be created.
 
+--edit-collection <collection>::
+  Edits the collection in the scope. The option takes a path in dot
+  format (scope.collection), specifying the collection in a scope which is
+  to be edited.
+
 --drop-collection <collection>::
   Removes the collection from the scope. The option takes a path in
   dot format (scope.collection), specifying the scope from which
@@ -73,12 +78,14 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   collection, in seconds. If enabled and a document is mutated with
   no TTL or a TTL greater than than the maximum, its TTL will be set
   to the maximum TTL. Setting this option to 0 disables the use of
-  max-TTL, and the largest TTL that is allowed is 2147483647.
+  max-TTL, and the largest TTL that is allowed is 2147483647. This setting
+  cannot be edited after a collection has been created.
 
 --enable-history-retention <0|1>::
   Specifies whether or not the document history retention should be enabled for
   the collection. To enable the document history retention, set this option to
   "1". To disable the document history retention, set this option to "0".
+  This setting can be edited after a collection has been created.
 
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
@@ -97,6 +104,13 @@ furniture bucket.
 
   $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
    -p password --bucket furniture --create-collection chairs.couches
+
+To edit the collection called "couches" in the chairs scope in the furniture
+bucket.
+
+  $ couchbase-cli collection-manage -c 192.168.1.5 -u Administrator \
+   -p password --bucket furniture --edit-collection chairs.couches
+   --enable-history-retention 1
 
 To list all of the collections in the chairs and tables scopes in the furniture
 bucket.
