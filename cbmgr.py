@@ -2323,12 +2323,14 @@ class SettingAlert(Subcommand):
                            help="Alert when the disk analyzer gets stuck")
         group.add_argument("--alert-memory-threshold", dest="alert_memory_threshold",
                            action="store_true", help="Alert when system memory usage exceeds threshold")
+        group.add_argument("--alert-bucket-history-size", dest="alert_bucket_history_size",
+                           action="store_true", help="Alert when history size for a bucket reaches 90%%")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         if opts.enabled == "1":
             if opts.email_recipients is None:
-                _exit_if_errors(["--email-recipient must be set when email alerts are enabled"])
+                _exit_if_errors(["--email-recipients must be set when email alerts are enabled"])
             if opts.email_sender is None:
                 _exit_if_errors(["--email-sender must be set when email alerts are enabled"])
             if opts.email_host is None:
@@ -2371,6 +2373,8 @@ class SettingAlert(Subcommand):
             alerts.append('disk_usage_analyzer_stuck')
         if opts.alert_memory_threshold:
             alerts.append('memory_threshold')
+        if opts.alert_bucket_history_size:
+            alerts.append('history_size_warning')
 
         enabled = "true"
         if opts.enabled == "0":
