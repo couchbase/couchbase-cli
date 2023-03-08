@@ -15,11 +15,19 @@
 # limitations under the License.
 
 import base64
+import os  # noqa
 import ssl
 from pathlib import Path
 from typing import Optional, Tuple
 
 import Crypto.IO.PKCS8 as pkcs8
+
+"""This environment variable is needed to prevent the "import pem" step is failing on MacOS.
+pem imports OpenSSL, which imports cryptography, which seems to fail as the MacOS version of OpenSSL doesn't seem to
+have the legacy algorithms required. Since we don't use any of these algorithms in this file, setting this environment
+variable solves the issue without problem.
+"""
+os.environ["CRYPTOGRAPHY_OPENSSL_NO_LEGACY"] = "true"  # noqa
 import pem
 from cryptography import x509
 from cryptography.exceptions import UnsupportedAlgorithm
