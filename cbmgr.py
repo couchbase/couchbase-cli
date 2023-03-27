@@ -2611,7 +2611,7 @@ class SettingAutofailover(Subcommand):
             _exit_if_errors(["--enable-failover-on-data-disk-issues must be set to 1 when auto-failover Data"
                              " Service disk period has been set"])
 
-        if opts.enable_failover_on_data_disk_issues and opts.failover_on_data_disk_period is None:
+        if opts.enable_failover_on_data_disk_issues == "true" and opts.failover_on_data_disk_period is None:
             _exit_if_errors(["--failover-data-disk-period must be set when auto-failover on Data Service disk"
                              " is enabled"])
 

@@ -1236,6 +1236,35 @@ class TestSettingAutofailover(CommandTest):
         self.system_exit_run(self.command + self.cmd_args + self.EE_args, self.server_args)
         self.assertIn('can only be configured on enterprise edition', self.str_output)
 
+    def test_enable_disk_issues_without_disk_period(self):
+        self.EE_args = ['--enable-failover-on-data-disk-issues', '1']
+        self.system_exit_run(self.command + self.cmd_args + self.EE_args, self.server_args)
+        self.assertIn(
+            '--failover-data-disk-period must be set when auto-failover on Data Service disk is enabled',
+            self.str_output)
+
+    def test_enable_disk_issues_with_disk_period(self):
+        self.EE_args = ['--enable-failover-on-data-disk-issues', '1', '--failover-data-disk-period', '20']
+        self.no_error_run(self.command + self.cmd_args + self.EE_args, self.server_args)
+        expected_params = ['enabled=true', 'timeout=10', 'failoverOnDataDiskIssues%5Benabled%5D=true',
+                           'failoverOnDataDiskIssues%5BtimePeriod%5D=20']
+        self.assertIn('POST:/settings/autoFailover', self.server.trace)
+        self.rest_parameter_match(expected_params)
+
+    def test_disable_disk_issues_without_disk_period(self):
+        self.EE_args = ['--enable-failover-on-data-disk-issues', '0']
+        self.no_error_run(self.command + self.cmd_args + self.EE_args, self.server_args)
+        expected_params = ['enabled=true', 'timeout=10', 'failoverOnDataDiskIssues%5Benabled%5D=false']
+        self.assertIn('POST:/settings/autoFailover', self.server.trace)
+        self.rest_parameter_match(expected_params)
+
+    def test_disable_disk_issues_with_disk_period(self):
+        self.EE_args = ['--enable-failover-on-data-disk-issues', '0', '--failover-data-disk-period', '20']
+        self.system_exit_run(self.command + self.cmd_args + self.EE_args, self.server_args)
+        self.assertIn(
+            '--enable-failover-on-data-disk-issues must be set to 1 when auto-failover Data Service disk period has been set',
+            self.str_output)
+
 
 class TestSettingAutoreporovision(CommandTest):
     def setUp(self):
