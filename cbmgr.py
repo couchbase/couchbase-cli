@@ -106,7 +106,7 @@ def force_communicate_tls(rest: ClusterManager) -> bool:
     return True
 
 
-def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_check=None):
+def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_check=None, credentials_required=True):
     """rest_initialiser is a decorator that does common subcommand tasks.
 
     The decorator will always creates a cluster manager and assign it to the subcommand variable rest
@@ -119,7 +119,8 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
     def inner(fn):
         def decorator(self, opts):
             _exit_if_errors(validate_credential_flags(opts.cluster, opts.username, opts.password, opts.client_ca,
-                                                      opts.client_ca_password, opts.client_pk, opts.client_pk_password))
+                                                      opts.client_ca_password, opts.client_pk, opts.client_pk_password,
+                                                      credentials_required))
 
             try:
                 self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
@@ -147,7 +148,8 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
     return inner
 
 
-def validate_credential_flags(host, username, password, client_ca, client_ca_password, client_pk, client_pk_password):
+def validate_credential_flags(host, username, password, client_ca, client_ca_password,
+                              client_pk, client_pk_password, credentials_required: bool = True):
     """ValidateCredentialFlags - Performs validation to ensure the user has provided the flags required to connect to
     their cluster.
     """
@@ -167,6 +169,9 @@ def validate_credential_flags(host, username, password, client_ca, client_ca_pas
             client_pk_password)
 
     if (username is None and password is None):
+        if credentials_required is False:
+            return None
+
         return ["cluster credentials required, expected --username/--password or --client-cert/--client-key"]
 
     if (username is None or password is None):
@@ -1818,7 +1823,7 @@ class NodeInit(Subcommand):
         group.add_argument("--ipv4", dest="ipv4", action="store_true", default=False,
                            help="Configure the node to communicate via ipv4")
 
-    @rest_initialiser()
+    @rest_initialiser(credentials_required=False)
     def execute(self, opts):
         # Cluster does not need to be initialized for this command
 
