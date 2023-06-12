@@ -332,7 +332,7 @@ class CBSink(pump_mc.MCSink):
                 if conn:
                     conn.close()
                 if err:
-                    return f'error: could not restore design doc id: {id}; response: {response}; err: {err}'
+                    return f'error: could not restore design doc id: {id!r}; response: {response!r}; err: {err!r}'
             else:
                 stmts = sd.get('statements', [])
                 hostname = f'http://{spec_parts[0]}:{spec_parts[1]!s}'
@@ -391,7 +391,7 @@ class CBSink(pump_mc.MCSink):
                     if conn:
                         conn.close()
                     if err:
-                        return f'error: could not restore design doc id: {id}; response: {response}; err: {err}'
+                        return f'error: could not restore design doc id: {id!r}; response: {response!r}; err: {err!r}'
                 except Exception as e:
                     return f'error: design sink exception: {e}; couch_api_base: {couch_api_base}'
 

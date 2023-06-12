@@ -237,7 +237,7 @@ class PumpingStation(ProgressReporter):
         logging.debug(f'source_buckets: {",".join([return_string(n["name"]) for n in source_buckets])}')
 
         bucket_source = getattr(self.opts, "bucket_source", None)
-        bucket_source = return_string(bucket_source)
+        bucket_source = return_string(bucket_source)  # type: ignore
         if bucket_source:
             logging.debug(f'bucket_source: {bucket_source}')
             source_buckets = [b for b in source_buckets
@@ -983,7 +983,7 @@ def parse_spec(opts, spec: str, port: int) -> Tuple[str, int, str, str, Any]:
 
     pair = netloc.split('@')  # [ "user:pwsd", "host:port" ].
     host = p.hostname
-    port = p.port
+    port = p.port  # type: ignore
     try:
         _ = int(port)
     except ValueError:
@@ -996,7 +996,7 @@ def parse_spec(opts, spec: str, port: int) -> Tuple[str, int, str, str, Any]:
         username = username or (pair[0] + ':').split(':')[0]
         password = password or (pair[0] + ':').split(':')[1]
 
-    return host, port, username, password, p[2]
+    return host, port, username, password, p[2]  # type: ignore
 
 
 def rest_request(host: str, port: int, user: Optional[str], pswd: Optional[str], use_ssl: bool, path: str,
