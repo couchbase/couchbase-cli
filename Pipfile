@@ -9,7 +9,7 @@ pem = "==21.2.0"
 pycryptodome = "==3.10.1"
 pyopenssl = "==20.0.1"
 python-snappy = "==0.6.0"
-requests = "==2.26.0"
+requests = "==2.31.0"
 requests-toolbelt = "==0.9.1"
 
 [dev-packages]
