@@ -7,7 +7,7 @@ import socket
 import struct
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import snappy  # pylint: disable=import-error
 
@@ -569,7 +569,7 @@ class MCSink(pump.Sink):
 
     @staticmethod
     def connect_mc(host: str, port: int, username: str, password: str, bucket: Optional[str], use_ssl: bool = False,
-                   verify: bool = True, ca_cert: str = None, collections: bool = False) -> \
+                   verify: bool = True, ca_cert: Union[str, None] = None, collections: bool = False) -> \
             Tuple[couchbaseConstants.PUMP_ERROR, Optional[cb_bin_client.MemcachedClient]]:
         return pump.get_mcd_conn(host, port, username, password, bucket, use_ssl=use_ssl, verify=verify,
                                  ca_cert=ca_cert, collections=collections)

@@ -12,7 +12,7 @@
  import jenkins.model.CauseOfInterruption.UserInterruption
 
 pipeline {
-    agent { label "ubuntu-18.04&&master" }
+    agent { label "linux&&master" }
 
     environment {
         PROJECTPATH="${WORKSPACE}/couchbase-cli"
@@ -54,7 +54,7 @@ pipeline {
 
                 timeout(time: 10, unit: "MINUTES") {
                     // Install the tools required to lint and fetch coverage profiles
-                    sh "pip3 install --user pylint==2.10.2 mypy==0.730 coverage==5.2 pytest==5.4.3 autopep8==1.5.7"
+                    sh "pip3 install --user pylint==2.10.2 mypy==1.3.0 coverage==5.2 pytest==5.4.3 autopep8==1.5.7"
 
                     // Install the dependencies required to build/run the cli tools
                     sh "pip3 install --user cryptography==3.4.8 pem==21.2.0 pycryptodome==3.10.1 pyopenssl==20.0.1 python-snappy==0.6.0 requests==2.26.0 requests-toolbelt==0.9.1"
