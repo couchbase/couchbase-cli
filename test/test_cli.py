@@ -140,6 +140,10 @@ class ValidateCredentialFlags(unittest.TestCase):
                 "host": "https://localhost:8091",
                 "errors": ["cluster credentials required, expected --username/--password or --client-cert/--client-key"],
             },
+            "NoCredentialsAndCredentialsNotRequired": {
+                "host": "https://localhost:8091",
+                "credentials_required": False,
+            },
         }
 
         def value(test, key):
@@ -155,6 +159,7 @@ class ValidateCredentialFlags(unittest.TestCase):
                     value(test, "client_ca_password"),
                     value(test, "client_pk"),
                     value(test, "client_pk_password"),
+                    True if "credentials_required" not in test else test["credentials_required"],
                 ))
 
 
