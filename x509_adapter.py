@@ -17,10 +17,9 @@
 import base64
 import os  # noqa
 import ssl
+import tempfile
 from pathlib import Path
-from typing import Optional, Tuple
-
-import Crypto.IO.PKCS8 as pkcs8
+from typing import Any, Callable, List, Optional
 
 """This environment variable is needed to prevent the "import pem" step is failing on MacOS.
 pem imports OpenSSL, which imports cryptography, which seems to fail as the MacOS version of OpenSSL doesn't seem to
@@ -29,14 +28,12 @@ variable solves the issue without problem.
 """
 os.environ["CRYPTOGRAPHY_OPENSSL_NO_LEGACY"] = "true"  # noqa
 import pem
-from cryptography import x509
 from cryptography.exceptions import UnsupportedAlgorithm
-from cryptography.hazmat.primitives.serialization import (Encoding, NoEncryption, PrivateFormat, load_der_private_key,
-                                                          load_pem_private_key, pkcs12)
-from OpenSSL.crypto import X509, PKey
-from OpenSSL.SSL import Error as OpenSSLError
+from cryptography.hazmat.primitives.asymmetric import dsa, rsa
+from cryptography.hazmat.primitives.serialization import (BestAvailableEncryption, Encoding, NoEncryption,
+                                                          PrivateFormat, load_der_private_key, load_pem_private_key,
+                                                          pkcs12)
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
 
 
 class X509AdapterError(Exception):
@@ -53,28 +50,29 @@ class X509AdapterError(Exception):
 
 
 class X509Adapter(HTTPAdapter):
-    """A 'HTTPAdapter' subclass which creates and uses a 'pyopenssl' context which allows users authenticate using mTLS.
+    """A 'HTTPAdapter' subclass which creates and uses an 'ssl' context which allows users authenticate using mTLS.
 
     Attributes:
-        _ctx: The created 'pyopenssl' context which will have been loaded with the clients cert/chain and key.
+        _ctx: The created 'ssl' context which will have been loaded with the clients cert/chain and key.
     """
 
-    def __init__(self, cert: bytes, chain: bytes, key: bytes, **kwargs):
-        """Instantiates a new 'X509Adapter' using the given cert/chain and key.
+    def __init__(self, cert: str, password: str = '', **kwargs):
+        """Instantiates a new 'X509Adapter' using the given cert/chain.
 
 
         Args:
-            cert: A PEM encoded x509 certificate.
-            chain: PEM encoded certificate chain containing any certificates needed to verify 'cert'.
-            key: An unencrypted PEM encoded private key or a PEM/DER encoded private key in the PKCS#8 format.
+            cert: A PEM encoded x509 certificate or certificate chain with a possibly encrypted ptivate key.
+            password: A password for the private key if it is encrypted.
 
         Raises:
-            X509AdapterError: An error occurred constructing the 'pyopenssl' context.
+            X509AdapterError: An error occurred constructing the 'ssl' context.
         """
-        self._ctx = self._new_ssl_context(
-            x509.load_pem_x509_certificate(cert),
-            [x509.load_pem_x509_certificate(ca_cert.as_bytes()) for ca_cert in pem.parse(chain)],
-            load_der_private_key(key, password=None))
+        self._ctx = ssl.SSLContext()
+
+        try:
+            self._ctx.load_cert_chain(cert, password=password)
+        except ssl.SSLError as e:
+            raise X509AdapterError(e.reason if e.reason is not None else str(e)) from e
 
         super().__init__(**kwargs)
 
@@ -89,29 +87,6 @@ class X509Adapter(HTTPAdapter):
             kwargs['ssl_context'] = self._ctx
 
         return super().proxy_manager_for(*args, **kwargs)
-
-    # pylint: disable=protected-access
-    @classmethod
-    def _new_ssl_context(cls, cert, chain, key):
-        ctx = PyOpenSSLContext(ssl.PROTOCOL_TLS)
-
-        ctx._ctx.use_certificate(X509.from_cryptography(cert))
-
-        for ca_cert in chain:
-            ctx._ctx.add_extra_chain_cert(X509.from_cryptography(ca_cert))
-
-        def remove_underscore(val: str) -> str:
-            return val[len('_'):] if val.startswith('_') else val
-
-        try:
-            ctx._ctx.use_privatekey(PKey.from_cryptography_key(key))
-        except OpenSSLError as error:
-            raise X509AdapterError(str(error)) from error
-        except TypeError as error:
-            raise X509AdapterError(f"unsupported key type, expected RSAPrivateKey/DSAPrivateKey got"
-                                   f" {remove_underscore(type(key).__name__)}") from error
-
-        return ctx
 
 # pylint: disable=too-few-public-methods
 
@@ -151,15 +126,23 @@ class X509AdapterFactory():
 
     def generate(self) -> X509Adapter:
         """Generate an 'X509Adapter' which may be used to perform mTLS authentication, the users cert/key will be
-        decrypted and remain in memory (it will not be written to disk, although it will be serialized/deserialized
-        multiple times).
+        decrypted and then written to disk in a common format, keeping the private key encrypted if it was so.
+
+        NOTE: We write to disk due to a limitation in the ssl library: it does not allow reading certificates/keys from
+        memory. We used to use urllib3.contrib.pyopenssl for this but it has been deprecated, so we have been forced
+        into using ssl. See MB-57219 and https://github.com/urllib3/urllib3/issues/2680.
         """
-        cert, chain = self._parse_certs()
+
+        certs = self._parse_certs()
         key = self._parse_key()
 
-        return X509Adapter(cert=cert, chain=chain, key=key)
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(key)
+            f.write(certs)
+            f.flush()
+            return X509Adapter(f.name, password=self.password)
 
-    def _parse_certs(self) -> Tuple[bytes, bytes]:
+    def _parse_certs(self) -> bytes:
         data = self._read_file_bytes(self.client_ca)
         if not data:
             raise X509AdapterError(f"certificate file '{self.client_ca}' is empty")
@@ -170,28 +153,33 @@ class X509AdapterFactory():
         return self._parse_certs_unencrypted(data)
 
     @classmethod
-    def _parse_certs_unencrypted(cls, data: bytes) -> Tuple[bytes, bytes]:
+    def _parse_certs_unencrypted(cls, data: bytes) -> bytes:
         parsed = pem.parse(data)
         if not parsed:
             raise X509AdapterError("invalid certificate, perhaps it's encrypted or an unsupported format")
 
         chain = bytearray()
-        for cert in parsed[1:]:
+        for cert in parsed:
             chain.extend(cert.as_bytes())
 
-        return parsed[0].as_bytes(), chain
+        return chain
 
-    def _parse_certs_pkcs12(self, data: bytes) -> Tuple[bytes, bytes]:
+    def _parse_certs_pkcs12(self, data: bytes) -> bytes:
         try:
             (_, cert, chain) = pkcs12.load_key_and_certificates(data, self.password.encode("utf-8"))
         except ValueError as error:
             raise X509AdapterError("invalid password or PKCS#12 data") from error
 
+        if cert is None:
+            raise X509AdapterError("invalid password or PKCS#12 data")
+
         encoded = bytearray()
+        encoded.extend(cert.public_bytes(Encoding.PEM))
+
         for cert in chain:
             encoded.extend(cert.public_bytes(Encoding.PEM))
 
-        return cert.public_bytes(Encoding.PEM), encoded
+        return encoded
 
     def _parse_key(self) -> bytes:
         data = self._read_file_bytes(self.client_ca if self.client_pk is None else self.client_pk)
@@ -213,19 +201,27 @@ class X509AdapterFactory():
         except (TypeError, ValueError, UnsupportedAlgorithm) as error:
             raise X509AdapterError("invalid key, perhaps it's an unsupported format or encrypted") from error
 
-        return key.private_bytes(Encoding.DER, PrivateFormat.PKCS8, NoEncryption())
+        cls._check_key_type(key)
+
+        return key.private_bytes(Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption())
 
     def _parse_key_pkcs8(self, data: bytes) -> bytes:
-        parsed = pem.parse(data)
-        if parsed and len(parsed) == 1:
-            data = base64.b64decode(''.join(parsed[0].as_text().strip().split("\n")[1:-1]))
+        last_exception = None
+        fns: List[Callable[..., Any]] = [load_pem_private_key, load_der_private_key]
+        for fn in fns:
+            try:
+                key = fn(data, password=self.password.encode('utf-8'))
+                break
+            except (TypeError, ValueError, UnsupportedAlgorithm) as error:
+                last_exception = error
+        else:
+            raise X509AdapterError("invalid password or PKCS#8 data") from last_exception
 
-        try:
-            (_, key, _) = pkcs8.unwrap(data, self.password.encode("utf-8"))
-        except ValueError as error:
-            raise X509AdapterError("invalid password or PKCS#8 data") from error
+        self._check_key_type(key)
 
-        return key
+        return key.private_bytes(
+            Encoding.PEM, PrivateFormat.TraditionalOpenSSL,
+            BestAvailableEncryption(password=self.password.encode('utf-8')))
 
     def _parse_key_pkcs12(self, data: bytes) -> bytes:
         try:
@@ -236,7 +232,11 @@ class X509AdapterFactory():
         if key is None:
             raise X509AdapterError("PKCS#12 file must contain at least one private key")
 
-        return key.private_bytes(Encoding.DER, PrivateFormat.PKCS8, NoEncryption())
+        self._check_key_type(key)
+
+        return key.private_bytes(
+            Encoding.PEM, PrivateFormat.TraditionalOpenSSL,
+            BestAvailableEncryption(password=self.password.encode('utf-8')))
 
     @classmethod
     def _read_file_bytes(cls, path: Path) -> bytes:
@@ -245,3 +245,11 @@ class X509AdapterFactory():
                 return file.read()
         except IOError as error:
             raise X509AdapterError(f"{error.strerror.lower()} '{path}'") from error
+
+    @classmethod
+    def _check_key_type(cls, key):
+        if isinstance(key, rsa.RSAPrivateKey) or isinstance(key, dsa.DSAPrivateKey):
+            return
+
+        raise X509AdapterError(f"unsupported key type, expected RSAPrivateKey/DSAPrivateKey got"
+                               f" {type(key).__name__.removeprefix('_')}")

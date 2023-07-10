@@ -198,7 +198,7 @@ class X509AdapterFactoryTest(unittest.TestCase):
         self.assertIsNotNone(adapter)
 
     def test_mismatched_keys(self):
-        msg = "[('x509 certificate routines', 'X509_check_private_key', 'key values mismatch')]"
+        msg = "KEY_VALUES_MISMATCH"
 
         with self.assertRaisesRegex(X509AdapterError, re.escape(msg)):
             X509AdapterFactory(host="https://localhost:19000",
