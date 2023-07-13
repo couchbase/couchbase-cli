@@ -2564,8 +2564,6 @@ class SettingAutofailover(Subcommand):
                            choices=["0", "1"], help="Enable/disable auto-failover")
         group.add_argument("--auto-failover-timeout", dest="timeout", metavar="<seconds>",
                            type=(int), help="The auto-failover timeout")
-        group.add_argument("--enable-failover-of-server-groups", dest="enable_failover_of_server_groups",
-                           metavar="<1|0>", choices=["0", "1"], help="Enable/disable auto-failover of server Groups")
         group.add_argument("--max-failovers", dest="max_failovers", metavar="<1|2|3>", choices=["1", "2", "3"],
                            help="Maximum number of times an auto-failover event can happen")
         group.add_argument("--enable-failover-on-data-disk-issues", dest="enable_failover_on_data_disk_issues",
@@ -2591,14 +2589,7 @@ class SettingAutofailover(Subcommand):
         elif opts.enable_failover_on_data_disk_issues == "0":
             opts.enable_failover_on_data_disk_issues = "false"
 
-        if opts.enable_failover_of_server_groups == "1":
-            opts.enable_failover_of_server_groups = "true"
-        elif opts.enable_failover_of_server_groups == "0":
-            opts.enable_failover_of_server_groups = "false"
-
         if not self.enterprise:
-            if opts.enable_failover_of_server_groups:
-                _exit_if_errors(["--enable-failover-of-server-groups can only be configured on enterprise edition"])
             if opts.enable_failover_on_data_disk_issues or opts.failover_on_data_disk_period:
                 _exit_if_errors(["Auto failover on Data Service disk issues can only be configured on enterprise"
                                  + " edition"])
@@ -2608,7 +2599,7 @@ class SettingAutofailover(Subcommand):
                 _exit_if_errors(["--can-abort-rebalance can only be configured on enterprise edition"])
 
         if not any([opts.enabled, opts.timeout, opts.enable_failover_on_data_disk_issues,
-                    opts.failover_on_data_disk_period, opts.enable_failover_of_server_groups, opts.max_failovers]):
+                    opts.failover_on_data_disk_period, opts.max_failovers]):
             _exit_if_errors(["No settings specified to be changed"])
 
         if ((opts.enable_failover_on_data_disk_issues is None or opts.enable_failover_on_data_disk_issues == "false")
@@ -2625,9 +2616,6 @@ class SettingAutofailover(Subcommand):
                 _exit_if_errors([
                     "--enable-auto-failover must be set to 1 when auto-failover on Data Service disk issues"
                     " settings are being configured"])
-            if opts.enable_failover_of_server_groups:
-                _exit_if_errors(
-                    ["--enable-auto-failover must be set to 1 when enabling auto-failover of Server Groups"])
             if opts.timeout:
                 _warning("Timeout specified will not take affect because auto-failover is being disabled")
 
@@ -2636,8 +2624,7 @@ class SettingAutofailover(Subcommand):
         elif opts.can_abort_rebalance == '0':
             opts.can_abort_rebalance = 'false'
 
-        _, errors = self.rest.set_autofailover_settings(opts.enabled, opts.timeout,
-                                                        opts.enable_failover_of_server_groups, opts.max_failovers,
+        _, errors = self.rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.max_failovers,
                                                         opts.enable_failover_on_data_disk_issues,
                                                         opts.failover_on_data_disk_period, opts.can_abort_rebalance)
         _exit_if_errors(errors)
