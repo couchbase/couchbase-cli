@@ -21,8 +21,10 @@ _couchbase-cli setting-query [--cluster <url>] [--username <user>] [--password <
     [--max-parallelism <max>] [--n1ql-feature-control <num>]
     [--temp-dir <path>] [--temp-dir-size <mebibytes>]
     [--cost-based-optimizer <1|0>] [--memory-quota <mebibytes>]
-    [--transaction-timeout <duration>] [--curl-access <restricted|unrestricted>]
-    [--allowed-urls <urls>] [--disallowed-urls <urls>]
+    [--transaction-timeout <duration>] [--node-quota <mebibytes>]
+    [--node-quota-val-percent <perc>] [--use-replica <unset|off|on>]
+    [--curl-access <restricted|unrestricted>] [--allowed-urls <urls>]
+    [--disallowed-urls <urls>]
 
 == DESCRIPTION
 
@@ -91,6 +93,20 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --transaction-timeout <duration>::
   The timeout for transactional queries. The duration is a number followed
   by a unit such as (100ns, 10ms, 1s, 1m).
+
+--node-quota <mebibytes>::
+  The maximum amount of memory that the query service will allow node wide for
+  loaded documents, not including caches, plans or transactions.
+
+--node-quota-val-percent <perc>::
+  The percentage of node-quota that is reserved for value memory.
+
+--use-replica <unset|off|on>::
+  Specify whether or not a query can read from replica vBuckets. When set to
+  "unset", whether or not replica vBuckets are read from is set at request
+  level. When set to "off", it is always disabled for all queries and this
+  cannot be overridden. When set to "on", it is by default enabled for all
+  queries, but this can be disabled at request level.
 
 == QUERY CURL ACCESS OPTIONS
 

@@ -4129,6 +4129,14 @@ class TestSettingQuery(CommandTest):
         self.assertIn('POST:/settings/querySettings', self.server.trace)
         self.rest_parameter_match(['queryUseCBO=false', 'queryTxTimeout=10ms', 'queryMemoryQuota=100'])
 
+    def test_7_6_query_settings(self):
+        """Test the settings added in CB 7.6 for the query service"""
+        self.no_error_run(self.command + ['--set', '--node-quota', '256', '--node-quota-val-percent', '42',
+                                          '--use-replica', 'off'], self.server_args)
+
+        self.assertIn('POST:/settings/querySettings', self.server.trace)
+        self.rest_parameter_match(['queryNodeQuota=256', 'queryNodeQuotaValPercent=42', 'queryUseReplica=off'])
+
 
 class TestSettingAnalytics(CommandTest):
     def setUp(self):

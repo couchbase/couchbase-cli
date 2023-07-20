@@ -5148,6 +5148,12 @@ class SettingQuery(Subcommand):
                            help='Sets the query memory quota in MiB.')
         group.add_argument('--transaction-timeout', metavar='<duration>', type=str, default=None,
                            help='A duration string for the transaction timeout i.e (100ns, 10ms, 1s, 1m).')
+        group.add_argument('--node-quota', metavar='<mebibytes>', type=int, default=None,
+                           help='Sets the query node-wide quota in MiB.')
+        group.add_argument('--node-quota-val-percent', metavar='<perc>', type=int, default=None,
+                           help='Sets the percentage of node quota that is reserved for value memory.')
+        group.add_argument('--use-replica', metavar='<unset|off|on>', type=str, default=None,
+                           help='Sets whether or not a query can read from replica vBuckets.')
 
         access_list_group = self.parser.add_argument_group('Query curl access settings')
         access_list_group.add_argument('--curl-access', choices=['restricted', 'unrestricted'], default=None,
@@ -5190,7 +5196,8 @@ class SettingQuery(Subcommand):
                                    opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
                                    opts.log_level, opts.max_parallelism, opts.n1ql_feature_control, opts.temp_dir,
                                    opts.temp_dir_size, opts.cost_based_optimizer, opts.memory_quota,
-                                   opts.transaction_timeout]):
+                                   opts.transaction_timeout, opts.node_quota, opts.node_quota_val_percent,
+                                   opts.use_replica]):
             if access_list:
                 return
 
@@ -5200,7 +5207,8 @@ class SettingQuery(Subcommand):
                                                opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
                                                opts.log_level, opts.max_parallelism, opts.n1ql_feature_control,
                                                opts.temp_dir, opts.temp_dir_size, opts.cost_based_optimizer,
-                                               opts.memory_quota, opts.transaction_timeout)
+                                               opts.memory_quota, opts.transaction_timeout, opts.node_quota,
+                                               opts.node_quota_val_percent, opts.use_replica)
         _exit_if_errors(err)
 
     @staticmethod
