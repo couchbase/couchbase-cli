@@ -2351,12 +2351,14 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def edit_collection(self, bucket, scope, collection, enable_history):
+    def edit_collection(self, bucket, scope, collection, max_ttl, enable_history):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/' \
             f'{urllib.parse.quote_plus(scope)}/collections/{urllib.parse.quote_plus(collection)}'
         params = {}
         if enable_history:
             params["history"] = one_zero_boolean_to_string(enable_history)
+        if max_ttl is not None:
+            params["maxTTL"] = max_ttl
 
         return self._patch_form_encoded(url, params)
 

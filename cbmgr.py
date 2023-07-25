@@ -4785,17 +4785,23 @@ class CollectionManage(Subcommand):
         elif cmd_total != 1:
             _exit_if_errors([f'Only one of the following may be specified: {args}'])
 
-        if opts.max_ttl is not None and opts.create_collection is None:
-            _exit_if_errors(["--max-ttl can only be set with --create-collection"])
+        if opts.max_ttl is not None and opts.create_collection is None and opts.edit_collection is None:
+            _exit_if_errors(["--max-ttl can only be set with --create-collection or --edit-collection"])
 
         if opts.enable_history is not None and opts.create_collection is None and opts.edit_collection is None:
             _exit_if_errors(["--enable-history-retention can only be set with --create-collection or "
                              "--edit-collection"])
 
-        if opts.edit_collection is not None and opts.enable_history is None:
-            _exit_if_errors(["--enable-history-retention should be set with --edit-collection"])
+        if opts.edit_collection is not None and (opts.enable_history is None and opts.max_ttl is None):
+            _exit_if_errors(
+                ["at least one of --enable-history-retention or --max-ttl should be set with --edit-collection"])
+
         if opts.edit_collection is not None and opts.max_ttl is not None:
-            _exit_if_errors(["--max-ttl cannot be set with --edit-collection"])
+            version, errors = self.rest.min_version()
+            _exit_if_errors(errors)
+
+            if version < "7.6.0":
+                _exit_if_errors(["--max-ttl can only be used with --edit-collection on >= 7.6.0 clusters"])
 
         if opts.create_scope:
             self._create_scope(opts)
@@ -4836,7 +4842,7 @@ class CollectionManage(Subcommand):
 
     def _edit_collection(self, opts):
         scope, collection = self._get_scope_collection(opts.edit_collection)
-        _, errors = self.rest.edit_collection(opts.bucket, scope, collection, opts.enable_history)
+        _, errors = self.rest.edit_collection(opts.bucket, scope, collection, opts.max_ttl, opts.enable_history)
         _exit_if_errors(errors)
         _success("Collection edited")
 

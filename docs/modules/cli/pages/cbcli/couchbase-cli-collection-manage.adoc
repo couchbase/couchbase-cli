@@ -78,8 +78,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   collection, in seconds. If enabled and a document is mutated with
   no TTL or a TTL greater than than the maximum, its TTL will be set
   to the maximum TTL. Setting this option to 0 disables the use of
-  max-TTL, and the largest TTL that is allowed is 2147483647. This setting
-  cannot be edited after a collection has been created.
+  max-TTL, and the largest TTL that is allowed is 2147483647.
 
 --enable-history-retention <0|1>::
   Specifies whether or not the document history retention should be enabled for
