@@ -408,7 +408,7 @@ class CBSink(pump_mc.MCSink):
 
         if vbucket_id > len(vbucket_map):
             return f'error: map missing vbucket_id: {vbucket_id!s}' \
-                f'; perhaps your source does not have vbuckets; if so, try using moxi (HOST:11211) as a destination',\
+                f'; perhaps your source does not have vbuckets; if so, try using moxi (HOST:11211) as a destination', \
                    None
 
         # Primary server for a vbucket_id is the 0'th entry.

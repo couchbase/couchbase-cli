@@ -1083,7 +1083,7 @@ class TestBFDSinkEx(unittest.TestCase):
             for row in cur.execute('SELECT cmd, vbucket_id, key, flg, exp, cas, meta, val, seqno, \
                                dtype, meta_size, conf_res FROM cbb_msg ORDER BY seqno'):
                 cmd, vbid, key, flg, exp, cas, meta, val, seqno, dtype, meta_size, conf_res = msgs[count][:]
-                cmd_o, vbid_o, key_o, flg_o, exp_o, cas_o, meta_o, val_o, seqno_o, dtype_o, meta_size_o,\
+                cmd_o, vbid_o, key_o, flg_o, exp_o, cas_o, meta_o, val_o, seqno_o, dtype_o, meta_size_o, \
                     conf_res_o = row[:]
                 self.assertEqual(cmd, cmd_o)
                 self.assertEqual(vbid, vbid_o)
