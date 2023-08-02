@@ -1030,6 +1030,7 @@ class TestServerAdd(CommandTest):
                                                 'stableSnapshotInterval': 5000,
                                                 'maxRollbackPoints': 2,
                                                 'memorySnapshotInterval': 200}
+        self.server_args["pools_default"] = {"nodes": [{"version": "7.6.0-0000-enterprise"}]}
 
         super(TestServerAdd, self).setUp()
 
@@ -1037,6 +1038,12 @@ class TestServerAdd(CommandTest):
         self.no_error_run(self.command + self.cmd_args, self.server_args)
         self.assertIn('POST:/controller/addNode', self.server.trace)
         expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd', 'services=kv']
+        self.rest_parameter_match(expected_params)
+
+    def test_server_add_manager_only(self):
+        self.no_error_run(self.command + self.cmd_args + ['--services', 'manager-only'], self.server_args)
+        self.assertIn('POST:/controller/addNode', self.server.trace)
+        expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd', 'services=']
         self.rest_parameter_match(expected_params)
 
     def test_server_add_group_name(self):

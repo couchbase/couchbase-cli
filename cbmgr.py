@@ -245,19 +245,27 @@ def index_storage_mode_to_param(value, default="plasma"):
     return value
 
 
-def process_services(services, enterprise):
+def process_services(services, enterprise, cluster_version="0.0.0"):
     """Converts services to a format Couchbase understands"""
     sep = ","
     if services.find(sep) < 0:
         # backward compatible when using ";" as separator
         sep = ";"
     svc_set = set([w.strip() for w in services.split(sep)])
-    svc_candidate = ["data", "index", "query", "fts", "eventing", "analytics", "backup"]
+
+    manager_only = "manager-only"
+    svc_candidate = ["data", "index", "query", "fts", "eventing", "analytics", "backup", manager_only]
     for svc in svc_set:
         if svc not in svc_candidate:
             return None, [f'`{svc}` is not a valid service']
         if not enterprise and svc in ["eventing", "analytics", "backup"]:
             return None, [f'{svc} service is only available on Enterprise Edition']
+
+    if len(svc_set) > 1 and manager_only in svc_set:
+        return None, ["Invalid service configuration. A manager only node cannot run any other services."]
+
+    if manager_only in svc_set and cluster_version != "0.0.0" and cluster_version < "7.6.0":
+        return None, ["The manager only service can only be used with >= 7.6.0 clusters"]
 
     if not enterprise:
         # Valid CE node service configuration
@@ -270,7 +278,7 @@ def process_services(services, enterprise):
                           f"'{','.join(ce_svc_45)}'"]
 
     services = ",".join(svc_set)
-    for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"], ["analytics", "cbas"]]:
+    for old, new in [[";", ","], ["data", "kv"], ["query", "n1ql"], ["analytics", "cbas"], ["manager-only", ""]]:
         services = services.replace(old, new)
     return services, None
 
@@ -802,6 +810,9 @@ class ClusterInit(Subcommand):
 
         if not self.enterprise and opts.index_storage_mode == 'memopt':
             _exit_if_errors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
+
+        if "manager-only" in opts.services:
+            _exit_if_errors(["Cannot initialize cluster with the manager only service"])
 
         services, errors = process_services(opts.services, self.enterprise)
         _exit_if_errors(errors)
@@ -2070,7 +2081,10 @@ class ServerAdd(Subcommand):
         if not self.enterprise and opts.index_storage_mode == 'memopt':
             _exit_if_errors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
 
-        opts.services, errors = process_services(opts.services, self.enterprise)
+        min_version, error = self.rest.min_version()
+        _exit_if_errors(error)
+
+        opts.services, errors = process_services(opts.services, self.enterprise, min_version)
         _exit_if_errors(errors)
 
         settings, errors = self.rest.index_settings()
