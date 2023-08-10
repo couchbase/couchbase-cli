@@ -131,7 +131,7 @@ which will determine how the global secondary indexes (GSI) are stored.
   using 'couchbase-cli-setting-notification.' For more information on this
   feature, please see the “Couchbase Server Privacy FAQ” in the product
   documentation, which supplements the Couchbase Privacy Policy available
-  online.
+  online. This feature is only available in Couchbase Enterprise Edition.
 
 --ip-family::
   Specifies what IP family the cluster should used. The default option is

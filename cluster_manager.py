@@ -2346,6 +2346,18 @@ class ClusterManager(object):
 
         return node_data['nodes'], None
 
+    def node_version(self):
+        """
+        Returns node implementationVersion from /pools.
+        Should work even if cluster is not initialised yet.
+        """
+        node_info, err = self.pools()
+        if err:
+            return None, err
+
+        return node_info["implementationVersion"].split(
+            "-")[0], None if "implementationVersion" in node_info else (None, "unexpected JSON returned from /pools")
+
     def min_version(self):
         data, err = self.pools("default")
         if err:
