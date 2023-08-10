@@ -260,12 +260,14 @@ def get_pools(rest_params=None, server_args=None, path="", endpoint_match=None):
     enterprise = True
     version = '0.0.0-0000-enterprise'
     init = True
-    if 'init' in server_args:
-        init = server_args['init']
-    if 'is_admin' in server_args:
-        is_admin = server_args['is_admin']
     if 'enterprise' in server_args:
         enterprise = server_args['enterprise']
+    if 'is_admin' in server_args:
+        is_admin = server_args['is_admin']
+    if "version" in server_args:
+        version = server_args["version"]
+    if 'init' in server_args:
+        init = server_args['init']
 
     response_init = {'uuid': '5f8b140987f4e46c950e3fa82e7fcb48', 'settings':
                      {'viewUpdateDaemon': '/settings/viewUpdateDaemon?uuid=5f8b140987f4e46c950e3fa82e7fcb48',

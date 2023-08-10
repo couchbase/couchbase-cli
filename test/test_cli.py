@@ -327,6 +327,14 @@ class TestClusterInit(CommandTest):
         self.server_args['init'] = False
         self.system_exit_run(self.command + cluster_connect_args[:2], self.server_args)
 
+    def test_error_update_notifications_CE(self):
+        self.server_args['init'] = False
+        self.server_args['enterprise'] = False
+        self.server_args['version'] = "7.6.0"
+        self.system_exit_run(self.command + cluster_connect_args[:2] + self.command_args +
+                             ['--update-notifications', '0'], self.server_args)
+        self.assertIn('--update-notifications can only be configured on Enterprise Edition', self.str_output)
+
 
 class TestBucketCompact(CommandTest):
     def setUp(self):
@@ -1434,6 +1442,7 @@ class TestSettingNotification(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'setting-notification'] + cluster_connect_args
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        self.server_args['pools_default'] = {'nodes': [{'version': '7.2.0'}]}
         super(TestSettingNotification, self).setUp()
 
     def test_enable_notification(self):
@@ -1447,6 +1456,12 @@ class TestSettingNotification(CommandTest):
         expected_params = ['sendStats=false']
         self.assertIn('POST:/settings/stats', self.server.trace)
         self.rest_parameter_match(expected_params)
+
+    def test_enable_notification_for_CE(self):
+        self.server_args['enterprise'] = False
+        self.server_args['pools_default'] = {'nodes': [{'version': '7.6.0'}]}
+        self.system_exit_run(self.command + ['--enable-notifications', '1'], self.server_args)
+        self.assertIn("Modifying notifications settings is an Enterprise Edition only feature", self.str_output)
 
 
 class TestSettingPasswordPolicy(CommandTest):

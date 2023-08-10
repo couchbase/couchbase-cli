@@ -794,7 +794,7 @@ class ClusterInit(Subcommand):
         group.add_argument("--services", dest="services", default="data", metavar="<service_list>",
                            help="The services to run on this server")
         group.add_argument("--update-notifications", dest="notifications", metavar="<1|0>", choices=["0", "1"],
-                           default="1", help="Enables/disable software update notifications")
+                           default="1", help="Enables/disable software update notifications (EE only)")
         group.add_argument("--ip-family", dest="ip_family", metavar="<ipv4|ipv6|ipv4-only|ipv6-only>", default="ipv4",
                            choices=["ipv4", "ipv6", "ipv4-only", "ipv6-only"],
                            help="Set the IP family for the cluster")
@@ -836,6 +836,12 @@ class ClusterInit(Subcommand):
         indexer_storage = None
         if opts.index_storage_mode:
             indexer_storage = index_storage_mode_to_param(opts.index_storage_mode, default)
+
+        min_version, errors = self.rest.node_version()
+        _exit_if_errors(errors)
+
+        if not self.enterprise and opts.notifications == "0" and min_version >= "7.6.0":
+            _exit_if_errors(["--update-notifications can only be configured on Enterprise Edition"])
 
         _, errors = self.rest.cluster_init(
             services=services,
@@ -3196,6 +3202,12 @@ class SettingNotification(Subcommand):
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
+        min_version, errors = self.rest.min_version()
+        _exit_if_errors(errors)
+
+        if not self.enterprise and min_version >= "7.6.0":
+            _exit_if_errors(["Modifying notifications settings is an Enterprise Edition only feature"])
+
         enabled = None
         if opts.enabled == "1":
             enabled = True
