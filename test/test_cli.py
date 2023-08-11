@@ -2817,7 +2817,8 @@ class TestCollectionManage(CommandTest):
     def test_enable_history_or_max_ttl_should_be_set_with_edit_collection(self):
         self.system_exit_run(self.command + ['--edit-collection', 'scope_1.collection_1'], self.server_args)
         self.assertIn(
-            "one of --enable-history-retention or --max-ttl should be set with --edit-collection", self.str_output)
+            "at least one of {--enable-history-retention, --max-ttl, --use-bucket-ttl} should be set with " +
+            "--edit-collection", self.str_output)
 
     def test_create_scope(self):
         self.no_error_run(self.command + ['--create-scope', 'scope_1'], self.server_args)
@@ -2856,7 +2857,22 @@ class TestCollectionManage(CommandTest):
         self.server_args["pools_default"] = {"nodes": [{"version": "7.2.0-0000-enteenterprise"}]}
         self.system_exit_run(self.command + ['--edit-collection', 'scope_1.collection_1', '--enable-history-retention',
                                              '1', '--max-ttl', '60'], self.server_args)
-        self.assertIn('--max-ttl can only be used with --edit-collection on >= 7.6.0 clusters', self.str_output)
+        self.assertIn('--max-ttl/--use-bucket-ttl can only be used with --edit-collection on >= 7.6.0 clusters',
+                      self.str_output)
+
+    def test_edit_collection_use_bucket_ttl(self):
+        self.server_args["pools_default"] = {"nodes": [{"version": "7.6.0-0000-enteenterprise"}]}
+        self.no_error_run(self.command + ['--edit-collection', 'scope_1.collection_1', '--enable-history-retention',
+                                          '1', '--use-bucket-ttl'], self.server_args)
+        self.assertIn('PATCH:/pools/default/buckets/name/scopes/scope_1/collections/collection_1', self.server.trace)
+        expected_params = ['history=true', 'maxTTL=-1']
+        self.rest_parameter_match(expected_params)
+
+    def test_edit_collection_cant_use_max_ttl_and_use_bucket_ttl_together(self):
+        self.server_args["pools_default"] = {"nodes": [{"version": "7.6.0-0000-enteenterprise"}]}
+        self.system_exit_run(self.command + ['--edit-collection', 'scope_1.collection_1', '--enable-history-retention',
+                                             '1', '--max-ttl', '60', '--use-bucket-ttl'], self.server_args)
+        self.assertIn('Only one of --max-ttl and --use-bucket-ttl may be set', self.str_output)
 
     def test_delete_collection(self):
         self.no_error_run(self.command + ['--drop-collection', 'scope_1.collection_1'], self.server_args)
