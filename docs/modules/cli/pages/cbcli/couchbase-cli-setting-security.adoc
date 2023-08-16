@@ -17,7 +17,7 @@ _couchbase-cli setting-security_ [--cluster <url>] [--username <user>] [--passwo
     [--client-key-password <password>] [--set] [--get] [--disable-http-ui <0|1>]
     [--disable-www-authenticate <0|1>]
     [--cluster-encryption-level <all|control|strict>]
-    [--tls-min-version <tlsv1|tlsv1.1|tlsv1.2>]
+    [--tls-min-version <tlsv1.2|tlsv1.3>]
     [--tls-honor-cipher-order <0|1>] [---cipher-suites <ciphers>]
     [--hsts-max-age <seconds] [--hsts-preload-enabled <0|1>]
     [--hsts-include-sub-domains-enabled <0|1>]
@@ -66,7 +66,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   important actions, see
   https://docs.couchbase.com/server/current/manage/manage-security/manage-tls.html#enforcing-tls[Enforcing TLS].
 
---tls-min-version <tlsv1|tlsv1.1|tlsv1.2>::
+--tls-min-version <tlsv1.2|tlsv1.3>::
   Specify the minimum TLS protocol version to be used across all of the
   Couchbase services.
 
