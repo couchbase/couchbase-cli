@@ -58,10 +58,10 @@ pipeline {
                         source env/bin/activate
 
                         # Install the tools required to lint and fetch coverage profiles
-                        pip3 install --user pylint==2.10.2 mypy==1.3.0 coverage==5.2 pytest==5.4.3 autopep8==1.5.7 types-pyOpenSSL==23.2.0.0 types-requests==2.31.0.1
+                        pip3 install pylint==2.10.2 mypy==1.3.0 coverage==5.2 pytest==5.4.3 autopep8==1.5.7 types-pyOpenSSL==23.2.0.0 types-requests==2.31.0.1
 
                         # Install the dependencies required to build/run the cli tools
-                        pip3 install --user cryptography==3.4.8 pem==21.2.0 pycryptodome==3.10.1 pyopenssl==20.0.1 python-snappy==0.6.0 requests==2.26.0 requests-toolbelt==0.9.1
+                        pip3 install cryptography==3.4.8 pem==21.2.0 pycryptodome==3.10.1 pyopenssl==20.0.1 python-snappy==0.6.0 requests==2.26.0 requests-toolbelt==0.9.1
                     """
                 }
 
@@ -99,7 +99,7 @@ pipeline {
                     dir("${WORKSPACE}/snappy/build") {
                         sh "cmake ../ -DBUILD_SHARED_LIBS=ON"
                         sh "DESTDIR=${WORKSPACE}/snappy-build make install"
-                        sh "CXXFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CPPFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" pip3 install --user python-snappy"
+                        sh "CXXFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CPPFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" pip3 install python-snappy"
                     }
                 }
             }
