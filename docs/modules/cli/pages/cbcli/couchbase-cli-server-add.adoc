@@ -54,7 +54,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --services <services>::
   A comma separated list of services that this server should be running.
   Accepted services are "data", "index", "query", "fts", "eventing",
-  "analytics" and "backup".
+  "analytics", "backup" and "manager-only". No other service can be used
+  alongside the "manager-only" service because the server with this service
+  specified will only act as a cluster manager and will not run any of the
+  other functional services.
 
 --index-storage-setting <mode>::
   Specifies the index storage mode. This parameter must be set if the servers
