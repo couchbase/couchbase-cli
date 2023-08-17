@@ -52,17 +52,19 @@ pipeline {
                     message: "Build for '<${GERRIT_CHANGE_URL}|${GERRIT_CHANGE_SUBJECT}>' by '${GERRIT_CHANGE_OWNER_NAME}' started (${env.BUILD_URL})"
                 )
 
-                timeout(time: 10, unit: "MINUTES") {
-                    sh """#!/bin/bash
-                        python3 -m venv env
-                        source env/bin/activate
+                dir("${WORKSPACE}") {    
+                    timeout(time: 10, unit: "MINUTES") {
+                        sh """#!/bin/bash
+                            python3 -m venv env
+                            source env/bin/activate
 
-                        # Install the tools required to lint and fetch coverage profiles
-                        pip3 install pylint==2.10.2 mypy==1.3.0 coverage==5.2 pytest==5.4.3 autopep8==1.5.7 types-pyOpenSSL==23.2.0.0 types-requests==2.31.0.1
+                            # Install the tools required to lint and fetch coverage profiles
+                            pip3 install pylint==2.10.2 mypy==1.3.0 coverage==5.2 pytest==5.4.3 autopep8==1.5.7 types-pyOpenSSL==23.2.0.0 types-requests==2.31.0.1
 
-                        # Install the dependencies required to build/run the cli tools
-                        pip3 install cryptography==3.4.8 pem==21.2.0 pycryptodome==3.10.1 pyopenssl==20.0.1 python-snappy==0.6.0 requests==2.26.0 requests-toolbelt==0.9.1
-                    """
+                            # Install the dependencies required to build/run the cli tools
+                            pip3 install cryptography==3.4.8 pem==21.2.0 pycryptodome==3.10.1 pyopenssl==20.0.1 python-snappy==0.6.0 requests==2.26.0 requests-toolbelt==0.9.1
+                        """
+                    }
                 }
 
                 // preventively delete the cli path to avoid issues with cloning
@@ -110,7 +112,7 @@ pipeline {
                 timeout(time: 10, unit: "MINUTES") {
                     dir("${PROJECTPATH}") {
                         sh """#!/bin/bash
-                            source env/bin/activate
+                            source ${WORKSPACE}/env/bin/activate
                             python3 -m pylint -E --disable=import-error cbbackup cbbackupwrapper cblogredaction cbrecovery cbrestore cbrestorewrapper cbtransfer cbworkloadgen couchbase-cli pump*.py
                             python3 -m pylint --disable=import-error,unused-import --disable C,R cbmgr.py cluster_manager.py
                             python3 -m autopep8 --diff --max-line-length=120 --experimental --exit-code -aaa \$(find -name '*.py')
@@ -133,7 +135,7 @@ pipeline {
                 timeout(time: 10, unit: "MINUTES") {
                     dir("${PROJECTPATH}") {
                         sh """#!/bin/bash
-                            source env/bin/activate
+                            source ${WORKSPACE}/env/bin/activate
                             if [ \$(mypy --ignore-missing-imports cbbackup | grep -c error) -gt 1 ]; then
                                 echo "Failed mypy type checking in cbbackup"
                                 echo "Re running: mypy --ignore-missing-imports cbbackup"
@@ -174,7 +176,7 @@ pipeline {
 
                 dir("${PROJECTPATH}"){
                     sh """#!/bin/bash
-                        source env/bin/activate
+                        source ${WORKSPACE}/env/bin/activate
 
                         # Use pytest to run the test as it is nicer and also can produce junit xml reports
                         coverage run --source . -m pytest test/test_*.py --cache-clear --junitxml=${WORKSPACE}/reports/test-cli.xml -v
