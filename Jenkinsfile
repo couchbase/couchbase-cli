@@ -101,7 +101,11 @@ pipeline {
                     dir("${WORKSPACE}/snappy/build") {
                         sh "cmake ../ -DBUILD_SHARED_LIBS=ON"
                         sh "DESTDIR=${WORKSPACE}/snappy-build make install"
-                        sh "CXXFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CPPFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" pip3 install python-snappy"
+
+                        sh """#!/bin/bash
+                            source ${WORKSPACE}/env/bin/activate
+                            CXXFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" CPPFLAGS=\"-I${WORKSPACE}/snappy-build/usr/local/include -L${WORKSPACE}/snappy-build/usr/local/lib\" pip3 install python-snappy
+                        """
                     }
                 }
             }
