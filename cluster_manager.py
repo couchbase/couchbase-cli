@@ -2344,7 +2344,7 @@ class ClusterManager(object):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes/' \
             f'{urllib.parse.quote_plus(scope)}/collections'
         params = {"name": collection}
-        if max_ttl:
+        if max_ttl is not None:
             params["maxTTL"] = max_ttl
         if enable_history:
             params["history"] = one_zero_boolean_to_string(enable_history)

@@ -2860,6 +2860,13 @@ class TestCollectionManage(CommandTest):
         expected_params = ['name=collection_1', 'maxTTL=100', 'history=true']
         self.rest_parameter_match(expected_params)
 
+    def test_create_collection_with_0_max_ttl(self):
+        self.no_error_run(self.command + ['--create-collection', 'scope_1.collection_1', '--max-ttl', '0',
+                          '--enable-history-retention', '1'], self.server_args)
+        self.assertIn('POST:/pools/default/buckets/name/scopes/scope_1/collections', self.server.trace)
+        expected_params = ['name=collection_1', 'maxTTL=0', 'history=true']
+        self.rest_parameter_match(expected_params)
+
     def test_edit_collection(self):
         self.server_args["pools_default"] = {"nodes": [{"version": "7.6.0-0000-enteenterprise"}]}
         self.no_error_run(self.command + ['--edit-collection', 'scope_1.collection_1', '--enable-history-retention',
