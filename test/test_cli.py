@@ -277,15 +277,15 @@ class TestClusterInit(CommandTest):
         full_options = cluster_connect_args[:2] + self.command_args + [
             '--cluster-ramsize', '512', '--services', 'data,query,fts,eventing,analytics,backup',
             '--cluster-index-ramsize', '512', '--cluster-fts-ramsize', '512',
-            '--cluster-eventing-ramsize', '512', '--cluster-name', 'name',
+            '--cluster-eventing-ramsize', '512', '--cluster-query-ramsize', '512', '--cluster-name', 'name',
             '--index-storage-setting', 'memopt', '--update-notifications', '0',
             '--ip-family', 'ipv6-only', '--node-to-node-encryption', 'on'
         ]
 
         self.no_error_run(self.command + full_options, self.server_args)
         self.assertIn('SUCCESS', self.str_output)
-        expected_params = ['memoryQuota=512', 'eventingMemoryQuota=512', 'ftsMemoryQuota=512', 'clusterName=name',
-                           'indexMemoryQuota=512', 'indexerStorageMode=memory_optimized',
+        expected_params = ['memoryQuota=512', 'eventingMemoryQuota=512', 'ftsMemoryQuota=512', 'queryNodeQuota=512',
+                           'clusterName=name', 'indexMemoryQuota=512', 'indexerStorageMode=memory_optimized',
                            'username=Administrator', 'password=asdasd', 'port=6789',
                            'sendStats=false']
         self.rest_parameter_match(expected_params, False)

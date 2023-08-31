@@ -18,7 +18,7 @@ _couchbase-cli cluster-init_ [--cluster <url>] [--cluster-username <username>] [
     [--cluster-ramsize <mebibytes>] [--cluster-name <name>]
     [--cluster-index-ramsize <mebibytes>] [--cluster-fts-ramsize <mebibytes>]
     [--cluster-eventing-ramsize <mebibytes>]
-    [--cluster-analytics-ramsize <mebibytes>]
+    [--cluster-analytics-ramsize <mebibytes>] [--cluster-query-ramsize <mebibytes>]
     [--index-storage-setting <setting>] [--services <services>]
     [--update-notifications <1|0>]
     [--ip-family <ipv4|ipv6|ipv4-only|ipv6-only>] [--node-to-node-encryption <on|off>]
@@ -84,6 +84,12 @@ which will determine how the global secondary indexes (GSI) are stored.
   if the Analytics service is specified in the --services option. This quota
   will be assigned to all future nodes added to the cluster with the
   analytics service.
+
+--cluster-query-ramsize::
+  Sets the Query service memory quota (in MiB). This parameter is required
+  if the Query service is specified in the --services option. This quota
+  will be assigned to all future nodes added to the cluster with the
+  query service.
 
 --cluster-name::
   Sets the name for this cluster. Naming clusters is useful when you have

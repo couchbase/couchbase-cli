@@ -1108,7 +1108,7 @@ class ClusterManager(object):
 
     def cluster_init(self, services=None, username=None, password=None, port=None,
                      cluster_name=None, data_ramsize=None, index_ramsize=None,
-                     fts_ramsize=None, cbas_ramsize=None, eventing_ramsize=None,
+                     fts_ramsize=None, cbas_ramsize=None, eventing_ramsize=None, query_ramsize=None,
                      ipfamily=None, ipfamilyonly=None, encryption=None,
                      indexer_storage_mode=None,
                      send_stats=None):
@@ -1146,6 +1146,9 @@ class ClusterManager(object):
 
         if eventing_ramsize is not None:
             params["eventingMemoryQuota"] = eventing_ramsize
+
+        if query_ramsize is not None:
+            params['queryNodeQuota'] = query_ramsize
 
         if ipfamily is not None:
             params["afamily"] = ipfamily

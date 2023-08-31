@@ -787,6 +787,8 @@ class ClusterInit(Subcommand):
         group.add_argument("--cluster-analytics-ramsize", dest="cbas_mem_quota", type=(int),
                            metavar="<quota>",
                            help="The analytics service memory quota in mebibytes")
+        group.add_argument('--cluster-query-ramsize', dest="query_mem_quota", type=(int),
+                           metavar="<quota>", help="The query service memory quota in mebibytes")
         group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
         group.add_argument("--index-storage-setting", dest="index_storage_mode",
                            choices=["default", "memopt"], metavar="<mode>",
@@ -854,6 +856,7 @@ class ClusterInit(Subcommand):
             fts_ramsize=opts.fts_mem_quota,
             cbas_ramsize=opts.cbas_mem_quota,
             eventing_ramsize=opts.eventing_mem_quota,
+            query_ramsize=opts.query_mem_quota,
             ipfamily=ip_family,
             ipfamilyonly=ip_only,
             encryption=opts.encryption,
