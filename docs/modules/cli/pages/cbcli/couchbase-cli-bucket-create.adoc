@@ -28,7 +28,7 @@ _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
     [--abort-outside <0|1>] [--parallel-db-view-compaction <0|1>]
     [--purge-interval <float>] [--history-retention-bytes <bytes>]
     [--history-retention-seconds <seconds>]
-    [--enable-history-retention-by-default <0|1>]
+    [--enable-history-retention-by-default <0|1>] [--rank <num>]
 
 == DESCRIPTION
 
@@ -238,6 +238,12 @@ Run index and data compaction in parallel. Global setting only.
 --purge-interval <float>::
   Sets the frequency of the tombstone (metadata) purge interval. The default
   value is three days.
+
+--rank <num>::
+  Sets the rank of this bucket in case of failover/rebalance. Buckets
+  with larger ranks are prioritized over buckets with smaller priorities
+  e.g. a bucket with rank "1" will failover/rebalance before a bucket with
+  rank "0". The default rank for a bucket is 0.
 
 include::{partialsdir}/cbcli/part-common-history-retention.adoc[]
 

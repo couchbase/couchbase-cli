@@ -1019,6 +1019,9 @@ class BucketCreate(Subcommand):
         group.add_argument("--point-in-time-max-history-age", dest="pitr_max_history_age", default=None, type=(int),
                            metavar="<seconds>", help="Set the maximum history age of Point-In-Time backups that can "
                            "be taken of this bucket (in seconds)")
+        group.add_argument("--rank", dest="rank", metavar="<num>", type=(int),
+                           help="Sets the rank of this bucket in case of failover/rebalance. Buckets with larger "
+                           "ranks are prioritised over buckets with smaller ranks")
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
@@ -1111,7 +1114,7 @@ class BucketCreate(Subcommand):
                                             opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval,
                                             opts.history_retention_bytes, opts.history_retention_seconds,
                                             opts.enable_history_retention, opts.enable_pitr, opts.pitr_granularity,
-                                            opts.pitr_max_history_age)
+                                            opts.pitr_max_history_age, opts.rank)
         _exit_if_errors(errors)
         _success("Bucket created")
 
@@ -1227,6 +1230,9 @@ class BucketEdit(Subcommand):
                            metavar="<seconds>", help="Set the granularity of Point-In-Time backups in seconds")
         group.add_argument("--point-in-time-max-history-age", dest="pitr_max_history_age", default=None, type=(int),
                            metavar="<seconds>", help="Set the maximum history age of Point-In-Time backups in seconds")
+        group.add_argument("--rank", dest="rank", metavar="<num>", type=(int),
+                           help="Sets the rank of this bucket in case of failover/rebalance. Buckets with larger "
+                           "ranks are prioritised over buckets with smaller ranks")
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
@@ -1319,7 +1325,7 @@ class BucketEdit(Subcommand):
                                           opts.history_retention_bytes, opts.history_retention_seconds,
                                           opts.enable_history_retention,
                                           opts.enable_pitr, opts.pitr_granularity, opts.pitr_max_history_age,
-                                          is_couchbase_bucket)
+                                          opts.rank, is_couchbase_bucket)
         _exit_if_errors(errors)
 
         _success("Bucket edited")

@@ -389,7 +389,7 @@ class TestBucketCreate(CommandTest):
         self.command = ['couchbase-cli', 'bucket-create'] + cluster_connect_args
         self.command_args = ['--bucket', 'name']
         self.command_couch_args = ['--bucket-type', 'couchbase', '--bucket-ramsize', '100', '--bucket-replica', '0',
-                                   '--bucket-eviction-policy', 'fullEviction']
+                                   '--bucket-eviction-policy', 'fullEviction', '--rank', '3']
         self.command_EE_args = ['--compression-mode', 'active', '--max-ttl', '20']
         self.command_auto_compaction_args = ['--database-fragmentation-threshold-percentage', '25',
                                              '--view-fragmentation-threshold-percentage', '20',
@@ -407,7 +407,7 @@ class TestBucketCreate(CommandTest):
                           self.server_args)
         expected_params = [
             'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'maxTTL=20',
-            'compressionMode=active', 'ramQuotaMB=100', 'storageBackend=couchstore'
+            'compressionMode=active', 'ramQuotaMB=100', 'storageBackend=couchstore', 'rank=3'
         ]
         self.rest_parameter_match(expected_params)
 
@@ -419,7 +419,7 @@ class TestBucketCreate(CommandTest):
             'bucketType=couchbase', 'databaseFragmentationThreshold%5Bpercentage%5D=25', 'name=name',
             'evictionPolicy=fullEviction', 'autoCompactionDefined=true', 'parallelDBAndViewCompaction=true',
             'replicaNumber=0', 'purgeInterval=2.0', 'viewFragmentationThreshold%5Bpercentage%5D=20',
-            'ramQuotaMB=100', 'storageBackend=couchstore'
+            'ramQuotaMB=100', 'storageBackend=couchstore', 'rank=3'
         ]
 
         self.rest_parameter_match(expected_params)
@@ -560,7 +560,7 @@ class TestBucketEdit(CommandTest):
         self.command = ['couchbase-cli', 'bucket-edit'] + cluster_connect_args
         self.command_args = ['--bucket', 'name']
         self.command_couch_args = ['--bucket-ramsize', '100', '--bucket-replica', '0', '--bucket-priority', 'high',
-                                   '--bucket-eviction-policy', 'fullEviction', '--enable-flush', '1']
+                                   '--bucket-eviction-policy', 'fullEviction', '--enable-flush', '1', '--rank', '3']
         self.command_EE_args = ['--compression-mode', 'active', '--max-ttl', '20']
         self.command_auto_compaction_args = ['--database-fragmentation-threshold-percentage', '25',
                                              '--view-fragmentation-threshold-percentage', '20',
@@ -578,7 +578,7 @@ class TestBucketEdit(CommandTest):
                           self.server_args)
         expected_params = [
             'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'maxTTL=20',
-            'compressionMode=active', 'ramQuotaMB=100'
+            'compressionMode=active', 'ramQuotaMB=100', 'rank=3'
         ]
         self.rest_parameter_match(expected_params)
 
@@ -591,7 +591,7 @@ class TestBucketEdit(CommandTest):
             'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'maxTTL=20',
             'compressionMode=active', 'ramQuotaMB=100', 'databaseFragmentationThreshold%5Bpercentage%5D=25',
             'viewFragmentationThreshold%5Bpercentage%5D=20', 'allowedTimePeriod%5BabortOutside%5D=true',
-            'parallelDBAndViewCompaction=true', 'purgeInterval=2.0', 'autoCompactionDefined=true'
+            'parallelDBAndViewCompaction=true', 'purgeInterval=2.0', 'autoCompactionDefined=true', 'rank=3'
         ]
 
         self.rest_parameter_match(expected_params)

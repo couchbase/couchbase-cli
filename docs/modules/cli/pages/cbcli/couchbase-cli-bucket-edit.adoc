@@ -28,7 +28,7 @@ _couchbase-cli bucket-edit_ [--cluster <url>] [--username <user>]
     [--abort-outside <0|1>] [--parallel-db-view-compaction <0|1>]
     [--purge-interval <num>] [--durability-min-level <level>]
     [--history-retention-bytes <bytes>] [--history-retention-seconds <seconds>]
-    [--enable-history-retention-by-default <0|1>]
+    [--enable-history-retention-by-default <0|1>] [--rank <num>]
 
 == DESCRIPTION
 
@@ -202,6 +202,12 @@ Run index and data compaction in parallel. Global setting only.
   data. "persistToMajority" specifies mutations must be persisted to a
   majority of the Data Service nodes. Accordingly, it will be written to disk
   on those nodes.
+
+--rank <num>::
+  Sets the rank of this bucket in case of failover/rebalance. Buckets
+  with larger ranks are prioritized over buckets with smaller priorities
+  e.g. a bucket with rank "1" will failover/rebalance before a bucket with
+  rank "0". The default rank for a bucket is 0.
 
 include::{partialsdir}/cbcli/part-common-history-retention.adoc[]
 

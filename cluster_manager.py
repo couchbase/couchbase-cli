@@ -834,7 +834,8 @@ class ClusterManager(object):
                       view_frag_size, from_hour, from_min, to_hour, to_min,
                       abort_outside, paralleldb_and_view_compact, purge_interval,
                       history_retention_bytes, history_retention_seconds,
-                      history_retention_default, pitr_enabled, pitr_granularity, pitr_max_history_age, timeout=60):
+                      history_retention_default, pitr_enabled, pitr_granularity, pitr_max_history_age,
+                      rank, timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
         if name is None:
@@ -880,6 +881,8 @@ class ClusterManager(object):
             params["pitrGranularity"] = pitr_granularity
         if pitr_max_history_age is not None:
             params["pitrMaxHistoryAge"] = pitr_max_history_age
+        if rank is not None:
+            params["rank"] = rank
 
         if bucket_type == "couchbase":
             if (db_frag_perc is not None or db_frag_size is not None or view_frag_perc is not None or
@@ -949,7 +952,8 @@ class ClusterManager(object):
                     view_frag_size, from_hour, from_min, to_hour, to_min,
                     abort_outside, paralleldb_and_view_compact, purge_interval,
                     history_retention_bytes, history_retention_seconds, history_retention_default,
-                    pitr_enabled, pitr_granularity, pitr_max_history_age, couchbase_bucket: bool = True):
+                    pitr_enabled, pitr_granularity, pitr_max_history_age, rank,
+                    couchbase_bucket: bool = True):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -1014,6 +1018,8 @@ class ClusterManager(object):
             params["pitrGranularity"] = pitr_granularity
         if pitr_max_history_age is not None:
             params["pitrMaxHistoryAge"] = pitr_max_history_age
+        if rank is not None:
+            params["rank"] = rank
 
         return self._post_form_encoded(url, params)
 
