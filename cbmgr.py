@@ -4833,13 +4833,21 @@ class CollectionManage(Subcommand):
                 ["at least one of {--enable-history-retention, --max-ttl, --use-bucket-ttl} should be set with " +
                  "--edit-collection"])
 
-        if opts.edit_collection is not None and (opts.max_ttl is not None or opts.use_bucket_ttl is not None):
+        if opts.use_bucket_ttl is not None:
             version, errors = self.rest.min_version()
             _exit_if_errors(errors)
 
             if version < "7.6.0":
                 _exit_if_errors(
-                    ["--max-ttl/--use-bucket-ttl can only be used with --edit-collection on >= 7.6.0 clusters"])
+                    ["--use-bucket-ttl can only be used on >= 7.6.0 clusters"])
+
+        if opts.edit_collection is not None and opts.max_ttl is not None:
+            version, errors = self.rest.min_version()
+            _exit_if_errors(errors)
+
+            if version < "7.6.0":
+                _exit_if_errors(
+                    ["--max-ttl can only be used with --edit-collection on >= 7.6.0 clusters"])
 
         if opts.use_bucket_ttl is not None:
             opts.max_ttl = -1

@@ -2867,6 +2867,14 @@ class TestCollectionManage(CommandTest):
         expected_params = ['name=collection_1', 'maxTTL=0', 'history=true']
         self.rest_parameter_match(expected_params)
 
+    def test_use_bucket_ttl_pre_7_6(self):
+        self.server_args["pools_default"] = {"nodes": [{"version": "7.2.0-0000-enteenterprise"}]}
+        self.system_exit_run(
+            self.command +
+            ['--create-collection', 'scope_1.collection_1', '--enable-history-retention', '1', '--use-bucket-ttl'],
+            self.server_args)
+        self.assertIn('--use-bucket-ttl can only be used on >= 7.6.0 clusters', self.str_output)
+
     def test_edit_collection(self):
         self.server_args["pools_default"] = {"nodes": [{"version": "7.6.0-0000-enteenterprise"}]}
         self.no_error_run(self.command + ['--edit-collection', 'scope_1.collection_1', '--enable-history-retention',
@@ -2875,11 +2883,11 @@ class TestCollectionManage(CommandTest):
         expected_params = ['history=true', 'maxTTL=60']
         self.rest_parameter_match(expected_params)
 
-    def test_edit_collection_max_ttl_old_version(self):
+    def test_edit_collection_max_ttl_pre_7_6(self):
         self.server_args["pools_default"] = {"nodes": [{"version": "7.2.0-0000-enteenterprise"}]}
         self.system_exit_run(self.command + ['--edit-collection', 'scope_1.collection_1', '--enable-history-retention',
                                              '1', '--max-ttl', '60'], self.server_args)
-        self.assertIn('--max-ttl/--use-bucket-ttl can only be used with --edit-collection on >= 7.6.0 clusters',
+        self.assertIn('--max-ttl can only be used with --edit-collection on >= 7.6.0 clusters',
                       self.str_output)
 
     def test_edit_collection_use_bucket_ttl(self):
