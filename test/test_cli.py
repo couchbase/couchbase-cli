@@ -3050,10 +3050,10 @@ class TestIpFamily(CommandTest):
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv4'], self.server_args)
         self.assertIn('Switched IP family of the cluster', self.str_output)
-        self.assertIn('GET:/pools/nodes', self.server.trace)
-        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
-        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        self.assertCountEqual(['GET:/pools', 'GET:/pools/nodes', 'GET:/settings/security',
+                               'POST:/node/controller/enableExternalListener', 'POST:/node/controller/setupNetConfig',
+                               'GET:/pools/nodes', 'POST:/node/controller/disableUnusedExternalListeners'],
+                              self.server.trace)
         expected_params = ['afamily=ipv4', 'afamily=ipv4', 'afamilyOnly=false']
         self.rest_parameter_match(expected_params, True)
 
@@ -3062,10 +3062,10 @@ class TestIpFamily(CommandTest):
         self.server_args['override-status'] = 400
         self.no_error_run(self.command + ['--set', '--ipv4'], self.server_args)
         self.assertIn('Switched IP family of the cluster', self.str_output)
-        self.assertIn('GET:/pools/nodes', self.server.trace)
-        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
-        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        self.assertCountEqual(['GET:/pools', 'GET:/pools/nodes', 'POST:/node/controller/enableExternalListener',
+                               'POST:/node/controller/setupNetConfig',
+                               'POST:/node/controller/disableUnusedExternalListeners'],
+                              self.server.trace)
         expected_params = ['afamily=ipv4', 'afamily=ipv4', 'afamilyOnly=false']
         self.rest_parameter_match(expected_params, True)
 
@@ -3074,10 +3074,10 @@ class TestIpFamily(CommandTest):
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv4only'], self.server_args)
         self.assertIn('Switched IP family of the cluster', self.str_output)
-        self.assertIn('GET:/pools/nodes', self.server.trace)
-        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
-        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        self.assertCountEqual(['GET:/pools', 'GET:/pools/nodes', 'GET:/settings/security',
+                               'POST:/node/controller/enableExternalListener', 'POST:/node/controller/setupNetConfig',
+                               'GET:/pools/nodes', 'POST:/node/controller/disableUnusedExternalListeners'],
+                              self.server.trace)
         expected_params = ['afamily=ipv4', 'afamily=ipv4', 'afamilyOnly=true']
         self.rest_parameter_match(expected_params, True)
 
@@ -3086,10 +3086,10 @@ class TestIpFamily(CommandTest):
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv6'], self.server_args)
         self.assertIn('Switched IP family of the cluster', self.str_output)
-        self.assertIn('GET:/pools/nodes', self.server.trace)
-        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
-        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        self.assertCountEqual(['GET:/pools', 'GET:/pools/nodes', 'GET:/settings/security',
+                               'POST:/node/controller/enableExternalListener', 'POST:/node/controller/setupNetConfig',
+                               'GET:/pools/nodes', 'POST:/node/controller/disableUnusedExternalListeners'],
+                              self.server.trace)
         expected_params = ['afamily=ipv6', 'afamily=ipv6', 'afamilyOnly=false']
         self.rest_parameter_match(expected_params, True)
 
@@ -3098,10 +3098,10 @@ class TestIpFamily(CommandTest):
                                                        'ports': {'httpsMgmt': '6789'}}]}
         self.no_error_run(self.command + ['--set', '--ipv6only'], self.server_args)
         self.assertIn('Switched IP family of the cluster', self.str_output)
-        self.assertIn('GET:/pools/nodes', self.server.trace)
-        self.assertIn('POST:/node/controller/enableExternalListener', self.server.trace)
-        self.assertIn('POST:/node/controller/setupNetConfig', self.server.trace)
-        self.assertIn('POST:/node/controller/disableUnusedExternalListeners', self.server.trace)
+        self.assertCountEqual(['GET:/pools', 'GET:/pools/nodes', 'GET:/settings/security',
+                               'POST:/node/controller/enableExternalListener', 'POST:/node/controller/setupNetConfig',
+                               'GET:/pools/nodes', 'POST:/node/controller/disableUnusedExternalListeners'],
+                              self.server.trace)
         expected_params = ['afamily=ipv6', 'afamily=ipv6', 'afamilyOnly=true']
         self.rest_parameter_match(expected_params, True)
 

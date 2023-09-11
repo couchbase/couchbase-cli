@@ -5337,26 +5337,35 @@ class IpFamily(Subcommand):
 
         ssl = ssl or force_communicate_tls(rest)
 
-        hosts = []
-        for n in node_data['nodes']:
-            host = f'http://{n["hostname"]}'
-            if ssl:
-                addr = n["hostname"].rsplit(":", 1)[0]
-                host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
+        hosts = IpFamily.get_hosts(node_data, ssl)
+        for host in hosts:
             _, err = rest.enable_external_listener(host=host, ipfamily=ip_fam)
             _exit_if_errors(err)
-            hosts.append(host)
 
         for h in hosts:
             _, err = rest.setup_net_config(host=h, ipfamily=ip_fam, ipfamilyonly=ip_only)
             _exit_if_errors(err)
             print(f'Switched IP family for node: {h}')
 
-        for h in hosts:
+        updated_node_data, err = rest.pools('nodes')
+        updated_hosts = IpFamily.get_hosts(updated_node_data, ssl)
+        for h in updated_hosts:
             _, err = rest.disable_unused_external_listeners(host=h, ipfamily=ip_fam_disable)
             _exit_if_errors(err)
 
         _success('Switched IP family of the cluster')
+
+    @staticmethod
+    def get_hosts(node_data, ssl):
+        hosts = []
+        for n in node_data['nodes']:
+            host = f'http://{n["hostname"]}'
+            if ssl:
+                addr = n["hostname"].rsplit(":", 1)[0]
+                host = f'https://{addr}:{n["ports"]["httpsMgmt"]}'
+            hosts.append(host)
+
+        return hosts
 
     @staticmethod
     def _get(rest):
