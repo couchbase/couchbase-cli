@@ -1,0 +1,50 @@
+= couchbase-cli-node-reset(1)
+:description: Resets a node
+ifndef::doctype-manpage[:doctitle: node-reset]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-node-reset -
+endif::[]
+Resets a node
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli node-reset_ [--cluster <url>] [--username <user>] [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>] [--client-key-password <password>] [--force]
+
+== DESCRIPTION
+
+This command will reset the node, completely wiping all data on it.
+This is designed to be used on nodes that have gone through unsafe failover,
+allowing them to be readded to the cluster. The command requires full admin
+permissions.
+
+Since all data will be lost, it is strongly recommended to backup the files on
+disk before running this command.
+
+== OPTIONS
+
+--force::
+  Reset the node without asking for confirmation.
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-node-init[1],
+man:couchbase-cli-cluster-init[1],
+man:couchbase-cli-server-add[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
+

@@ -1177,6 +1177,10 @@ class ClusterManager(object):
         url = f'{self.hostname}/nodes/self'
         return self._get(url)
 
+    def reset_node(self):
+        url = f'{self.hostname}/controller/hardResetNode'
+        return self._post_form_encoded(url, None)
+
     def get_babysitter_cookie(self):
         url = f'{self.hostname}/diag/eval'
         payload = \

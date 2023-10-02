@@ -990,6 +990,17 @@ class TestNodeInit(CommandTest):
         self.rest_parameter_match(expected_params)
 
 
+class TestNodeReset(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'node-reset', '--force'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        super(TestNodeReset, self).setUp()
+
+    def test_reset_node(self):
+        self.no_error_run(self.command, self.server_args)
+        self.assertIn('POST:/controller/hardResetNode', self.server.trace)
+
+
 class TestRebalance(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'rebalance'] + cluster_connect_args

@@ -107,6 +107,7 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 == SEE ALSO
 
 man:couchbase-cli-cluster-init[1],
-man:couchbase-cli-server-add[1]
+man:couchbase-cli-server-add[1],
+man:couchbase-cli-node-reset[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]

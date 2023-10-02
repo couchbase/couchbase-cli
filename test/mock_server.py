@@ -564,6 +564,7 @@ endpoints = [
     (r'/controller/rebalance$', {'POST': do_nothing}),
     (r'/controller/changePassword', {'POST': do_nothing}),
     (r'/controller/reAddNode$', {'POST': do_nothing}),
+    (r'/controller/hardResetNode$', {'POST': do_nothing}),
     (r'/controller/startGracefulFailover$', {'POST': do_nothing}),
     (r'/controller/cancelLogsCollection$', {'POST': do_nothing}),
     (r'/controller/createReplication$', {'POST': do_nothing}),

@@ -90,6 +90,9 @@ man:couchbase-cli-host-list[1]::
 man:couchbase-cli-node-init[1]::
   Initializes a node.
 
+man:couchbase-cli-node-reset[1]::
+  Resets a node.
+
 man:couchbase-cli-rebalance[1]::
   Rebalances data across nodes in a cluster.
 

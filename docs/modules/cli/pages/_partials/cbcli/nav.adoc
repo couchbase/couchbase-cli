@@ -24,6 +24,7 @@
  ** xref:cli:cbcli/couchbase-cli-ip-family.adoc[ip-family]
  ** xref:cli:cbcli/couchbase-cli-master-password.adoc[master-password]
  ** xref:cli:cbcli/couchbase-cli-node-init.adoc[node-init]
+ ** xref:cli:cbcli/couchbase-cli-node-reset.adoc[node-reset]
  ** xref:cli:cbcli/couchbase-cli-node-to-node-encryption.adoc[node-to-node-encryption]
  ** xref:cli:cbcli/couchbase-cli-rebalance-status.adoc[rebalance-status]
  ** xref:cli:cbcli/couchbase-cli-rebalance-stop.adoc[rebalance-stop]

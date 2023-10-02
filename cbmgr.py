@@ -1907,6 +1907,38 @@ class NodeInit(Subcommand):
         return "Set node specific settings"
 
 
+class NodeReset(Subcommand):
+    """The node reset subcommand"""
+
+    def __init__(self):
+        super(NodeReset, self).__init__()
+        self.parser.prog = "couchbase-cli node-reset"
+        group = self.parser.add_argument_group("Node reset options")
+        group.add_argument("--force", dest="force", action="store_true", help="Reset node without asking to confirm")
+
+    @rest_initialiser(cluster_init_check=True)
+    def execute(self, opts):
+        if not opts.force:
+            confirm = input('This command will purge all data on this node.\nAre you sure? [y/n]: ')
+            if confirm == 'n':
+                print("Node has not been reset")
+                sys.exit(0)
+            elif confirm != 'y':
+                _exit_if_errors(["Unknown option provided"])
+
+        _, errors = self.rest.reset_node()
+        _exit_if_errors(errors)
+        _success("Node reset")
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-node-reset")
+
+    @staticmethod
+    def get_description():
+        return "Resets node - will delete all data from node"
+
+
 class Rebalance(Subcommand):
     """The rebalance subcommand"""
 
