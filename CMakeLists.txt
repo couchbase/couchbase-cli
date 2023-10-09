@@ -13,12 +13,7 @@ PyWrapper (BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}"
     SCRIPTS
     couchbase-cli
     cblogredaction
-    cbrestorewrapper
-    cbbackup
-    cbbackupwrapper
     cbrecovery
-    cbrestore
-    cbtransfer
     cbworkloadgen)
 
 # Install dependent Python files
@@ -30,22 +25,15 @@ INSTALL (FILES
     couchbaseConstants.py
     pbar.py
     pump.py
-    pump_bfd.py
     pump_cb.py
-    pump_csv.py
     pump_gen.py
-    pump_json.py
     pump_mc.py
-    pump_sfd.py
     pump_transfer.py
     pump_dcp.py
     x509_adapter.py
     ${CMAKE_CURRENT_BINARY_DIR}/cb_version.py
     ${CMAKE_CURRENT_BINARY_DIR}/couchstore.py
     DESTINATION lib/python)
-IF (BUILD_ENTERPRISE)
-  INSTALL (FILES pump_bfd2.py DESTINATION lib/python)
-ENDIF ()
 
 ADD_SUBDIRECTORY(docs)
 
