@@ -28,6 +28,9 @@ the cluster is not currently running the index service that you also need to
 set the index storage mode. This can be done with the --index-storage-setting
 option.
 
+Note that the server to be added can not be specified using the http scheme
+since, in 7.1+, addition must occur over a secure connection.
+
 == OPTIONS
 
 include::{partialsdir}/cbcli/part-common-options.adoc[]
@@ -72,7 +75,7 @@ If we want to add a server at 192.168.1.6:8091 with the index, data and query
 service on it then we would run the command below.
 ----
 $ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
- --password password --server-add http://192.168.1.6:8091 \
+ --password password --server-add https://192.168.1.6:18091 \
  --server-add-username Administrator --server-add-password password
  --services data,index,query
 ----
@@ -88,7 +91,7 @@ the first time so we need to specify the index storage mode. If we want to index
 storage mode to be memory optimized then we would run the following command.
 ----
 $ couchbase-cli server-add -c 192.168.1.5:8091 --username Administrator \
- --password password --server-add http://192.168.1.6:8091,http://192.168.1.7:8091 \
+ --password password --server-add https://192.168.1.6:18091,https://192.168.1.7:18091 \
  --server-username Administrator --server-password password
  --services data,fts --group-name --index-storage-setting memopt
 ----
