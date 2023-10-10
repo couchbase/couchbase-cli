@@ -842,7 +842,7 @@ class ClusterInit(Subcommand):
         min_version, errors = self.rest.node_version()
         _exit_if_errors(errors)
 
-        if not self.enterprise and opts.notifications == "0" and min_version >= "7.6.0":
+        if not self.enterprise and opts.notifications == "0" and min_version >= "7.2.3":
             _exit_if_errors(["--update-notifications can only be configured on Enterprise Edition"])
 
         _, errors = self.rest.cluster_init(
@@ -3246,7 +3246,7 @@ class SettingNotification(Subcommand):
         min_version, errors = self.rest.min_version()
         _exit_if_errors(errors)
 
-        if not self.enterprise and min_version >= "7.6.0":
+        if not self.enterprise and min_version >= "7.2.3":
             _exit_if_errors(["Modifying notifications settings is an Enterprise Edition only feature"])
 
         enabled = None

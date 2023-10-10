@@ -2,11 +2,11 @@
 
 When specifying a host for the couchbase-cli command the following formats are expected:
 
-* `couchbase://<addr>`
+* `couchbase://<addr>` or `couchbases://<addr>`
+* `\http://<addr>:<port>` or `\https://<addr>:<port>`
 * `<addr>:<port>`
-* `\http://<addr>:<port>`
 
-It is recommended to use the couchbase://<addr> format for standard
-installations. The other two formats allow an option to take a port number which
-is needed for non-default installations where the admin port has been set up on
-a port other that 8091.
+It is recommended to use the couchbase://<addr> or couchbases://<addr> format
+for standard installations. The other formats allow an option to take a port
+number which is needed for non-default installations where the admin port has
+been set up on a port other that 8091 (or 18091 for https).
