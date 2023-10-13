@@ -1216,8 +1216,8 @@ class TestSettingAutofailover(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'setting-autofailover'] + cluster_connect_args
         self.cmd_args = ['--enable-auto-failover', '1', '--auto-failover-timeout', '10']
-        self.EE_args = ['--enable-failover-of-server-groups', '1', '--max-failovers', '3',
-                        '--enable-failover-on-data-disk-issues', '1', '--failover-data-disk-period', '20']
+        self.EE_args = ['--max-failovers', '3', '--enable-failover-on-data-disk-issues', '1',
+                        '--failover-data-disk-period', '20']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestSettingAutofailover, self).setUp()
 
@@ -1229,9 +1229,8 @@ class TestSettingAutofailover(CommandTest):
 
     def test_setting_auto_failover_EE(self):
         self.no_error_run(self.command + self.cmd_args + self.EE_args, self.server_args)
-        expected_params = ['enabled=true', 'timeout=10', 'failoverServerGroup=true',
-                           'failoverOnDataDiskIssues%5Benabled%5D=true', 'failoverOnDataDiskIssues%5BtimePeriod%5D=20',
-                           'maxCount=3']
+        expected_params = ['enabled=true', 'timeout=10', 'failoverOnDataDiskIssues%5Benabled%5D=true',
+                           'failoverOnDataDiskIssues%5BtimePeriod%5D=20', 'maxCount=3']
         self.assertIn('POST:/settings/autoFailover', self.server.trace)
         self.rest_parameter_match(expected_params)
 

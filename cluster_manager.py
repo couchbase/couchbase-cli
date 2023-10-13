@@ -1331,9 +1331,8 @@ class ClusterManager(object):
     def get_id_descriptors(self):
         return self._get(f'{self.hostname}/settings/audit/descriptors')
 
-    def set_autofailover_settings(self, enabled, timeout, failover_of_server_groups, max_count,
-                                  failover_on_data_disk_issues_enabled, failover_on_data_disk_issues_time_period,
-                                  can_abort_rebalance):
+    def set_autofailover_settings(self, enabled, timeout, max_count, failover_on_data_disk_issues_enabled,
+                                  failover_on_data_disk_issues_time_period, can_abort_rebalance):
         url = self.hostname + '/settings/autoFailover'
 
         params = dict()
@@ -1341,8 +1340,6 @@ class ClusterManager(object):
             params["enabled"] = enabled
         if timeout:
             params["timeout"] = timeout
-        if failover_of_server_groups:
-            params["failoverServerGroup"] = failover_of_server_groups
         if failover_on_data_disk_issues_enabled:
             params["failoverOnDataDiskIssues[enabled]"] = failover_on_data_disk_issues_enabled
         if max_count:
