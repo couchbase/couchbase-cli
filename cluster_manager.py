@@ -216,6 +216,9 @@ class ClusterManager(object):
         if errors:
             return None, errors
 
+        if result["indexDefs"] is None:
+            return None, None
+
         bucket_index_defs = []
         if "indexDefs" in result and result["indexDefs"] is not None:
             for _, index_def in result["indexDefs"]["indexDefs"].items():
