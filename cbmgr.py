@@ -2223,10 +2223,27 @@ class ServerEshell(Subcommand):
             env = os.environ.copy()
             env["CB_COOKIE"] = cookie
 
-            args = [path, '-name', name, '-setcookie', 'nocookie', '-hidden', '-eval',
-                    'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).',
-                    '-remsh', node, '-proto_dist', 'cb', '-epmd_module', 'cb_epmd', '-pa', CB_NS_EBIN_PATH, '-kernel',
-                    'dist_config_file', f'"{temp_name}"'] + CB_INETRC_OPT
+            args = [
+                path,
+                '-name',
+                name,
+                '-setcookie',
+                'nocookie',
+                '-hidden',
+                '-eval',
+                'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).',
+                '-remsh',
+                node,
+                '-proto_dist',
+                'cb',
+                '-epmd_module',
+                'cb_epmd',
+                '-no_epmd',
+                '-pa',
+                CB_NS_EBIN_PATH,
+                '-kernel',
+                'dist_config_file',
+                f'"{temp_name}"'] + CB_INETRC_OPT
 
             if opts.debug:
                 print(f'Running {" ".join(args)}')
