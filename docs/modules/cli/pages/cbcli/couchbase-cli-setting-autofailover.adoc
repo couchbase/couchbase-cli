@@ -55,7 +55,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --max-failovers <num>::
   Specifies the number of auto-failover events that will be handled before
   requiring user intervention. A single event could be one node failing over or
-  an entire Server Group. The maximum allowed value is three. This feature is
+  an entire Server Group. The maximum allowed value is 100. This feature is
   only available in Couchbase Enterprise Edition.
 
 --enable-failover-on-data-disk-issues <num>::
@@ -104,8 +104,8 @@ following command.
    --password password --enable-auto-failover 1 --auto-failover-timeout 120 \
    --enable-failover-on-data-disk-issues 1 --failover-data-disk-period 10
 
-To enable autofailover with a 120 second auto-failover timeout and allow up to \
-two auto failover events.
+To enable autofailover with a 120 second auto-failover timeout and allow up to
+two auto failover events
 
   $ couchbase-cli setting-autofailover -c 192.168.1.5 --username Administrator \
    --password password --enable-auto-failover 1 --auto-failover-timeout 120 \

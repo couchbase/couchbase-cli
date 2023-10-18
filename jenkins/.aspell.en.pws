@@ -84,6 +84,7 @@ hostnames
 hsts
 http
 HTTPS
+https
 includeSubDomains
 init
 intra

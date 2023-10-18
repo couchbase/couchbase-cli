@@ -2625,7 +2625,7 @@ class SettingAutofailover(Subcommand):
                            choices=["0", "1"], help="Enable/disable auto-failover")
         group.add_argument("--auto-failover-timeout", dest="timeout", metavar="<seconds>",
                            type=(int), help="The auto-failover timeout")
-        group.add_argument("--max-failovers", dest="max_failovers", metavar="<1|2|3>", choices=["1", "2", "3"],
+        group.add_argument("--max-failovers", dest="max_failovers",
                            help="Maximum number of times an auto-failover event can happen")
         group.add_argument("--enable-failover-on-data-disk-issues", dest="enable_failover_on_data_disk_issues",
                            metavar="<1|0>", choices=["0", "1"],
