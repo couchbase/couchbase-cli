@@ -3005,6 +3005,33 @@ class TestSettingLdap(CommandTest):
                            'clientTLSKey=this-is-the-user-key-file']
         self.rest_parameter_match(expected_params)
 
+    def test_set_ldap_user_dn_advanced(self):
+        mapping_file = tempfile.NamedTemporaryFile(delete=False)
+        file_contents = '[{"match":"","query":""}]'
+        mapping_file.write(file_contents.encode())
+        mapping_file.close()
+
+        mapping = f'{{"advanced":{file_contents}}}'
+
+        self.no_error_run(self.command + self.authentication_args + ['--user-dn-advanced', mapping_file.name],
+                          self.server_args)
+        self.assertIn('POST:/settings/ldap', self.server.trace)
+        expected_params = ['authenticationEnabled=true', 'hosts=0.0.0.0', 'port=369',
+                           'encryption=None', 'requestTimeout=2000', 'maxParallelConnections=20',
+                           'maxCacheSize=20', 'cacheValueLifetime=2000000', 'serverCertValidation=false',
+                           'userDNMapping=' + urllib.parse.quote(mapping)]
+        self.rest_parameter_match(expected_params)
+
+    def test_set_ldap_user_dn_advanced_invalid_json(self):
+        mapping_file = tempfile.NamedTemporaryFile(delete=False)
+        file_contents = 'this is not valid json'
+        mapping_file.write(file_contents.encode())
+        mapping_file.close()
+
+        self.system_exit_run(self.command + self.authentication_args + ['--user-dn-advanced', mapping_file.name],
+                             self.server_args)
+        self.assertIn('does not contain valid JSON', self.str_output)
+
 
 class TestIpFamily(CommandTest):
     def setUp(self):

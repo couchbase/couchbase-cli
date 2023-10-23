@@ -3124,6 +3124,7 @@ class SettingLdap(Subcommand):
         super(SettingLdap, self).__init__()
         self.parser.prog = "couchbase-cli setting-ldap"
         group = self.parser.add_argument_group("LDAP settings")
+        group_me = group.add_mutually_exclusive_group(required=False)
         group.add_argument("--get", dest="get", default=False, action="store_true",
                            help='When the get flag is provided it will retrieve the current ldap settings')
         group.add_argument("--authentication-enabled", dest="authentication_enabled", metavar="<1|0>",
@@ -3140,10 +3141,6 @@ class SettingLdap(Subcommand):
         group.add_argument("--ldap-cacert", dest="cacert_ldap", metavar="<path>",
                            help="CA certificate to be used for LDAP server certificate validation, required if"
                            + " certificate validation is not disabled")
-        group.add_argument("--user-dn-query", metavar="<query>", dest="user_dn_query",
-                           help="LDAP query to get user's DN. Must contains at least one instance of %%u")
-        group.add_argument("--user-dn-template", metavar="<template>", dest="user_dn_template",
-                           help="Template to construct user's DN. Must contain at least one instance of %%u")
         group.add_argument("--ldap-client-cert", metavar="<path>", dest="ldap_client_cert",
                            help="The client TLS certificate for authentication")
         group.add_argument("--ldap-client-key", metavar="<path>", dest="ldap_client_key",
@@ -3166,6 +3163,12 @@ class SettingLdap(Subcommand):
                            choices=["0", "1"])
         group.add_argument("--nested-group-max-depth", dest="nested_max_depth", metavar="<max>", type=int,
                            help="Maximum number of recursive group requests allowed. [1 - 100]")
+        group_me.add_argument("--user-dn-query", metavar="<query>", dest="user_dn_query",
+                              help="LDAP query to get user's DN. Must contains at least one instance of %%u")
+        group_me.add_argument("--user-dn-template", metavar="<template>", dest="user_dn_template",
+                              help="Template to construct user's DN. Must contain at least one instance of %%u")
+        group_me.add_argument("--user-dn-advanced", metavar="<path>", dest="user_dn_advanced",
+                              help="A path to a JSON file with a list of mappings")
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=True)
     def execute(self, opts):
@@ -3210,15 +3213,16 @@ class SettingLdap(Subcommand):
         elif opts.nested_groups == '0':
             opts.nested_groups = 'false'
 
-        if opts.user_dn_query is not None and opts.user_dn_template is not None:
-            _exit_if_errors(['--user-dn-query and --user-dn-template can not be used together'])
-
         mapping = None
         if opts.user_dn_query is not None:
             mapping = f'{{"query": "{opts.user_dn_query}"}}'
 
         if opts.user_dn_template is not None:
             mapping = f'{{"template": "{opts.user_dn_template}"}}'
+
+        if opts.user_dn_advanced is not None:
+            json_mapping = {'advanced': _read_json_file_if_provided(opts.user_dn_advanced)}
+            mapping = json.dumps(json_mapping, separators=(',', ':'))
 
         if (opts.ldap_client_cert and not opts.ldap_client_key) or (not opts.ldap_client_cert and opts.ldap_client_key):
             _exit_if_errors(['--client-cert and --client--key have to be used together'])
