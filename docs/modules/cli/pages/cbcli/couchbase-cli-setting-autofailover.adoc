@@ -15,7 +15,7 @@ Modifies auto-failover settings
 _couchbase-cli setting-autofailover_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
     [--client-key-password <password>] [--enable-auto-failover <num>]
-    [--auto-failover-timeout <seconds>]
+    [--auto-failover-timeout <seconds>] [--max-failovers <num>]
     [--enable-failover-on-data-disk-issues <num>]
     [--failover-data-disk-period <seconds>] [--can-abort-rebalance <1|0>]
 
