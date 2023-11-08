@@ -83,8 +83,8 @@ hostname
 hostnames
 hsts
 http
-https
 HTTPS
+https
 https
 includeSubDomains
 init
