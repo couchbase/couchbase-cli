@@ -933,8 +933,13 @@ class ClusterManager(object):
                 if errors:
                     return None, errors
 
+                nodes = content["nodes"]
+                if len(nodes) == 0:
+                    time.sleep(1)
+                    continue
+
                 all_node_ready = True
-                for node in content["nodes"]:
+                for node in nodes:
                     if node["status"] != "healthy":
                         all_node_ready = False
                         break
