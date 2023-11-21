@@ -1159,7 +1159,7 @@ class ClusterManager(object):
             params["eventingMemoryQuota"] = eventing_ramsize
 
         if query_ramsize is not None:
-            params['queryNodeQuota'] = query_ramsize
+            params['queryMemoryQuota'] = query_ramsize
 
         if ipfamily is not None:
             params["afamily"] = ipfamily
