@@ -1320,7 +1320,7 @@ class TestSettingCluster(CommandTest):
         self.admin_args = ['--cluster-username', 'admin', '--cluster-password', 'password', '--cluster-port', '9000']
         self.cluster_settings = ['--cluster-ramsize', '100', '--cluster-index-ramsize', '200', '--cluster-fts-ramsize',
                                  '300', '--cluster-eventing-ramsize', '400', '--cluster-analytics-ramsize', '500',
-                                 '--cluster-name', 'name']
+                                 '--cluster-query-ramsize', '600', '--cluster-name', 'name']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestSettingCluster, self).setUp()
 
@@ -1334,7 +1334,7 @@ class TestSettingCluster(CommandTest):
         self.no_error_run(self.command + self.cluster_settings, self.server_args)
         self.assertIn('POST:/pools/default', self.server.trace)
         expected_params = ['ftsMemoryQuota=300', 'memoryQuota=100', 'clusterName=name', 'eventingMemoryQuota=400',
-                           'cbasMemoryQuota=500', 'indexMemoryQuota=200']
+                           'cbasMemoryQuota=500', 'indexMemoryQuota=200', 'queryMemoryQuota=600']
         self.rest_parameter_match(expected_params)
 
 

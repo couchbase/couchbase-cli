@@ -391,7 +391,8 @@ class ClusterManager(object):
         params = {'password': new_password}
         return self._post_form_encoded(url, params)
 
-    def set_pools_default(self, data_ramsize, index_ramsize, fts_ramsize, cbas_ramsize, eventing_ramsize, cluster_name):
+    def set_pools_default(self, data_ramsize, index_ramsize, fts_ramsize, cbas_ramsize, eventing_ramsize, query_ramsize,
+                          cluster_name):
         """ Sets Couchbase RAM Quotas for various services
 
         Options:
@@ -400,6 +401,7 @@ class ClusterManager(object):
         fts_ramsize - An integer denoting the size in MiB, None skips the parameter
         cbas_ramsize - An integer denoting the size in MiB, None skips the parameter
         eventing_ramsize - An integer denoting the size in MiB, None skips the parameter
+        query_ramsize - An integer denoting the size in MiB, None skips the parameter
         cluster_name - Sets a name for the cluster, None skips the parameter
         """
         url = f'{self.hostname}/pools/default'
@@ -414,6 +416,8 @@ class ClusterManager(object):
             params["cbasMemoryQuota"] = cbas_ramsize
         if eventing_ramsize:
             params["eventingMemoryQuota"] = eventing_ramsize
+        if query_ramsize:
+            params["queryMemoryQuota"] = query_ramsize
         if cluster_name:
             params["clusterName"] = cluster_name
 

@@ -2783,14 +2783,17 @@ class SettingCluster(Subcommand):
                            type=(int), help="The Eventing service memory quota in mebibytes")
         group.add_argument("--cluster-analytics-ramsize", dest="cbas_mem_quota", metavar="<quota>",
                            type=(int), help="The analytics service memory quota in mebibytes")
+        group.add_argument("--cluster-query-ramsize", dest="query_mem_quota", metavar="<quota>",
+                           type=(int), help="The query service memory quota in mebibytes")
         group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         if (opts.data_mem_quota or opts.index_mem_quota or opts.fts_mem_quota or opts.cbas_mem_quota
-                or opts.eventing_mem_quota or opts.name):
+                or opts.eventing_mem_quota or opts.query_mem_quota or opts.name):
             _, errors = self.rest.set_pools_default(opts.data_mem_quota, opts.index_mem_quota, opts.fts_mem_quota,
-                                                    opts.cbas_mem_quota, opts.eventing_mem_quota, opts.name)
+                                                    opts.cbas_mem_quota, opts.eventing_mem_quota, opts.query_mem_quota,
+                                                    opts.name)
             _exit_if_errors(errors)
 
         if opts.new_username or opts.new_password or opts.port:
