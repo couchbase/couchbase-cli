@@ -117,7 +117,7 @@ pipeline {
                     dir("${PROJECTPATH}") {
                         sh """#!/bin/bash
                             source ${WORKSPACE}/env/bin/activate
-                            python3 -m pylint -E --disable=import-error cblogredaction cbrecovery cbworkloadgen couchbase-cli pump*.py
+                            python3 -m pylint -E --disable=import-error cbbackup cbbackupwrapper cblogredaction cbrecovery cbrestore cbrestorewrapper cbtransfer cbworkloadgen couchbase-cli pump*.py
                             python3 -m pylint --disable=import-error,unused-import --disable C,R cbmgr.py cluster_manager.py
                             python3 -m autopep8 --diff --max-line-length=120 --experimental --exit-code -aaa \$(find -name '*.py')
                         """
@@ -140,6 +140,27 @@ pipeline {
                     dir("${PROJECTPATH}") {
                         sh """#!/bin/bash
                             source ${WORKSPACE}/env/bin/activate
+                            if [ \$(mypy --ignore-missing-imports cbbackup | grep -c error) -gt 1 ]; then
+                                echo "Failed mypy type checking in cbbackup"
+                                echo "Re running: mypy --ignore-missing-imports cbbackup"
+                                echo \$(mypy --ignore-missing-imports cbbackup)
+                                exit 1
+                            fi
+
+                            if [ \$(mypy --ignore-missing-imports cbrestore | grep -c error) -gt 1 ]; then
+                                echo "Failed mypy type checking in cbrestore"
+                                echo "Re running: mypy --ignore-missing-imports cbrestore"
+                                echo \$(mypy --ignore-missing-imports cbrestore)
+                                exit 1
+                            fi
+
+                            if [ \$(mypy --ignore-missing-imports cbtransfer | grep -c error) -gt 1 ]; then
+                                echo "Failed mypy type checking in cbtransfer"
+                                echo "Re running: mypy --ignore-missing-imports cbtransfer"
+                                echo \$(mypy --ignore-missing-imports cbtransfer)
+                                exit 1
+                            fi
+
                             if [ \$(mypy --ignore-missing-imports cbworkloadgen | grep -c error) -gt 1 ]; then
                                 echo "Failed mypy type checking in cbworkloadgen"
                                 echo "Re running: mypy --ignore-missing-imports cbworkloadgen"

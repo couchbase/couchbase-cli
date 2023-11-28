@@ -11,7 +11,9 @@ import threading
 from typing import Optional
 
 import pump
+import pump_bfd
 import pump_cb
+import pump_csv
 import pump_dcp
 import pump_gen
 import pump_mc
@@ -48,6 +50,10 @@ class Transfer:
     def main(self, argv, opts_etc=None):
         if threading.currentThread().getName() == "MainThread":
             threading.currentThread().setName("mt")
+
+        if self.name in ['cbbackup', 'cbbackupwrapper', 'cbrestore', 'cbrestorewrapper', 'cbtransfer']:
+            new_executable = 'cbbackupmgr' if self.name != "cbtransfer" else 'cbdatarecovery'
+            print(f'WARN: {self.name} is deprecated please use {new_executable} instead')
 
         err, opts, source, sink = self.opt_parse(argv)
         if err:
@@ -245,6 +251,139 @@ such as when transferring data from an OSX server to a non-OSX cluster"),
                 PumpingStation.find_handler(opts, sink, SINKS))
 
 
+class Backup(Transfer):
+    """Entry point for 2.0 cbbackup."""
+
+    def __init__(self):
+        self.name = "cbbackup"
+        self.source_alias = "source"
+        self.sink_alias = "backup_dir"
+
+        if self._is_enterprise():
+            self.usage = \
+                "DEPRECATED: Please use cbbackupmgr instead.\n" \
+                "%prog [options] source backup_dir\n\n" \
+                "Online backup of a couchbase cluster or server node.\n\n" \
+                "Examples:\n" \
+                "   The first backup to a given directory is a full backup, any subsequent ones are incremental.\n" \
+                "       %prog -u Administrator -p password http://HOST:8091 /backup-42\n\n" \
+                "   To take a differential backup after taking a full backup. \n" \
+                "       %prog -u Administrator -p password couchbase://HOST:8091 /backup-43 -m diff\n\n" \
+                "   To take an accumulative backup after taking a full backup. \n" \
+                "       %prog -u Administrator -p password couchbase://HOST:8091 /backup-43 -m accu --single-node\n\n" \
+                "Note: A full backup task is always triggered for a new sink location\n" \
+                "   no matter what backup mode is specified.\n"
+        else:
+            self.usage = \
+                "DEPRECATED: Please use cbbackupmgr instead.\n" \
+                "%prog [options] source backup_dir\n\n" \
+                "Online backup of a couchbase cluster or server node.\n\n" \
+                "Examples:\n" \
+                "   Take a full backup of a cluster. \n" \
+                "       %prog -u Administrator -p password http://HOST:8091 /backup-42\n\n" \
+                "   Take a full backup for a single node. \n" \
+                "       %prog -u Administrator -p password couchbase://HOST:8091 /backup-43 --single-node\n" \
+
+
+    def opt_parser_options(self, p):
+        p.add_option("-b", "--bucket-source",
+                     action="store", type="string", default=None,
+                     help="""single bucket from source to backup""")
+        p.add_option("", "--single-node",
+                     action="store_true", default=False,
+                     help="""use a single server node from the source only,
+                             not all server nodes from the entire cluster;
+                             this single server node is defined by the source URL""")
+        if self._is_enterprise():
+            p.add_option("-m", "--mode",
+                         action="store", type="string", default="diff",
+                         help="backup mode: full, diff or accu [default:%default]")
+
+        else:
+            p.add_option("-m", "--mode",
+                         action="store", type="string", default="full",
+                         help=optparse.SUPPRESS_HELP)
+
+        Transfer.opt_parser_options_common(self, p)
+
+    def find_handlers(self, opts, source, sink):
+        return PumpingStation.find_handler(opts, source, SOURCES), \
+            PumpingStation.find_handler(opts, sink, SINKS)
+
+    def check_opts(self, opts):
+        mode = getattr(opts, "mode", None)
+        if mode:
+            if mode not in ["full", "diff", "accu"]:
+                return "\nError: option mode has to be 'full', 'diff' or 'accu'"
+        return None
+
+    def _is_enterprise(self):
+        try:
+            import pump_bfd2
+            return True
+        except ImportError:
+            return False
+
+
+class Restore(Transfer):
+    """Entry point for 2.0 cbrestore."""
+
+    # TODO: (1) Restore - opt_parse handle 1.8 backwards compatible args.
+
+    def __init__(self):
+        self.name = "cbrestore"
+        self.source_alias = "backup_dir"
+        self.sink_alias = "destination"
+        self.usage = \
+            "DEPRECATED: Please use cbbackupmgr instead.\n" \
+            "%prog [options] backup_dir destination\n\n" \
+            "Restores a single couchbase bucket.\n\n" \
+            "Please first create the destination / bucket before restoring.\n\n" \
+            "Examples:\n" \
+            "  %prog /backups/backup-42 http://HOST:8091 \\\n" \
+            "    --bucket-source=default --from-date=2014-01-20 --to-date=2014-03-31\n" \
+            "  %prog /backups/backup-42 couchbase://HOST:8091 \\\n" \
+            "    --bucket-source=default\n" \
+            "  %prog /backups/backup-42 memcached://HOST:11211 \\\n" \
+            "    --bucket-source=sessions --bucket-destination=sessions2"
+
+    def opt_parser_options(self, p):
+        p.add_option("-a", "--add",
+                     action="store_true", default=False,
+                     help="""use add instead of set to not overwrite existing
+                             items in the destination""")
+        p.add_option("-b", "--bucket-source",
+                     action="store", type="string", default=None,
+                     help="""single bucket from the backup_dir to restore;
+                             if the backup_dir only contains a single bucket,
+                             then that bucket will be automatically used""")
+        p.add_option("-B", "--bucket-destination",
+                     action="store", type="string", default=None,
+                     help="""when --bucket-source is specified, overrides the
+                             destination bucket name; this allows you to restore
+                             to a different bucket; defaults to the same as the
+                             bucket-source""")
+        p.add_option("", "--from-date",
+                     action="store", type="string", default=None,
+                     help="""restore data from the date specified as yyyy-mm-dd. By default,
+all data from the very beginning will be restored""")
+        p.add_option("", "--to-date",
+                     action="store", type="string", default=None,
+                     help="""restore data till the date specified as yyyy-mm-dd. By default,
+all data that are collected will be restored""")
+        Transfer.opt_parser_options_common(self, p)
+
+        # TODO: (1) cbrestore parameter --create-design-docs=y|n
+        # TODO: (1) cbrestore parameter -d DATA, --data=DATA
+        # TODO: (1) cbrestore parameter --validate-only
+        # TODO: (1) cbrestore parameter -H HOST, --host=HOST
+        # TODO: (1) cbrestore parameter -p PORT, --port=PORT
+        # TODO: (1) cbrestore parameter option to override expiration?
+
+    def find_handlers(self, opts, source, sink):
+        return pump_bfd.BFDSource, PumpingStation.find_handler(opts, sink, SINKS)
+
+
 # --------------------------------------------------
 
 def opt_parse_helper(opts):
@@ -288,13 +427,36 @@ def opt_extra_help(parser, extra_defaults):
 # --------------------------------------------------
 
 
-SOURCES = [pump_gen.GenSource,
+SOURCES = [pump_bfd.BFDSource,
+           pump_csv.CSVSource,
+           pump_gen.GenSource,
            pump_dcp.DCPStreamSource,
            pump.StdInSource]
 
-SINKS = [pump_mc.MCSink,
+SINKS = [pump_bfd.BFDSink,
+         pump_mc.MCSink,
          pump_cb.CBSink,
+         pump_csv.CSVSink,
          pump.StdOutSink]
+
+try:
+    import pump_sfd
+    SOURCES.append(pump_sfd.SFDSource)
+    SINKS.append(pump_sfd.SFDSink)
+except ImportError:
+    pass
+
+try:
+    import pump_json
+    SOURCES.append(pump_json.JSONSource)
+except ImportError:
+    pass
+
+try:
+    import pump_bfd2
+    SINKS.insert(0, pump_bfd2.BFDSinkEx)
+except ImportError:
+    pass
 
 # TODO: (1) pump_transfer - use QUIET commands
 # TODO: (1) pump_transfer - verify that nth replica got the msg

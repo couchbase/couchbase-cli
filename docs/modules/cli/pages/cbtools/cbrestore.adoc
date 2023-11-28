@@ -1,0 +1,301 @@
+= cbrestore(1)
+:description: Restores data backed up by cbbackup to a Couchbase cluster
+:page-aliases: cli:cbrestore-tool
+ifndef::doctype-manpage[:doctitle: cbrestore]
+
+ifdef::doctype-manpage[]
+== NAME
+
+cbbrestore -
+endif::[]
+(Deprecated) The `cbrestore` tool restores data backed up by `cbbackup` to a Couchbase cluster
+
+== SYNOPSIS
+[verse]
+_cbrestore_ [--username <user>] [--password <password>] [--ssl]
+            [--no-ssl-verify] [--cacert <path>] [--bucket-source <name>]
+            [--bucket-destination <bucket>] [--id <vbid>] [--key <regexp>]
+            [--from-date <start>] [--to-date <end>] [--add] [--dry-run]
+            [--verbose] [--silent] [--threads <num>] [--extra <options>]
+            [--help] backup_dir destination
+
+== DESCRIPTION
+
+DEPRECATION WARNING: This tool has been deprecated please use cbbackupmgr instead.
+
+This tool restores data that was backed up using `cbbackup` the command will
+take some options as well as the `backup_dir` which is the path to the folder
+created by `cbbackup` that has to be restored and the `destination` which is
+the target cluster. The target cluster can be the same cluster from which
+the data was backed up or a different one. The tool does not create buckets so
+the buckets must exist in the target cluster.
+
+
+*Conflict Resolution*
+
+By default, when restoring from a backup using `cbrestore`, Couchbase Server will
+perform conflict resolution on all documents to be restored. The conflict
+resolution behavior is the same as cross data center replication (XDCR), which
+is detailed in Availability. This is so that documents which have been updated
+after the backup are not incorrectly overwritten by the restore process.
+As a result, after running the restore process, some documents may not match
+the content of the backup file. In certain cases where a document has been
+recently deleted on the cluster, the document may not be restored at all due
+to this conflict resolution. To restore the contents of a backup while
+overwriting current documents with the same key, pass the extra parameter
+`conflict_resolve=0` as part of the `cbrestore` command. To ensure that only
+the documents contained in the backup exist in the bucket after performing the
+restore, flush the bucket prior to performing the restore.
+
+
+The tool can be found in the following directories:
+[cols="1,5"]
+|===
+| Operating system | Location
+
+| Linux
+| `/opt/couchbase/bin/cbrestore`
+
+| Windows
+| `C:\Program Files\Couchbase\Server\bin\cbrestore`
+
+| Mac OS X
+| `/Applications/Couchbase Server.app/Contents/Resources/couchbase-core/bin/cbrestore`
+|===
+
+== Options
+
+-u,--username <user>::
+  Specifies the username of the user executing the command. If you do not have
+  a user account with permission to execute the command then it will fail with
+  an unauthorized error.
+
+-p,--password <password>::
+  Specifies the password of the user executing the command. If you do not have
+  a user account with permission to execute the command then it will fail with
+  an unauthorized error.
+
+-s,--ssl::
+  (Deprecated) Specifies that the connection should use SSL verification. If
+  this flag is used then SSL will be used but the cluster certificate will not
+  be verified by the Certificate Authority. This flag is deprecated and not
+  recommended. If you wish to use SSL encryption it is recommended that you
+  specify the cluster host name using either _couchbases://_ or _https://_.
+  Each of these connection schemes will ensure that the connection is
+  encrypted with SSL. You may then use either --no-ssl-verify or --cacert in
+  order to customize how your SSL connection is set up.
+
+--no-ssl-verify::
+  Specifies that SSL verification should be used but that verifying that the
+  cluster certificate is valid should be skipped. Use of this flag is not
+  recommended for production environments because it does not protect the user
+  from a man-in-the-middle attack.
+
+--cacert <path>::
+  Specifies that the SSL connection should use the cacert provided when
+  connecting to the cluster. This argument takes the path the certificate
+  file as its value. This is the most secure way to connect to your cluster.
+
+-b,--bucket-source <bucket>::
+  Single named bucket from source cluster to transfer. If the backup directory
+  only contains a single bucket, then that bucket is automatically used.
+
+-B,--bucket-destination <bucket>::
+  Specify the bucket to restore the data to in the target cluster. If not
+  provided it will default to match the `--bucket-source`.
+
+-i,--id <vbid>::
+  Transfer only items that match a vBucket ID.
+
+-k,--key <regexp>::
+  Transfer only items with keys that match the given regular expression.
+
+--from-date <start>::
+  Restore data from the first specified backup in the format `yyyy-mm-dd`*. By
+  default the starting point will be the first backup.
+
+--to-date <end>::
+  Restore data until the date specified as `yyyy-mm-dd`*. By default, all data
+  collected is restored.
+
+-a,--add::
+  Used to not override the existing items in the destination.
+
+-n,--dry-run::
+  When specified the tool will not transfer data but only validate
+  parameters, files, connectivity and configuration.
+
+-v,--verbose::
+  Verbose logging; more -v's provide more verbosity. Max is -vvv
+
+--silent::
+  Reduces the logging verbosity to only include errors.
+
+-t,--threads <num>::
+  Number of concurrent worker threads performing transfer, defaults to 1.
+
+-x,--extra <options>::
+  Provide extra, uncommon configuration parameters. Comma-separated
+  key=val pairs
+
+== EXTRAS
+
+The following are extra, specialized command options with the `cbbackup -x` parameter.
+
+.cbbackup -x options
+[cols="100,223"]
+|===
+| -x options | Description
+
+| `backoff_cap=10`
+| Maximum backoff time during the rebalance period.
+
+| `batch_max_bytes=400000`
+| Transfer this # of bytes per batch.
+
+| `batch_max_size=1000`
+| Transfer this # of documents per batch.
+
+| `cbb_max_mb=100000`
+| Split backup file on destination cluster if it exceeds the MiB.
+
+| `conflict_resolve=1`
+| By default, disable conflict resolution.
+
+This option doesn't work in Couchbase Server versions 4.0 and 4.1 but will be
+re-implemented in version 4.1.1 and in subsequent versions.
+
+| `data_only=0`
+| For value 1, transfer only data from a backup file or cluster.
+
+| `design_doc_only=0`
+| For value 1, transfer only design documents from a backup file or cluster.
+Default: 0.
+
+Back up only design documents which include view and secondary index
+definitions from a cluster or bucket with the option `design_doc_only=1`.
+Restore only design documents with `cbrestore -x design_doc_only=1`.
+
+| `max_retry=10`
+| Max number of sequential retries if the transfer fails.
+
+| `mcd_compatible=1`
+| For value 0, display extended fields for stdout output.
+
+| `nmv_retry=1`
+| 0 or 1, where 1 retries transfer after a NOT_MY_VBUCKET message.
+Default: 1.
+
+| `recv_min_bytes=4096`
+| Amount of bytes for every TCP/IP batch transferred.
+
+| `rehash=0`
+| For value 1, rehash the partition id's of each item.
+This is required when transferring data between clusters with different number
+of partitions, such as when transferring data from an Mac OS X server to a
+non-Mac OS X cluster.
+
+| `report=5`
+| Number batches transferred before updating progress bar in console.
+
+| `report_full=2000`
+| Number batches transferred before emitting progress information in console.
+
+| `seqno=0`
+| By default, start from sequence number 0.
+
+| `try_xwm=1`
+| Transfer documents with metadata.
+Default: 1.
+Value of 0 is only used when transferring from 1.8.x to 1.8.x.
+
+| `uncompress=0`
+| For value 1, restore data in uncompressed mode.
+
+This option is unsupported.
+To create backups with compression, use `cbbackupmgr`, which is available for
+Couchbase Server Enterprise Edition only.
+See xref:backup-restore:enterprise-backup-restore.adoc[Backup].
+|===
+
+== EXAMPLES
+
+The most basic operation is to restore all the backed in our backup directory
+`~/backups`. The directory will have a format as the one bellow:
+
+    backups
+    └── 2019-06-25T141453Z
+        ├── 2019-06-25T141453Z-full
+        │   └── bucket-beer-sample
+        └── 2019-06-25T141553Z-diff
+            └── bucket-beer-sample
+
+To restore we use the command bellow. Note that `cbrestore` does not create
+the buckets in the target cluster so in this case our cluster already has
+a bucket named `beer-sample`.
+
+    $ cbrestore ~/backups http://10.112.193.101:8091 -u Administrator \
+      -p password
+
+When executed the command will restore all the data in the `~/backups`
+directory into the target cluster, if any of the buckets in the backup do not
+exist in the target cluster `cbrestore` will return an error. We can restore
+one bucket to a different bucket using the `-b` and `-B` flags as follows.
+
+    $ cbrestore ~/backups http://10.112.193.101:8091 -u Administrator \
+      -p password -b beer-sample -B new-bucket
+
+This will restore the backed up data for beer-sample into the bucket
+`new-bucket` in the target cluster. If the backup contains multiple buckets
+we can restore only one by using the `-b` flag.
+
+The restore also has the ability to select only a subset of the backups to be
+restored. If the backup directory contained 4 backup such as:
+
+    backups
+    └── 2019-06-25T141453Z
+        ├── 2019-06-25T141453Z-full
+        │   └── bucket-beer-sample
+        ├── 2019-06-26T141553Z-diff
+        │    └── bucket-beer-sample
+        ├── 2019-06-27T151453Z-full
+        │   └── bucket-beer-sample
+        └── 2019-06-28T161553Z-diff
+            └── bucket-beer-sample
+
+Then we can restore only the first two by using the following command:
+
+    $ cbrestore ~/backups http://10.112.193.101:8091 -u Administrator \
+      -p password -b beer-sample --from-date 2019-06-25 --to-date 2019-06-27
+
+The tool also gives the capability of filtering documents based on keys, giving
+a regular expression to the `-k` flag will result in only documents that have
+ keys that match the expression being restored. An example can be sen bellow
+
+     $ cbrestore ~/backups http://10.112.193.101:8091 -u Administrator \
+      -p password -b default --k '^user:.*'
+
+The command above will only restore documents with keys that have the prefix
+'user:'.
+
+== Rehash=1
+
+Couchbase Server on Mac OS X uses a different number of configured vBuckets than Linux and Windows installations.
+Because of this, restoring to Mac OS X from a Linux or Windows backup or restoring to Linux/Windows from a Mac OS X backup requires the `rehash=1` option.
+
+To backup the data (from any operating system), use the standard `cbbackup` tool and options.
+
+To restore the data to a cluster with a different operating system, connect to the 8091 port, and use the `rehash=1` option to rehash the information and distribute the data to the appropriate node within the cluster.
+`rehash=1` rehashes the partition IDs of each item.
+This is required when transferring data between clusters with a different number of partitions, such as when transferring data from a Mac OS X cluster to a non-Mac OS X cluster.
+
+----
+cbrestore /path/to/backup -u [username] -p [password]
+  -x rehash=1
+  http://[host]:8091
+  --bucket-source [my_bucket]
+  --bucket-destination [my_bucket]gen_docs couchbase-cli-backup-service.adoc 1
+
+----
+
+NOTE: If you backed up multiple buckets from Mac OS X and are restoring to either Linux or Windows, each bucket must be restored individually.
