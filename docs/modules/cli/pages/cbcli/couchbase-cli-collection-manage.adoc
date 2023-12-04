@@ -18,7 +18,7 @@ _couchbase-cli collection-manage_ [--cluster <url>] [--username <user>]
     [--create-scope <scope>] [--drop-scope <scope>] [--list-scopes]
     [--create-collection <collection>] [--edit-collection <collection>]
     [--drop-collection <collection>] [--list-collections [<scope_list>]]
-    [--max-ttl <seconds>] [--use-bucket-ttl] [--enable-history-retention <0|1>]
+    [--max-ttl <seconds>] [--no-expiry] [--enable-history-retention <0|1>]
 
 == DESCRIPTION
 
@@ -77,13 +77,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Specifies the maximum TTL (time-to-live) for all documents in the
   collection, in seconds. If enabled and a document is mutated with
   no TTL or a TTL greater than than the maximum, its TTL will be set
-  to the maximum TTL. Setting this option to 0 disables the use of
-  max-TTL, and the largest TTL that is allowed is 2147483647.
-  Cannot be used in conjunction with --use-bucket-ttl.
+  to the maximum TTL. Setting this option to 0 will make the collection use the
+  bucket TTL. The largest TTL that is allowed is 2147483647. Cannot be used in
+  conjunction with -no-expiry.
 
---use-bucket-ttl::
-  Sets the maximum TTL (time-to-live) for all documents in the collection to
-  the bucket's max TTL value, if it exists. Cannot be used in conjunction with
+--no-expiry::
+  Disables the maximum TTL (time-to-live) for all documents in the collection,
+  regardless of the bucket's maximum TTL. Cannot be used in conjunction with 
   --max-ttl.
 
 --enable-history-retention <0|1>::

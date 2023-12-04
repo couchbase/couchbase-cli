@@ -4860,8 +4860,8 @@ class CollectionManage(Subcommand):
                                                      "are provided it will print all collections")
         group.add_argument("--max-ttl", dest="max_ttl", metavar="<seconds>", type=int,
                            help="Set the maximum TTL the collection will accept")
-        group.add_argument("--use-bucket-ttl", dest="use_bucket_ttl", action="store_true", default=None,
-                           help="Set the maximum TTL to the bucket's TTL")
+        group.add_argument("--no-expiry", dest="no_expiry", action="store_true", default=None,
+                           help="Disable maximum TTL for this collection, so documents in it never expire")
         group.add_argument("--enable-history-retention", dest="enable_history", metavar="<0|1>", choices=["0", "1"],
                            help="Enable history retention (0 or 1)")
 
@@ -4878,30 +4878,30 @@ class CollectionManage(Subcommand):
         elif cmd_total != 1:
             _exit_if_errors([f'Only one of the following may be specified: {args}'])
 
-        if opts.max_ttl is not None and opts.use_bucket_ttl is not None:
-            _exit_if_errors(["Only one of --max-ttl and --use-bucket-ttl may be set"])
+        if opts.max_ttl is not None and opts.no_expiry is not None:
+            _exit_if_errors(["Only one of --max-ttl and --no-expiry may be set"])
 
-        if (opts.max_ttl is not None or opts.use_bucket_ttl is not None) and opts.create_collection is None and opts.edit_collection is None:
+        if (opts.max_ttl is not None or opts.no_expiry is not None) and opts.create_collection is None and opts.edit_collection is None:
             _exit_if_errors(
-                ["--max-ttl/--use-bucket-ttl can only be set with --create-collection or --edit-collection"])
+                ["--max-ttl/--no-expiry can only be set with --create-collection or --edit-collection"])
 
         if opts.enable_history is not None and opts.create_collection is None and opts.edit_collection is None:
             _exit_if_errors(["--enable-history-retention can only be set with --create-collection or "
                              "--edit-collection"])
 
         if opts.edit_collection is not None and (
-                opts.enable_history is None and opts.max_ttl is None and opts.use_bucket_ttl is None):
+                opts.enable_history is None and opts.max_ttl is None and opts.no_expiry is None):
             _exit_if_errors(
-                ["at least one of {--enable-history-retention, --max-ttl, --use-bucket-ttl} should be set with " +
+                ["at least one of {--enable-history-retention, --max-ttl, --no-expiry} should be set with " +
                  "--edit-collection"])
 
-        if opts.use_bucket_ttl is not None:
+        if opts.no_expiry is not None:
             version, errors = self.rest.min_version()
             _exit_if_errors(errors)
 
             if version < "7.6.0":
                 _exit_if_errors(
-                    ["--use-bucket-ttl can only be used on >= 7.6.0 clusters"])
+                    ["--no-expiry can only be used on >= 7.6.0 clusters"])
 
         if opts.edit_collection is not None and opts.max_ttl is not None:
             version, errors = self.rest.min_version()
@@ -4911,7 +4911,7 @@ class CollectionManage(Subcommand):
                 _exit_if_errors(
                     ["--max-ttl can only be used with --edit-collection on >= 7.6.0 clusters"])
 
-        if opts.use_bucket_ttl is not None:
+        if opts.no_expiry is not None:
             opts.max_ttl = -1
 
         if opts.create_scope:
