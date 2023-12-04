@@ -19,6 +19,8 @@ from argparse import SUPPRESS, Action, ArgumentError, ArgumentParser, HelpFormat
 from operator import itemgetter
 from typing import Any, Dict, List, Optional
 
+from packaging.version import parse as parse_version
+
 import couchbaseConstants
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
@@ -39,6 +41,9 @@ BUCKET_PRIORITY_LOW_STR = "low"
 
 BUCKET_TYPE_COUCHBASE = "membase"
 BUCKET_TYPE_MEMCACHED = "memcached"
+
+VERSION_UNKNOWN = "0.0.0"
+LATEST_VERSION = "7.6.0"
 
 CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
 CB_ETC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "etc", "couchbase"))
@@ -264,7 +269,8 @@ def process_services(services, enterprise, cluster_version="0.0.0"):
     if len(svc_set) > 1 and manager_only in svc_set:
         return None, ["Invalid service configuration. A manager only node cannot run any other services."]
 
-    if manager_only in svc_set and cluster_version != "0.0.0" and cluster_version < "7.6.0":
+    versionCheck = compare_versions(cluster_version, "7.6.0")
+    if manager_only in svc_set and versionCheck == -1:
         return None, ["The manager only service can only be used with >= 7.6.0 clusters"]
 
     if not enterprise:
@@ -842,7 +848,11 @@ class ClusterInit(Subcommand):
         min_version, errors = self.rest.node_version()
         _exit_if_errors(errors)
 
-        if not self.enterprise and opts.notifications == "0" and min_version >= "7.2.3":
+        versionCheck = compare_versions(min_version, "7.2.3")
+        if versionCheck == -1:
+            _exit_if_errors(["--cluster-init can only be used against >= 7.2.3 clusters"])
+
+        if not self.enterprise and opts.notifications == "0":
             _exit_if_errors(["--update-notifications can only be configured on Enterprise Edition"])
 
         _, errors = self.rest.cluster_init(
@@ -3270,7 +3280,8 @@ class SettingNotification(Subcommand):
         min_version, errors = self.rest.min_version()
         _exit_if_errors(errors)
 
-        if not self.enterprise and min_version >= "7.2.3":
+        versionCheck = compare_versions(min_version, "7.2.3")
+        if not self.enterprise and versionCheck != -1:
             _exit_if_errors(["Modifying notifications settings is an Enterprise Edition only feature"])
 
         enabled = None
@@ -4464,7 +4475,8 @@ class EventingFunctionSetup(Subcommand):
         min_version, errors = self.rest.min_version()
         _exit_if_errors(errors)
 
-        deprecated = min_version == "0.0.0" or min_version >= "6.6.2"
+        versionCheck = compare_versions(min_version, "6.6.2")
+        deprecated = versionCheck != -1
 
         if not (deprecated or opts.boundary):
             _exit_if_errors(["--boundary is needed to deploy a function"])
@@ -4491,7 +4503,8 @@ class EventingFunctionSetup(Subcommand):
         min_version, errors = self.rest.min_version()
         _exit_if_errors(errors)
 
-        if min_version != "0.0.0" and min_version < "7.1.0":
+        result = compare_versions(min_version, "7.1.0")
+        if result == -1:
             _exit_if_errors(["The --bucket/--scope flags can only be used against >= 7.1.0 clusters"])
 
     def _list(self, opts):
@@ -4899,7 +4912,8 @@ class CollectionManage(Subcommand):
             version, errors = self.rest.min_version()
             _exit_if_errors(errors)
 
-            if version < "7.6.0":
+            versionCheck = compare_versions(version, "7.6.0")
+            if versionCheck == -1:
                 _exit_if_errors(
                     ["--no-expiry can only be used on >= 7.6.0 clusters"])
 
@@ -5171,7 +5185,7 @@ class SettingAlternateAddress(Subcommand):
                             ports = ' '
                             if port in node['alternateAddresses']['external']['ports']:
                                 ports = f'{str(node["services"][port])}' \
-                                        f'/{str(node["alternateAddresses"]["external"]["ports"][port])}'
+                                    f'/{str(node["alternateAddresses"]["external"]["ports"][port])}'
                             print(f'{ports:{column_size}}', end='')
                         print()
                     else:
@@ -6392,3 +6406,19 @@ class BackupServicePlan:
     @staticmethod
     def get_description():
         return 'Manage backup service plans'
+
+
+def compare_versions(version1, version2: string) -> int:
+
+    if version1 == "" or version1 == VERSION_UNKNOWN:
+        version1 = LATEST_VERSION
+
+    if version2 == "" or version2 == VERSION_UNKNOWN:
+        version2 = LATEST_VERSION
+
+    if parse_version(version1) > parse_version(version2):
+        return 1
+    elif parse_version(version1) < parse_version(version2):
+        return -1
+    elif parse_version(version1) == parse_version(version2):
+        return 0

@@ -1,5 +1,6 @@
 import unittest
-from cbmgr import process_services
+
+from cbmgr import compare_versions, process_services
 
 
 class TestProcessServices(unittest.TestCase):
@@ -37,3 +38,49 @@ class TestProcessServices(unittest.TestCase):
         services, err = process_services("manager-only", True)
         self.assertEqual(err, None)
         self.assertEqual(services, "")
+
+
+class TestCompareVersions(unittest.TestCase):
+    def test_compare_versions(self):
+        tests = {
+            "V1GreaterThanV2": {
+                "version1": "10.0.0",
+                "version2": "6.5.2",
+                "expected": 1
+            },
+            "V1EqualV2": {
+                "version1": "7.0.0",
+                "version2": "7.0.0",
+                "expected": 0
+            },
+            "V1LessThanV2": {
+                "version1": "6.5.2",
+                "version2": "10.0.0",
+                "expected": -1
+            },
+            "V1IsUnknown": {
+                "version1": "",
+                "version2": "6.4.3",
+                "expected": 1
+            },
+            "V1IsZero": {
+                "version1": "0.0.0",
+                "version2": "6.4.3",
+                "expected": 1
+            },
+            "V2IsUnknown": {
+                "version1": "6.5.4",
+                "version2": "",
+                "expected": -1
+            },
+            "V2IsZero": {
+                "version1": "7.2.3",
+                "version2": "0.0.0",
+                "expected": -1
+            },
+        }
+
+        for name, test in tests.items():
+            with self.subTest(name):
+                result = compare_versions(test["version1"], test["version2"])
+                self.assertEqual(result, test["expected"])
