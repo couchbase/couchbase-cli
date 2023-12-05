@@ -3265,7 +3265,7 @@ class SettingNotification(Subcommand):
         group.add_argument("--enable-notifications", dest="enabled", metavar="<1|0>", required=True,
                            choices=["0", "1"], help="Enables/disable software notifications")
 
-    @rest_initialiser(version_check=True)
+    @rest_initialiser(version_check=True, enterprise_check=False)
     def execute(self, opts):
         min_version, errors = self.rest.min_version()
         _exit_if_errors(errors)

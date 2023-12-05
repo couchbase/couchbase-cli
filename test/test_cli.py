@@ -1474,6 +1474,11 @@ class TestSettingNotification(CommandTest):
         self.system_exit_run(self.command + ['--enable-notifications', '1'], self.server_args)
         self.assertIn("Modifying notifications settings is an Enterprise Edition only feature", self.str_output)
 
+    def test_enable_notification_for_EE(self):
+        self.server_args['enterprise'] = True
+        self.server_args['pools_default'] = {'nodes': [{'version': '7.6.0'}]}
+        self.no_error_run(self.command + ['--enable-notifications', '1'], self.server_args)
+
 
 class TestSettingPasswordPolicy(CommandTest):
     def setUp(self):
