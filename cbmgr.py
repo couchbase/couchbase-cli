@@ -19,8 +19,6 @@ from argparse import SUPPRESS, Action, ArgumentError, ArgumentParser, HelpFormat
 from operator import itemgetter
 from typing import Any, Dict, List, Optional
 
-from packaging.version import parse as parse_version
-
 import couchbaseConstants
 from cluster_manager import ClusterManager
 from pbar import TopologyProgressBar
@@ -6421,9 +6419,15 @@ def compare_versions(version1, version2: string) -> int:
     if version2 == "" or version2 == VERSION_UNKNOWN:
         version2 = LATEST_VERSION
 
-    if parse_version(version1) > parse_version(version2):
-        return 1
-    elif parse_version(version1) < parse_version(version2):
-        return -1
-    elif parse_version(version1) == parse_version(version2):
+    # Split the input strings into lists of integers
+    v1_numbers = list(map(int, version1.split('.')))
+    v2_numbers = list(map(int, version2.split('.')))
+
+    # Compare each segment of the version numbers
+    for v1, v2 in zip(v1_numbers, v2_numbers):
+        if v1 > v2:
+            return 1
+        elif v1 < v2:
+            return -1
+    else:
         return 0
