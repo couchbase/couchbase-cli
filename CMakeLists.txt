@@ -13,11 +13,7 @@ PyWrapper (BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}"
     SCRIPTS
     couchbase-cli
     cblogredaction
-    cbrestorewrapper
-    cbbackup
-    cbbackupwrapper
     cbrecovery
-    cbrestore
     cbtransfer
     cbworkloadgen)
 

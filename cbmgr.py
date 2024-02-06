@@ -3278,6 +3278,11 @@ class SettingNotification(Subcommand):
     @rest_initialiser(version_check=True, enterprise_check=False)
     def execute(self, opts):
         min_version, errors = self.rest.min_version()
+        if errors is not None:
+            # We fallback to node_version as min_version checks the cluster version and would fail
+            # if the cluster is not initialised. node_version checks the version of the node instead.
+            # See MB-60592 for more information.
+            min_version, errors = self.rest.node_version()
         _exit_if_errors(errors)
 
         versionCheck = compare_versions(min_version, "7.2.3")
