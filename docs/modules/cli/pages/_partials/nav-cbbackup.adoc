@@ -1,1 +1,0 @@
-* xref:cli:cbbackup.adoc[cbbackup]
