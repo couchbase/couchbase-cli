@@ -2322,6 +2322,9 @@ class ServerEshell(Subcommand):
                 # erl script fails in OSX as it is unable to find COUCHBASE_TOP
                 env["COUCHBASE_TOP"] = opts.base_path
 
+            eval_str = 'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))), ' \
+                       f'shell:start_interactive({{remote, "{node}"}}).'
+
             args = [
                 path,
                 '-name',
@@ -2330,9 +2333,8 @@ class ServerEshell(Subcommand):
                 'nocookie',
                 '-hidden',
                 '-eval',
-                'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).',
-                '-remsh',
-                node,
+                eval_str,
+                '-noshell',
                 '-proto_dist',
                 'cb',
                 '-epmd_module',
