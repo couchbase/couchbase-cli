@@ -2231,6 +2231,9 @@ class ServerEshell(Subcommand):
             env = os.environ.copy()
             env["CB_COOKIE"] = cookie
 
+            eval_str = 'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))), ' \
+                       f'shell:start_interactive({{remote, "{node}"}}).'
+
             args = [
                 path,
                 '-name',
@@ -2239,9 +2242,8 @@ class ServerEshell(Subcommand):
                 'nocookie',
                 '-hidden',
                 '-eval',
-                'erlang:set_cookie(node(), list_to_atom(os:getenv("CB_COOKIE"))).',
-                '-remsh',
-                node,
+                eval_str,
+                '-noshell',
                 '-proto_dist',
                 'cb',
                 '-epmd_module',
