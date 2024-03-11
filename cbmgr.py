@@ -2336,6 +2336,10 @@ class SettingAlert(Subcommand):
                            action="store_true", help="Alert when system memory usage exceeds threshold")
         group.add_argument("--alert-bucket-history-size", dest="alert_bucket_history_size",
                            action="store_true", help="Alert when history size for a bucket reaches 90%%")
+        group.add_argument("--alert-indexer-low-resident-percentage", dest="alert_indexer_low_resident_percentage",
+                           action="store_true", help="Alert when approaching indexer low resident percentage")
+        group.add_argument("--alert-memcached-connections", dest="alert_memcached_connections",
+                           action="store_true", help="Alert when the memcached connection threshold is exceeded")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -2386,6 +2390,10 @@ class SettingAlert(Subcommand):
             alerts.append('memory_threshold')
         if opts.alert_bucket_history_size:
             alerts.append('history_size_warning')
+        if opts.alert_indexer_low_resident_percentage:
+            alerts.append('indexer_low_resident_percentage')
+        if opts.alert_memcached_connections:
+            alerts.append('memcached_connections')
 
         enabled = "true"
         if opts.enabled == "0":

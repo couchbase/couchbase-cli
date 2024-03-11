@@ -1113,7 +1113,8 @@ class TestSettingAlert(CommandTest):
                             '--alert-meta-overhead', '--alert-meta-oom', '--alert-write-failed',
                             '--alert-audit-msg-dropped', '--alert-indexer-max-ram', '--alert-timestamp-drift-exceeded',
                             '--alert-communication-issue', '--alert-node-time', '--alert-disk-analyzer',
-                            '--alert-bucket-history-size']
+                            '--alert-bucket-history-size', '--alert-indexer-low-resident-percentage',
+                            '--alert-memcached-connections']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestSettingAlert, self).setUp()
 
