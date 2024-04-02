@@ -12,7 +12,7 @@
  import jenkins.model.CauseOfInterruption.UserInterruption
 
 pipeline {
-    agent { label "linux&&master" }
+    agent { label "linux&&trinity" }
 
     environment {
         PROJECTPATH="${WORKSPACE}/couchbase-cli"
@@ -34,7 +34,7 @@ pipeline {
                             gerritProjects: [
                                 [
                                     compareType: "PLAIN", disableStrictForbiddenFileVerification: false, pattern: "couchbase-cli",
-                                    branches: [[ compareType: "PLAIN", pattern: "master" ]]
+                                    branches: [[ compareType: "PLAIN", pattern: "trinity" ]]
                                 ],
                              ],
                             triggerOnEvents: [
