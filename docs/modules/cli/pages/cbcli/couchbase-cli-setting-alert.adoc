@@ -25,6 +25,7 @@ _couchbase-cli setting-alert_ [--cluster <url>] [--username <user>] [--password 
     [--alert-audit-msg-dropped] [--alert-indexer-max-ram]
     [--alert-timestamp-drift-exceeded] [--alert-node-time] [--alert-disk-analyzer]
     [--alert-memory-threshold] [--alert-bucket-history-size]
+    [--alert-indexer-low-resident-percentage] [--alert-memcached-connections]
 
 == DESCRIPTION
 
@@ -145,6 +146,14 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --alert-bucket-history-size::
   Specifies that an email alert should be sent when the size of history for a
   bucket reaches 90% of the maximum history size.
+
+--alert-indexer-low-resident-percentage::
+  Specifies that an email alert should be sent when approaching the indexer low
+  resident percentage.
+
+--alert-memcached-connections::
+  Specifies that an email alert should be sent when the memcached connection
+  threshold is exceeded.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

@@ -17,7 +17,7 @@ _couchbase-cli setting-ldap_ [--cluster <url>] [--username <user>] [--password <
     [--authorization-enabled <1|0>] [--hosts <host_list>] [--port <port>]
     [--encryption <tls|startTLS|none>] [--server-cert-validation <1|0>]
     [--ldap-cacert <path>] [--request-timeout <ms>]
-    [--user-dn-query <query> | --user-dn-template <template>]
+    [--user-dn-query <query> | --user-dn-template <template> | --user-dn-advanced <path>]
     [--max-parallel <max>] [--max-cache-size <size>]
     [--cache-value-lifetime <ms>] [--bind-dn <dn>] [--bind-password <password>]
     [--ldap-client-cert <path>] [--ldap-client-key <path>]
@@ -60,12 +60,34 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The timeout for LDAP requests in milliseconds.
 
 --user-dn-query <query>::
-  LDAP query to get user's DN. Must contains at least one instance of %u
+  LDAP query to get user's DN. Must contain at least one instance of %u
   Example: ou=Users,dc=example??one?(uid=%u)
 
 --user-dn-template <template>::
   Template to construct user's DN. Must contain at least one instance of %u
   Example: uid=%u,ou=Users,dc=example
+
+--user-dn-advanced <path>::
+  Path to a JSON file which contains an ordered array of mappings. Each object
+  must contain a regular expression match and either a substitution or
+  ldapQuery template used for transforming the incoming username. Example JSON
+  file:
+
+[source,json]
+----
+[
+    {
+        "match": "([^@]+)@(.+)\\.com",
+        "substitution": "cn={0},ou={1},dc=example,dc=com"
+    },
+    {
+        "match": "(.*)",
+        "ldapQuery": "ou=people,dc=example,dc=com??one?(uid={0})"
+    }
+]
+----
+
+See xref:manage:manage-security/configure-ldap.adoc#ldap-advanced-mapping[Advanced Query] under xref:manage:manage-security/configure-ldap.adoc#enable-ldap-user-authentication[User Authentication Enablement] for more information.
 
 --max-parallel <max>::
   Maximum number of parallel connections that can be established with LDAP
