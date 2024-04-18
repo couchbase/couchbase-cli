@@ -69,8 +69,8 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --user-dn-advanced <path>::
   Path to a JSON file which contains an ordered array of mappings. Each object
-  must contain a regular expression match and either a substitution or
-  ldapQuery template used for transforming the incoming username. Example JSON
+  must contain a regular expression match and either a substitution or an
+  `ldapQuery` template used for transforming the incoming username. Example JSON
   file:
 
 [source,json]
