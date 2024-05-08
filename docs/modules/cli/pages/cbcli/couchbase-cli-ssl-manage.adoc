@@ -16,7 +16,7 @@ _couchbase-cli ssl-manage_ [--cluster <url>] [--username <user>] [--password <pa
   [--client-cert <path>] [--client-cert-password <password>] [--client-key <path]
   [--client-key-password <password>]
   [--cluster-cert-info] [ --cluster-ca-info] [--cluster-ca-load] [--cluster-ca-delete <id>]
-  [ --upload-cluster-ca <path>] [--node-cert-info] [--regenerate-cert <path>]
+  [ --upload-cluster-ca <path> `(deprecated)`] [--node-cert-info] [--regenerate-cert <path>]
   [--set-node-certificate] [--pkey-passphrase-settings <path>] [--set-client-auth <path>]
   [--client-auth]
 
@@ -108,6 +108,11 @@ one below.
 --upload-cluster-ca <file>::
   Uploads the certificate specified to the cluster. The uploaded certificate
   will replace the cluster certificate in this cluster.
++
+[WARNING]
+====
+For security reasons, this method has been deprecated in Couchbase Server 7.1 and later.
+====
 
 --set-client-auth <path>::
   Specifies a path to the client auth configuration file. This file should
