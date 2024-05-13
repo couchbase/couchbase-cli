@@ -783,7 +783,8 @@ class ClusterManager(object):
             ports_to_check.append(node_port)
 
             for port in ports_to_check:
-                if f'{node_hostname}:{port}' in nodes_to_match or f'{otp_hostname}:{port}' in nodes_to_match:
+                if f'[{node_hostname}]:{port}' in nodes_to_match or f'[{otp_hostname}]:{port}' in nodes_to_match or \
+                        f'{node_hostname}:{port}' in nodes_to_match or f'{otp_hostname}:{port}' in nodes_to_match:
                     matched_nodes_otp_names.append(otp_name)
 
         return matched_nodes_otp_names, None

@@ -153,6 +153,21 @@ class ClusterManagerTest(unittest.TestCase):
                 "errors": None,
                 "matched_nodes": ['ns_1@10.200.300.400']
             },
+            "NodeInHostnameIPv6": {
+                "nodes": [
+                    {
+                        'otpNode': 'ns_1@::1',
+                        'hostname': '[::1]:8091',
+                        'ports':
+                            {
+                                'httpsMgmt': 18091
+                            }
+                    },
+                ],
+                "nodes_to_match": ['[::1]:8091'],
+                "errors": None,
+                "matched_nodes": ['ns_1@::1']
+            },
             "NodeInHostnameSSL": {
                 "nodes": [
                     {
