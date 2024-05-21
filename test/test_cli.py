@@ -1145,8 +1145,8 @@ class TestSettingAlert(CommandTest):
                            '_nodes_down%2Cauto_failover_cluster_too_small%2Cauto_failover_disabled%2Cip%2Cdisk%2' +
                            'Coverhead%2Cep_oom_errors%2Cep_item_commit_failed%2Caudit_dropped_events%2Cindexer_ram_' +
                            'max_usage%2Cep_clock_cas_drift_threshold_exceeded%2Ccommunication_issue' +
-                           '%2Ctime_out_of_sync%2Cdisk_usage_analyzer_stuck%2Chistory_size_warning', 'enabled=false',
-                           'emailEncrypt=false']
+                           '%2Ctime_out_of_sync%2Cdisk_usage_analyzer_stuck%2Chistory_size_warning%2Cindexer_low_' +
+                           'resident_percentage%2Cmemcached_connections', 'enabled=false', 'emailEncrypt=false']
 
         self.assertIn('POST:/settings/alerts', self.server.trace)
         self.rest_parameter_match(expected_params)
@@ -1157,9 +1157,10 @@ class TestSettingAlert(CommandTest):
                            '_nodes_down%2Cauto_failover_cluster_too_small%2Cauto_failover_disabled%2Cip%2Cdisk%2' +
                            'Coverhead%2Cep_oom_errors%2Cep_item_commit_failed%2Caudit_dropped_events%2Cindexer_ram_' +
                            'max_usage%2Cep_clock_cas_drift_threshold_exceeded%2Ccommunication_issue' +
-                           '%2Ctime_out_of_sync%2Cdisk_usage_analyzer_stuck%2Chistory_size_warning', 'enabled=true',
-                           'emailEncrypt=true', 'sender=email2', 'recipients=email1', 'emailUser=emailuser',
-                           'emailPass=emailpwd', 'emailHost=emailhost', 'emailPort=3000']
+                           '%2Ctime_out_of_sync%2Cdisk_usage_analyzer_stuck%2Chistory_size_warning%2Cindexer_low_' +
+                           'resident_percentage%2Cmemcached_connections', 'enabled=true', 'emailEncrypt=true',
+                           'sender=email2', 'recipients=email1', 'emailUser=emailuser', 'emailPass=emailpwd',
+                           'emailHost=emailhost', 'emailPort=3000']
 
         self.assertIn('POST:/settings/alerts', self.server.trace)
         self.rest_parameter_match(expected_params)
