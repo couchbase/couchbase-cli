@@ -1,1 +1,1 @@
-VERSION = "${PRODUCT_VERSION}"
+VERSION = "${_cli_version}"
