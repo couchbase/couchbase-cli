@@ -2074,10 +2074,13 @@ class ResetAdminPassword(LocalSubcommand):
                            help="Generates a random administrator password")
         group.add_argument("-P", "--port", metavar="<port>", default="8091",
                            help="The REST API port, defaults to 8091")
+        group.add_argument("-I", "--ip", metavar="<ip>", default="localhost",
+                           help="The IP address of the cluster, defaults to localhost")
 
     def execute(self, opts):
         token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
-        rest = ClusterManager("http://127.0.0.1:" + opts.port, "@localtoken", token)
+        ip = opts.ip if ":" not in opts.ip else "[" + opts.ip + "]"
+        rest = ClusterManager("http://" + ip + ":" + opts.port, "@localtoken", token)
         check_cluster_initialized(rest)
         check_versions(rest)
 

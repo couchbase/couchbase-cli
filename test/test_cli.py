@@ -16,6 +16,10 @@ from mock_server import MockRESTServer, generate_self_signed_cert
 from cbmgr import AnalyticsLinkSetup, CollectionManage, CouchbaseCLI, validate_credential_flags
 from couchbaseConstants import parse_host_port
 
+import unittest
+from unittest.mock import patch, MagicMock
+from cbmgr import ResetAdminPassword
+
 host = '127.0.0.1'
 port = 6789
 cluster_connect_args = ['-c', host + ":" + str(port), '-u', 'Administrator', '-p', 'asdasd']
@@ -1619,7 +1623,60 @@ class TestSettingXdcr(CommandTest):
 
 # TODO: TestSettingMasterPassword
 # TODO: TestRestCipherSuites
-# TODO: TestResetAdminPassword
+
+class TestResetAdminPassword(unittest.TestCase):
+    @patch('cbmgr._exit_on_file_read_failure')
+    @patch('cbmgr.ClusterManager')
+    @patch('cbmgr._exit_if_errors')
+    @patch('cbmgr._success')
+    def test_execute(self, mock_success, mock_exit_errors, mock_ClusterManager, mock_exit_on_file_read_failure):
+        # Arrange
+        mock_exit_on_file_read_failure.return_value = 'mock_token\n'
+        mock_ClusterManager.return_value = MagicMock()
+        mock_ClusterManager.return_value.is_cluster_initialized.return_value = True, []
+        mock_ClusterManager.return_value.pools.return_value = {'implementationVersion': '1.0.0'}, []
+        mock_ClusterManager.return_value.regenerate_admin_password.return_value = {"password": "random_password"}, []
+        mock_ClusterManager.return_value.set_admin_password.return_value = None, []
+
+        # Test case 1: regenerate
+        opts = MagicMock()
+        opts.config_path = '/path/to/config'
+        opts.ip = 'localhost'
+        opts.port = '8091'
+        opts.new_password = None
+        opts.regenerate = True
+        ResetAdminPassword().execute(opts)
+        mock_ClusterManager.return_value.regenerate_admin_password.assert_called_once()
+
+        # Test case 2: new password
+        opts.new_password = 'new_password'
+        opts.regenerate = False
+        ResetAdminPassword().execute(opts)
+        mock_ClusterManager.return_value.set_admin_password.assert_called_once_with('new_password')
+
+        # Test case 3: regenerate with -I and -P
+        opts.ip = '192.168.1.1'
+        opts.port = '9000'
+        opts.new_password = None
+        opts.regenerate = True
+        ResetAdminPassword().execute(opts)
+        mock_ClusterManager.assert_called_with('http://192.168.1.1:9000', '@localtoken', 'mock_token')
+        mock_ClusterManager.return_value.regenerate_admin_password.assert_called()
+
+        # Test case 4: both new_password and regenerate specified
+        opts.new_password = 'new_password'
+        opts.regenerate = True
+        ResetAdminPassword().execute(opts)
+        mock_exit_errors.assert_called_with(["Cannot specify both --new-password and --regenerate at the same time"])
+
+        # Test case 5: neither new_password nor regenerate specified
+        opts.new_password = None
+        opts.regenerate = False
+        ResetAdminPassword().execute(opts)
+        mock_exit_errors.assert_called_with(["No parameters specified"])
+
+        # Check the number of calls to _exit_if_errors
+        self.assertEqual(mock_exit_errors.call_count, 5)
 
 
 class TestSslManage(CommandTest):
