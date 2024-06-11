@@ -603,5 +603,6 @@ endpoints = [
     (r'/api/v1/plan$', {'GET': get_by_path}),
     (r'/api/v1/plan/\w+$', {'GET': get_by_path, 'DELETE': do_nothing, 'POST': do_nothing}),
     (r'/api/v1/cluster/self/repository/(:?active|archived|imported)/\w+(:?\?remove_repository=\w+)?$',
-     {'GET': get_by_path, 'POST': do_nothing, 'DELETE': do_nothing})
+     {'GET': get_by_path, 'POST': do_nothing, 'DELETE': do_nothing}),
+    (r'/api/v1/nodesThreadsMap', {'GET': get_by_path, 'POST': do_nothing, 'PATCH': do_nothing}),
 ]

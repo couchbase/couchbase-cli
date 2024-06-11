@@ -213,8 +213,11 @@ class CommandTest(unittest.TestCase):
     def setUp(self):
         self.cli = CouchbaseCLI()
         self.stdout = sys.stdout
+        self.stderr = sys.stderr
         self.sink = StringIO()
+        self.sink_err = StringIO()
         self.str_output = ''
+        self.str_error = ''
         self.server = MockRESTServer(host, port)
 
     def tearDown(self):
@@ -229,6 +232,14 @@ class CommandTest(unittest.TestCase):
         sys.stdout = self.stdout
         if self.str_output == '':
             self.str_output = str(self.sink.getvalue())
+
+    def capture_error(self):
+        sys.stderr = self.sink_err
+
+    def stop_capture_error(self):
+        sys.stderr = self.stderr
+        if self.str_error == '':
+            self.str_error = str(self.sink_err.getvalue())
 
     def no_error_run(self, cmd_args, server_args):
         self.server.set_args(server_args)
@@ -246,9 +257,11 @@ class CommandTest(unittest.TestCase):
         self.server.run()
 
         self.capture()
+        self.capture_error()
         with self.assertRaises(SystemExit):
             self.cli.execute(self.cli.parse(cmd_args))
         self.stop_capture()
+        self.stop_capture_error()
 
     def rest_parameter_match(self, expected_params, length_match=True):
         if length_match:
@@ -4236,6 +4249,101 @@ class TestBackupServicePlan(CommandTest):
         self.assertIn('POST:/api/v1/plan/prof', self.server.trace)
         self.rest_parameter_match([json.dumps({'description': 'some description', 'services': ['data', 'eventing'],
                                                'tasks': [task]}, sort_keys=True)])
+
+
+class TestBucketServiceNodeThreadsMap(CommandTest):
+    """Test the bucket-service node-threads-map subcommand and all its actions
+    """
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['node-threads']
+        super(TestBucketServiceNodeThreadsMap, self).setUp()
+
+    def test_node_threads_empty(self):
+        """Test that if the are no node threads map a sensible message is returned"""
+        self.server_args['api/v1/nodesThreadsMap'] = {}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('GET:/api/v1/nodesThreadsMap', self.server.trace)
+        self.assertIn('No node threads map found', self.str_output)
+
+    def test_node_threads_get(self):
+        """Test that the node threads get calls the correct endpoint and prints the expected information"""
+        self.server_args['/api/v1/nodesThreadsMap'] = {
+            '0e88b40a2e476cf8a95565c480465f71': 4,
+            '11d925ec77c0f577bc38c41d315c4b07': 3
+        }
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('GET:/api/v1/nodesThreadsMap', self.server.trace)
+        self.assertIn('4', self.str_output)
+        self.assertIn('0e88b40a2e476cf8a95565c480465f71', self.str_output)
+        self.assertIn('3', self.str_output)
+        self.assertIn('11d925ec77c0f577bc38c41d315c4b07', self.str_output)
+
+    def test_node_threads_post(self):
+        """Test that the node threads post calls the correct endpoint and prints the expected information"""
+        self.no_error_run(
+            self.command + ['--set', '--node', '0e88b40a2e476cf8a95565c480465f71', '--threads', '4'],
+            self.server_args)
+        self.assertIn('POST:/api/v1/nodesThreadsMap', self.server.trace)
+        self.rest_parameter_match(
+            [json.dumps({"nodes_threads_map": {'0e88b40a2e476cf8a95565c480465f71': 4}}, sort_keys=True)])
+
+    def test_node_threads_post_invalid_threads(self):
+        """Test that the node threads post fails if the threads are not an integer"""
+        self.system_exit_run(
+            self.command + ['--set', '--node', '0e88b40a2e476cf8a95565c480465f71', '--threads', 'four'],
+            self.server_args)
+        self.assertIn('ERROR: argument --threads: invalid int value', self.str_error)
+
+    def test_node_threads_post_invalid_flags(self):
+        """Test that the node threads post fails if the threads is not set"""
+        self.system_exit_run(self.command + ['--set', '--node', '0e88b40a2e476cf8a95565c480465f71'], self.server_args)
+        self.assertIn('--node and --threads are required', self.str_output)
+
+    def test_node_threads_post_invalid_number_of_flags(self):
+        """Test that the node threads post fails if there is a different number of --node and --threads flags"""
+        self.system_exit_run(self.command + ['--set',
+                                             '--node',
+                                             '0e88b40a2e476cf8a95565c480465f71',
+                                             '--threads',
+                                             '4',
+                                             '--threads',
+                                             '5'],
+                             self.server_args)
+        self.assertIn('--node and --threads must have the same number of arguments', self.str_output)
+
+    def test_node_threads_patch_invalid_flags(self):
+        """Test that the node threads patch fails if the threads is not set"""
+        self.system_exit_run(self.command + ['--set', '--node', '0e88b40a2e476cf8a95565c480465f71'], self.server_args)
+        self.assertIn('--node and --threads are required', self.str_output)
+
+    def test_node_threads_patch_invalid_number_of_flags(self):
+        """Test that the node threads patch fails if there is a different number of --node and --threads flags"""
+        self.system_exit_run(self.command + ['--add',
+                                             '--node',
+                                             '0e88b40a2e476cf8a95565c480465f71',
+                                             '--threads',
+                                             '4',
+                                             '--threads',
+                                             '5'],
+                             self.server_args)
+        self.assertIn('--node and --threads must have the same number of arguments', self.str_output)
+
+    def test_node_threads_patch(self):
+        """Test that the node threads patch calls the correct endpoint and prints the expected information"""
+        self.no_error_run(
+            self.command + ['--add', '--node', '0e88b40a2e476cf8a95565c480465f71', '--threads', '4'],
+            self.server_args)
+        self.assertIn('PATCH:/api/v1/nodesThreadsMap', self.server.trace)
+        self.rest_parameter_match(
+            [json.dumps({"nodes_threads_map": {'0e88b40a2e476cf8a95565c480465f71': 4}}, sort_keys=True)])
 
 
 class TestSettingQuery(CommandTest):
