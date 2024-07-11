@@ -62,8 +62,8 @@ class RecoveryTest(unittest.TestCase):
                 }),
                 "status": 400,
                 "response": {"code": "not_needed"},
-                "error": "error: unable to access REST API: " \
-                "127.0.0.1:6789/pools/default/buckets/bucket/controller/startRecovery; please check source URL, " \
+                "error": "error: unable to access REST API: "
+                "127.0.0.1:6789/pools/default/buckets/bucket/controller/startRecovery; please check source URL, "
                 "server status, username (-u) and password (-p); response: 400; reason: start_recovery",
                 "cmd": "startRecovery",
                 "bad_request_code": "not_needed",
