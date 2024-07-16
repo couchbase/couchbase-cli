@@ -2082,10 +2082,13 @@ class ResetAdminPassword(LocalSubcommand):
                            help="Generates a random administrator password")
         group.add_argument("-P", "--port", metavar="<port>", default="8091",
                            help="The REST API port, defaults to 8091")
+        group.add_argument("-I", "--ip", metavar="<ip>", default="localhost",
+                           help="The IP address of the cluster, defaults to localhost")
 
     def execute(self, opts):
         token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
-        rest = ClusterManager("http://127.0.0.1:" + opts.port, "@localtoken", token)
+        ip = opts.ip if ":" not in opts.ip else "[" + opts.ip + "]"
+        rest = ClusterManager("http://" + ip + ":" + opts.port, "@localtoken", token)
         check_cluster_initialized(rest)
         check_versions(rest)
 
@@ -5744,10 +5747,11 @@ class BackupService(Subcommand):
         self.settings_cmd = BackupServiceSettings(self.subparser)
         self.repository_cmd = BackupServiceRepository(self.subparser)
         self.plan_cmd = BackupServicePlan(self.subparser)
+        self.nodeThreads_cmd = BackupServiceNodeThreadsMap(self.subparser)
 
     def execute(self, opts):
-        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'repository', 'plan']:
-            _exit_if_errors(['<subcommand> must be one off [settings, repository, plan]'])
+        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'repository', 'plan', 'node-threads']:
+            _exit_if_errors(['<subcommand> must be one of [settings, repository, plan, node-threads]'])
 
         if opts.sub_cmd == 'settings':
             self.settings_cmd.execute(opts)
@@ -5755,6 +5759,8 @@ class BackupService(Subcommand):
             self.repository_cmd.execute(opts)
         elif opts.sub_cmd == 'plan':
             self.plan_cmd.execute(opts)
+        elif opts.sub_cmd == 'node-threads':
+            self.nodeThreads_cmd.execute(opts)
 
     @staticmethod
     def get_man_page_name():
@@ -6421,8 +6427,111 @@ class BackupServicePlan:
         return 'Manage backup service plans'
 
 
-def compare_versions(version1, version2: string) -> int:
+class BackupServiceNodeThreadsMap:
+    """This command manages backup services node threads map.
 
+    Things this command can do is:
+    - Get node threads map
+    - Post a new node threads map
+    - Patch an existing node threads map
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        node_threads_parser = subparser.add_parser('node-threads', help='Manage backup node threads map',
+                                                   add_help=False, allow_abbrev=False)
+
+        # action flags are mutually exclusive
+        action_group = node_threads_parser.add_mutually_exclusive_group(
+            required=True)
+        action_group.add_argument(
+            '--get', action='store_true', help='Get the node threads map')
+        action_group.add_argument(
+            '--set', action='store_true', help='Set a new node threads map')
+        action_group.add_argument(
+            '--add', action='store_true', help='Add an existing node threads map')
+        action_group.add_argument('-h', '--help', action=CBHelpAction, klass=self,
+                                  help="Prints the short or long help message")
+
+        options = node_threads_parser.add_argument_group(
+            'Node threads map options')
+        options.add_argument('--node', action='append', help='Node UUID')
+        options.add_argument('--threads', action='append', type=int, help='Number of threads')
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup node threads map command"""
+        if opts.get:
+            self.get_node_threads_map()
+        elif opts.set:
+            self.post_node_threads_map(opts.node, opts.threads)
+        elif opts.add:
+            self.patch_node_threads_map(opts.node, opts.threads)
+
+    def get_node_threads_map(self):
+        """Get the node threads map"""
+        node_threads_map, errors = self.rest.get_backup_node_threads_map()
+
+        if errors:
+            _exit_if_errors(errors)
+        if not node_threads_map:
+            print('No node threads map found')
+            return
+        self.human_print_node_threads_map(node_threads_map)
+
+    def post_node_threads_map(self, nodes: List[str], threads: List[int]):
+        """Post a new node threads map"""
+        if not nodes or not threads:
+            _exit_if_errors(['--node and --threads are required'])
+
+        if len(nodes) != len(threads):
+            _exit_if_errors(['--node and --threads must have the same number of arguments'])
+
+        threads_map = dict(zip(nodes, threads))
+        data = {"nodes_threads_map": threads_map}
+
+        _, errors = self.rest.post_backup_node_threads_map(data)
+        _exit_if_errors(errors)
+        _success('Set node threads map')
+
+    def patch_node_threads_map(self, nodes: List[str], threads: List[int]):
+        """Patch an existing node threads map"""
+        if not nodes or not threads:
+            _exit_if_errors(['--node and --threads are required'])
+
+        if len(nodes) != len(threads):
+            _exit_if_errors(['--node and --threads must have the same number of arguments'])
+
+        threads_map = dict(zip(nodes, threads))
+        data = {"nodes_threads_map": threads_map}
+
+        _, errors = self.rest.patch_backup_node_threads_map(data)
+        _exit_if_errors(errors)
+        _success('Updated node threads map')
+
+    @staticmethod
+    def human_print_node_threads_map(node_threads_map: Dict[str, any]):
+        """Print the node threads map in a human friendly way"""
+        node_pad = 5
+        threads_pad = 7
+        for node, threads in node_threads_map.items():
+            if len(node) > node_pad:
+                node_pad = len(node)
+            threads_str = json.dumps(threads)
+            if len(threads_str) > threads_pad:
+                threads_pad = len(threads_str)
+
+        node_pad += 1
+        threads_pad += 1
+        header = f'{"Node UUID":<{node_pad}} | {"Threads":<{threads_pad}}'
+        print(header)
+        print('-' * (len(header) + 5))
+        for node, threads in node_threads_map.items():
+            print(f'{node:<{node_pad}} | {threads:<{threads_pad}}')
+
+
+def compare_versions(version1, version2: string) -> int:
     if version1 == "" or version1 == VERSION_UNKNOWN:
         version1 = LATEST_VERSION
 

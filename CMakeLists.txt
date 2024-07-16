@@ -1,6 +1,12 @@
 PROJECT(CouchbaseClient)
 CMAKE_MINIMUM_REQUIRED(VERSION 3.13)
 
+IF (BUILD_COLUMNAR)
+  SET (_cli_version "${COLUMNAR_PRODUCT_VERSION}-columnar")
+ELSE ()
+  SET (_cli_version "${PRODUCT_VERSION}")
+ENDIF ()
+
 # Generate the Version module
 CONFIGURE_FILE (cb_version.cmake.py
                 cb_version.py)

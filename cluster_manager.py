@@ -783,7 +783,8 @@ class ClusterManager(object):
             ports_to_check.append(node_port)
 
             for port in ports_to_check:
-                if f'{node_hostname}:{port}' in nodes_to_match or f'{otp_hostname}:{port}' in nodes_to_match:
+                if f'[{node_hostname}]:{port}' in nodes_to_match or f'[{otp_hostname}]:{port}' in nodes_to_match or \
+                        f'{node_hostname}:{port}' in nodes_to_match or f'{otp_hostname}:{port}' in nodes_to_match:
                     matched_nodes_otp_names.append(otp_name)
 
         return matched_nodes_otp_names, None
@@ -2351,6 +2352,40 @@ class ClusterManager(object):
             raise ServiceNotAvailableException(BACKUP_SERVICE)
 
         return self._post_json(f'{hosts[0]}/api/v1/plan/{name}', plan)
+
+    def get_backup_node_threads_map(self):
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        url = f'{hosts[0]}/api/v1/nodesThreadsMap'
+        return self._get(url)
+
+    def post_backup_node_threads_map(self, threadsMap: Dict[str, int]):
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        url = f'{hosts[0]}/api/v1/nodesThreadsMap'
+        return self._post_json(url, threadsMap)
+
+    def patch_backup_node_threads_map(self, threadsMap: Dict[str, int]):
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        url = f'{hosts[0]}/api/v1/nodesThreadsMap'
+
+        return self._patch_json(url, threadsMap)
 
     def create_scope(self, bucket, scope):
         url = f'{self.hostname}/pools/default/buckets/{urllib.parse.quote_plus(bucket)}/scopes'
