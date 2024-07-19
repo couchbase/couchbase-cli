@@ -2539,6 +2539,8 @@ class SettingAudit(Subcommand):
                            help="A comma-separated list of users to ignore events from")
         group.add_argument("--disable-events", dest="disable_events", default=None,
                            help="A comma-separated list of audit-event IDs to not audit")
+        group.add_argument("--prune-age", dest="prune_age", default=None,
+                           help="Prune audit logs older than the specified age in minutes")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -2577,7 +2579,8 @@ class SettingAudit(Subcommand):
                 opts.disabled_users = re.sub(r'\/couchbase', '/local', opts.disabled_users)
 
             _, errors = self.rest.set_audit_settings(opts.enabled, opts.log_path, opts.rotate_interval,
-                                                     opts.rotate_size, opts.disable_events, opts.disabled_users)
+                                                     opts.rotate_size, opts.disable_events, opts.disabled_users,
+                                                     opts.prune_age)
             _exit_if_errors(errors)
             _success("Audit settings modified")
 

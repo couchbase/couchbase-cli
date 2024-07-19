@@ -17,7 +17,7 @@ _couchbase-cli setting-audit_ [--cluster <url>] [--username <user>] [--password 
     [--client-key-password <password>] [--list-filterable-events] [--get-settings]
     [--set] [--audit-enabled <1|0>] [--audit-log-path <path>]
     [--audit-log-rotate-interval <seconds>] [--audit-log-rotate-size <bytes>]
-    [--disabled-users <user-list>] [--disable-events <event-list>]
+    [--disabled-users <user-list>] [--disable-events <event-list>] [--prune-age]
 
 ifdef::site-gen-antora,backend-html5[]
 Some of these options are only available in Couchbase Server 6.5.1 and later.
@@ -89,6 +89,11 @@ ifdef::site-gen-antora,backend-html5[(Couchbase Server 6.5.1 and later.)]
   (e.g 8243,8255,8257). To retrieve information of what event ID maps to
   what event use the --list-filterable-events to retrieve a list of IDs with
   descriptions.
+
+--prune-age <seconds>::
+  Specifies the age of the audit logs to prune. The minimum prune age is 0
+  seconds, which disables pruning. The maximum value for this setting is
+  35791394 (4085 years).
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

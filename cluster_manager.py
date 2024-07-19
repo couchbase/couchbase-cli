@@ -1446,7 +1446,7 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def set_audit_settings(self, enabled, log_path, rotate_interval, rotate_size, disabled, disabled_users):
+    def set_audit_settings(self, enabled, log_path, rotate_interval, rotate_size, disabled, disabled_users, prune_age):
         url = f'{self.hostname}/settings/audit'
 
         params = dict()
@@ -1462,6 +1462,8 @@ class ClusterManager(object):
             params["disabled"] = disabled
         if disabled_users is not None:
             params["disabledUsers"] = disabled_users
+        if prune_age is not None:
+            params["pruneAge"] = prune_age
 
         return self._post_form_encoded(url, params)
 

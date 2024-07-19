@@ -1195,13 +1195,13 @@ class TestSettingAudit(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'setting-audit'] + cluster_connect_args
         self.cmd_args = ['--set', '--audit-enabled', '1', '--audit-log-path', 'path', '--audit-log-rotate-interval',
-                         '1', '--audit-log-rotate-size', '2']
+                         '1', '--audit-log-rotate-size', '2', '--prune-age', '60']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestSettingAudit, self).setUp()
 
     def test_setting_audit(self):
         self.no_error_run(self.command + self.cmd_args, self.server_args)
-        expected_params = ['auditdEnabled=true', 'logPath=path', 'rotateInterval=1', 'rotateSize=2']
+        expected_params = ['auditdEnabled=true', 'logPath=path', 'rotateInterval=1', 'rotateSize=2', 'pruneAge=60']
         self.assertIn('POST:/settings/audit', self.server.trace)
         self.rest_parameter_match(expected_params)
 
