@@ -772,9 +772,8 @@ class ClusterManager(object):
             ports = node['ports']
             ports_to_check = []
 
-            if 'httpsMgmt' not in ports:
-                return None, [f"Unable to get the HTTPS port of the {hostname} node"]
-            ports_to_check.append(ports['httpsMgmt'])
+            if 'httpsMgmt' in ports:
+                ports_to_check.append(ports['httpsMgmt'])
 
             _, otp_hostname = otp_name.split('@')
             node_hostname, node_port = cls._get_hostname_and_port(hostname)
