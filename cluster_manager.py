@@ -1804,12 +1804,30 @@ class ClusterManager(object):
         """Retrieves the settings for a XDCR replication with id 'replicator_id'"""
         return self._get(f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}')
 
-    def xdcr_replicator_settings(self, chk_interval, worker_batch_size,
-                                 doc_batch_size, fail_interval, replication_thresh,
-                                 src_nozzles, dst_nozzles, usage_limit, compression,
-                                 log_level, stats_interval, replicator_id, filter_expression, filter_skip, priority,
-                                 reset_expiry, filter_del, filter_exp, col_explicit_mappings, col_migration_mode,
-                                 col_mapping_rule):
+    def xdcr_replicator_settings(
+            self,
+            chk_interval,
+            worker_batch_size,
+            doc_batch_size,
+            fail_interval,
+            replication_thresh,
+            src_nozzles,
+            dst_nozzles,
+            usage_limit,
+            compression,
+            log_level,
+            stats_interval,
+            replicator_id,
+            filter_expression,
+            filter_skip,
+            priority,
+            reset_expiry,
+            filter_del,
+            filter_exp,
+            filter_binary,
+            col_explicit_mappings,
+            col_migration_mode,
+            col_mapping_rule):
 
         url = f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
@@ -1830,6 +1848,8 @@ class ClusterManager(object):
             params['filterDeletion'] = one_zero_boolean_to_string(filter_del)
         if filter_exp:
             params['filterExpiration'] = one_zero_boolean_to_string(filter_exp)
+        if filter_binary:
+            params['filterBinary'] = one_zero_boolean_to_string(filter_binary)
         if col_explicit_mappings is not None:
             params['collectionsExplicitMapping'] = one_zero_boolean_to_string(col_explicit_mappings)
         if col_migration_mode is not None:
@@ -1883,7 +1903,7 @@ class ClusterManager(object):
     def create_xdcr_replication(self, name, to_bucket, from_bucket, chk_interval, worker_batch_size, doc_batch_size,
                                 fail_interval, replication_thresh, src_nozzles, dst_nozzles, usage_limit, compression,
                                 log_level, stats_interval, filter_expression, priority, reset_expiry, filter_del,
-                                filter_exp, col_explicit_mappings, col_migration_mode, col_mapping_rule):
+                                filter_exp, filter_binary, col_explicit_mappings, col_migration_mode, col_mapping_rule):
         url = f'{self.hostname}/controller/createReplication'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                                        fail_interval, replication_thresh, src_nozzles,
@@ -1905,6 +1925,8 @@ class ClusterManager(object):
             params['filterBypassExpiry'] = one_zero_boolean_to_string(reset_expiry)
         if filter_del:
             params['filterDeletion'] = one_zero_boolean_to_string(filter_del)
+        if filter_binary:
+            params['filterBinary'] = one_zero_boolean_to_string(filter_binary)
         if filter_exp:
             params['filterExpiration'] = one_zero_boolean_to_string(filter_exp)
         if col_explicit_mappings is not None:

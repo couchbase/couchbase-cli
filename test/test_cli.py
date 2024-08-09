@@ -10,15 +10,12 @@ import unittest
 import urllib
 from argparse import Namespace
 from io import StringIO
+from unittest.mock import MagicMock, patch
 
 from mock_server import MockRESTServer, generate_self_signed_cert
 
-from cbmgr import AnalyticsLinkSetup, CollectionManage, CouchbaseCLI, validate_credential_flags
+from cbmgr import AnalyticsLinkSetup, CollectionManage, CouchbaseCLI, ResetAdminPassword, validate_credential_flags
 from couchbaseConstants import parse_host_port
-
-import unittest
-from unittest.mock import patch, MagicMock
-from cbmgr import ResetAdminPassword
 
 host = '127.0.0.1'
 port = 6789
@@ -2247,10 +2244,11 @@ class TestXdcrReplicate(CommandTest):
     def test_setting_filter_args(self):
         self.no_error_run(self.command + ['--settings', '--xdcr-replicator', '1', '--filter-expression', 'key:',
                                           '--filter-skip-restream', '--reset-expiry', '1',
-                                          '--filter-deletion', '0', '--filter-expiration', '1'], self.server_args)
+                                          '--filter-deletion', '0', '--filter-expiration', '1', '--filter-binary', '1'],
+                          self.server_args)
         self.assertIn('POST:/settings/replications/1', self.server.trace)
         expected_params = ['filterExpression=key%3A', 'filterSkipRestream=1', 'filterBypassExpiry=true',
-                           'filterDeletion=false', 'filterExpiration=true']
+                           'filterDeletion=false', 'filterExpiration=true', 'filterBinary=true']
         self.rest_parameter_match(expected_params)
 
     def test_settings_collection_args(self):

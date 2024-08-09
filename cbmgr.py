@@ -4007,6 +4007,9 @@ class XdcrReplicate(Subcommand):
         group.add_argument('--filter-expiration', choices=['1', '0'], metavar='<1|0>', default=None, dest='filter_exp',
                            help='When set to true expiry mutations will be filter out and not sent to the target '
                                 'cluster')
+        group.add_argument('--filter-binary', choices=['1', '0'], metavar='<1|0>', default=None, dest='filter_binary',
+                           help='When set to true binary documents are not replicated. When false binary documents may '
+                                'be replicated')
 
         collection_group = self.parser.add_argument_group("Collection options")
         collection_group.add_argument('--collection-explicit-mappings', choices=['1', '0'], metavar='<1|0>',
@@ -4071,8 +4074,8 @@ class XdcrReplicate(Subcommand):
                                                       opts.usage_limit, opts.compression, opts.log_level,
                                                       opts.stats_interval, opts.filter, opts.priority,
                                                       opts.reset_expiry, opts.filter_del, opts.filter_exp,
-                                                      opts.collection_explicit_mappings, opts.collection_migration,
-                                                      opts.collection_mapping_rules)
+                                                      opts.filter_binary, opts.collection_explicit_mappings,
+                                                      opts.collection_migration, opts.collection_mapping_rules)
         _exit_if_errors(errors)
 
         _success("XDCR replication created")
@@ -4133,7 +4136,7 @@ class XdcrReplicate(Subcommand):
                                                        opts.dst_nozzles, opts.usage_limit, opts.compression,
                                                        opts.log_level, opts.stats_interval, opts.replicator_id,
                                                        opts.filter, opts.filter_skip, opts.priority, opts.reset_expiry,
-                                                       opts.filter_del, opts.filter_exp,
+                                                       opts.filter_del, opts.filter_exp, opts.filter_binary,
                                                        opts.collection_explicit_mappings, opts.collection_migration,
                                                        opts.collection_mapping_rules)
         _exit_if_errors(errors)
