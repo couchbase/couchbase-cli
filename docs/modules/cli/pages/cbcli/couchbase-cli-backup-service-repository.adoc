@@ -11,16 +11,15 @@ Manage the backup service repositories.
 == SYNOPSIS
 
 [verse]
-_couchbase-cli backup-service [--cluster <url>] [--username <user>]
-    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
-    [--client-key <path>] [--client-key-password <password>]
-    [--output] repository [--list] [--get] [--archive]
-    [--add] [--remove] [--id <id>] [--new-id <id>] [--state <state>]
-    [--profile <name>] [--backup-archive <archive>] [--bucket-name <name>]
-    [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
-    [--cloud-credentials-id <id>] [--cloud-credentials-key <key>]
-    [--cloud-credentials-refresh-token <token>] [--cloud-credentials-region <region>]
-    [--cloud-endpoint <endpoint>] [--s3-force-path-style] [--remove-data]
+./couchbase-cli backup-service repository -h
+usage: couchbase-cli backup-service repository (--list | --get | --archive | --add | --remove | -h) [--id <id>]
+                                               [--new-id <id>] [--state <state>] [--plan <plan_name>]
+                                               [--backup-archive <archive>] [--bucket-name <name>] [--remove-data]
+                                               [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
+                                               [--cloud-credentials-id <id>] [--cloud-credentials-key <key>]
+                                               [--cloud-credentials-refresh-token <token>]
+                                               [--cloud-credentials-region <region>] [--cloud-endpoint <endpoint>]
+                                               [--s3-force-path-style]
 
 == DESCRIPTION
 
@@ -56,8 +55,8 @@ Manage backup service repositories
 --state <state>::
     Specifies the repository state. Valid states are 'active', 'archived' or 'imported'
 
---profile <profile_name>::
-    Specify the profile to use when adding a new repository.
+--plan <plan_name>::
+    The plan to use as the base for the repository
 
 --backup-archive <archive>::
     The location to store backups in. This location should be accessible by all backup
