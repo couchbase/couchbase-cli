@@ -14,23 +14,20 @@ CONFIGURE_FILE (cb_version.cmake.py
 # Copy couchstore.py from couchstore so we can import it
 CONFIGURE_FILE (../couchstore/python/couchstore.py couchstore.py COPYONLY)
 
-# Install all executable Python scripts, with wrappers
-PyWrapper (BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}"
-    SCRIPTS
-    couchbase-cli
-    cblogredaction
-    cbrecovery
-    cbtransfer
-    cbworkloadgen)
-
-# Install dependent Python files
-INSTALL (FILES
+# Set of Python files required for couchbase-cli
+SET (cli_files
     cb_bin_client.py
-    cb_util.py
     cbmgr.py
     cluster_manager.py
     couchbaseConstants.py
     pbar.py
+    x509_adapter.py
+    ${CMAKE_CURRENT_BINARY_DIR}/cb_version.py
+    ${CMAKE_CURRENT_BINARY_DIR}/couchstore.py
+)
+# Set of other Python files
+SET (py_files
+    cb_util.py
     pump.py
     pump_bfd.py
     pump_cb.py
@@ -41,13 +38,29 @@ INSTALL (FILES
     pump_sfd.py
     pump_transfer.py
     pump_dcp.py
-    x509_adapter.py
-    ${CMAKE_CURRENT_BINARY_DIR}/cb_version.py
-    ${CMAKE_CURRENT_BINARY_DIR}/couchstore.py
-    DESTINATION lib/python)
+)
 IF (BUILD_ENTERPRISE)
-  INSTALL (FILES pump_bfd2.py DESTINATION lib/python)
+  LIST (APPEND py_files pump_bfd2.py)
 ENDIF ()
+
+# Install couchbase-cli, including admin_tools package
+PyWrapper (
+    BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+    ADD_TO_STANDALONE_PACKAGE admin_tools
+    SCRIPTS
+        couchbase-cli
+    EXTRA_SCRIPTS ${cli_files}
+)
+# Install remaining Python scripts
+PyWrapper (
+    BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+    SCRIPTS
+        cblogredaction
+        cbrecovery
+        cbtransfer
+        cbworkloadgen
+    EXTRA_SCRIPTS ${py_files}
+)
 
 ADD_SUBDIRECTORY(docs)
 
