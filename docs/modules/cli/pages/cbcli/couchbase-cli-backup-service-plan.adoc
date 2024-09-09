@@ -105,9 +105,9 @@ To add a plan  use the action argument `--add` as seen below.
 
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
-  plan --add --name new-plan --description "Optional description"
+  plan --add --name new-plan --description "Optional description" \
   --task '{"name":"t1", "task_type":"BACKUP", "full_backup": true, \
-  "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}'
+  "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}' \
    --services data
 ----
 
@@ -133,6 +133,18 @@ task objects. The task objects have the following schema:
         "time": "22:00"       // Optional time at which to run the tasks
     }
 }
+----
+
+You also have the option of submitting multiple tasks as part of the same plan by listing all the required tasks in the `task` parameter:
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+    plan --add --name new-plan --description "Optional description" \
+    --task '{"name":"t1", "task_type":"BACKUP", "full_backup": true, \
+    "schedule":{"frequency": 1, "period": "HOURS", "job_type":"BACKUP"}}' \
+    '{"name":"t2", "task_type":"BACKUP", "full_backup": false, \
+        "schedule":{"frequency": 2, "period": "DAYS", "job_type":"BACKUP"}}' \
+     --services data
 ----
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
