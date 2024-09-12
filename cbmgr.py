@@ -2549,6 +2549,8 @@ class SettingAudit(Subcommand):
                            help="A comma-separated list of users to ignore events from")
         group.add_argument("--disable-events", dest="disable_events", default=None,
                            help="A comma-separated list of audit-event IDs to not audit")
+        group.add_argument("--prune-age", dest="prune_age", default=None,
+                           help="Prune audit logs older than the specified age in minutes")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -2587,7 +2589,8 @@ class SettingAudit(Subcommand):
                 opts.disabled_users = re.sub(r'\/couchbase', '/local', opts.disabled_users)
 
             _, errors = self.rest.set_audit_settings(opts.enabled, opts.log_path, opts.rotate_interval,
-                                                     opts.rotate_size, opts.disable_events, opts.disabled_users)
+                                                     opts.rotate_size, opts.disable_events, opts.disabled_users,
+                                                     opts.prune_age)
             _exit_if_errors(errors)
             _success("Audit settings modified")
 
@@ -4018,6 +4021,9 @@ class XdcrReplicate(Subcommand):
         group.add_argument('--filter-expiration', choices=['1', '0'], metavar='<1|0>', default=None, dest='filter_exp',
                            help='When set to true expiry mutations will be filter out and not sent to the target '
                                 'cluster')
+        group.add_argument('--filter-binary', choices=['1', '0'], metavar='<1|0>', default=None, dest='filter_binary',
+                           help='When set to true binary documents are not replicated. When false binary documents may '
+                                'be replicated')
 
         collection_group = self.parser.add_argument_group("Collection options")
         collection_group.add_argument('--collection-explicit-mappings', choices=['1', '0'], metavar='<1|0>',
@@ -4082,8 +4088,8 @@ class XdcrReplicate(Subcommand):
                                                       opts.usage_limit, opts.compression, opts.log_level,
                                                       opts.stats_interval, opts.filter, opts.priority,
                                                       opts.reset_expiry, opts.filter_del, opts.filter_exp,
-                                                      opts.collection_explicit_mappings, opts.collection_migration,
-                                                      opts.collection_mapping_rules)
+                                                      opts.filter_binary, opts.collection_explicit_mappings,
+                                                      opts.collection_migration, opts.collection_mapping_rules)
         _exit_if_errors(errors)
 
         _success("XDCR replication created")
@@ -4144,7 +4150,7 @@ class XdcrReplicate(Subcommand):
                                                        opts.dst_nozzles, opts.usage_limit, opts.compression,
                                                        opts.log_level, opts.stats_interval, opts.replicator_id,
                                                        opts.filter, opts.filter_skip, opts.priority, opts.reset_expiry,
-                                                       opts.filter_del, opts.filter_exp,
+                                                       opts.filter_del, opts.filter_exp, opts.filter_binary,
                                                        opts.collection_explicit_mappings, opts.collection_migration,
                                                        opts.collection_mapping_rules)
         _exit_if_errors(errors)

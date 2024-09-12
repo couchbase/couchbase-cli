@@ -24,7 +24,7 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>] [--password
     [--bandwidth-usage-limit <num>] [--enable-compression <num>]
     [--stats-interval <milliseconds>][--optimistic-replication-threshold <bytes>]
     [--log-level <level>] [--priority <High|Medium|Low>] [--reset-expiry <1|0>]
-    [--filter-deletion <1|0>] [--filter-expiration <1|0>]
+    [--filter-deletion <1|0>] [--filter-expiration <1|0>] [--filter-binary <1|0>]
     [--collection-explicit-mappings <1|0>] [--collection-migration <1|0>]
     [--collection-mapping-rules <mappings>]
 
@@ -140,6 +140,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   When set to true, expiry mutations will not be sent to the target cluster.
   This means documents will not be deleted in the target cluster via
   expirations on the source cluster.
+
+--filter-binary <1|0>::
+  When set to true, binary mutations will not be sent to the target cluster.
+  When false, binary mutations will be sent to the target cluster depending
+  on the filter expression. See
+  xref:rest-api:rest-xdcr-create-replication.adoc[Creating a Replication].
 
 == COLLECTION OPTIONS
 

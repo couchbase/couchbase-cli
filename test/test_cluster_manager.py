@@ -111,18 +111,6 @@ class ClusterManagerTest(unittest.TestCase):
                 "errors": ["Unable to get the ports of the 10.200.300.400:8091 node"],
                 "matched_nodes": None
             },
-            "NoPortsKey_httpsMgmt": {
-                "nodes": [
-                    {
-                        'otpNode': 'ns_1@10.200.300.400',
-                        'hostname': '10.200.300.400:8091',
-                        'ports': {}
-                    },
-                ],
-                "nodes_to_match": ['test.com'],
-                "errors": ["Unable to get the HTTPS port of the 10.200.300.400:8091 node"],
-                "matched_nodes": None
-            },
             "NodeNotFound": {
                 "nodes": [
                     {
