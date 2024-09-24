@@ -1459,7 +1459,10 @@ class ClusterManager(object):
         return self._get(f'{self.hostname}/settings/audit/descriptors')
 
     def set_autofailover_settings(self, enabled, timeout, max_count, failover_on_data_disk_issues_enabled,
-                                  failover_on_data_disk_issues_time_period, can_abort_rebalance):
+                                  failover_on_data_disk_issues_time_period,
+                                  failover_on_data_disk_non_responsive_enabled,
+                                  failover_on_data_disk_non_responsive_time_period,
+                                  can_abort_rebalance):
         url = self.hostname + '/settings/autoFailover'
 
         params = dict()
@@ -1469,10 +1472,16 @@ class ClusterManager(object):
             params["timeout"] = timeout
         if failover_on_data_disk_issues_enabled:
             params["failoverOnDataDiskIssues[enabled]"] = failover_on_data_disk_issues_enabled
-        if max_count:
-            params["maxCount"] = max_count
         if failover_on_data_disk_issues_time_period:
             params["failoverOnDataDiskIssues[timePeriod]"] = failover_on_data_disk_issues_time_period
+        if failover_on_data_disk_non_responsive_enabled:
+            params["failoverOnDataDiskNonResponsiveness[enabled]"] = \
+                failover_on_data_disk_non_responsive_enabled
+        if failover_on_data_disk_non_responsive_time_period:
+            params["failoverOnDataDiskNonResponsiveness[timePeriod]"] = \
+                failover_on_data_disk_non_responsive_time_period
+        if max_count:
+            params["maxCount"] = max_count
         if can_abort_rebalance:
             params["canAbortRebalance"] = can_abort_rebalance
 

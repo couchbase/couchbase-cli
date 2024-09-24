@@ -2650,8 +2650,28 @@ class SettingAutofailover(Subcommand):
                            metavar="<seconds>", type=(int),
                            help="The amount of time the Data Serivce disk failures has to be happening for to trigger"
                                 " an auto-failover")
+        group.add_argument("--enable-failover-on-data-disk-non-responsive",
+                           dest="enable_failover_on_data_disk_non_responsive", metavar="<1|0>", choices=["0", "1"],
+                           help="Enable/disable auto-failover when the Data Service reports disk is not responsive. "
+                           + "Couchbase Server Enterprise Edition only.")
+        group.add_argument("--failover-data-disk-non-responsive-period",
+                           dest="failover_on_data_disk_non_responsive_period", metavar="<seconds>", type=(int),
+                           help="The amount of time the Data Serivce disk non-responsiveness has to be happening for to"
+                                " trigger an auto-failover")
         group.add_argument("--can-abort-rebalance", metavar="<1|0>", choices=["1", "0"], dest="can_abort_rebalance",
                            help="Enables auto-failover to abort rebalance and perform the failover. (EE only)")
+
+    def __validate_failover_reason(self, enable, period, cli_enable_name, cli_period_name):
+        if not self.enterprise and (enable or period):
+            _exit_if_errors([f"--{cli_enable_name} and --{cli_period_name} can only be configured on "
+                             "Enterprise Edition"])
+
+        if (enable is None or enable == "false") and period:
+            _exit_if_errors([
+                f"{cli_enable_name} must be set to 1 when {cli_period_name} is configured"])
+
+        if enable == "true" and period is None:
+            _exit_if_errors([f"{cli_period_name} must be set when {cli_enable_name} is enabled"])
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
@@ -2665,33 +2685,38 @@ class SettingAutofailover(Subcommand):
         elif opts.enable_failover_on_data_disk_issues == "0":
             opts.enable_failover_on_data_disk_issues = "false"
 
+        if opts.enable_failover_on_data_disk_non_responsive == "1":
+            opts.enable_failover_on_data_disk_non_responsive = "true"
+        elif opts.enable_failover_on_data_disk_non_responsive == "0":
+            opts.enable_failover_on_data_disk_non_responsive = "false"
+
         if not self.enterprise:
-            if opts.enable_failover_on_data_disk_issues or opts.failover_on_data_disk_period:
-                _exit_if_errors(["Auto failover on Data Service disk issues can only be configured on enterprise"
-                                 + " edition"])
             if opts.max_failovers:
                 _exit_if_errors(["--max-count can only be configured on enterprise edition"])
             if opts.can_abort_rebalance:
                 _exit_if_errors(["--can-abort-rebalance can only be configured on enterprise edition"])
 
         if not any([opts.enabled, opts.timeout, opts.enable_failover_on_data_disk_issues,
-                    opts.failover_on_data_disk_period, opts.max_failovers]):
+                    opts.failover_on_data_disk_period, opts.enable_failover_on_data_disk_non_responsive,
+                    opts.failover_on_data_disk_non_responsive_period, opts.max_failovers]):
             _exit_if_errors(["No settings specified to be changed"])
 
-        if ((opts.enable_failover_on_data_disk_issues is None or opts.enable_failover_on_data_disk_issues == "false")
-                and opts.failover_on_data_disk_period):
-            _exit_if_errors(["--enable-failover-on-data-disk-issues must be set to 1 when auto-failover Data"
-                             " Service disk period has been set"])
-
-        if opts.enable_failover_on_data_disk_issues == "true" and opts.failover_on_data_disk_period is None:
-            _exit_if_errors(["--failover-data-disk-period must be set when auto-failover on Data Service disk"
-                             " is enabled"])
+        self.__validate_failover_reason(
+            opts.enable_failover_on_data_disk_issues, opts.failover_on_data_disk_period,
+            "--enable-failover-on-data-disk-issues", "--failover-data-disk-period")
+        self.__validate_failover_reason(
+            opts.enable_failover_on_data_disk_non_responsive,
+            opts.failover_on_data_disk_non_responsive_period,
+            "--enable-failover-on-data-disk-non-responsive",
+            "--failover-data-disk-non-responsive-period")
 
         if opts.enabled == "false" or opts.enabled is None:
-            if opts.enable_failover_on_data_disk_issues or opts.failover_on_data_disk_period:
+            if opts.enable_failover_on_data_disk_issues or opts.failover_on_data_disk_period or \
+                    opts.enable_failover_on_data_disk_non_responsive or \
+                    opts.failover_on_data_disk_non_responsive_period:
                 _exit_if_errors([
-                    "--enable-auto-failover must be set to 1 when auto-failover on Data Service disk issues"
-                    " settings are being configured"])
+                    "--enable-auto-failover must be set to 1 when auto-failover on Data Service disk "
+                    "issues/non-responsive settings are being configured"])
             if opts.timeout:
                 _warning("Timeout specified will not take affect because auto-failover is being disabled")
 
@@ -2702,7 +2727,10 @@ class SettingAutofailover(Subcommand):
 
         _, errors = self.rest.set_autofailover_settings(opts.enabled, opts.timeout, opts.max_failovers,
                                                         opts.enable_failover_on_data_disk_issues,
-                                                        opts.failover_on_data_disk_period, opts.can_abort_rebalance)
+                                                        opts.failover_on_data_disk_period,
+                                                        opts.enable_failover_on_data_disk_non_responsive,
+                                                        opts.failover_on_data_disk_non_responsive_period,
+                                                        opts.can_abort_rebalance)
         _exit_if_errors(errors)
 
         _success("Auto-failover settings modified")
