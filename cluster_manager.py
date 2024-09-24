@@ -838,8 +838,7 @@ class ClusterManager(object):
                       view_frag_size, from_hour, from_min, to_hour, to_min,
                       abort_outside, paralleldb_and_view_compact, purge_interval,
                       history_retention_bytes, history_retention_seconds,
-                      history_retention_default, pitr_enabled, pitr_granularity, pitr_max_history_age,
-                      rank, timeout=60):
+                      history_retention_default, rank, timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
         if name is None:
@@ -879,12 +878,6 @@ class ClusterManager(object):
             params["historyRetentionSeconds"] = history_retention_seconds
         if history_retention_default is not None:
             params["historyRetentionCollectionDefault"] = one_zero_boolean_to_string(history_retention_default)
-        if pitr_enabled is not None:
-            params["pitrEnabled"] = one_zero_boolean_to_string(pitr_enabled)
-        if pitr_granularity is not None:
-            params["pitrGranularity"] = pitr_granularity
-        if pitr_max_history_age is not None:
-            params["pitrMaxHistoryAge"] = pitr_max_history_age
         if rank is not None:
             params["rank"] = rank
 
@@ -961,8 +954,7 @@ class ClusterManager(object):
                     view_frag_size, from_hour, from_min, to_hour, to_min,
                     abort_outside, paralleldb_and_view_compact, purge_interval,
                     history_retention_bytes, history_retention_seconds, history_retention_default,
-                    pitr_enabled, pitr_granularity, pitr_max_history_age, rank,
-                    couchbase_bucket: bool = True):
+                    rank, couchbase_bucket: bool = True):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -1021,12 +1013,6 @@ class ClusterManager(object):
             params["historyRetentionSeconds"] = history_retention_seconds
         if history_retention_default is not None:
             params["historyRetentionCollectionDefault"] = one_zero_boolean_to_string(history_retention_default)
-        if pitr_enabled is not None:
-            params["pitrEnabled"] = one_zero_boolean_to_string(pitr_enabled)
-        if pitr_granularity is not None:
-            params["pitrGranularity"] = pitr_granularity
-        if pitr_max_history_age is not None:
-            params["pitrMaxHistoryAge"] = pitr_max_history_age
         if rank is not None:
             params["rank"] = rank
 

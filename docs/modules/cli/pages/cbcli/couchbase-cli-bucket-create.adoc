@@ -247,8 +247,6 @@ Run index and data compaction in parallel. Global setting only.
 
 include::{partialsdir}/cbcli/part-common-history-retention.adoc[]
 
-include::{partialsdir}/cbcli/part-common-pitr-options.adoc[]
-
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]

@@ -1018,15 +1018,6 @@ class BucketCreate(Subcommand):
                            help="Enable history retention for new collections created in this bucket by default "
                            "(0 or 1)")
 
-        group.add_argument("--enable-point-in-time", dest="enable_pitr", metavar="<0|1>",
-                           choices=["0", "1"], help="Enable the Point-In-Time feature on this bucket, which allows "
-                           "taking Point-In-Time backups of it (0 or 1)")
-        group.add_argument("--point-in-time-granularity", dest="pitr_granularity", default=None, type=(int),
-                           metavar="<seconds>", help="Set the granularity of Point-In-Time backups that can be taken "
-                           "of this bucket (in seconds)")
-        group.add_argument("--point-in-time-max-history-age", dest="pitr_max_history_age", default=None, type=(int),
-                           metavar="<seconds>", help="Set the maximum history age of Point-In-Time backups that can "
-                           "be taken of this bucket (in seconds)")
         group.add_argument("--rank", dest="rank", metavar="<num>", type=(int),
                            help="Sets the rank of this bucket in case of failover/rebalance. Buckets with larger "
                            "ranks are prioritised over buckets with smaller ranks")
@@ -1068,10 +1059,6 @@ class BucketCreate(Subcommand):
                      or opts.to_hour is not None or opts.to_min is not None or opts.abort_outside is not None
                      or opts.paralleldb_and_view_compact is not None)):
             _warning(f'ignoring compaction settings as bucket type {opts.type} does not accept it')
-
-        if opts.type != "couchbase" and (opts.enable_pitr is not None or opts.pitr_granularity is not None or
-                                         opts.pitr_max_history_age is not None):
-            _exit_if_errors(["Point-In-Time options are only supported for 'couchbase' buckets"])
 
         storage_type = "couchstore"
         if opts.storage is not None:
@@ -1121,8 +1108,7 @@ class BucketCreate(Subcommand):
                                             opts.from_hour, opts.from_min, opts.to_hour, opts.to_min,
                                             opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval,
                                             opts.history_retention_bytes, opts.history_retention_seconds,
-                                            opts.enable_history_retention, opts.enable_pitr, opts.pitr_granularity,
-                                            opts.pitr_max_history_age, opts.rank)
+                                            opts.enable_history_retention, opts.rank)
         _exit_if_errors(errors)
         _success("Bucket created")
 
@@ -1232,12 +1218,6 @@ class BucketEdit(Subcommand):
                            help="Enable history retention for new collections created in this bucket by default "
                            "(0 or 1)")
 
-        group.add_argument("--enable-point-in-time", dest="enable_pitr", metavar="<0|1>",
-                           choices=["0", "1"], help="Enable Point-In-Time backups and restores on this bucket (0 or 1)")
-        group.add_argument("--point-in-time-granularity", dest="pitr_granularity", default=None, type=(int),
-                           metavar="<seconds>", help="Set the granularity of Point-In-Time backups in seconds")
-        group.add_argument("--point-in-time-max-history-age", dest="pitr_max_history_age", default=None, type=(int),
-                           metavar="<seconds>", help="Set the maximum history age of Point-In-Time backups in seconds")
         group.add_argument("--rank", dest="rank", metavar="<num>", type=(int),
                            help="Sets the rank of this bucket in case of failover/rebalance. Buckets with larger "
                            "ranks are prioritised over buckets with smaller ranks")
@@ -1307,10 +1287,6 @@ class BucketEdit(Subcommand):
                 _exit_if_errors(["--enable-history-retention-by-default cannot be specified for a bucket with "
                                  f"{bucket['storageBackend']} backend"])
 
-        if not is_couchbase_bucket and (opts.enable_pitr is not None or opts.pitr_granularity is not None or
-                                        opts.pitr_max_history_age is not None):
-            _exit_if_errors(["Point-In-Time options are only supported for 'couchbase' buckets"])
-
         priority = None
         if opts.priority is not None:
             if opts.priority == BUCKET_PRIORITY_HIGH_STR:
@@ -1331,9 +1307,7 @@ class BucketEdit(Subcommand):
                                           opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
                                           opts.paralleldb_and_view_compact, opts.purge_interval,
                                           opts.history_retention_bytes, opts.history_retention_seconds,
-                                          opts.enable_history_retention,
-                                          opts.enable_pitr, opts.pitr_granularity, opts.pitr_max_history_age,
-                                          opts.rank, is_couchbase_bucket)
+                                          opts.enable_history_retention, opts.rank, is_couchbase_bucket)
         _exit_if_errors(errors)
 
         _success("Bucket edited")
