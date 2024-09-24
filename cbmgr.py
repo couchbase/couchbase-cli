@@ -2658,6 +2658,9 @@ class SettingAutofailover(Subcommand):
                            dest="failover_on_data_disk_non_responsive_period", metavar="<seconds>", type=(int),
                            help="The amount of time the Data Serivce disk non-responsiveness has to be happening for to"
                                 " trigger an auto-failover")
+        group.add_argument("--allow-failover-for-ephemeral-without-replica", metavar="<1|0>", choices=["0", "1"],
+                           help="Whether to allow autofailover on nodes with an ephemeral buckets that do not have at "
+                                "least one replica")
         group.add_argument("--can-abort-rebalance", metavar="<1|0>", choices=["1", "0"], dest="can_abort_rebalance",
                            help="Enables auto-failover to abort rebalance and perform the failover. (EE only)")
 
@@ -2690,15 +2693,24 @@ class SettingAutofailover(Subcommand):
         elif opts.enable_failover_on_data_disk_non_responsive == "0":
             opts.enable_failover_on_data_disk_non_responsive = "false"
 
+        if opts.allow_failover_for_ephemeral_without_replica == "1":
+            opts.allow_failover_for_ephemeral_without_replica = "true"
+        elif opts.allow_failover_for_ephemeral_without_replica == "0":
+            opts.allow_failover_for_ephemeral_without_replica = "false"
+
         if not self.enterprise:
             if opts.max_failovers:
                 _exit_if_errors(["--max-count can only be configured on enterprise edition"])
             if opts.can_abort_rebalance:
                 _exit_if_errors(["--can-abort-rebalance can only be configured on enterprise edition"])
+            if opts.allow_failover_for_ephemeral_without_replica:
+                _exit_if_errors(["--allow-failover-for-ephemeral-without-replica can only be configured on enterprise"
+                                 " edition"])
 
         if not any([opts.enabled, opts.timeout, opts.enable_failover_on_data_disk_issues,
                     opts.failover_on_data_disk_period, opts.enable_failover_on_data_disk_non_responsive,
-                    opts.failover_on_data_disk_non_responsive_period, opts.max_failovers]):
+                    opts.failover_on_data_disk_non_responsive_period, opts.max_failovers,
+                    opts.allow_failover_for_ephemeral_without_replica]):
             _exit_if_errors(["No settings specified to be changed"])
 
         self.__validate_failover_reason(
@@ -2713,10 +2725,12 @@ class SettingAutofailover(Subcommand):
         if opts.enabled == "false" or opts.enabled is None:
             if opts.enable_failover_on_data_disk_issues or opts.failover_on_data_disk_period or \
                     opts.enable_failover_on_data_disk_non_responsive or \
-                    opts.failover_on_data_disk_non_responsive_period:
+                    opts.failover_on_data_disk_non_responsive_period or \
+                    opts.allow_failover_for_ephemeral_without_replica:
                 _exit_if_errors([
                     "--enable-auto-failover must be set to 1 when auto-failover on Data Service disk "
-                    "issues/non-responsive settings are being configured"])
+                    "issues/non-responsive settings or allowing auto-failover for ephemeral buckets without replicas "
+                    "are being configured"])
             if opts.timeout:
                 _warning("Timeout specified will not take affect because auto-failover is being disabled")
 
@@ -2730,7 +2744,8 @@ class SettingAutofailover(Subcommand):
                                                         opts.failover_on_data_disk_period,
                                                         opts.enable_failover_on_data_disk_non_responsive,
                                                         opts.failover_on_data_disk_non_responsive_period,
-                                                        opts.can_abort_rebalance)
+                                                        opts.can_abort_rebalance,
+                                                        opts.allow_failover_for_ephemeral_without_replica)
         _exit_if_errors(errors)
 
         _success("Auto-failover settings modified")

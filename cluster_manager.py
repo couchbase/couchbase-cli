@@ -1462,7 +1462,7 @@ class ClusterManager(object):
                                   failover_on_data_disk_issues_time_period,
                                   failover_on_data_disk_non_responsive_enabled,
                                   failover_on_data_disk_non_responsive_time_period,
-                                  can_abort_rebalance):
+                                  can_abort_rebalance, allow_failover_for_ephemeral_without_replica):
         url = self.hostname + '/settings/autoFailover'
 
         params = dict()
@@ -1484,6 +1484,8 @@ class ClusterManager(object):
             params["maxCount"] = max_count
         if can_abort_rebalance:
             params["canAbortRebalance"] = can_abort_rebalance
+        if allow_failover_for_ephemeral_without_replica:
+            params["allowFailoverEphemeralNoReplicas"] = allow_failover_for_ephemeral_without_replica
 
         return self._post_form_encoded(url, params)
 

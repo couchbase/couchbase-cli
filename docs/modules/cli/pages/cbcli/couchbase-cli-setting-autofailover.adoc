@@ -19,7 +19,7 @@ _couchbase-cli setting-autofailover_ [--cluster <url>] [--username <user>] [--pa
     [--enable-failover-on-data-disk-issues <num>] [--failover-data-disk-period <seconds>]
     [--enable-failover-on-data-disk-non-responsive <num>]
     [--failover-data-disk-non-responsive-period <seconds>]
-    [--can-abort-rebalance <1|0>]
+    [--can-abort-rebalance <1|0>] [--allow-failover-for-ephemeral-without-replica <1|0>]
 
 == DESCRIPTION
 
@@ -35,7 +35,7 @@ Since the administrator will not always be able to manually fail servers over
 quickly enough to avoid application down time Couchbase provides an
 auto-failover feature. This feature allows the cluster manager to automatically
 fail over down nodes over and bring the cluster back to a healthy state as
-quickly as possible.
+quickly as possible <1|0>.
 
 In Couchbase Server Enterprise Edition nodes can also be automatically failed
 over when the Data Service reports sustained disk I/O failures.
@@ -94,6 +94,11 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --can-abort-rebalance <1|0>::
   Enables auto-failover to abort rebalance and perform auto-failover.
   This feature is only available in Couchbase Enterprise Edition.
+
+--allow-failover-for-ephemeral-without-replica <1|0>::
+  Enables auto-failover when ephemeral buckets do not have replicas. If this
+  happens then data loss can occur. This feature is only available in Couchbase
+  Enterprise Edition.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
