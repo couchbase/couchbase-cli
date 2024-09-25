@@ -2285,8 +2285,9 @@ class TestXdcrReplicate(CommandTest):
 class TestXdcrSetup(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'xdcr-setup'] + cluster_connect_args
-        self.cmd_args = ['--xdcr-cluster-name', 'name', '--xdcr-hostname', 'hostname', '--xdcr-username', 'username',
-                         '--xdcr-password', 'pwd']
+        self.cmd_args_without_hostname = ['--xdcr-cluster-name', 'name', '--xdcr-username', 'username',
+                                          '--xdcr-password', 'pwd']
+        self.cmd_args = self.cmd_args_without_hostname + ['--xdcr-hostname', 'hostname']
         # TODO: encryption setting test
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super(TestXdcrSetup, self).setUp()
@@ -2295,6 +2296,33 @@ class TestXdcrSetup(CommandTest):
         self.no_error_run(self.command + ['--create'] + self.cmd_args, self.server_args)
         self.assertIn('POST:/pools/default/remoteClusters', self.server.trace)
         expected_params = ['name=name', 'hostname=hostname', 'username=username', 'password=pwd', 'demandEncryption=0']
+        self.rest_parameter_match(expected_params)
+
+    def test_create_xdcr_encryption_passed_certificate(self):
+        cert_file = tempfile.NamedTemporaryFile(delete=False)
+        cert_file.write(b'this-is-the-cert-file')
+        cert_file.close()
+
+        self.no_error_run(self.command + ['--create'] + self.cmd_args +
+                          ['--xdcr-demand-encryption', '1', '--xdcr-certificate', cert_file.name],
+                          self.server_args)
+        expected_params = ['name=name', 'hostname=hostname', 'username=username', 'password=pwd', 'demandEncryption=1',
+                           'encryptionType=full', 'certificate=this-is-the-cert-file']
+        self.rest_parameter_match(expected_params)
+
+    def test_create_xdcr_encryption_needs_certificate(self):
+        self.system_exit_run(self.command + ['--create'] + self.cmd_args + ['--xdcr-demand-encryption', '1'],
+                             self.server_args)
+        self.assertIn('certificate required if encryption is demanded', self.str_output)
+
+    def test_create_xdcr_capella(self):
+        args = ['--create'] + self.cmd_args + [
+            '--xdcr-hostname', 'cb.abcdef12345678.cloud.couchbase.com', '--xdcr-demand-encryption', '1']
+        self.no_error_run(self.command + args, self.server_args)
+        self.assertIn('POST:/pools/default/remoteClusters', self.server.trace)
+        expected_params = [
+            'name=name', 'hostname=cb.abcdef12345678.cloud.couchbase.com', 'username=username', 'password=pwd',
+            'demandEncryption=1', 'encryptionType=full']
         self.rest_parameter_match(expected_params)
 
     def test_delete_xdcr(self):

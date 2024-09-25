@@ -4226,9 +4226,12 @@ class XdcrSetup(Subcommand):
                 opts.encryption_type = "full"
 
             if opts.encryption_type == "full":
-                if opts.certificate is None:
+                capella = 'cloud.couchbase.com' in opts.hostname
+                if opts.certificate is None and not capella:
                     _exit_if_errors(["certificate required if encryption is demanded"])
-                raw_cert = _exit_on_file_read_failure(opts.certificate)
+
+                if opts.certificate:
+                    raw_cert = _exit_on_file_read_failure(opts.certificate)
 
         raw_user_key = None
         if opts.r_key:
