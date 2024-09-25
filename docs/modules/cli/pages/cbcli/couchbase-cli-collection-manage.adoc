@@ -30,7 +30,7 @@ which allows further categorization and ease of management.
 
 The following rules define a valid collection or scope name:
 
-* Must be between 1 and 30 bytes long
+* Must be between 1 and 251 bytes long
 * Can only contain characters A-Z, a-z, 0-9 and the following
 symbols _ - %
 * Cannot start with _ or %
