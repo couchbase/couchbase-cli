@@ -2218,7 +2218,7 @@ class TestXdcrReplicate(CommandTest):
     def test_create_EE(self):
         self.no_error_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
                                           '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:[a-zA-z]+',
-                                          '--xdcr-replication-mode', 'capi', '--enable-compression', '1'],
+                                          '--enable-compression', '1'],
                           self.server_args)
         self.assertIn('POST:/controller/createReplication', self.server.trace)
         expected_params = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1', 'compressionType=Auto',
@@ -2227,8 +2227,7 @@ class TestXdcrReplicate(CommandTest):
     def test_create_log_level(self):
         self.no_error_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
                                           '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:[a-zA-z]+',
-                                          '--xdcr-replication-mode', 'capi', '--enable-compression', '1',
-                                          '--log-level', 'Warn'], self.server_args)
+                                          '--enable-compression', '1', '--log-level', 'Warn'], self.server_args)
         self.assertIn('POST:/controller/createReplication', self.server.trace)
         expected_params = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1', 'compressionType=Auto',
                            'filterExpression=key%3A%5Ba-zA-z%5D%2B', 'replicationType=continuous', 'logLevel=Warn']
@@ -2238,8 +2237,8 @@ class TestXdcrReplicate(CommandTest):
     def test_create_with_mutually_exclusive_args(self):
         self.system_exit_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket',
                                              'bucket2', '--xdcr-from-bucket', 'bucket1', '--filter-expression',
-                                             'key:[a-zA-z]+', '--xdcr-replication-mode', 'capi', '--enable-compression',
-                                             '1', '--collection-explicit-mappings', '1', '--collection-migration', '1'],
+                                             'key:[a-zA-z]+', '--enable-compression', '1',
+                                             '--collection-explicit-mappings', '1', '--collection-migration', '1'],
                              self.server_args)
         self.assertIn('cannot enable both collection migration and explicit mappings', self.str_output)
 
@@ -2254,8 +2253,6 @@ class TestXdcrReplicate(CommandTest):
                                              'bucket1',
                                              '--filter-expression',
                                              'key:[a-zA-z]+',
-                                             '--xdcr-replication-mode',
-                                             'capi',
                                              '--enable-compression',
                                              '1'],
                              self.server_args)

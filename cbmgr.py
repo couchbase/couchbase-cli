@@ -3992,8 +3992,6 @@ class XdcrReplicate(Subcommand):
                            help="The name bucket to replicate data to")
         group.add_argument("--xdcr-cluster-name", dest="cluster_name", metavar="<name>",
                            help="The name of the cluster reference to replicate to")
-        group.add_argument("--xdcr-replication-mode", dest="rep_mode", metavar="<mode>",
-                           choices=["xmem", "capi"], action=CBDeprecatedAction, help=SUPPRESS)
         group.add_argument("--filter-expression", dest="filter", metavar="<regex>",
                            help="Regular expression to filter replication streams")
         group.add_argument("--filter-skip-restream", dest="filter_skip", action="store_true", default=False,
