@@ -2361,6 +2361,13 @@ class TestXdcrSetup(CommandTest):
             'demandEncryption=1', 'encryptionType=full']
         self.rest_parameter_match(expected_params)
 
+    def test_create_xdcr_external(self):
+        self.no_error_run(self.command + ['--create'] + self.cmd_args + ['--xdcr-hostname-external'], self.server_args)
+        self.assertIn('POST:/pools/default/remoteClusters', self.server.trace)
+        expected_params = ['name=name', 'hostname=hostname', 'username=username', 'password=pwd', 'demandEncryption=0',
+                           'network_type=external']
+        self.rest_parameter_match(expected_params)
+
     def test_delete_xdcr(self):
         self.no_error_run(self.command + ['--delete'] + self.cmd_args, self.server_args)
         self.assertIn('DELETE:/pools/default/remoteClusters/name', self.server.trace)

@@ -15,7 +15,7 @@ Manage references to remote clusters
 _couchbase-cli xdcr-setup_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
     [--client-key-password <password>] [--create] [--delete] [--edit] [--list]
-    [--xdcr-cluster-name <name>] [--xdcr-hostname <hostname>]
+    [--xdcr-cluster-name <name>] [--xdcr-hostname <hostname>] [--xdcr-hostname-external]
     [--xdcr-username <username>] [--xdcr-password <password>]
     [--xdcr-user-certificate <path>] [--xdcr-user-key <path>]
     [--xdcr-certificate <file>] [--xdcr-secure-connection <type>]
@@ -46,6 +46,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --xdcr-hostname <hostname>::
   The hostname of the remote cluster reference.
+
+--xdcr-hostname-external::
+  Specifies that the hostname passed as `--xdcr-hostname` is an external address.
 
 --xdcr-username <username>::
   The username of the remote cluster reference.

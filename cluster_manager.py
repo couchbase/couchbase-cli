@@ -1749,19 +1749,19 @@ class ClusterManager(object):
         url = f'{self.hostname}/settings/clientCertAuth'
         return self._get(url)
 
-    def create_xdcr_reference(self, name, hostname, username, password, encrypted,
+    def create_xdcr_reference(self, name, hostname, hostname_external, username, password, encrypted,
                               encryption_type, certificate, client_certificate, client_key):
-        return self._set_xdcr_reference(False, name, hostname, username,
+        return self._set_xdcr_reference(False, name, hostname, hostname_external, username,
                                         password, encrypted, encryption_type,
                                         certificate, client_certificate, client_key)
 
-    def edit_xdcr_reference(self, name, hostname, username, password, encrypted,
+    def edit_xdcr_reference(self, name, hostname, hostname_external, username, password, encrypted,
                             encryption_type, certificate, client_certificate, client_key):
-        return self._set_xdcr_reference(True, name, hostname, username,
+        return self._set_xdcr_reference(True, name, hostname, hostname_external, username,
                                         password, encrypted, encryption_type,
                                         certificate, client_certificate, client_key)
 
-    def _set_xdcr_reference(self, edit, name, hostname, username, password,
+    def _set_xdcr_reference(self, edit, name, hostname, hostname_external, username, password,
                             encrypted, encryption_type, certificate, client_certificate, client_key):
         url = f'{self.hostname}/pools/default/remoteClusters'
         params = {}
@@ -1773,6 +1773,8 @@ class ClusterManager(object):
             params["name"] = name
         if hostname is not None:
             params["hostname"] = hostname
+        if hostname_external:
+            params["network_type"] = "external"
         if username is not None:
             params["username"] = username
         if password is not None:
