@@ -111,6 +111,9 @@ man:couchbase-cli-reset-admin-password[1]::
 man:couchbase-cli-reset-cipher-suites[1]::
   Resets the cipher suites to the default.
 
+man:couchbase-cli-admin-manage[1]::
+  Manages the built-in administrator.
+
 man:couchbase-cli-server-add[1]::
   Adds a server to the cluster.
 

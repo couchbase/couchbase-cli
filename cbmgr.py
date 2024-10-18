@@ -2088,6 +2088,56 @@ class ResetAdminPassword(LocalSubcommand):
         return "Resets the administrator password"
 
 
+class AdminManage(LocalSubcommand):
+    """The admin manage command"""
+
+    def __init__(self):
+        super(AdminManage, self).__init__()
+        self.parser.prog = "couchbase-cli admin-manage"
+        group = self.parser.add_argument_group("Manage admin options")
+        group.add_argument("-P", "--port", metavar="<port>", default="8091",
+                           help="The REST API port, defaults to 8091")
+        group.add_argument("-I", "--ip", metavar="<ip>", default="localhost",
+                           help="The IP address of the cluster, defaults to localhost")
+        me_group = group.add_mutually_exclusive_group(required=True)
+        me_group.add_argument("--lock", action="store_true",
+                              help="Locks the built-in administrator")
+        me_group.add_argument("--unlock", action="store_true",
+                              help="Unlocks the built-in administrator")
+
+    def execute(self, opts):
+        token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
+        ip = opts.ip if ":" not in opts.ip else "[" + opts.ip + "]"
+        rest = ClusterManager("http://" + ip + ":" + opts.port, "@localtoken", token)
+        check_cluster_initialized(rest)
+        check_versions(rest)
+
+        if opts.lock:
+            self._lock_admin(rest)
+        elif opts.unlock:
+            self._unlock_admin(rest)
+
+    @staticmethod
+    def _lock_admin(rest):
+        _, errors = rest.lock_admin()
+        _exit_if_errors(errors)
+        _success("Administrator locked")
+
+    @staticmethod
+    def _unlock_admin(rest):
+        _, errors = rest.unlock_admin()
+        _exit_if_errors(errors)
+        _success("Administrator unlocked")
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-admin-manage")
+
+    @staticmethod
+    def get_description():
+        return "Manages the built-in administrator"
+
+
 class ServerAdd(Subcommand):
     """The server add command"""
 

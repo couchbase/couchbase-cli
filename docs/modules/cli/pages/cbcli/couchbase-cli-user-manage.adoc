@@ -512,6 +512,7 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 
 == SEE ALSO
 
-man:couchbase-cli-setting-ldap[1]
+man:couchbase-cli-setting-ldap[1],
+man:couchbase-cli-admin-manage[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]

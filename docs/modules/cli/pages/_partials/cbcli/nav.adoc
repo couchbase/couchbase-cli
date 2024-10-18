@@ -33,6 +33,7 @@
  ** xref:cli:cbcli/couchbase-cli-recovery.adoc[recovery]
  ** xref:cli:cbcli/couchbase-cli-reset-admin-password.adoc[reset-admin-password]
  ** xref:cli:cbcli/couchbase-cli-reset-cipher-suites.adoc[reset-cipher-suites]
+ ** xref:cli:cbcli/couchbase-cli-admin-manage.adoc[admin-manage]
  ** xref:cli:cbcli/couchbase-cli-server-add.adoc[server-add]
  ** xref:cli:cbcli/couchbase-cli-server-info.adoc[server-info]
  ** xref:cli:cbcli/couchbase-cli-server-list.adoc[server-list]

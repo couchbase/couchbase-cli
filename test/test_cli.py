@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 from mock_server import MockRESTServer, generate_self_signed_cert
 
-from cbmgr import AnalyticsLinkSetup, CollectionManage, CouchbaseCLI, ResetAdminPassword, validate_credential_flags
+from cbmgr import AnalyticsLinkSetup, CollectionManage, CouchbaseCLI, ResetAdminPassword, validate_credential_flags, AdminManage
 from couchbaseConstants import parse_host_port
 
 host = '127.0.0.1'
@@ -1726,6 +1726,46 @@ class TestResetAdminPassword(unittest.TestCase):
 
         # Check the number of calls to _exit_if_errors
         self.assertEqual(mock_exit_errors.call_count, 5)
+
+
+class TestLockUnlockAdmin(unittest.TestCase):
+    @patch('cbmgr._exit_on_file_read_failure')
+    @patch('cbmgr.ClusterManager')
+    @patch('cbmgr._exit_if_errors')
+    @patch('cbmgr._success')
+    def test_execute(self, mock_success, mock_exit_errors, mock_ClusterManager, mock_exit_on_file_read_failure):
+        # Arrange
+        mock_exit_on_file_read_failure.return_value = 'mock_token\n'
+        mock_ClusterManager.return_value = MagicMock()
+        mock_ClusterManager.return_value.is_cluster_initialized.return_value = True, []
+        mock_ClusterManager.return_value.pools.return_value = {'implementationVersion': '1.0.0'}, []
+        mock_ClusterManager.return_value.lock_admin.return_value = None, []
+        mock_ClusterManager.return_value.unlock_admin.return_value = None, []
+
+        # Test case 1: lock
+        opts = MagicMock()
+        opts.config_path = '/path/to/config'
+        opts.ip = 'localhost'
+        opts.port = '8091'
+        opts.lock = True
+        AdminManage().execute(opts)
+        mock_ClusterManager.return_value.lock_admin.assert_called_once()
+
+        # Test case 2: unlock
+        opts.lock = False
+        opts.unlock = True
+        AdminManage().execute(opts)
+        mock_ClusterManager.return_value.unlock_admin.assert_called_once()
+
+        # Test case 3: lock with -I and -P
+        opts.ip = '192.168.1.1'
+        opts.port = '9000'
+        AdminManage().execute(opts)
+        mock_ClusterManager.assert_called_with('http://192.168.1.1:9000', '@localtoken', 'mock_token')
+        mock_ClusterManager.return_value.lock_admin.assert_called()
+
+        # Check the number of calls to _exit_if_errors
+        self.assertEqual(mock_exit_errors.call_count, 3)
 
 
 class TestSslManage(CommandTest):

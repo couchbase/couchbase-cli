@@ -377,6 +377,16 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, None)
 
+    def lock_admin(self):
+        url = f'{self.hostname}/controller/lockAdmin'
+
+        return self._post_form_encoded(url, None)
+
+    def unlock_admin(self):
+        url = f'{self.hostname}/controller/unlockAdmin'
+
+        return self._post_form_encoded(url, None)
+
     def rotate_master_pwd(self):
         url = f'{self.hostname}/node/controller/rotateDataKey'
         return self._post_form_encoded(url, None)
