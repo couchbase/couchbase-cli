@@ -2236,6 +2236,26 @@ class TestUserManage(CommandTest):
         self.system_exit_run(self.command + ['--get-group'], self.server_args)
         self.assertIn('--group-name is required with the --get-group option', self.str_output)
 
+    def test_lock_no_username(self):
+        self.system_exit_run(self.command + ['--lock'], self.server_args)
+        self.assertIn('--rbac-username is required when using the --lock/--unlock option', self.str_output)
+
+    def test_unlock_no_username(self):
+        self.system_exit_run(self.command + ['--unlock'], self.server_args)
+        self.assertIn('--rbac-username is required when using the --lock/--unlock option', self.str_output)
+
+    def test_lock(self):
+        self.no_error_run(self.command + ['--lock', '--rbac-username', 'username'], self.server_args)
+        self.assertIn('PATCH:/settings/rbac/users/local/username', self.server.trace)
+        expected_params = ['locked=true']
+
+    def test_unlock(self):
+        self.no_error_run(self.command + ['--unlock', '--rbac-username', 'username'], self.server_args)
+        self.assertIn('PATCH:/settings/rbac/users/local/username', self.server.trace)
+        expected_params = ['locked=false']
+        self.rest_parameter_match(expected_params)
+        self.rest_parameter_match(expected_params)
+
 
 class TestMasterPassword(CommandTest):
     def setUp(self):

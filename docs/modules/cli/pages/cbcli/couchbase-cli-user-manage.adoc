@@ -17,8 +17,8 @@ _couchbase-cli user-manage_ [--cluster <url>] [--username <user>] [--password <p
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
     [--client-key-password <password>] [--delete] [--list] [--my-roles] [--set]
     [--set-group] [--delete-group] [--list-groups] [--get-group]
-    [-- get] [--rbac-username <username>] [--rbac-password <password>]
-    [--rbac-name <name>] [--roles <roles_list>]
+    [-- get] [--lock] [--unlock] [--rbac-username <username>]
+    [--rbac-password <password>] [--rbac-name <name>] [--roles <roles_list>]
     [--auth-domain <domain>] [--user-groups <group>]
     [--group-description <text>] [--ldap-ref <ref>]
 
@@ -61,6 +61,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --get-group::
   Gets the details of a group.
+
+--lock::
+  Locks a user account.
+
+--unlock::
+  Unlocks a user account.
 
 --rbac-username <username>::
   Specifies the username of the RBAC user to modify. This option is used when

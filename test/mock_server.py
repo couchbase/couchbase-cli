@@ -532,7 +532,7 @@ endpoints = [
     (r'/settings/rbac/users/\w+$', {'PUT': do_nothing, 'GET': get_user_groups}),
     (r'/settings/rbac/groups/(\w|-)+', {'PUT': do_nothing, 'DELETE': do_nothing, 'GET': get_group}),
     (r'/settings/rbac/groups', {'GET': get_groups}),
-    (r'/settings/rbac/users/\w+/\w+$', {'DELETE': do_nothing, 'PUT': do_nothing, 'GET': get_user}),
+    (r'/settings/rbac/users/\w+/\w+$', {'DELETE': do_nothing, 'PUT': do_nothing, 'GET': get_user, 'PATCH': do_nothing}),
     (r'/settings/saslauthdAuth$', {'POST': do_nothing}),
     (r'/settings/ldap', {'POST': do_nothing, 'GET': get_ldap_settings}),
     (r'/settings/alerts$', {'POST': do_nothing}),

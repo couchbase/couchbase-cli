@@ -3857,6 +3857,10 @@ class UserManage(Subcommand):
                            help="List my roles")
         group.add_argument("--set", dest="set", action="store_true", default=False,
                            help="Create or edit an RBAC user")
+        group.add_argument("--lock", dest="lock", action="store_true", default=False,
+                           help="Lock an RBAC user")
+        group.add_argument("--unlock", dest="unlock", action="store_true", default=False,
+                           help="Unlock an RBAC user")
         group.add_argument("--set-group", dest="set_group", action="store_true", default=False,
                            help="Create or edit a user group")
         group.add_argument("--delete-group", dest="delete_group", action="store_true", default=False,
@@ -3885,13 +3889,11 @@ class UserManage(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get, opts.get_group,
-                             opts.list_group, opts.delete_group, opts.set_group])
-        if num_selectors == 0:
-            _exit_if_errors(['Must specify --delete, --list, --my-roles, --set, --get, --get-group, --set-group, '
-                             '--list-groups or --delete-group'])
-        elif num_selectors != 1:
-            _exit_if_errors(['Only one of the following can be specified:--delete, --list, --my-roles, --set, --get,'
-                             ' --get-group, --set-group, --list-groups or --delete-group'])
+                             opts.list_group, opts.delete_group, opts.set_group, opts.lock, opts.unlock])
+        if num_selectors != 1:
+            _exit_if_errors([
+                'Exactly one of the following must be specified:--delete, --list, --my-roles, --set, --get,'
+                ' --get-group, --set-group, --list-groups, --delete-group, --lock or --unlock'])
 
         if opts.delete:
             self._delete(opts)
@@ -3911,6 +3913,8 @@ class UserManage(Subcommand):
             self._list_groups()
         elif opts.delete_group:
             self._delete_group(opts)
+        elif opts.lock or opts.unlock:
+            self._lock_unlock(opts)
 
     def _delete_group(self, opts):
         if opts.group is None:
@@ -4029,6 +4033,15 @@ class UserManage(Subcommand):
                      'the Internet.')
 
         _success(f"User {opts.rbac_user} set")
+
+    def _lock_unlock(self, opts):
+        if opts.rbac_user is None:
+            _exit_if_errors(["--rbac-username is required when using the --lock/--unlock option"])
+
+        _, errors = self.rest.lock_rbac_user(opts.rbac_user, opts.lock)
+        _exit_if_errors(errors)
+
+        _success(f"User {opts.rbac_user} {'locked' if opts.lock else 'unlocked'}")
 
     @staticmethod
     def get_man_page_name():

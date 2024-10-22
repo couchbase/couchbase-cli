@@ -1323,6 +1323,11 @@ class ClusterManager(object):
 
         return self._put(url, params)
 
+    def lock_rbac_user(self, username, lock):
+        url = f'{self.hostname}/settings/rbac/users/local/{username}'
+        params = {'locked': 'true' if lock else 'false'}
+        return self._patch_form_encoded(url, params)
+
     def _format_user_roles(self, roles):
         directly_assigned = filter(lambda r: any(o for o in r['origins'] if o['type'] == 'user'), roles)
         return ",".join(self._format_role(r) for r in directly_assigned)
