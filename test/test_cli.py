@@ -4557,6 +4557,16 @@ class TestSettingQuery(CommandTest):
         self.assertIn('POST:/settings/querySettings', self.server.trace)
         self.rest_parameter_match(['queryNodeQuota=256', 'queryNodeQuotaValPercent=42', 'queryUseReplica=off'])
 
+    def test_num_cpus_negative(self):
+        self.system_exit_run(self.command + ['--set', '--num-cpus', '-1'], self.server_args)
+        self.assertIn('--num-cpus must be a positive integer', self.str_output)
+
+    def test_num_cpus(self):
+        self.no_error_run(self.command + ['--set', '--num-cpus', '5'], self.server_args)
+
+        self.assertIn('POST:/settings/querySettings', self.server.trace)
+        self.rest_parameter_match(['queryNumCpus=5'])
+
 
 class TestSettingAnalytics(CommandTest):
     def setUp(self):

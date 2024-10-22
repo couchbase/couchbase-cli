@@ -1972,7 +1972,7 @@ class ClusterManager(object):
     def post_query_settings(self, pipeline_batch, pipeline_cap, scan_cap, timeout, prepared_limit, completed_limit,
                             complete_threshold, log_level, max_parallelism, n1ql_feature_control, temp_dir,
                             temp_dir_max_size, cbo, memory_quota, tx_timeout, node_quota, node_quota_val_percent,
-                            use_replica):
+                            use_replica, num_cpus):
         url = f'{self.hostname}/settings/querySettings'
         params = {}
         if pipeline_batch is not None:
@@ -2011,6 +2011,8 @@ class ClusterManager(object):
             params['queryNodeQuotaValPercent'] = node_quota_val_percent
         if use_replica is not None:
             params['queryUseReplica'] = use_replica
+        if num_cpus is not None:
+            params['queryNumCpus'] = num_cpus
 
         return self._post_form_encoded(url, params)
 

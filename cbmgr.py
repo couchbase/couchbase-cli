@@ -5400,6 +5400,8 @@ class SettingQuery(Subcommand):
                            help='Sets the percentage of node quota that is reserved for value memory.')
         group.add_argument('--use-replica', metavar='<unset|off|on>', type=str, default=None,
                            help='Sets whether or not a query can read from replica vBuckets.')
+        group.add_argument('--num-cpus', metavar='<num>', type=int, default=None,
+                           help='Number of CPUs to use for query execution.')
 
         access_list_group = self.parser.add_argument_group('Query curl access settings')
         access_list_group.add_argument('--curl-access', choices=['restricted', 'unrestricted'], default=None,
@@ -5443,18 +5445,21 @@ class SettingQuery(Subcommand):
                                    opts.log_level, opts.max_parallelism, opts.n1ql_feature_control, opts.temp_dir,
                                    opts.temp_dir_size, opts.cost_based_optimizer, opts.memory_quota,
                                    opts.transaction_timeout, opts.node_quota, opts.node_quota_val_percent,
-                                   opts.use_replica]):
+                                   opts.use_replica, opts.num_cpus]):
             if access_list:
                 return
 
             _exit_if_errors(['Please provide at least one other option with --set'])
+
+        if opts.num_cpus is not None and opts.num_cpus <= 0:
+            _exit_if_errors(['--num-cpus must be a positive integer'])
 
         _, err = self.rest.post_query_settings(opts.pipeline_batch, opts.pipeline_cap, opts.scan_cap, opts.timeout,
                                                opts.prepared_limit, opts.completed_limit, opts.completed_threshold,
                                                opts.log_level, opts.max_parallelism, opts.n1ql_feature_control,
                                                opts.temp_dir, opts.temp_dir_size, opts.cost_based_optimizer,
                                                opts.memory_quota, opts.transaction_timeout, opts.node_quota,
-                                               opts.node_quota_val_percent, opts.use_replica)
+                                               opts.node_quota_val_percent, opts.use_replica, opts.num_cpus)
         _exit_if_errors(err)
 
     @staticmethod

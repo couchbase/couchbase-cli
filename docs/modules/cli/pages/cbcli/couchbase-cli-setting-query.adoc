@@ -24,7 +24,7 @@ _couchbase-cli setting-query [--cluster <url>] [--username <user>] [--password <
     [--transaction-timeout <duration>] [--node-quota <mebibytes>]
     [--node-quota-val-percent <perc>] [--use-replica <unset|off|on>]
     [--curl-access <restricted|unrestricted>] [--allowed-urls <urls>]
-    [--disallowed-urls <urls>]
+    [--disallowed-urls <urls>] [--num-cpus <num>]
 
 == DESCRIPTION
 
@@ -123,6 +123,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Comma separated lists of URLs that are disallowed to be accessed by the curl
   function. This option must be provided together with --curl-access restricted.
   If allowed-urls also provided then the disallowed list takes precedence.
+
+--num-cpus <num>::
+  The number of CPU cores the query service is allowed to utilize.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
