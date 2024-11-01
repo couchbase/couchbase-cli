@@ -1033,7 +1033,14 @@ class BucketCreate(Subcommand):
         if opts.compression_mode and not self.enterprise:
             _exit_if_errors(["Compression mode can only be configured on enterprise edition"])
 
+        version, errors = self.rest.min_version()
+        _exit_if_errors(errors)
+
         if opts.type == "memcached":
+            if compare_versions(version, "8.0.0") >= 0:
+                _exit_if_errors(["Memcached buckets have been removed in versions 8.0 and above, please use ephemeral "
+                                 "buckets instead"])
+
             _deprecated("Memcached buckets are deprecated, please use ephemeral buckets instead")
             if opts.replica_count is not None:
                 _exit_if_errors(["--bucket-replica cannot be specified for a memcached bucket"])

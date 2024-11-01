@@ -451,6 +451,7 @@ class TestBucketCreate(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_bucket_create_memcached(self):
+        self.server_args['pools_default']['nodes'][0]['version'] = '7.0.0'
         args = [
             '--bucket-type', 'memcached', '--bucket-ramsize', '100'
         ]
@@ -460,6 +461,13 @@ class TestBucketCreate(CommandTest):
         ]
         self.rest_parameter_match(expected_params)
         self.deprecated_output()
+
+    def test_bucket_create_memcached_with_8_0(self):
+        self.server_args['pools_default'] = {'nodes': [{'version': '8.0.0'}]}
+
+        args = ['--bucket-type', 'memcached', '--bucket-ramsize', '100']
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("Memcached buckets have been removed", self.str_output)
 
     def test_bucket_create_EE_options_in_CE(self):
         self.server_args['enterprise'] = False
@@ -476,6 +484,7 @@ class TestBucketCreate(CommandTest):
         self.assertIn('--bucket-eviction-policy must either be noEviction or nruEviction', self.str_output)
 
     def test_bucket_create_memcached_with_couch_options(self):
+        self.server_args['pools_default']['nodes'][0]['version'] = '7.0.0'
         args = [
             '--bucket-type', 'memcached', '--bucket-ramsize', '100', '--bucket-replica', '0',
         ]
@@ -483,6 +492,7 @@ class TestBucketCreate(CommandTest):
         self.assertIn('--bucket-replica cannot be specified for a memcached bucket', self.str_output)
 
     def test_bucket_create_memcached_with_durability_min_level(self):
+        self.server_args['pools_default']['nodes'][0]['version'] = '7.0.0'
         args = [
             '--bucket-type', 'memcached', '--bucket-ramsize', '100',
             '--durability-min-level', 'majorityAndPersistActive',
