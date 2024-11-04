@@ -1767,7 +1767,7 @@ class TestSettingXdcr(CommandTest):
 # TODO: TestRestCipherSuites
 
 class TestResetAdminPassword(unittest.TestCase):
-    @patch('cbmgr._exit_on_file_read_failure')
+    @patch('cbmgr._exit_on_encrypted_file_read_failure')
     @patch('cbmgr.ClusterManager')
     @patch('cbmgr._exit_if_errors')
     @patch('cbmgr._success')
@@ -1822,7 +1822,7 @@ class TestResetAdminPassword(unittest.TestCase):
 
 
 class TestLockUnlockAdmin(unittest.TestCase):
-    @patch('cbmgr._exit_on_file_read_failure')
+    @patch('cbmgr._exit_on_encrypted_file_read_failure')
     @patch('cbmgr.ClusterManager')
     @patch('cbmgr._exit_if_errors')
     @patch('cbmgr._success')

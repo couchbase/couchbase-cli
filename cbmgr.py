@@ -402,6 +402,25 @@ def _exit_on_file_write_failure(fname, to_write):
         _exit_if_errors([error])
 
 
+def _exit_on_encrypted_file_read_failure(fname, password, config_path):
+    cbcat_path = os.path.join(get_bin_path(), 'cbcat')
+    if not os.path.isfile(cbcat_path):
+        _exit_if_errors([f'`{cbcat_path}` does not exist'])
+    gosecrets_cfg_path = os.path.join(config_path, 'config', 'gosecrets.cfg')
+    args = [cbcat_path, '--with-gosecrets', gosecrets_cfg_path,
+            '--password', '-', fname]
+    r = subprocess.run(args, input=password, text=True, capture_output=True,
+                       check=False)
+
+    if r.returncode == 2:  # cbcat returns 2 if and only it is incorrect password
+        _exit_if_errors(['Invalid master password'])
+
+    if r.returncode != 0:
+        _exit_if_errors([f'cbcat returned non zero return code: {r.stderr}'])
+
+    return r.stdout
+
+
 def _exit_on_file_read_failure(fname, to_report=None):
     try:
         rfile = open(fname, 'r', encoding="utf-8")
@@ -1816,12 +1835,22 @@ class ResetCipherSuites(LocalSubcommand):
         group.add_argument("--force", action='store_true', default=False, help="Force resetting of the cipher suites")
         group.add_argument("-P", "--port", metavar="<port>", default="8091",
                            help="The REST API port, defaults to 8091")
+        group.add_argument("--master-password", dest="master_password", metavar="<master_password>",
+                           required=False, action=CBNonEchoedAction, envvar=None,
+                           prompt_text="Enter master password:",
+                           confirm_text=None,
+                           help="Node's master password")
 
     def execute(self, opts):
         if opts.config_path is None:
             _exit_if_errors(["Unable to locate the configuration path, please specify it using --config-path"])
 
-        token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
+        token_path = os.path.join(opts.config_path, "localtoken")
+        master_pass = ''
+        if opts.master_password is not None:
+            master_pass = opts.master_password
+        token = _exit_on_encrypted_file_read_failure(token_path, master_pass,
+                                                     opts.config_path).rstrip()
         rest = ClusterManager("http://127.0.0.1:" + opts.port, "@localtoken", token)
         check_cluster_initialized(rest)
         check_versions(rest)
@@ -2233,6 +2262,11 @@ class ResetAdminPassword(LocalSubcommand):
                            prompt_text="Enter new administrator password:",
                            confirm_text="Confirm new administrator password:",
                            help="The new administrator password")
+        group.add_argument("--master-password", dest="master_password", metavar="<master_password>",
+                           required=False, action=CBNonEchoedAction, envvar=None,
+                           prompt_text="Enter master password:",
+                           confirm_text=None,
+                           help="Node's master password")
         group.add_argument("--regenerate", dest="regenerate", action="store_true",
                            help="Generates a random administrator password")
         group.add_argument("-P", "--port", metavar="<port>", default="8091",
@@ -2244,7 +2278,12 @@ class ResetAdminPassword(LocalSubcommand):
         if opts.config_path is None:
             _exit_if_errors(["Unable to locate the configuration path, please specify it using --config-path"])
 
-        token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
+        token_path = os.path.join(opts.config_path, "localtoken")
+        master_pass = ''
+        if opts.master_password is not None:
+            master_pass = opts.master_password
+        token = _exit_on_encrypted_file_read_failure(token_path, master_pass,
+                                                     opts.config_path).rstrip()
         ip = opts.ip if ":" not in opts.ip else "[" + opts.ip + "]"
         rest = ClusterManager("http://" + ip + ":" + opts.port, "@localtoken", token)
         check_cluster_initialized(rest)
@@ -2288,9 +2327,19 @@ class AdminManage(LocalSubcommand):
                               help="Locks the built-in administrator")
         me_group.add_argument("--unlock", action="store_true",
                               help="Unlocks the built-in administrator")
+        group.add_argument("--master-password", dest="master_password", metavar="<master_password>",
+                           required=False, action=CBNonEchoedAction, envvar=None,
+                           prompt_text="Enter master password:",
+                           confirm_text=None,
+                           help="Node's master password")
 
     def execute(self, opts):
-        token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
+        token_path = os.path.join(opts.config_path, "localtoken")
+        master_pass = ''
+        if opts.master_password is not None:
+            master_pass = opts.master_password
+        token = _exit_on_encrypted_file_read_failure(token_path, master_pass,
+                                                     opts.config_path).rstrip()
         ip = opts.ip if ":" not in opts.ip else "[" + opts.ip + "]"
         rest = ClusterManager("http://" + ip + ":" + opts.port, "@localtoken", token)
         check_cluster_initialized(rest)
