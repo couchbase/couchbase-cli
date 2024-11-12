@@ -13,6 +13,7 @@ Resets the Couchbase Server cipher suites to the default
 
 [verse]
 _couchbase-cli reset-cipher-suites_ [--force] [--port <port>]
+    [--config-path <path>]
 
 == DESCRIPTION
 
@@ -36,6 +37,15 @@ have read access to the local Couchbase Server configuration files.
 --port::
   Specify the REST API port of the locally running Couchbase Server. If no
   port is specified the default port 8091 is used.
+
+--config-path::
+  Manually specify the path to the Couchbase Server configuration file. This
+  is only needed if the configuration file is not in the default location,
+  otherwise it can be found at `var/lib/couchbase` within the Couchbase
+  Server installation directory.
+
+  Note: on Mac, this path is instead located in the user's home directory, at
+  `~/Library/Application Support/Couchbase/var/lib/couchbase`.
 
 == EXAMPLES
 
