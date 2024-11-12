@@ -848,7 +848,7 @@ class ClusterManager(object):
                       view_frag_size, from_hour, from_min, to_hour, to_min,
                       abort_outside, paralleldb_and_view_compact, purge_interval,
                       history_retention_bytes, history_retention_seconds,
-                      history_retention_default, rank, timeout=60):
+                      history_retention_default, rank, vbuckets, timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
         if name is None:
@@ -918,6 +918,9 @@ class ClusterManager(object):
                 params["allowedTimePeriod[abortOutside]"] = one_zero_boolean_to_string(abort_outside)
             if paralleldb_and_view_compact is not None:
                 params["parallelDBAndViewCompaction"] = one_zero_boolean_to_string(paralleldb_and_view_compact)
+
+        if vbuckets is not None:
+            params["numVBuckets"] = vbuckets
 
         if bucket_type != "memcached" and purge_interval is not None:
             params["purgeInterval"] = purge_interval

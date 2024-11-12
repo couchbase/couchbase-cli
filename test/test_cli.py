@@ -14,7 +14,8 @@ from unittest.mock import MagicMock, patch
 
 from mock_server import MockRESTServer, generate_self_signed_cert
 
-from cbmgr import AnalyticsLinkSetup, CollectionManage, CouchbaseCLI, ResetAdminPassword, validate_credential_flags, AdminManage
+from cbmgr import (AdminManage, AnalyticsLinkSetup, CollectionManage, CouchbaseCLI, ResetAdminPassword,
+                   validate_credential_flags)
 from couchbaseConstants import parse_host_port
 
 host = '127.0.0.1'
@@ -410,7 +411,7 @@ class TestBucketCreate(CommandTest):
                                              '--parallel-db-view-compaction', '1', '--purge-interval', '2']
 
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
-                            'buckets': []}
+                            'buckets': [], 'pools_default': {'nodes': [{'version': '8.0.0'}]}}
 
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase'}
         self.bucket_memcached = {'name': 'name', 'bucketType': 'memcached'}
@@ -421,7 +422,7 @@ class TestBucketCreate(CommandTest):
                           self.server_args)
         expected_params = [
             'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'maxTTL=20',
-            'compressionMode=active', 'ramQuotaMB=100', 'storageBackend=couchstore', 'rank=3'
+            'compressionMode=active', 'ramQuotaMB=100', 'storageBackend=magma', 'rank=3', 'numVBuckets=128',
         ]
         self.rest_parameter_match(expected_params)
 
@@ -433,7 +434,7 @@ class TestBucketCreate(CommandTest):
             'bucketType=couchbase', 'databaseFragmentationThreshold%5Bpercentage%5D=25', 'name=name',
             'evictionPolicy=fullEviction', 'autoCompactionDefined=true', 'parallelDBAndViewCompaction=true',
             'replicaNumber=0', 'purgeInterval=2.0', 'viewFragmentationThreshold%5Bpercentage%5D=20',
-            'ramQuotaMB=100', 'storageBackend=couchstore', 'rank=3'
+            'ramQuotaMB=100', 'storageBackend=magma', 'rank=3', 'numVBuckets=128',
         ]
 
         self.rest_parameter_match(expected_params)
@@ -446,7 +447,6 @@ class TestBucketCreate(CommandTest):
         self.no_error_run(self.command + self.command_args + args, self.server_args)
         expected_params = [
             'bucketType=ephemeral', 'replicaNumber=0', 'evictionPolicy=noEviction', 'name=name', 'ramQuotaMB=100',
-            'storageBackend=couchstore'
         ]
         self.rest_parameter_match(expected_params)
 
@@ -456,7 +456,7 @@ class TestBucketCreate(CommandTest):
         ]
         self.no_error_run(self.command + self.command_args + args, self.server_args)
         expected_params = [
-            'bucketType=memcached', 'ramQuotaMB=100', 'name=name', 'storageBackend=couchstore'
+            'bucketType=memcached', 'ramQuotaMB=100', 'name=name',
         ]
         self.rest_parameter_match(expected_params)
         self.deprecated_output()
@@ -542,7 +542,55 @@ class TestBucketCreate(CommandTest):
         self.no_error_run(self.command + self.command_args + args, self.server_args)
         expected_params = [
             'bucketType=couchbase', 'storageBackend=magma', 'name=name', 'ramQuotaMB=1024',
-            "historyRetentionBytes=1024", "historyRetentionSeconds=10", "historyRetentionCollectionDefault=false"
+            "historyRetentionBytes=1024", "historyRetentionSeconds=10", "historyRetentionCollectionDefault=false",
+            "numVBuckets=128",
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_create_magma_config_couchstore(self):
+        args = [
+            '--bucket-type', 'couchbase', '--storage-backend', 'couchstore', '--bucket-ramsize', '1024',
+            '--magma-configuration', 'standard'
+        ]
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("--magma-configuration is only valid for Magma buckets", self.str_output)
+
+    def test_bucket_create_magma_config_7_6(self):
+        self.server_args['pools_default'] = {'nodes': [{'version': '7.6.0'}]}
+        args = [
+            '--bucket-type', 'couchbase', '--storage-backend', 'magma', '--bucket-ramsize', '1024',
+            '--magma-configuration', 'standard'
+        ]
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("--magma-configuration can only be passed on 8.0 and above", self.str_output)
+
+    def test_bucket_create_magma_config_default_is_standard(self):
+        args = ['--bucket-type', 'couchbase', '--storage-backend', 'magma', '--bucket-ramsize', '1024']
+        self.no_error_run(self.command + self.command_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'storageBackend=magma', 'name=name', 'ramQuotaMB=1024', "numVBuckets=128",
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_create_magma_config_standard(self):
+        args = [
+            '--bucket-type', 'couchbase', '--storage-backend', 'magma', '--bucket-ramsize', '1024',
+            '--magma-configuration', 'standard'
+        ]
+        self.no_error_run(self.command + self.command_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'storageBackend=magma', 'name=name', 'ramQuotaMB=1024', "numVBuckets=128",
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_create_magma_config_large_scale(self):
+        args = [
+            '--bucket-type', 'couchbase', '--storage-backend', 'magma', '--bucket-ramsize', '1024',
+            '--magma-configuration', 'large-scale'
+        ]
+        self.no_error_run(self.command + self.command_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'storageBackend=magma', 'name=name', 'ramQuotaMB=1024', "numVBuckets=1024",
         ]
         self.rest_parameter_match(expected_params)
 

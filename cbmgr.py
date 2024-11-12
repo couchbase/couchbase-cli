@@ -41,7 +41,7 @@ BUCKET_TYPE_COUCHBASE = "membase"
 BUCKET_TYPE_MEMCACHED = "memcached"
 
 VERSION_UNKNOWN = "0.0.0"
-LATEST_VERSION = "7.6.0"
+LATEST_VERSION = "8.0.0"
 
 CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
 CB_ETC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "etc", "couchbase"))
@@ -1022,6 +1022,10 @@ class BucketCreate(Subcommand):
                            help="Sets the rank of this bucket in case of failover/rebalance. Buckets with larger "
                            "ranks are prioritised over buckets with smaller ranks")
 
+        group.add_argument("--magma-configuration", dest="magma_configuration", metavar="<configuration>", default=None,
+                           choices=["standard", "large-scale"], help="Sets the configuration for magma buckets, "
+                           "either 'standard' (the default) or 'large-scale'")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1060,12 +1064,30 @@ class BucketCreate(Subcommand):
                      or opts.paralleldb_and_view_compact is not None)):
             _warning(f'ignoring compaction settings as bucket type {opts.type} does not accept it')
 
-        storage_type = "couchstore"
+        storage_type = None
+        if opts.type == "couchbase":
+            storage_type = "magma"
+
         if opts.storage is not None:
             if opts.type != "couchbase":
                 _exit_if_errors(["--storage-backend is only valid for couchbase buckets"])
-            if opts.storage == "magma":
-                storage_type = "magma"
+            if opts.storage == "couchstore":
+                storage_type = "couchstore"
+
+        min_version, error = self.rest.min_version()
+        _exit_if_errors(error)
+
+        if storage_type != "magma" and opts.magma_configuration is not None:
+            _exit_if_errors(["--magma-configuration is only valid for Magma buckets"])
+        if opts.magma_configuration is not None and compare_versions(min_version, "8.0.0") < 0:
+            _exit_if_errors(["--magma-configuration can only be passed on 8.0 and above"])
+
+        if storage_type == "magma" and opts.magma_configuration is None:
+            opts.magma_configuration = "standard"
+
+        vbuckets = None
+        if opts.magma_configuration is not None and opts.type == "couchbase":
+            vbuckets = 128 if opts.magma_configuration == "standard" else 1024
 
         if opts.type != "couchbase":
             if opts.history_retention_bytes is not None:
@@ -1108,7 +1130,7 @@ class BucketCreate(Subcommand):
                                             opts.from_hour, opts.from_min, opts.to_hour, opts.to_min,
                                             opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval,
                                             opts.history_retention_bytes, opts.history_retention_seconds,
-                                            opts.enable_history_retention, opts.rank)
+                                            opts.enable_history_retention, opts.rank, vbuckets)
         _exit_if_errors(errors)
         _success("Bucket created")
 
