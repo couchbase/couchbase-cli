@@ -41,16 +41,19 @@ $ couchbase-cli bucket-list -c 192.168.1.5:8091 --username Administrator \
    numReplicas: 1
    ramQuota: 104857600
    ramUsed: 45302840
+   vBuckets: 1024
  airline-data
    bucketType: ephemeral
    numReplicas: 1
    ramQuota: 268435456
    ramUsed: 1134432
+   vBuckets: 1024
  flight-data
    bucketType: memcached
    numReplicas: 0
    ramQuota: 104857600
    ramUsed: 0
+   vBuckets: 1024
 ----
 == DISCUSSION
 

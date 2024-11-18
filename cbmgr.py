@@ -1402,6 +1402,7 @@ class BucketList(Subcommand):
                 print(f' numReplicas: {bucket["replicaNumber"]}')
                 print(f' ramQuota: {bucket["quota"]["ram"]}')
                 print(f' ramUsed: {bucket["basicStats"]["memUsed"]}')
+                print(f' vBuckets: {bucket["numVBuckets"]}')
 
     @staticmethod
     def get_man_page_name():
