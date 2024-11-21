@@ -1960,6 +1960,28 @@ class Rebalance(Subcommand):
         group = self.parser.add_argument_group("Rebalance options")
         group.add_argument("--server-remove", dest="server_remove", metavar="<server_list>",
                            help="A list of servers to remove from the cluster")
+        group.add_argument("--update-services", dest="update_services", action="store_true",
+                           default=False, help="Update services used by nodes from the cluster")
+        group.add_argument("--fts-add", dest="fts_add", metavar="<server_list>",
+                           help="A list of servers which should have the Search Service added")
+        group.add_argument("--fts-remove", dest="fts_remove", metavar="<server_list>",
+                           help="A list of servers which should have the Search Service removed")
+        group.add_argument("--index-add", dest="index_add", metavar="<server_list>",
+                           help="A list of servers which should have the Index Service added")
+        group.add_argument("--index-remove", dest="index_remove", metavar="<server_list>",
+                           help="A list of servers which should have the Index Service removed")
+        group.add_argument("--query-add", dest="n1ql_add", metavar="<server_list>",
+                           help="A list of servers which should have the Query Service added")
+        group.add_argument("--query-remove", dest="n1ql_remove", metavar="<server_list>",
+                           help="A list of servers which should have the Query Service removed")
+        group.add_argument("--backup-add", dest="backup_add", metavar="<server_list>",
+                           help="A list of servers which should have the Backup Service added")
+        group.add_argument("--backup-remove", dest="backup_remove", metavar="<server_list>",
+                           help="A list of servers which should have the Backup Service removed")
+        group.add_argument("--analytics-add", dest="cbas_add", metavar="<server_list>",
+                           help="A list of servers which should have the Analytics Service added")
+        group.add_argument("--analytics-remove", dest="cbas_remove", metavar="<server_list>",
+                           help="A list of servers which should have the Analytics Service removed")
         group.add_argument("--no-progress-bar", dest="no_bar", action="store_true",
                            default=False, help="Disables the progress bar")
         group.add_argument("--no-wait", dest="wait", action="store_false",
@@ -1967,12 +1989,64 @@ class Rebalance(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        eject_nodes = []
+        if opts.server_remove and opts.update_services:
+            _exit_if_errors(["Cannot specify both --server-remove and --update-services at the same time"])
+
+        services_modified = opts.fts_add or opts.fts_remove or \
+            opts.index_add or opts.index_remove or \
+            opts.n1ql_add or opts.n1ql_remove or \
+            opts.backup_add or opts.backup_remove or \
+            opts.cbas_add or opts.cbas_remove
+
+        if opts.update_services and not services_modified:
+            _exit_if_errors(["--update-services requires services to be added/removed from nodes"])
+
+        if services_modified and not opts.update_services:
+            _exit_if_errors(["Services can only be modified when using --update-services"])
+
         if opts.server_remove:
             eject_nodes = apply_default_port(opts.server_remove)
 
-        _, errors = self.rest.rebalance(eject_nodes)
-        _exit_if_errors(errors)
+            _, errors = self.rest.rebalance(eject_nodes)
+            _exit_if_errors(errors)
+
+        if opts.update_services:
+            fts_add, fts_remove = [], []
+            if opts.fts_add is not None:
+                fts_add = apply_default_port(opts.fts_add)
+            if opts.fts_remove is not None:
+                fts_remove = apply_default_port(opts.fts_remove)
+
+            index_add, index_remove = [], []
+            if opts.index_add is not None:
+                index_add = apply_default_port(opts.index_add)
+            if opts.index_remove is not None:
+                index_remove = apply_default_port(opts.index_remove)
+
+            n1ql_add, n1ql_remove = [], []
+            if opts.n1ql_add is not None:
+                n1ql_add = apply_default_port(opts.n1ql_add)
+            if opts.n1ql_remove is not None:
+                n1ql_remove = apply_default_port(opts.n1ql_remove)
+
+            backup_add, backup_remove = [], []
+            if opts.backup_add is not None:
+                backup_add = apply_default_port(opts.backup_add)
+            if opts.backup_remove is not None:
+                backup_remove = apply_default_port(opts.backup_remove)
+
+            cbas_add, cbas_remove = [], []
+            if opts.cbas_add is not None:
+                cbas_add = apply_default_port(opts.cbas_add)
+            if opts.cbas_remove is not None:
+                cbas_remove = apply_default_port(opts.cbas_remove)
+
+            _, errors = self.rest.rebalance_services(fts_add, fts_remove,
+                                                     index_add, index_remove,
+                                                     n1ql_add, n1ql_remove,
+                                                     backup_add, backup_remove,
+                                                     cbas_add, cbas_remove)
+            _exit_if_errors(errors)
 
         time.sleep(1)
 

@@ -14,8 +14,12 @@ Rebalances data and indexes across nodes in a cluster
 [verse]
 _couchbase-cli rebalance_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--server-remove <servers>] [--no-progress-bar]
-    [--no-wait]
+    [--client-key-password <password>] [--server-remove <servers>]
+    [--update-services] [--fts-add <servers>] [--fts-remove <servers>]
+    [--index-add <servers>] [--index-remove <servers>] [--query-add <servers>]
+    [--query-remove <servers>] [--backup-add <servers>]
+    [--backup-remove <servers>] [--analytics-add <servers>]
+    [--analytics-remove <servers>] [--no-progress-bar] [--no-wait]
 
 == DESCRIPTION
 
@@ -40,6 +44,43 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   A comma separated list of nodes to remove from the cluster. Each node
   in the list should correspond to the hostname or IP address of that
   server.
+
+--update-services::
+  Should be used when either adding or removing services from a node. This
+  option can not be used with the --server-remove option, and should be used if
+  and only if the services on the node are being updated using one or more of
+  the other flags in this command which add or remove services e.g. --fts-add,
+  --index-remove, etc.
+
+--fts-add <servers>::
+  A comma separated list of nodes to add the Search Service to.
+
+--fts-remove <servers>::
+  A comma separated list of nodes to remove the Search Service from.
+
+--index-add <servers>::
+  A comma separated list of nodes to add the Index Service to.
+
+--index-remove <servers>::
+  A comma separated list of nodes to remove the Index Service from.
+
+--query-add <servers>::
+  A comma separated list of nodes to add the Query Service to.
+
+--query-remove <servers>::
+  A comma separated list of nodes to remove the Query Service from.
+
+--backup-add <servers>::
+  A comma separated list of nodes to add the Backup Service to.
+
+--backup-remove <servers>::
+  A comma separated list of nodes to remove the Backup Service from.
+
+--analytics-add <servers>::
+  A comma separated list of nodes to add the Analytics Service to.
+
+--analytics-remove <servers>::
+  A comma separated list of nodes to remove the Analytics Service from.
 
 --no-progress-bar::
   Hides the progress bar which tracks the progress of the
@@ -96,6 +137,14 @@ rebalance, Couchbase Server will do a "swap rebalance". This means data and
 indexes from the node being removed are moved to the one being added. This
 means the rebalance will only occur between these two nodes as
 opposed to involving all nodes in the cluster.
+
+To add and remove services from particular nodes, you can use
+the update-services flag along with the appropriate flags. For example, to add
+the Search Service to a node and remove the Index Service from another node:
+
+  $ couchbase-cli rebalance -c 192.168.1.5:8091 --username Administrator \
+   --password password --update-services --fts-add 192.168.1.5:8091 \
+   --index-remove 192.168.1.6:8091
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

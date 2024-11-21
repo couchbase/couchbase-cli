@@ -1082,9 +1082,14 @@ class TestRebalance(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         self.server_args['pools_default'] = {'nodes': [
             {'otpNode': 'ns1@localhost', 'hostname': 'localhost:6789', 'status': 'healthy', 'ports':
-             {'httpsMgmt': '16789'}, 'clusterMembership': 'active'},
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'active',
+             'services': ['kv', 'n1ql', 'index', 'fts']},
             {'otpNode': 'ns1@some-host', 'hostname': 'some-host:6789', 'status': 'healthy', 'ports':
-             {'httpsMgmt': '16789'}, 'clusterMembership': 'active'}
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'active',
+             'services': ['fts', 'index', 'n1ql', 'backup', 'cbas']},
+            {'otpNode': 'ns1@some-host2', 'hostname': 'some-host2:6789', 'status': 'healthy', 'ports':
+             {'httpsMgmt': '16789'}, 'clusterMembership': 'active',
+                'services': ['eventing', 'backup', 'cbas']}
         ]}
         self.server_args['tasks'] = [{'type': 'rebalance', 'status': 'notRunning'}]
         super(TestRebalance, self).setUp()
@@ -1092,7 +1097,23 @@ class TestRebalance(CommandTest):
     def test_rebalance(self):
         self.no_error_run(self.command + self.cmd_args, self.server_args)
         self.assertIn('POST:/controller/rebalance', self.server.trace)
-        expected_params = ['ejectedNodes=ns1%40localhost', 'knownNodes=ns1%40localhost%2Cns1%40some-host']
+        expected_params = ['knownNodes=ns1%40localhost%2Cns1%40some-host%2Cns1%40some-host2',
+                           'ejectedNodes=ns1%40localhost']
+        self.rest_parameter_match(expected_params)
+
+    def test_rebalance_services(self):
+        cmd_args = ['--update-services', '--fts-add', 'some-host2:6789', '--index-add', 'some-host2:6789',
+                    '--query-add', 'some-host2:6789', '--backup-add', 'localhost:6789', '--analytics-add',
+                    'localhost:6789', '--fts-remove', 'localhost:6789,some-host:6789',
+                    '--index-remove', 'localhost:6789,some-host:6789', '--query-remove',
+                    'localhost:6789,some-host:6789', '--backup-remove', 'some-host:6789,some-host2:6789',
+                    '--analytics-remove', 'some-host:6789,some-host2:6789']
+
+        self.no_error_run(self.command + cmd_args, self.server_args)
+        expected_params = ['knownNodes=ns1%40localhost%2Cns1%40some-host%2Cns1%40some-host2',
+                           'topology%5Bfts%5D=ns1%40some-host2', 'topology%5Bindex%5D=ns1%40some-host2',
+                           'topology%5Bn1ql%5D=ns1%40some-host2', 'topology%5Bbackup%5D=ns1%40localhost',
+                           'topology%5Bcbas%5D=ns1%40localhost']
         self.rest_parameter_match(expected_params)
 
 

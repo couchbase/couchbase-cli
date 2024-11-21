@@ -12,6 +12,7 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
+from collections import defaultdict
 
 import requests
 import urllib3
@@ -645,6 +646,167 @@ class ClusterManager(object):
         url = f'{self.hostname}/controller/rebalance'
         params = {"knownNodes": ','.join(all_nodes),
                   "ejectedNodes": ','.join(eject)}
+
+        return self._post_form_encoded(url, params)
+
+    @staticmethod
+    def map_services_to_nodes(nodes):
+        """Returns a dictionary that maps services to a set of nodes that provide that service
+
+        nodes - The 'nodes' entry from /pools/default"""
+
+        service_map = defaultdict(set, {
+            FTS_SERVICE: set(),
+            INDEX_SERVICE: set(),
+            N1QL_SERVICE: set(),
+            BACKUP_SERVICE: set(),
+            CBAS_SERVICE: set()
+        })
+
+        for node in nodes:
+            otp_node = node.get('otpNode')
+            for service in node.get('services', []):
+                if service not in service_map:
+                    service_map[service] = set()
+                service_map[service].add(otp_node)
+        return service_map
+
+    @classmethod
+    def get_otp_names_and_verify(cls, cluster_info, nodes, list_name):
+        """Verifies the nodes in the list exist in the cluster and returns their OTP names"""
+        otp_names, errors = cls._get_otp_names_of_matched_nodes(cluster_info, nodes)
+        if errors:
+            return None, errors
+
+        if len(nodes) != len(otp_names):
+            return None, [f"Invalid node(s) in the {list_name} list not found in the cluster"]
+
+        return otp_names, None
+
+    @staticmethod
+    def add_service_to_node(nodes, service_set, service_name):
+        for node in nodes:
+            if node in service_set:
+                print(f"Node {node} already provides the {service_name} service")
+                continue
+            service_set.add(node)
+
+    @staticmethod
+    def remove_service_from_node(nodes, service_set, service_name):
+        for node in nodes:
+            if node not in service_set:
+                return [f"Node {node} does not provide the {service_name} service"]
+            service_set.remove(node)
+
+    def rebalance_services(self,
+                           fts_add, fts_remove,
+                           index_add, index_remove,
+                           n1ql_add, n1ql_remove,
+                           backup_add, backup_remove,
+                           cbas_add, cbas_remove):
+
+        all_cluster_nodes_info, errors = self._get_all_cluster_nodes_info()
+        if errors:
+            return None, errors
+
+        # Check if the same node is being added and removed from the same service
+        if len(set(fts_add) & set(fts_remove)) > 0:
+            return None, ["Nodes can't be added and removed from the Search Service at the same time"]
+
+        if len(set(index_add) & set(index_remove)) > 0:
+            return None, ["Nodes can't be added and removed from the Index Service at the same time"]
+
+        if len(set(n1ql_add) & set(n1ql_remove)) > 0:
+            return None, ["Nodes can't be added and removed from the Query Service at the same time"]
+
+        if len(set(backup_add) & set(backup_remove)) > 0:
+            return None, ["Nodes can't be added and removed from the Backup Service at the same time"]
+
+        if len(set(cbas_add) & set(cbas_remove)) > 0:
+            return None, ["Nodes can't be added and removed from the Analytics Service at the same time"]
+
+        # Verify the nodes in the inputted lists exist in the cluster, and get their OTP names
+        otp_fts_add, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, fts_add, "fts_add")
+        if errors:
+            return None, errors
+
+        otp_fts_remove, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, fts_remove, "fts_remove")
+        if errors:
+            return None, errors
+
+        otp_index_add, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, index_add, "index_add")
+        if errors:
+            return None, errors
+
+        otp_index_remove, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, index_remove, "index_remove")
+        if errors:
+            return None, errors
+
+        otp_n1ql_add, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, n1ql_add, "query_add")
+        if errors:
+            return None, errors
+
+        otp_n1ql_remove, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, n1ql_remove, "query_remove")
+        if errors:
+            return None, errors
+
+        otp_backup_add, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, backup_add, "backup_add")
+        if errors:
+            return None, errors
+
+        otp_backup_remove, errors = self.get_otp_names_and_verify(
+            all_cluster_nodes_info, backup_remove, "backup_remove")
+        if errors:
+            return None, errors
+
+        otp_cbas_add, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, cbas_add, "analytics_add")
+        if errors:
+            return None, errors
+
+        otp_cbas_remove, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, cbas_remove, "analytics_remove")
+        if errors:
+            return None, errors
+
+        # Map the services to the nodes that provide them
+        services_to_nodes = self.map_services_to_nodes(all_cluster_nodes_info)
+
+        # Add/remove the inputted nodes to the service_to_nodes dictionary
+        self.add_service_to_node(otp_fts_add, services_to_nodes[FTS_SERVICE], FTS_SERVICE)
+        errors = self.remove_service_from_node(otp_fts_remove, services_to_nodes[FTS_SERVICE], FTS_SERVICE)
+        if errors:
+            return None, errors
+
+        self.add_service_to_node(otp_index_add, services_to_nodes[INDEX_SERVICE], INDEX_SERVICE)
+        errors = self.remove_service_from_node(otp_index_remove, services_to_nodes[INDEX_SERVICE], INDEX_SERVICE)
+        if errors:
+            return None, errors
+
+        self.add_service_to_node(otp_n1ql_add, services_to_nodes[N1QL_SERVICE], N1QL_SERVICE)
+        errors = self.remove_service_from_node(otp_n1ql_remove, services_to_nodes[N1QL_SERVICE], N1QL_SERVICE)
+        if errors:
+            return None, errors
+
+        self.add_service_to_node(otp_backup_add, services_to_nodes[BACKUP_SERVICE], BACKUP_SERVICE)
+        errors = self.remove_service_from_node(otp_backup_remove, services_to_nodes[BACKUP_SERVICE], BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        self.add_service_to_node(otp_cbas_add, services_to_nodes[CBAS_SERVICE], CBAS_SERVICE)
+        errors = self.remove_service_from_node(otp_cbas_remove, services_to_nodes[CBAS_SERVICE], CBAS_SERVICE)
+        if errors:
+            return None, errors
+
+        all_nodes, errors = self._get_all_nodes_otp_names(all_cluster_nodes_info)
+        if errors:
+            return None, errors
+
+        url = f'{self.hostname}/controller/rebalance'
+        params = {"knownNodes": ','.join(all_nodes),
+                  f"topology[{FTS_SERVICE}]": ','.join(services_to_nodes[FTS_SERVICE]),
+                  f"topology[{INDEX_SERVICE}]": ','.join(services_to_nodes[INDEX_SERVICE]),
+                  f"topology[{N1QL_SERVICE}]": ','.join(services_to_nodes[N1QL_SERVICE]),
+                  f"topology[{BACKUP_SERVICE}]": ','.join(services_to_nodes[BACKUP_SERVICE]),
+                  f"topology[{CBAS_SERVICE}]": ','.join(services_to_nodes[CBAS_SERVICE])}
 
         return self._post_form_encoded(url, params)
 
