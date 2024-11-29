@@ -43,12 +43,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --enable <1|0>::
   Enable (1) or disable (0) automatic rebalance retry. This flag is required
-  when using --set. By default automatic rebalance retry is disabled.
+  when using --set. By default, automatic rebalance retry is disabled.
 
 --wait-for <sec>::
   Specify the amount of time to wait after a failed rebalance before retrying.
-  Time must be a value between 5 and 3600 seconds. By default the wait time is
-  300 seconds.
+  Time must be a value between 5 and 3600 seconds.
+  By default, the wait time is 300 seconds.
 
 --max-attempts <num>::
   Specify the number of times a failed rebalance will be retried. The value
@@ -59,7 +59,7 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The value provided must be between 1 and 64, the default is 4. A higher
   setting may improve rebalance performance, at the cost of higher resource
   consumption; in terms of CPU, memory, disk, and bandwidth. Conversely, a lower
-  setting may degrade rebalance performance, while freeing up such resources.
+  setting may degrade rebalance performance while freeing up such resources.
   Note, however, that rebalance performance can be affected by many additional
   factors; and that in consequence, changing this parameter may not always have
   the expected effects. Note also that a higher setting, due to its additional
@@ -77,7 +77,7 @@ include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 
-To retrieve the current automatic rebalance retry configuration use:
+To retrieve the current automatic rebalance retry configuration, use:
 ----
 $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
  -p password --get
@@ -85,16 +85,16 @@ $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
 To enable automatic rebalance retry use the command bellow.
 ----
 $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
- -p password --set --enabled 1
+ -p password --set --enable 1
 ----
-You can also set the the wait for period and the maximum number of retries. The
-command above enables automatic rebalance retry as well as setting the wait
-time before retrying to 60 seconds and the maximum number of retires to 2.
+You can also set the `wait-for` period and the maximum number of retries.
+The command above enables automatic rebalance retry as well as setting the wait time
+before retrying to 60 seconds and the maximum number of retries to 2.
 ----
 $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
- -p password --set --enabled 1 --wait-for 60 --retries 2
+ -p password --set --enable 1 --wait-for 60 --retries 2
 ----
-To retrieve information of the pending rebalance retries run the command bellow.
+To retrieve information of the pending rebalance retries, run the command bellow.
 ----
 $ couchbase-cli setting-rebalance -c 127.0.0.1:8091 -u Administrator \
  -p password --pending-info
