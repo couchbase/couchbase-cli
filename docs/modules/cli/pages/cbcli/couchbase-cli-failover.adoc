@@ -21,9 +21,9 @@ _couchbase-cli failover_ [--cluster <url>] [--username <user>] [--password <pass
 
 This command fails over one or more nodes. Nodes can be either hard failed
 over or gracefully failed over. A hard failover means that the failover happens
-immediately, but risks potential data loss. Graceful failover ensures that
+ immediately but risks potential data loss. Graceful failover ensures that
 replication is up to date before the node is failed over so that there is no
-data loss, but the failover is not immediate. Note that if a node is already down
+data loss, but the failover is not immediate. Note that if a node is already down, 
 you must perform a hard failover.
 
 == OPTIONS
@@ -31,34 +31,39 @@ you must perform a hard failover.
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --server-failover <server_list>::
-  A comma separated list of nodes to failover.
+  A comma-separated list of nodes to failover.
 
 --hard::
   Specifying this flag signifies that the nodes to be failed over should be
   hard failed over. A hard failover means that the failover is immediate, but
-  you risk potential data loss. If this flag is not specified then a graceful
+  you risk potential data loss. If this flag is not specified, then a graceful
   failover will occur which ensures that the replication is up to date. This
   means there will be no data loss, but the failover is not immediate. Note
-  that if a server is already down you must hard fail it over.
+  that if a server is already down, you must hard fail it over.
 
 --force::
-  Specifying this flag forces a hard failover. This option should should only
-  be used when needed. To be able to do a failover the cluster need a quorum
-  of nodes. There are case where the majority of nodes are unavailable and it
-  will be impossible to get a quorum. In those case this flag can be used to
-  force a hard failover. This flag has to be used with '--hard' flag.
+  Specifying this flag forces a hard failover.
+  This option should only be used when needed.
+  In order to perform a failover, the cluster needs a quorum
+  of nodes.
+  There are cases where the majority of nodes are unavailable, and it
+  will be impossible to get a quorum.
+  In those cases, this flag can be used to
+  force a hard failover.
+  This flag has to be used with '--hard' flag.
 
 --no-progress-bar::
   Disables showing the progress bar which tracks the progress of the
-  rebalance. Note that a rebalance only occurs for graceful failovers (e.g.
-  non-forced failovers). The failover command will still wait for rebalance
+  rebalance.
+  Note that a rebalance only occurs for graceful failovers (e.g., non-forced failovers).
+  The failover command will still wait for rebalance
   completion even if this flag is specified, but the progress bar will not
   be shown.
 
 --no-wait::
   Specifies that this command should not wait for the completion of rebalance
   before exiting. Note that a rebalance only occurs for graceful failovers
-  (e.g. non-forced failovers).
+  (e.g., non-forced failovers).
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
@@ -66,13 +71,13 @@ include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 
-To hard fail over two nodes run the following command:
+To hard fail over two nodes, run the following command:
 
   $ couchbase-cli failover -c 192.168.1.5:8091 --username Administrator \
    --password password \
-   --server-failover 192.168.1.6:8091,192.168.1.7:8091
+   --server-failover 192.168.1.6:8091,192.168.1.7:8091 --hard
 
-To gracefully failover a node run the following command:
+To gracefully failover a node, run the following command:
 
   $ couchbase-cli failover -c 192.168.1.5:8091 --username Administrator \
    --password password --server-failover 192.168.1.6:8091
