@@ -1101,6 +1101,12 @@ class TestRebalance(CommandTest):
                            'ejectedNodes=ns1%40localhost']
         self.rest_parameter_match(expected_params)
 
+    def test_rebalance_no_args(self):
+        self.no_error_run(self.command, self.server_args)
+        self.assertIn('POST:/controller/rebalance', self.server.trace)
+        expected_params = ['knownNodes=ns1%40localhost%2Cns1%40some-host%2Cns1%40some-host2', 'ejectedNodes=']
+        self.rest_parameter_match(expected_params)
+
     def test_rebalance_services(self):
         cmd_args = ['--update-services', '--fts-add', 'some-host2:6789', '--index-add', 'some-host2:6789',
                     '--query-add', 'some-host2:6789', '--backup-add', 'localhost:6789', '--analytics-add',

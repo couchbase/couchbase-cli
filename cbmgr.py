@@ -2004,9 +2004,11 @@ class Rebalance(Subcommand):
         if services_modified and not opts.update_services:
             _exit_if_errors(["Services can only be modified when using --update-services"])
 
+        eject_nodes = []
         if opts.server_remove:
             eject_nodes = apply_default_port(opts.server_remove)
 
+        if opts.server_remove or not opts.update_services:
             _, errors = self.rest.rebalance(eject_nodes)
             _exit_if_errors(errors)
 
