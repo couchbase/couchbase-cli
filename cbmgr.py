@@ -1449,6 +1449,9 @@ class CollectLogsStart(Subcommand):
                            help="The name of the customer uploading logs")
         group.add_argument("--ticket", dest="upload_ticket", metavar="<num>",
                            help="The ticket number the logs correspond to")
+        group.add_argument("--encryption-password", dest="encryption_password",
+                           action=CBNonEchoedAction, envvar=None, metavar="<encryption_password>",
+                           help="The password to encrypt the logs with")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -1482,7 +1485,7 @@ class CollectLogsStart(Subcommand):
 
         _, errors = self.rest.collect_logs_start(servers, opts.redaction_level, opts.salt, opts.output_dir,
                                                  opts.tmp_dir, opts.upload, opts.upload_host, opts.upload_proxy,
-                                                 opts.upload_customer, opts.upload_ticket)
+                                                 opts.upload_customer, opts.upload_ticket, opts.encryption_password)
         _exit_if_errors(errors)
         _success("Log collection started")
 

@@ -839,6 +839,13 @@ class TestCollectLogsStart(CommandTest):
         expected_params = ['logRedactionLevel=partial', 'nodes=%2A']
         self.rest_parameter_match(expected_params)
 
+    def test_collect_logs_start_encrypted(self):
+        self.no_error_run(self.command + self.basic_args + ['--encryption-password', 'asdasd'], self.server_args)
+        self.assertIn('Log collection started', self.str_output)
+        self.assertIn('POST:/controller/startLogsCollection', self.server.trace)
+        expected_params = ['logRedactionLevel=none', 'nodes=%2A', 'encryptionPassword=asdasd']
+        self.rest_parameter_match(expected_params)
+
 
 class TestCollectLogsStatus(CommandTest):
     def setUp(self):

@@ -19,6 +19,7 @@ _couchbase-cli collect-logs-start_ [--cluster <url>] [--username <user>]
     [--output-directory <directory>] [--temporary-directory <directory>]
     [--upload] [--upload-host <host>] [--upload-proxy <host>]
     [--customer <customer>] [--ticket <ticket>]
+    [--encryption-password <password>]
 
 == DESCRIPTION
 
@@ -103,6 +104,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   The ticket number that the support team has created to track the issue
   filed. This parameter is optional when specifying the --upload flag, but
   recommended if you have a ticket number.
+
+--encryption-password <encryption_password>::
+  The password to use to encrypt (with AES-256) the resulting zip file.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

@@ -8,11 +8,11 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import defaultdict
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
-from collections import defaultdict
 
 import requests
 import urllib3
@@ -528,7 +528,7 @@ class ClusterManager(object):
         return self._get(url)
 
     def collect_logs_start(self, servers, redaction_level, salt, log_dir, tmp_dir, upload, upload_host, upload_proxy,
-                           upload_customer, upload_ticket):
+                           upload_customer, upload_ticket, encryption_password):
         url = f'{self.hostname}/controller/startLogsCollection'
         params = dict()
 
@@ -558,6 +558,8 @@ class ClusterManager(object):
             params["tmpDir"] = tmp_dir
         if salt:
             params["logRedactionSalt"] = salt
+        if encryption_password:
+            params["encryptionPassword"] = encryption_password
 
         if upload:
             if upload_host:
