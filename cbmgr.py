@@ -948,7 +948,7 @@ class BucketCreate(Subcommand):
                            help="The name of bucket to create")
         group.add_argument("--bucket-type", dest="type", metavar="<type>", required=True,
                            choices=["couchbase", "ephemeral", "memcached"],
-                           help="The bucket type (couchbase, ephemeral, or memcached)")
+                           help="The bucket type (couchbase or ephemeral)")
         group.add_argument("--storage-backend", dest="storage", metavar="<storage>",
                            choices=["couchstore", "magma"],
                            help="Type of storage backend (only for couchbase buckets)")
