@@ -14,7 +14,8 @@ Opens a shell to talk to the cluster manager process
 [verse]
 _couchbase-cli server-eshell_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--vm <vm_name>] [--erl <path>]
+    [--client-key-password <password>] [--vm <vm_name>] [--erl-path <path>]
+    [--ns-ebin-path <path>] [--hosts-path <path>] [--base-path <path>]
 
 == DESCRIPTION
 
@@ -42,10 +43,33 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   and the ns_server vm corresponds to the cluster manager. By default the vm
   option is set to ns_server.
 
---erl::
-  Specified the location of the erlang process. This parameter should be set
-  if the default erlang process that is shipped with Couchbase is not the
-  correct executable to connect to the cluster manager with.
+--erl-path::
+  Specifies the location of the directory containing the erlang process. This
+  parameter should only be set if the default erlang process that is shipped
+  with Couchbase is not the correct executable to connect to the cluster
+  manager with. The directory containing the erlang process is `bin` within the
+  Couchbase Server installation directory.
+
+--ns-ebin-path::
+  Specifies the location of the ns_server ebin directory. This parameter should
+  only be set if the default ebin directory that is shipped with Couchbase is
+  not the correct directory to connect to the cluster manager with. The ebin
+  directory can be found  within the Couchbase Server installation directory at
+  at `ns_server/erlang/lib/ns_server/ebin` on Mac/Linux, and `ns_server/ebin`
+  on Windows.
+
+--hosts_path::
+  Specifies the location of the hosts.cfg file. This parameter should only be
+  set if the default hosts.cfg file that is shipped with Couchbase is not the
+  correct file to connect to the cluster manager with. The hosts.cfg file can
+  be found within the Couchbase Server installation directory at
+  `etc/couchbase/hosts.cfg`.
+
+--base-path::
+  Specifies the location of the base directory. This parameter should only be
+  set if Couchbase was installed in a non-standard location. Note that this
+  parameter is only currently used on Mac - on other operating systems it isn't
+  used.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

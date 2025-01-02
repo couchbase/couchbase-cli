@@ -31,9 +31,11 @@ cbrestore
 cbrestorewrapper
 cbtransfer
 cbworkloadgen
+cfg
 CLI
 cli
 cmd
+config
 Couchbase
 couchbase
 couchdb
@@ -60,6 +62,7 @@ dir
 dn
 doctitle
 DSA
+ebin
 EE
 enablement
 erl

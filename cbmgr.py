@@ -15,6 +15,7 @@ import sys
 import tempfile
 import time
 import urllib.parse
+import traceback
 from argparse import SUPPRESS, Action, ArgumentError, ArgumentParser, HelpFormatter
 from operator import itemgetter
 from typing import Any, Dict, List, Optional
@@ -43,38 +44,102 @@ BUCKET_TYPE_MEMCACHED = "memcached"
 VERSION_UNKNOWN = "0.0.0"
 LATEST_VERSION = "8.0.0"
 
-CB_BIN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "bin"))
-CB_ETC_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "etc", "couchbase"))
-CB_LIB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "lib"))
 
-if os.name == 'nt':
-    CB_NS_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "ebin")
-    CB_BABYSITTER_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_babysitter", "ebin")
-else:
-    CB_NS_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_server", "ebin")
-    CB_BABYSITTER_EBIN_PATH = os.path.join(CB_LIB_PATH, "ns_server", "erlang", "lib", "ns_babysitter", "ebin")
+def check_base_path(base_path):
+    required_dirs = ["bin", "etc", "lib"]
+    return all(os.path.exists(os.path.join(base_path, d)) for d in required_dirs)
 
-inetrc_file = os.path.join(CB_ETC_PATH, 'hosts.cfg')
-if os.path.isfile(inetrc_file):
-    inetrc_file = inetrc_file.encode('unicode-escape').decode()
-    CB_INETRC_OPT = ['inetrc', f'"{inetrc_file}"']
-else:
-    CB_INETRC_OPT = []
 
-# On MacOS the config is store in the users home directory
-if platform.system() == "Darwin":
-    CB_CFG_PATH = os.path.expanduser("~/Library/Application Support/Couchbase/var/lib/couchbase")
-    # erl script fails in OSX as it is unable to find COUCHBASE_TOP
-    os.environ["COUCHBASE_TOP"] = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-else:
-    CB_CFG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "var", "lib", "couchbase"))
+def get_base_cb_path():
+    # Check if relative path exists
+    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    if os.path.exists(base_path) and check_base_path(base_path):
+        return base_path
 
-CB_MAN_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "share"))
+    # If the base path is not at the relative path, then check the default path, which is platform dependent
+    system = platform.system()
+    if system == "Darwin":
+        base_path = os.path.join(os.sep, "Applications", "Couchbase Server.app", "Contents", "Resources",
+                                 "couchbase-core")
+    elif system == "Windows":
+        base_path = os.path.join("C:" + os.sep, "Program Files", "couchbase", "server")
+    elif system == "Linux":
+        base_path = os.path.join(os.sep, "opt", "couchbase")
+    else:
+        base_path = None
 
-if os.name == "nt":
-    CB_MAN_PATH = os.path.join(CB_MAN_PATH, "doc", "couchbase-cli")
-else:
-    CB_MAN_PATH = os.path.join(CB_MAN_PATH, "man", "man1")
+    if base_path and check_base_path(base_path):
+        return base_path
+
+    return None
+
+
+def get_bin_path():
+    base_path = get_base_cb_path()
+    if not base_path:
+        return None
+
+    return os.path.join(base_path, "bin")
+
+
+def get_hosts_path():
+    base_path = get_base_cb_path()
+    if not base_path:
+        return None
+
+    hosts_path = os.path.join(base_path, "etc", "couchbase", "hosts.cfg")
+    if os.path.isfile(hosts_path):
+        return hosts_path
+
+    return None
+
+
+def get_inetrc(hosts_path):
+    inetrc_file = hosts_path.encode('unicode-escape').decode()
+    return ['inetrc', f'"{inetrc_file}"']
+
+
+def get_cfg_path():
+    base_path = get_base_cb_path()
+    if not base_path:
+        return None
+
+    if platform.system() == "Darwin":
+        return os.path.expanduser("~/Library/Application Support/Couchbase/var/lib/couchbase")
+
+    return os.path.join(base_path, "var", "lib", "couchbase")
+
+
+def get_lib_path():
+    base_path = get_base_cb_path()
+    if not base_path:
+        return None
+
+    return os.path.join(base_path, "lib")
+
+
+def get_ns_ebin_path():
+    lib_path = get_lib_path()
+    if not lib_path:
+        return None
+
+    if platform.system() == "Windows":
+        return os.path.join(lib_path, "ns_server", "ebin")
+
+    return os.path.join(lib_path, "ns_server", "erlang", "lib", "ns_server", "ebin")
+
+
+def get_man_path():
+    base_path = get_base_cb_path()
+    if not base_path:
+        return None
+
+    share_path = os.path.join(base_path, "share")
+
+    if platform.system() == "Windows":
+        return os.path.join(share_path, "doc", "couchbase-cli")
+
+    return os.path.join(share_path, "man", "man1")
 
 
 def get_doc_page_name(command: str) -> str:
@@ -543,14 +608,15 @@ class CBHelpAction(Action):
 
     @staticmethod
     def _show_man_page(page):
+        man_path = get_man_path()
         if os.name == "nt":
             try:
-                subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(CB_MAN_PATH, page)])
+                subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(man_path, page)])
             except OSError as e:
                 _exit_if_errors(["Unable to open man page using your browser, %s" % e])
         else:
             try:
-                subprocess.call(["man", os.path.join(CB_MAN_PATH, page)])
+                subprocess.call(["man", os.path.join(man_path, page)])
             except OSError:
                 _exit_if_errors(["Unable to open man page using the 'man' command, ensure it is on your path or"
                                  + "install a manual reader"])
@@ -746,7 +812,7 @@ class LocalSubcommand(Command):
         group.add_argument("-h", "--help", action=CBHelpAction, klass=self,
                            help="Prints the short or long help message")
         group.add_argument("--config-path", dest="config_path", metavar="<path>",
-                           default=CB_CFG_PATH, help=SUPPRESS)
+                           default=get_cfg_path(), help="Overrides the default configuration path")
 
     def execute(self, opts):  # pylint: disable=useless-super-delegation
         super(LocalSubcommand, self).execute(opts)
@@ -1752,6 +1818,9 @@ class ResetCipherSuites(LocalSubcommand):
                            help="The REST API port, defaults to 8091")
 
     def execute(self, opts):
+        if opts.config_path is None:
+            _exit_if_errors(["Unable to locate the configuration path, please specify it using --config-path"])
+
         token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
         rest = ClusterManager("http://127.0.0.1:" + opts.port, "@localtoken", token)
         check_cluster_initialized(rest)
@@ -1789,6 +1858,9 @@ class MasterPassword(LocalSubcommand):
 
     def execute(self, opts):
         if opts.send_password is not None:
+            if opts.config_path is None:
+                _exit_if_errors(["Unable to locate the configuration path, please specify it using --config-path"])
+
             portfile = os.path.join(opts.config_path, "couchbase-server.babysitter.smport")
             if not os.path.isfile(portfile):
                 _exit_if_errors(["The node is down"])
@@ -2169,6 +2241,9 @@ class ResetAdminPassword(LocalSubcommand):
                            help="The IP address of the cluster, defaults to localhost")
 
     def execute(self, opts):
+        if opts.config_path is None:
+            _exit_if_errors(["Unable to locate the configuration path, please specify it using --config-path"])
+
         token = _exit_on_file_read_failure(os.path.join(opts.config_path, "localtoken")).rstrip()
         ip = opts.ip if ":" not in opts.ip else "[" + opts.ip + "]"
         rest = ClusterManager("http://" + ip + ":" + opts.port, "@localtoken", token)
@@ -2320,8 +2395,14 @@ class ServerEshell(Subcommand):
         group = self.parser.add_argument_group("Server eshell options")
         group.add_argument("--vm", dest="vm", default="ns_server", metavar="<name>",
                            help="The vm to connect to")
-        group.add_argument("--erl-path", dest="erl_path", metavar="<path>", default=CB_BIN_PATH,
-                           help="Override the path to the erl executable")
+        group.add_argument("--erl-path", dest="erl_path", metavar="<path>", default=get_bin_path(),
+                           help="Override the default path to the erl executable")
+        group.add_argument("--ns-ebin-path", dest="ns_ebin_path", metavar="<path>", default=get_ns_ebin_path(),
+                           help="Override the default path to the ns_server ebin directory")
+        group.add_argument("--hosts-path", dest="hosts_path", metavar="<path>", default=get_hosts_path(),
+                           help="Override the default path to the hosts.cfg file")
+        group.add_argument("--base-path", dest="base_path", metavar="<path>", default=get_base_cb_path(),
+                           help="Override the default path to the Couchbase Server base directory")
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
@@ -2360,12 +2441,27 @@ class ServerEshell(Subcommand):
             _warning("Cannot locate Couchbase erlang. Attempting to use non-Couchbase erlang")
             path = 'erl'
 
+        if not opts.erl_path:
+            _exit_if_errors(["directory containing erl executable not found, please specify it using --erl-path"])
+
+        if not opts.ns_ebin_path:
+            _exit_if_errors(["ns_server ebin directory not found, please specify it using --ns-ebin-path"])
+
+        if not opts.hosts_path:
+            _exit_if_errors(["hosts.cfg file not found, please specify it using --hosts-path"])
+
+        if not opts.base_path:
+            _exit_if_errors(["Couchbase Server base directory not found, please specify it using --base-path"])
+
         with tempfile.NamedTemporaryFile() as temp:
             temp.write(f'[{{preferred_local_proto,{result["addressFamily"]}_tcp_dist}}].'.encode())
             temp.flush()
             temp_name = temp.name
             env = os.environ.copy()
             env["CB_COOKIE"] = cookie
+            if platform.system() == "Darwin":
+                # erl script fails in OSX as it is unable to find COUCHBASE_TOP
+                env["COUCHBASE_TOP"] = opts.base_path
 
             eval_str = 'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))), ' \
                        f'shell:start_interactive({{remote, "{node}"}}).'
@@ -2386,10 +2482,10 @@ class ServerEshell(Subcommand):
                 'cb_epmd',
                 '-no_epmd',
                 '-pa',
-                CB_NS_EBIN_PATH,
+                opts.ns_ebin_path,
                 '-kernel',
                 'dist_config_file',
-                f'"{temp_name}"'] + CB_INETRC_OPT
+                f'"{temp_name}"'] + get_inetrc(opts.hosts_path)
 
             if opts.debug:
                 print(f'Running {" ".join(args)}')
