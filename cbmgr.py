@@ -2452,6 +2452,8 @@ class ServerEshell(Subcommand):
                            help="Override the default path to the hosts.cfg file")
         group.add_argument("--base-path", dest="base_path", metavar="<path>", default=get_base_cb_path(),
                            help="Override the default path to the Couchbase Server base directory")
+        group.add_argument("--eval", dest="eval", metavar="<command>",
+                           help="Evaluate the given command and exit")
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
@@ -2512,8 +2514,17 @@ class ServerEshell(Subcommand):
                 # erl script fails in OSX as it is unable to find COUCHBASE_TOP
                 env["COUCHBASE_TOP"] = opts.base_path
 
-            eval_str = 'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))), ' \
-                       f'shell:start_interactive({{remote, "{node}"}}).'
+            eval_str = 'erlang:set_cookie(list_to_atom(os:getenv("CB_COOKIE"))), '
+            if opts.eval is not None:
+                cmd = opts.eval.replace('"', '\\"')
+                eval_str += \
+                    '{value, Res, _} = ' \
+                    f'rpc:call(\'{node}\', ' \
+                    f'misc, eval, ["{cmd}", erl_eval:new_bindings()]),' \
+                    'io:format("~p~n", [Res]),' \
+                    'init:stop().'
+            else:
+                eval_str += f'shell:start_interactive({{remote, "{node}"}}).'
 
             args = [
                 path,
