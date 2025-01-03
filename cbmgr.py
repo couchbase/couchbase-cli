@@ -6907,5 +6907,5 @@ def compare_versions(version1, version2: string) -> int:
             return 1
         elif v1 < v2:
             return -1
-    else:
-        return 0
+
+    return 0
