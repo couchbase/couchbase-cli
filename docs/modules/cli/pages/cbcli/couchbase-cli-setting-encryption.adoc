@@ -1,0 +1,45 @@
+= couchbase-cli-setting-encryption(1)
+:description: Manage encryption at-rest settings.
+ifndef::doctype-manpage[:doctitle: setting-encryption]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-setting-encryption -
+endif::[]
+Manage encryption at-rest settings.
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli setting-enable_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] [--list-keys]
+
+== DESCRIPTION
+
+Allows managing encryption at-rest settings, including create/editing/rotating/deleting
+keys and choosing what encryption to use for config, logs and audit logs.
+
+The operation the command performs is determined by several mutually exclusive
+arguments, each having their own set of options:
+
+* `--list-keys`
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--list-keys::
+  List the keys and their settings in JSON format.
+
+== EXAMPLES
+To list the available encryption keys run the following command
+
+  $ couchbase-cli setting-encryption -c 192.168.1.5 -u Administrator -p password --list-keys
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

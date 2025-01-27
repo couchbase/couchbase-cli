@@ -1322,6 +1322,19 @@ class TestSettingAlert(CommandTest):
         self.assertIn('must be set when email alerts are enabled', self.str_output)
 
 
+class TestSettingEncryption(CommandTest):
+    def setUp(self):
+        self.command = ['couchbase-cli', 'setting-encryption'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            'encryption-keys': [{'id': 1, 'name': 'key-01'}, {'id': 2, 'name': 'key-02'}]}
+        super(TestSettingEncryption, self).setUp()
+
+    def test_encryption_key_list(self):
+        self.no_error_run(self.command + ['--list-keys'], self.server_args)
+        self.assertIn('key-01', self.str_output)
+        self.assertIn('key-02', self.str_output)
+
+
 class TestSettingAudit(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'setting-audit'] + cluster_connect_args

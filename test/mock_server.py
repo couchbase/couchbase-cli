@@ -440,10 +440,16 @@ def get_group(rest_params=None, server_args=None, path="", endpoint_match=None):
     return 200, {}
 
 
+def get_encryption_keys(rest_params=None, server_args=None, path="", endpoint_match=None):
+    if 'encryption-keys' in server_args:
+        return 200, server_args['encryption-keys']
+    return 200, {}
+
+
 def get_ldap_settings(rest_params=None, server_args=None, path="", endpoint_match=None):
     if 'ldap' in server_args:
         return 200, server_args['ldap']
-    return 200, {}
+    return 200, []
 
 
 def get_by_path(rest_params=None, server_args=None, path="", endpoint_match=None):
@@ -524,6 +530,7 @@ endpoints = [
     (r'/pools/default/trustedCAs/\d+$', {'DELETE': get_by_path}),
     (r'/pools/nodes', {'GET': get_by_path}),
     (r'/settings/analytics', {'POST': do_nothing, 'GET': get_by_path}),
+    (r'/settings/encryptionKeys', {'POST': do_nothing, 'GET': get_encryption_keys}),
     (r'/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
     (r'/settings/passwordPolicy$', {'POST': do_nothing, 'GET': get_password_policy}),
     (r'/settings/querySettings$', {'POST': do_nothing}),

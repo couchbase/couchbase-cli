@@ -1004,6 +1004,10 @@ class ClusterManager(object):
 
         return nodes_otp_names_with_states, None
 
+    def list_keys(self):
+        url = f'{self.hostname}/settings/encryptionKeys'
+        return self._get(url)
+
     def create_bucket(
             self,
             name,

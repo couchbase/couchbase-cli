@@ -3213,6 +3213,30 @@ class SettingCluster(Subcommand):
         return "Modify cluster settings"
 
 
+class SettingEncryption(Subcommand):
+    """The setting encryption subcommand"""
+
+    def __init__(self):
+        super(SettingEncryption, self).__init__()
+        self.parser.prog = "couchbase-cli setting-encryption"
+        group = self.parser.add_argument_group("Encryption settings")
+        group.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
+
+    @rest_initialiser(cluster_init_check=True, version_check=True)
+    def execute(self, opts):
+        keys, errors = self.rest.list_keys()
+        _exit_if_errors(errors)
+        print(json.dumps(keys, indent=2))
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-setting-encryption")
+
+    @staticmethod
+    def get_description():
+        return "Manage encryption at-rest"
+
+
 class ClusterEdit(SettingCluster):
     """The cluster edit subcommand (Deprecated)"""
 

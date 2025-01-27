@@ -144,6 +144,9 @@ man:couchbase-cli-setting-cluster[1]::
 man:couchbase-cli-setting-compaction[1]::
   Modifies compaction settings.
 
+man:couchbase-cli-setting-encryption[1]::
+  Manage encryption at-rest settings.
+
 man:couchbase-cli-setting-index[1]::
   Modifies index settings.
 
