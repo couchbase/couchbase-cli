@@ -3220,13 +3220,22 @@ class SettingEncryption(Subcommand):
         super(SettingEncryption, self).__init__()
         self.parser.prog = "couchbase-cli setting-encryption"
         group = self.parser.add_argument_group("Encryption settings")
-        group.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
+
+        group_me = group.add_mutually_exclusive_group(required=True)
+        group_me.add_argument("--get", dest="get", action="store_true",
+                              help="Get the encryption settings of config/logs/audit")
+        group_me.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        keys, errors = self.rest.list_keys()
-        _exit_if_errors(errors)
-        print(json.dumps(keys, indent=2))
+        if opts.list_keys:
+            keys, errors = self.rest.list_keys()
+            _exit_if_errors(errors)
+            print(json.dumps(keys, indent=2))
+        elif opts.get:
+            settings, errors = self.rest.get_encryption_settings()
+            _exit_if_errors(errors)
+            print(json.dumps(settings, indent=2))
 
     @staticmethod
     def get_man_page_name():

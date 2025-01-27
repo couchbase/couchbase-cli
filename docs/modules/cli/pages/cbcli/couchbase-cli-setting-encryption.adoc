@@ -14,7 +14,7 @@ Manage encryption at-rest settings.
 [verse]
 _couchbase-cli setting-enable_ [--cluster <url>] [--username <user>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
-    [--client-key <path>] [--client-key-password <password>] [--list-keys]
+    [--client-key <path>] [--client-key-password <password>] [--get] [--list-keys]
 
 == DESCRIPTION
 
@@ -24,11 +24,15 @@ keys and choosing what encryption to use for config, logs and audit logs.
 The operation the command performs is determined by several mutually exclusive
 arguments, each having their own set of options:
 
+* `--get`
 * `--list-keys`
 
 == OPTIONS
 
 include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--get::
+  Gets the encryption settings for configuration, logs and audit logs.
 
 --list-keys::
   List the keys and their settings in JSON format.
@@ -36,7 +40,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 == EXAMPLES
 To list the available encryption keys run the following command
 
-  $ couchbase-cli setting-encryption -c 192.168.1.5 -u Administrator -p password --list-keys
+  $ couchbase-cli setting-encryption -c 192.168.1.5 -u Administrator \
+   -p password --list-keys
+
+To get the settings for configuration, logs and audit log encryption
+
+  $ couchbase-cli setting-encryption -c 192.168.1.5 -u Administrator \
+   -p password --get
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

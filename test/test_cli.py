@@ -1329,6 +1329,9 @@ class TestSettingEncryption(CommandTest):
                             'encryption-keys': [{'id': 1, 'name': 'key-01'}, {'id': 2, 'name': 'key-02'}]}
         super(TestSettingEncryption, self).setUp()
 
+    def test_encryption_no_op(self):
+        self.system_exit_run(self.command, self.server_args)
+
     def test_encryption_key_list(self):
         self.no_error_run(self.command + ['--list-keys'], self.server_args)
         self.assertIn('key-01', self.str_output)
