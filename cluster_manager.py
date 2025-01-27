@@ -1004,15 +1004,42 @@ class ClusterManager(object):
 
         return nodes_otp_names_with_states, None
 
-    def create_bucket(self, name, bucket_type, storage_type, memory_quota,
-                      durability_min_level,
-                      eviction_policy, replicas, replica_indexes,
-                      threads_number, conflict_resolution, flush_enabled,
-                      max_ttl, compression_mode, sync, db_frag_perc, db_frag_size, view_frag_perc,
-                      view_frag_size, from_hour, from_min, to_hour, to_min,
-                      abort_outside, paralleldb_and_view_compact, purge_interval,
-                      history_retention_bytes, history_retention_seconds,
-                      history_retention_default, rank, vbuckets, timeout=60):
+    def create_bucket(
+            self,
+            name,
+            bucket_type,
+            storage_type,
+            memory_quota,
+            durability_min_level,
+            eviction_policy,
+            replicas,
+            replica_indexes,
+            threads_number,
+            conflict_resolution,
+            flush_enabled,
+            max_ttl,
+            compression_mode,
+            sync,
+            db_frag_perc,
+            db_frag_size,
+            view_frag_perc,
+            view_frag_size,
+            from_hour,
+            from_min,
+            to_hour,
+            to_min,
+            abort_outside,
+            paralleldb_and_view_compact,
+            purge_interval,
+            history_retention_bytes,
+            history_retention_seconds,
+            history_retention_default,
+            rank,
+            vbuckets,
+            encryption_key,
+            dek_rotation_interval,
+            dek_lifetime,
+            timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
         if name is None:
@@ -1089,6 +1116,13 @@ class ClusterManager(object):
         if bucket_type != "memcached" and purge_interval is not None:
             params["purgeInterval"] = purge_interval
 
+        if encryption_key is not None:
+            params["encryptionAtRestKeyId"] = encryption_key
+        if dek_rotation_interval is not None:
+            params["encryptionAtRestDekRotationInterval"] = dek_rotation_interval
+        if dek_lifetime is not None:
+            params["encryptionAtRestDekLifetime"] = dek_lifetime
+
         result, errors = self._post_form_encoded(url, params)
         if errors:
             return None, errors
@@ -1131,7 +1165,8 @@ class ClusterManager(object):
                     view_frag_size, from_hour, from_min, to_hour, to_min,
                     abort_outside, paralleldb_and_view_compact, purge_interval,
                     history_retention_bytes, history_retention_seconds, history_retention_default,
-                    rank, couchbase_bucket: bool = True):
+                    rank, encryption_key, dek_rotation_interval, dek_lifetime,
+                    couchbase_bucket: bool = True):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -1192,6 +1227,13 @@ class ClusterManager(object):
             params["historyRetentionCollectionDefault"] = one_zero_boolean_to_string(history_retention_default)
         if rank is not None:
             params["rank"] = rank
+
+        if encryption_key is not None:
+            params["encryptionAtRestKeyId"] = encryption_key
+        if dek_rotation_interval is not None:
+            params["encryptionAtRestDekRotationInterval"] = dek_rotation_interval
+        if dek_lifetime is not None:
+            params["encryptionAtRestDekLifetime"] = dek_lifetime
 
         return self._post_form_encoded(url, params)
 

@@ -14,8 +14,8 @@ import subprocess
 import sys
 import tempfile
 import time
-import urllib.parse
 import traceback
+import urllib.parse
 from argparse import SUPPRESS, Action, ArgumentError, ArgumentParser, HelpFormatter
 from operator import itemgetter
 from typing import Any, Dict, List, Optional
@@ -1111,6 +1111,13 @@ class BucketCreate(Subcommand):
                            choices=["standard", "large-scale"], help="Sets the configuration for magma buckets, "
                            "either 'standard' (the default) or 'large-scale'")
 
+        group.add_argument("--encryption-key", dest="encryption_key", metavar="<keyid>",
+                           help="The key id of the encryption key to use on this bucket")
+        group.add_argument("--dek-rotate-every", dest="dek_rotate_interval", metavar="<days>", type=(int),
+                           help="How often to rotate the DEK for this bucket")
+        group.add_argument("--dek-lifetime", dest="dek_lifetime", metavar="<days>", type=(int),
+                           help="How long the DEK should be kept for")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1214,6 +1221,16 @@ class BucketCreate(Subcommand):
             elif opts.conflict_resolution == "timestamp":
                 conflict_resolution_type = "lww"
 
+        if (opts.dek_rotate_interval or opts.dek_lifetime) and not opts.encryption_key:
+            _exit_if_errors(["--dek-rotate-every and/or --dek-lifetime can only be passed if an encryption key is "
+                             "specified (--encryption-key)"])
+
+        dek_rotate_interval, dek_lifetime = None, None
+        if opts.dek_rotate_interval:
+            dek_rotate_interval = opts.dek_rotate_interval * 24 * 60 * 60
+        if opts.dek_lifetime:
+            dek_lifetime = opts.dek_lifetime * 24 * 60 * 60
+
         _, errors = self.rest.create_bucket(opts.bucket_name, opts.type, storage_type, opts.memory_quota,
                                             opts.durability_min_level, opts.eviction_policy, opts.replica_count,
                                             opts.replica_indexes, priority, conflict_resolution_type, opts.enable_flush,
@@ -1222,7 +1239,8 @@ class BucketCreate(Subcommand):
                                             opts.from_hour, opts.from_min, opts.to_hour, opts.to_min,
                                             opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval,
                                             opts.history_retention_bytes, opts.history_retention_seconds,
-                                            opts.enable_history_retention, opts.rank, vbuckets)
+                                            opts.enable_history_retention, opts.rank, vbuckets, opts.encryption_key,
+                                            dek_rotate_interval, dek_lifetime)
         _exit_if_errors(errors)
         _success("Bucket created")
 
@@ -1336,6 +1354,13 @@ class BucketEdit(Subcommand):
                            help="Sets the rank of this bucket in case of failover/rebalance. Buckets with larger "
                            "ranks are prioritised over buckets with smaller ranks")
 
+        group.add_argument("--encryption-key", dest="encryption_key", metavar="<keyid>",
+                           help="The key id of the encryption key to use on this bucket")
+        group.add_argument("--dek-rotate-every", dest="dek_rotate_interval", metavar="<days>", type=(int),
+                           help="How often to rotate the DEK for this bucket")
+        group.add_argument("--dek-lifetime", dest="dek_lifetime", metavar="<days>", type=(int),
+                           help="How long the DEK should be kept for")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1414,6 +1439,16 @@ class BucketEdit(Subcommand):
             else:
                 opts.remove_port = False
 
+        if (opts.dek_rotate_interval or opts.dek_lifetime) and not opts.encryption_key:
+            _exit_if_errors(["--dek-rotate-every and/or --dek-lifetime can only be passed if an encryption key is "
+                             "specified (--encryption-key)"])
+
+        dek_rotate_interval, dek_lifetime = None, None
+        if opts.dek_rotate_interval:
+            dek_rotate_interval = opts.dek_rotate_interval * 24 * 60 * 60
+        if opts.dek_lifetime:
+            dek_lifetime = opts.dek_lifetime * 24 * 60 * 60
+
         _, errors = self.rest.edit_bucket(opts.bucket_name, opts.memory_quota, opts.durability_min_level,
                                           opts.eviction_policy, opts.replica_count, priority, opts.enable_flush,
                                           opts.max_ttl, opts.compression_mode, opts.remove_port, opts.db_frag_perc,
@@ -1421,7 +1456,7 @@ class BucketEdit(Subcommand):
                                           opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
                                           opts.paralleldb_and_view_compact, opts.purge_interval,
                                           opts.history_retention_bytes, opts.history_retention_seconds,
-                                          opts.enable_history_retention, opts.rank, is_couchbase_bucket)
+                                          opts.enable_history_retention, opts.rank, opts.encryption_key, dek_rotate_interval, dek_lifetime, is_couchbase_bucket)
         _exit_if_errors(errors)
 
         _success("Bucket edited")

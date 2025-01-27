@@ -604,6 +604,23 @@ class TestBucketCreate(CommandTest):
         ]
         self.rest_parameter_match(expected_params)
 
+    def test_bucket_create_encryption_dek_options_no_key(self):
+        args = ['--dek-rotate-every', '30']
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        self.assertIn("--dek-rotate-every and/or --dek-lifetime can only be passed if an encryption key is specified",
+                      self.str_output)
+
+    def test_bucket_create_encryption(self):
+        args = ['--dek-rotate-every', '30', '--dek-lifetime', '60', '--encryption-key', '2']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0',
+            'ramQuotaMB=100', 'storageBackend=magma', 'rank=3', 'numVBuckets=128',
+            'encryptionAtRestKeyId=2', f'encryptionAtRestDekRotationInterval={30*24*60*60}',
+            f'encryptionAtRestDekLifetime={60*24*60*60}',
+        ]
+        self.rest_parameter_match(expected_params)
+
 
 class TestBucketDelete(CommandTest):
     def setUp(self):
@@ -756,6 +773,25 @@ class TestBucketEdit(CommandTest):
         self.no_error_run(self.command + self.command_args + args, self.server_args)
         expected_params = [
             "historyRetentionBytes=1024", "historyRetentionSeconds=10", "historyRetentionCollectionDefault=false"
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_encryption_settings_no_dek_settings(self):
+        self.server_args['buckets'].append({'name': 'name', 'bucketType': 'membase', 'storageBackend': 'magma'})
+        args = ['--dek-rotate-every', '30']
+        self.system_exit_run(self.command + self.command_args + args, self.server_args)
+        self.assertIn("--dek-rotate-every and/or --dek-lifetime can only be passed if an encryption key is specified",
+                      self.str_output)
+
+    def test_bucket_edit_encryption_settings(self):
+        self.server_args['buckets'].append({'name': 'name', 'bucketType': 'membase', 'storageBackend': 'magma'})
+        args = [
+            '--encryption-key', '2', '--dek-rotate-every', '30', '--dek-lifetime', '60',
+        ]
+        self.no_error_run(self.command + self.command_args + args, self.server_args)
+        expected_params = [
+            'encryptionAtRestKeyId=2', f'encryptionAtRestDekRotationInterval={30*24*60*60}',
+            f'encryptionAtRestDekLifetime={60*24*60*60}',
         ]
         self.rest_parameter_match(expected_params)
 
