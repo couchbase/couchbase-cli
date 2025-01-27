@@ -1531,6 +1531,9 @@ class BucketList(Subcommand):
                 print(f' ramUsed: {bucket["basicStats"]["memUsed"]}')
                 print(f' vBuckets: {bucket["numVBuckets"]}')
 
+                if 'encryptionAtRestInfo' in bucket and 'dataStatus' in bucket['encryptionAtRestInfo']:
+                    print(f' encryptionAtRestStatus: {bucket["encryptionAtRestInfo"]["dataStatus"]}')
+
     @staticmethod
     def get_man_page_name():
         return get_doc_page_name("couchbase-cli-bucket-list")

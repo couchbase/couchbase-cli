@@ -820,7 +820,8 @@ class TestBucketList(CommandTest):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
                             'buckets': []}
         self.bucket_membase = {'name': 'name', 'bucketType': 'membase', 'replicaNumber': '0',
-                               'quota': {'ram': '100'}, 'basicStats': {'memUsed': '100'}, 'numVBuckets': 1024}
+                               'quota': {'ram': '100'}, 'basicStats': {'memUsed': '100'}, 'numVBuckets': 1024,
+                               'encryptionAtRestInfo': {'dataStatus': 'encrypted'}}
         self.bucket_memcached = {'name': 'name1', 'bucketType': 'memcached', 'replicaNumber': '0',
                                  'quota': {'ram': '100'}, 'basicStats': {'memUsed': '100'}, 'numVBuckets': 1024}
         super(TestBucketList, self).setUp()
@@ -830,7 +831,8 @@ class TestBucketList(CommandTest):
         self.server_args['buckets'].append(self.bucket_memcached)
         self.no_error_run(self.command, self.server_args)
         expected_out = [
-            'name\n bucketType: membase\n numReplicas: 0\n ramQuota: 100\n ramUsed: 100\n vBuckets: 1024\n',
+            'name\n bucketType: membase\n numReplicas: 0\n ramQuota: 100\n ramUsed: 100\n vBuckets: 1024\n'
+            ' encryptionAtRestStatus: encrypted\n',
             'name1\n bucketType: memcached\n numReplicas: 0\n ramQuota: 100\n ramUsed: 100\n vBuckets: 1024\n']
         self.assertIn(expected_out[0], self.str_output)
         self.assertIn(expected_out[1], self.str_output)
@@ -841,7 +843,7 @@ class TestBucketList(CommandTest):
         self.no_error_run(self.command + ['-o', 'json'], self.server_args)
         expected_out = ['"bucketType": "membase"', '"quota": {"ram": "100"}', '"replicaNumber": "0"',
                         '"basicStats": {"memUsed": "100"}', '"name": "name"', '"name": "name1"',
-                        '"bucketType": "memcached"']
+                        '"bucketType": "memcached"', '"encryptionAtRestInfo": {"dataStatus": "encrypted"}']
 
         for p in expected_out:
             self.assertIn(p, self.str_output)

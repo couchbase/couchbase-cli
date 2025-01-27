@@ -19,7 +19,8 @@ _couchbase-cli bucket-list_ [--cluster <url>] [--username <user>] [--password <p
 == DESCRIPTION
 
 Lists all buckets in the cluster. For each bucket, the following are printed
-to stdout: `bucketType`, `numReplicas`, `ramQuota`, `ramUsed`.
+to stdout: `bucketType`, `numReplicas`, `ramQuota`, `ramUsed`. If the bucket
+is encrypted then `encryptionAtRestStatus` is also printed.
 
 == OPTIONS
 
@@ -42,6 +43,7 @@ $ couchbase-cli bucket-list -c 192.168.1.5:8091 --username Administrator \
    ramQuota: 104857600
    ramUsed: 45302840
    vBuckets: 1024
+   encryptionAtRestStatus: partiallyEncrypted
  airline-data
    bucketType: ephemeral
    numReplicas: 1
