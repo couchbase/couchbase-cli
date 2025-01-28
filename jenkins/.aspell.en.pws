@@ -7,9 +7,11 @@ API
 api
 APIs
 args
+arn
 auth
 autofailover
 autoreprovision
+aws
 AzureBlob
 azureblob
 AzureDataLake
@@ -44,6 +46,7 @@ couchstore
 CPU
 cpu
 CPUs
+creds
 CSV
 csv
 Ctrl
@@ -96,14 +99,19 @@ http
 HTTPS
 https
 https
+imds
 includeSubDomains
 init
 intra
 ip
 IPv
 ipv
+iso
 JSON
 json
+kek
+kmip
+kms
 kubernetes
 KV
 kv
@@ -177,6 +185,7 @@ subcommands
 TCP
 tcp
 tls
+tmp
 transactional
 TTL
 ttl

@@ -15,9 +15,20 @@ Manage encryption at-rest settings.
 _couchbase-cli setting-enable_ [--cluster <url>] [--username <user>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
     [--client-key <path>] [--client-key-password <password>]
-    [--get] [--set] [--list-keys]
+     [--get] [--set] [--list-keys] [--add-key]
     [--target <target>] [--type <type>] [--key <keyid>]
     [--dek-rotate-every <days>] [--dek-lifetime <days>]
+    [--name <name>] [--key-type <type>]
+    [--kek-usage] [--config-usage] [--log-usage] [--audit-usage]
+    [--all-bucket-usage] [--bucket-usage <bucket>]
+    [--cloud-key-arn <arn>] [--cloud-region <region>]
+    [--cloud-auth-by-instance-metadata] [--cloud-creds-path <path>]
+    [--cloud-config-path <path>] [--cloud-profile-path <path>]
+    [--encrypt-with-master-password] [--encrypt-with-key <keyid>]
+    [--kmip-operations <ops>] [--kmip-key <key>] [--kmip-host <host>]
+    [--kmip-port <port>] [--kmip-key-path <path>] [--kmip-cert-path <path>]
+    [--kmip-key-passphrase <passphrase>]
+    [--auto-rotate-every <days>] [--auto-rotate-start-on <iso8601>]
 
 == DESCRIPTION
 
@@ -32,6 +43,22 @@ arguments, each having their own set of options:
   ** `--target <target>`, `--type <type>`, `--key <keyid>`,
      `--dek-rotate-every <days>`, `--dek-lifetime <days>`
 * `--list-keys`
+* `--add-key`, with the args
+  ** `--name <name>`, `--key-type <type>`,  `--kek-usage`, `--config-usage`,
+    `--log-usage`, `--audit-usage`, `--all-bucket-usage`,
+    `--bucket-usage <bucket>`
+  ** For AWS keys: `--cloud-key-arn <arn>`, `--cloud-region <region>`,
+   `--cloud-auth-by-instance-metadata`, `--cloud-creds-path <path>`,
+   `--cloud-config-path <path>`, `--cloud-profile-path <path>`
+  ** For KMIP keys: `--kmip-operations <ops>`, `--kmip-key <key>`,
+   `--kmip-host <host>`, `--kmip-port <port>`, `--kmip-key-path <path>`,
+   `--kmip-cert-path <path>`, `--kmip-key-passphrase <passphrase>`,
+   `--encrypt-with-master-password`, `--encrypt-with-key <keyid>`
+  ** For auto-generated keys: `--auto-rotate-every <days>`,
+   `--auto-rotate-start-on <iso8601>`, `--encrypt-with-master-password`,
+   `--encrypt-with-key <keyid>`
+
+For more information see the examples section.
 
 == OPTIONS
 
@@ -62,6 +89,86 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --list-keys::
   List the keys and their settings in JSON format.
 
+--add-key::
+  Create a new encryption key.
+
+--name <name>::
+  The name of the new key.
+
+--key-type <type>::
+  The type of key to create. Can be `aws`, `kmip` or `auto-generated`.
+
+--kek-usage::
+  Allow the key to be used as a KEK.
+
+--config-usage::
+  Allow the key to be used to encrypt the config.
+
+--log-usage::
+  Allow the key to be used to encrypt logs.
+
+--audit-usage::
+  Allow the key to be used to encrypt the audit logs.
+
+--all-bucket-usage::
+  Allow the key to be used to encrypt any bucket. Cannot be used with
+  `--bucket-usage`.
+
+--bucket-usage <bucket>::
+  Allow the key to be used to encrypt the given bucket. This option can be
+  specified multiple times. Cannot be used with `--all-bucket-usage`.
+
+--cloud-key-arn <arn>::
+  The ARN of the cloud key.
+
+--cloud-region <region>::
+  The region the cloud key is in.
+
+--cloud-auth-by-instance-metadata::
+  When authenticating with the cloud provider, use the IMDS.
+
+--cloud-creds-path <path>::
+  The path to the cloud credentials.
+
+--cloud-config-path <path>::
+  The path to the cloud config.
+
+--cloud-profile-path <path>::
+  The path to the cloud profile.
+
+--encrypt-with-master-password::
+  Encrypt this key with the master password.
+
+--encrypt-with-key <keyid>::
+  Encrypt this key with another key.
+
+--kmip-operations <op>::
+  What operations to use with the KMIP server. Can be `get` or `encrypt-decrypt`.
+
+--kmip-key <key>::
+  The key on the KMIP server to use.
+
+--kmip-host <host>::
+  The host of the KMIP server.
+
+--kmip-port <port>::
+  The port of the KMIP server.
+
+--kmip-key-path <path>::
+  The path to the client key to use.
+
+--kmip-cert-path <path>::
+  The path to the certificate to use.
+
+--kmip-key-passphrase <passphrase>::
+  The passphrase to use to decode the key.
+
+--auto-rotate-every <days>::
+  How often to rotate the generated key, in days.
+
+--auto-rotate-start-on <iso8601>::
+  When to start rotating, in an ISO 8601 date.
+
 == EXAMPLES
 To list the available encryption keys run the following command
 
@@ -89,6 +196,33 @@ To disable encryption for logs
 
   $ couchbase-cli setting-encryption -c 192.168.1.5 -u Administrator \
    -p password --set --target log --type disabled
+
+To create a new AWS key called "aws-key", to be used to encrypt other keys,
+authenticated using IMDS, itself encrypted with the master password
+
+  $ couchbase-cli setting-encryption -c 192.168.1.5 -u Administrator \
+   -p password --add-key --kek-usage --key-type aws --name aws-key \
+   --encrypt-with-master-password --cloud-region us-east-1 \
+   --cloud-key-arn arn:aws:kms:us-east-1:123456789012:key-name \
+   --cloud-auth-by-instance-metadata
+
+To create a new key from a KMIP server, to be used to encrypt any bucket, itself
+encrypted with existing key `2`
+
+  $ couchbase-cli setting-encryption -c 192.168.1.5 -u Administrator \
+   -p password --add-key --all-bucket-usage --key-type kmip --name kmip-key \
+   --kmip-operations get --kmip-host localhost --kmip-port 5696
+   --encrypt-with-key 2 --kmip-key my-key --kmip-cert-path /tmp/cert \
+   --kmip-key-path /tmp/key
+
+To create a new auto-generated key, to be used with the buckets `travel-sample`
+and `beer-sample`, encrypted with the master password, rotated every 30 days,
+with the rotation starting at midnight on the first day of 2025.
+
+  $ couchbase-cli setting-encryption -c 192.168.1.5 -u Administrator \
+   -p password --bucket-usage travel-sample --bucket-usage beer-sample \
+   --key-type auto-generated --name auto-key --encrypt-with-master-password \
+   --auto-rotate-every 30 --auto-rotate-start-on 2025-01-01T00:00:00Z
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

@@ -3227,6 +3227,7 @@ class SettingEncryption(Subcommand):
         group_me.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
         group_me.add_argument("--set", dest="set", action="store_true",
                               help="Set the encryption settings of config/log/audit")
+        group_me.add_argument("--add-key", dest="add_key", action="store_true", help="Create a new encryption key")
 
         # --set arguments
         group.add_argument("--target", dest="target", choices=["config", "log", "audit"],
@@ -3240,6 +3241,63 @@ class SettingEncryption(Subcommand):
         group.add_argument("--dek-lifetime", dest="dek_lifetime", metavar="<days>", type=(int),
                            help="How long the DEK should be kept for")
 
+        # --add-key arguments
+        group.add_argument("--name", dest="name", metavar="<name>", help="The name of the key")
+        group.add_argument("--key-type", dest="key_type", choices=["aws", "kmip", "auto-generated"],
+                           help="The type of key to create")
+        group.add_argument("--kek-usage", dest="kek_usage", action="store_true",
+                           help="Allow the key to be used as a KEK")
+        group.add_argument("--config-usage", dest="config_usage", action="store_true",
+                           help="Allow the key to be used to encrypt the config")
+        group.add_argument("--log-usage", dest="log_usage", action="store_true",
+                           help="Allow the key to be used to encrypt logs")
+        group.add_argument("--audit-usage", dest="audit_usage", action="store_true",
+                           help="Allow the key to be used to encrypt the audit logs")
+
+        group_usage_me = group.add_mutually_exclusive_group(required=False)
+        group_usage_me.add_argument("--all-bucket-usage", dest="all_bucket_usage", action="store_true",
+                                    help="Allow the key to be used to encrypt any bucket")
+        group_usage_me.add_argument("--bucket-usage", dest="bucket_usage", action="append", metavar="<bucket>",
+                                    help="Allow the key to be used to encrypt the given bucket. Can be used multiple "
+                                    "times.")
+
+        group.add_argument("--cloud-key-arn", dest="cloud_key_arn", metavar="<arn>", help="The arn of the cloud key")
+        group.add_argument("--cloud-region", dest="cloud_region", metavar="<region>",
+                           help="The region the cloud key is in")
+        group.add_argument("--cloud-auth-by-instance-metadata", dest="cloud_imds", action="store_true",
+                           help="When authenticating with the cloud provider, use IMDS")
+        group.add_argument("--cloud-creds-path", dest="cloud_creds_path", metavar="<path>",
+                           help="The path to the cloud credentials")
+        group.add_argument("--cloud-config-path", dest="cloud_config_path", metavar="<path>",
+                           help="The path to the cloud config")
+        group.add_argument("--cloud-profile-path", dest="cloud_profile_path", metavar="<path>",
+                           help="The path to the cloud profile")
+
+        group_encrypt_me = group.add_mutually_exclusive_group(required=False)
+        group_encrypt_me.add_argument("--encrypt-with-master-password", dest="encrypt_with_master", action="store_true",
+                                      help="Encrypt this key with the master password")
+        group_encrypt_me.add_argument("--encrypt-with-key", dest="encrypt_with_key", metavar="<keyid>",
+                                      help="Encrypt this key with another key")
+
+        group.add_argument("--kmip-operations", dest="kmip_ops", choices=["get", "encrypt-decrypt"],
+                           help="What operations to use with the KMIP server")
+        group.add_argument("--kmip-key", dest="kmip_key", metavar="<keyid>", help="The key on the KMIP server to use")
+        group.add_argument("--kmip-host", dest="kmip_host", metavar="<host>", help="The hostname of the KMIP server")
+        group.add_argument("--kmip-port", dest="kmip_port", metavar="<port>", type=(int),
+                           help="The port of the KMIP server")
+        group.add_argument("--kmip-key-path", dest="kmip_key_path", metavar="<path>",
+                           help="The path to the client key to use")
+        group.add_argument("--kmip-cert-path", dest="kmip_cert_path", metavar="<path>",
+                           help="The path to the certificate to use")
+        group.add_argument("--kmip-key-passphrase", dest="kmip_key_passphrase", metavar="<passphrase>",
+                           action=CBNonEchoedAction, envvar="CB_KMIP_KEY_PASSPHRASE",
+                           help="The passphrase to use to decode the key")
+
+        group.add_argument("--auto-rotate-every", dest="auto_rotate_every", metavar="<days>",
+                           help="How often to rotate the generated key")
+        group.add_argument("--auto-rotate-start-on", dest="auto_rotate_start", metavar="<iso8601date>",
+                           help="When to start rotating")
+
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
         if opts.list_keys:
@@ -3252,6 +3310,8 @@ class SettingEncryption(Subcommand):
             print(json.dumps(settings, indent=2))
         elif opts.set:
             self._set(opts)
+        elif opts.add_key:
+            self._add_key(opts)
 
     def _set(self, opts):
         if not opts.target:
@@ -3274,6 +3334,108 @@ class SettingEncryption(Subcommand):
         _exit_if_errors(errors)
 
         _success(f"Set the encryptition settings for {opts.target}")
+
+    def _add_key(self, opts):
+        if not opts.name:
+            _exit_if_errors(["--name must be specified"])
+
+        usages = []
+        if opts.config_usage:
+            usages.append("config-encryption")
+        if opts.log_usage:
+            usages.append("log-encryption")
+        if opts.audit_usage:
+            usages.append("audit_usage")
+        if opts.kek_usage:
+            usages.append("KEK-encryption")
+        if opts.all_bucket_usage:
+            usages.append("bucket-encryption-*")
+        if opts.bucket_usage:
+            usages += [f"bucket-encryption-{b}" for b in opts.bucket_usage]
+
+        if not usages:
+            _exit_if_errors(["at least one of --config-usage, --log-usage, --audit-usage, --kek-usage, "
+                             "--all-bucket-usage and/or --bucket-usage must be passed"])
+
+        data = {}
+        typ = ""
+        if opts.key_type == "aws":
+            typ = "awskms-aes-key-256"
+
+            if not opts.cloud_key_arn or not opts.cloud_region:
+                _exit_if_errors(["--cloud-key-arn and --cloud-region must be specified"])
+
+            data["keyARN"] = opts.cloud_key_arn
+            data["region"] = opts.cloud_region
+            data["useIMDS"] = opts.cloud_imds
+
+            if opts.cloud_creds_path:
+                data["credentialsFile"] = opts.cloud_creds_path
+            if opts.cloud_config_path:
+                data["configFile"] = opts.cloud_config_path
+            if opts.cloud_profile_path:
+                data["profile"] = opts.cloud_profile_path
+        elif opts.key_type == "kmip":
+            typ = "kmip-aes-key-256"
+
+            if not (opts.kmip_ops and opts.kmip_key and opts.kmip_host and opts.kmip_port and opts.kmip_key_path
+                    and opts.kmip_cert_path):
+                _exit_if_errors(["--kmip-operations, --kmip-key, --kmip-host --kmip-port, --kmip-key-path, "
+                                 "--kmip-cert-path must be specified"])
+
+            if not (opts.encrypt_with_master or opts.encrypt_with_key):
+                _exit_if_errors(["one of --encrypt-with-master-password, --encrypt-with-key must be specified"])
+
+            if opts.encrypt_with_master:
+                data["encryptWith"] = "nodeSecretManager"
+            else:
+                data["encryptWith"] = "encryptionKey"
+                data["encryptWithKeyId"] = int(opts.encrypt_with_key)
+
+            data["activeKey"] = {"kmipId": opts.kmip_key}
+            data["host"] = opts.kmip_host
+            data["port"] = int(opts.kmip_port)
+
+            if opts.kmip_ops == "get":
+                data["encryptionApproach"] = "useGet"
+            else:
+                data["encryptionApproach"] = "useEncryptDecrypt"
+
+            if opts.kmip_key_path:
+                data["keyPath"] = opts.kmip_key_path
+            if opts.kmip_cert_path:
+                data["certPath"] = opts.kmip_cert_path
+            if opts.kmip_key_passphrase:
+                data["keyPassphrase"] = opts.kmip_key_passphrase
+
+        elif opts.key_type == "auto-generated":
+            typ = "auto-generated-aes-key-256"
+
+            if not (opts.encrypt_with_master or opts.encrypt_with_key):
+                _exit_if_errors(["one of --encrypt-with-master-password, --encrypt-with-key must be specified"])
+
+            if opts.encrypt_with_master:
+                data["encryptWith"] = "nodeSecretManager"
+            else:
+                data["encryptWith"] = "encryptionKey"
+                data["encryptWithKeyId"] = int(opts.encrypt_with_key)
+
+            if (opts.auto_rotate_every and not opts.auto_rotate_start) or \
+               (opts.auto_rotate_start and not opts.auto_rotate_every):
+                _exit_if_errors(["--auto-rotate-every must be provided with --auto-rotate-start-on"])
+
+            data["autoRotation"] = False
+            if opts.auto_rotate_every:
+                data["autoRotation"] = True
+                data["rotationIntervalInDays"] = int(opts.auto_rotate_every)
+                data["nextRotationTime"] = opts.auto_rotate_start
+        else:
+            _exit_if_errors(["--key-type must be specified"])
+
+        _, errors = self.rest.create_key(opts.name, typ, usages, data)
+        _exit_if_errors(errors)
+
+        _success(f"Created key {opts.name}")
 
     @staticmethod
     def get_man_page_name():
