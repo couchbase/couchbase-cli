@@ -1008,6 +1008,26 @@ class ClusterManager(object):
         url = f'{self.hostname}/settings/security/encryptionAtRest'
         return self._get(url)
 
+    def set_encryption_settings(self, target, typ, key, dek_rotation_interval, dek_lifetime):
+        url = f'{self.hostname}/settings/security/encryptionAtRest'
+
+        method = 'disabled'
+        if typ == 'key':
+            method = 'encryptionKey'
+        elif typ == 'master-password':
+            method = 'nodeSecretsManager'
+
+        params = {'encryptionMethod': method}
+        if key is not None:
+            params['encryptionKeyId'] = key
+        if dek_rotation_interval is not None:
+            params['dekRotationInterval'] = dek_rotation_interval
+        if dek_lifetime is not None:
+            params['dekLifetime'] = dek_lifetime
+
+        params = {f'{target}.{k}': v for k, v in params.items()}
+        return self._post_form_encoded(url, params)
+
     def list_keys(self):
         url = f'{self.hostname}/settings/encryptionKeys'
         return self._get(url)

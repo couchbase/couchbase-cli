@@ -1337,6 +1337,29 @@ class TestSettingEncryption(CommandTest):
         self.assertIn('key-01', self.str_output)
         self.assertIn('key-02', self.str_output)
 
+    def test_set_encryption_no_target(self):
+        args = ['--set', '--type', 'disabled']
+        self.system_exit_run(self.command + args, self.server_args)
+        self.assertIn('--target must be specified', self.str_output)
+
+    def test_set_encryption_no_type(self):
+        args = ['--set', '--target', 'log']
+        self.system_exit_run(self.command + args, self.server_args)
+        self.assertIn('--type must be specified', self.str_output)
+
+    def test_set_encryption_type_key_no_key(self):
+        args = ['--set', '--type', 'key', '--target', 'log']
+        self.system_exit_run(self.command + args, self.server_args)
+        self.assertIn("when --type is 'key', --key must be specified", self.str_output)
+
+    def test_set_encryption(self):
+        args = ['--set', '--type', 'key', '--target', 'log', '--key', '2', '--dek-rotate-every', '30',
+                '--dek-lifetime', '60']
+        self.no_error_run(self.command + args, self.server_args)
+        expected_params = ['log.encryptionMethod=encryptionKey', 'log.encryptionKeyId=2',
+                           f'log.dekRotationInterval={30*24*60*60}', f'log.dekLifetime={60*24*60*60}']
+        self.rest_parameter_match(expected_params)
+
 
 class TestSettingAudit(CommandTest):
     def setUp(self):

@@ -3225,6 +3225,20 @@ class SettingEncryption(Subcommand):
         group_me.add_argument("--get", dest="get", action="store_true",
                               help="Get the encryption settings of config/logs/audit")
         group_me.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
+        group_me.add_argument("--set", dest="set", action="store_true",
+                              help="Set the encryption settings of config/log/audit")
+
+        # --set arguments
+        group.add_argument("--target", dest="target", choices=["config", "log", "audit"],
+                           help="The type of files to configure the encryption of")
+        group.add_argument("--type", dest="encryption_type", choices=["disabled", "master-password", "key"],
+                           help="The type of encryption to use")
+        group.add_argument("--key", dest="key", metavar="<keyid>",
+                           help="The id of the key to encrypt these files with")
+        group.add_argument("--dek-rotate-every", dest="dek_rotation_interval", metavar="<days>", type=(int),
+                           help="The number of days the DEK should be rotated")
+        group.add_argument("--dek-lifetime", dest="dek_lifetime", metavar="<days>", type=(int),
+                           help="How long the DEK should be kept for")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -3236,6 +3250,30 @@ class SettingEncryption(Subcommand):
             settings, errors = self.rest.get_encryption_settings()
             _exit_if_errors(errors)
             print(json.dumps(settings, indent=2))
+        elif opts.set:
+            self._set(opts)
+
+    def _set(self, opts):
+        if not opts.target:
+            _exit_if_errors(["--target must be specified if setting encryption settings"])
+
+        if not opts.encryption_type:
+            _exit_if_errors(["--type must be specified if setting encryption settings"])
+
+        if (opts.encryption_type == "key" and not opts.key) or (opts.encryption_type != "key" and opts.key):
+            _exit_if_errors(["when --type is 'key', --key must be specified, and vice versa"])
+
+        dek_rotation_interval, dek_lifetime = None, None
+        if opts.dek_rotation_interval:
+            dek_rotation_interval = opts.dek_rotation_interval * 24 * 60 * 60
+        if opts.dek_lifetime:
+            dek_lifetime = opts.dek_lifetime * 24 * 60 * 60
+
+        _, errors = self.rest.set_encryption_settings(
+            opts.target, opts.encryption_type, opts.key, dek_rotation_interval, dek_lifetime)
+        _exit_if_errors(errors)
+
+        _success(f"Set the encryptition settings for {opts.target}")
 
     @staticmethod
     def get_man_page_name():

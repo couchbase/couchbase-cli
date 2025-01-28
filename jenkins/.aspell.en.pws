@@ -6,6 +6,7 @@ APAC
 API
 api
 APIs
+args
 auth
 autofailover
 autoreprovision
@@ -57,6 +58,9 @@ decrypt
 decrypted
 decrypts
 DEK
+dek
+DEKs
+deks
 DER
 dest
 dir

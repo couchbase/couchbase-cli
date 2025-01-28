@@ -544,6 +544,7 @@ endpoints = [
     (r'/settings/ldap', {'POST': do_nothing, 'GET': get_ldap_settings}),
     (r'/settings/alerts$', {'POST': do_nothing}),
     (r'/settings/security$', {'POST': do_nothing, 'GET': get_by_path}),
+    (r'/settings/security/encryptionAtRest$', {'POST': do_nothing, 'GET': do_nothing}),
     (r'/settings/audit$', {'POST': do_nothing, 'GET': get_audit_settings}),
     (r'/settings/audit/descriptors$', {'GET': get_by_path}),
     (r'/settings/stats$', {'POST': do_nothing}),
