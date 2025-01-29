@@ -1037,6 +1037,10 @@ class ClusterManager(object):
         params = {'name': name, 'type': typ, 'usage': usages, 'data': data}
         return self._post_json(url, params)
 
+    def delete_key(self, keyid):
+        url = f'{self.hostname}/settings/encryptionKeys/{keyid}'
+        return self._delete(url, None)
+
     def create_bucket(
             self,
             name,

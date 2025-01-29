@@ -15,7 +15,7 @@ Manage encryption at-rest settings.
 _couchbase-cli setting-enable_ [--cluster <url>] [--username <user>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
     [--client-key <path>] [--client-key-password <password>]
-     [--get] [--set] [--list-keys] [--add-key]
+    [--get] [--set] [--list-keys] [--add-key] [--delete-key <keyid>]
     [--target <target>] [--type <type>] [--key <keyid>]
     [--dek-rotate-every <days>] [--dek-lifetime <days>]
     [--name <name>] [--key-type <type>]
@@ -57,6 +57,7 @@ arguments, each having their own set of options:
   ** For auto-generated keys: `--auto-rotate-every <days>`,
    `--auto-rotate-start-on <iso8601>`, `--encrypt-with-master-password`,
    `--encrypt-with-key <keyid>`
+* `--delete-key <keyid>`
 
 For more information see the examples section.
 
@@ -169,6 +170,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --auto-rotate-start-on <iso8601>::
   When to start rotating, in an ISO 8601 date.
 
+--delete-key <keyid>::
+  Delete the given key.
+
 == EXAMPLES
 To list the available encryption keys run the following command
 
@@ -223,6 +227,11 @@ with the rotation starting at midnight on the first day of 2025.
    -p password --bucket-usage travel-sample --bucket-usage beer-sample \
    --key-type auto-generated --name auto-key --encrypt-with-master-password \
    --auto-rotate-every 30 --auto-rotate-start-on 2025-01-01T00:00:00Z
+
+To delete the key with the id 2
+
+  $ couchbase-cli setting-encryption -c 192.168.1.5 -u Administrator \
+   -p password --delete-key 2
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 

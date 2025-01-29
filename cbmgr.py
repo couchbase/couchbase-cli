@@ -3224,10 +3224,12 @@ class SettingEncryption(Subcommand):
         group_me = group.add_mutually_exclusive_group(required=True)
         group_me.add_argument("--get", dest="get", action="store_true",
                               help="Get the encryption settings of config/logs/audit")
-        group_me.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
         group_me.add_argument("--set", dest="set", action="store_true",
                               help="Set the encryption settings of config/log/audit")
+        group_me.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
         group_me.add_argument("--add-key", dest="add_key", action="store_true", help="Create a new encryption key")
+        group_me.add_argument("--delete-key", dest="delete_key", metavar="<keyid>",
+                              help="Delete the specified encryption key")
 
         # --set arguments
         group.add_argument("--target", dest="target", choices=["config", "log", "audit"],
@@ -3300,11 +3302,7 @@ class SettingEncryption(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        if opts.list_keys:
-            keys, errors = self.rest.list_keys()
-            _exit_if_errors(errors)
-            print(json.dumps(keys, indent=2))
-        elif opts.get:
+        if opts.get:
             settings, errors = self.rest.get_encryption_settings()
             _exit_if_errors(errors)
             print(json.dumps(settings, indent=2))
@@ -3312,6 +3310,14 @@ class SettingEncryption(Subcommand):
             self._set(opts)
         elif opts.add_key:
             self._add_key(opts)
+        elif opts.delete_key:
+            _, errors = self.rest.delete_key(opts.delete_key)
+            _exit_if_errors(errors)
+            _success(f"Deleted key {opts.delete_key}")
+        elif opts.list_keys:
+            keys, errors = self.rest.list_keys()
+            _exit_if_errors(errors)
+            print(json.dumps(keys, indent=2))
 
     def _set(self, opts):
         if not opts.target:

@@ -1449,6 +1449,11 @@ class TestSettingEncryption(CommandTest):
         }, sort_keys=True)
         self.rest_parameter_match([expected])
 
+    def test_delete_key(self):
+        args = ['--delete-key', '7']
+        self.no_error_run(self.command + args, self.server_args)
+        self.assertIn('DELETE:/settings/encryptionKeys/7', self.server.trace)
+
 
 class TestSettingAudit(CommandTest):
     def setUp(self):
