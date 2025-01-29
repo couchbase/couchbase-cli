@@ -3228,6 +3228,8 @@ class SettingEncryption(Subcommand):
                               help="Set the encryption settings of config/log/audit")
         group_me.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
         group_me.add_argument("--add-key", dest="add_key", action="store_true", help="Create a new encryption key")
+        group_me.add_argument("--rotate-key", dest="rotate_key", metavar="<keyid>",
+                              help="Rotate the specified encryption key")
         group_me.add_argument("--delete-key", dest="delete_key", metavar="<keyid>",
                               help="Delete the specified encryption key")
 
@@ -3310,6 +3312,10 @@ class SettingEncryption(Subcommand):
             self._set(opts)
         elif opts.add_key:
             self._add_key(opts)
+        elif opts.rotate_key:
+            _, errors = self.rest.rotate_key(opts.rotate_key)
+            _exit_if_errors(errors)
+            _success(f"Rotated key {opts.rotate_key}")
         elif opts.delete_key:
             _, errors = self.rest.delete_key(opts.delete_key)
             _exit_if_errors(errors)

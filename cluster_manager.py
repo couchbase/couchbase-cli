@@ -1037,6 +1037,10 @@ class ClusterManager(object):
         params = {'name': name, 'type': typ, 'usage': usages, 'data': data}
         return self._post_json(url, params)
 
+    def rotate_key(self, keyid):
+        url = f'{self.hostname}/controller/rotateEncryptionKey/{keyid}'
+        return self._post_form_encoded(url, None)
+
     def delete_key(self, keyid):
         url = f'{self.hostname}/settings/encryptionKeys/{keyid}'
         return self._delete(url, None)

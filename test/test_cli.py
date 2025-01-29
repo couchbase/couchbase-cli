@@ -1454,6 +1454,11 @@ class TestSettingEncryption(CommandTest):
         self.no_error_run(self.command + args, self.server_args)
         self.assertIn('DELETE:/settings/encryptionKeys/7', self.server.trace)
 
+    def test_rotate_key(self):
+        args = ['--rotate-key', '7']
+        self.no_error_run(self.command + args, self.server_args)
+        self.assertIn('POST:/controller/rotateEncryptionKey/7', self.server.trace)
+
 
 class TestSettingAudit(CommandTest):
     def setUp(self):

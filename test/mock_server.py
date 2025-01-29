@@ -582,6 +582,7 @@ endpoints = [
     (r'/controller/startLogsCollection$', {'POST': start_log_collection}),
     (r'/controller/uploadClusterCA', {'POST': do_nothing}),
     (r'/controller/regenerateCertificate', {'POST': get_by_path}),
+    (r'/controller/rotateEncryptionKey/\d+$', {'POST': do_nothing}),
 
     # cbrecovery
     (r'/pools/default/buckets/\w+/controller/startRecovery', {'POST': get_by_path}),
