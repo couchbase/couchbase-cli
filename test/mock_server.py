@@ -531,7 +531,7 @@ endpoints = [
     (r'/pools/nodes', {'GET': get_by_path}),
     (r'/settings/analytics', {'POST': do_nothing, 'GET': get_by_path}),
     (r'/settings/encryptionKeys$', {'POST': do_nothing, 'GET': get_encryption_keys}),
-    (r'/settings/encryptionKeys/\d+', {'DELETE': do_nothing}),
+    (r'/settings/encryptionKeys/\d+', {'PUT': do_nothing, 'DELETE': do_nothing}),
     (r'/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
     (r'/settings/passwordPolicy$', {'POST': do_nothing, 'GET': get_password_policy}),
     (r'/settings/querySettings$', {'POST': do_nothing}),

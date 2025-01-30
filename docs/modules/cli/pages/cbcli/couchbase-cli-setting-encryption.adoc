@@ -16,7 +16,8 @@ _couchbase-cli setting-enable_ [--cluster <url>] [--username <user>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
     [--client-key <path>] [--client-key-password <password>]
     [--get] [--set]
-    [--list-keys] [--add-key] [--rotate-key <keyid>] [--delete-key <keyid>]
+    [--list-keys] [--add-key] [--edit-key <keyid>] [--rotate-key <keyid>]
+    [--delete-key <keyid>]
     [--target <target>] [--type <type>] [--key <keyid>]
     [--dek-rotate-every <days>] [--dek-lifetime <days>]
     [--name <name>] [--key-type <type>]
@@ -58,6 +59,7 @@ arguments, each having their own set of options:
   ** For auto-generated keys: `--auto-rotate-every <days>`,
    `--auto-rotate-start-on <iso8601>`, `--encrypt-with-master-password`,
    `--encrypt-with-key <keyid>`
+* `--edit-key <keyid>` with the same args as `--add-key`
 * `--rotate-key <keyid>`
 * `--delete-key <keyid>`
 
@@ -171,6 +173,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --auto-rotate-start-on <iso8601>::
   When to start rotating, in an ISO 8601 date.
+
+--edit-key <keyid>::
+  Edit the given key.
 
 --delete-key <keyid>::
   Delete the given key.

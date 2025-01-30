@@ -3228,6 +3228,7 @@ class SettingEncryption(Subcommand):
                               help="Set the encryption settings of config/log/audit")
         group_me.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
         group_me.add_argument("--add-key", dest="add_key", action="store_true", help="Create a new encryption key")
+        group_me.add_argument("--edit-key", dest="edit_key", metavar="<keyid>", help="Edit an encryption key")
         group_me.add_argument("--rotate-key", dest="rotate_key", metavar="<keyid>",
                               help="Rotate the specified encryption key")
         group_me.add_argument("--delete-key", dest="delete_key", metavar="<keyid>",
@@ -3245,7 +3246,7 @@ class SettingEncryption(Subcommand):
         group.add_argument("--dek-lifetime", dest="dek_lifetime", metavar="<days>", type=(int),
                            help="How long the DEK should be kept for")
 
-        # --add-key arguments
+        # --add-key/--edit-key arguments
         group.add_argument("--name", dest="name", metavar="<name>", help="The name of the key")
         group.add_argument("--key-type", dest="key_type", choices=["aws", "kmip", "auto-generated"],
                            help="The type of key to create")
@@ -3312,6 +3313,8 @@ class SettingEncryption(Subcommand):
             self._set(opts)
         elif opts.add_key:
             self._add_key(opts)
+        elif opts.edit_key:
+            self._edit_key(opts)
         elif opts.rotate_key:
             _, errors = self.rest.rotate_key(opts.rotate_key)
             _exit_if_errors(errors)
@@ -3347,7 +3350,7 @@ class SettingEncryption(Subcommand):
 
         _success(f"Set the encryptition settings for {opts.target}")
 
-    def _add_key(self, opts):
+    def _add_edit_parse_opts(self, opts):
         if not opts.name:
             _exit_if_errors(["--name must be specified"])
 
@@ -3444,10 +3447,21 @@ class SettingEncryption(Subcommand):
         else:
             _exit_if_errors(["--key-type must be specified"])
 
+        return typ, usages, data
+
+    def _add_key(self, opts):
+        typ, usages, data = self._add_edit_parse_opts(opts)
         _, errors = self.rest.create_key(opts.name, typ, usages, data)
         _exit_if_errors(errors)
 
         _success(f"Created key {opts.name}")
+
+    def _edit_key(self, opts):
+        typ, usages, data = self._add_edit_parse_opts(opts)
+        _, errors = self.rest.edit_key(opts.edit_key, opts.name, typ, usages, data)
+        _exit_if_errors(errors)
+
+        _success(f"Edited key {opts.name}")
 
     @staticmethod
     def get_man_page_name():

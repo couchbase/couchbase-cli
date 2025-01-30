@@ -239,9 +239,11 @@ class CommandTest(unittest.TestCase):
         if self.str_error == '':
             self.str_error = str(self.sink_err.getvalue())
 
-    def no_error_run(self, cmd_args, server_args):
-        self.server.set_args(server_args)
-        self.server.run()
+    def no_error_run(self, cmd_args, server_args, start_server=True):
+        if start_server:
+            self.server.set_args(server_args)
+            self.server.run()
+
         self.capture()
         try:
             self.cli.execute(self.cli.parse(cmd_args))
@@ -250,9 +252,10 @@ class CommandTest(unittest.TestCase):
             self.fail(f'Error: "{self.str_output}" occurred. Exception: {e}')
         self.stop_capture()
 
-    def system_exit_run(self, cmd_args, server_args):
-        self.server.set_args(server_args)
-        self.server.run()
+    def system_exit_run(self, cmd_args, server_args, start_server=True):
+        if start_server:
+            self.server.set_args(server_args)
+            self.server.run()
 
         self.capture()
         self.capture_error()
@@ -1360,94 +1363,138 @@ class TestSettingEncryption(CommandTest):
                            f'log.dekRotationInterval={30*24*60*60}', f'log.dekLifetime={60*24*60*60}']
         self.rest_parameter_match(expected_params)
 
-    def test_add_key_no_name(self):
-        args = ['--add-key']
-        self.system_exit_run(self.command + args, self.server_args)
-        self.assertIn('--name must be specified', self.str_output)
+    def test_add_edit_key_no_name(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
 
-    def test_add_key_no_usages(self):
-        args = ['--add-key', '--name', 'key01']
-        self.system_exit_run(self.command + args, self.server_args)
-        self.assertIn('at least one of --config-usage', self.str_output)
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            self.system_exit_run(self.command + base_args, None, start_server=False)
+            self.assertIn('--name must be specified', self.str_output)
 
-    def test_add_key_cloud_no_arn_or_region(self):
-        args = ['--add-key', '--name', 'key01', '--kek-usage', '--key-type', 'aws']
-        self.system_exit_run(self.command + args, self.server_args)
-        self.assertIn('--cloud-key-arn and --cloud-region must be specified', self.str_output)
+    def test_add_edit_key_no_usages(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
 
-    def test_add_key_cloud(self):
-        args = ['--add-key', '--name', 'key01', '--kek-usage', '--key-type', 'aws', '--cloud-key-arn', 'arn',
-                '--cloud-region', 'us-east-1']
-        self.no_error_run(self.command + args, self.server_args)
-        expected = json.dumps({
-            'usage': ['KEK-encryption'],
-            'name': 'key01',
-            'type': 'awskms-aes-key-256',
-            'data': {'keyARN': 'arn', 'region': 'us-east-1', 'useIMDS': False}
-        }, sort_keys=True)
-        self.rest_parameter_match([expected])
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01']
+            self.system_exit_run(self.command + args, None, start_server=False)
+            self.assertIn('at least one of --config-usage', self.str_output)
 
-    def test_add_key_kmip_no_ops(self):
-        args = ['--add-key', '--name', 'key01', '--kek-usage', '--key-type', 'kmip']
-        self.system_exit_run(self.command + args, self.server_args)
-        self.assertIn('--kmip-operations', self.str_output)
+    def test_add_edit_key_cloud_no_arn_or_region(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
 
-    def test_add_key_kmip_no_encrypt_method(self):
-        args = ['--add-key', '--name', 'key01', '--kek-usage', '--key-type', 'kmip', '--kmip-operations', 'get',
-                '--kmip-key', 'key', '--kmip-host', 'localhost', '--kmip-port', '1470', '--kmip-key-path', '/key',
-                '--kmip-cert-path', '/cert']
-        self.system_exit_run(self.command + args, self.server_args)
-        self.assertIn('one of --encrypt-with-master-password, --encrypt-with-key must be specified', self.str_output)
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'aws']
+            self.system_exit_run(self.command + args, None, start_server=False)
+            self.assertIn('--cloud-key-arn and --cloud-region must be specified', self.str_output)
 
-    def test_add_key_kmip(self):
-        args = ['--add-key', '--name', 'key01', '--kek-usage', '--key-type', 'kmip', '--kmip-operations', 'get',
-                '--kmip-key', 'key', '--kmip-host', 'localhost', '--kmip-port', '1470', '--kmip-key-path', '/key',
-                '--kmip-cert-path', '/cert', '--encrypt-with-master-password']
-        self.no_error_run(self.command + args, self.server_args)
-        expected = json.dumps({
-            'usage': ['KEK-encryption'],
-            'name': 'key01',
-            'type': 'kmip-aes-key-256',
-            'data': {
-                'encryptWith': 'nodeSecretManager',
-                'activeKey': {'kmipId': 'key'},
-                'host': 'localhost',
-                'port': 1470,
-                'encryptionApproach': 'useGet',
-                'keyPath': '/key',
-                'certPath': '/cert',
-            }
-        }, sort_keys=True)
-        self.rest_parameter_match([expected])
+    def test_add_edit_key_cloud(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
 
-    def test_add_key_auto_no_encrypt_method(self):
-        args = ['--add-key', '--name', 'key01', '--kek-usage', '--key-type', 'auto-generated']
-        self.system_exit_run(self.command + args, self.server_args)
-        self.assertIn('one of --encrypt-with-master-password, --encrypt-with-key must be specified', self.str_output)
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'aws', '--cloud-key-arn', 'arn',
+                                '--cloud-region', 'us-east-1']
+            self.no_error_run(self.command + args, None, start_server=False)
+            expected = json.dumps({
+                'usage': ['KEK-encryption'],
+                'name': 'key01',
+                'type': 'awskms-aes-key-256',
+                'data': {'keyARN': 'arn', 'region': 'us-east-1', 'useIMDS': False}
+            }, sort_keys=True)
+            self.rest_parameter_match([expected], length_match=False)
 
-    def test_add_key_auto_one_rotation_opt(self):
-        args = ['--add-key', '--name', 'key01', '--kek-usage', '--key-type', 'auto-generated',
-                '--encrypt-with-master-password', '--auto-rotate-every', '30']
-        self.system_exit_run(self.command + args, self.server_args)
-        self.assertIn('--auto-rotate-every must be provided with --auto-rotate-start-on', self.str_output)
+    def test_add_edit_key_kmip_no_ops(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'kmip']
+            self.system_exit_run(self.command + args, None, start_server=False)
+            self.assertIn('--kmip-operations', self.str_output)
+
+    def test_add_edit_key_kmip_no_encrypt_method(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'kmip', '--kmip-operations', 'get',
+                                '--kmip-key', 'key', '--kmip-host', 'localhost', '--kmip-port', '1470',
+                                '--kmip-key-path', '/key', '--kmip-cert-path', '/cert']
+            self.system_exit_run(self.command + args, None, start_server=False)
+            self.assertIn(
+                'one of --encrypt-with-master-password, --encrypt-with-key must be specified',
+                self.str_output)
+
+    def test_add_edit_key_kmip(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'kmip', '--kmip-operations', 'get',
+                                '--kmip-key', 'key', '--kmip-host', 'localhost', '--kmip-port', '1470',
+                                '--kmip-key-path', '/key', '--kmip-cert-path', '/cert',
+                                '--encrypt-with-master-password']
+            self.no_error_run(self.command + args, None, start_server=False)
+            expected = json.dumps({
+                'usage': ['KEK-encryption'],
+                'name': 'key01',
+                'type': 'kmip-aes-key-256',
+                'data': {
+                    'encryptWith': 'nodeSecretManager',
+                    'activeKey': {'kmipId': 'key'},
+                    'host': 'localhost',
+                    'port': 1470,
+                    'encryptionApproach': 'useGet',
+                    'keyPath': '/key',
+                    'certPath': '/cert',
+                }
+            }, sort_keys=True)
+            self.rest_parameter_match([expected], length_match=False)
+
+    def test_add_edit_key_auto_no_encrypt_method(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'auto-generated']
+            self.system_exit_run(self.command + args, None, start_server=False)
+            self.assertIn(
+                'one of --encrypt-with-master-password, --encrypt-with-key must be specified',
+                self.str_output)
+
+    def test_add_edit_key_auto_one_rotation_opt(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'auto-generated',
+                                '--encrypt-with-master-password', '--auto-rotate-every', '30']
+            self.system_exit_run(self.command + args, None, start_server=False)
+            self.assertIn('--auto-rotate-every must be provided with --auto-rotate-start-on', self.str_output)
 
     def test_add_key_auto(self):
-        args = ['--add-key', '--name', 'key01', '--kek-usage', '--key-type', 'auto-generated',
-                '--encrypt-with-master-password', '--auto-rotate-every', '30',
-                '--auto-rotate-start-on', '2025-01-01T00:00:00Z']
-        self.no_error_run(self.command + args, self.server_args)
-        expected = json.dumps({
-            'usage': ['KEK-encryption'],
-            'name': 'key01',
-            'type': 'auto-generated-aes-key-256',
-            'data': {
-                'encryptWith': 'nodeSecretManager',
-                'autoRotation': True,
-                'rotationIntervalInDays': 30,
-                'nextRotationTime': '2025-01-01T00:00:00Z',
-            }
-        }, sort_keys=True)
-        self.rest_parameter_match([expected])
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'auto-generated',
+                                '--encrypt-with-master-password', '--auto-rotate-every', '30',
+                                '--auto-rotate-start-on', '2025-01-01T00:00:00Z']
+            self.no_error_run(self.command + args, None, start_server=False)
+            expected = json.dumps({
+                'usage': ['KEK-encryption'],
+                'name': 'key01',
+                'type': 'auto-generated-aes-key-256',
+                'data': {
+                    'encryptWith': 'nodeSecretManager',
+                    'autoRotation': True,
+                    'rotationIntervalInDays': 30,
+                    'nextRotationTime': '2025-01-01T00:00:00Z',
+                }
+            }, sort_keys=True)
+            self.rest_parameter_match([expected], length_match=False)
 
     def test_delete_key(self):
         args = ['--delete-key', '7']
