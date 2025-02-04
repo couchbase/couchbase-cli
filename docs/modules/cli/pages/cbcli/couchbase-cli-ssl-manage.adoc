@@ -124,6 +124,8 @@ For security reasons, this method has been deprecated in Couchbase Server 7.1 an
   * enable: if the client presents a valid client certificate then we try
     and validate it. If the validation fails or no certificate is presented we
     fall back to the existing authentication methods
+  * hybrid: like enable but internal connections will use a client certificate
+    when node-to-node encryption is enabled, basic otherwise.
   * mandatory: the client has to present valid SSL certificate in order to
     access successfully authorize the connection.
 
