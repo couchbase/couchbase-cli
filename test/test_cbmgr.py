@@ -30,12 +30,12 @@ class TestProcessServices(unittest.TestCase):
         for name, test in tests.items():
             with self.subTest(name):
                 cluster_version = test.setdefault("cluster_version", "7.6.0")
-                services, err = process_services(test["service"], True, cluster_version)
+                services, err = process_services(test["service"], True, False, cluster_version)
                 self.assertEqual(err, test.setdefault("error", None))
                 self.assertEqual(services, test["expected"])
 
     def test_process_services_version_none(self):
-        services, err = process_services("manager-only", True)
+        services, err = process_services("manager-only", True, False)
         self.assertEqual(err, None)
         self.assertEqual(services, "")
 

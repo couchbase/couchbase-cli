@@ -205,13 +205,15 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
             if version_check:
                 check_versions(self.rest)
             if enterprise_check is not None:
-                enterprise, errors = self.rest.is_enterprise()
+                # check columnar when we check enterprise to avoid a duplicate fetch on pools
+                enterprise, columnar, errors = self.rest.is_enterprise_columnar()
                 _exit_if_errors(errors)
 
                 if enterprise_check and not enterprise:
                     _exit_if_errors(['Command only available in enterprise edition'])
 
                 self.enterprise = enterprise
+                self.columnar = columnar
 
             return fn(self, opts)
         return decorator
@@ -313,7 +315,7 @@ def index_storage_mode_to_param(value, default="plasma"):
     return value
 
 
-def process_services(services, enterprise, cluster_version="0.0.0"):
+def process_services(services, enterprise, columnar, cluster_version="0.0.0"):
     """Converts services to a format Couchbase understands"""
     sep = ","
     if services.find(sep) < 0:
@@ -333,7 +335,7 @@ def process_services(services, enterprise, cluster_version="0.0.0"):
         return None, ["Invalid service configuration. A manager only node cannot run any other services."]
 
     versionCheck = compare_versions(cluster_version, "7.6.0")
-    if manager_only in svc_set and versionCheck == -1:
+    if manager_only in svc_set and not columnar and versionCheck == -1:
         return None, ["The manager only service can only be used with >= 7.6.0 clusters"]
 
     if not enterprise:
@@ -905,7 +907,7 @@ class ClusterInit(Subcommand):
         if "manager-only" in opts.services:
             _exit_if_errors(["Cannot initialize cluster with the manager only service"])
 
-        services, errors = process_services(opts.services, self.enterprise)
+        services, errors = process_services(opts.services, self.enterprise, self.columnar)
         _exit_if_errors(errors)
 
         if 'kv' not in services.split(','):
@@ -932,7 +934,7 @@ class ClusterInit(Subcommand):
         _exit_if_errors(errors)
 
         versionCheck = compare_versions(min_version, "7.2.3")
-        if versionCheck == -1:
+        if not self.columnar and versionCheck == -1:
             _exit_if_errors(["--cluster-init can only be used against >= 7.2.3 clusters"])
 
         if not self.enterprise and opts.notifications == "0":
@@ -2437,7 +2439,7 @@ class ServerAdd(Subcommand):
         min_version, error = self.rest.min_version()
         _exit_if_errors(error)
 
-        opts.services, errors = process_services(opts.services, self.enterprise, min_version)
+        opts.services, errors = process_services(opts.services, self.enterprise, self.columnar, min_version)
         _exit_if_errors(errors)
 
         settings, errors = self.rest.index_settings()
@@ -3929,7 +3931,7 @@ class SettingNotification(Subcommand):
         _exit_if_errors(errors)
 
         versionCheck = compare_versions(min_version, "7.2.3")
-        if not self.enterprise and versionCheck != -1:
+        if not self.enterprise and not self.columnar and versionCheck != -1:
             _exit_if_errors(["Modifying notifications settings is an Enterprise Edition only feature"])
 
         enabled = None
