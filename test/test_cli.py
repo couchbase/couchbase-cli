@@ -1482,6 +1482,16 @@ class TestSettingEncryption(CommandTest):
             self.system_exit_run(self.command + args, None, start_server=False)
             self.assertIn('--auto-rotate-every must be provided with --auto-rotate-start-on', self.str_output)
 
+    def test_add_edit_key_invalid_id(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'auto-generated',
+                                '--encrypt-with-key', 'foo']
+            self.system_exit_run(self.command + args, None, start_server=False)
+            self.assertIn("--encrypt-with-key's argument must be a number", self.str_output)
+
     def test_add_key_auto(self):
         self.server.set_args(self.server_args)
         self.server.run()

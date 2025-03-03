@@ -3358,6 +3358,13 @@ class SettingEncryption(Subcommand):
         if not opts.name:
             _exit_if_errors(["--name must be specified"])
 
+        encrypt_with_key = 0
+        try:
+            if opts.encrypt_with_key:
+                encrypt_with_key = int(opts.encrypt_with_key)
+        except ValueError:
+            _exit_if_errors(["--encrypt-with-key's argument must be a number"])
+
         usages = []
         if opts.config_usage:
             usages.append("config-encryption")
@@ -3409,7 +3416,7 @@ class SettingEncryption(Subcommand):
                 data["encryptWith"] = "nodeSecretManager"
             else:
                 data["encryptWith"] = "encryptionKey"
-                data["encryptWithKeyId"] = int(opts.encrypt_with_key)
+                data["encryptWithKeyId"] = encrypt_with_key
 
             data["activeKey"] = {"kmipId": opts.kmip_key}
             data["host"] = opts.kmip_host
@@ -3437,7 +3444,7 @@ class SettingEncryption(Subcommand):
                 data["encryptWith"] = "nodeSecretManager"
             else:
                 data["encryptWith"] = "encryptionKey"
-                data["encryptWithKeyId"] = int(opts.encrypt_with_key)
+                data["encryptWithKeyId"] = encrypt_with_key
 
             if (opts.auto_rotate_every and not opts.auto_rotate_start) or \
                (opts.auto_rotate_start and not opts.auto_rotate_every):
