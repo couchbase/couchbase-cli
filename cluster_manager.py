@@ -1016,7 +1016,7 @@ class ClusterManager(object):
         if typ == 'key':
             method = 'encryptionKey'
         elif typ == 'master-password':
-            method = 'nodeSecretsManager'
+            method = 'nodeSecretManager'
 
         params = {'encryptionMethod': method}
         if key is not None:

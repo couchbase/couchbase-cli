@@ -1363,6 +1363,14 @@ class TestSettingEncryption(CommandTest):
                            f'log.dekRotationInterval={30*24*60*60}', f'log.dekLifetime={60*24*60*60}']
         self.rest_parameter_match(expected_params)
 
+    def test_set_encryption_master_password(self):
+        args = ['--set', '--type', 'master-password', '--target', 'log', '--dek-rotate-every', '30',
+                '--dek-lifetime', '60']
+        self.no_error_run(self.command + args, self.server_args)
+        expected_params = ['log.encryptionMethod=nodeSecretManager',
+                           f'log.dekRotationInterval={30*24*60*60}', f'log.dekLifetime={60*24*60*60}']
+        self.rest_parameter_match(expected_params)
+
     def test_add_edit_key_no_name(self):
         self.server.set_args(self.server_args)
         self.server.run()
