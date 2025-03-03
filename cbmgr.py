@@ -3337,8 +3337,10 @@ class SettingEncryption(Subcommand):
         if not opts.encryption_type:
             _exit_if_errors(["--type must be specified if setting encryption settings"])
 
-        if (opts.encryption_type == "key" and not opts.key) or (opts.encryption_type != "key" and opts.key):
+        if opts.encryption_type == "key" and not opts.key:
             _exit_if_errors(["when --type is 'key', --key must be specified, and vice versa"])
+        if opts.encryption_type != "key" and opts.key:
+            _exit_if_errors(["--key should only be specified when --type is 'key'"])
 
         dek_rotation_interval, dek_lifetime = None, None
         if opts.dek_rotation_interval:
