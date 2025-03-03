@@ -3364,7 +3364,7 @@ class SettingEncryption(Subcommand):
         if opts.log_usage:
             usages.append("log-encryption")
         if opts.audit_usage:
-            usages.append("audit_usage")
+            usages.append("audit-usage")
         if opts.kek_usage:
             usages.append("KEK-encryption")
         if opts.all_bucket_usage:
