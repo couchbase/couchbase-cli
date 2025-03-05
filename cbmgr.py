@@ -3352,7 +3352,7 @@ class SettingEncryption(Subcommand):
             opts.target, opts.encryption_type, opts.key, dek_rotation_interval, dek_lifetime)
         _exit_if_errors(errors)
 
-        _success(f"Set the encryptition settings for {opts.target}")
+        _success(f"Set the encryption settings for {opts.target}")
 
     def _add_edit_parse_opts(self, opts):
         if not opts.name:
