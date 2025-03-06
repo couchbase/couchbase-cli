@@ -747,6 +747,7 @@ class Subcommand(Command):
         # Filled by the decorators
         self.rest = None
         self.enterprise = None
+        self.columnar = None
 
         self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False, allow_abbrev=False)
         group = self.parser.add_argument_group("Cluster options")

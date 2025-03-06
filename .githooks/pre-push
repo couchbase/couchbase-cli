@@ -15,6 +15,5 @@ done
 # run multiple linters over the codebase before allowing allowing a push (these are the same linters that the build bot
 # runs), therefore, this should mean less wasted time spent fixing mistakes picked up when it's least convenient to fix
 # them.
-pylint --errors-only --disable=import-error cbbackup cbbackupwrapper cblogredaction cbrecovery cbrestore \
-    cbrestorewrapper cbtransfer cbworkloadgen couchbase-cli pump*.py
+pylint --errors-only --disable=import-error cblogredaction cbrecovery cbtransfer cbworkloadgen couchbase-cli pump*.py
 pylint --errors-only --disable=import-error,unused-import --disable C,R cbmgr.py cluster_manager.py
