@@ -29,6 +29,7 @@ CBAS_SERVICE = 'cbas'
 BACKUP_SERVICE = 'backup'
 
 ERR_AUTH = 'unable to access the REST API - please check your username (-u) and password (-p)'
+ERR_PASSWORD_EXPIRED = 'unable to access the REST API - Password expired'
 ERR_INTERNAL = 'Internal server error, please retry your request'
 
 DEFAULT_REQUEST_TIMEOUT = 60
@@ -37,6 +38,10 @@ try:
     from cb_version import VERSION
 except ImportError:
     VERSION = '0.0.0-0000'
+
+
+def unexpected_403_err(message):
+    return f"Unexpected response for error 403: {message}"
 
 
 def one_zero_boolean_to_string(value: str) -> str:
@@ -252,7 +257,7 @@ class ClusterManager(object):
 
     def is_cluster_initialized(self):
         data, errors = self.pools()
-        if (errors and len(errors) == 1 and errors[0] == ERR_AUTH) or \
+        if (errors and len(errors) == 1 and errors[0] in [ERR_AUTH, ERR_PASSWORD_EXPIRED]) or \
                 (data and data['pools'] and len(data['pools']) > 0):
             return True, None
         return False, errors
@@ -2991,7 +2996,9 @@ class ClusterManager(object):
                     return None, [errors['message'] + ": " + ", ".join(errors["permissions"])]
                 elif 'runtime_info' in errors and 'info' in errors['runtime_info']:
                     return None, [errors['runtime_info']['info']]
-            return None, [f"Unexpected response for error 403: {response.text}"]
+                elif 'passwordExpired' in errors and errors['passwordExpired']:
+                    return None, [ERR_PASSWORD_EXPIRED]
+            return None, [unexpected_403_err(response.text)]
         # Error codes from Eventing service
         elif response.status_code in [406, 422, 423]:
             errors = response.json()

@@ -256,6 +256,9 @@ class MockRESTServer(object):
 
 
 def get_pools(rest_params=None, server_args=None, path="", endpoint_match=None):
+    if "override-pools" in server_args:
+        return server_args["override-pools"]
+
     is_admin = True
     enterprise = True
     version = '0.0.0-0000-enterprise'

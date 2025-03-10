@@ -14,9 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import unittest
+import unittest.mock
 
-from cluster_manager import ClusterManager
+from mock_server import MockRESTServer
+
+from cluster_manager import ERR_AUTH, ERR_PASSWORD_EXPIRED, ClusterManager, unexpected_403_err
 
 
 class ClusterManagerTest(unittest.TestCase):
@@ -209,3 +213,39 @@ class ClusterManagerTest(unittest.TestCase):
                                                                                        test['nodes_to_match'])
                 self.assertEqual(errors, test['errors'])
                 self.assertEqual(matched_nodes, test['matched_nodes'])
+
+    def test_is_cluster_initialized(self):
+        tests = {
+            "ErrAuthIgnored": {
+                "pools_res": (None, [ERR_AUTH]),
+                "server_status": 401,
+                "server_res": {},
+                "expected_res": (True, None)
+            },
+            "ErrPasswordExpiredIgnored": {
+                "pools_res": (None, [ERR_PASSWORD_EXPIRED]),
+                "server_status": 403,
+                "server_res": {"message": "Password expired", "passwordExpired": True},
+                "expected_res": (True, None)
+            },
+            "PropagateOtherErrors": {
+                "pools_res": (None, ["Unknown error"]),
+                "server_status": 403,
+                "server_res": {"message": "Unknown error"},
+                "expected_res": (False, [unexpected_403_err(json.dumps({"message": "Unknown error"}))])
+            }
+        }
+
+        for name, test in tests.items():
+            with self.subTest(name=name):
+                server = MockRESTServer('127.0.0.1', 6789)
+                server.args['override-pools'] = (test["server_status"], test["server_res"])
+
+                server.run()
+
+                cluster_manager = ClusterManager("http://127.0.0.1:6789", "Administrator", "asdasd")
+                res = cluster_manager.is_cluster_initialized()
+
+                server.shutdown()
+
+                self.assertEqual(res, test["expected_res"])
