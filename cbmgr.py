@@ -4262,6 +4262,8 @@ class SslManage(Subcommand):
                               help="Regenerate the cluster certificate and save it to a file")
         me_group.add_argument("--set-node-certificate", dest="set_cert", action="store_true",
                               default=False, help="Sets the node certificate")
+        me_group.add_argument("--set-client-certificate", dest="set_client_cert", action="store_true",
+                              default=False, help="Sets the internal client certificate")
         group.add_argument("--pkey-passphrase-settings", dest="pkey_settings", metavar="<path>",
                            help="Optional path to a JSON file containing private key passphrase settings")
         me_group.add_argument("--set-client-auth", dest="client_auth_path", metavar="<path>",
@@ -4365,9 +4367,13 @@ class SslManage(Subcommand):
             _exit_if_errors(errors)
             _success(f'Uploaded cluster certificate to {opts.cluster}')
         elif opts.set_cert:
-            _, errors = self.rest.set_node_certificate(_read_json_file_if_provided(opts.pkey_settings))
+            _, errors = self.rest.set_certificate(_read_json_file_if_provided(opts.pkey_settings), is_client_cert=False)
             _exit_if_errors(errors)
             _success("Node certificate set")
+        elif opts.set_client_cert:
+            _, errors = self.rest.set_certificate(_read_json_file_if_provided(opts.pkey_settings), is_client_cert=True)
+            _exit_if_errors(errors)
+            _success("Internal client certificate set")
         elif opts.client_auth_path:
             data = _exit_on_file_read_failure(opts.client_auth_path)
             try:

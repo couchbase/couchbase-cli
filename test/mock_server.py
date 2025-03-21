@@ -570,6 +570,7 @@ endpoints = [
     (r'/node/controller/disableUnusedExternalListeners', {'POST': do_nothing}),
     (r'/node/controller/loadTrustedCAs', {'POST': do_nothing}),
     (r'/node/controller/reloadCertificate', {'POST': do_nothing}),
+    (r'/node/controller/reloadClientCertificate', {'POST': do_nothing}),
     (r'/node/controller/setupNetConfig', {'POST': do_nothing}),
     (r'/controller/addNode$', {'POST': do_nothing}),
     (r'/controller/failOver$', {'POST': do_nothing}),

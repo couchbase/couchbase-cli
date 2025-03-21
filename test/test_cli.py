@@ -2321,6 +2321,17 @@ class TestSslManage(CommandTest):
         self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
         self.assertIn('Node certificate set', self.str_output)
 
+    def test_set_client_certificate(self):
+        self.no_error_run(self.command + ['--set-client-certificate'], self.server_args)
+        self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
+        self.assertIn('Internal client certificate set', self.str_output)
+
+    def test_set_client_certificate_not_init(self):
+        self.server_args['init'] = False
+        self.no_error_run(self.command + ['--set-client-certificate'], self.server_args)
+        self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
+        self.assertIn('Internal client certificate set', self.str_output)
+
     def test_set_node_certificate_with_pkey_settings(self):
         pkey_settings_file = tempfile.NamedTemporaryFile(delete=False)
         pkey_settings_file.write(b'{"type":"plain","password":"asdf"}')

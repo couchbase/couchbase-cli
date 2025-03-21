@@ -2000,7 +2000,7 @@ class ClusterManager(object):
         url = f'{self.hostname}/pools/default/certificate/node/{node}'
         return self._get(url)
 
-    def set_node_certificate(self, pkey_settings):
+    def set_certificate(self, pkey_settings, is_client_cert=False):
         """Activates the current node certificate
 
         Grabs chain.pem and pkey.pem from the <data folder>/inbox/ directory and
@@ -2014,7 +2014,12 @@ class ClusterManager(object):
         if pkey_settings:
             params["privateKeyPassphrase"] = pkey_settings
 
-        return self._post_json(f'{self.hostname}/node/controller/reloadCertificate', params)
+        if is_client_cert:
+            endpoint = '/node/controller/reloadClientCertificate'
+        else:
+            endpoint = '/node/controller/reloadCertificate'
+
+        return self._post_json(f'{self.hostname}{endpoint}', params)
 
     def set_client_cert_auth(self, config):
         """Enable/disable the client cert auth"""
