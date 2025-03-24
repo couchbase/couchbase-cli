@@ -290,7 +290,7 @@ def get_pools(rest_params=None, server_args=None, path="", endpoint_match=None):
                                            'lhttpc': '1.3.0', 'sasl': '2.3.4'}, 'implementationVersion': version,
                      'isAdminCreds': is_admin, 'isROAdminCreds': False}
 
-    response_no_init = {'uuid': [], 'settings': [], 'pools': [], 'isEnterprise': enterprise,
+    response_no_init = {'uuid': [], 'settings': [], 'pools': [], 'isEnterprise': enterprise, 'isColumnar': columnar,
                         'componentsVersion': {'kernel': '5.4.3.2', 'ale': version, 'ssl': '8.2.6.2', 'os_mon': '2.4.4',
                                               'stdlib': '3.4.5', 'inets': '6.5.2.4', 'public_key': '1.5.2',
                                               'ns_server': version, 'crypto': '4.2.2.2', 'asn1': '5.0.5.1',

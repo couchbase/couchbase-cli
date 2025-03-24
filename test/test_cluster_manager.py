@@ -249,3 +249,54 @@ class ClusterManagerTest(unittest.TestCase):
                 server.shutdown()
 
                 self.assertEqual(res, test["expected_res"])
+
+    def test_is_enterprise_columnar(self):
+        tests = {
+            "Enterprise_Columnar": {
+                "pools_response": (200, {
+                    "isEnterprise": True,
+                    "isColumnar": True
+                }),
+                "expected": (True, True, None)
+            },
+            "Enterprise_NonColumnar": {
+                "pools_response": (200, {
+                    "isEnterprise": True,
+                    "isColumnar": False
+                }),
+                "expected": (True, False, None)
+            },
+            "Enterprise_MissingColumnarField": {
+                "pools_response": (200, {
+                    "isEnterprise": True
+                    # isColumnar field is missing, should default to False
+                }),
+                "expected": (True, False, None)
+            },
+            "NonEnterprise_MissingColumnarField": {
+                "pools_response": (200, {
+                    "isEnterprise": False
+                    # isColumnar field is missing, should default to False
+                }),
+                "expected": (False, False, None)
+            },
+            "Error": {
+                "pools_response": (400, {"_": "error"}),
+                "expected": (None, None, [{"_": "error"}])
+            }
+        }
+
+        for name, test in tests.items():
+            with self.subTest(name=name):
+                server = MockRESTServer('127.0.0.1', 6789)
+                server.args["override-pools"] = test["pools_response"]
+                server.run()
+
+                cluster_manager = ClusterManager("http://127.0.0.1:6789", "Administrator", "asdasd")
+                is_enterprise, is_columnar, errors = cluster_manager.is_enterprise_columnar()
+
+                server.shutdown()
+
+                self.assertEqual(is_enterprise, test["expected"][0], "is_enterprise value does not match expected")
+                self.assertEqual(is_columnar, test["expected"][1], "is_columnar value does not match expected")
+                self.assertEqual(errors, test["expected"][2], "errors value does not match expected")

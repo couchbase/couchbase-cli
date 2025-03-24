@@ -263,11 +263,15 @@ class ClusterManager(object):
         return False, errors
 
     def is_enterprise_columnar(self):
+        """
+        Returns a tuple of (isEnterprise, isColumnar, errors)
+        """
         data, errors = self.pools()
         if errors:
             return None, None, errors
-        # use data["isColumnar"] once MB-65393 is completed
-        return data["isEnterprise"], data["implementationVersion"].endswith("-columnar"), None
+
+        # If isColumnar isn't present, then it must be a <8.0 non-Columnar cluster (MB-65393)
+        return data["isEnterprise"], data.get("isColumnar", False), None
 
     def get_hostnames_for_service(self, service_name):
         """ Gets all hostnames that run a service
