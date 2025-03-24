@@ -24,13 +24,31 @@ class TestProcessServices(unittest.TestCase):
                 "expected": None,
                 "error": ["The manager only service can only be used with >= 7.6.0 clusters"],
                 "cluster_version": "7.2.0"
-            }
+            },
+            "ColumnarDataService": {
+                "service": "data",
+                "expected": None,
+                "columnar": True,
+                "error": ["--services cannot be specified on Columnar"]
+            },
+            "ColumnarManagerOnly": {
+                "service": "manager-only",
+                "expected": None,
+                "columnar": True,
+                "error": ["--services cannot be specified on Columnar"]
+            },
+            "ColumnarBlankService": {
+                "service": "",
+                "expected": None,
+                "columnar": True
+            },
         }
 
         for name, test in tests.items():
             with self.subTest(name):
                 cluster_version = test.setdefault("cluster_version", "7.6.0")
-                services, err = process_services(test["service"], True, False, cluster_version)
+                columnar = test.setdefault("columnar", False)
+                services, err = process_services(test["service"], True, columnar, cluster_version)
                 self.assertEqual(err, test.setdefault("error", None))
                 self.assertEqual(services, test["expected"])
 

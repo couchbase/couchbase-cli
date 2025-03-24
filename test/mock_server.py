@@ -261,10 +261,15 @@ def get_pools(rest_params=None, server_args=None, path="", endpoint_match=None):
 
     is_admin = True
     enterprise = True
+    columnar = False
     version = '0.0.0-0000-enterprise'
     init = True
     if 'enterprise' in server_args:
         enterprise = server_args['enterprise']
+    if 'columnar' in server_args:
+        columnar = server_args['columnar']
+        if columnar:
+            version = '0.0.0-0000-columnar'
     if 'is_admin' in server_args:
         is_admin = server_args['is_admin']
     if "version" in server_args:
@@ -278,6 +283,7 @@ def get_pools(rest_params=None, server_args=None, path="", endpoint_match=None):
                      'pools': [{'streamingUri': '/poolsStreaming/default?uuid=5f8b140987f4e46c950e3fa82e7fcb48',
                                 'name': 'default', 'uri': '/pools/default?uuid=5f8b140987f4e46c950e3fa82e7fcb48'}],
                      'isEnterprise': enterprise,
+                     'isColumnar': columnar,
                      'componentsVersion': {'kernel': '2.16.4', 'ale': version, 'ssl': '5.3.3',
                                            'os_mon': '2.2.14', 'stdlib': '1.19.4', 'inets': '5.9.8',
                                            'public_key': '0.21', 'ns_server': version, 'crypto': '3.2', 'asn1': '2.0.4',

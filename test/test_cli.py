@@ -353,6 +353,20 @@ class TestClusterInit(CommandTest):
                              ['--update-notifications', '0'], self.server_args)
         self.assertIn('--update-notifications can only be configured on Enterprise Edition', self.str_output)
 
+    def test_error_services_columnar(self):
+        self.server_args['init'] = False
+        self.server_args['columnar'] = True
+        self.system_exit_run(self.command + cluster_connect_args[:2] + self.command_args +
+                             ['--services', 'data'], self.server_args)
+        self.assertIn('--services cannot be specified on Columnar', self.str_output)
+
+    def test_error_manager_only_service_columnar(self):
+        self.server_args['init'] = False
+        self.server_args['columnar'] = True
+        self.system_exit_run(self.command + cluster_connect_args[:2] + self.command_args +
+                             ['--services', 'manager-only'], self.server_args)
+        self.assertIn('--services cannot be specified on Columnar', self.str_output)
+
 
 class TestBucketCompact(CommandTest):
     def setUp(self):
@@ -1238,6 +1252,20 @@ class TestServerAdd(CommandTest):
                 self.assertTrue(found)
             else:
                 self.assertIn(p, self.server.rest_params)
+
+    def test_server_add_columnar(self):
+        self.server_args["columnar"] = True
+        self.server_args["pools_default"] = {"nodes": [{"version": "1.2.0-0000-columnar"}]}
+        self.no_error_run(self.command + self.cmd_args, self.server_args)
+        self.assertIn('POST:/controller/addNode', self.server.trace)
+        expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd']
+        self.rest_parameter_match(expected_params)
+
+    def test_server_add_services_columnar(self):
+        self.server_args["columnar"] = True
+        self.server_args["pools_default"] = {"nodes": [{"version": "1.2.0-0000-columnar"}]}
+        self.system_exit_run(self.command + self.cmd_args + ['--services', 'data'], self.server_args)
+        self.assertIn('--services cannot be specified on Columnar', self.str_output)
 
 
 class TestServerInfo(CommandTest):

@@ -317,6 +317,13 @@ def index_storage_mode_to_param(value, default="plasma"):
 
 def process_services(services, enterprise, columnar, cluster_version="0.0.0"):
     """Converts services to a format Couchbase understands"""
+    if not services and not columnar:
+        services = "data"
+    elif services and columnar:
+        return None, ["--services cannot be specified on Columnar"]
+    elif columnar:
+        return None, None
+
     sep = ","
     if services.find(sep) < 0:
         # backward compatible when using ";" as separator
@@ -335,7 +342,7 @@ def process_services(services, enterprise, columnar, cluster_version="0.0.0"):
         return None, ["Invalid service configuration. A manager only node cannot run any other services."]
 
     versionCheck = compare_versions(cluster_version, "7.6.0")
-    if manager_only in svc_set and not columnar and versionCheck == -1:
+    if manager_only in svc_set and versionCheck == -1:
         return None, ["The manager only service can only be used with >= 7.6.0 clusters"]
 
     if not enterprise:
@@ -885,7 +892,7 @@ class ClusterInit(Subcommand):
         group.add_argument("--index-storage-setting", dest="index_storage_mode",
                            choices=["default", "memopt"], metavar="<mode>",
                            help="The index storage backend (Defaults to \"default)\"")
-        group.add_argument("--services", dest="services", default="data", metavar="<service_list>",
+        group.add_argument("--services", dest="services", metavar="<service_list>",
                            help="The services to run on this server")
         group.add_argument("--update-notifications", dest="notifications", metavar="<1|0>", choices=["0", "1"],
                            default="1", help="Enables/disable software update notifications (EE only)")
@@ -905,13 +912,13 @@ class ClusterInit(Subcommand):
         if not self.enterprise and opts.index_storage_mode == 'memopt':
             _exit_if_errors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
 
-        if "manager-only" in opts.services:
+        if not self.columnar and opts.services and "manager-only" in opts.services:
             _exit_if_errors(["Cannot initialize cluster with the manager only service"])
 
         services, errors = process_services(opts.services, self.enterprise, self.columnar)
         _exit_if_errors(errors)
 
-        if 'kv' not in services.split(','):
+        if not self.columnar and 'kv' not in services.split(','):
             _exit_if_errors(["Cannot set up first cluster node without the data service"])
 
         if 'ipv4' in opts.ip_family:
@@ -920,7 +927,7 @@ class ClusterInit(Subcommand):
             ip_family = 'ipv6'
         ip_only = True if 'only' in opts.ip_family else False
 
-        if not opts.index_storage_mode and 'index' in services.split(','):
+        if not self.columnar and not opts.index_storage_mode and 'index' in services.split(','):
             opts.index_storage_mode = "default"
 
         default = "plasma"
@@ -2427,7 +2434,7 @@ class ServerAdd(Subcommand):
                            required=True, help="The password for the server to add")
         group.add_argument("--group-name", dest="group_name", metavar="<name>",
                            help="The server group to add this server into")
-        group.add_argument("--services", dest="services", default="data", metavar="<services>",
+        group.add_argument("--services", dest="services", default="", metavar="<services>",
                            help="The services this server will run")
         group.add_argument("--index-storage-setting", dest="index_storage_mode", metavar="<mode>",
                            choices=["default", "memopt"], help="The index storage mode")
@@ -2446,7 +2453,7 @@ class ServerAdd(Subcommand):
         settings, errors = self.rest.index_settings()
         _exit_if_errors(errors)
 
-        if opts.index_storage_mode is None and settings['storageMode'] == "" and "index" in opts.services:
+        if not self.columnar and opts.index_storage_mode is None and settings['storageMode'] == "" and "index" in opts.services:
             opts.index_storage_mode = "default"
 
         # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
