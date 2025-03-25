@@ -5204,20 +5204,20 @@ class EventingFunctionSetup(Subcommand):
 
         if statuses['apps'] is not None:
             statuses = self._get_eventing_functions_paths_to_statuses_map(statuses['apps'])
-            for function in functions:
-                function_path = self._get_function_path_from_list_functions_endpoint(function)
+            for fn in functions:
+                function_path = self._get_function_path_from_list_functions_endpoint(fn)
                 if function_path in statuses:
                     print(function_path)
                     print(f' Status: {statuses[function_path]}')
-                    if 'source_scope' in function["depcfg"]:
-                        print(f' Source: {function["depcfg"]["source_bucket"]}.{function["depcfg"]["source_scope"]}.'
-                              f'{function["depcfg"]["source_collection"]}')
+                    if 'source_scope' in fn["depcfg"]:
+                        print(f' Source: {fn["depcfg"]["source_bucket"]}.{fn["depcfg"]["source_scope"]}.'
+                              f'{fn["depcfg"]["source_collection"]}')
                         print(
-                            f' Metadata: {function["depcfg"]["metadata_bucket"]}.{function["depcfg"]["metadata_scope"]}.'
-                            f'{function["depcfg"]["metadata_collection"]}')
+                            f' Metadata: {fn["depcfg"]["metadata_bucket"]}.{fn["depcfg"]["metadata_scope"]}.'
+                            f'{fn["depcfg"]["metadata_collection"]}')
                     else:
-                        print(f' Source Bucket: {function["depcfg"]["source_bucket"]}')
-                        print(f' Metadata Bucket: {function["depcfg"]["metadata_bucket"]}')
+                        print(f' Source Bucket: {fn["depcfg"]["source_bucket"]}')
+                        print(f' Metadata Bucket: {fn["depcfg"]["metadata_bucket"]}')
         else:
             print('The cluster has no functions')
 

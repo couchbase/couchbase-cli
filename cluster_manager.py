@@ -481,12 +481,14 @@ class ClusterManager(object):
         if errors:
             return None, errors
 
+       # pylint: disable=invalid-sequence-index
         if not groups or not groups["groups"] or groups["groups"] == 0:
             return None, ["No server groups found"]
 
         for group in groups["groups"]:
             if group["name"] == group_name:
                 return group, None
+        # pylint: enable=invalid-sequence-index
 
         return None, [f'Group `{group_name}` not found']
 
