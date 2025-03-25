@@ -619,8 +619,8 @@ class TestBucketCreate(CommandTest):
         expected_params = [
             'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0',
             'ramQuotaMB=100', 'storageBackend=magma', 'rank=3', 'numVBuckets=128',
-            'encryptionAtRestKeyId=2', f'encryptionAtRestDekRotationInterval={30*24*60*60}',
-            f'encryptionAtRestDekLifetime={60*24*60*60}',
+            'encryptionAtRestKeyId=2', f'encryptionAtRestDekRotationInterval={30 * 24 * 60 * 60}',
+            f'encryptionAtRestDekLifetime={60 * 24 * 60 * 60}',
         ]
         self.rest_parameter_match(expected_params)
 
@@ -793,8 +793,8 @@ class TestBucketEdit(CommandTest):
         ]
         self.no_error_run(self.command + self.command_args + args, self.server_args)
         expected_params = [
-            'encryptionAtRestKeyId=2', f'encryptionAtRestDekRotationInterval={30*24*60*60}',
-            f'encryptionAtRestDekLifetime={60*24*60*60}',
+            'encryptionAtRestKeyId=2', f'encryptionAtRestDekRotationInterval={30 * 24 * 60 * 60}',
+            f'encryptionAtRestDekLifetime={60 * 24 * 60 * 60}',
         ]
         self.rest_parameter_match(expected_params)
 
@@ -1360,7 +1360,7 @@ class TestSettingEncryption(CommandTest):
                 '--dek-lifetime', '60']
         self.no_error_run(self.command + args, self.server_args)
         expected_params = ['log.encryptionMethod=encryptionKey', 'log.encryptionKeyId=2',
-                           f'log.dekRotationInterval={30*24*60*60}', f'log.dekLifetime={60*24*60*60}']
+                           f'log.dekRotationInterval={30 * 24 * 60 * 60}', f'log.dekLifetime={60 * 24 * 60 * 60}']
         self.rest_parameter_match(expected_params)
 
     def test_set_encryption_master_password(self):
@@ -1368,7 +1368,7 @@ class TestSettingEncryption(CommandTest):
                 '--dek-lifetime', '60']
         self.no_error_run(self.command + args, self.server_args)
         expected_params = ['log.encryptionMethod=nodeSecretManager',
-                           f'log.dekRotationInterval={30*24*60*60}', f'log.dekLifetime={60*24*60*60}']
+                           f'log.dekRotationInterval={30 * 24 * 60 * 60}', f'log.dekLifetime={60 * 24 * 60 * 60}']
         self.rest_parameter_match(expected_params)
 
     def test_add_edit_key_no_name(self):
@@ -2310,27 +2310,73 @@ class TestSslManage(CommandTest):
         self.assertIn('POST:/controller/regenerateCertificate', self.server.trace)
         self.assertIn('Certificate regenerate and copied to `node1.pem`', self.str_output)
 
+    def test_set_node_certificate_missing(self):
+        self.system_exit_run(self.command + ['--set-node-certificate'], self.server_args)
+        self.assertIn('--pkey-passphrase-settings is required', self.str_output)
+
+    def test_set_node_certificate_invalid_json(self):
+        with tempfile.NamedTemporaryFile() as link_options_file:
+            link_options_file.write(b'{123:123}')
+            link_options_file.flush()
+
+            self.system_exit_run(self.command + ['--set-node-certificate', '--pkey-passphrase-settings',
+                                                 link_options_file.name], self.server_args)
+            self.assertIn('does not contain valid JSON data', self.str_output)
+
     def test_set_node_certificate(self):
-        self.no_error_run(self.command + ['--set-node-certificate'], self.server_args)
-        self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
-        self.assertIn('Node certificate set', self.str_output)
+        with tempfile.NamedTemporaryFile() as link_options_file:
+            link_options_file.write(b'{"asd":123}')
+            link_options_file.flush()
+
+            self.no_error_run(self.command + ['--set-node-certificate', '--pkey-passphrase-settings',
+                                              link_options_file.name], self.server_args)
+            self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
+            self.assertIn('Node certificate set', self.str_output)
 
     def test_set_node_certificate_not_init(self):
-        self.server_args['init'] = False
-        self.no_error_run(self.command + ['--set-node-certificate'], self.server_args)
-        self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
-        self.assertIn('Node certificate set', self.str_output)
+        with tempfile.NamedTemporaryFile() as link_options_file:
+            link_options_file.write(b'{"asd":123}')
+            link_options_file.flush()
+
+            self.server_args['init'] = False
+            self.no_error_run(self.command + ['--set-node-certificate', '--pkey-passphrase-settings',
+                                              link_options_file.name], self.server_args)
+            self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
+            self.assertIn('Node certificate set', self.str_output)
+
+    def test_set_client_certificate_missing(self):
+        self.system_exit_run(self.command + ['--set-client-certificate'], self.server_args)
+        self.assertIn('--pkey-passphrase-settings is required', self.str_output)
+
+    def test_set_client_certificate_invalid_json(self):
+        with tempfile.NamedTemporaryFile() as link_options_file:
+            link_options_file.write(b'{123:123}')
+            link_options_file.flush()
+
+            self.system_exit_run(self.command + ['--set-client-certificate', '--pkey-passphrase-settings',
+                                                 link_options_file.name], self.server_args)
+            self.assertIn('does not contain valid JSON data', self.str_output)
 
     def test_set_client_certificate(self):
-        self.no_error_run(self.command + ['--set-client-certificate'], self.server_args)
-        self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
-        self.assertIn('Internal client certificate set', self.str_output)
+        with tempfile.NamedTemporaryFile() as link_options_file:
+            link_options_file.write(b'{"asd":123}')
+            link_options_file.flush()
+
+            self.no_error_run(self.command + ['--set-client-certificate', '--pkey-passphrase-settings',
+                                              link_options_file.name], self.server_args)
+            self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
+            self.assertIn('Internal client certificate set', self.str_output)
 
     def test_set_client_certificate_not_init(self):
-        self.server_args['init'] = False
-        self.no_error_run(self.command + ['--set-client-certificate'], self.server_args)
-        self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
-        self.assertIn('Internal client certificate set', self.str_output)
+        with tempfile.NamedTemporaryFile() as link_options_file:
+            link_options_file.write(b'{"asd":123}')
+            link_options_file.flush()
+
+            self.server_args['init'] = False
+            self.no_error_run(self.command + ['--set-client-certificate', '--pkey-passphrase-settings',
+                                              link_options_file.name], self.server_args)
+            self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
+            self.assertIn('Internal client certificate set', self.str_output)
 
     def test_set_node_certificate_with_pkey_settings(self):
         pkey_settings_file = tempfile.NamedTemporaryFile(delete=False)
@@ -2603,7 +2649,7 @@ class TestMasterPassword(CommandTest):
 
 def read_password(sock):
     (result, remoteaddr) = sock.recvfrom(128)
-    assert(result == b'asdasd')
+    assert (result == b'asdasd')
     sock.sendto(b'ok', remoteaddr)
 
 
