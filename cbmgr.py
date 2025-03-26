@@ -3285,7 +3285,7 @@ class SettingEncryption(Subcommand):
         group_encrypt_me.add_argument("--encrypt-with-master-password", dest="encrypt_with_master", action="store_true",
                                       help="Encrypt this key with the master password")
         group_encrypt_me.add_argument("--encrypt-with-key", dest="encrypt_with_key", metavar="<keyid>",
-                                      help="Encrypt this key with another key")
+                                      help="Encrypt this key with another key", type=(int))
 
         group.add_argument("--kmip-operations", dest="kmip_ops", choices=["get", "encrypt-decrypt"],
                            help="What operations to use with the KMIP server")
@@ -3359,20 +3359,13 @@ class SettingEncryption(Subcommand):
         if not opts.name:
             _exit_if_errors(["--name must be specified"])
 
-        encrypt_with_key = 0
-        try:
-            if opts.encrypt_with_key:
-                encrypt_with_key = int(opts.encrypt_with_key)
-        except ValueError:
-            _exit_if_errors(["--encrypt-with-key's argument must be a number"])
-
         usages = []
         if opts.config_usage:
             usages.append("config-encryption")
         if opts.log_usage:
             usages.append("log-encryption")
         if opts.audit_usage:
-            usages.append("audit-usage")
+            usages.append("audit-encryption")
         if opts.kek_usage:
             usages.append("KEK-encryption")
         if opts.all_bucket_usage:
@@ -3410,14 +3403,14 @@ class SettingEncryption(Subcommand):
                 _exit_if_errors(["--kmip-operations, --kmip-key, --kmip-host --kmip-port, --kmip-key-path, "
                                  "--kmip-cert-path must be specified"])
 
-            if not (opts.encrypt_with_master or opts.encrypt_with_key):
+            if not opts.encrypt_with_master and opts.encrypt_with_key is None:
                 _exit_if_errors(["one of --encrypt-with-master-password, --encrypt-with-key must be specified"])
 
             if opts.encrypt_with_master:
                 data["encryptWith"] = "nodeSecretManager"
             else:
                 data["encryptWith"] = "encryptionKey"
-                data["encryptWithKeyId"] = encrypt_with_key
+                data["encryptWithKeyId"] = opts.encrypt_with_key
 
             data["activeKey"] = {"kmipId": opts.kmip_key}
             data["host"] = opts.kmip_host
@@ -3438,14 +3431,14 @@ class SettingEncryption(Subcommand):
         elif opts.key_type == "auto-generated":
             typ = "auto-generated-aes-key-256"
 
-            if not (opts.encrypt_with_master or opts.encrypt_with_key):
+            if not opts.encrypt_with_master and opts.encrypt_with_key is None:
                 _exit_if_errors(["one of --encrypt-with-master-password, --encrypt-with-key must be specified"])
 
             if opts.encrypt_with_master:
                 data["encryptWith"] = "nodeSecretManager"
             else:
                 data["encryptWith"] = "encryptionKey"
-                data["encryptWithKeyId"] = encrypt_with_key
+                data["encryptWithKeyId"] = opts.encrypt_with_key
 
             if (opts.auto_rotate_every and not opts.auto_rotate_start) or \
                (opts.auto_rotate_start and not opts.auto_rotate_every):

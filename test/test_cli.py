@@ -1490,7 +1490,7 @@ class TestSettingEncryption(CommandTest):
             args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'auto-generated',
                                 '--encrypt-with-key', 'foo']
             self.system_exit_run(self.command + args, None, start_server=False)
-            self.assertIn("--encrypt-with-key's argument must be a number", self.str_output)
+            self.assertIn("ERROR: argument --encrypt-with-key: invalid int value", self.str_error)
 
     def test_add_key_auto(self):
         self.server.set_args(self.server_args)
