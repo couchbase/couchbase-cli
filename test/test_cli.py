@@ -2310,73 +2310,27 @@ class TestSslManage(CommandTest):
         self.assertIn('POST:/controller/regenerateCertificate', self.server.trace)
         self.assertIn('Certificate regenerate and copied to `node1.pem`', self.str_output)
 
-    def test_set_node_certificate_missing(self):
-        self.system_exit_run(self.command + ['--set-node-certificate'], self.server_args)
-        self.assertIn('--pkey-passphrase-settings is required', self.str_output)
-
-    def test_set_node_certificate_invalid_json(self):
-        with tempfile.NamedTemporaryFile() as link_options_file:
-            link_options_file.write(b'{123:123}')
-            link_options_file.flush()
-
-            self.system_exit_run(self.command + ['--set-node-certificate', '--pkey-passphrase-settings',
-                                                 link_options_file.name], self.server_args)
-            self.assertIn('does not contain valid JSON data', self.str_output)
-
     def test_set_node_certificate(self):
-        with tempfile.NamedTemporaryFile() as link_options_file:
-            link_options_file.write(b'{"asd":123}')
-            link_options_file.flush()
-
-            self.no_error_run(self.command + ['--set-node-certificate', '--pkey-passphrase-settings',
-                                              link_options_file.name], self.server_args)
-            self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
-            self.assertIn('Node certificate set', self.str_output)
+        self.no_error_run(self.command + ['--set-node-certificate'], self.server_args)
+        self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
+        self.assertIn('Node certificate set', self.str_output)
 
     def test_set_node_certificate_not_init(self):
-        with tempfile.NamedTemporaryFile() as link_options_file:
-            link_options_file.write(b'{"asd":123}')
-            link_options_file.flush()
-
-            self.server_args['init'] = False
-            self.no_error_run(self.command + ['--set-node-certificate', '--pkey-passphrase-settings',
-                                              link_options_file.name], self.server_args)
-            self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
-            self.assertIn('Node certificate set', self.str_output)
-
-    def test_set_client_certificate_missing(self):
-        self.system_exit_run(self.command + ['--set-client-certificate'], self.server_args)
-        self.assertIn('--pkey-passphrase-settings is required', self.str_output)
-
-    def test_set_client_certificate_invalid_json(self):
-        with tempfile.NamedTemporaryFile() as link_options_file:
-            link_options_file.write(b'{123:123}')
-            link_options_file.flush()
-
-            self.system_exit_run(self.command + ['--set-client-certificate', '--pkey-passphrase-settings',
-                                                 link_options_file.name], self.server_args)
-            self.assertIn('does not contain valid JSON data', self.str_output)
+        self.server_args['init'] = False
+        self.no_error_run(self.command + ['--set-node-certificate'], self.server_args)
+        self.assertIn('POST:/node/controller/reloadCertificate', self.server.trace)
+        self.assertIn('Node certificate set', self.str_output)
 
     def test_set_client_certificate(self):
-        with tempfile.NamedTemporaryFile() as link_options_file:
-            link_options_file.write(b'{"asd":123}')
-            link_options_file.flush()
-
-            self.no_error_run(self.command + ['--set-client-certificate', '--pkey-passphrase-settings',
-                                              link_options_file.name], self.server_args)
-            self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
-            self.assertIn('Internal client certificate set', self.str_output)
+        self.no_error_run(self.command + ['--set-client-certificate'], self.server_args)
+        self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
+        self.assertIn('Internal client certificate set', self.str_output)
 
     def test_set_client_certificate_not_init(self):
-        with tempfile.NamedTemporaryFile() as link_options_file:
-            link_options_file.write(b'{"asd":123}')
-            link_options_file.flush()
-
-            self.server_args['init'] = False
-            self.no_error_run(self.command + ['--set-client-certificate', '--pkey-passphrase-settings',
-                                              link_options_file.name], self.server_args)
-            self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
-            self.assertIn('Internal client certificate set', self.str_output)
+        self.server_args['init'] = False
+        self.no_error_run(self.command + ['--set-client-certificate'], self.server_args)
+        self.assertIn('POST:/node/controller/reloadClientCertificate', self.server.trace)
+        self.assertIn('Internal client certificate set', self.str_output)
 
     def test_set_node_certificate_with_pkey_settings(self):
         pkey_settings_file = tempfile.NamedTemporaryFile(delete=False)

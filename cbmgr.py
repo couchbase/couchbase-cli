@@ -4360,19 +4360,11 @@ class SslManage(Subcommand):
             _exit_if_errors(errors)
             _success(f'Uploaded cluster certificate to {opts.cluster}')
         elif opts.set_cert:
-            if opts.pkey_settings is None:
-                _exit_if_errors(['--pkey-passphrase-settings is required'])
-
-            _, errors = self.rest.set_certificate(_exit_on_json_file_read_failure(opts.pkey_settings),
-                                                  is_client_cert=False)
+            _, errors = self.rest.set_certificate(_read_json_file_if_provided(opts.pkey_settings), is_client_cert=False)
             _exit_if_errors(errors)
             _success("Node certificate set")
         elif opts.set_client_cert:
-            if opts.pkey_settings is None:
-                _exit_if_errors(['--pkey-passphrase-settings is required'])
-
-            _, errors = self.rest.set_certificate(_exit_on_json_file_read_failure(opts.pkey_settings),
-                                                  is_client_cert=True)
+            _, errors = self.rest.set_certificate(_read_json_file_if_provided(opts.pkey_settings), is_client_cert=True)
             _exit_if_errors(errors)
             _success("Internal client certificate set")
         elif opts.client_auth_path:
