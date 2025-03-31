@@ -2460,9 +2460,11 @@ class ServerAdd(Subcommand):
         group.add_argument("--server-add", dest="servers", metavar="<server_list>", required=True,
                            help="The list of servers to add")
         group.add_argument("--server-add-username", dest="server_username", metavar="<username>",
-                           required=True, help="The username for the server to add")
+                           help="The username for the server to add")
         group.add_argument("--server-add-password", dest="server_password", metavar="<password>",
-                           required=True, help="The password for the server to add")
+                           help="The password for the server to add")
+        group.add_argument("--use-client-cert", dest="use_client_cert", action="store_true",
+                           help="Use client certificate for authentication")
         group.add_argument("--group-name", dest="group_name", metavar="<name>",
                            help="The server group to add this server into")
         group.add_argument("--services", dest="services", default="", metavar="<services>",
@@ -2472,6 +2474,14 @@ class ServerAdd(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
+        if opts.use_client_cert:
+            if opts.server_username is not None or opts.server_password is not None:
+                _exit_if_errors(["cannot use --server-add-username and --server-add-password with --use-client-cert"])
+        else:
+            if opts.server_username is None or opts.server_password is None:
+                _exit_if_errors(
+                    ["provide either both --server-add-username and --server-add-password or the --use-client-cert flag"])
+
         if not self.enterprise and opts.index_storage_mode == 'memopt':
             _exit_if_errors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
 
@@ -2499,8 +2509,7 @@ class ServerAdd(Subcommand):
 
         servers = opts.servers.split(',')
         for server in servers:
-            _, errors = self.rest.add_server(server, opts.group_name, opts.server_username, opts.server_password,
-                                             opts.services)
+            _, errors = self.rest.add_server(server, opts)
             _exit_if_errors(errors)
 
         _success("Server added")

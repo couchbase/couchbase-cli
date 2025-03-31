@@ -508,15 +508,20 @@ class ClusterManager(object):
 
         return f'{self.hostname}{group["addNodeURI"]}', None
 
-    def add_server(self, add_server, group_name, username, password, services):
-        uri, errors = self.get_add_node_uri(group_name)
+    def add_server(self, add_server, opts):
+        uri, errors = self.get_add_node_uri(opts.group_name)
         if errors:
             return None, errors
 
-        return self._post_form_encoded(
-            uri,
-            {"hostname": add_server, "user": username, "password": password, "services": services},
-        )
+        params = {"hostname": add_server, "services": opts.services}
+
+        if opts.use_client_cert:
+            params["clientCertAuth"] = 'true'
+        else:
+            params["user"] = opts.server_username
+            params["password"] = opts.server_password
+
+        return self._post_form_encoded(uri, params)
 
     def readd_server(self, server):
         all_cluster_nodes_info, errors = self._get_all_cluster_nodes_info()

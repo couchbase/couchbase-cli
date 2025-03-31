@@ -1248,8 +1248,9 @@ class TestRebalance(CommandTest):
 class TestServerAdd(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'server-add'] + cluster_connect_args
-        self.cmd_args = ['--server-add', 'some-host:6789', '--server-add-username', 'Administrator',
-                         '--server-add-password', 'asdasd']
+        self.cmd_server_add_args = ['--server-add', 'some-host:6789']
+        self.cmd_basic_auth_args = ['--server-add-username', 'Administrator', '--server-add-password', 'asdasd']
+        self.cmd_args = self.cmd_server_add_args + self.cmd_basic_auth_args
 
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         self.server_args['server-group'] = {'groups': [
@@ -1268,6 +1269,40 @@ class TestServerAdd(CommandTest):
         self.server_args["pools_default"] = {"nodes": [{"version": "7.6.0-0000-enterprise"}]}
 
         super(TestServerAdd, self).setUp()
+
+    def test_server_add_use_client_cert(self):
+        self.no_error_run(self.command + self.cmd_server_add_args + ["--use-client-cert"], self.server_args)
+        self.assertIn('POST:/controller/addNode', self.server.trace)
+        expected_params = ['hostname=some-host%3A6789', 'clientCertAuth=true', 'services=kv']
+        self.rest_parameter_match(expected_params)
+
+    def test_server_add_use_client_cert_user_pass(self):
+        self.system_exit_run(self.command + self.cmd_args + ["--use-client-cert"], self.server_args)
+        self.assertIn(
+            'cannot use --server-add-username and --server-add-password with --use-client-cert',
+            self.str_output)
+
+    def test_server_add_no_auth(self):
+        self.system_exit_run(self.command + self.cmd_server_add_args, self.server_args)
+        self.assertIn(
+            'provide either both --server-add-username and --server-add-password or the --use-client-cert flag',
+            self.str_output)
+
+    def test_server_add_no_pass(self):
+        self.system_exit_run(self.command +
+                             self.cmd_server_add_args +
+                             ['--server-add-username', 'Administrator'], self.server_args)
+        self.assertIn(
+            'provide either both --server-add-username and --server-add-password or the --use-client-cert flag',
+            self.str_output)
+
+    def test_server_add_no_user(self):
+        self.system_exit_run(self.command +
+                             self.cmd_server_add_args +
+                             ['--server-add-password', 'asdasd'], self.server_args)
+        self.assertIn(
+            'provide either both --server-add-username and --server-add-password or the --use-client-cert flag',
+            self.str_output)
 
     def test_server_add_basic(self):
         self.no_error_run(self.command + self.cmd_args, self.server_args)
