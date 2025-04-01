@@ -31,6 +31,7 @@ _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
     [--enable-history-retention-by-default <0|1>] [--rank <num>]
     [--magma-configuration <standard|large-scale>]
     [--encryption-key <key>] [--dek-rotate-every <days>] [--dek-lifetime <days>]
+    [--invalid-hlc-strategy <error|ignore|replace>] [--hlc-max-future-threshold <seconds>]
 
 == DESCRIPTION
 
@@ -259,6 +260,13 @@ The number of days after which the DEK (Data Encryption Key) should be rotated.
 
 --dek-lifetime <days>::
 The number of days which the DEK (Data Encryption Key) should be kept for.
+
+--invalid-hlc-strategy <error|ignore|replace>::
+  Sets the invalid HLC strategy, used to handle invalid CAS values.
+  (Can be error, ignore or replace)
+
+--hlc-max-future-threshold <seconds>::
+The number of seconds of acceptable drift at which new CAS values will be accepted.
 
 include::{partialsdir}/cbcli/part-common-history-retention.adoc[]
 

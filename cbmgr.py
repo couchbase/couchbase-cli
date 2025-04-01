@@ -1128,12 +1128,26 @@ class BucketCreate(Subcommand):
         group.add_argument("--dek-lifetime", dest="dek_lifetime", metavar="<days>", type=(int),
                            help="How long the DEK should be kept for")
 
+        group.add_argument("--invalid-hlc-strategy", dest="invalid_hlc_strategy", metavar="<strategy>",
+                           choices=["error", "ignore", "replace"],
+                           help="Sets the invalid HLC strategy, used to handle invalid CAS values " +
+                           "(Can be error, ignore or replace)")
+        group.add_argument(
+            "--hlc-max-future-threshold",
+            dest="hlc_max_future_threshold",
+            metavar="<seconds>",
+            type=(int),
+            help="The number of seconds of acceptable drift at which new CAS values will be accepted")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
             _exit_if_errors(["Maximum TTL can only be configured on enterprise edition"])
         if opts.compression_mode and not self.enterprise:
             _exit_if_errors(["Compression mode can only be configured on enterprise edition"])
+
+        if opts.hlc_max_future_threshold is not None and opts.hlc_max_future_threshold < 10:
+            _exit_if_errors(["--hlc-max-future-threshold cannot be lower than 10"])
 
         version, errors = self.rest.min_version()
         _exit_if_errors(errors)
@@ -1250,7 +1264,8 @@ class BucketCreate(Subcommand):
                                             opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval,
                                             opts.history_retention_bytes, opts.history_retention_seconds,
                                             opts.enable_history_retention, opts.rank, vbuckets, opts.encryption_key,
-                                            dek_rotate_interval, dek_lifetime)
+                                            dek_rotate_interval, dek_lifetime, opts.invalid_hlc_strategy,
+                                            opts.hlc_max_future_threshold)
         _exit_if_errors(errors)
         _success("Bucket created")
 
@@ -1371,6 +1386,17 @@ class BucketEdit(Subcommand):
         group.add_argument("--dek-lifetime", dest="dek_lifetime", metavar="<days>", type=(int),
                            help="How long the DEK should be kept for")
 
+        group.add_argument("--invalid-hlc-strategy", dest="invalid_hlc_strategy", metavar="<strategy>",
+                           choices=["error", "ignore", "replace"],
+                           help="Sets the invalid HLC strategy, used to handle invalid CAS values " +
+                           "(Can be error, ignore or replace)")
+        group.add_argument(
+            "--hlc-max-future-threshold",
+            dest="hlc_max_future_threshold",
+            metavar="<seconds>",
+            type=(int),
+            help="The number of seconds of acceptable drift at which new CAS values will be accepted")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1378,6 +1404,9 @@ class BucketEdit(Subcommand):
 
         if opts.compression_mode and not self.enterprise:
             _exit_if_errors(["Compression mode can only be configured on enterprise edition"])
+
+        if opts.hlc_max_future_threshold is not None and opts.hlc_max_future_threshold < 10:
+            _exit_if_errors(["--hlc-max-future-threshold cannot be lower than 10"])
 
         # Note that we accept 'noEviction' and 'nruEviction' as valid values even though they are undocumented; this is
         # so that users attempting to modify the eviction policy of an ephemeral bucket will receive a meaningful
@@ -1466,7 +1495,9 @@ class BucketEdit(Subcommand):
                                           opts.from_min, opts.to_hour, opts.to_min, opts.abort_outside,
                                           opts.paralleldb_and_view_compact, opts.purge_interval,
                                           opts.history_retention_bytes, opts.history_retention_seconds,
-                                          opts.enable_history_retention, opts.rank, opts.encryption_key, dek_rotate_interval, dek_lifetime, is_couchbase_bucket)
+                                          opts.enable_history_retention, opts.rank, opts.encryption_key,
+                                          dek_rotate_interval, dek_lifetime, is_couchbase_bucket, opts.invalid_hlc_strategy,
+                                          opts.hlc_max_future_threshold)
         _exit_if_errors(errors)
 
         _success("Bucket edited")

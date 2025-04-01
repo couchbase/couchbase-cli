@@ -638,6 +638,31 @@ class TestBucketCreate(CommandTest):
         ]
         self.rest_parameter_match(expected_params)
 
+    def test_bucket_create_hlc(self):
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args +
+                          ['--invalid-hlc-strategy', 'error', '--hlc-max-future-threshold', '11'],
+                          self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'maxTTL=20',
+            'compressionMode=active', 'ramQuotaMB=100', 'storageBackend=magma', 'rank=3', 'numVBuckets=128',
+            'invalidHLCStrategy=error', 'hlcMaxFutureThreshold=11'
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_create_hlc_invalid(self):
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args +
+                             ['--invalid-hlc-strategy', 'asd', '--hlc-max-future-threshold', '11'],
+                             self.server_args)
+        self.assertIn("invalid choice: 'asd' (choose from 'error', 'ignore', 'replace')",
+                      self.str_error)
+
+    def test_bucket_create_hlc_threshold_invalid(self):
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args +
+                             ['--invalid-hlc-strategy', 'error', '--hlc-max-future-threshold', '9'],
+                             self.server_args)
+        self.assertIn("--hlc-max-future-threshold cannot be lower than 10",
+                      self.str_output)
+
 
 class TestBucketDelete(CommandTest):
     def setUp(self):
@@ -811,6 +836,35 @@ class TestBucketEdit(CommandTest):
             f'encryptionAtRestDekLifetime={60 * 24 * 60 * 60}',
         ]
         self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_hlc(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args +
+                          ['--invalid-hlc-strategy', 'error', '--hlc-max-future-threshold', '11'],
+                          self.server_args)
+        expected_params = [
+            'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'maxTTL=20',
+            'compressionMode=active', 'ramQuotaMB=100', 'rank=3', 'invalidHLCStrategy=error', 'hlcMaxFutureThreshold=11'
+        ]
+
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_hlc_invalid(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args +
+                             ['--invalid-hlc-strategy', 'asd', '--hlc-max-future-threshold', '11'],
+                             self.server_args)
+        self.assertIn("invalid choice: 'asd' (choose from 'error', 'ignore', 'replace')",
+                      self.str_error)
+
+    def test_bucket_edit_hlc_threshold_invalid(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args +
+                             ['--invalid-hlc-strategy', 'error', '--hlc-max-future-threshold', '9'],
+                             self.server_args)
+
+        self.assertIn("--hlc-max-future-threshold cannot be lower than 10",
+                      self.str_output)
 
 
 class TestBucketFlush(CommandTest):

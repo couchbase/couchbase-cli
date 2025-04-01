@@ -21,6 +21,7 @@ backoff
 bashrc
 bucketType
 cacert
+CAS
 cbbackup
 cbbackupmgr
 cbbackupwrapper
@@ -92,6 +93,8 @@ gcs
 geolocation
 GSI
 gsi
+HLC
+hlc
 hostname
 hostnames
 hsts

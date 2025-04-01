@@ -1093,6 +1093,8 @@ class ClusterManager(object):
             encryption_key,
             dek_rotation_interval,
             dek_lifetime,
+            invalid_hlc_strategy,
+            hlc_max_future_threshold,
             timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
@@ -1177,6 +1179,11 @@ class ClusterManager(object):
         if dek_lifetime is not None:
             params["encryptionAtRestDekLifetime"] = dek_lifetime
 
+        if invalid_hlc_strategy is not None:
+            params["invalidHLCStrategy"] = invalid_hlc_strategy
+        if hlc_max_future_threshold is not None:
+            params["hlcMaxFutureThreshold"] = hlc_max_future_threshold
+
         result, errors = self._post_form_encoded(url, params)
         if errors:
             return None, errors
@@ -1219,8 +1226,8 @@ class ClusterManager(object):
                     view_frag_size, from_hour, from_min, to_hour, to_min,
                     abort_outside, paralleldb_and_view_compact, purge_interval,
                     history_retention_bytes, history_retention_seconds, history_retention_default,
-                    rank, encryption_key, dek_rotation_interval, dek_lifetime,
-                    couchbase_bucket: bool = True):
+                    rank, encryption_key, dek_rotation_interval, dek_lifetime, couchbase_bucket: bool = True,
+                    invalid_hlc_strategy=None, hlc_max_future_threshold=None):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -1288,6 +1295,11 @@ class ClusterManager(object):
             params["encryptionAtRestDekRotationInterval"] = dek_rotation_interval
         if dek_lifetime is not None:
             params["encryptionAtRestDekLifetime"] = dek_lifetime
+
+        if invalid_hlc_strategy is not None:
+            params["invalidHLCStrategy"] = invalid_hlc_strategy
+        if hlc_max_future_threshold is not None:
+            params["hlcMaxFutureThreshold"] = hlc_max_future_threshold
 
         return self._post_form_encoded(url, params)
 
