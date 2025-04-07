@@ -4270,6 +4270,105 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.assertIn('DELETE:/analytics/link/Default/me', self.server.trace)
 
 
+class TestColumnarLinkSetup(CommandTest):
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, 'columnar': True,
+                            'version': '1.2.0-0000-columnar',
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'cbas': port,
+                                }
+                            }]}}
+        self.command = ['couchbase-cli', 'columnar-link-setup'] + cluster_connect_args
+        super(TestColumnarLinkSetup, self).setUp()
+
+    def test_no_flags(self):
+        self.system_exit_run(self.command, self.server_args)
+        self.assertIn('--create', self.str_error)
+        self.assertIn('--delete', self.str_error)
+        self.assertIn('--edit', self.str_error)
+        self.assertIn('--get', self.str_error)
+        self.assertIn('--list', self.str_error)
+
+    def test_more_than_one_action_flag(self):
+        self.system_exit_run(self.command + ['--get', '--edit'], self.server_args)
+        self.assertIn('--get', self.str_error)
+        self.assertIn('--edit', self.str_error)
+
+    def test_create_no_name(self):
+        self.system_exit_run(self.command + ['--create'], self.server_args)
+        self.assertIn('--name is required', self.str_output)
+
+    def test_create_no_options(self):
+        self.system_exit_run(self.command + ['--create', '--name', 'aaa'], self.server_args)
+        self.assertIn('Providing either --link-details or --link-details-path is required', self.str_output)
+
+    def test_edit_no_name(self):
+        self.system_exit_run(self.command + ['--edit'], self.server_args)
+        self.assertIn('--name is required', self.str_output)
+
+    def test_edit_no_options(self):
+        self.system_exit_run(self.command + ['--edit', '--name', 'aaa'], self.server_args)
+        self.assertIn('Providing either --link-details or --link-details-path is required', self.str_output)
+
+    def test_get_no_name(self):
+        self.system_exit_run(self.command + ['--get'], self.server_args)
+        self.assertIn('--name is required', self.str_output)
+
+    def test_delete_no_name(self):
+        self.system_exit_run(self.command + ['--delete'], self.server_args)
+        self.assertIn('--name is required', self.str_output)
+
+    def test_list(self):
+        self.no_error_run(self.command + ['--list'], self.server_args)
+        self.assertIn('GET:/api/v1/link', self.server.trace)
+
+    def test_get(self):
+        self.no_error_run(self.command + ['--get', '--name', 'aaa'], self.server_args)
+        self.assertIn('GET:/api/v1/link/aaa', self.server.trace)
+
+    def test_delete(self):
+        self.no_error_run(self.command + ['--delete', '--name', 'aaa'], self.server_args)
+        self.assertIn('DELETE:/api/v1/link/aaa', self.server.trace)
+
+    def test_create(self):
+        self.no_error_run(self.command + ['--create', '--name', 'aaa',
+                          '--link-details', '{{"asd":123}}'.format()], self.server_args)
+        self.assertIn('POST:/api/v1/link/aaa', self.server.trace)
+
+    def test_edit(self):
+        self.no_error_run(self.command + ['--edit', '--name', 'aaa', '--link-details',
+                          '{{"asd":123}}'.format()], self.server_args)
+        self.assertIn('PUT:/api/v1/link/aaa', self.server.trace)
+
+    def test_edit_invalid_json(self):
+        self.system_exit_run(self.command + ['--edit', '--name', 'aaa',
+                             '--link-details', '{{123:123}}'.format()], self.server_args)
+        self.assertIn('Failed to parse link-details JSON', self.str_output)
+
+    def test_edit_file_invalid_json(self):
+        link_options_file = tempfile.NamedTemporaryFile()
+        link_options_file.write(b'{123:123}')
+        link_options_file.flush()
+
+        self.system_exit_run(self.command + ['--edit', '--name', 'aaa',
+                             '--link-details-path', link_options_file.name], self.server_args)
+        self.assertIn('Failed to parse link-details JSON', self.str_output)
+
+        link_options_file.close()
+
+    def test_edit_file_valid_json(self):
+        link_options_file = tempfile.NamedTemporaryFile()
+        link_options_file.write(b'{"asd":123}')
+        link_options_file.flush()
+
+        self.no_error_run(self.command + ['--edit', '--name', 'aaa',
+                          '--link-details-path', link_options_file.name], self.server_args)
+
+        link_options_file.close()
+
+
 class VerifyAzureOptions(unittest.TestCase):
     def test_verify_azure_options(self):
         tests = {

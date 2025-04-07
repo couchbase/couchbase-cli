@@ -176,7 +176,8 @@ def force_communicate_tls(rest: ClusterManager) -> bool:
     return True
 
 
-def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_check=None, credentials_required=True):
+def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_check=None, credentials_required=True,
+                     columnar_check=None):
     """rest_initialiser is a decorator that does common subcommand tasks.
 
     The decorator will always creates a cluster manager and assign it to the subcommand variable rest
@@ -185,6 +186,9 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
     :param enterprise_check: if true it will check if the cluster is enterprise and fail if not. If it is false it does
         the check but it does not fail if not enterprise. If none it does not perform the check. The result of the check
         is stored on the instance parameter enterprise
+    :param columnar_check: if true it will check if the cluster supports columnar and fail if not. If it is false it does
+        the check but it does not fail if not columnar. If none it does not perform the check. The result of the check
+        is stored on the instance parameter columnar
     """
     def inner(fn):
         def decorator(self, opts):
@@ -204,7 +208,7 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
                 check_cluster_initialized(self.rest)
             if version_check:
                 check_versions(self.rest)
-            if enterprise_check is not None:
+            if enterprise_check is not None or columnar_check is not None:
                 # check columnar when we check enterprise to avoid a duplicate fetch on pools
                 enterprise, columnar, errors = self.rest.is_enterprise_columnar()
                 _exit_if_errors(errors)
@@ -212,8 +216,13 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
                 if enterprise_check and not enterprise:
                     _exit_if_errors(['Command only available in enterprise edition'])
 
-                self.enterprise = enterprise
-                self.columnar = columnar
+                if columnar_check and not columnar:
+                    _exit_if_errors(['Command only available for columnar'])
+
+                if enterprise_check is not None:
+                    self.enterprise = enterprise
+                if columnar_check is not None:
+                    self.columnar = columnar
 
             return fn(self, opts)
         return decorator
@@ -902,7 +911,7 @@ class ClusterInit(Subcommand):
         group.add_argument("--node-to-node-encryption", dest="encryption", metavar="<on|off>", default="off",
                            choices=["on", "off"], help="Enable node to node encryption")
 
-    @rest_initialiser(enterprise_check=False)
+    @rest_initialiser(enterprise_check=False, columnar_check=False)
     def execute(self, opts):
         initialized, errors = self.rest.is_cluster_initialized()
         _exit_if_errors(errors)
@@ -2472,7 +2481,7 @@ class ServerAdd(Subcommand):
         group.add_argument("--index-storage-setting", dest="index_storage_mode", metavar="<mode>",
                            choices=["default", "memopt"], help="The index storage mode")
 
-    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False, columnar_check=False)
     def execute(self, opts):
         if opts.use_client_cert:
             if opts.server_username is not None or opts.server_password is not None:
@@ -5469,7 +5478,7 @@ class AnalyticsLinkSetup(Subcommand):
             _exit_if_errors([f'--type is required to {cmd} a link'])
 
         if opts.type == 'azureblob' or opts.type == 'azuredatalake':
-            self._verify_azure_options(opts)
+            _exit_if_errors(self._verify_azure_options(opts))
 
         if opts.type == 'gcs':
             # --application-default-credentials and --json-credentials are not allowed to be passed together
@@ -5605,6 +5614,91 @@ class AnalyticsLinkSetup(Subcommand):
     @staticmethod
     def get_description():
         return "Manage Analytics Links"
+
+
+class ColumnarLinkSetup(Subcommand):
+    """The columnar link setup subcommand"""
+
+    def __init__(self):
+        super(ColumnarLinkSetup, self).__init__()
+        self.parser.prog = "couchbase-cli columnar-link-setup"
+
+        group = self.parser.add_argument_group("Columnar link setup options")
+        action_group = group.add_mutually_exclusive_group(required=True)
+        action_group.add_argument("--create", dest="create", action="store_true",
+                                  default=False, help="Create a link")
+        action_group.add_argument("--delete", dest="delete", action="store_true",
+                                  default=False, help="Delete a link")
+        action_group.add_argument("--edit", dest="edit", action="store_true",
+                                  default=False, help="Modify a link")
+        action_group.add_argument("--get", dest="get", action="store_true",
+                                  default=False, help="List all links")
+        action_group.add_argument("--list", dest="list", action="store_true",
+                                  default=False, help="List all links")
+
+        group.add_argument("--name", dest="name", metavar="<name>",
+                           help="The name of the link")
+
+        ld_group = group.add_mutually_exclusive_group()
+        ld_group.add_argument("--link-details", dest="link_details", metavar="<json>",
+                              help="The link details as JSON string")
+        ld_group.add_argument("--link-details-path", dest="link_details_path", metavar="<path>",
+                              help="The path to the link details JSON file")
+
+    @rest_initialiser(cluster_init_check=True, version_check=True, columnar_check=True)
+    def execute(self, opts):
+        if opts.create or opts.edit:
+            self._set(opts)
+        elif opts.delete:
+            self._delete(opts)
+        elif opts.list or opts.get:
+            self._get(opts)
+
+    def _set(self, opts):
+        cmd = "create"
+        if opts.edit:
+            cmd = "edit"
+
+        if opts.name is None:
+            _exit_if_errors([f'--name is required to {cmd} a link'])
+
+        if opts.link_details_path:
+            opts.link_details = _exit_on_file_read_failure(opts.link_details_path)
+        if opts.link_details is None:
+            _exit_if_errors([f'Providing either --link-details or --link-details-path is required to {cmd} a link'])
+        try:
+            opts.parsed_link_details = json.loads(opts.link_details)
+        except ValueError as err:
+            _exit_if_errors(['Failed to parse link-details JSON', err])
+
+        _, errors = self.rest.set_columnar_link(opts)
+        _exit_if_errors(errors)
+
+        _success("Link created" if opts.create else "Link edited")
+
+    def _delete(self, opts):
+        if opts.name is None:
+            _exit_if_errors(['--name is required to delete a link'])
+
+        _, errors = self.rest.delete_columnar_link(opts)
+        _exit_if_errors(errors)
+        _success("Link deleted")
+
+    def _get(self, opts):
+        if opts.get and opts.name is None:
+            _exit_if_errors(['--name is required to get a link'])
+
+        clusters, errors = self.rest.get_columnar_links(opts)
+        _exit_if_errors(errors)
+        print(json.dumps(clusters, sort_keys=True, indent=2))
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-columnar-link-setup")
+
+    @staticmethod
+    def get_description():
+        return "Manage Columnar Links"
 
 
 class UserChangePassword(Subcommand):

@@ -2923,6 +2923,38 @@ class ClusterManager(object):
 
         return self._get(url)
 
+    def _columar_link_url(self, name):
+        hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(CBAS_SERVICE)
+
+        return f'{hosts[0]}/api/v1/link{("/" + urllib.parse.quote_plus(name)) if name else ""}', None
+
+    def set_columnar_link(self, opts):
+        url, errors = self._columar_link_url(opts.name)
+        if errors:
+            return None, errors
+
+        send_json = self._put_json if opts.edit else self._post_json
+        return send_json(url, opts.parsed_link_details)
+
+    def delete_columnar_link(self, opts):
+        url, errors = self._columar_link_url(opts.name)
+        if errors:
+            return None, errors
+
+        return self._delete(url, None)
+
+    def get_columnar_links(self, opts):
+        url, errors = self._columar_link_url(opts.name)
+        if errors:
+            return None, errors
+
+        return self._get(url, None)
+
     # Low level methods for basic HTML operations
 
     @classmethod

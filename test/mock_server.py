@@ -610,6 +610,14 @@ endpoints = [
       'PUT': set_analytics_link,
       'DELETE': do_nothing}),
 
+    # columnar link
+    (r'api/v1/link', {'GET': do_nothing}),
+    (r'api/v1/link/[^/]+',
+     {'GET': do_nothing,
+      'POST': do_nothing,
+      'PUT': do_nothing,
+      'DELETE': do_nothing}),
+
     # eventing api
     (r'/api/v1/functions/\w+', {'POST': do_eventing_setup_subcommand, 'DELETE': do_eventing_setup_subcommand}),
     (r'/api/v1/status$', {'GET': get_eventing_functions_statuses}),

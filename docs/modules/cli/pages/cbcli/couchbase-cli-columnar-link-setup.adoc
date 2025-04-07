@@ -1,0 +1,94 @@
+= couchbase-cli-columnar-link-setup(1)
+:description: Manage Columnar links
+ifndef::doctype-manpage[:doctitle: columnar-link-setup]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-columnar-link-setup -
+endif::[]
+Manage Columnar links
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli columnar-link-setup_ [--cluster <cluster>] [--username <username>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] [--create] [--delete]
+    [--edit] [--list] [--dataverse <name>] [--scope <name>] [--name <name>] [--type <type>]
+    [--hostname <hostname>] [--link-username <username>] [--link-password <password>]
+    [--user-certificate <path>] [--user-key <path>] [--user-key-passphrase <path>]
+    [--certificate <path>] [--encryption <type>] [--access-key-id <id>]
+    [--secret-access-key <key>] [--session-token <token>] [--region <region>]
+    [--service-endpoint <url>] [--account-name <id>] [--account-key <key>]
+    [--shared-access-signature <token>] [--managed-identity-id <id>] [--client-id <id>]
+    [--tenant-id <id>] [--client-secret <key>] [--client-certificate <key>]
+    [--client-certificate-password <key>] [--endpoint <url>] [--application-default-credentials]
+    [--json-credentials <key>]
+
+== DESCRIPTION
+
+This command is used to manage links used by the external dataset and remote
+cluster capabilities of the Columnar Service.
+
+== OPTIONS
+
+=== Common Link Options
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--create::
+  Creates a new link.
+
+--delete::
+  Deletes a link.
+
+--edit::
+  Edits a link.
+
+--get::
+  Retrieve link details.
+
+--list::
+  List defined links.
+
+--name <name>::
+  The name of the link.
+
+--link-details <json>::
+  The link details as JSON string
+
+--link-details-path <path>::
+  The path to the link details JSON file
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To create a new link named "l1", run the following command:
+
+$ couchbase-cli columnar-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --create --name l1 --link-details-path <path>
+
+To delete the new link named "l1", run the following command:
+
+$ couchbase-cli columnar-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --delete --name l1
+
+To list the defined links run the following command:
+
+$ couchbase-cli columnar-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --list
+
+To retrieve the link details for a link named "l1", run the following command:
+
+$ couchbase-cli columnar-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --get --name l1
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

@@ -18,6 +18,7 @@
  ** xref:cli:cbcli/couchbase-cli-collect-logs-status.adoc[collect-logs-status]
  ** xref:cli:cbcli/couchbase-cli-collect-logs-stop.adoc[collect-logs-stop]
  ** xref:cli:cbcli/couchbase-cli-collection-manage.adoc[collection-manage]
+ ** xref:cli:cbcli/couchbase-cli-columnar-link-setup.adoc[columnar-link-setup]
  ** xref:cli:cbcli/couchbase-cli-enable-developer-preview.adoc[enable-developer-preview]
  ** xref:cli:cbcli/couchbase-cli-eventing-function-setup.adoc[eventing-function-setup]
  ** xref:cli:cbcli/couchbase-cli-failover.adoc[failover]
