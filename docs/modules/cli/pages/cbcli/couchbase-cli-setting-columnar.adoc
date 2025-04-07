@@ -1,0 +1,76 @@
+= couchbase-cli-setting-columnar(1)
+:description: Manage Columnar service settings
+ifndef::doctype-manpage[:doctitle: setting-columnar]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-setting-columnar -
+endif::[]
+Manage Columnar service settings
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli setting-columnar_ [--get] [--set] [--replicas <num>] 
+
+== DESCRIPTION
+
+Manage Columnar service settings
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--get::
+  Retrieve current Columnar service settings.
+
+--set::
+  Set Columnar settings.
+
+--partitions <num>::
+  The number of storage partitions (positive integer, lower than the configured maximum)
+
+--scheme <scheme>::
+  The BLOB storage scheme (e.g. s3)
+
+--bucket <bucket>::
+  The BLOB storage bucket
+
+--prefix <prefix>::
+  The BLOB storage prefix
+
+--region <region>::
+  The BLOB storage region
+
+--endpoint <endpoint>::
+  The BLOB storage endpoint
+
+--anonymous-auth <0|1>::
+  Allow BLOB storage anonymous auth
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To retrieve the Columnar service settings:
+
+  $ couchbase-cli setting-columnar -c 127.0.01:8091 -u Administrator \
+   -p password --get
+
+To set the BLOB storage scheme to s3:
+
+  $ couchbase-cli setting-columnar -c 127.0.01:8091 -u Administrator \
+   -p password --set --scheme s3
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

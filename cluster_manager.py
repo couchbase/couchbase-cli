@@ -2895,6 +2895,34 @@ class ClusterManager(object):
         params = dict(filter(lambda x: x[1], params.items()))
         return self._post_form_encoded(url, params)
 
+    def set_columnar_settings(self, opts):
+        """Sets the columnar settings"""
+        url = f'{self.hostname}/settings/columnar'
+        params = {}
+
+        if opts.num_storage_partitions:
+            params["numStoragePartitions"] = opts.num_storage_partitions
+        if opts.blob_storage_scheme:
+            params["blobStorageScheme"] = opts.blob_storage_scheme
+        if opts.blob_storage_bucket:
+            params["blobStorageBucket"] = opts.blob_storage_bucket
+        if opts.blob_storage_prefix:
+            params["blobStoragePrefix"] = opts.blob_storage_prefix
+        if opts.blob_storage_region:
+            params["blobStorageRegion"] = opts.blob_storage_region
+        if opts.blob_storage_endpoint:
+            params["blobStorageEndpoint"] = opts.blob_storage_endpoint
+        if opts.blob_storage_anonymous_auth:
+            params["blobStorageAnonymousAuth"] = opts.blob_storage_anonymous_auth
+
+        return self._post_form_encoded(url, params)
+
+    def get_columnar_settings(self):
+        """Gets the columnar settings"""
+        url = f'{self.hostname}/settings/columnar'
+
+        return self._get(url)
+
     # Low level methods for basic HTML operations
 
     @classmethod

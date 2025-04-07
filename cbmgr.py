@@ -3263,6 +3263,68 @@ class SettingCluster(Subcommand):
         return "Modify cluster settings"
 
 
+class SettingColumnar(Subcommand):
+    """The settings columnar subcommand"""
+
+    def __init__(self):
+        super(SettingColumnar, self).__init__()
+        self.parser.prog = "couchbase-cli setting-columnar"
+        group = self.parser.add_argument_group("Columnar settings")
+
+        group_me = group.add_mutually_exclusive_group(required=True)
+        group_me.add_argument("--get", dest="get", action="store_true",
+                              help="Get the columnar settings")
+        group_me.add_argument("--set", dest="set", action="store_true",
+                              help="Set the columnar settings")
+
+        group.add_argument("--partitions", dest="num_storage_partitions", type=(int), metavar="<num_partitions>",
+                           help="The number of storage partitions (positive integer, lower than the configured " +
+                           "maximum)")
+        group.add_argument("--scheme", dest="blob_storage_scheme", metavar="<scheme>",
+                           help="The BLOB storage scheme (e.g. s3)")
+        group.add_argument("--bucket", dest="blob_storage_bucket", metavar="<bucket>",
+                           help="The BLOB storage bucket")
+        group.add_argument("--prefix", dest="blob_storage_prefix", metavar="<prefix>",
+                           help="The BLOB storage prefix")
+        group.add_argument("--region", dest="blob_storage_region", metavar="<region>",
+                           help="The BLOB storage region")
+        group.add_argument("--endpoint", dest="blob_storage_endpoint", metavar="<endpoint>",
+                           help="The BLOB storage endpoint")
+        group.add_argument("--anonymous-auth", dest="blob_storage_anonymous_auth", metavar="<0|1>",
+                           choices=["0", "1"], help="Allow BLOB storage anonymous auth")
+
+    @rest_initialiser(cluster_init_check=True, version_check=True)
+    def execute(self, opts):
+        if opts.set:
+            if not (opts.num_storage_partitions or opts.blob_storage_scheme or opts.blob_storage_bucket
+                    or opts.blob_storage_prefix or opts.blob_storage_region or opts.blob_storage_endpoint
+                    or opts.blob_storage_anonymous_auth):
+                _exit_if_errors(["At least one option (--partitions, --scheme, --bucket, --prefix, --region," +
+                                 " --endpoint, --anonymous-auth) must be specified."])
+
+            if opts.blob_storage_anonymous_auth == "0":
+                opts.blob_storage_anonymous_auth = "false"
+            if opts.blob_storage_anonymous_auth == "1":
+                opts.blob_storage_anonymous_auth = "true"
+
+            _, errors = self.rest.set_columnar_settings(opts)
+            _exit_if_errors(errors)
+
+            _success("Columnar settings modified")
+
+        if opts.get:
+            columnar_settings, errors = self.rest.get_columnar_settings()
+            print(json.dumps(columnar_settings, indent=2))
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-setting-columnar")
+
+    @staticmethod
+    def get_description():
+        return "Modify columnar settings"
+
+
 class SettingEncryption(Subcommand):
     """The setting encryption subcommand"""
 
