@@ -645,7 +645,7 @@ class TestBucketCreate(CommandTest):
         expected_params = [
             'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'maxTTL=20',
             'compressionMode=active', 'ramQuotaMB=100', 'storageBackend=magma', 'rank=3', 'numVBuckets=128',
-            'invalidHLCStrategy=error', 'hlcMaxFutureThreshold=11'
+            'invalidHlcStrategy=error', 'hlcMaxFutureThreshold=11'
         ]
         self.rest_parameter_match(expected_params)
 
@@ -844,7 +844,7 @@ class TestBucketEdit(CommandTest):
                           self.server_args)
         expected_params = [
             'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'maxTTL=20',
-            'compressionMode=active', 'ramQuotaMB=100', 'rank=3', 'invalidHLCStrategy=error', 'hlcMaxFutureThreshold=11'
+            'compressionMode=active', 'ramQuotaMB=100', 'rank=3', 'invalidHlcStrategy=error', 'hlcMaxFutureThreshold=11'
         ]
 
         self.rest_parameter_match(expected_params)

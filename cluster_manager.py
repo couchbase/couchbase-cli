@@ -1189,7 +1189,7 @@ class ClusterManager(object):
             params["encryptionAtRestDekLifetime"] = dek_lifetime
 
         if invalid_hlc_strategy is not None:
-            params["invalidHLCStrategy"] = invalid_hlc_strategy
+            params["invalidHlcStrategy"] = invalid_hlc_strategy
         if hlc_max_future_threshold is not None:
             params["hlcMaxFutureThreshold"] = hlc_max_future_threshold
 
@@ -1306,7 +1306,7 @@ class ClusterManager(object):
             params["encryptionAtRestDekLifetime"] = dek_lifetime
 
         if invalid_hlc_strategy is not None:
-            params["invalidHLCStrategy"] = invalid_hlc_strategy
+            params["invalidHlcStrategy"] = invalid_hlc_strategy
         if hlc_max_future_threshold is not None:
             params["hlcMaxFutureThreshold"] = hlc_max_future_threshold
 
