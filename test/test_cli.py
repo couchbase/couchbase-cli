@@ -577,19 +577,19 @@ class TestBucketCreate(CommandTest):
     def test_bucket_create_magma_config_couchstore(self):
         args = [
             '--bucket-type', 'couchbase', '--storage-backend', 'couchstore', '--bucket-ramsize', '1024',
-            '--magma-configuration', 'standard'
+            '--num-vbuckets', '128'
         ]
         self.system_exit_run(self.command + self.command_args + args, self.server_args)
-        self.assertIn("--magma-configuration is only valid for Magma buckets", self.str_output)
+        self.assertIn("--num-vbuckets is only valid for Magma buckets", self.str_output)
 
     def test_bucket_create_magma_config_7_6(self):
         self.server_args['pools_default'] = {'nodes': [{'version': '7.6.0'}]}
         args = [
             '--bucket-type', 'couchbase', '--storage-backend', 'magma', '--bucket-ramsize', '1024',
-            '--magma-configuration', 'standard'
+            '--num-vbuckets', '128'
         ]
         self.system_exit_run(self.command + self.command_args + args, self.server_args)
-        self.assertIn("--magma-configuration can only be passed on 8.0 and above", self.str_output)
+        self.assertIn("--num-vbuckets can only be passed on 8.0 and above", self.str_output)
 
     def test_bucket_create_magma_config_default_is_standard(self):
         args = ['--bucket-type', 'couchbase', '--storage-backend', 'magma', '--bucket-ramsize', '1024']
@@ -602,7 +602,7 @@ class TestBucketCreate(CommandTest):
     def test_bucket_create_magma_config_standard(self):
         args = [
             '--bucket-type', 'couchbase', '--storage-backend', 'magma', '--bucket-ramsize', '1024',
-            '--magma-configuration', 'standard'
+            '--num-vbuckets', '128'
         ]
         self.no_error_run(self.command + self.command_args + args, self.server_args)
         expected_params = [
@@ -613,7 +613,7 @@ class TestBucketCreate(CommandTest):
     def test_bucket_create_magma_config_large_scale(self):
         args = [
             '--bucket-type', 'couchbase', '--storage-backend', 'magma', '--bucket-ramsize', '1024',
-            '--magma-configuration', 'large-scale'
+            '--num-vbuckets', '1024'
         ]
         self.no_error_run(self.command + self.command_args + args, self.server_args)
         expected_params = [

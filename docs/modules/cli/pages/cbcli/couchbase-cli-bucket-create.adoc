@@ -29,7 +29,7 @@ _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
     [--purge-interval <float>] [--history-retention-bytes <bytes>]
     [--history-retention-seconds <seconds>]
     [--enable-history-retention-by-default <0|1>] [--rank <num>]
-    [--magma-configuration <standard|large-scale>]
+    [--num-vbuckets <128|1024>]
     [--encryption-key <key>] [--dek-rotate-every <days>] [--dek-lifetime <days>]
     [--invalid-hlc-strategy <error|ignore|replace>] [--hlc-max-future-threshold <seconds>]
 
@@ -248,9 +248,8 @@ Run index and data compaction in parallel. Global setting only.
   e.g. a bucket with rank "1" will failover/rebalance before a bucket with
   rank "0". The default rank for a bucket is 0.
 
---magma-configuration <standard|large-scale>::
-  Specifies the Magma configuration. Only valid on Couchbase buckets backed by the
-  Magma storage backend.
+--num-vbuckets <128|1024>::
+Sets the number of vBuckets. Can only be used if the storage engine is Magma.
 
 --encryption-key <key>::
 The key that should be used to encrypt the bucket.

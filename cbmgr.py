@@ -1126,9 +1126,9 @@ class BucketCreate(Subcommand):
                            help="Sets the rank of this bucket in case of failover/rebalance. Buckets with larger "
                            "ranks are prioritised over buckets with smaller ranks")
 
-        group.add_argument("--magma-configuration", dest="magma_configuration", metavar="<configuration>", default=None,
-                           choices=["standard", "large-scale"], help="Sets the configuration for magma buckets, "
-                           "either 'standard' (the default) or 'large-scale'")
+        group.add_argument("--num-vbuckets", dest="num_vbuckets", metavar="<128|1024>", type=(int),
+                           choices=[128, 1024], help="Sets the number of magma vBuckets, "
+                           "either 128 (the default) or 1024")
 
         group.add_argument("--encryption-key", dest="encryption_key", metavar="<keyid>",
                            help="The key id of the encryption key to use on this bucket")
@@ -1209,17 +1209,13 @@ class BucketCreate(Subcommand):
         min_version, error = self.rest.min_version()
         _exit_if_errors(error)
 
-        if storage_type != "magma" and opts.magma_configuration is not None:
-            _exit_if_errors(["--magma-configuration is only valid for Magma buckets"])
-        if opts.magma_configuration is not None and compare_versions(min_version, "8.0.0") < 0:
-            _exit_if_errors(["--magma-configuration can only be passed on 8.0 and above"])
+        if storage_type != "magma" and opts.num_vbuckets is not None:
+            _exit_if_errors(["--num-vbuckets is only valid for Magma buckets"])
+        if opts.num_vbuckets is not None and compare_versions(min_version, "8.0.0") < 0:
+            _exit_if_errors(["--num-vbuckets can only be passed on 8.0 and above"])
 
-        if storage_type == "magma" and opts.magma_configuration is None:
-            opts.magma_configuration = "standard"
-
-        vbuckets = None
-        if opts.magma_configuration is not None and opts.type == "couchbase":
-            vbuckets = 128 if opts.magma_configuration == "standard" else 1024
+        if storage_type == "magma" and opts.num_vbuckets is None:
+            opts.num_vbuckets = 128
 
         if opts.type != "couchbase":
             if opts.history_retention_bytes is not None:
@@ -1272,7 +1268,7 @@ class BucketCreate(Subcommand):
                                             opts.from_hour, opts.from_min, opts.to_hour, opts.to_min,
                                             opts.abort_outside, opts.paralleldb_and_view_compact, opts.purge_interval,
                                             opts.history_retention_bytes, opts.history_retention_seconds,
-                                            opts.enable_history_retention, opts.rank, vbuckets, opts.encryption_key,
+                                            opts.enable_history_retention, opts.rank, opts.num_vbuckets, opts.encryption_key,
                                             dek_rotate_interval, dek_lifetime, opts.invalid_hlc_strategy,
                                             opts.hlc_max_future_threshold)
         _exit_if_errors(errors)
