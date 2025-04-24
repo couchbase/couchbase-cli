@@ -722,7 +722,8 @@ class ClusterManager(object):
                            index_add, index_remove,
                            n1ql_add, n1ql_remove,
                            backup_add, backup_remove,
-                           cbas_add, cbas_remove):
+                           cbas_add, cbas_remove,
+                           eventing_add, eventing_remove):
 
         all_cluster_nodes_info, errors = self._get_all_cluster_nodes_info()
         if errors:
@@ -743,6 +744,9 @@ class ClusterManager(object):
 
         if len(set(cbas_add) & set(cbas_remove)) > 0:
             return None, ["Nodes can't be added and removed from the Analytics Service at the same time"]
+
+        if len(set(eventing_add) & set(eventing_remove)) > 0:
+            return None, ["Nodes can't be added and removed from the Eventing Service at the same time"]
 
         # Verify the nodes in the inputted lists exist in the cluster, and get their OTP names
         otp_fts_add, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, fts_add, "fts_add")
@@ -786,6 +790,15 @@ class ClusterManager(object):
         if errors:
             return None, errors
 
+        otp_eventing_add, errors = self.get_otp_names_and_verify(all_cluster_nodes_info, eventing_add, "eventing_add")
+        if errors:
+            return None, errors
+
+        otp_eventing_remove, errors = self.get_otp_names_and_verify(
+            all_cluster_nodes_info, eventing_remove, "eventing_remove")
+        if errors:
+            return None, errors
+
         # Map the services to the nodes that provide them
         services_to_nodes = self.map_services_to_nodes(all_cluster_nodes_info)
 
@@ -815,6 +828,11 @@ class ClusterManager(object):
         if errors:
             return None, errors
 
+        self.add_service_to_node(otp_eventing_add, services_to_nodes[EVENT_SERVICE], EVENT_SERVICE)
+        errors = self.remove_service_from_node(otp_eventing_remove, services_to_nodes[EVENT_SERVICE], EVENT_SERVICE)
+        if errors:
+            return None, errors
+
         all_nodes, errors = self._get_all_nodes_otp_names(all_cluster_nodes_info)
         if errors:
             return None, errors
@@ -825,7 +843,8 @@ class ClusterManager(object):
                   f"topology[{INDEX_SERVICE}]": ','.join(services_to_nodes[INDEX_SERVICE]),
                   f"topology[{N1QL_SERVICE}]": ','.join(services_to_nodes[N1QL_SERVICE]),
                   f"topology[{BACKUP_SERVICE}]": ','.join(services_to_nodes[BACKUP_SERVICE]),
-                  f"topology[{CBAS_SERVICE}]": ','.join(services_to_nodes[CBAS_SERVICE])}
+                  f"topology[{CBAS_SERVICE}]": ','.join(services_to_nodes[CBAS_SERVICE]),
+                  f"topology[{EVENT_SERVICE}]": ','.join(services_to_nodes[EVENT_SERVICE])}
 
         return self._post_form_encoded(url, params)
 

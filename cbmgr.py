@@ -2170,6 +2170,10 @@ class Rebalance(Subcommand):
                            help="A list of servers which should have the Analytics Service added")
         group.add_argument("--analytics-remove", dest="cbas_remove", metavar="<server_list>",
                            help="A list of servers which should have the Analytics Service removed")
+        group.add_argument("--eventing-add", dest="eventing_add", metavar="<server_list>",
+                           help="A list of servers which should have the Eventing Service added")
+        group.add_argument("--eventing-remove", dest="eventing_remove", metavar="<server_list>",
+                           help="A list of servers which should have the Eventing Service removed")
         group.add_argument("--no-progress-bar", dest="no_bar", action="store_true",
                            default=False, help="Disables the progress bar")
         group.add_argument("--no-wait", dest="wait", action="store_false",
@@ -2184,7 +2188,8 @@ class Rebalance(Subcommand):
             opts.index_add or opts.index_remove or \
             opts.n1ql_add or opts.n1ql_remove or \
             opts.backup_add or opts.backup_remove or \
-            opts.cbas_add or opts.cbas_remove
+            opts.cbas_add or opts.cbas_remove or \
+            opts.eventing_add or opts.eventing_remove
 
         if opts.update_services and not services_modified:
             _exit_if_errors(["--update-services requires services to be added/removed from nodes"])
@@ -2231,11 +2236,18 @@ class Rebalance(Subcommand):
             if opts.cbas_remove is not None:
                 cbas_remove = apply_default_port(opts.cbas_remove)
 
+            eventing_add, eventing_remove = [], []
+            if opts.eventing_add is not None:
+                eventing_add = apply_default_port(opts.eventing_add)
+            if opts.eventing_remove is not None:
+                eventing_remove = apply_default_port(opts.eventing_remove)
+
             _, errors = self.rest.rebalance_services(fts_add, fts_remove,
                                                      index_add, index_remove,
                                                      n1ql_add, n1ql_remove,
                                                      backup_add, backup_remove,
-                                                     cbas_add, cbas_remove)
+                                                     cbas_add, cbas_remove,
+                                                     eventing_add, eventing_remove)
             _exit_if_errors(errors)
 
         time.sleep(1)

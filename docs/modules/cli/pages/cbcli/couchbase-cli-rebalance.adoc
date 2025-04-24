@@ -19,7 +19,8 @@ _couchbase-cli rebalance_ [--cluster <url>] [--username <user>] [--password <pas
     [--index-add <servers>] [--index-remove <servers>] [--query-add <servers>]
     [--query-remove <servers>] [--backup-add <servers>]
     [--backup-remove <servers>] [--analytics-add <servers>]
-    [--analytics-remove <servers>] [--no-progress-bar] [--no-wait]
+    [--analytics-remove <servers>] [--eventing-add <servers>]
+    [--eventing-remove <servers>] [--no-progress-bar] [--no-wait]
 
 == DESCRIPTION
 
@@ -81,6 +82,12 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --analytics-remove <servers>::
   A comma separated list of nodes to remove the Analytics Service from.
+
+--eventing-add <servers>::
+  A comma separated list of nodes to add the Eventing Service to.
+
+--eventing-remove <servers>::
+  A comma separated list of nodes to remove the Eventing Service from.
 
 --no-progress-bar::
   Hides the progress bar which tracks the progress of the
