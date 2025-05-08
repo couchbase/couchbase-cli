@@ -407,7 +407,7 @@ class ClusterManager(object):
         params = {"newPassword": password}
         return self._post_form_encoded(url, params)
 
-    def user_change_passsword(self, new_password):
+    def user_change_password(self, new_password):
         url = f'{self.hostname}/controller/changePassword'
         params = {'password': new_password}
         return self._post_form_encoded(url, params)
@@ -1073,17 +1073,17 @@ class ClusterManager(object):
         params = {'name': name, 'type': typ, 'usage': usages, 'data': data}
         return self._post_json(url, params)
 
-    def edit_key(self, keyid, name, typ, usages, data):
-        url = f'{self.hostname}/settings/encryptionKeys/{keyid}'
+    def edit_key(self, key_id, name, typ, usages, data):
+        url = f'{self.hostname}/settings/encryptionKeys/{key_id}'
         params = {'name': name, 'type': typ, 'usage': usages, 'data': data}
         return self._put_json(url, params)
 
-    def rotate_key(self, keyid):
-        url = f'{self.hostname}/controller/rotateEncryptionKey/{keyid}'
+    def rotate_key(self, key_id):
+        url = f'{self.hostname}/controller/rotateEncryptionKey/{key_id}'
         return self._post_form_encoded(url, None)
 
-    def delete_key(self, keyid):
-        url = f'{self.hostname}/settings/encryptionKeys/{keyid}'
+    def delete_key(self, key_id):
+        url = f'{self.hostname}/settings/encryptionKeys/{key_id}'
         return self._delete(url, None)
 
     def create_bucket(
@@ -2047,9 +2047,9 @@ class ClusterManager(object):
 
         Grabs chain.pem and pkey.pem from the <data folder>/inbox/ directory and
         applies them to the node. chain.pem contains the chain encoded certificates
-        starting from the node certificat and ending with the last intermediate
+        starting from the node certificate and ending with the last intermediate
         certificate before cluster CA. pkey.pem contains the pem encoded private
-        key for node certifiactes. Both files should exist on the server before
+        key for node certificates. Both files should exist on the server before
         this API is called."""
         params = {}
 
@@ -2368,14 +2368,14 @@ class ClusterManager(object):
         url = f'{hosts[0]}/api/v1/export'
         return self._get(url)
 
-    def import_functions(self, parms):
+    def import_functions(self, params):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
         if errors:
             return None, errors
         if not hosts:
             raise ServiceNotAvailableException(EVENT_SERVICE)
         url = f'{hosts[0]}/api/v1/import'
-        return self._post_json(url, parms)
+        return self._post_json(url, params)
 
     def delete_function(self, function, bucket, scope):
         hosts, errors = self.get_hostnames_for_service(EVENT_SERVICE)
@@ -2671,8 +2671,8 @@ class ClusterManager(object):
         """Delete a backup repository
         Args:
             repository_id (str): The id to be deleted.
-            state (str): The state in which the isntance to be deleted is.
-            delete_repo (bool): Wheter or not to delete the backup Repository.
+            state (str): The state in which the instance to be deleted is.
+            delete_repo (bool): Whether or not to delete the backup Repository.
             cluster (str): Only 'self' is supported.
         """
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
@@ -2942,7 +2942,7 @@ class ClusterManager(object):
 
         return self._get(url)
 
-    def _columar_link_url(self, name):
+    def _columnar_link_url(self, name):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -2953,7 +2953,7 @@ class ClusterManager(object):
         return f'{hosts[0]}/api/v1/link{("/" + urllib.parse.quote_plus(name)) if name else ""}', None
 
     def set_columnar_link(self, opts):
-        url, errors = self._columar_link_url(opts.name)
+        url, errors = self._columnar_link_url(opts.name)
         if errors:
             return None, errors
 
@@ -2961,14 +2961,14 @@ class ClusterManager(object):
         return send_json(url, opts.parsed_link_details)
 
     def delete_columnar_link(self, opts):
-        url, errors = self._columar_link_url(opts.name)
+        url, errors = self._columnar_link_url(opts.name)
         if errors:
             return None, errors
 
         return self._delete(url, None)
 
     def get_columnar_links(self, opts):
-        url, errors = self._columar_link_url(opts.name)
+        url, errors = self._columnar_link_url(opts.name)
         if errors:
             return None, errors
 

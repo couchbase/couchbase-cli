@@ -478,7 +478,7 @@ def apply_default_port(nodes):
     Adds the default port if the port is missing.
 
     @type  nodes: string
-    @param nodes: A comma seprated list of nodes
+    @param nodes: A comma separated list of nodes
     @rtype:       array of strings
     @return:      The nodes with the port postfixed on each one
     """
@@ -1130,7 +1130,7 @@ class BucketCreate(Subcommand):
                            choices=[128, 1024], help="Sets the number of magma vBuckets, "
                            "either 128 (the default) or 1024")
 
-        group.add_argument("--encryption-key", dest="encryption_key", metavar="<keyid>",
+        group.add_argument("--encryption-key", dest="encryption_key", metavar="<key_id>",
                            help="The key id of the encryption key to use on this bucket")
         group.add_argument("--dek-rotate-every", dest="dek_rotate_interval", metavar="<days>", type=(int),
                            help="How often to rotate the DEK for this bucket")
@@ -1384,7 +1384,7 @@ class BucketEdit(Subcommand):
                            help="Sets the rank of this bucket in case of failover/rebalance. Buckets with larger "
                            "ranks are prioritised over buckets with smaller ranks")
 
-        group.add_argument("--encryption-key", dest="encryption_key", metavar="<keyid>",
+        group.add_argument("--encryption-key", dest="encryption_key", metavar="<key_id>",
                            help="The key id of the encryption key to use on this bucket")
         group.add_argument("--dek-rotate-every", dest="dek_rotate_interval", metavar="<days>", type=(int),
                            help="How often to rotate the DEK for this bucket")
@@ -2977,7 +2977,7 @@ class SettingAudit(Subcommand):
                                  " --audit-log-rotate-size, --disabled-users, --disable-events] is required with"
                                  " --set"])
 
-            # Match the behavior in the WebUI, which is to internally translate the '/couchbase' postfix into '/local'
+            # Match the behaviour in the WebUI, which is to internally translate the '/couchbase' postfix into '/local'
             # see MB-46970 for more information.
             if opts.disabled_users is not None:
                 opts.disabled_users = re.sub(r'\/couchbase', '/local', opts.disabled_users)
@@ -3068,7 +3068,7 @@ class SettingAutofailover(Subcommand):
                            + "Couchbase Server Enterprise Edition only.")
         group.add_argument("--failover-data-disk-period", dest="failover_on_data_disk_period",
                            metavar="<seconds>", type=(int),
-                           help="The amount of time the Data Serivce disk failures has to be happening for to trigger"
+                           help="The amount of time the Data Service disk failures has to be happening for to trigger"
                                 " an auto-failover")
         group.add_argument("--enable-failover-on-data-disk-non-responsive",
                            dest="enable_failover_on_data_disk_non_responsive", metavar="<1|0>", choices=["0", "1"],
@@ -3076,7 +3076,7 @@ class SettingAutofailover(Subcommand):
                            + "Couchbase Server Enterprise Edition only.")
         group.add_argument("--failover-data-disk-non-responsive-period",
                            dest="failover_on_data_disk_non_responsive_period", metavar="<seconds>", type=(int),
-                           help="The amount of time the Data Serivce disk non-responsiveness has to be happening for to"
+                           help="The amount of time the Data Service disk non-responsiveness has to be happening for to"
                                 " trigger an auto-failover")
         group.add_argument("--allow-failover-for-ephemeral-without-replica", metavar="<1|0>", choices=["0", "1"],
                            help="Whether to allow autofailover on nodes with an ephemeral buckets that do not have at "
@@ -3357,10 +3357,10 @@ class SettingEncryption(Subcommand):
                               help="Set the encryption settings of config/log/audit")
         group_me.add_argument("--list-keys", dest="list_keys", action="store_true", help="List the encryption keys")
         group_me.add_argument("--add-key", dest="add_key", action="store_true", help="Create a new encryption key")
-        group_me.add_argument("--edit-key", dest="edit_key", metavar="<keyid>", help="Edit an encryption key")
-        group_me.add_argument("--rotate-key", dest="rotate_key", metavar="<keyid>",
+        group_me.add_argument("--edit-key", dest="edit_key", metavar="<key_id>", help="Edit an encryption key")
+        group_me.add_argument("--rotate-key", dest="rotate_key", metavar="<key_id>",
                               help="Rotate the specified encryption key")
-        group_me.add_argument("--delete-key", dest="delete_key", metavar="<keyid>",
+        group_me.add_argument("--delete-key", dest="delete_key", metavar="<key_id>",
                               help="Delete the specified encryption key")
 
         # --set arguments
@@ -3368,7 +3368,7 @@ class SettingEncryption(Subcommand):
                            help="The type of files to configure the encryption of")
         group.add_argument("--type", dest="encryption_type", choices=["disabled", "master-password", "key"],
                            help="The type of encryption to use")
-        group.add_argument("--key", dest="key", metavar="<keyid>",
+        group.add_argument("--key", dest="key", metavar="<key_id>",
                            help="The id of the key to encrypt these files with")
         group.add_argument("--dek-rotate-every", dest="dek_rotation_interval", metavar="<days>", type=(int),
                            help="The number of days the DEK should be rotated")
@@ -3410,12 +3410,12 @@ class SettingEncryption(Subcommand):
         group_encrypt_me = group.add_mutually_exclusive_group(required=False)
         group_encrypt_me.add_argument("--encrypt-with-master-password", dest="encrypt_with_master", action="store_true",
                                       help="Encrypt this key with the master password")
-        group_encrypt_me.add_argument("--encrypt-with-key", dest="encrypt_with_key", metavar="<keyid>",
+        group_encrypt_me.add_argument("--encrypt-with-key", dest="encrypt_with_key", metavar="<key_id>",
                                       help="Encrypt this key with another key", type=(int))
 
         group.add_argument("--kmip-operations", dest="kmip_ops", choices=["get", "encrypt-decrypt"],
                            help="What operations to use with the KMIP server")
-        group.add_argument("--kmip-key", dest="kmip_key", metavar="<keyid>", help="The key on the KMIP server to use")
+        group.add_argument("--kmip-key", dest="kmip_key", metavar="<key_id>", help="The key on the KMIP server to use")
         group.add_argument("--kmip-host", dest="kmip_host", metavar="<host>", help="The hostname of the KMIP server")
         group.add_argument("--kmip-port", dest="kmip_port", metavar="<port>", type=(int),
                            help="The port of the KMIP server")
@@ -3666,7 +3666,7 @@ class SettingCompaction(Subcommand):
                            help="Allow gsi compaction to run before this time (Circular mode only)")
         group.add_argument("--enable-gsi-compaction-abort", dest="enable_gsi_abort", metavar="<1|0>",
                            choices=["0", "1"],
-                           help="Abort gsi compaction if when run outside of the accepted interaval"
+                           help="Abort gsi compaction if when run outside of the accepted interval"
                            + "(Circular mode only)")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
@@ -4858,7 +4858,7 @@ class XdcrReplicate(Subcommand):
         if opts.collection_migration == '1' and opts.collection_explicit_mappings == '1':
             _exit_if_errors(['cannot enable both collection migration and explicit mappings'])
         if opts.filter_skip and opts.filter is None:
-            _exit_if_errors(["--filter-expersion is needed with the --filter-skip-restream option"])
+            _exit_if_errors(["--filter-expression is needed with the --filter-skip-restream option"])
         _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.chk_int,
                                                       opts.worker_batch_size, opts.doc_batch_size, opts.fail_interval,
                                                       opts.rep_thresh, opts.src_nozzles, opts.dst_nozzles,
@@ -4919,7 +4919,7 @@ class XdcrReplicate(Subcommand):
         if opts.replicator_id is None:
             _exit_if_errors(["--xdcr-replicator is needed to change a replicators settings"])
         if opts.filter_skip and opts.filter is None:
-            _exit_if_errors(["--filter-expersion is needed with the --filter-skip-restream option"])
+            _exit_if_errors(["--filter-expression is needed with the --filter-skip-restream option"])
         if opts.collection_migration == '1' and opts.collection_explicit_mappings == '1':
             _exit_if_errors(['cannot enable both collection migration and explicit mappings'])
         _, errors = self.rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size, opts.doc_batch_size,
@@ -5060,7 +5060,7 @@ class XdcrSetup(Subcommand):
 
     def _delete(self, opts):
         if opts.name is None:
-            _exit_if_errors(["--xdcr-cluster-name is required to deleta a cluster connection"])
+            _exit_if_errors(["--xdcr-cluster-name is required to delete a cluster connection"])
 
         _, errors = self.rest.delete_xdcr_reference(opts.name)
         _exit_if_errors(errors)
@@ -5266,7 +5266,7 @@ class EventingFunctionSetup(Subcommand):
 
         _, errors = self.rest.deploy_undeploy_function(opts.name, opts.bucket, opts.scope, deploy, opts.boundary)
         self._exit_if_function_not_found(opts, errors)
-        # For backwards compatability we don't want to error if you try to (un)deploy an (un)deployed function
+        # For backwards compatibility we don't want to error if you try to (un)deploy an (un)deployed function
         if errors is not None and len(errors) == 1 and isinstance(errors[0], str) and \
                 errors[0].endswith(f'already in {"deployed" if deploy else "undeployed"} state.'):
             _success(f'Function is already in {"deployed" if deploy else "undeployed"} state')
@@ -5724,7 +5724,7 @@ class UserChangePassword(Subcommand):
         if opts.new_pass is None:
             _exit_if_errors(["--new-password is required"])
 
-        _, rv = self.rest.user_change_passsword(opts.new_pass)
+        _, rv = self.rest.user_change_password(opts.new_pass)
         _exit_if_errors(rv)
         _success(f'Changed password for {opts.username}')
 
@@ -6078,7 +6078,7 @@ class SettingAlternateAddress(Subcommand):
                             print(f'{ports:{column_size}}', end='')
                         print()
                     else:
-                        # For cluster_run and single node clusters there is no hostanme
+                        # For cluster_run and single node clusters there is no hostname
                         try:
                             print(f'{node["hostname"]}')
                         except KeyError:
@@ -6440,21 +6440,21 @@ class NodeToNodeEncryption(Subcommand):
         nodes, err = rest.nodes_info()
         _exit_if_errors(err)
         encrypted_nodes = []
-        unencrpyted_nodes = []
+        unencrypted_nodes = []
         for n in nodes:
             if n['nodeEncryption']:
                 encrypted_nodes.append(n['hostname'])
             else:
-                unencrpyted_nodes.append(n['hostname'])
+                unencrypted_nodes.append(n['hostname'])
 
         if len(encrypted_nodes) == len(nodes):
             print('Node-to-node encryption is enabled')
-        elif len(unencrpyted_nodes) == len(nodes):
+        elif len(unencrypted_nodes) == len(nodes):
             print('Node-to-node encryption is disabled')
         else:
             print('Cluster is in mixed mode')
             print(f'Nodes with encryption enabled: {encrypted_nodes}')
-            print(f'Nodes with encryption disabled: {unencrpyted_nodes}')
+            print(f'Nodes with encryption disabled: {unencrypted_nodes}')
 
     @staticmethod
     def get_man_page_name():
@@ -6794,7 +6794,7 @@ class BackupServiceRepository:
         """
         if not repository_id:
             _exit_if_errors(['--id is required'])
-        # the following is devided in two options to give better error messages depending if state is missing or if it
+        # the following is divided in two options to give better error messages depending if state is missing or if it
         # is invalid
         if not state:
             _exit_if_errors(['--state is required'])
@@ -6946,10 +6946,10 @@ class BackupServiceRepository:
         if json_out:
             print(json.dumps(repository, indent=2))
         else:
-            self.human_firendly_print_repository(repository)
+            self.human_friendly_print_repository(repository)
 
     @staticmethod
-    def human_firendly_print_repository(repository):
+    def human_friendly_print_repository(repository):
         """Print the repository in a human friendly format
 
         Args:
@@ -6969,7 +6969,7 @@ class BackupServiceRepository:
 
         if 'scheduled' in repository and repository['scheduled']:
             print()
-            BackupServiceRepository.human_firendly_print_repository_scheduled_tasks(repository['scheduled'])
+            BackupServiceRepository.human_friendly_print_repository_scheduled_tasks(repository['scheduled'])
 
         one_off = repository['running_one_off'] if 'running_one_off' in repository else None
         running_scheduled = repository['running_tasks'] if 'running_tasks' in repository else None
@@ -7008,7 +7008,7 @@ class BackupServiceRepository:
             print(f'{task["name"]:<{name_pad}}| {task["type"].title():<10}| {task["status"]:<8} | {task["start"]}')
 
     @staticmethod
-    def human_firendly_print_repository_scheduled_tasks(scheduled):
+    def human_friendly_print_repository_scheduled_tasks(scheduled):
         """Print the scheduled task in a tabular format"""
         name_pad = 5
         for name in scheduled:
@@ -7108,7 +7108,7 @@ class BackupServicePlan:
 
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
-        """Run the backup plan managment command"""
+        """Run the backup plan management command"""
         if opts.list:
             self.list_plans(opts.output == 'json')
         elif opts.get:
@@ -7201,7 +7201,7 @@ class BackupServicePlan:
         print(f'Name: {plan["name"]}')
         print(f'Description: {plan["description"] if "description" in plan else "N/A"}')
         print(f'Services: {BackupServicePlan.service_list_to_str(plan["services"])}')
-        print(f'Default: {(plan["default"] if "deafult" in plan else False)!s}')
+        print(f'Default: {(plan["default"] if "default" in plan else False)!s}')
 
         # If the are no tasks return
         if not plan["tasks"]:
