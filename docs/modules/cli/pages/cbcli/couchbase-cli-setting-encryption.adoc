@@ -29,7 +29,7 @@ _couchbase-cli setting-enable_ [--cluster <url>] [--username <user>]
     [--encrypt-with-master-password] [--encrypt-with-key <keyid>]
     [--kmip-operations <ops>] [--kmip-key <key>] [--kmip-host <host>]
     [--kmip-port <port>] [--kmip-key-path <path>] [--kmip-cert-path <path>]
-    [--kmip-key-passphrase <passphrase>]
+    [--kmip-key-passphrase <passphrase>] [--kmip-server-verification <verification_option>]
     [--auto-rotate-every <days>] [--auto-rotate-start-on <iso8601>]
 
 == DESCRIPTION
@@ -55,6 +55,7 @@ arguments, each having their own set of options:
   ** For KMIP keys: `--kmip-operations <ops>`, `--kmip-key <key>`,
    `--kmip-host <host>`, `--kmip-port <port>`, `--kmip-key-path <path>`,
    `--kmip-cert-path <path>`, `--kmip-key-passphrase <passphrase>`,
+   `--kmip-server-verification <verification_option>`
    `--encrypt-with-master-password`, `--encrypt-with-key <keyid>`
   ** For auto-generated keys: `--auto-rotate-every <days>`,
    `--auto-rotate-start-on <iso8601>`, `--encrypt-with-master-password`,
@@ -167,6 +168,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --kmip-key-passphrase <passphrase>::
   The passphrase to use to decode the key.
+
+--kmip-server-verification <verification_option>::
+  Which certificates should be used for server verification.
 
 --auto-rotate-every <days>::
   How often to rotate the generated key, in days.

@@ -1539,6 +1539,12 @@ class TestSettingEncryption(CommandTest):
             args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'kmip']
             self.system_exit_run(self.command + args, None, start_server=False)
             self.assertIn('--kmip-operations', self.str_output)
+            self.assertIn('--kmip-key', self.str_output)
+            self.assertIn('--kmip-host', self.str_output)
+            self.assertIn('--kmip-port', self.str_output)
+            self.assertIn('--kmip-key-path', self.str_output)
+            self.assertIn('--kmip-cert-path', self.str_output)
+            self.assertIn('--kmip-server-verification', self.str_output)
 
     def test_add_edit_key_kmip_no_encrypt_method(self):
         self.server.set_args(self.server_args)
@@ -1547,7 +1553,8 @@ class TestSettingEncryption(CommandTest):
         for base_args in [['--add-key'], ['--edit-key', '1']]:
             args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'kmip', '--kmip-operations', 'get',
                                 '--kmip-key', 'key', '--kmip-host', 'localhost', '--kmip-port', '1470',
-                                '--kmip-key-path', '/key', '--kmip-cert-path', '/cert']
+                                '--kmip-key-path', '/key', '--kmip-cert-path', '/cert', '--kmip-server-verification',
+                                'use-system-and-cb-ca']
             self.system_exit_run(self.command + args, None, start_server=False)
             self.assertIn(
                 'one of --encrypt-with-master-password, --encrypt-with-key must be specified',
@@ -1561,7 +1568,7 @@ class TestSettingEncryption(CommandTest):
             args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'kmip', '--kmip-operations', 'get',
                                 '--kmip-key', 'key', '--kmip-host', 'localhost', '--kmip-port', '1470',
                                 '--kmip-key-path', '/key', '--kmip-cert-path', '/cert',
-                                '--encrypt-with-master-password']
+                                '--encrypt-with-master-password', '--kmip-server-verification', 'use-system-and-cb-ca']
             self.no_error_run(self.command + args, None, start_server=False)
             expected = json.dumps({
                 'usage': ['KEK-encryption'],
@@ -1575,6 +1582,88 @@ class TestSettingEncryption(CommandTest):
                     'encryptionApproach': 'useGet',
                     'keyPath': '/key',
                     'certPath': '/cert',
+                    'caSelection': "useSysAndCbCa"
+                }
+            }, sort_keys=True)
+            self.rest_parameter_match([expected], length_match=False)
+
+    def test_add_edit_key_kmip_do_not_verify(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'kmip', '--kmip-operations', 'get',
+                                '--kmip-key', 'key', '--kmip-host', 'localhost', '--kmip-port', '1470',
+                                '--kmip-key-path', '/key', '--kmip-cert-path', '/cert',
+                                '--encrypt-with-master-password', '--kmip-server-verification', 'do-not-verify']
+            self.no_error_run(self.command + args, None, start_server=False)
+            expected = json.dumps({
+                'usage': ['KEK-encryption'],
+                'name': 'key01',
+                'type': 'kmip-aes-key-256',
+                'data': {
+                    'encryptWith': 'nodeSecretManager',
+                    'activeKey': {'kmipId': 'key'},
+                    'host': 'localhost',
+                    'port': 1470,
+                    'encryptionApproach': 'useGet',
+                    'keyPath': '/key',
+                    'certPath': '/cert',
+                    'caSelection': "skipServerCertVerification"
+                }
+            }, sort_keys=True)
+            self.rest_parameter_match([expected], length_match=False)
+
+    def test_add_edit_key_kmip_use_system_ca(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'kmip', '--kmip-operations', 'get',
+                                '--kmip-key', 'key', '--kmip-host', 'localhost', '--kmip-port', '1470',
+                                '--kmip-key-path', '/key', '--kmip-cert-path', '/cert',
+                                '--encrypt-with-master-password', '--kmip-server-verification', 'use-system-ca']
+            self.no_error_run(self.command + args, None, start_server=False)
+            expected = json.dumps({
+                'usage': ['KEK-encryption'],
+                'name': 'key01',
+                'type': 'kmip-aes-key-256',
+                'data': {
+                    'encryptWith': 'nodeSecretManager',
+                    'activeKey': {'kmipId': 'key'},
+                    'host': 'localhost',
+                    'port': 1470,
+                    'encryptionApproach': 'useGet',
+                    'keyPath': '/key',
+                    'certPath': '/cert',
+                    'caSelection': "useSysCa"
+                }
+            }, sort_keys=True)
+            self.rest_parameter_match([expected], length_match=False)
+
+    def test_add_edit_key_kmip_use_cb_ca(self):
+        self.server.set_args(self.server_args)
+        self.server.run()
+
+        for base_args in [['--add-key'], ['--edit-key', '1']]:
+            args = base_args + ['--name', 'key01', '--kek-usage', '--key-type', 'kmip', '--kmip-operations', 'get',
+                                '--kmip-key', 'key', '--kmip-host', 'localhost', '--kmip-port', '1470',
+                                '--kmip-key-path', '/key', '--kmip-cert-path', '/cert',
+                                '--encrypt-with-master-password', '--kmip-server-verification', 'use-cb-ca']
+            self.no_error_run(self.command + args, None, start_server=False)
+            expected = json.dumps({
+                'usage': ['KEK-encryption'],
+                'name': 'key01',
+                'type': 'kmip-aes-key-256',
+                'data': {
+                    'encryptWith': 'nodeSecretManager',
+                    'activeKey': {'kmipId': 'key'},
+                    'host': 'localhost',
+                    'port': 1470,
+                    'encryptionApproach': 'useGet',
+                    'keyPath': '/key',
+                    'certPath': '/cert',
+                    'caSelection': "useCbCa"
                 }
             }, sort_keys=True)
             self.rest_parameter_match([expected], length_match=False)

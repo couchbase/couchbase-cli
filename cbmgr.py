@@ -3426,6 +3426,13 @@ class SettingEncryption(Subcommand):
         group.add_argument("--kmip-key-passphrase", dest="kmip_key_passphrase", metavar="<passphrase>",
                            action=CBNonEchoedAction, envvar="CB_KMIP_KEY_PASSPHRASE",
                            help="The passphrase to use to decode the key")
+        group.add_argument("--kmip-server-verification", dest="kmip_server_verification",
+                           choices=["use-system-ca", "use-cb-ca", "use-system-and-cb-ca", "do-not-verify"],
+                           metavar="<verification_option>", help="How to verify the KMIP server. Available options: " +
+                           "use-system-ca (Use system CA certificates), " +
+                           "use-cb-ca (Use Couchbase trusted certificates), " +
+                           "use-system-and-cb-ca (Use system CA certificates and Couchbase trusted certificates), " +
+                           "do-not-verify (Do not verify server certificate - insecure)")
 
         group.add_argument("--auto-rotate-every", dest="auto_rotate_every", metavar="<days>",
                            help="How often to rotate the generated key")
@@ -3525,9 +3532,9 @@ class SettingEncryption(Subcommand):
             typ = "kmip-aes-key-256"
 
             if not (opts.kmip_ops and opts.kmip_key and opts.kmip_host and opts.kmip_port and opts.kmip_key_path
-                    and opts.kmip_cert_path):
+                    and opts.kmip_cert_path and opts.kmip_server_verification):
                 _exit_if_errors(["--kmip-operations, --kmip-key, --kmip-host --kmip-port, --kmip-key-path, "
-                                 "--kmip-cert-path must be specified"])
+                                 "--kmip-cert-path, --kmip-server-verification must be specified"])
 
             if not opts.encrypt_with_master and opts.encrypt_with_key is None:
                 _exit_if_errors(["one of --encrypt-with-master-password, --encrypt-with-key must be specified"])
@@ -3553,6 +3560,16 @@ class SettingEncryption(Subcommand):
                 data["certPath"] = opts.kmip_cert_path
             if opts.kmip_key_passphrase:
                 data["keyPassphrase"] = opts.kmip_key_passphrase
+
+            if opts.kmip_server_verification:
+                if opts.kmip_server_verification == "use-system-ca":
+                    data["caSelection"] = "useSysCa"
+                elif opts.kmip_server_verification == "use-cb-ca":
+                    data["caSelection"] = "useCbCa"
+                elif opts.kmip_server_verification == "use-system-and-cb-ca":
+                    data["caSelection"] = "useSysAndCbCa"
+                elif opts.kmip_server_verification == "do-not-verify":
+                    data["caSelection"] = "skipServerCertVerification"
 
         elif opts.key_type == "auto-generated":
             typ = "auto-generated-aes-key-256"
