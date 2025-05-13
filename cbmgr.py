@@ -15,6 +15,7 @@ import sys
 import tempfile
 import time
 import traceback
+import dataclasses
 import urllib.parse
 from argparse import SUPPRESS, Action, ArgumentError, ArgumentParser, HelpFormatter
 from operator import itemgetter
@@ -516,6 +517,161 @@ def prompt_for_confirmation(question, default=None):
         print(f'Unrecognised option "{answer}"')
     if confirm not in ('y', 'Y', 'yes', 'Yes'):
         return
+
+
+class CollectionStringParser:
+    def __init__(self, inp):
+        self.inp = inp
+        self.pos = 0
+
+    def pop(self):
+        if self.pos == len(self.inp):
+            return None
+
+        self.pos += 1
+        return self.inp[self.pos - 1]
+
+    def peek(self):
+        if self.pos == len(self.inp):
+            return None
+
+        return self.inp[self.pos]
+
+    def expect(self, c):
+        if self.inp[self.pos] != c:
+            raise ValueError(f"unexpected char {self.inp[self.pos]}, was expecting {c}")
+
+        self.pos += 1
+
+    def take_until(self, c, accept_eof=False):
+        s = ''
+        while True:
+            got = self.peek()
+            if got is None:
+                if accept_eof:
+                    return s
+
+                raise ValueError(f"unexpected end, was waiting for a {c} character")
+
+            if got == c:
+                return s
+
+            s += self.pop()
+
+    def item(self):
+        start = self.pop()
+        if start is None:
+            raise ValueError("unexpected end")
+
+        if start in "'\"":
+            item = self.take_until(start)
+            self.pop()
+            return item
+
+        return start + self.take_until(".", accept_eof=True)
+
+    def run(self):
+        items = []
+        for _ in range(3):
+            item = self.item()
+            items.append(item)
+            if self.peek() is None:
+                return items
+
+            self.expect('.')
+
+        raise ValueError(f"extra input left: {self.inp[self.pos:]}")
+
+    def parse(self, start_at="bucket"):
+        items = []
+        try:
+            items = self.run()
+        except ValueError as e:
+            return None, [str(e)]
+
+        keys = ["bucket", "scope", "collection"]
+        if start_at == "scope":
+            keys = keys[1:]
+
+        if len(keys) < len(items):
+            return None, ["too many items in collection string"]
+
+        d = dict(zip(keys, items))
+
+        cs = CollectionString(
+            bucket=d.get("bucket", None),
+            scope=d.get("scope", None),
+            collection=d.get("collection", None))
+
+        errors = cs.valid()
+        if errors:
+            return None, errors
+
+        return cs, []
+
+
+@dataclasses.dataclass
+class CollectionString:
+    bucket: str = None
+    scope: str = None
+    collection: str = None
+
+    def scope_collection_string(self):
+        if not self.scope:
+            return ""
+
+        s = self.scope
+        if self.collection:
+            s += "." + self.collection
+        return s
+
+    def levels(self):
+        if not self.bucket:
+            return 0
+
+        if not self.scope:
+            return 1
+
+        if not self.collection:
+            return 2
+
+        return 3
+
+    def _valid_name(self, field, name, allowed, disallowed_starting_chars='', max_len=0):
+        if max_len != 0 and len(name) > max_len:
+            return [f"{field} is too long"]
+
+        for i, c in enumerate(name.lower()):
+            if i == 0 and c in disallowed_starting_chars:
+                return [f"{field} names cannot start with {c}"]
+
+            if c not in allowed:
+                return [f"{field} names cannot have {c} in them"]
+
+        return []
+
+    def valid(self):
+        errors = []
+        if self.bucket:
+            e = self._valid_name("bucket", self.bucket, "abcdefghijklmnopqrstuvwxyz0123456789.%_-", max_len=100)
+            if e:
+                errors += e
+
+        valid_scope_collection_chars = "abcdefghijklmnopqrstuvwxyz0123456789%_-"
+        if self.scope:
+            e = self._valid_name(
+                "scope", self.scope, valid_scope_collection_chars, disallowed_starting_chars='%_', max_len=251)
+            if e:
+                errors += e
+
+        if self.collection:
+            e = self._valid_name(
+                "collection", self.collection, valid_scope_collection_chars, disallowed_starting_chars='%_',
+                max_len=251)
+            if e:
+                errors += e
+
+        return errors
 
 
 class CLIHelpFormatter(HelpFormatter):
