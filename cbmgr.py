@@ -5006,6 +5006,7 @@ class XdcrReplicate(Subcommand):
         group.add_argument('--filter-binary', choices=['1', '0'], metavar='<1|0>', default=None, dest='filter_binary',
                            help='When set to true binary documents are not replicated. When false binary documents may '
                                 'be replicated')
+        group.add_argument('--force', action='store_true', help='Skips any confirmation prompts')
 
         collection_group = self.parser.add_argument_group("Collection options")
         collection_group.add_argument('--collection-explicit-mappings', choices=['1', '0'], metavar='<1|0>',
@@ -5017,6 +5018,22 @@ class XdcrReplicate(Subcommand):
         collection_group.add_argument('--collection-mapping-rules', type=str, default=None, metavar='<mappings>',
                                       help='The mapping rules specified as a JSON formatted string. '
                                            '(Enterprise Edition Only)')
+
+        conflict_logging_group = self.parser.add_argument_group("Conflict logging options")
+        conflict_logging_group.add_argument('--conflict-logging', choices=['1', '0'], metavar='<1|0>',
+                                            default=None, help='Whether conflict logging should be enabled')
+        conflict_logging_group.add_argument(
+            '--conflict-logging-default', type=str, metavar='<collection-string>',
+            help='A collection string specifying the default location for conflict logs')
+        conflict_logging_group.add_argument('--conflict-logging-rule-map', type=str, metavar='<mapping>',
+                                            action='append', help='A mapping from a scope/collection on the source to '
+                                                                  'a collection string on the destination')
+        conflict_logging_group.add_argument('--conflict-logging-rule-default', type=str, metavar='<collection>',
+                                            action='append', help='Use the replication default for the given '
+                                                                  'scope/collection')
+        conflict_logging_group.add_argument('--conflict-logging-rule-disable', type=str, metavar='<collection>',
+                                            action='append', help='Disable conflict logging for specified '
+                                                                  'scope/collection')
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
@@ -5059,11 +5076,95 @@ class XdcrReplicate(Subcommand):
         _exit_if_errors(errors)
         print(json.dumps(settings, indent=4, sort_keys=True))
 
+    def _parse_conflict_logging_args(self, opts):
+        if opts.conflict_logging is None:
+            return None
+
+        if opts.conflict_logging == "1" and not opts.conflict_logging_default:
+            _exit_if_errors(["if conflict-logging is enabled --conflict-logging-default is needed"])
+        if opts.conflict_logging != "1" and opts.conflict_logging_default:
+            _exit_if_errors(["if conflict-logging is disabled --conflict-logging-default cannot be passed"])
+
+        data = {}
+        if opts.conflict_logging == "0":
+            data["disabled"] = True
+            return data
+
+        if not opts.force:
+            choice = prompt_for_confirmation(
+                "Enabling conflict logging requires the source and destination clusters to "
+                "be on 8.0 or later, and have cross cluster versioning enabled.")
+            if not choice:
+                sys.exit(0)
+
+        data["disabled"] = False
+
+        default_cs, errors = CollectionStringParser(opts.conflict_logging_default).parse()
+        _exit_if_errors([f"error parsing {opts.conflict_logging_default}: {e}" for e in errors])
+
+        if default_cs.collection is None:
+            _exit_if_errors(["conflict logging default destination must be to a collection"])
+
+        data["bucket"] = default_cs.bucket
+        data["collection"] = f"{default_cs.scope}.{default_cs.collection}"
+
+        rules = {}
+        if opts.conflict_logging_rule_map:
+            for rule in opts.conflict_logging_rule_map:
+                # This is safe because bucket, scope and collection names cannot contain an equals
+                split = rule.split('=', 1)
+                if len(split) != 2:
+                    _exit_if_errors([f"no '=' in log rule {rule}"])
+
+                src, errors = CollectionStringParser(split[0]).parse(start_at="scope")
+                _exit_if_errors([f"error parsing {split[0]}: {e}" for e in errors])
+
+                if split[1] == "":
+                    _exit_if_errors([f"error parsing {rule}: no destination specified"])
+
+                dst, errors = CollectionStringParser(split[1]).parse()
+                _exit_if_errors([f"error parsing {split[1]}: {e}" for e in errors])
+
+                if dst.levels() != 3:
+                    _exit_if_errors(["the destination for a rule must be a collection"])
+
+                rules[src.scope_collection_string()] = {
+                    "bucket": dst.bucket,
+                    "collection": dst.scope_collection_string()
+                }
+
+        if opts.conflict_logging_rule_default:
+            for collection in opts.conflict_logging_rule_default:
+                src, errors = CollectionStringParser(collection).parse(start_at="scope")
+                _exit_if_errors([f"error parsing {split[0]}: {e}" for e in errors])
+
+                rules[src.scope_collection_string()] = {}
+
+        if opts.conflict_logging_rule_disable:
+            for collection in opts.conflict_logging_rule_disable:
+                src, errors = CollectionStringParser(collection).parse(start_at="scope")
+                _exit_if_errors([f"error parsing {split[0]}: {e}" for e in errors])
+
+                rules[src.scope_collection_string()] = None
+
+        data["loggingRules"] = rules
+
+        return data
+
     def _create(self, opts):
         if opts.collection_migration == '1' and opts.collection_explicit_mappings == '1':
             _exit_if_errors(['cannot enable both collection migration and explicit mappings'])
+
         if opts.filter_skip and opts.filter is None:
             _exit_if_errors(["--filter-expression is needed with the --filter-skip-restream option"])
+
+        if opts.conflict_logging == '1' and not opts.conflict_logging_default:
+            _exit_if_errors(["if conflict-logging is enabled --conflict-logging-default is needed"])
+        if opts.conflict_logging != '1' and opts.conflict_logging_default:
+            _exit_if_errors(["if conflict-logging is disabled --conflict-logging-default cannot be passed"])
+
+        conflict_logging = self._parse_conflict_logging_args(opts)
+
         _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.chk_int,
                                                       opts.worker_batch_size, opts.doc_batch_size, opts.fail_interval,
                                                       opts.rep_thresh, opts.src_nozzles, opts.dst_nozzles,
@@ -5071,7 +5172,8 @@ class XdcrReplicate(Subcommand):
                                                       opts.stats_interval, opts.filter, opts.priority,
                                                       opts.reset_expiry, opts.filter_del, opts.filter_exp,
                                                       opts.filter_binary, opts.collection_explicit_mappings,
-                                                      opts.collection_migration, opts.collection_mapping_rules)
+                                                      opts.collection_migration, opts.collection_mapping_rules,
+                                                      conflict_logging)
         _exit_if_errors(errors)
 
         _success("XDCR replication created")
@@ -5127,6 +5229,9 @@ class XdcrReplicate(Subcommand):
             _exit_if_errors(["--filter-expression is needed with the --filter-skip-restream option"])
         if opts.collection_migration == '1' and opts.collection_explicit_mappings == '1':
             _exit_if_errors(['cannot enable both collection migration and explicit mappings'])
+
+        conflict_logging = self._parse_conflict_logging_args(opts)
+
         _, errors = self.rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size, opts.doc_batch_size,
                                                        opts.fail_interval, opts.rep_thresh, opts.src_nozzles,
                                                        opts.dst_nozzles, opts.usage_limit, opts.compression,
@@ -5134,7 +5239,7 @@ class XdcrReplicate(Subcommand):
                                                        opts.filter, opts.filter_skip, opts.priority, opts.reset_expiry,
                                                        opts.filter_del, opts.filter_exp, opts.filter_binary,
                                                        opts.collection_explicit_mappings, opts.collection_migration,
-                                                       opts.collection_mapping_rules)
+                                                       opts.collection_mapping_rules, conflict_logging)
         _exit_if_errors(errors)
 
         _success("XDCR replicator settings updated")

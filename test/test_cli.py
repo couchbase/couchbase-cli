@@ -270,6 +270,14 @@ class CommandTest(unittest.TestCase):
         for parameter in expected_params:
             self.assertIn(parameter, self.server.rest_params)
 
+    def find_rest_param(self, key):
+        for param in self.server.rest_params:
+            split = param.split('=')
+            if split[0] != key:
+                continue
+
+            return urllib.parse.unquote(split[1])
+
     def deprecated_output(self):
         self.assertIn('DEPRECATED:', self.str_output)
 
@@ -2881,6 +2889,80 @@ class TestXdcrReplicate(CommandTest):
                                              '1'],
                              self.server_args)
         self.assertIn('can only be configured on enterprise edition', self.str_output)
+
+    def test_conflict_logging_disable(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging', '0',
+        ]
+
+        self.no_error_run(self.command + args, self.server_args)
+        data = json.loads(self.find_rest_param('conflictLogging'))
+        self.assertEqual({'disabled': True}, data)
+
+    def test_conflict_logging_enabled_no_default(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging', '1',
+        ]
+
+        self.system_exit_run(self.command + args, self.server_args)
+        self.assertIn('--conflict-logging-default is needed', self.str_output)
+
+    def test_conflict_logging_default(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2', '--force',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging', '1',
+            '--conflict-logging-default', 'default.cl.default',
+        ]
+
+        self.no_error_run(self.command + args, self.server_args)
+        data = json.loads(self.find_rest_param('conflictLogging'))
+        self.assertEqual({'disabled': False, 'bucket': 'default', 'collection': 'cl.default', 'loggingRules': {}}, data)
+
+    def test_conflict_logging_rule_map_invalid_collection_string(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2', '--force',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging', '1',
+            '--conflict-logging-default', 'default.cl.default', '--conflict-logging-rule-map', 'foo=',
+        ]
+
+        self.system_exit_run(self.command + args, self.server_args)
+        self.assertIn('no destination specified', self.str_output)
+
+    def test_conflict_logging_rule_map_dest_scope(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2', '--force',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging', '1',
+            '--conflict-logging-default', 'default.cl.default', '--conflict-logging-rule-map', 'foo=bar',
+        ]
+
+        self.system_exit_run(self.command + args, self.server_args)
+        self.assertIn('the destination for a rule must be a collection', self.str_output)
+
+    def test_conflict_logging_rules(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2', '--force',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging', '1',
+            '--conflict-logging-default', 'default.cl.bucket_default',
+            '--conflict-logging-rule-map', 'override=default.cl.scope_default',
+            '--conflict-logging-rule-disable', 'override.disabled',
+            '--conflict-logging-rule-default', 'override.bucket_default',
+        ]
+
+        self.no_error_run(self.command + args, self.server_args)
+        data = json.loads(self.find_rest_param('conflictLogging'))
+        expected = {
+            'disabled': False,
+            'bucket': 'default',
+            'collection': 'cl.bucket_default',
+            'loggingRules': {
+                'override': {'bucket': 'default', 'collection': 'cl.scope_default'},
+                'override.disabled': None,
+                'override.bucket_default': {},
+            }
+        }
+        self.assertEqual(expected, data)
 
     def test_delete_replicate(self):
         self.no_error_run(self.command + ['--delete', '--xdcr-replicator', '1'], self.server_args)

@@ -2155,7 +2155,8 @@ class ClusterManager(object):
             filter_binary,
             col_explicit_mappings,
             col_migration_mode,
-            col_mapping_rule):
+            col_mapping_rule,
+            conflict_logging=None):
 
         url = f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
@@ -2184,6 +2185,8 @@ class ClusterManager(object):
             params['collectionsMigrationMode'] = one_zero_boolean_to_string(col_migration_mode)
         if col_mapping_rule is not None:
             params['colMappingRules'] = col_mapping_rule
+        if conflict_logging is not None:
+            params['conflictLogging'] = json.dumps(conflict_logging, indent=None, separators=(',', ':'))
 
         return self._post_form_encoded(url, params)
 
@@ -2231,7 +2234,8 @@ class ClusterManager(object):
     def create_xdcr_replication(self, name, to_bucket, from_bucket, chk_interval, worker_batch_size, doc_batch_size,
                                 fail_interval, replication_thresh, src_nozzles, dst_nozzles, usage_limit, compression,
                                 log_level, stats_interval, filter_expression, priority, reset_expiry, filter_del,
-                                filter_exp, filter_binary, col_explicit_mappings, col_migration_mode, col_mapping_rule):
+                                filter_exp, filter_binary, col_explicit_mappings, col_migration_mode, col_mapping_rule,
+                                conflict_logging):
         url = f'{self.hostname}/controller/createReplication'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                                        fail_interval, replication_thresh, src_nozzles,
@@ -2263,6 +2267,8 @@ class ClusterManager(object):
             params['collectionsMigrationMode'] = one_zero_boolean_to_string(col_migration_mode)
         if col_mapping_rule is not None:
             params['colMappingRules'] = col_mapping_rule
+        if conflict_logging is not None:
+            params['conflictLogging'] = json.dumps(conflict_logging, indent=None, separators=(',', ':'))
 
         return self._post_form_encoded(url, params)
 

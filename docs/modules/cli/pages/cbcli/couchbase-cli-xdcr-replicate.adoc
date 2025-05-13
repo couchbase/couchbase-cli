@@ -26,7 +26,11 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>] [--password
     [--log-level <level>] [--priority <High|Medium|Low>] [--reset-expiry <1|0>]
     [--filter-deletion <1|0>] [--filter-expiration <1|0>] [--filter-binary <1|0>]
     [--collection-explicit-mappings <1|0>] [--collection-migration <1|0>]
-    [--collection-mapping-rules <mappings>]
+    [--collection-mapping-rules <mappings>] [--conflict-logging <1|0>]
+    [--conflict-logging-default <collection-string>]
+    [--conflict-logging-rule-map <mapping>]
+    [--conflict-logging-rule-default <collection-string>]
+    [--conflict-logging-rule-disable <collection-string>]
 
 == DESCRIPTION
 
@@ -147,6 +151,28 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   on the filter expression. See
   xref:rest-api:rest-xdcr-create-replication.adoc[Creating a Replication].
 
+== CONFLICT LOGGING OPTIONS
+
+--conflict-logging <1|0>::
+  When set to true conflicts will be logged. `--conflict-logging-default`
+  must also be passed.
+
+--conflict-logging-default <collection-string>::
+  The default location to put conflict logs. Should be of the form
+  `<bucket>.<collection>.<scope>`.
+
+--conflict-logging-rule-map <mapping>::
+  Defines a mapping rule for conflict logs. Parameter should be of the form
+  `<src>=<dst>` where the source is a scope/collection string and the
+  destination is a string specifying a bucket, scope and collection.
+
+--conflict-logging-rule-default <collection-string>::
+  Makes the given collection use the replication's default conflict logging
+  location.
+
+--conflict-logging-rule-disable <collection-string>::
+  Turns off conflict logging for the given collection.
+
 == COLLECTION OPTIONS
 
 --collection-explicit-mappings <1|0>::
@@ -179,6 +205,20 @@ $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
    -p password --create --xdcr-cluster-name east --xdcr-from-bucket apps \
    --xdcr-to-bucket apps
 ----
+To do the above but also turn on conflict logging with the default location of
+`apps.cl.default`, source scope `hotels` logged to `apps.cl.hotels`, collection
+`hotels.uk` to `apps.cl.uk_hotels`, collection `hotels.other` to the bucket
+default (`apps.cl.default`) and disable conflict logging for `secret` do:
+....
+$ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
+   -p password --create --xdcr-cluster-name east --xdcr-from-bucket apps \
+   --xdcr-to-bucket apps --conflict-logging 1 \
+   --conflict-logging-default apps.cl.default \
+   --conflict-logging-rule-map hotels=apps.cl.hotels \
+   --conflict-logging-rule-map hotels.uk=apps.cl.uk_hotels \
+   --conflict-logging-rule-default hotels.other \
+   --conflict-logging-rule-disable secret
+....
 To list all of the current XDCR replication you can run the following command.
 ----
 $ couchbase-cli xdcr-replicate -c 192.168.1.5 -u Administrator \
