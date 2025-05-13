@@ -491,6 +491,33 @@ def apply_default_port(nodes):
     return [append_port(x) for x in nodes]
 
 
+def prompt_for_confirmation(question, default=None):
+    confirm = 'Are you sure? '
+    if default is None:
+        confirm += 'Y/N'
+    elif default:
+        confirm += '[Y]/N'
+    else:
+        confirm += 'Y/[N]'
+
+    while True:
+        answer = input(question + ' ' + confirm + ' ')
+        if not answer:
+            if default is None:
+                continue
+            return default
+
+        if answer.lower() in ('y', 'yes'):
+            return True
+
+        if answer.lower() in ('n', 'no'):
+            return False
+
+        print(f'Unrecognised option "{answer}"')
+    if confirm not in ('y', 'Y', 'yes', 'Yes'):
+        return
+
+
 class CLIHelpFormatter(HelpFormatter):
     """Format help with indented section bodies"""
 
@@ -1534,10 +1561,8 @@ class BucketFlush(Subcommand):
         _exit_if_errors(errors)
 
         if not opts.force:
-            question = "Running this command will totally PURGE database data from disk. " + \
-                       "Do you really want to do it? (Yes/No)"
-            confirm = input(question)
-            if confirm not in ('y', 'Y', 'yes', 'Yes'):
+            confirm = prompt_for_confirmation("Running this command will totally PURGE database data from disk.")
+            if not confirm:
                 return
 
         _, errors = self.rest.flush_bucket(opts.bucket_name)
@@ -1940,8 +1965,8 @@ class ResetCipherSuites(LocalSubcommand):
         check_versions(rest)
 
         if not opts.force:
-            confirm = str(input("Are you sure that the cipher should be reset?: Y/[N]"))
-            if confirm != "Y":
+            confirm = prompt_for_confirmation("This command will reset the cipher.", default=False)
+            if not confirm:
                 _success("Cipher suites have not been reset to default")
 
         _, errors = rest.reset_cipher_suites()
@@ -2119,12 +2144,10 @@ class NodeReset(Subcommand):
     @rest_initialiser(cluster_init_check=True)
     def execute(self, opts):
         if not opts.force:
-            confirm = input('This command will purge all data on this node.\nAre you sure? [y/n]: ')
-            if confirm == 'n':
+            confirm = prompt_for_confirmation('This command will purge all data on this node.')
+            if not confirm:
                 print("Node has not been reset")
                 sys.exit(0)
-            elif confirm != 'y':
-                _exit_if_errors(["Unknown option provided"])
 
         _, errors = self.rest.reset_node()
         _exit_if_errors(errors)
@@ -5963,17 +5986,15 @@ class EnableDeveloperPreview(Subcommand):
             _exit_if_errors(['cannot provide both --enable and --list'])
 
         if opts.enable:
-            confirm = input('Developer preview cannot be disabled once it is enabled. '
-                            'If you enter developer preview mode you will not be able to '
-                            'upgrade. DO NOT USE IN PRODUCTION.\nAre you sure [y/n]: ')
-            if confirm == 'y':
+            confirm = prompt_for_confirmation('Developer preview cannot be disabled once it is enabled. '
+                                              'If you enter developer preview mode you will not be able to '
+                                              'upgrade. DO NOT USE IN PRODUCTION.')
+            if confirm:
                 _, errors = self.rest.set_dp_mode()
                 _exit_if_errors(errors)
                 _success("Cluster is in developer preview mode")
-            elif confirm == 'n':
-                _success("Developer preview mode has NOT been enabled")
             else:
-                _exit_if_errors(["Unknown option provided"])
+                _success("Developer preview mode has NOT been enabled")
 
         if opts.list:
             pools, rv = self.rest.pools()
