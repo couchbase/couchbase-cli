@@ -866,6 +866,18 @@ class TestBucketEdit(CommandTest):
         self.assertIn("--hlc-max-future-threshold cannot be lower than 10",
                       self.str_output)
 
+    def test_bucket_edit_cross_cluster_versioning(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + self.command_EE_args +
+                          ['--enable-cross-cluster-versioning', '--force'],
+                          self.server_args)
+        expected_params = [
+            'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'maxTTL=20',
+            'compressionMode=active', 'ramQuotaMB=100', 'rank=3', 'enableCrossClusterVersioning=true',
+        ]
+
+        self.rest_parameter_match(expected_params)
+
 
 class TestBucketFlush(CommandTest):
     def setUp(self):

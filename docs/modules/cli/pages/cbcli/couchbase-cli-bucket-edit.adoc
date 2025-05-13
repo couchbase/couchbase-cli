@@ -31,6 +31,7 @@ _couchbase-cli bucket-edit_ [--cluster <url>] [--username <user>]
     [--enable-history-retention-by-default <0|1>] [--rank <num>]
     [--encryption-key <key>] [--dek-rotate-every <days>] [--dek-lifetime <days>]
     [--invalid-hlc-strategy <error|ignore|replace>] [--hlc-max-future-threshold <seconds>]
+    [--enable-cross-cluster-versioning]
 
 == DESCRIPTION
 
@@ -212,20 +213,26 @@ Run index and data compaction in parallel. Global setting only.
   rank "0". The default rank for a bucket is 0.
 
 --encryption-key <key>::
-The key that should be used to encrypt the bucket.
+  The key that should be used to encrypt the bucket.
 
 --dek-rotate-every <days>::
-The number of days after which the DEK (Data Encryption Key) should be rotated.
+  The number of days after which the DEK (Data Encryption Key) should be rotated.
 
 --dek-lifetime <days>::
-The number of days which the DEK (Data Encryption Key) should be kept for.
+  The number of days which the DEK (Data Encryption Key) should be kept for.
 
 --invalid-hlc-strategy <error|ignore|replace>::
   Sets the invalid HLC strategy, used to handle invalid CAS values.
   (Can be error, ignore or replace)
 
 --hlc-max-future-threshold <seconds>::
-The number of seconds of acceptable drift at which new CAS values will be accepted.
+  The number of seconds of acceptable drift at which new CAS values will be accepted.
+
+--enable-cross-cluster-versioning::
+  Turn on cross-cluster versioning for this bucket. This setting cannot be turned off.
+
+--force::
+  Skip any prompts asking you whether to continue.
 
 include::{partialsdir}/cbcli/part-common-history-retention.adoc[]
 

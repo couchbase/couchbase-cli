@@ -1257,7 +1257,7 @@ class ClusterManager(object):
                     abort_outside, paralleldb_and_view_compact, purge_interval,
                     history_retention_bytes, history_retention_seconds, history_retention_default,
                     rank, encryption_key, dek_rotation_interval, dek_lifetime, couchbase_bucket: bool = True,
-                    invalid_hlc_strategy=None, hlc_max_future_threshold=None):
+                    invalid_hlc_strategy=None, hlc_max_future_threshold=None, xcluster_versioning: bool = False):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -1330,6 +1330,9 @@ class ClusterManager(object):
             params["invalidHlcStrategy"] = invalid_hlc_strategy
         if hlc_max_future_threshold is not None:
             params["hlcMaxFutureThreshold"] = hlc_max_future_threshold
+
+        if xcluster_versioning:
+            params["enableCrossClusterVersioning"] = "true"
 
         return self._post_form_encoded(url, params)
 

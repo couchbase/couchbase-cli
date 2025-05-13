@@ -1429,6 +1429,9 @@ class BucketEdit(Subcommand):
             type=(int),
             help="The number of seconds of acceptable drift at which new CAS values will be accepted")
 
+        group.add_argument("--enable-cross-cluster-versioning", dest="xcluster_versioning", action='store_true')
+        group.add_argument("--force", dest="force", action='store_true')
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1520,6 +1523,10 @@ class BucketEdit(Subcommand):
         if opts.dek_lifetime:
             dek_lifetime = opts.dek_lifetime * 24 * 60 * 60
 
+        if opts.xcluster_versioning and not opts.force:
+            if not prompt_for_confirmation('Cross-cluster versioning cannot be turned off.'):
+                return
+
         _, errors = self.rest.edit_bucket(opts.bucket_name, opts.memory_quota, opts.durability_min_level,
                                           opts.eviction_policy, opts.replica_count, priority, opts.enable_flush,
                                           opts.max_ttl, opts.compression_mode, opts.remove_port, opts.db_frag_perc,
@@ -1529,7 +1536,7 @@ class BucketEdit(Subcommand):
                                           opts.history_retention_bytes, opts.history_retention_seconds,
                                           opts.enable_history_retention, opts.rank, opts.encryption_key,
                                           dek_rotate_interval, dek_lifetime, is_couchbase_bucket, opts.invalid_hlc_strategy,
-                                          opts.hlc_max_future_threshold)
+                                          opts.hlc_max_future_threshold, opts.xcluster_versioning)
         _exit_if_errors(errors)
 
         _success("Bucket edited")
