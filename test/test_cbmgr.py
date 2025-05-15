@@ -25,30 +25,30 @@ class TestProcessServices(unittest.TestCase):
                 "error": ["The manager only service can only be used with >= 7.6.0 clusters"],
                 "cluster_version": "7.2.0"
             },
-            "ColumnarDataService": {
+            "EnterpriseAnalyticsDataService": {
                 "service": "data",
                 "expected": None,
-                "columnar": True,
-                "error": ["--services cannot be specified on Columnar"]
+                "enterprise_analytics": True,
+                "error": ["--services cannot be specified on Enterprise Analytics"]
             },
-            "ColumnarManagerOnly": {
+            "EnterpriseAnalyticsManagerOnly": {
                 "service": "manager-only",
                 "expected": None,
-                "columnar": True,
-                "error": ["--services cannot be specified on Columnar"]
+                "enterprise_analytics": True,
+                "error": ["--services cannot be specified on Enterprise Analytics"]
             },
-            "ColumnarBlankService": {
+            "EnterpriseAnalyticsBlankService": {
                 "service": "",
                 "expected": None,
-                "columnar": True
+                "enterprise_analytics": True
             },
         }
 
         for name, test in tests.items():
             with self.subTest(name):
                 cluster_version = test.setdefault("cluster_version", "7.6.0")
-                columnar = test.setdefault("columnar", False)
-                services, err = process_services(test["service"], True, columnar, cluster_version)
+                enterprise_analytics = test.setdefault("enterprise_analytics", False)
+                services, err = process_services(test["service"], True, enterprise_analytics, cluster_version)
                 self.assertEqual(err, test.setdefault("error", None))
                 self.assertEqual(services, test["expected"])
 

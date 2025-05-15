@@ -262,16 +262,18 @@ class ClusterManager(object):
             return True, None
         return False, errors
 
-    def is_enterprise_columnar(self):
+    def get_cluster_type(self):
         """
-        Returns a tuple of (isEnterprise, isColumnar, errors)
+        Returns a tuple of (isEnterprise, isEnterpriseAnalytics, errors)
         """
         data, errors = self.pools()
         if errors:
             return None, None, errors
 
-        # If isColumnar isn't present, then it must be a <8.0 non-Columnar cluster (MB-65393)
-        return data["isEnterprise"], data.get("isColumnar", False), None
+        isEnterprise = data["isEnterprise"]
+        isEnterpriseAnalytics = "prodName" in data and data["prodName"] == "Enterprise Analytics"
+
+        return isEnterprise, isEnterpriseAnalytics, None
 
     def get_hostnames_for_service(self, service_name):
         """ Gets all hostnames that run a service

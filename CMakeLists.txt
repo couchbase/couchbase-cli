@@ -2,7 +2,7 @@ PROJECT(CouchbaseClient)
 CMAKE_MINIMUM_REQUIRED(VERSION 3.13)
 
 IF (BUILD_COLUMNAR)
-  SET (_cli_version "${COLUMNAR_PRODUCT_VERSION}-columnar")
+  SET (_cli_version "${COLUMNAR_PRODUCT_VERSION}-enterprise-analytics")
 ELSE ()
   SET (_cli_version "${PRODUCT_VERSION}")
 ENDIF ()

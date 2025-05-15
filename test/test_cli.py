@@ -353,19 +353,19 @@ class TestClusterInit(CommandTest):
                              ['--update-notifications', '0'], self.server_args)
         self.assertIn('--update-notifications can only be configured on Enterprise Edition', self.str_output)
 
-    def test_error_services_columnar(self):
+    def test_error_services_enterprise_analytics(self):
         self.server_args['init'] = False
-        self.server_args['columnar'] = True
+        self.server_args['enterprise_analytics'] = True
         self.system_exit_run(self.command + cluster_connect_args[:2] + self.command_args +
                              ['--services', 'data'], self.server_args)
-        self.assertIn('--services cannot be specified on Columnar', self.str_output)
+        self.assertIn('--services cannot be specified on Enterprise Analytics', self.str_output)
 
-    def test_error_manager_only_service_columnar(self):
+    def test_error_manager_only_service_enterprise_analytics(self):
         self.server_args['init'] = False
-        self.server_args['columnar'] = True
+        self.server_args['enterprise_analytics'] = True
         self.system_exit_run(self.command + cluster_connect_args[:2] + self.command_args +
                              ['--services', 'manager-only'], self.server_args)
-        self.assertIn('--services cannot be specified on Columnar', self.str_output)
+        self.assertIn('--services cannot be specified on Enterprise Analytics', self.str_output)
 
 
 class TestBucketCompact(CommandTest):
@@ -1343,19 +1343,19 @@ class TestServerAdd(CommandTest):
             else:
                 self.assertIn(p, self.server.rest_params)
 
-    def test_server_add_columnar(self):
-        self.server_args["columnar"] = True
-        self.server_args["pools_default"] = {"nodes": [{"version": "1.2.0-0000-columnar"}]}
+    def test_server_add_enterprise_analytics(self):
+        self.server_args["enterprise_analytics"] = True
+        self.server_args["pools_default"] = {"nodes": [{"version": "1.2.0-0000-enterprise-analytics"}]}
         self.no_error_run(self.command + self.cmd_args, self.server_args)
         self.assertIn('POST:/controller/addNode', self.server.trace)
         expected_params = ['hostname=some-host%3A6789', 'user=Administrator', 'password=asdasd']
         self.rest_parameter_match(expected_params)
 
-    def test_server_add_services_columnar(self):
-        self.server_args["columnar"] = True
-        self.server_args["pools_default"] = {"nodes": [{"version": "1.2.0-0000-columnar"}]}
+    def test_server_add_services_enterprise_analytics(self):
+        self.server_args["enterprise_analytics"] = True
+        self.server_args["pools_default"] = {"nodes": [{"version": "1.2.0-0000-enterprise-analytics"}]}
         self.system_exit_run(self.command + self.cmd_args + ['--services', 'data'], self.server_args)
-        self.assertIn('--services cannot be specified on Columnar', self.str_output)
+        self.assertIn('--services cannot be specified on Enterprise Analytics', self.str_output)
 
 
 class TestServerInfo(CommandTest):
@@ -1892,20 +1892,20 @@ class TestSettingAutofailover(CommandTest):
             '--failover-data-disk-non-responsive-period')
 
 
-class TestSettingAutoreporovision(CommandTest):
+class TestSettingAutoreprovision(CommandTest):
     def setUp(self):
         self.command = ['couchbase-cli', 'setting-autoreprovision'] + cluster_connect_args
         self.cmd_args = ['--enabled', '1', '--max-nodes', '3']
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
-        super(TestSettingAutoreporovision, self).setUp()
+        super(TestSettingAutoreprovision, self).setUp()
 
-    def test_basic_autoreporvision_setting(self):
+    def test_basic_autoreprovision_setting(self):
         self.no_error_run(self.command + self.cmd_args, self.server_args)
         expected_params = ['enabled=true', 'maxNodes=3']
         self.assertIn('POST:/settings/autoReprovision', self.server.trace)
         self.rest_parameter_match(expected_params)
 
-    def test_error_autoreporvision_setting_enabled_and_no_max_nodes(self):
+    def test_error_autoreprovision_setting_enabled_and_no_max_nodes(self):
         self.system_exit_run(self.command + ['--enabled', '1'], self.server_args)
         self.assertIn('must be specified if auto-reprovision is enabled', self.str_output)
 
@@ -4362,8 +4362,8 @@ class TestAnalyticsLinkSetup(CommandTest):
 
 class TestEnterpriseAnalyticsLinkSetup(CommandTest):
     def setUp(self):
-        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, 'columnar': True,
-                            'version': '1.2.0-0000-columnar',
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, 'enterprise_analytics': True,
+                            'version': '1.2.0-0000-enterprise-analytics',
                             '/pools/default/nodeServices': {'nodesExt': [{
                                 'hostname': host,
                                 'services': {
@@ -4685,7 +4685,7 @@ class TestBackupServiceRepository(CommandTest):
         self.assertIn('No repositories found', self.str_output)
 
     def test_list_various_repositories(self):
-        """Test that repository of all state are retireved and outputed"""
+        """Test that repository of all state are retrieved and outputted"""
         self.server_args['/api/v1/cluster/self/repository/active'] = [{
             'id': 'active-repository',
             'state': 'active',
@@ -4714,7 +4714,7 @@ class TestBackupServiceRepository(CommandTest):
             self.assertIn(repository_id, self.str_output)
 
     def test_list_various_repositories_state_filter(self):
-        """Test that repository of the specific state are retireved and outputed"""
+        """Test that repository of the specific state are retrieved and outputted"""
         self.server_args['/api/v1/cluster/self/repository/active'] = [{
             'id': 'active-repository',
             'state': 'active',
@@ -4858,7 +4858,7 @@ class TestBackupServiceRepository(CommandTest):
                                                'bucket_name': 'bucket'}, sort_keys=True)])
 
     def test_add_cloud_backup_repository_with_no_cloud_credentials(self):
-        """"Test that if an S3 archive is given but no cloud credentials that the command throws a meaningfull error"""
+        """"Test that if an S3 archive is given but no cloud credentials that the command throws a meaningful error"""
         self.system_exit_run(self.command + ['--add', '--id', 'a', '--plan', 'plan', '--backup-archive',
                                              's3://archive', '--cloud-credentials-region', 'a', '--cloud-staging-dir',
                                              'b'], self.server_args)
@@ -4902,7 +4902,7 @@ class TestBackupServiceRepository(CommandTest):
         self.system_exit_run(self.command + ['--remove', '--id', 'a', '--state', 'active'], self.server_args)
         self.assertIn('can only delete archived or imported repositories', self.str_output)
 
-    def test_remove_delete_data_imported_repository_failes(self):
+    def test_remove_delete_data_imported_repository_fails(self):
         """Test that the CLI does not allow the option --remove-data to be given when deleting an imported repository"""
         self.system_exit_run(self.command + ['--remove', '--id', 'a', '--state', 'imported', '--remove-data'],
                              self.server_args)
@@ -4971,7 +4971,7 @@ class TestBackupServicePlan(CommandTest):
         self.assertIn('--name is required', self.str_output)
 
     def test_get_plan(self):
-        """Test that get operatiopn hits the right endpoint and prints the correct information"""
+        """Test that get operation hits the right endpoint and prints the correct information"""
         self.server_args['/api/v1/plan/p1'] = {
             'name': 'p1',
             'description': 'Some description',

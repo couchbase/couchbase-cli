@@ -177,18 +177,18 @@ def force_communicate_tls(rest: ClusterManager) -> bool:
 
 
 def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_check=None, credentials_required=True,
-                     columnar_check=None):
+                     enterprise_analytics_check=None):
     """rest_initialiser is a decorator that does common subcommand tasks.
 
     The decorator will always creates a cluster manager and assign it to the subcommand variable rest
     :param cluster_init_check: if true it will check if the cluster is initialized before executing the subcommand
     :param version_check: if true it will check if the cluster and CLI version match if they do not it prints a warning
     :param enterprise_check: if true it will check if the cluster is enterprise and fail if not. If it is false it does
-        the check but it does not fail if not enterprise. If none it does not perform the check. The result of the check
-        is stored on the instance parameter enterprise
-    :param columnar_check: if true it will check if the cluster supports columnar and fail if not. If it is false it does
-        the check but it does not fail if not columnar. If none it does not perform the check. The result of the check
-        is stored on the instance parameter columnar
+        the check but it does not fail if not enterprise. If none it does not perform the check. The result of the
+        check is stored on the instance parameter enterprise
+    :param enterprise_analytics_check: if true it will check if the cluster supports Enterprise Analytics and fail if
+        not. If it is false it does the check but it does not fail if not Enterprise Analytics. If none it does not
+        perform the check. The result of the check is stored on the instance parameter enterprise_analytics
     """
     def inner(fn):
         def decorator(self, opts):
@@ -208,21 +208,21 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
                 check_cluster_initialized(self.rest)
             if version_check:
                 check_versions(self.rest)
-            if enterprise_check is not None or columnar_check is not None:
-                # check columnar when we check enterprise to avoid a duplicate fetch on pools
-                enterprise, columnar, errors = self.rest.is_enterprise_columnar()
+            if enterprise_check is not None or enterprise_analytics_check is not None:
+                # check Enterprise Analytics when we check enterprise to avoid a duplicate fetch on pools
+                enterprise, enterprise_analytics, errors = self.rest.get_cluster_type()
                 _exit_if_errors(errors)
 
                 if enterprise_check and not enterprise:
                     _exit_if_errors(['Command only available in enterprise edition'])
 
-                if columnar_check and not columnar:
-                    _exit_if_errors(['Command only available for columnar'])
+                if enterprise_analytics_check and not enterprise_analytics:
+                    _exit_if_errors(['Command only available for Enterprise Analytics'])
 
                 if enterprise_check is not None:
                     self.enterprise = enterprise
-                if columnar_check is not None:
-                    self.columnar = columnar
+                if enterprise_analytics_check is not None:
+                    self.enterprise_analytics = enterprise_analytics
 
             return fn(self, opts)
         return decorator
@@ -324,13 +324,13 @@ def index_storage_mode_to_param(value, default="plasma"):
     return value
 
 
-def process_services(services, enterprise, columnar, cluster_version="0.0.0"):
+def process_services(services, enterprise, enterprise_analytics, cluster_version="0.0.0"):
     """Converts services to a format Couchbase understands"""
-    if not services and not columnar:
+    if not services and not enterprise_analytics:
         services = "data"
-    elif services and columnar:
-        return None, ["--services cannot be specified on Columnar"]
-    elif columnar:
+    elif services and enterprise_analytics:
+        return None, ["--services cannot be specified on Enterprise Analytics"]
+    elif enterprise_analytics:
         return None, None
 
     sep = ","
@@ -763,7 +763,7 @@ class Subcommand(Command):
         # Filled by the decorators
         self.rest = None
         self.enterprise = None
-        self.columnar = None
+        self.enterprise_analytics = None
 
         self.parser = CliParser(formatter_class=CLIHelpFormatter, add_help=False, allow_abbrev=False)
         group = self.parser.add_argument_group("Cluster options")
@@ -911,7 +911,7 @@ class ClusterInit(Subcommand):
         group.add_argument("--node-to-node-encryption", dest="encryption", metavar="<on|off>", default="off",
                            choices=["on", "off"], help="Enable node to node encryption")
 
-    @rest_initialiser(enterprise_check=False, columnar_check=False)
+    @rest_initialiser(enterprise_check=False, enterprise_analytics_check=False)
     def execute(self, opts):
         initialized, errors = self.rest.is_cluster_initialized()
         _exit_if_errors(errors)
@@ -921,13 +921,13 @@ class ClusterInit(Subcommand):
         if not self.enterprise and opts.index_storage_mode == 'memopt':
             _exit_if_errors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])
 
-        if not self.columnar and opts.services and "manager-only" in opts.services:
+        if not self.enterprise_analytics and opts.services and "manager-only" in opts.services:
             _exit_if_errors(["Cannot initialize cluster with the manager only service"])
 
-        services, errors = process_services(opts.services, self.enterprise, self.columnar)
+        services, errors = process_services(opts.services, self.enterprise, self.enterprise_analytics)
         _exit_if_errors(errors)
 
-        if not self.columnar and 'kv' not in services.split(','):
+        if not self.enterprise_analytics and 'kv' not in services.split(','):
             _exit_if_errors(["Cannot set up first cluster node without the data service"])
 
         if 'ipv4' in opts.ip_family:
@@ -936,7 +936,7 @@ class ClusterInit(Subcommand):
             ip_family = 'ipv6'
         ip_only = True if 'only' in opts.ip_family else False
 
-        if not self.columnar and not opts.index_storage_mode and 'index' in services.split(','):
+        if not self.enterprise_analytics and not opts.index_storage_mode and 'index' in services.split(','):
             opts.index_storage_mode = "default"
 
         default = "plasma"
@@ -951,7 +951,7 @@ class ClusterInit(Subcommand):
         _exit_if_errors(errors)
 
         versionCheck = compare_versions(min_version, "7.2.3")
-        if not self.columnar and versionCheck == -1:
+        if not self.enterprise_analytics and versionCheck == -1:
             _exit_if_errors(["--cluster-init can only be used against >= 7.2.3 clusters"])
 
         if not self.enterprise and opts.notifications == "0":
@@ -2489,7 +2489,8 @@ class ServerAdd(Subcommand):
         group.add_argument("--index-storage-setting", dest="index_storage_mode", metavar="<mode>",
                            choices=["default", "memopt"], help="The index storage mode")
 
-    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False, columnar_check=False)
+    @rest_initialiser(cluster_init_check=True, version_check=True,
+                      enterprise_check=False, enterprise_analytics_check=False)
     def execute(self, opts):
         if opts.use_client_cert:
             if opts.server_username is not None or opts.server_password is not None:
@@ -2505,13 +2506,14 @@ class ServerAdd(Subcommand):
         min_version, error = self.rest.min_version()
         _exit_if_errors(error)
 
-        opts.services, errors = process_services(opts.services, self.enterprise, self.columnar, min_version)
+        opts.services, errors = process_services(opts.services, self.enterprise, self.enterprise_analytics, min_version)
         _exit_if_errors(errors)
 
         settings, errors = self.rest.index_settings()
         _exit_if_errors(errors)
 
-        if not self.columnar and opts.index_storage_mode is None and settings['storageMode'] == "" and "index" in opts.services:
+        if not self.enterprise_analytics and opts.index_storage_mode is None and settings[
+                'storageMode'] == "" and "index" in opts.services:
             opts.index_storage_mode = "default"
 
         # For supporting the default index backend changing from forestdb to plasma in Couchbase 5.0
@@ -4077,7 +4079,7 @@ class SettingNotification(Subcommand):
         _exit_if_errors(errors)
 
         versionCheck = compare_versions(min_version, "7.2.3")
-        if not self.enterprise and not self.columnar and versionCheck != -1:
+        if not self.enterprise and not self.enterprise_analytics and versionCheck != -1:
             _exit_if_errors(["Modifying notifications settings is an Enterprise Edition only feature"])
 
         enabled = None
@@ -5670,7 +5672,7 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
         ld_group.add_argument("--link-details-path", dest="link_details_path", metavar="<path>",
                               help="The path to the link details JSON file")
 
-    @rest_initialiser(cluster_init_check=True, version_check=True, columnar_check=True)
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_analytics_check=True)
     def execute(self, opts):
         if opts.create or opts.edit:
             self._set(opts)

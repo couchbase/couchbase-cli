@@ -261,15 +261,15 @@ def get_pools(rest_params=None, server_args=None, path="", endpoint_match=None):
 
     is_admin = True
     enterprise = True
-    columnar = False
+    enterprise_analytics = False
     version = '0.0.0-0000-enterprise'
     init = True
     if 'enterprise' in server_args:
         enterprise = server_args['enterprise']
-    if 'columnar' in server_args:
-        columnar = server_args['columnar']
-        if columnar:
-            version = '0.0.0-0000-columnar'
+    if 'enterprise_analytics' in server_args:
+        enterprise_analytics = server_args['enterprise_analytics']
+        if enterprise_analytics:
+            version = '0.0.0-0000-enterprise-analytics'
     if 'is_admin' in server_args:
         is_admin = server_args['is_admin']
     if "version" in server_args:
@@ -283,14 +283,15 @@ def get_pools(rest_params=None, server_args=None, path="", endpoint_match=None):
                      'pools': [{'streamingUri': '/poolsStreaming/default?uuid=5f8b140987f4e46c950e3fa82e7fcb48',
                                 'name': 'default', 'uri': '/pools/default?uuid=5f8b140987f4e46c950e3fa82e7fcb48'}],
                      'isEnterprise': enterprise,
-                     'isColumnar': columnar,
+                     'prodName': "Enterprise Analytics" if enterprise_analytics else None,
                      'componentsVersion': {'kernel': '2.16.4', 'ale': version, 'ssl': '5.3.3',
                                            'os_mon': '2.2.14', 'stdlib': '1.19.4', 'inets': '5.9.8',
                                            'public_key': '0.21', 'ns_server': version, 'crypto': '3.2', 'asn1': '2.0.4',
                                            'lhttpc': '1.3.0', 'sasl': '2.3.4'}, 'implementationVersion': version,
                      'isAdminCreds': is_admin, 'isROAdminCreds': False}
 
-    response_no_init = {'uuid': [], 'settings': [], 'pools': [], 'isEnterprise': enterprise, 'isColumnar': columnar,
+    response_no_init = {'uuid': [], 'settings': [], 'pools': [], 'isEnterprise': enterprise,
+                        'prodName': "Enterprise Analytics" if enterprise_analytics else None,
                         'componentsVersion': {'kernel': '5.4.3.2', 'ale': version, 'ssl': '8.2.6.2', 'os_mon': '2.4.4',
                                               'stdlib': '3.4.5', 'inets': '6.5.2.4', 'public_key': '1.5.2',
                                               'ns_server': version, 'crypto': '4.2.2.2', 'asn1': '5.0.5.1',

@@ -250,33 +250,33 @@ class ClusterManagerTest(unittest.TestCase):
 
                 self.assertEqual(res, test["expected_res"])
 
-    def test_is_enterprise_columnar(self):
+    def test_get_cluster_type(self):
         tests = {
-            "Enterprise_Columnar": {
+            "Enterprise_and_Analytics": {
                 "pools_response": (200, {
                     "isEnterprise": True,
-                    "isColumnar": True
+                    "prodName": "Enterprise Analytics"
                 }),
                 "expected": (True, True, None)
             },
-            "Enterprise_NonColumnar": {
+            "Enterprise_NoneAnalytics": {
                 "pools_response": (200, {
                     "isEnterprise": True,
-                    "isColumnar": False
+                    "prodName": None
                 }),
                 "expected": (True, False, None)
             },
-            "Enterprise_MissingColumnarField": {
+            "Enterprise_MissingProdNameField": {
                 "pools_response": (200, {
                     "isEnterprise": True
-                    # isColumnar field is missing, should default to False
+                    # prodName field is missing, should default to False
                 }),
                 "expected": (True, False, None)
             },
-            "NonEnterprise_MissingColumnarField": {
+            "NonEnterprise_MissingProdNameField": {
                 "pools_response": (200, {
                     "isEnterprise": False
-                    # isColumnar field is missing, should default to False
+                    # prodName field is missing, should default to False
                 }),
                 "expected": (False, False, None)
             },
@@ -293,10 +293,13 @@ class ClusterManagerTest(unittest.TestCase):
                 server.run()
 
                 cluster_manager = ClusterManager("http://127.0.0.1:6789", "Administrator", "asdasd")
-                is_enterprise, is_columnar, errors = cluster_manager.is_enterprise_columnar()
+                is_enterprise, is_enterprise_analytics, errors = cluster_manager.get_cluster_type()
 
                 server.shutdown()
 
                 self.assertEqual(is_enterprise, test["expected"][0], "is_enterprise value does not match expected")
-                self.assertEqual(is_columnar, test["expected"][1], "is_columnar value does not match expected")
+                self.assertEqual(
+                    is_enterprise_analytics,
+                    test["expected"][1],
+                    "is_enterprise_analytics value does not match expected")
                 self.assertEqual(errors, test["expected"][2], "errors value does not match expected")
