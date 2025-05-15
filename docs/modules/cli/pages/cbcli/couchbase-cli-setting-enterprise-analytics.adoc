@@ -1,32 +1,32 @@
-= couchbase-cli-setting-columnar(1)
-:description: Manage Columnar service settings
-ifndef::doctype-manpage[:doctitle: setting-columnar]
+= couchbase-cli-setting-enterprise-analytics(1)
+:description: Manage Enterprise Analytics service settings
+ifndef::doctype-manpage[:doctitle: setting-enterprise-analytics]
 
 ifdef::doctype-manpage[]
 == NAME
 
-couchbase-cli-setting-columnar -
+couchbase-cli-setting-enterprise-analytics -
 endif::[]
-Manage Columnar service settings
+Manage Enterprise Analytics service settings
 
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-columnar_ [--get] [--set] [--replicas <num>] 
+_couchbase-cli setting-enterprise-analytics_ [--get] [--set] [--replicas <num>]
 
 == DESCRIPTION
 
-Manage Columnar service settings
+Manage Enterprise Analytics service settings
 
 == OPTIONS
 
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --get::
-  Retrieve current Columnar service settings.
+  Retrieve current Enterprise Analytics service settings.
 
 --set::
-  Set Columnar settings.
+  Set Enterprise Analytics settings.
 
 --partitions <num>::
   The number of storage partitions (positive integer, lower than the configured maximum)
@@ -55,14 +55,14 @@ include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 == EXAMPLES
 
-To retrieve the Columnar service settings:
+To retrieve the Enterprise Analytics service settings:
 
-  $ couchbase-cli setting-columnar -c 127.0.01:8091 -u Administrator \
+  $ couchbase-cli setting-enterprise-analytics -c 127.0.01:8091 -u Administrator \
    -p password --get
 
 To set the BLOB storage scheme to s3:
 
-  $ couchbase-cli setting-columnar -c 127.0.01:8091 -u Administrator \
+  $ couchbase-cli setting-enterprise-analytics -c 127.0.01:8091 -u Administrator \
    -p password --set --scheme s3
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES

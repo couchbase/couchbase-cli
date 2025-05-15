@@ -3280,19 +3280,19 @@ class SettingCluster(Subcommand):
         return "Modify cluster settings"
 
 
-class SettingColumnar(Subcommand):
-    """The settings columnar subcommand"""
+class SettingEnterpriseAnalytics(Subcommand):
+    """The settings enterprise analytics subcommand"""
 
     def __init__(self):
-        super(SettingColumnar, self).__init__()
-        self.parser.prog = "couchbase-cli setting-columnar"
-        group = self.parser.add_argument_group("Columnar settings")
+        super(SettingEnterpriseAnalytics, self).__init__()
+        self.parser.prog = "couchbase-cli setting-enterprise-analytics"
+        group = self.parser.add_argument_group("Enterprise analytics settings")
 
         group_me = group.add_mutually_exclusive_group(required=True)
         group_me.add_argument("--get", dest="get", action="store_true",
-                              help="Get the columnar settings")
+                              help="Get the enterprise analytics settings")
         group_me.add_argument("--set", dest="set", action="store_true",
-                              help="Set the columnar settings")
+                              help="Set the enterprise analytics settings")
 
         group.add_argument("--partitions", dest="num_storage_partitions", type=(int), metavar="<num_partitions>",
                            help="The number of storage partitions (positive integer, lower than the configured " +
@@ -3324,22 +3324,22 @@ class SettingColumnar(Subcommand):
             if opts.blob_storage_anonymous_auth == "1":
                 opts.blob_storage_anonymous_auth = "true"
 
-            _, errors = self.rest.set_columnar_settings(opts)
+            _, errors = self.rest.set_enterprise_analytics_settings(opts)
             _exit_if_errors(errors)
 
-            _success("Columnar settings modified")
+            _success("Enterprise analytics settings modified")
 
         if opts.get:
-            columnar_settings, errors = self.rest.get_columnar_settings()
-            print(json.dumps(columnar_settings, indent=2))
+            enterprise_analytics_settings, errors = self.rest.get_enterprise_analytics_settings()
+            print(json.dumps(enterprise_analytics_settings, indent=2))
 
     @staticmethod
     def get_man_page_name():
-        return get_doc_page_name("couchbase-cli-setting-columnar")
+        return get_doc_page_name("couchbase-cli-setting-enterprise-analytics")
 
     @staticmethod
     def get_description():
-        return "Modify columnar settings"
+        return "Modify enterprise analytics settings"
 
 
 class SettingEncryption(Subcommand):

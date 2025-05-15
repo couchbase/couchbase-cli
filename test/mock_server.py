@@ -568,7 +568,7 @@ endpoints = [
     (r'/settings/rebalance$', {'GET': get_by_path, 'POST': do_nothing}),
     (r'/settings/retryRebalance$', {'GET': get_by_path, 'POST': do_nothing}),
     (r'/settings/replications/(\d|\w)+$', {'POST': do_nothing, 'GET': get_by_path}),
-    (r'/settings/columnar', {'POST': do_nothing, 'GET': get_by_path}),
+    (r'/settings/analytics', {'POST': do_nothing, 'GET': get_by_path}),
     (r'/nodes/self/controller/settings$', {'POST': do_nothing}),
     (r'/nodes/self$', {'GET': get_node_info}),
     (r'/nodeInit', {'POST': do_nothing}),

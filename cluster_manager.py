@@ -2914,9 +2914,9 @@ class ClusterManager(object):
         params = dict(filter(lambda x: x[1], params.items()))
         return self._post_form_encoded(url, params)
 
-    def set_columnar_settings(self, opts):
-        """Sets the columnar settings"""
-        url = f'{self.hostname}/settings/columnar'
+    def set_enterprise_analytics_settings(self, opts):
+        """Sets the enterprise analytics settings"""
+        url = f'{self.hostname}/settings/analytics'
         params = {}
 
         if opts.num_storage_partitions:
@@ -2936,9 +2936,9 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def get_columnar_settings(self):
-        """Gets the columnar settings"""
-        url = f'{self.hostname}/settings/columnar'
+    def get_enterprise_analytics_settings(self):
+        """Gets the enterprise analytics settings"""
+        url = f'{self.hostname}/settings/analytics'
 
         return self._get(url)
 

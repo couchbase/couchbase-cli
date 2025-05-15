@@ -5212,9 +5212,9 @@ class TestSettingAnalytics(CommandTest):
         self.rest_parameter_match(['numReplicas=3'])
 
 
-class TestSettingColumnar(CommandTest):
+class TestSettingEnterpriseAnalytics(CommandTest):
     def setUp(self):
-        self.command = ['couchbase-cli', 'setting-columnar'] + cluster_connect_args
+        self.command = ['couchbase-cli', 'setting-enterprise-analytics'] + cluster_connect_args
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
         super().setUp()
 
@@ -5223,51 +5223,51 @@ class TestSettingColumnar(CommandTest):
         self.assertIn('ERROR: argument --set: not allowed with argument --get', self.str_error)
 
     def test_get(self):
-        self.server_args['/settings/columnar'] = {'numStoragePartitions': 7}
+        self.server_args['/settings/analytics'] = {'numStoragePartitions': 7}
         self.no_error_run(self.command + ['--get'], self.server_args)
-        self.assertIn('GET:/settings/columnar', self.server.trace)
+        self.assertIn('GET:/settings/analytics', self.server.trace)
         self.assertIn(json.dumps({'numStoragePartitions': 7}, indent=2), self.str_output)
 
     def test_partitions(self):
         self.no_error_run(self.command + ['--set', '--partitions', '7'], self.server_args)
-        self.assertIn('POST:/settings/columnar', self.server.trace)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['numStoragePartitions=7'])
 
     def test_scheme(self):
         self.no_error_run(self.command + ['--set', '--scheme', 's3'], self.server_args)
-        self.assertIn('POST:/settings/columnar', self.server.trace)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['blobStorageScheme=s3'])
 
     def test_bucket(self):
         self.no_error_run(self.command + ['--set', '--bucket', 'aaa'], self.server_args)
-        self.assertIn('POST:/settings/columnar', self.server.trace)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['blobStorageBucket=aaa'])
 
     def test_prefix(self):
         self.no_error_run(self.command + ['--set', '--prefix', 'aaa'], self.server_args)
-        self.assertIn('POST:/settings/columnar', self.server.trace)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['blobStoragePrefix=aaa'])
 
     def test_region(self):
         self.no_error_run(self.command + ['--set', '--region', 'aaa'], self.server_args)
-        self.assertIn('POST:/settings/columnar', self.server.trace)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['blobStorageRegion=aaa'])
 
     def test_endpoint(self):
         self.no_error_run(self.command + ['--set', '--endpoint', 'aaa'], self.server_args)
-        self.assertIn('POST:/settings/columnar', self.server.trace)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['blobStorageEndpoint=aaa'])
 
     def test_anonymous_auth(self):
         self.no_error_run(self.command + ['--set', '--anonymous-auth', '1'], self.server_args)
-        self.assertIn('POST:/settings/columnar', self.server.trace)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['blobStorageAnonymousAuth=true'])
 
     def test_all_flags(self):
         self.no_error_run(self.command + ['--set', '--partitions', '7', '--scheme', 's3', '--bucket', 'aaa',
                                           '--prefix', 'aaa', '--region', 'aaa', '--endpoint', 'aaa',
                                           '--anonymous-auth', '1',], self.server_args)
-        self.assertIn('POST:/settings/columnar', self.server.trace)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['numStoragePartitions=7', 'blobStorageScheme=s3', 'blobStorageBucket=aaa',
                                    'blobStoragePrefix=aaa', 'blobStorageRegion=aaa', 'blobStorageEndpoint=aaa',
                                    'blobStorageAnonymousAuth=true'])
