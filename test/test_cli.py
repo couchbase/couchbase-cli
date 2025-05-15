@@ -4360,7 +4360,7 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.assertIn('DELETE:/analytics/link/Default/me', self.server.trace)
 
 
-class TestColumnarLinkSetup(CommandTest):
+class TestEnterpriseAnalyticsLinkSetup(CommandTest):
     def setUp(self):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, 'columnar': True,
                             'version': '1.2.0-0000-columnar',
@@ -4370,8 +4370,8 @@ class TestColumnarLinkSetup(CommandTest):
                                     'cbas': port,
                                 }
                             }]}}
-        self.command = ['couchbase-cli', 'columnar-link-setup'] + cluster_connect_args
-        super(TestColumnarLinkSetup, self).setUp()
+        self.command = ['couchbase-cli', 'enterprise-analytics-link-setup'] + cluster_connect_args
+        super(TestEnterpriseAnalyticsLinkSetup, self).setUp()
 
     def test_no_flags(self):
         self.system_exit_run(self.command, self.server_args)

@@ -2942,7 +2942,7 @@ class ClusterManager(object):
 
         return self._get(url)
 
-    def _columnar_link_url(self, name):
+    def _enterprise_analytics_link_url(self, name):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -2952,23 +2952,23 @@ class ClusterManager(object):
 
         return f'{hosts[0]}/api/v1/link{("/" + urllib.parse.quote_plus(name)) if name else ""}', None
 
-    def set_columnar_link(self, opts):
-        url, errors = self._columnar_link_url(opts.name)
+    def set_enterprise_analytics_link(self, opts):
+        url, errors = self._enterprise_analytics_link_url(opts.name)
         if errors:
             return None, errors
 
         send_json = self._put_json if opts.edit else self._post_json
         return send_json(url, opts.parsed_link_details)
 
-    def delete_columnar_link(self, opts):
-        url, errors = self._columnar_link_url(opts.name)
+    def delete_enterprise_analytics_link(self, opts):
+        url, errors = self._enterprise_analytics_link_url(opts.name)
         if errors:
             return None, errors
 
         return self._delete(url, None)
 
-    def get_columnar_links(self, opts):
-        url, errors = self._columnar_link_url(opts.name)
+    def get_enterprise_analytics_links(self, opts):
+        url, errors = self._enterprise_analytics_link_url(opts.name)
         if errors:
             return None, errors
 

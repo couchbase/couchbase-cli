@@ -610,7 +610,7 @@ endpoints = [
       'PUT': set_analytics_link,
       'DELETE': do_nothing}),
 
-    # columnar link
+    # enterprise analytics link
     (r'api/v1/link', {'GET': do_nothing}),
     (r'api/v1/link/[^/]+',
      {'GET': do_nothing,

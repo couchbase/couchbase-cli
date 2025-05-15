@@ -5641,14 +5641,14 @@ class AnalyticsLinkSetup(Subcommand):
         return "Manage Analytics Links"
 
 
-class ColumnarLinkSetup(Subcommand):
-    """The columnar link setup subcommand"""
+class EnterpriseAnalyticsLinkSetup(Subcommand):
+    """The Enterprise Analytics link setup subcommand"""
 
     def __init__(self):
-        super(ColumnarLinkSetup, self).__init__()
-        self.parser.prog = "couchbase-cli columnar-link-setup"
+        super(EnterpriseAnalyticsLinkSetup, self).__init__()
+        self.parser.prog = "couchbase-cli enterprise-analytics-link-setup"
 
-        group = self.parser.add_argument_group("Columnar link setup options")
+        group = self.parser.add_argument_group("Enterprise Analytics link setup options")
         action_group = group.add_mutually_exclusive_group(required=True)
         action_group.add_argument("--create", dest="create", action="store_true",
                                   default=False, help="Create a link")
@@ -5696,7 +5696,7 @@ class ColumnarLinkSetup(Subcommand):
         except ValueError as err:
             _exit_if_errors(['Failed to parse link-details JSON', err])
 
-        _, errors = self.rest.set_columnar_link(opts)
+        _, errors = self.rest.set_enterprise_analytics_link(opts)
         _exit_if_errors(errors)
 
         _success("Link created" if opts.create else "Link edited")
@@ -5705,7 +5705,7 @@ class ColumnarLinkSetup(Subcommand):
         if opts.name is None:
             _exit_if_errors(['--name is required to delete a link'])
 
-        _, errors = self.rest.delete_columnar_link(opts)
+        _, errors = self.rest.delete_enterprise_analytics_link(opts)
         _exit_if_errors(errors)
         _success("Link deleted")
 
@@ -5713,17 +5713,17 @@ class ColumnarLinkSetup(Subcommand):
         if opts.get and opts.name is None:
             _exit_if_errors(['--name is required to get a link'])
 
-        clusters, errors = self.rest.get_columnar_links(opts)
+        clusters, errors = self.rest.get_enterprise_analytics_links(opts)
         _exit_if_errors(errors)
         print(json.dumps(clusters, sort_keys=True, indent=2))
 
     @staticmethod
     def get_man_page_name():
-        return get_doc_page_name("couchbase-cli-columnar-link-setup")
+        return get_doc_page_name("couchbase-cli-enterprise-analytics-link-setup")
 
     @staticmethod
     def get_description():
-        return "Manage Columnar Links"
+        return "Manage Enterprise Analytics Links"
 
 
 class UserChangePassword(Subcommand):

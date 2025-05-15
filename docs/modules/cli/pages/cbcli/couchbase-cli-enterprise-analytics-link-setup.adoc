@@ -1,18 +1,18 @@
-= couchbase-cli-columnar-link-setup(1)
-:description: Manage Columnar links
-ifndef::doctype-manpage[:doctitle: columnar-link-setup]
+= couchbase-cli-enterprise-analytics-link-setup(1)
+:description: Manage Enterprise Analytics links
+ifndef::doctype-manpage[:doctitle: enterprise-analytics-link-setup]
 
 ifdef::doctype-manpage[]
 == NAME
 
-couchbase-cli-columnar-link-setup -
+couchbase-cli-enterprise-analytics-link-setup -
 endif::[]
-Manage Columnar links
+Manage Enterprise Analytics links
 
 == SYNOPSIS
 
 [verse]
-_couchbase-cli columnar-link-setup_ [--cluster <cluster>] [--username <username>]
+_couchbase-cli enterprise-analytics-link-setup_ [--cluster <cluster>] [--username <username>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
     [--client-key <path>] [--client-key-password <password>] [--create] [--delete]
     [--edit] [--list] [--dataverse <name>] [--scope <name>] [--name <name>] [--type <type>]
@@ -29,7 +29,7 @@ _couchbase-cli columnar-link-setup_ [--cluster <cluster>] [--username <username>
 == DESCRIPTION
 
 This command is used to manage links used by the external dataset and remote
-cluster capabilities of the Columnar Service.
+cluster capabilities of the Enterprise Analytics Service.
 
 == OPTIONS
 
@@ -69,22 +69,22 @@ include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
 
 To create a new link named "l1", run the following command:
 
-$ couchbase-cli columnar-link-setup -c 192.168.1.5 -u Administrator \
+$ couchbase-cli enterprise-analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --create --name l1 --link-details-path <path>
 
 To delete the new link named "l1", run the following command:
 
-$ couchbase-cli columnar-link-setup -c 192.168.1.5 -u Administrator \
+$ couchbase-cli enterprise-analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --delete --name l1
 
 To list the defined links run the following command:
 
-$ couchbase-cli columnar-link-setup -c 192.168.1.5 -u Administrator \
+$ couchbase-cli enterprise-analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --list
 
 To retrieve the link details for a link named "l1", run the following command:
 
-$ couchbase-cli columnar-link-setup -c 192.168.1.5 -u Administrator \
+$ couchbase-cli enterprise-analytics-link-setup -c 192.168.1.5 -u Administrator \
  -p password --get --name l1
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
