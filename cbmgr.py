@@ -3498,7 +3498,8 @@ class SettingEnterpriseAnalytics(Subcommand):
         group.add_argument("--anonymous-auth", dest="blob_storage_anonymous_auth", metavar="<0|1>",
                            choices=["0", "1"], help="Allow BLOB storage anonymous auth")
 
-    @rest_initialiser(cluster_init_check=True, version_check=True)
+    # We disable the cluster init check so people can use '--set' before the cluster is initiaslised. See MB-66986.
+    @rest_initialiser(cluster_init_check=False, version_check=True)
     def execute(self, opts):
         if opts.set:
             if not (opts.num_storage_partitions or opts.blob_storage_scheme or opts.blob_storage_bucket
