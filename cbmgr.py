@@ -3701,7 +3701,7 @@ class SettingEncryption(Subcommand):
         data = {}
         typ = ""
         if opts.key_type == "aws":
-            typ = "awskms-aes-key-256"
+            typ = "awskms-symmetric-key"
 
             if not opts.cloud_key_arn or not opts.cloud_region:
                 _exit_if_errors(["--cloud-key-arn and --cloud-region must be specified"])
@@ -3760,7 +3760,7 @@ class SettingEncryption(Subcommand):
                     data["caSelection"] = "skipServerCertVerification"
 
         elif opts.key_type == "auto-generated":
-            typ = "auto-generated-aes-key-256"
+            typ = "cb-server-managed-aes-key-256"
 
             if not opts.encrypt_with_master and opts.encrypt_with_key is None:
                 _exit_if_errors(["one of --encrypt-with-master-password, --encrypt-with-key must be specified"])
