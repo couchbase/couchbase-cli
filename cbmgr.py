@@ -1,5 +1,6 @@
 """A Couchbase  CLI subcommand"""
 
+import dataclasses
 import getpass
 import inspect
 import ipaddress
@@ -15,7 +16,6 @@ import sys
 import tempfile
 import time
 import traceback
-import dataclasses
 import urllib.parse
 from argparse import SUPPRESS, Action, ArgumentError, ArgumentParser, HelpFormatter
 from operator import itemgetter
@@ -3690,7 +3690,7 @@ class SettingEncryption(Subcommand):
         if opts.kek_usage:
             usages.append("KEK-encryption")
         if opts.all_bucket_usage:
-            usages.append("bucket-encryption-*")
+            usages.append("bucket-encryption")
         if opts.bucket_usage:
             usages += [f"bucket-encryption-{b}" for b in opts.bucket_usage]
 
