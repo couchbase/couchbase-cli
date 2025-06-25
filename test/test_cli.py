@@ -1546,7 +1546,7 @@ class TestSettingEncryption(CommandTest):
             expected = json.dumps({
                 'usage': ['KEK-encryption'],
                 'name': 'key01',
-                'type': 'awskms-aes-key-256',
+                'type': 'awskms-symmetric-key',
                 'data': {'keyARN': 'arn', 'region': 'us-east-1', 'useIMDS': False}
             }, sort_keys=True)
             self.rest_parameter_match([expected], length_match=False)
@@ -1731,7 +1731,7 @@ class TestSettingEncryption(CommandTest):
             expected = json.dumps({
                 'usage': ['KEK-encryption'],
                 'name': 'key01',
-                'type': 'auto-generated-aes-key-256',
+                'type': 'cb-server-managed-aes-key-256',
                 'data': {
                     'encryptWith': 'nodeSecretManager',
                     'autoRotation': True,

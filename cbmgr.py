@@ -1,5 +1,6 @@
 """A Couchbase  CLI subcommand"""
 
+import dataclasses
 import getpass
 import inspect
 import ipaddress
@@ -15,7 +16,6 @@ import sys
 import tempfile
 import time
 import traceback
-import dataclasses
 import urllib.parse
 from argparse import SUPPRESS, Action, ArgumentError, ArgumentParser, HelpFormatter
 from operator import itemgetter
@@ -3691,7 +3691,7 @@ class SettingEncryption(Subcommand):
         if opts.kek_usage:
             usages.append("KEK-encryption")
         if opts.all_bucket_usage:
-            usages.append("bucket-encryption-*")
+            usages.append("bucket-encryption")
         if opts.bucket_usage:
             usages += [f"bucket-encryption-{b}" for b in opts.bucket_usage]
 
@@ -3702,7 +3702,7 @@ class SettingEncryption(Subcommand):
         data = {}
         typ = ""
         if opts.key_type == "aws":
-            typ = "awskms-aes-key-256"
+            typ = "awskms-symmetric-key"
 
             if not opts.cloud_key_arn or not opts.cloud_region:
                 _exit_if_errors(["--cloud-key-arn and --cloud-region must be specified"])
@@ -3761,7 +3761,7 @@ class SettingEncryption(Subcommand):
                     data["caSelection"] = "skipServerCertVerification"
 
         elif opts.key_type == "auto-generated":
-            typ = "auto-generated-aes-key-256"
+            typ = "cb-server-managed-aes-key-256"
 
             if not opts.encrypt_with_master and opts.encrypt_with_key is None:
                 _exit_if_errors(["one of --encrypt-with-master-password, --encrypt-with-key must be specified"])
