@@ -271,7 +271,7 @@ class ClusterManager(object):
             return None, None, errors
 
         isEnterprise = data["isEnterprise"]
-        isEnterpriseAnalytics = "prodName" in data and data["prodName"] == "Enterprise Analytics"
+        isEnterpriseAnalytics = "prod" in data and data["prod"] == "analytics"
 
         return isEnterprise, isEnterpriseAnalytics, None
 
