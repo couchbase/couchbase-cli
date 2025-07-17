@@ -1110,32 +1110,39 @@ class ClusterInit(Subcommand):
         services, errors = process_services(opts.services, self.enterprise, self.enterprise_analytics)
         _exit_if_errors(errors)
 
-        if not self.enterprise_analytics and 'kv' not in services.split(','):
-            _exit_if_errors(["Cannot set up first cluster node without the data service"])
-
         if 'ipv4' in opts.ip_family:
             ip_family = 'ipv4'
         elif 'ipv6' in opts.ip_family:
             ip_family = 'ipv6'
         ip_only = True if 'only' in opts.ip_family else False
 
-        if not self.enterprise_analytics and not opts.index_storage_mode and 'index' in services.split(','):
-            opts.index_storage_mode = "default"
-
-        default = "plasma"
-        if not self.enterprise:
-            default = "forestdb"
-
         indexer_storage = None
-        if opts.index_storage_mode:
-            indexer_storage = index_storage_mode_to_param(opts.index_storage_mode, default)
+        if not self.enterprise_analytics:
+            if 'kv' not in services.split(','):
+                _exit_if_errors(["Cannot set up first cluster node without the data service"])
 
-        min_version, errors = self.rest.node_version()
-        _exit_if_errors(errors)
+            if not opts.index_storage_mode and 'index' in services.split(','):
+                opts.index_storage_mode = "default"
 
-        versionCheck = compare_versions(min_version, "7.2.3")
-        if not self.enterprise_analytics and versionCheck == -1:
-            _exit_if_errors(["--cluster-init can only be used against >= 7.2.3 clusters"])
+            default = "plasma"
+            if not self.enterprise:
+                default = "forestdb"
+
+            if opts.index_storage_mode:
+                indexer_storage = index_storage_mode_to_param(opts.index_storage_mode, default)
+
+            min_version, errors = self.rest.node_version()
+            _exit_if_errors(errors)
+
+            versionCheck = compare_versions(min_version, "7.2.3")
+            if versionCheck == -1:
+                _exit_if_errors(["--cluster-init can only be used against >= 7.2.3 clusters"])
+        else:
+            settings, err = self.rest.get_analytics_settings()
+            _exit_if_errors(err)
+            if not settings.get('blobStorageScheme'):
+                _exit_if_errors(
+                    ["Cannot initialize cluster before running the 'setting-enterprise-analytics' command"])
 
         if not self.enterprise and opts.notifications == "0":
             _exit_if_errors(["--update-notifications can only be configured on Enterprise Edition"])
@@ -3497,21 +3504,27 @@ class SettingEnterpriseAnalytics(Subcommand):
                            help="The BLOB storage endpoint")
         group.add_argument("--anonymous-auth", dest="blob_storage_anonymous_auth", metavar="<0|1>",
                            choices=["0", "1"], help="Allow BLOB storage anonymous auth")
+        group.add_argument("--path-style-addressing", dest="blob_storage_path_style_addressing", metavar="<0|1>",
+                           choices=["0", "1"], help="Use BLOB storage path style addressing")
 
-    # We disable the cluster init check so people can use '--set' before the cluster is initiaslised. See MB-66986.
+    # We disable the cluster init check so people can use '--set' before the cluster is initialised. See MB-66986.
     @rest_initialiser(cluster_init_check=False, version_check=True)
     def execute(self, opts):
         if opts.set:
             if not (opts.num_storage_partitions or opts.blob_storage_scheme or opts.blob_storage_bucket
                     or opts.blob_storage_prefix or opts.blob_storage_region or opts.blob_storage_endpoint
-                    or opts.blob_storage_anonymous_auth):
+                    or opts.blob_storage_anonymous_auth or opts.blob_storage_path_style_addressing):
                 _exit_if_errors(["At least one option (--partitions, --scheme, --bucket, --prefix, --region," +
-                                 " --endpoint, --anonymous-auth) must be specified."])
+                                 " --endpoint, --anonymous-auth, --path-style-addressing) must be specified."])
 
             if opts.blob_storage_anonymous_auth == "0":
                 opts.blob_storage_anonymous_auth = "false"
             if opts.blob_storage_anonymous_auth == "1":
                 opts.blob_storage_anonymous_auth = "true"
+            if opts.blob_storage_path_style_addressing == "0":
+                opts.blob_storage_path_style_addressing = "false"
+            if opts.blob_storage_path_style_addressing == "1":
+                opts.blob_storage_path_style_addressing = "true"
 
             _, errors = self.rest.set_enterprise_analytics_settings(opts)
             _exit_if_errors(errors)

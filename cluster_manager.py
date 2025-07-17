@@ -2944,6 +2944,8 @@ class ClusterManager(object):
             params["blobStorageEndpoint"] = opts.blob_storage_endpoint
         if opts.blob_storage_anonymous_auth:
             params["blobStorageAnonymousAuth"] = opts.blob_storage_anonymous_auth
+        if opts.blob_storage_path_style_addressing:
+            params["blobStoragePathStyleAddressing"] = opts.blob_storage_path_style_addressing
 
         return self._post_form_encoded(url, params)
 

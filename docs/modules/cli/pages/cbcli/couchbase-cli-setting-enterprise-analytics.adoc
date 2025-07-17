@@ -49,6 +49,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --anonymous-auth <0|1>::
   Allow BLOB storage anonymous auth
 
+--path-style-addressing <0|1>::
+  Use BLOB storage path style addressing
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
