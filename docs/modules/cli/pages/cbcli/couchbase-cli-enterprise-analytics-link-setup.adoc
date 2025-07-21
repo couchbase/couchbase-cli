@@ -15,16 +15,7 @@ Manage Enterprise Analytics links
 _couchbase-cli enterprise-analytics-link-setup_ [--cluster <cluster>] [--username <username>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
     [--client-key <path>] [--client-key-password <password>] [--create] [--delete]
-    [--edit] [--list] [--dataverse <name>] [--scope <name>] [--name <name>] [--type <type>]
-    [--hostname <hostname>] [--link-username <username>] [--link-password <password>]
-    [--user-certificate <path>] [--user-key <path>] [--user-key-passphrase <path>]
-    [--certificate <path>] [--encryption <type>] [--access-key-id <id>]
-    [--secret-access-key <key>] [--session-token <token>] [--region <region>]
-    [--service-endpoint <url>] [--account-name <id>] [--account-key <key>]
-    [--shared-access-signature <token>] [--managed-identity-id <id>] [--client-id <id>]
-    [--tenant-id <id>] [--client-secret <key>] [--client-certificate <key>]
-    [--client-certificate-password <key>] [--endpoint <url>] [--application-default-credentials]
-    [--json-credentials <key>]
+    [--edit] [--list] [--name <name>] [--link-details <json>] [--link-details-path <path>]
 
 == DESCRIPTION
 
