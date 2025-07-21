@@ -5357,14 +5357,30 @@ class TestSettingEnterpriseAnalytics(CommandTest):
         self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['blobStorageAnonymousAuth=true'])
 
+    def test_path_style_addressing(self):
+        self.no_error_run(self.command + ['--set', '--path-style-addressing', '1'], self.server_args)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.rest_parameter_match(['blobStoragePathStyleAddressing=true'])
+
     def test_all_flags(self):
         self.no_error_run(self.command + ['--set', '--partitions', '7', '--scheme', 's3', '--bucket', 'aaa',
                                           '--prefix', 'aaa', '--region', 'aaa', '--endpoint', 'aaa',
-                                          '--anonymous-auth', '1',], self.server_args)
+                                          '--anonymous-auth', '1', '--path-style-addressing', '1',], self.server_args)
         self.assertIn('POST:/settings/analytics', self.server.trace)
         self.rest_parameter_match(['numStoragePartitions=7', 'blobStorageScheme=s3', 'blobStorageBucket=aaa',
                                    'blobStoragePrefix=aaa', 'blobStorageRegion=aaa', 'blobStorageEndpoint=aaa',
-                                   'blobStorageAnonymousAuth=true'])
+                                   'blobStorageAnonymousAuth=true', 'blobStoragePathStyleAddressing=true'])
+
+    def test_all_flags_uninitialised(self):
+        server_args = self.server_args
+        server_args['init'] = False
+        self.no_error_run(self.command + ['--set', '--partitions', '7', '--scheme', 's3', '--bucket', 'aaa',
+                                          '--prefix', 'aaa', '--region', 'aaa', '--endpoint', 'aaa',
+                                          '--anonymous-auth', '1', '--path-style-addressing', '1',], server_args)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.rest_parameter_match(['numStoragePartitions=7', 'blobStorageScheme=s3', 'blobStorageBucket=aaa',
+                                   'blobStoragePrefix=aaa', 'blobStorageRegion=aaa', 'blobStorageEndpoint=aaa',
+                                   'blobStorageAnonymousAuth=true', 'blobStoragePathStyleAddressing=true'])
 
     def test_all_flags_uninitialised(self):
         server_args = self.server_args

@@ -255,28 +255,28 @@ class ClusterManagerTest(unittest.TestCase):
             "Enterprise_and_Analytics": {
                 "pools_response": (200, {
                     "isEnterprise": True,
-                    "prodName": "Enterprise Analytics"
+                    "prod": "analytics"
                 }),
                 "expected": (True, True, None)
             },
             "Enterprise_NoneAnalytics": {
                 "pools_response": (200, {
                     "isEnterprise": True,
-                    "prodName": None
+                    "prod": None
                 }),
                 "expected": (True, False, None)
             },
-            "Enterprise_MissingProdNameField": {
+            "Enterprise_MissingProdField": {
                 "pools_response": (200, {
                     "isEnterprise": True
-                    # prodName field is missing, should default to False
+                    # prod field is missing, should default to False
                 }),
                 "expected": (True, False, None)
             },
-            "NonEnterprise_MissingProdNameField": {
+            "NonEnterprise_MissingProdField": {
                 "pools_response": (200, {
                     "isEnterprise": False
-                    # prodName field is missing, should default to False
+                    # prod field is missing, should default to False
                 }),
                 "expected": (False, False, None)
             },
