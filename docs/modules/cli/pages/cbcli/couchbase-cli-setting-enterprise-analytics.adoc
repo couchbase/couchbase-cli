@@ -12,7 +12,12 @@ Manage Enterprise Analytics service settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-enterprise-analytics_ [--get] [--set] [--replicas <num>]
+_couchbase-cli setting-enterprise-analytics_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] [--get] [--set]
+    [--partitions <num>] [--scheme <scheme>] [--bucket <bucket>]
+    [--prefix <prefix>] [--region <region>] [--endpoint <endpoint>]
+    [--anonymous-auth <0|1>] [--path-style-addressing <0|1>]
 
 == DESCRIPTION
 
