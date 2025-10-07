@@ -185,8 +185,13 @@ pipeline {
             // Post the test results
             junit allowEmptyResults: true, testResults: "reports/test-*.xml"
 
-            // Post the test coverage
-            cobertura autoUpdateStability: false, autoUpdateHealth: false, onlyStable: false, coberturaReportFile: "reports/coverage-*.xml", conditionalCoverageTargets: "70, 10, 30", failNoReports: false, failUnhealthy: true, failUnstable: true, lineCoverageTargets: "70, 10, 30", methodCoverageTargets: "70, 10, 30", maxNumberOfBuilds: 0, sourceEncoding: "ASCII", zoomCoverageChart: false
+            // Post the test coverage using the official Jenkins Coverage plugin
+            recordCoverage(
+                tools: [[parser: 'COBERTURA', pattern: 'reports/coverage-cli.xml']],
+                qualityGates: [[threshold: 50.0, metric: 'LINE', baseline: 'PROJECT']],
+                sourceDirectories: [[path: "couchbase-cli/"]],
+                sourceCodeRetention: "LAST_BUILD",
+            )
         }
 
         success {
