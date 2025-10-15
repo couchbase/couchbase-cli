@@ -35,9 +35,8 @@ _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
 
 == DESCRIPTION
 
-Creates a new bucket. Allows creation of Couchbase, Ephemeral, and Memcached
-buckets, and supports the various configuration parameters for these
-buckets.
+Creates a new bucket. Allows creation of Couchbase and Ephemeral buckets, and
+supports the various configuration parameters for these buckets.
 
 == OPTIONS
 
@@ -50,15 +49,11 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   maximum of 100 characters in length.
 
 --bucket-type <type>::
-  The type of bucket to create. Accepted bucket types are "couchbase",
-  "ephemeral", and "memcached". The Couchbase bucket is the standard bucket
-  type. It supports data persistence, replication, caching, indexing, views,
-  and {sqlpp} queries. The Ephemeral bucket is an in-memory bucket similar to the
-  Couchbase bucket; but it does not support data persistence or views. The
-  Memcached bucket is a cache-only bucket that does not support persistence,
-  replication, indexing, views, or {sqlpp} querying: this bucket type provides
-  the same behavior as Memcached Server. Memcached buckets are removed as of 8.0
-  and Ephemeral buckets should be used instead.
+  The type of bucket to create. Accepted bucket types are "couchbase" and
+  "ephemeral". The Couchbase bucket is the standard bucket type. It supports
+  data persistence, replication, caching, indexing, views, and {sqlpp} queries.
+  The Ephemeral bucket is an in-memory bucket similar to the Couchbase bucket;
+  but it does not support data persistence or views.
 
 --storage-backend <storage>::
   The type of storage to use with the bucket. This is only specified for
@@ -291,13 +286,6 @@ enabled, and view index replication enabled, run the following command.
    --bucket-ramsize 1024 --bucket-replica 2 --bucket-priority high \
    --bucket-eviction-policy fullEviction --enable-flush 1 \
    --enable-index-replica 1
-
-To create a Memcached bucket named "travel-data" with a memory cache size
-of 1GB, run the following command.
-
-  $ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
-   --password password --bucket travel-data --bucket-type memcached \
-   --bucket-ramsize 1024
 
 To create an Ephemeral bucket named "hotel-data" synchronously, with a memory
 cache size of 256MiB, flushing enabled, "nruEviction", and timestamp-based
