@@ -20,7 +20,7 @@ _couchbase-cli bucket-flush_ [--cluster <url>] [--username <user>] [--password <
 
 Deletes all data from a bucket. The bucket itself is not deleted; and all
 its indexes and configuration-details remain unchanged. Applies to
-Couchbase, Ephemeral, and Memcached buckets.
+Couchbase and Ephemeral buckets.
 
 == OPTIONS
 
