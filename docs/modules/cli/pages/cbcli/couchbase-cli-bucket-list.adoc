@@ -50,6 +50,7 @@ $ couchbase-cli bucket-list -c 192.168.1.5:8091 --username Administrator \
    ramQuota: 268435456
    ramUsed: 1134432
    vBuckets: 1024
+----
 == DISCUSSION
 
 In the output, RAM figures are in bytes. The "membase" bucketType signifies a
