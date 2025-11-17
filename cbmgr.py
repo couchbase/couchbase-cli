@@ -4312,9 +4312,9 @@ class XdcrSetup(Subcommand):
             _exit_if_errors([f'--xdcr-cluster-name is required to {cmd} a cluster connection'])
         if opts.hostname is None:
             _exit_if_errors([f'--xdcr-hostname is required to {cmd} a cluster connections'])
-        if opts.username is None:
+        if opts.username is None and opts.secure_connection != "full":
             _exit_if_errors([f'--xdcr-username is required to {cmd} a cluster connections'])
-        if opts.password is None:
+        if opts.password is None and opts.secure_connection != "full":
             _exit_if_errors([f'--xdcr-password is required to {cmd} a cluster connections'])
         if (opts.encrypt is not None or opts.encryption_type is not None) and opts.secure_connection is not None:
             _exit_if_errors(["Cannot use deprecated flags --xdcr-demand-encryption or --xdcr-encryption-type with"
