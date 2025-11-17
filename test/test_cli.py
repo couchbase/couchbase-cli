@@ -3135,10 +3135,11 @@ class TestXdcrSetup(CommandTest):
 
     def test_list_xdcr(self):
         self.server_args['remote-clusters'] = [{'name': 'name', 'uuid': '1', 'hostname': 'host', 'username': 'user',
-                                                'uri': 'uri', 'deleted': False}]
+                                                'uri': 'uri', 'deleted': False, 'stage': {'username': 'other-user'}}]
         self.no_error_run(self.command + ['--list'] + self.cmd_args, self.server_args)
         self.assertIn('GET:/pools/default/remoteClusters/', self.server.trace)
-        expected_out = ['cluster name: name', 'uuid: 1', 'host name: host', 'user name: user', 'uri: uri']
+        expected_out = ['cluster name: name', 'uuid: 1', 'host name: host', 'user name: user', 'uri: uri',
+                        'staged user name: other-user']
         for p in expected_out:
             self.assertIn(p, self.str_output)
 

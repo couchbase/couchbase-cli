@@ -5412,10 +5412,12 @@ class XdcrSetup(Subcommand):
 
         for cluster in clusters:
             if not cluster["deleted"]:
-                print(f'cluster name: {cluster["name"]}')
-                print(f'        uuid: {cluster["uuid"]}')
-                print(f'   host name: {cluster["hostname"]}')
-                print(f'   user name: {cluster["username"]}')
+                print(f'    cluster name: {cluster["name"]}')
+                print(f'            uuid: {cluster["uuid"]}')
+                print(f'       host name: {cluster["hostname"]}')
+                print(f'       user name: {cluster["username"]}')
+                if "stage" in cluster:
+                    print(f'staged user name: {cluster["stage"]["username"]}')
                 print(f'         uri: {cluster["uri"]}')
 
     @staticmethod
