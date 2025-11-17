@@ -14,7 +14,7 @@ Manage references to remote clusters
 [verse]
 _couchbase-cli xdcr-setup_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--create] [--delete] [--edit] [--list]
+    [--client-key-password <password>] [--create] [--delete] [--edit] [--list] [--stage]
     [--xdcr-cluster-name <name>] [--xdcr-hostname <hostname>] [--xdcr-hostname-external]
     [--xdcr-username <username>] [--xdcr-password <password>]
     [--xdcr-user-certificate <path>] [--xdcr-user-key <path>]
@@ -37,6 +37,9 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --edit::
   Edits an XDCR remote reference.
+
+--stage::
+  Adds staged credentials to the XDCR remote reference.
 
 --list::
   List all XDCR remote references.
@@ -84,7 +87,7 @@ To create a new remote reference to a Couchbase cluster named "east" run the
 following command.
 
   $ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \
-   -p password --create --xdcr-cluster-name east --xdcr-hostname 192.168.1.6
+   -p password --create --xdcr-cluster-name east --xdcr-hostname 192.168.1.6 \
    --xdcr-username Administrator --xdcr-password password
 
 If the new remote reference should always be encrypted then make sure to enable
@@ -104,11 +107,19 @@ If you need to edit a cluster references named "east" and change the password
 run the following command.
 
   $ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \
-   -p password --edit --xdcr-cluster-name east --xdcr-hostname 192.168.1.6
+   -p password --edit --xdcr-cluster-name east --xdcr-hostname 192.168.1.6 \
    --xdcr-username Administrator --xdcr-password new_password
 
 Note in the above example that you need to specify all of the current unchanging
 configuration parameters also to avoid them being reset to defaults.
+
+Remote references can have "staged" credentials which are used if the first set
+start failing. Username and password or client certificate and key can be passed.
+These can be set like so.
+
+  $ couchbase-cli xdcr-setup -c 192.168.1.5 -u Administrator \
+   -p password --stage --xdcr-cluster-name east \
+   --xdcr-username Admin2 --xdcr-password password
 
 If you no longer need an XDCR remote reference then you can delete it. We should
 this below using the "east" remote reference as an example.

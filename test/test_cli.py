@@ -3133,6 +3133,12 @@ class TestXdcrSetup(CommandTest):
                            f'clientCertificate={contents}', f'clientKey={contents}', f'certificate={contents}']
         self.rest_parameter_match(expected_params)
 
+    def test_stage_xdcr(self):
+        self.no_error_run(self.command + ['--stage'] + self.cmd_args_without_hostname, self.server_args)
+        self.assertIn('POST:/pools/default/remoteClusters/name', self.server.trace)
+        expected_params = ['stage=true', 'username=username', 'password=pwd']
+        self.rest_parameter_match(expected_params)
+
     def test_list_xdcr(self):
         self.server_args['remote-clusters'] = [{'name': 'name', 'uuid': '1', 'hostname': 'host', 'username': 'user',
                                                 'uri': 'uri', 'deleted': False, 'stage': {'username': 'other-user'}}]

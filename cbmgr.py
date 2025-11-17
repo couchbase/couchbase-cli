@@ -5297,6 +5297,8 @@ class XdcrSetup(Subcommand):
                            default=False, help="Set the local read-only user")
         group.add_argument("--list", dest="list", action="store_true",
                            default=False, help="List all XDCR remote references")
+        group.add_argument("--stage", dest="stage", action="store_true",
+                           default=False, help="Set the staged credentials")
         group.add_argument("--xdcr-cluster-name", dest="name", metavar="<name>",
                            help="The name for the remote cluster reference")
         group.add_argument("--xdcr-hostname", dest="hostname", metavar="<hostname>",
@@ -5322,13 +5324,16 @@ class XdcrSetup(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
-        actions = sum([opts.create, opts.delete, opts.edit, opts.list])
+        actions = sum([opts.create, opts.delete, opts.edit, opts.list, opts.stage])
         if actions == 0:
-            _exit_if_errors(["Must specify one of --create, --delete, --edit, --list"])
+            _exit_if_errors(["Must specify one of --create, --delete, --edit, --stage, --list"])
         elif actions > 1:
-            _exit_if_errors(["The --create, --delete, --edit, --list flags may not be specified at the same time"])
+            _exit_if_errors(
+                ["The --create, --delete, --edit, --stage, --list flags may not be specified at the same time"])
         elif opts.create or opts.edit:
             self._set(opts)
+        elif opts.stage:
+            self._stage(opts)
         elif opts.delete:
             self._delete(opts)
         elif opts.list:
@@ -5396,6 +5401,33 @@ class XdcrSetup(Subcommand):
                                                       raw_user_cert, raw_user_key)
             _exit_if_errors(errors)
             _success("Cluster reference edited")
+
+    def _stage(self, opts):
+        if opts.name is None:
+            _exit_if_errors(['--xdcr-cluster-name is required to stage credentials on a cluster connection'])
+
+        total = sum(1 if x else 0 for x in [opts.r_username, opts.r_password, opts.r_key, opts.r_certificate])
+        if total != 2:
+            _exit_if_errors(['exactly one of --xdcr-username/--xdcr-password and ' +
+                             '--xdcr-user-certificate/--xdcr-user-key must be specified'])
+
+        if (opts.r_username and opts.r_password is None) or (opts.r_username is None and opts.r_password):
+            _exit_if_errors(['-xdcr-username and --xdcr-password must be specified together'])
+
+        if (opts.r_key and opts.r_certificate is None) or (opts.r_key is None and opts.r_certificate):
+            _exit_if_errors(['-xdcr-user-certificate and --xdcr-user-key must be specified together'])
+
+        raw_user_key = None
+        if opts.r_key:
+            raw_user_key = _exit_on_file_read_failure(opts.r_key)
+        raw_user_cert = None
+        if opts.r_certificate:
+            raw_user_cert = _exit_on_file_read_failure(opts.r_certificate)
+
+        _, errors = self.rest.stage_creds_on_xdcr_reference(opts.name, opts.r_username, opts.r_password, raw_user_cert,
+                                                            raw_user_key)
+        _exit_if_errors(errors)
+        _success("Credentials for cluster reference staged")
 
     def _delete(self, opts):
         if opts.name is None:

@@ -92,6 +92,12 @@ class ServiceNotAvailableException(Exception):
         Exception.__init__(self, f'Service {service} not available in target cluster')
 
 
+class SetXDCRReferenceMode(Enum):
+    CREATE = 1
+    EDIT = 2
+    STAGE = 3
+
+
 class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
@@ -2104,25 +2110,31 @@ class ClusterManager(object):
 
     def create_xdcr_reference(self, name, hostname, hostname_external, username, password, encrypted,
                               encryption_type, certificate, client_certificate, client_key):
-        return self._set_xdcr_reference(False, name, hostname, hostname_external, username,
+        return self._set_xdcr_reference(SetXDCRReferenceMode.CREATE, name, hostname, hostname_external, username,
                                         password, encrypted, encryption_type,
                                         certificate, client_certificate, client_key)
 
     def edit_xdcr_reference(self, name, hostname, hostname_external, username, password, encrypted,
                             encryption_type, certificate, client_certificate, client_key):
-        return self._set_xdcr_reference(True, name, hostname, hostname_external, username,
+        return self._set_xdcr_reference(SetXDCRReferenceMode.EDIT, name, hostname, hostname_external, username,
                                         password, encrypted, encryption_type,
                                         certificate, client_certificate, client_key)
 
-    def _set_xdcr_reference(self, edit, name, hostname, hostname_external, username, password,
+    def stage_creds_on_xdcr_reference(self, name, username, password, client_certificate, client_key):
+        return self._set_xdcr_reference(SetXDCRReferenceMode.STAGE, name, None, None, username, password, None, None,
+                                        None, client_certificate, client_key)
+
+    def _set_xdcr_reference(self, mode, name, hostname, hostname_external, username, password,
                             encrypted, encryption_type, certificate, client_certificate, client_key):
         url = f'{self.hostname}/pools/default/remoteClusters'
         params = {}
 
-        if edit:
+        if mode == SetXDCRReferenceMode.EDIT or mode == SetXDCRReferenceMode.STAGE:
             url += f'/{urllib.parse.quote(name)}'
+        if mode == SetXDCRReferenceMode.STAGE:
+            params["stage"] = 'true'
 
-        if name is not None:
+        if name is not None and mode != SetXDCRReferenceMode.STAGE:
             params["name"] = name
         if hostname is not None:
             params["hostname"] = hostname
