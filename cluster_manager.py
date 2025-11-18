@@ -40,6 +40,15 @@ except ImportError:
     VERSION = '0.0.0-0000'
 
 
+class TokenAuth(requests.auth.AuthBase):
+    def __init__(self, token):
+        self.token = token
+
+    def __call__(self, r):
+        r.headers["Authorization"] = f"Bearer {self.token}"
+        return r
+
+
 def unexpected_403_err(message):
     return f"Unexpected response for error 403: {message}"
 
@@ -86,10 +95,21 @@ class ServiceNotAvailableException(Exception):
 class ClusterManager(object):
     """A set of REST API's for managing a Couchbase cluster"""
 
-    def __init__(self, hostname, username, password, ssl_flag=False, verify_cert=True, ca_cert=True, debug=False,
-                 timeout=DEFAULT_REQUEST_TIMEOUT, client_ca: Optional[Path] = None,
-                 client_ca_password: Optional[str] = None,
-                 client_pk: Optional[Path] = None, client_pk_password: Optional[str] = None):
+    def __init__(
+            self,
+            hostname,
+            username,
+            password,
+            token=None,
+            ssl_flag=False,
+            verify_cert=True,
+            ca_cert=True,
+            debug=False,
+            timeout=DEFAULT_REQUEST_TIMEOUT,
+            client_ca: Optional[Path] = None,
+            client_ca_password: Optional[str] = None,
+            client_pk: Optional[Path] = None,
+            client_pk_password: Optional[str] = None):
         hostname = hostname.replace("couchbase://", "http://", 1)
         hostname = hostname.replace("couchbases://", "https://", 1)
 
@@ -115,8 +135,13 @@ class ClusterManager(object):
             self.verify_cert = False
             self.ca_cert = False
 
-        self.username = username.encode('utf-8').decode('latin1') if username is not None else ""
-        self.password = password.encode('utf-8').decode('latin1') if password is not None else ""
+        username = username.encode('utf-8').decode('latin1') if username is not None else ""
+        password = password.encode('utf-8').decode('latin1') if password is not None else ""
+        self.auth: Any = (username, password)
+
+        if token:
+            self.auth = TokenAuth(token)
+
         self.timeout = timeout
         self.ssl = self.hostname.startswith("https://")
         self.debug = debug
@@ -3002,7 +3027,7 @@ class ClusterManager(object):
         if self.debug:
             print(f'GET {url} {self._url_encode_params(params)}')
 
-        return self._handle_response(self.session.get(url, params=params, auth=(self.username, self.password),
+        return self._handle_response(self.session.get(url, params=params, auth=self.auth,
                                                       verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
@@ -3013,7 +3038,7 @@ class ClusterManager(object):
             else:
                 print(f'POST {url} {self._url_encode_params(params)}')
 
-        return self._handle_response(self.session.post(url, auth=(self.username, self.password), data=params,
+        return self._handle_response(self.session.post(url, auth=self.auth, data=params,
                                                        verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
@@ -3021,7 +3046,7 @@ class ClusterManager(object):
         if self.debug:
             print(f'POST {url} {self._json_encode_params(params)}')
 
-        return self._handle_response(self.session.post(url, auth=(self.username, self.password), json=params,
+        return self._handle_response(self.session.post(url, auth=self.auth, json=params,
                                                        verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
@@ -3031,9 +3056,7 @@ class ClusterManager(object):
 
         return self._handle_response(
             self.session.patch(
-                url, auth=(
-                    self.username,
-                    self.password),
+                url, auth=self.auth,
                 data=params,
                 verify=self.ca_cert,
                 timeout=self.timeout,
@@ -3044,7 +3067,7 @@ class ClusterManager(object):
         if self.debug:
             print(f'PATCH {url} {self._json_encode_params(params)}')
 
-        return self._handle_response(self.session.patch(url, auth=(self.username, self.password), json=params,
+        return self._handle_response(self.session.patch(url, auth=self.auth, json=params,
                                                         verify=self.ca_cert, timeout=self.timeout,
                                                         headers=self.headers))
 
@@ -3053,7 +3076,7 @@ class ClusterManager(object):
         if self.debug:
             print(f'PUT {url} {self._url_encode_params(params)}')
 
-        return self._handle_response(self.session.put(url, params, auth=(self.username, self.password),
+        return self._handle_response(self.session.put(url, params, auth=self.auth,
                                                       verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
@@ -3061,7 +3084,7 @@ class ClusterManager(object):
         if self.debug:
             print(f'PUT {url} {self._json_encode_params(params)}')
 
-        return self._handle_response(self.session.put(url, None, auth=(self.username, self.password), json=params,
+        return self._handle_response(self.session.put(url, None, auth=self.auth, json=params,
                                                       verify=self.ca_cert, timeout=self.timeout, headers=self.headers))
 
     @request
@@ -3069,7 +3092,7 @@ class ClusterManager(object):
         if self.debug:
             print(f'DELETE {url} {self._url_encode_params(params)}')
 
-        return self._handle_response(self.session.delete(url, auth=(self.username, self.password), data=params,
+        return self._handle_response(self.session.delete(url, auth=self.auth, data=params,
                                                          verify=self.ca_cert, timeout=self.timeout,
                                                          headers=self.headers))
 

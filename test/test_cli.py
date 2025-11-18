@@ -37,6 +37,12 @@ class ValidateCredentialFlags(unittest.TestCase):
                 "username": "username",
                 "password": "password",
             },
+            "ValidAuthToken": {
+                "auth_token":
+                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+                    "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0." +
+                    "KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30",
+            },
             "ValidCertAuthWithHTTPS": {
                 "host": "https://localhost:8091",
                 "client_ca": "/path/to/cert",
@@ -54,6 +60,22 @@ class ValidateCredentialFlags(unittest.TestCase):
             "OnlyPassword": {
                 "password": "password",
                 "errors": ["the --username/--password flags must be supplied together"],
+            },
+            "AuthTokenWithUsername": {
+                "auth_token":
+                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+                    "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0." +
+                    "KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30",
+                "username": "username",
+                "errors": ["expected either --username and --password or --auth-token but not both"],
+            },
+            "AuthTokenWithPassword": {
+                "auth_token":
+                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+                    "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0." +
+                    "KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30",
+                "password": "password",
+                "errors": ["expected either --username and --password or --auth-token but not both"],
             },
             "OnlyClientCert": {
                 "host": "https://localhost:8091",
@@ -78,6 +100,16 @@ class ValidateCredentialFlags(unittest.TestCase):
                 "client_ca": "/path/to/cert",
                 "client_pk": "/path/to/key",
                 "errors": ["expected either --username and --password or --client-cert and --client-key but not both"],
+            },
+            "CertAuthWithToken": {
+                "host": "https://localhost:8091",
+                "auth_token":
+                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+                    "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0." +
+                    "KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30",
+                "client_ca": "/path/to/cert",
+                "client_pk": "/path/to/key",
+                "errors": ["expected either --auth-token or --client-cert and --client-key but not both"],
             },
             "InsecureConnectionEmpty": {
                 "host": "",
@@ -140,7 +172,8 @@ class ValidateCredentialFlags(unittest.TestCase):
             },
             "NoCredentials": {
                 "host": "https://localhost:8091",
-                "errors": ["cluster credentials required, expected --username/--password or --client-cert/--client-key"],
+                "errors": ["cluster credentials required, expected --username/--password, " +
+                           "--client-cert/--client-key or --auth-token"],
             },
             "NoCredentialsAndCredentialsNotRequired": {
                 "host": "https://localhost:8091",
@@ -157,6 +190,7 @@ class ValidateCredentialFlags(unittest.TestCase):
                     value(test, "host"),
                     value(test, "username"),
                     value(test, "password"),
+                    value(test, "auth_token"),
                     value(test, "client_ca"),
                     value(test, "client_ca_password"),
                     value(test, "client_pk"),

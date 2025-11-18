@@ -193,15 +193,15 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
     """
     def inner(fn):
         def decorator(self, opts):
-            _exit_if_errors(validate_credential_flags(opts.cluster, opts.username, opts.password, opts.client_ca,
-                                                      opts.client_ca_password, opts.client_pk, opts.client_pk_password,
-                                                      credentials_required))
+            _exit_if_errors(validate_credential_flags(opts.cluster, opts.username, opts.password, opts.auth_token,
+                                                      opts.client_ca, opts.client_ca_password, opts.client_pk,
+                                                      opts.client_pk_password, credentials_required))
 
             try:
-                self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                                           opts.cacert, opts.debug, client_ca=opts.client_ca,
-                                           client_ca_password=opts.client_ca_password, client_pk=opts.client_pk,
-                                           client_pk_password=opts.client_pk_password)
+                self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.auth_token,
+                                           opts.ssl, opts.ssl_verify, opts.cacert, opts.debug,
+                                           client_ca=opts.client_ca, client_ca_password=opts.client_ca_password,
+                                           client_pk=opts.client_pk, client_pk_password=opts.client_pk_password)
             except X509AdapterError as error:
                 _exit_if_errors([f"failed to setup client certificate encryption, {error}"])
 
@@ -230,7 +230,7 @@ def rest_initialiser(cluster_init_check=False, version_check=False, enterprise_c
     return inner
 
 
-def validate_credential_flags(host, username, password, client_ca, client_ca_password,
+def validate_credential_flags(host, username, password, token, client_ca, client_ca_password,
                               client_pk, client_pk_password, credentials_required: bool = True):
     """ValidateCredentialFlags - Performs validation to ensure the user has provided the flags required to connect to
     their cluster.
@@ -245,16 +245,23 @@ def validate_credential_flags(host, username, password, client_ca, client_ca_pas
             host,
             username,
             password,
+            token,
             client_ca,
             client_ca_password,
             client_pk,
             client_pk_password)
 
-    if (username is None and password is None):
+    if (username is None and password is None and token is None):
         if credentials_required is False:
             return None
 
-        return ["cluster credentials required, expected --username/--password or --client-cert/--client-key"]
+        return ["cluster credentials required, expected --username/--password, --client-cert/--client-key or "
+                "--auth-token"]
+
+    if token:
+        if username is not None or password is not None:
+            return ["expected either --username and --password or --auth-token but not both"]
+        return None
 
     if (username is None or password is None):
         return ["the --username/--password flags must be supplied together"]
@@ -262,11 +269,15 @@ def validate_credential_flags(host, username, password, client_ca, client_ca_pas
     return None
 
 
-def validate_certificate_flags(host, username, password, client_ca, client_ca_password, client_pk, client_pk_password):
+def validate_certificate_flags(host, username, password, token, client_ca, client_ca_password, client_pk,
+                               client_pk_password):
     """Validate that the user is correctly using certificate authentication.
     """
     if username is not None or password is not None:
         return ["expected either --username and --password or --client-cert and --client-key but not both"]
+
+    if token is not None:
+        return ["expected either --auth-token or --client-cert and --client-key but not both"]
 
     if not (host.startswith("https://") or host.startswith("couchbases://")):
         return ["certificate authentication requires a secure connection, use https:// or couchbases://"]
@@ -969,6 +980,10 @@ class Subcommand(Command):
             group.add_argument("-p", "--password", dest="password",
                                action=CBNonEchoedAction, envvar='CB_REST_PASSWORD',
                                metavar="<password>", help="The password for the Couchbase cluster")
+
+        group.add_argument("--auth-token", dest="auth_token",
+                           action=CBNonEchoedAction, envvar="CB_REST_AUTH_TOKEN", metavar="<auth-token>",
+                           help="The JWT to authenticate with this Couchbase cluster")
 
         group.add_argument("-o", "--output", dest="output", default="standard", metavar="<output>",
                            choices=["json", "standard"], help="The output type (json or standard)")
@@ -6342,8 +6357,8 @@ class SettingAlternateAddress(Subcommand):
             opts.cluster = cluster
 
             # override rest client so it uses the node to be altered
-            self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.ssl, opts.ssl_verify,
-                                       opts.cacert, opts.debug)
+            self.rest = ClusterManager(opts.cluster, opts.username, opts.password, opts.auth_token,
+                                       opts.ssl, opts.ssl_verify, opts.cacert, opts.debug)
 
         if opts.set:
             ports, error = self._parse_ports(opts.ports)
