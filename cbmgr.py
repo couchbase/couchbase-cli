@@ -7227,6 +7227,8 @@ class BackupServiceRepository:
             add_request_body['cloud_staging_dir'] = kwargs.get('staging_dir')
         if kwargs.get('s3_path_style', False):
             add_request_body['cloud_force_path_style'] = kwargs.get('s3_path_style')
+        if kwargs.get('staging_dir', False):
+            add_request_body['cloud_staging_dir'] = kwargs.get('staging_dir')
 
         _, errors = self.rest.add_backup_active_repository(repository_id, add_request_body)
         _exit_if_errors(errors)
