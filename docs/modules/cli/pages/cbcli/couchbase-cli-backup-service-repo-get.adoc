@@ -1,0 +1,128 @@
+= couchbase-cli-backup-service-repo-get(1)
+:description: Retrieve a backup service repository
+ifndef::doctype-manpage[:doctitle: backup-service repo-get]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-repo-get -
+endif::[]
+Retrieve a backup service repository
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] _repo-get_ [--id <id>] [--state <state>]
+
+== DESCRIPTION
+
+Retrieves a single backup repository by its ID and state. If the repository
+does not exist an error will be returned. This command supports retrieving
+repository information in both JSON and human-friendly format.
+
+== OPTIONS
+
+--id <id>::
+    The repository ID. This argument is required.
+
+--state <state>::
+    The repository state. Valid states are 'active', 'archived', or 'imported'.
+    This argument is required.
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To retrieve the details of an active backup repository with ID 'weekly-all',
+run the following command.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-get --id weekly-all --state active
+
+ID: weekly-all
+State: active
+Healthy: True
+Archive: /backup
+Repository: a8059549-7fc3-401a-8fb8-008d1e20f1b0
+Plan: _weekly
+Creation time: 2020-07-10T07:44:18.826195+01:00
+
+Scheduled tasks:
+Name               | Task type | Next run
+----------------------------------------------
+backup_monday_full | Backup    | 2020-07-13T22:00:00+01:00
+backup_wednesday   | Backup    | 2020-07-15T22:00:00+01:00
+merge_week         | Merge     | 2020-07-12T23:20:00+01:00
+----
+
+To retrieve an archived repository, use the `--state archived` flag.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-get --id old-data --state archived
+
+ID: old-data
+State: archived
+Healthy: True
+Archive: /backup/archive
+Repository: d6ccec04-6f03-4599-94c5-b95ac10a4f80
+Plan: _daily
+Creation time: 2020-06-15T10:30:00.000000+01:00
+----
+
+To get the output in JSON format, use the `--output json` flag before the
+subcommand.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  --output json repo-get --id weekly-all --state active
+{
+  "id": "weekly-all",
+  "state": "active",
+  "archive": "/backup",
+  "repo": "a8059549-7fc3-401a-8fb8-008d1e20f1b0",
+  "profile_name": "_weekly",
+  "health": {
+    "healthy": true
+  },
+  "creation_time": "2025-12-19T14:28:34.539238Z",
+  "update_time": "2025-12-19T14:28:34.539238Z",
+  "scheduled": {
+    "backup_hourly": {
+      "name": "backup_hourly",
+      "task_type": "BACKUP",
+      "next_run": "2026-01-09T11:00:47Z"
+    },
+    "merge_every_6_hours": {
+      "name": "merge_every_6_hours",
+      "task_type": "MERGE",
+      "next_run": "2026-01-09T15:30:46Z"
+    },
+    "merge_week": {
+      "name": "merge_week",
+      "task_type": "MERGE",
+      "next_run": "2026-01-11T23:40:00Z"
+    }
+  }
+}
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1],
+man:couchbase-cli-backup-service-repo-list[1],
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
+

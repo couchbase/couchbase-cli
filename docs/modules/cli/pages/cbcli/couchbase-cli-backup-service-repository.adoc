@@ -131,7 +131,7 @@ State: active
 Healthy: True
 Archive: /backup
 Repository: a8059549-7fc3-401a-8fb8-008d1e20f1b0
-Profile: _weekly
+plan: _weekly
 Creation time: 2020-07-10T07:44:18.826195+01:00
 
 Scheduled tasks:

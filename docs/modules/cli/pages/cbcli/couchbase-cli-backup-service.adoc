@@ -40,6 +40,9 @@ man:couchbase-cli-backup-service-nodes-threads-map[1]::
 man:couchbase-cli-backup-service-repo-list[1]::
   List backup service repositories.
 
+man:couchbase-cli-backup-service-repo-get[1]::
+  Retrieve a backup service repository.
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]

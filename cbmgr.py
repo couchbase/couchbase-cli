@@ -6996,12 +6996,15 @@ class BackupService(Subcommand):
         self.settings_cmd = BackupServiceSettings(self.subparser)
         self.repository_cmd = BackupServiceRepository(self.subparser)
         self.repo_list_cmd = BackupServiceRepoList(self.subparser)
+        self.repo_get_cmd = BackupServiceRepoGet(self.subparser)
         self.plan_cmd = BackupServicePlan(self.subparser)
         self.nodeThreads_cmd = BackupServiceNodeThreadsMap(self.subparser)
 
     def execute(self, opts):
-        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'repository', 'repo-list', 'plan', 'node-threads']:
-            _exit_if_errors(['<subcommand> must be one of [settings, repository, repo-list, plan, node-threads]'])
+        subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'plan', 'node-threads']
+
+        if opts.sub_cmd is None or opts.sub_cmd not in subcommands:
+            _exit_if_errors([f'<subcommand> must be one of {subcommands}'])
 
         if opts.sub_cmd == 'settings':
             self.settings_cmd.execute(opts)
@@ -7009,6 +7012,8 @@ class BackupService(Subcommand):
             self.repository_cmd.execute(opts)
         elif opts.sub_cmd == 'repo-list':
             self.repo_list_cmd.execute(opts)
+        elif opts.sub_cmd == 'repo-get':
+            self.repo_get_cmd.execute(opts)
         elif opts.sub_cmd == 'plan':
             self.plan_cmd.execute(opts)
         elif opts.sub_cmd == 'node-threads':
@@ -7096,7 +7101,7 @@ def human_friendly_print_repository(repository):
     if 'bucket' in repository:
         print(f'Bucket: {repository["bucket"]["name"]}')
     if 'plan_name' in repository and repository['plan_name'] != "":
-        print(f'plan: {repository["plan_name"]}')
+        print(f'Plan: {repository["plan_name"]}')
     print(f'Creation time: {repository["creation_time"]}')
 
     if 'scheduled' in repository and repository['scheduled']:
@@ -7240,6 +7245,42 @@ class BackupServiceRepoList:
     @staticmethod
     def get_description():
         return 'List backup service repositories'
+
+
+class BackupServiceRepoGet:
+    """Retrieves one repository from the backup service
+
+    If the repository does not exist an error will be returned
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        repository_parser = subparser.add_parser('repo-get', help='Retrieve a backup repository', add_help=False,
+                                                 allow_abbrev=False)
+
+        repository_parser.add_argument('--id', metavar='<id>', help='The repository id', required=True)
+        repository_parser.add_argument('--state', metavar='<state>', choices=['active', 'archived', 'imported'],
+                                       help='The repository state.', required=True)
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service repo-get subcommand"""
+
+        repository, errors = self.rest.get_backup_service_repository(opts.id, opts.state)
+        _exit_if_errors(errors)
+        if opts.output == 'json':
+            print(json.dumps(repository, indent=2))
+        else:
+            human_friendly_print_repository(repository)
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-backup-service-repo-get")
+
+    @staticmethod
+    def get_description():
+        return 'Retrieves a repository from the backup service'
 
 
 class BackupServiceRepository:

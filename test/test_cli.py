@@ -4934,6 +4934,145 @@ class TestBackupServiceRepoList(CommandTest):
         self.assertIn('N/A', self.str_output)
 
 
+class TestBackupServiceRepoGet(CommandTest):
+    """Test the backup-service repo-get subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repo-get']
+        super(TestBackupServiceRepoGet, self).setUp()
+
+    def test_missing_id(self):
+        """Test that the command fails if --id is not provided"""
+        self.system_exit_run(self.command + ['--state', 'active'], self.server_args)
+        self.assertIn('--id', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_missing_state(self):
+        """Test that the command fails if --state is not provided"""
+        self.system_exit_run(self.command + ['--id', 'repo1'], self.server_args)
+        self.assertIn('--state', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_invalid_state(self):
+        """Test that if a state not in [active, imported, archived] is provided the command exits with a non zero status
+        code
+        """
+        self.system_exit_run(self.command + ['--id', 'repo1', '--state', 'invalid'], self.server_args)
+
+    def test_get_active_repository(self):
+        """Test that the command retrieves an active repository correctly"""
+        self.server_args['/api/v1/cluster/self/repository/active/repo1'] = {
+            'id': 'repo1',
+            'state': 'active',
+            'archive': '/backup/archive',
+            'repo': '/backup/repo',
+            'plan_name': 'daily-plan',
+            'health': {'healthy': True},
+            'creation_time': '2024-01-01T00:00:00Z',
+        }
+
+        self.no_error_run(self.command + ['--id', 'repo1', '--state', 'active'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/active/repo1', self.server.trace)
+        self.assertIn('ID: repo1', self.str_output)
+        self.assertIn('State: active', self.str_output)
+        self.assertIn('Healthy: True', self.str_output)
+        self.assertIn('Archive: /backup/archive', self.str_output)
+        self.assertIn('Repository: /backup/repo', self.str_output)
+        self.assertIn('Plan: daily-plan', self.str_output)
+
+    def test_get_archived_repository(self):
+        """Test that the command retrieves an archived repository correctly"""
+        self.server_args['/api/v1/cluster/self/repository/archived/archivedrepo'] = {
+            'id': 'archivedrepo',
+            'state': 'archived',
+            'archive': '/backup/archive',
+            'repo': '/backup/repo',
+            'plan_name': 'weekly-plan',
+            'creation_time': '2024-01-01T00:00:00Z',
+        }
+
+        self.no_error_run(self.command + ['--id', 'archivedrepo', '--state', 'archived'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/archived/archivedrepo', self.server.trace)
+        self.assertIn('ID: archivedrepo', self.str_output)
+        self.assertIn('State: archived', self.str_output)
+
+    def test_get_imported_repository(self):
+        """Test that the command retrieves an imported repository correctly"""
+        self.server_args['/api/v1/cluster/self/repository/imported/importedrepo'] = {
+            'id': 'importedrepo',
+            'state': 'imported',
+            'archive': '/backup/archive',
+            'repo': '/backup/repo',
+            'creation_time': '2024-01-01T00:00:00Z',
+        }
+
+        self.no_error_run(self.command + ['--id', 'importedrepo', '--state', 'imported'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/imported/importedrepo', self.server.trace)
+        self.assertIn('ID: importedrepo', self.str_output)
+        self.assertIn('State: imported', self.str_output)
+
+    def test_get_repository_json_output(self):
+        """Test that the command outputs JSON when --output json is specified"""
+        self.server_args['/api/v1/cluster/self/repository/active/repo1'] = {
+            'id': 'repo1',
+            'state': 'active',
+            'archive': '/backup/archive',
+            'repo': '/backup/repo',
+            'plan_name': 'daily-plan',
+            'health': {'healthy': True},
+            'creation_time': '2024-01-01T00:00:00Z',
+        }
+
+        # --output must come before repo-get subcommand
+        json_command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['--output', 'json', 'repo-get']
+        self.no_error_run(json_command + ['--id', 'repo1', '--state', 'active'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/active/repo1', self.server.trace)
+        output = json.loads(self.str_output)
+        self.assertEqual(output['id'], 'repo1')
+        self.assertEqual(output['state'], 'active')
+        self.assertEqual(output['archive'], '/backup/archive')
+        self.assertEqual(output['repo'], '/backup/repo')
+        self.assertEqual(output['plan_name'], 'daily-plan')
+
+    def test_get_unhealthy_repository(self):
+        """Test that an unhealthy repository shows Healthy: False"""
+        self.server_args['/api/v1/cluster/self/repository/active/unhealthyrepo'] = {
+            'id': 'unhealthyrepo',
+            'state': 'active',
+            'archive': '/backup/archive',
+            'repo': '/backup/repo',
+            'plan_name': 'daily-plan',
+            'health': {'healthy': False},
+            'creation_time': '2024-01-01T00:00:00Z',
+        }
+
+        self.no_error_run(self.command + ['--id', 'unhealthyrepo', '--state', 'active'], self.server_args)
+        self.assertIn('Healthy: False', self.str_output)
+
+    def test_get_repository_with_bucket(self):
+        """Test that the bucket name is displayed when present"""
+        self.server_args['/api/v1/cluster/self/repository/active/repo1'] = {
+            'id': 'repo1',
+            'state': 'active',
+            'archive': '/backup/archive',
+            'repo': '/backup/repo',
+            'plan_name': 'daily-plan',
+            'health': {'healthy': True},
+            'creation_time': '2024-01-01T00:00:00Z',
+            'bucket': {'name': 'my-bucket'},
+        }
+
+        self.no_error_run(self.command + ['--id', 'repo1', '--state', 'active'], self.server_args)
+        self.assertIn('Bucket: my-bucket', self.str_output)
+
+
 class TestBackupServiceSettings(CommandTest):
     """Test the backup-service settings subcommand"""
 
