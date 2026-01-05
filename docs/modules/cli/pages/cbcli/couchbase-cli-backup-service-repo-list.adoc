@@ -1,0 +1,117 @@
+= couchbase-cli-backup-service-repo-list(1)
+:description: List backup service repositories
+ifndef::doctype-manpage[:doctitle: backup-service repo-list]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-repo-list -
+endif::[]
+List backup service repositories
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] _repo-list_
+    [--state <state>]
+
+== DESCRIPTION
+
+Lists the backup repositories. If a repository state is given, only repositories
+in that state will be listed. This command supports listing repositories in both
+JSON and human-friendly format.
+
+== OPTIONS
+
+--state <state>::
+    Filters the repositories by state. Valid states are 'active', 'archived', or
+    'imported'. If not specified, repositories in all states will be listed.
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To list all backup repositories in the cluster, run the following command.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-list
+
+ID            | State    | Plan    | Healthy | Repository
+----------------------------------------------------------
+weekly-all    | active   | _weekly |  True   | a8059549-7fc3-401a-8fb8-008d1e20f1b0
+old-data      | archived | _daily  |  True   | d6ccec04-6f03-4599-94c5-b95ac10a4f80
+test-data-set | imported | N/A     |  True   | provider
+----
+
+To list only active repositories, use the `--state` flag. Paused repos are also considered
+'active'.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-list --state active
+
+ID       | State    | Plan            | Healthy | Repository
+------------------------------------------------------------
+repo1    | active   | _daily_backups  |  False  | 7326081f-db10-49d1-9a55-fe80f676cde9
+repo2    | paused   | _daily_backups  |  False  | 179a36cc-2ad9-4360-a080-42ddc98e53c7
+----
+
+To get the output in JSON format, use the `--output json` flag before the
+subcommand.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  --output json repo-list --state active
+{
+  "active": [
+    {
+      "id": "repo",
+      "plan_name": "_daily_backups",
+      "state": "active",
+      "archive": "/path/to/archive",
+      "repo": "179a36cc-2ad9-4360-a080-42ddc98e53c7",
+      "scheduled": {
+        "backup_hourly": {
+          "name": "backup_hourly",
+          "task_type": "BACKUP",
+          "next_run": "2026-01-09T11:00:47Z"
+        },
+        "merge_every_6_hours": {
+          "name": "merge_every_6_hours",
+          "task_type": "MERGE",
+          "next_run": "2026-01-09T15:30:46Z"
+        },
+        "merge_week": {
+          "name": "merge_week",
+          "task_type": "MERGE",
+          "next_run": "2026-01-11T23:40:00Z"
+        }
+      },
+      "version": 1,
+      "health": {
+        "healthy": true
+      },
+      "creation_time": "2025-12-19T14:15:02.29496Z",
+      "update_time": "2026-01-09T09:32:58.514109Z"
+    },
+  ]
+}
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
+

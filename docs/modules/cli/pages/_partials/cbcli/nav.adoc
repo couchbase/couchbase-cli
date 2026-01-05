@@ -4,6 +4,7 @@
  ** xref:cli:cbcli/couchbase-cli-backup-service.adoc[backup-service]
  ** xref:cli:cbcli/couchbase-cli-backup-service-nodes-threads-map.adoc[backup-service nodes-threads-map]
  ** xref:cli:cbcli/couchbase-cli-backup-service-plan.adoc[backup-service plan]
+ ** xref:cli:cbcli/couchbase-cli-backup-service-repo-list.adoc[backup-service repo-list]
  ** xref:cli:cbcli/couchbase-cli-backup-service-repository.adoc[backup-service repository]
  ** xref:cli:cbcli/couchbase-cli-backup-service-settings.adoc[backup-service settings]
  ** xref:cli:cbcli/couchbase-cli-bucket-compact.adoc[bucket-compact]

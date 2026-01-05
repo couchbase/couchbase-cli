@@ -3522,7 +3522,7 @@ class SettingEnterpriseAnalytics(Subcommand):
         group.add_argument("--path-style-addressing", dest="blob_storage_path_style_addressing", metavar="<0|1>",
                            choices=["0", "1"], help="Use BLOB storage path style addressing")
 
-    # We disable the cluster init check so people can use '--set' before the cluster is initiaslised. See MB-66986.
+    # We disable the cluster init check so people can use '--set' before the cluster is initialised. See MB-66986.
     @rest_initialiser(cluster_init_check=False, version_check=True)
     def execute(self, opts):
         if opts.set:
@@ -6995,17 +6995,20 @@ class BackupService(Subcommand):
         self.subparser = self.parser.add_subparsers(help='Sub command help', dest='sub_cmd', metavar='<subcommand>')
         self.settings_cmd = BackupServiceSettings(self.subparser)
         self.repository_cmd = BackupServiceRepository(self.subparser)
+        self.repo_list_cmd = BackupServiceRepoList(self.subparser)
         self.plan_cmd = BackupServicePlan(self.subparser)
         self.nodeThreads_cmd = BackupServiceNodeThreadsMap(self.subparser)
 
     def execute(self, opts):
-        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'repository', 'plan', 'node-threads']:
-            _exit_if_errors(['<subcommand> must be one of [settings, repository, plan, node-threads]'])
+        if opts.sub_cmd is None or opts.sub_cmd not in ['settings', 'repository', 'repo-list', 'plan', 'node-threads']:
+            _exit_if_errors(['<subcommand> must be one of [settings, repository, repo-list, plan, node-threads]'])
 
         if opts.sub_cmd == 'settings':
             self.settings_cmd.execute(opts)
         elif opts.sub_cmd == 'repository':
             self.repository_cmd.execute(opts)
+        elif opts.sub_cmd == 'repo-list':
+            self.repo_list_cmd.execute(opts)
         elif opts.sub_cmd == 'plan':
             self.plan_cmd.execute(opts)
         elif opts.sub_cmd == 'node-threads':
@@ -7076,6 +7079,167 @@ class BackupServiceSettings:
     @staticmethod
     def get_description():
         return 'Manage backup service settings'
+
+
+def human_friendly_print_repository(repository):
+    """Print the repository in a human friendly format
+
+    Args:
+        repository (obj): The backup repository information
+    """
+
+    print(f'ID: {repository["id"]}')
+    print(f'State: {repository["state"]}')
+    print(f'Healthy: {(not ("health" in repository and not repository["health"]["healthy"]))!s}')
+    print(f'Archive: {repository["archive"]}')
+    print(f'Repository: {repository["repo"]}')
+    if 'bucket' in repository:
+        print(f'Bucket: {repository["bucket"]["name"]}')
+    if 'plan_name' in repository and repository['plan_name'] != "":
+        print(f'plan: {repository["plan_name"]}')
+    print(f'Creation time: {repository["creation_time"]}')
+
+    if 'scheduled' in repository and repository['scheduled']:
+        print()
+        human_friendly_print_repository_scheduled_tasks(repository['scheduled'])
+
+    one_off = repository['running_one_off'] if 'running_one_off' in repository else None
+    running_scheduled = repository['running_tasks'] if 'running_tasks' in repository else None
+    if one_off or running_scheduled:
+        print()
+        human_friendly_print_running_tasks(one_off, running_scheduled)
+
+
+def human_friendly_print_running_tasks(one_off, scheduled):
+    """Prints the running task summary in a human friendly way
+
+    Args:
+        one_off (map<str, task object>): Running one off tasks
+        scheduled (map<str, task object>): Running scheduled tasks
+    """
+    all_vals = []
+    name_pad = 5
+    if one_off:
+        for name in one_off:
+            if len(name) > name_pad:
+                name_pad = len(name)
+        all_vals += one_off.values()
+
+    if scheduled:
+        for name in scheduled:
+            if len(name) > name_pad:
+                name_pad = len(name)
+        all_vals += scheduled.values()
+
+    name_pad += 1
+
+    header = f'{"Name":<{name_pad}}| Task type | Status  | Start'
+    print(header)
+    print('-' * (len(header) + 5))
+    for task in all_vals:
+        print(f'{task["name"]:<{name_pad}}| {task["type"].title():<10}| {task["status"]:<8} | {task["start"]}')
+
+
+def human_friendly_print_repository_scheduled_tasks(scheduled):
+    """Print the scheduled task in a tabular format"""
+    name_pad = 5
+    for name in scheduled:
+        if len(name) > name_pad:
+            name_pad = len(name)
+    name_pad += 1
+
+    header = f'{"Name":<{name_pad}}| Task type | Next run'
+    print('Scheduled tasks:')
+    print(header)
+    print('-' * (len(header) + 5))
+
+    for task in scheduled.values():
+        print(f'{task["name"]:<{name_pad}}| {task["task_type"].title():<10}| {task["next_run"]}')
+
+
+def human_friendly_print_repositories(repositories_map):
+    """This will print the repositories in a tabular format
+
+    Args:
+        repository_map (map<state (str), repository (list of objects)>)
+    """
+    repository_count = 0
+    id_pad = 5
+    plan_pad = 7
+    for repositories in repositories_map.values():
+        for repository in repositories:
+            repository_count += 1
+            if id_pad < len(repository['id']):
+                id_pad = len(repository['id'])
+            if 'plan_name' in repository and plan_pad < len(repository['plan_name']):
+                plan_pad = len(repository['plan_name'])
+
+    if repository_count == 0:
+        print('No repositories found')
+        return
+
+    # Get an extra space between the information and the column separator
+    plan_pad += 1
+    id_pad += 1
+
+    # build header
+    header = f'{"ID":<{id_pad}}| {"State":<9}| {"Plan":<{plan_pad}}| Healthy | Repository'
+    print(header)
+    print('-' * len(header))
+
+    # print repository summary
+    for _, repositories in sorted(repositories_map.items()):
+        for repository in repositories:
+            healthy = not ('health' in repository and not repository['health']['healthy'])
+            # archived and imported repositories may not have plans so we have to replace the empty string with N/A
+            plan_name = 'N/A'
+            if 'plan_name' in repository and len(repository['plan_name']) != 0:
+                plan_name = repository['plan_name']
+
+            print(f"{repository['id']:<{id_pad}}| {repository['state']:<9}| {plan_name:<{plan_pad}}| "
+                  f" {healthy!s:<7}| {repository['repo']}")
+
+
+class BackupServiceRepoList:
+    """List the backup repositories.
+
+    If a repository state is given only repositories in that state will be listed. This command supports listing both in
+    json and human friendly format.
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        repository_parser = subparser.add_parser('repo-list', help='List backup repositories', add_help=False,
+                                                 allow_abbrev=False)
+
+        repository_parser.add_argument(
+            '--state', metavar='<state>', choices=['active', 'archived', 'imported'],
+            help='The repository state. Used to retrieve only repositories in a specific state. If not provided all '
+            'repositories will be returned regardless of their state (optional)')
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service repo-list subcommand"""
+        states = ['active', 'archived', 'imported'] if opts.state is None else [opts.state]
+        results = {}
+        for get_state in states:
+            repositories, errors = self.rest.get_backup_service_repositories(state=get_state)
+            _exit_if_errors(errors)
+            results[get_state] = repositories
+
+        if opts.output == 'json':
+            print(json.dumps(results, indent=2))
+        else:
+            human_friendly_print_repositories(results)
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-backup-service-repo-list")
+
+    @staticmethod
+    def get_description():
+        return 'List backup service repositories'
 
 
 class BackupServiceRepository:
@@ -7417,7 +7581,7 @@ class BackupServiceRepository:
             print('No repositories found')
             return
 
-        # Get an extra space between the the information and the column separator
+        # Get an extra space between the information and the column separator
         plan_pad += 1
         id_pad += 1
 

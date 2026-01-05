@@ -1,5 +1,5 @@
 = couchbase-cli-backup-service-nodes-threads-map(1)
-ifndef::doctype-manpage[:doctitle: backup-service-nodes-threads-map]
+ifndef::doctype-manpage[:doctitle: backup-service nodes-threads-map]
 
 ifdef::doctype-manpage[]
 == NAME

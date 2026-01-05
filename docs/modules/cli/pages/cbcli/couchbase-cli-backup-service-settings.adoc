@@ -1,5 +1,5 @@
 = couchbase-cli-backup-service-settings(1)
-ifndef::doctype-manpage[:doctitle: backup-service-settings]
+ifndef::doctype-manpage[:doctitle: backup-service settings]
 
 ifdef::doctype-manpage[]
 == NAME
@@ -11,9 +11,9 @@ Manage the backup service settings
 == SYNOPSIS
 
 [verse]
-_couchbase-cli backup-service [--cluster <url>] [--username <user>]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
-    [--client-key <path>] [--client-key-password <password>] settings [--get]
+    [--client-key <path>] [--client-key-password <password>] _settings_ [--get]
     [--set] [--history-rotation-period <days>] [--history-rotation-size <mebibytes>]
 
 == DESCRIPTION

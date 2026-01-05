@@ -34,6 +34,12 @@ man:couchbase-cli-backup-service-repository[1]::
 man:couchbase-cli-backup-service-plan[1]::
   Manage backup plans.
 
+man:couchbase-cli-backup-service-nodes-threads-map[1]::
+  Manage the backup service nodes threads map.
+
+man:couchbase-cli-backup-service-repo-list[1]::
+  List backup service repositories.
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]

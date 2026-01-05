@@ -4762,6 +4762,178 @@ class VerifyAzureOptions(unittest.TestCase):
                     self.assertIsNone(errors)
 
 
+class TestBackupServiceRepoList(CommandTest):
+    """Test the backup-service repo-list subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/api/v1/cluster/self/repository/active': [],
+                            '/api/v1/cluster/self/repository/archived': [],
+                            '/api/v1/cluster/self/repository/imported': [],
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repo-list']
+        super(TestBackupServiceRepoList, self).setUp()
+
+    def test_invalid_state(self):
+        """Test that if a state not in [active, imported, archived] is provided the command exits with a non zero status
+        code
+        """
+        self.system_exit_run(self.command + ['--state', 'invalid'], self.server_args)
+
+    def test_no_repositories(self):
+        """Test that if there are no repositories the command exits with 0 status and prints that there are no
+        repositories
+        """
+        self.no_error_run(self.command, self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/active', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/archived', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/imported', self.server.trace)
+        self.assertIn('No repositories found', self.str_output)
+
+    def test_list_all_repositories(self):
+        """Test that repositories of all states are retrieved and outputted when no state filter is given"""
+        self.server_args['/api/v1/cluster/self/repository/active'] = [{
+            'id': 'active-repo',
+            'state': 'active',
+            'plan_name': 'plan1',
+            'health': {'healthy': True},
+            'repo': 'repo1',
+        }]
+        self.server_args['/api/v1/cluster/self/repository/imported'] = [{
+            'id': 'imported-repo',
+            'state': 'imported',
+            'repo': 'repo2',
+        }]
+        self.server_args['/api/v1/cluster/self/repository/archived'] = [{
+            'id': 'archived-repo',
+            'state': 'archived',
+            'plan_name': 'plan2',
+            'repo': 'repo3',
+        }]
+
+        self.no_error_run(self.command, self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/active', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/archived', self.server.trace)
+        self.assertIn('GET:/api/v1/cluster/self/repository/imported', self.server.trace)
+        for repository_id in ['active-repo', 'imported-repo', 'archived-repo']:
+            self.assertIn(repository_id, self.str_output)
+
+    def test_list_active_repositories_only(self):
+        """Test that only active repositories are retrieved when --state active is specified"""
+        self.server_args['/api/v1/cluster/self/repository/active'] = [{
+            'id': 'active-repo',
+            'state': 'active',
+            'plan_name': 'plan1',
+            'health': {'healthy': True},
+            'repo': 'repo1',
+        }]
+        self.server_args['/api/v1/cluster/self/repository/imported'] = [{
+            'id': 'imported-repo',
+            'state': 'imported',
+            'repo': 'repo2',
+        }]
+
+        self.no_error_run(self.command + ['--state', 'active'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/active', self.server.trace)
+        self.assertNotIn('GET:/api/v1/cluster/self/repository/archived', self.server.trace)
+        self.assertNotIn('GET:/api/v1/cluster/self/repository/imported', self.server.trace)
+        self.assertIn('active-repo', self.str_output)
+        self.assertNotIn('imported-repo', self.str_output)
+
+    def test_list_archived_repositories_only(self):
+        """Test that only archived repositories are retrieved when --state archived is specified"""
+        self.server_args['/api/v1/cluster/self/repository/archived'] = [{
+            'id': 'archived-repo',
+            'state': 'archived',
+            'plan_name': 'archived-plan',
+            'repo': 'repo1',
+        }]
+        self.server_args['/api/v1/cluster/self/repository/active'] = [{
+            'id': 'active-repo',
+            'state': 'active',
+            'plan_name': 'plan1',
+            'health': {'healthy': False},
+            'repo': 'repo2',
+        }]
+
+        self.no_error_run(self.command + ['--state', 'archived'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/archived', self.server.trace)
+        self.assertNotIn('GET:/api/v1/cluster/self/repository/active', self.server.trace)
+        self.assertNotIn('GET:/api/v1/cluster/self/repository/imported', self.server.trace)
+        self.assertIn('archived-repo', self.str_output)
+        self.assertNotIn('active-repo', self.str_output)
+
+    def test_list_imported_repositories_only(self):
+        """Test that only imported repositories are retrieved when --state imported is specified"""
+        self.server_args['/api/v1/cluster/self/repository/imported'] = [{
+            'id': 'imported-repo',
+            'state': 'imported',
+            'repo': 'repo1',
+        }]
+        self.server_args['/api/v1/cluster/self/repository/active'] = [{
+            'id': 'active-repo',
+            'state': 'active',
+            'plan_name': 'plan1',
+            'health': {'healthy': True},
+            'repo': 'repo2',
+        }]
+
+        self.no_error_run(self.command + ['--state', 'imported'], self.server_args)
+        self.assertIn('GET:/api/v1/cluster/self/repository/imported', self.server.trace)
+        self.assertNotIn('GET:/api/v1/cluster/self/repository/active', self.server.trace)
+        self.assertNotIn('GET:/api/v1/cluster/self/repository/archived', self.server.trace)
+        self.assertIn('imported-repo', self.str_output)
+        self.assertNotIn('active-repo', self.str_output)
+
+    def test_multiple_repositories_same_state(self):
+        """Test that multiple repositories of the same state are all displayed"""
+        self.server_args['/api/v1/cluster/self/repository/active'] = [
+            {
+                'id': 'repo-1',
+                'state': 'active',
+                'plan_name': 'plan1',
+                'health': {'healthy': True},
+                'repo': 'path1',
+            },
+            {
+                'id': 'repo-2',
+                'state': 'active',
+                'plan_name': 'plan2',
+                'health': {'healthy': False},
+                'repo': 'path2',
+            },
+            {
+                'id': 'repo-3',
+                'state': 'active',
+                'plan_name': 'plan3',
+                'health': {'healthy': True},
+                'repo': 'path3',
+            },
+        ]
+
+        self.no_error_run(self.command + ['--state', 'active'], self.server_args)
+        self.assertIn('repo-1', self.str_output)
+        self.assertIn('repo-2', self.str_output)
+        self.assertIn('repo-3', self.str_output)
+
+    def test_imported_repository_shows_na_for_plan(self):
+        """Test that imported repositories display N/A for the plan field since they don't have one"""
+        self.server_args['/api/v1/cluster/self/repository/imported'] = [{
+            'id': 'imported-repo',
+            'state': 'imported',
+            'repo': 'repo1',
+        }]
+
+        self.no_error_run(self.command + ['--state', 'imported'], self.server_args)
+        self.assertIn('imported-repo', self.str_output)
+        self.assertIn('N/A', self.str_output)
+
+
 class TestBackupServiceSettings(CommandTest):
     """Test the backup-service settings subcommand"""
 

@@ -108,7 +108,7 @@ To retrieve a summary of all repositories run:
 ----
 $ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
   repository --list
-ID            | State    | Profile | Healthy | Repository"
+ID            | State    | plan | Healthy | Repository"
 ----------------------------------------------------------
 weekly-all    | active   | _weekly |  True   | a8059549-7fc3-401a-8fb8-008d1e20f1b0
 old-data      | archived | _daily  |  True   | d6ccec04-6f03-4599-94c5-b95ac10a4f80
@@ -120,7 +120,7 @@ details for the repository use the JSON output as can be seen below:
 
 
 
-To retrieve just the information for one repository used instead the `--get` action flag as
+To retrieve just the information for one repository use the `--get` action flag as
 illustrated below.
 
 ----
