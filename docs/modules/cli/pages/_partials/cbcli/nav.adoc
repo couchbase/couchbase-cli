@@ -1,5 +1,5 @@
 * xref:cli:cbcli/couchbase-cli.adoc[couchbase-cli]
- ** xref:cli:cbcli/couchbase-cli-admin-manage.adoc[lock-admin]
+ ** xref:cli:cbcli/couchbase-cli-admin-manage.adoc[admin-manage]
  ** xref:cli:cbcli/couchbase-cli-analytics-link-setup.adoc[analytics-link-setup]
  ** xref:cli:cbcli/couchbase-cli-backup-service.adoc[backup-service]
  ** xref:cli:cbcli/couchbase-cli-backup-service-nodes-threads-map.adoc[backup-service nodes-threads-map]
