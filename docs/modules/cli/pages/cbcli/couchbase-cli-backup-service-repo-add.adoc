@@ -20,7 +20,8 @@ _couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
     [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
     [--cloud-credentials-id <id>] [--cloud-credentials-key <key>]
     [--cloud-credentials-refresh-token <token>] [--cloud-region <region>]
-    [--cloud-endpoint <endpoint>] [--cloud-force-path-style]
+    [--cloud-endpoint <endpoint>] [--cloud-force-path-style] [--worm <days>]
+    [--default-retention <days>] [--cloud-retention-delete-versions]
 
 == DESCRIPTION
 
@@ -49,6 +50,16 @@ directly in object storage such as S3, Azure, GCP or compatible stores.
 --bucket-name <bucket_name>::
     Optionally specify a single bucket to back up. If not provided, all
     buckets will be included in the backup.
+
+--worm <days>::
+    The repo WORM compliance period in days. Must be in the [3, 36525] range.
+    Used to enable WORM for the repository. Newly created backups will be immutable
+    for the provided period. The repo must be located in an object store to enable
+    WORM.
+
+--default-retention <days>::
+    The default retention period in days. Scheduled PRUNE tasks will automatically
+    delete backups with an expired retention period.
 
 == CLOUD OPTIONS
 
@@ -87,6 +98,12 @@ stores data in object storage.
     When using S3 or S3-compatible storage, use the legacy path-style URLs
     instead of virtual-hosted-style URLs. Some S3-compatible stores require
     this option.
+
+--cloud-retention-delete-versions::
+    Pruning expired backups will also delete old object versions. If this is
+    set, whenever a backup's retention period expires we will also deleted old
+    versions of the cloud objects. This applies only to backups in a
+    versioning-enabled object store. Versioning permissions are required.
 
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 

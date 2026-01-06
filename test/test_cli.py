@@ -5303,6 +5303,59 @@ class TestBackupServiceRepoAdd(CommandTest):
         body = json.loads(self.server.rest_params[0])
         self.assertEqual('refresh-token-value', body['cloud_credentials_refresh_token'])
 
+    def test_add_repository_with_worm(self):
+        """Test adding a repository with WORM compliance period"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/wormrepo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 'wormrepo',
+            '--plan', 'daily',
+            '--location', '/backup/archive',
+            '--worm', '365'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/wormrepo', self.server.trace)
+        self.assertIn('Added repository', self.str_output)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertEqual(365, body['worm'])
+
+    def test_add_repository_with_default_retention(self):
+        """Test adding a repository with default retention period"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/retentionrepo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 'retentionrepo',
+            '--plan', 'daily',
+            '--location', '/backup/archive',
+            '--default-retention', '30'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/retentionrepo', self.server.trace)
+        self.assertIn('Added repository', self.str_output)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertEqual(30, body['default_retention'])
+
+    def test_add_repository_with_cloud_retention_delete_versions(self):
+        """Test adding a cloud repository with retention delete versions enabled"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/deleteversionrepo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 'deleteversionrepo',
+            '--plan', 'daily',
+            '--location', 's3://mybucket/backup',
+            '--cloud-credentials-name', 'my-aws-creds',
+            '--cloud-staging-dir', '/tmp/staging',
+            '--cloud-retention-delete-versions'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/deleteversionrepo', self.server.trace)
+        self.assertIn('Added repository', self.str_output)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertTrue(body['cloud_retention_delete_versions'])
+
 
 class TestBackupServiceRepoArchive(CommandTest):
     """Test the backup-service repo-archive subcommand"""

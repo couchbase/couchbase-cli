@@ -7349,6 +7349,9 @@ class BackupServiceRepoAdd:
         group.add_argument('--location', metavar='<location>', help='The location to store the backups in',
                            required=True)
         group.add_argument('--bucket-name', metavar='<bucket_name>', help='The bucket to backup')
+        group.add_argument('--worm', type=int, metavar='<days>', help='The WORM compliance period in days')
+        group.add_argument('--default-retention', type=int, metavar='<days>',
+                           help='The default retention period in days')
 
         # the cloud arguments are given the own group so that the short help is a bit more readable
         cloud_group = repository_parser.add_argument_group('Backup repository cloud arguments')
@@ -7368,6 +7371,9 @@ class BackupServiceRepoAdd:
                                       'Use for object store compatible third party solutions')
         cloud_group.add_argument('--cloud-force-path-style', action='store_true',
                                  help='When using S3 or S3 compatible storage it will use the old path style.')
+        cloud_group.add_argument('--cloud-retention-delete-versions', action='store_true',
+                                 help='Pruning expired backups will also delete old object versions. (This applies to'
+                                 'backups in a versioning-enabled object store)')
 
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
@@ -7405,6 +7411,17 @@ class BackupServiceRepoAdd:
 
         if opts.cloud_force_path_style is not None:
             request_body["cloud_force_path_style"] = opts.cloud_force_path_style
+
+        if opts.worm is not None:
+            if opts.worm < 3 or opts.worm > 36525:
+                _exit_if_errors(['the provided WORM period must be in the [3, 36525] range'])
+            request_body["worm"] = opts.worm
+
+        if opts.default_retention is not None:
+            request_body["default_retention"] = opts.default_retention
+
+        if opts.cloud_retention_delete_versions is not None:
+            request_body["cloud_retention_delete_versions"] = opts.cloud_retention_delete_versions
 
         _, errors = self.rest.add_backup_active_repository(opts.id, request_body)
         _exit_if_errors(errors)
