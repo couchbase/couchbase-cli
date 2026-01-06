@@ -1,0 +1,190 @@
+= couchbase-cli-backup-service-repo-add(1)
+:description: Add a new backup service repository
+ifndef::doctype-manpage[:doctitle: backup-service repo-add]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-repo-add -
+endif::[]
+Add a new backup service repository
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] _repo-add_ [--id <id>]
+    [--plan <plan_name>] [--location <location>] [--bucket-name <bucket_name>]
+    [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
+    [--cloud-credentials-id <id>] [--cloud-credentials-key <key>]
+    [--cloud-credentials-refresh-token <token>] [--cloud-region <region>]
+    [--cloud-endpoint <endpoint>] [--cloud-force-path-style]
+
+== DESCRIPTION
+
+Adds a new active backup repository to the backup service. The repository
+will be created with the specified ID and will use the given plan as its base
+configuration. The plan defines the backup schedules and which services to
+back up. Backups will be stored at the specified location.
+
+This command also supports creating cloud backup repositories that store data
+directly in object storage such as S3, Azure, GCP or compatible stores.
+
+== OPTIONS
+
+--id <id>::
+    The unique identifier for the new repository. This argument is required.
+
+--plan <plan_name>::
+    The name of the plan to use as the base configuration for this repository.
+    The plan defines backup schedules and which services to include. This
+    argument is required.
+
+--location <location>::
+    The location where backups will be stored. This location should be
+    accessible by all backup nodes. This argument is required.
+
+--bucket-name <bucket_name>::
+    Optionally specify a single bucket to back up. If not provided, all
+    buckets will be included in the backup.
+
+== CLOUD OPTIONS
+
+The following options are used when creating a cloud backup repository that
+stores data in object storage.
+
+--cloud-credentials-name <name>::
+    The name of a stored cloud credential set to use for this repository.
+    If specified, you do not need to provide `--cloud-credentials-id` and
+    `--cloud-credentials-key`.
+
+--cloud-staging-dir <path>::
+    The path to a staging directory used temporarily during cloud backups.
+    This path must be accessible by all backup nodes and should have enough
+    space for roughly 10% of the dataset size. Required when using cloud
+    storage.
+
+--cloud-credentials-id <id>::
+    The ID used to authenticate with the object store.
+
+--cloud-credentials-key <key>::
+    The key used to authenticate with the object store.
+
+--cloud-credentials-refresh-token <token>::
+    A refresh token used to obtain new OAuth2 tokens when accessing remote
+    storage.
+
+--cloud-region <region>::
+    The region where the object store bucket is located (e.g., `us-east-1`).
+
+--cloud-endpoint <endpoint>::
+    Overrides the default endpoint used to communicate with the cloud provider.
+    Use this for third-party object store solutions.
+
+--cloud-force-path-style::
+    When using S3 or S3-compatible storage, use the legacy path-style URLs
+    instead of virtual-hosted-style URLs. Some S3-compatible stores require
+    this option.
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+=== Adding a basic repository
+
+To add a new backup repository with ID 'weekly-backup' using the '_weekly'
+plan and storing backups in '/backup/data', run the following command.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-add --id weekly-backup --plan _weekly --location /backup/data
+----
+
+In the command above we are adding a new repository with name `weekly-backup`
+that is using a base plan `_weekly`. The base plan defines the schedules of
+the tasks that the repository will run as well as what services it will backup.
+The location is where the backups will be stored. This location is equivalent
+to a cbbackupmgr archive. Also `cbbackupmgr` should *not* be run on the
+archives managed by the service directly.
+
+=== Adding a repository for a specific bucket
+
+If you want a repository that only backs up one bucket or want different backup
+schedules for each bucket, this can be achieved by using the `--bucket-name`
+argument to specify which bucket the repository should backup.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-add --id beer-backup --plan _daily --location /backup/beer \
+  --bucket-name beer-sample
+----
+
+=== Adding a cloud backup repository
+
+The service supports creating cloud backup repositories. These are repositories
+that backup directly to object store. Currently supported object stores include
+S3, Azure, GCP, and S3-compatible stores. To create a cloud repository you will
+need to supply some additional details, as illustrated in the example below.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-add --id cloud-backup --plan _daily --location s3://bucket/archive \
+  --cloud-staging-dir /backup/staging --cloud-credentials-id id \
+  --cloud-credentials-key key --cloud-region us-east-1
+----
+
+In the command above we can see that the archive supplied for cloud starts
+with the schema `s3://` followed by the bucket name, after which the path to
+the archive in S3 must be given. A *staging directory* must also be supplied.
+This is a location where cbbackupmgr will temporarily store data whilst doing
+cloud backups. This path must be available on all backup nodes and should have
+space for roughly 10% of the data set size as reported by the UI. In the command
+above we have also supplied the cloud credential ID, key and region. These are
+the details that will be used to communicate with S3.
+
+=== Using stored cloud credentials
+
+Credentials can be stored and reused in the backup service. If you already have
+the correct set of credentials stored you can use `--cloud-credentials-name`
+instead of providing the ID, key and region flags.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-add --id cloud-backup --plan _weekly --location s3://bucket/archive \
+  --cloud-staging-dir /backup/staging --cloud-credentials-name creds
+----
+
+=== Using S3-compatible storage
+
+For S3-compatible stores you can use the `--cloud-endpoint` argument to override
+the endpoint used to communicate with S3 and point it to your storage solution
+address. Some S3-compatible storages only support the old S3 path styles; to use
+those supply the `--cloud-force-path-style` argument.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-add --id minio-backup --plan _daily --location s3://bucket/backups \
+  --cloud-staging-dir /backup/staging --cloud-credentials-id id \
+  --cloud-credentials-key key --cloud-endpoint http://localhost:9000 \
+  --cloud-force-path-style
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1],
+man:couchbase-cli-backup-service-repo-get[1],
+man:couchbase-cli-backup-service-repo-list[1],
+man:couchbase-cli-backup-service-plan[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
+

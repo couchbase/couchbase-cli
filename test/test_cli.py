@@ -5073,6 +5073,237 @@ class TestBackupServiceRepoGet(CommandTest):
         self.assertIn('Bucket: my-bucket', self.str_output)
 
 
+class TestBackupServiceRepoAdd(CommandTest):
+    """Test the backup-service repo-add subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repo-add']
+        super(TestBackupServiceRepoAdd, self).setUp()
+
+    def test_missing_id(self):
+        """Test that the command fails if --id is not provided"""
+        self.system_exit_run(self.command + ['--plan', 'daily', '--location', '/backup'], self.server_args)
+        self.assertIn('--id', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_missing_plan(self):
+        """Test that the command fails if --plan is not provided"""
+        self.system_exit_run(self.command + ['--id', 'repo1', '--location', '/backup'], self.server_args)
+        self.assertIn('--plan', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_missing_location(self):
+        """Test that the command fails if --location is not provided"""
+        self.system_exit_run(self.command + ['--id', 'repo1', '--plan', 'daily'], self.server_args)
+        self.assertIn('--location', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_add_repository_success(self):
+        """Test that the command successfully adds a repository with required parameters"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/repo1'] = {}
+
+        self.no_error_run(self.command + ['--id', 'repo1', '--plan', 'daily', '--location', '/backup/archive'],
+                          self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/repo1', self.server.trace)
+        self.assertIn('Added repository', self.str_output)
+
+    def test_add_repository_with_bucket_name(self):
+        """Test that the command includes bucket_name in the request when provided"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/repo1'] = {}
+
+        self.no_error_run(self.command + ['--id', 'repo1', '--plan', 'daily', '--location', '/backup/archive',
+                                          '--bucket-name', 'my-bucket'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/repo1', self.server.trace)
+        self.assertIn('Added repository', self.str_output)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertEqual('daily', body['plan'])
+        self.assertEqual('/backup/archive', body['archive'])
+        self.assertEqual('my-bucket', body['bucket_name'])
+
+    def test_add_s3_repository_with_credential_name(self):
+        """Test adding an S3 repository using stored cloud credentials"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/s3repo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 's3repo',
+            '--plan', 'daily',
+            '--location', 's3://mybucket/backup',
+            '--cloud-credentials-name', 'my-aws-creds',
+            '--cloud-staging-dir', '/tmp/staging'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/s3repo', self.server.trace)
+        self.assertIn('Added repository', self.str_output)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertEqual('daily', body['plan'])
+        self.assertEqual('s3://mybucket/backup', body['archive'])
+        self.assertEqual('my-aws-creds', body['cloud_credential_name'])
+        self.assertEqual('/tmp/staging', body['cloud_staging_dir'])
+
+    def test_add_s3_repository_with_credentials_id_and_key(self):
+        """Test adding an S3 repository using explicit credentials ID and key"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/s3repo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 's3repo',
+            '--plan', 'daily',
+            '--location', 's3://mybucket/backup',
+            '--cloud-credentials-id', 'AKIAIOSFODNN7EXAMPLE',
+            '--cloud-credentials-key', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+            '--cloud-region', 'us-east-1',
+            '--cloud-staging-dir', '/tmp/staging'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/s3repo', self.server.trace)
+        self.assertIn('Added repository', self.str_output)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertEqual('daily', body['plan'])
+        self.assertEqual('s3://mybucket/backup', body['archive'])
+        self.assertEqual('AKIAIOSFODNN7EXAMPLE', body['cloud_credentials_id'])
+        self.assertEqual('wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY', body['cloud_credentials_key'])
+        self.assertEqual('us-east-1', body['cloud_region'])
+        self.assertEqual('/tmp/staging', body['cloud_staging_dir'])
+
+    def test_s3_repository_missing_staging_dir(self):
+        """Test that S3 repository creation fails when --cloud-staging-dir is not provided"""
+        self.system_exit_run(self.command + [
+            '--id', 's3repo',
+            '--plan', 'daily',
+            '--location', 's3://mybucket/backup',
+            '--cloud-credentials-name', 'my-aws-creds'
+        ], self.server_args)
+        self.assertIn('--cloud-staging-dir is required', self.str_output)
+
+    def test_s3_repository_missing_credentials(self):
+        """Test that S3 repository creation fails when no credentials are provided"""
+        self.system_exit_run(self.command + [
+            '--id', 's3repo',
+            '--plan', 'daily',
+            '--location', 's3://mybucket/backup',
+            '--cloud-staging-dir', '/tmp/staging'
+        ], self.server_args)
+        self.assertIn('must provide either --cloud-credentials-name or --cloud-credentials-key', self.str_output)
+
+    def test_s3_repository_conflicting_credentials(self):
+        """Test that S3 repository creation fails when both credential name and id/key are provided"""
+        self.system_exit_run(self.command + [
+            '--id', 's3repo',
+            '--plan', 'daily',
+            '--location', 's3://mybucket/backup',
+            '--cloud-credentials-name', 'my-aws-creds',
+            '--cloud-credentials-id', 'AKIAIOSFODNN7EXAMPLE',
+            '--cloud-staging-dir', '/tmp/staging'
+        ], self.server_args)
+        self.assertIn('must provide either --cloud-credentials-name or --cloud-credentials-key', self.str_output)
+
+    def test_s3_repository_missing_region_with_explicit_creds(self):
+        """Test that S3 repository creation fails when using explicit creds without region"""
+        self.system_exit_run(self.command + [
+            '--id', 's3repo',
+            '--plan', 'daily',
+            '--location', 's3://mybucket/backup',
+            '--cloud-credentials-id', 'AKIAIOSFODNN7EXAMPLE',
+            '--cloud-credentials-key', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+            '--cloud-staging-dir', '/tmp/staging'
+        ], self.server_args)
+        self.assertIn('--cloud-credentials-region is required', self.str_output)
+
+    def test_add_repository_with_cloud_endpoint(self):
+        """Test adding a repository with a custom cloud endpoint (S3-compatible storage)"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/miniorepo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 'miniorepo',
+            '--plan', 'daily',
+            '--location', 's3://mybucket/backup',
+            '--cloud-credentials-name', 'my-minio-creds',
+            '--cloud-staging-dir', '/tmp/staging',
+            '--cloud-endpoint', 'http://minio.local:9000'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/miniorepo', self.server.trace)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertEqual('http://minio.local:9000', body['cloud_endpoint'])
+
+    def test_add_repository_with_force_path_style(self):
+        """Test adding a repository with S3 path style enabled"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/pathstylerepo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 'pathstylerepo',
+            '--plan', 'daily',
+            '--location', 's3://mybucket/backup',
+            '--cloud-credentials-name', 'my-aws-creds',
+            '--cloud-staging-dir', '/tmp/staging',
+            '--cloud-force-path-style'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/pathstylerepo', self.server.trace)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertTrue(body['cloud_force_path_style'])
+
+    def test_add_azure_repository(self):
+        """Test adding an Azure Blob Storage repository"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/azurerepo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 'azurerepo',
+            '--plan', 'daily',
+            '--location', 'az://mycontainer/backup',
+            '--cloud-credentials-name', 'my-azure-creds',
+            '--cloud-staging-dir', '/tmp/staging'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/azurerepo', self.server.trace)
+        self.assertIn('Added repository', self.str_output)
+
+    def test_add_gcs_repository(self):
+        """Test adding a Google Cloud Storage repository"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/gcsrepo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 'gcsrepo',
+            '--plan', 'daily',
+            '--location', 'gs://mybucket/backup',
+            '--cloud-credentials-name', 'my-gcs-creds',
+            '--cloud-staging-dir', '/tmp/staging'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/gcsrepo', self.server.trace)
+        self.assertIn('Added repository', self.str_output)
+
+    def test_add_repository_with_refresh_token(self):
+        """Test adding a repository with OAuth2 refresh token"""
+        self.server_args['POST:/api/v1/cluster/self/repository/active/oauthrepo'] = {}
+
+        self.no_error_run(self.command + [
+            '--id', 'oauthrepo',
+            '--plan', 'daily',
+            '--location', 'gs://mybucket/backup',
+            '--cloud-credentials-id', 'oauth-client-id',
+            '--cloud-credentials-key', 'oauth-client-secret',
+            '--cloud-credentials-refresh-token', 'refresh-token-value',
+            '--cloud-region', 'us-central1',
+            '--cloud-staging-dir', '/tmp/staging'
+        ], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/oauthrepo', self.server.trace)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertEqual('refresh-token-value', body['cloud_credentials_refresh_token'])
+
+
 class TestBackupServiceSettings(CommandTest):
     """Test the backup-service settings subcommand"""
 

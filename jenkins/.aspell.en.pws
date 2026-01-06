@@ -90,6 +90,7 @@ FTS
 fts
 fullEviction
 gamesim
+GCP
 GCS
 gcs
 geolocation
@@ -142,6 +143,7 @@ nosql
 nruEviction
 ns
 num
+OAuth
 oauth
 oom
 opsys

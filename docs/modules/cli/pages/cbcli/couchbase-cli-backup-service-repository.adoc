@@ -158,8 +158,7 @@ In the command above we are adding a new repository with name `new-repository` t
 base profile `_weekly`. The base profile defines the schedules of the tasks that the
 repository will run as well as what services it will backup. Finally the backup archive is the
 location where the backups will stored. This location is equivalent to a cbbackupmgr
-archive. Two repository should *not* use the same archive. Also `cbbackupmgr` should *not*
-be run on the archives managed by the service directly.
+archive. Also `cbbackupmgr` should *not* be run on the archives managed by the service directly.
 
 If you want an repository that only backs up one bucket or want different backup schedules
 for each bucket this can be achieved by using the `--bucket-name` argument to specify
@@ -192,7 +191,7 @@ by the UI. In the command above we have also supplied the cloud credential ID, k
 region. This are the details that will be used to communicate with S3. Note that
 credentials can be stored and reused in the backup service so if you already have
 the correct set of credentials stored you can replace the id, key and region flags by
-`--cloud-credential-name` and give the name of the credential set you want to re-use.
+`--cloud-credentials-name` and give the name of the credential set you want to re-use.
 
 Finally, for S3 compatible stores you can use the `--cloud-endpoint` argument to override
 the endpoint use to communicate with S3 and point it to your storage solution address.

@@ -1,5 +1,6 @@
 """A Couchbase  CLI subcommand"""
 
+import argparse
 import dataclasses
 import getpass
 import inspect
@@ -6997,11 +6998,12 @@ class BackupService(Subcommand):
         self.repository_cmd = BackupServiceRepository(self.subparser)
         self.repo_list_cmd = BackupServiceRepoList(self.subparser)
         self.repo_get_cmd = BackupServiceRepoGet(self.subparser)
+        self.repo_add_cmd = BackupServiceRepoAdd(self.subparser)
         self.plan_cmd = BackupServicePlan(self.subparser)
         self.nodeThreads_cmd = BackupServiceNodeThreadsMap(self.subparser)
 
     def execute(self, opts):
-        subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'plan', 'node-threads']
+        subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'repo-add', 'plan', 'node-threads']
 
         if opts.sub_cmd is None or opts.sub_cmd not in subcommands:
             _exit_if_errors([f'<subcommand> must be one of {subcommands}'])
@@ -7014,6 +7016,8 @@ class BackupService(Subcommand):
             self.repo_list_cmd.execute(opts)
         elif opts.sub_cmd == 'repo-get':
             self.repo_get_cmd.execute(opts)
+        elif opts.sub_cmd == 'repo-add':
+            self.repo_add_cmd.execute(opts)
         elif opts.sub_cmd == 'plan':
             self.plan_cmd.execute(opts)
         elif opts.sub_cmd == 'node-threads':
@@ -7205,6 +7209,32 @@ def human_friendly_print_repositories(repositories_map):
                   f" {healthy!s:<7}| {repository['repo']}")
 
 
+def check_cloud_params(location: str, opts: argparse.Namespace) -> Optional[List[str]]:
+    """Checks that inside kwargs there is a valid set of parameters to add a cloud repository
+    Args:
+        location (str): The location to use for the repository.
+        opts (argparse.Namespace): The options dict containing the cloud params.
+    """
+    if not location.startswith('s3://') and not location.startswith('az://') and not location.startswith('gs://'):
+        return None
+
+    creds_name = opts.cloud_credentials_name
+    region = opts.cloud_region
+    creds_id = opts.cloud_credentials_id
+    creds_key = opts.cloud_credentials_key
+    staging_dir = opts.cloud_staging_dir
+
+    if (creds_name and (creds_id or creds_key)) or (not creds_name and not (creds_id or creds_key)):
+        return ['must provide either --cloud-credentials-name or --cloud-credentials-key and '
+                '--cloud-credentials-id']
+    if not staging_dir:
+        return ['--cloud-staging-dir is required']
+    if not creds_name and not region:
+        return ['--cloud-credentials-region is required']
+
+    return None
+
+
 class BackupServiceRepoList:
     """List the backup repositories.
 
@@ -7281,6 +7311,93 @@ class BackupServiceRepoGet:
     @staticmethod
     def get_description():
         return 'Retrieves a repository from the backup service'
+
+
+class BackupServiceRepoAdd:
+    """Adds a new active repository identified by a repository ID and that uses a plan as base.
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        repository_parser = subparser.add_parser('repo-add', help='Adds a new active repository', add_help=False,
+                                                 allow_abbrev=False)
+
+        group = repository_parser.add_argument_group('Backup service repository configuration')
+        group.add_argument('--id', metavar='<id>', help='The repository id', required=True)
+        group.add_argument('--plan', metavar='<plan_name>', help='The plan to use as base for the repository',
+                           required=True)
+        group.add_argument('--location', metavar='<location>', help='The location to store the backups in',
+                           required=True)
+        group.add_argument('--bucket-name', metavar='<bucket_name>', help='The bucket to backup')
+
+        # the cloud arguments are given the own group so that the short help is a bit more readable
+        cloud_group = repository_parser.add_argument_group('Backup repository cloud arguments')
+        cloud_group.add_argument('--cloud-credentials-name', metavar='<name>',
+                                 help='The stored clouds credential name to use for the new repository')
+        cloud_group.add_argument('--cloud-staging-dir', metavar='<path>', help='The path to the staging directory')
+        cloud_group.add_argument('--cloud-credentials-id', metavar='<id>',
+                                 help='The ID to use to communicate with the object store')
+        cloud_group.add_argument('--cloud-credentials-key', metavar='<key>',
+                                 help='The key to use to communicate with the object store')
+        cloud_group.add_argument('--cloud-credentials-refresh-token', metavar='<token>',
+                                 help='Used to refresh oauth2 tokens when accessing remote storage')
+        cloud_group.add_argument('--cloud-region', metavar='<region>',
+                                 help='The region for the object store')
+        cloud_group.add_argument('--cloud-endpoint', metavar='<endpoint>',
+                                 help='Overrides the default endpoint used to communicate with the cloud provider. '
+                                      'Use for object store compatible third party solutions')
+        cloud_group.add_argument('--cloud-force-path-style', action='store_true',
+                                 help='When using S3 or S3 compatible storage it will use the old path style.')
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service repo-add subcommand"""
+        _exit_if_errors(check_cloud_params(opts.location, opts))
+
+        request_body = {
+            "plan": opts.plan,
+            "archive": opts.location,
+        }
+
+        if opts.bucket_name is not None:
+            request_body["bucket_name"] = opts.bucket_name
+
+        if opts.cloud_credentials_name is not None:
+            request_body["cloud_credential_name"] = opts.cloud_credentials_name
+
+        if opts.cloud_credentials_id is not None:
+            request_body["cloud_credentials_id"] = opts.cloud_credentials_id
+
+        if opts.cloud_credentials_key is not None:
+            request_body["cloud_credentials_key"] = opts.cloud_credentials_key
+
+        if opts.cloud_credentials_refresh_token is not None:
+            request_body["cloud_credentials_refresh_token"] = opts.cloud_credentials_refresh_token
+
+        if opts.cloud_region is not None:
+            request_body["cloud_region"] = opts.cloud_region
+
+        if opts.cloud_endpoint is not None:
+            request_body["cloud_endpoint"] = opts.cloud_endpoint
+
+        if opts.cloud_staging_dir is not None:
+            request_body["cloud_staging_dir"] = opts.cloud_staging_dir
+
+        if opts.cloud_force_path_style is not None:
+            request_body["cloud_force_path_style"] = opts.cloud_force_path_style
+
+        _, errors = self.rest.add_backup_active_repository(opts.id, request_body)
+        _exit_if_errors(errors)
+        _success('Added repository')
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-backup-service-repo-add")
+
+    @staticmethod
+    def get_description():
+        return 'Adds a new active repository'
 
 
 class BackupServiceRepository:

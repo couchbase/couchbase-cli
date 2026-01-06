@@ -112,7 +112,8 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 == SEE ALSO
 
 man:couchbase-cli-backup-service[1],
-man:couchbase-cli-backup-service-repo-get[1]
+man:couchbase-cli-backup-service-repo-get[1],
+man:couchbase-cli-backup-service-repo-add[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]
 
