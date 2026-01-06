@@ -1,0 +1,90 @@
+= couchbase-cli-backup-service-repo-remove(1)
+:description: Remove a backup service repository
+ifndef::doctype-manpage[:doctitle: backup-service repo-remove]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-repo-remove -
+endif::[]
+Remove a backup service repository
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] _repo-remove_ [--id <id>]
+    [--state <state>] [--delete-data]
+
+== DESCRIPTION
+
+Removes an archived or imported backup repository from the backup service.
+Optionally, the underlying backup data can also be deleted using the
+`--delete-data` flag (only valid for archived repositories).
+
+Note that active repositories cannot be removed directly. To remove an active
+repository, it must first be archived. This can be done using the `repo-archive` command.
+
+== OPTIONS
+
+--id <id>::
+    The ID of the repository to remove. This argument is required.
+
+--state <state>::
+    The state of the repository to remove. Valid states are 'archived' or
+    'imported'. This argument is required. Note that active repositories
+    cannot be removed directly.
+
+--delete-data::
+    If specified, the underlying backup data will also be deleted. This flag
+    is only valid for archived repositories. Imported repositories cannot have
+    their data deleted.
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To remove an archived repository with ID 'old-backup' without deleting the
+underlying backup data, run the following command.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-remove --id old-backup --state archived
+----
+
+To remove an archived repository and also delete the underlying backup data,
+use the `--delete-data` flag.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-remove --id old-backup --state archived --delete-data
+----
+
+To remove an imported repository, specify `--state imported`. Note that
+the `--delete-data` flag cannot be used with imported repositories.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-remove --id imported-repo --state imported
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1],
+man:couchbase-cli-backup-service-repo-add[1],
+man:couchbase-cli-backup-service-repo-get[1],
+man:couchbase-cli-backup-service-repo-list[1],
+man:couchbase-cli-backup-service-repo-archive[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
+

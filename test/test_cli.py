@@ -5347,6 +5347,69 @@ class TestBackupServiceRepoArchive(CommandTest):
         self.assertEqual('weeklybackup_archived', body['id'])
 
 
+class TestBackupServiceRepoRemove(CommandTest):
+    """Test the backup-service repo-remove subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repo-remove']
+        super(TestBackupServiceRepoRemove, self).setUp()
+
+    def test_missing_id(self):
+        """Test that the command fails if --id is not provided"""
+        self.system_exit_run(self.command + ['--state', 'archived'], self.server_args)
+        self.assertIn('--id', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_missing_state(self):
+        """Test that the command fails if --state is not provided"""
+        self.system_exit_run(self.command + ['--id', 'repo1'], self.server_args)
+        self.assertIn('--state', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_invalid_state(self):
+        """Test that only 'archived' or 'imported' are valid state values"""
+        self.system_exit_run(self.command + ['--id', 'repo1', '--state', 'active'], self.server_args)
+        self.assertIn('invalid choice', self.str_error)
+
+    def test_remove_archived_repository_success(self):
+        """Test that the command successfully removes an archived repository"""
+        self.no_error_run(self.command + ['--id', 'archivedrepo', '--state', 'archived'], self.server_args)
+        self.assertIn('DELETE:/api/v1/cluster/self/repository/archived/archivedrepo', self.server.trace)
+        self.assertIn('Repository was removed', self.str_output)
+
+    def test_remove_imported_repository_success(self):
+        """Test that the command successfully removes an imported repository"""
+        self.no_error_run(self.command + ['--id', 'importedrepo', '--state', 'imported'], self.server_args)
+        self.assertIn('DELETE:/api/v1/cluster/self/repository/imported/importedrepo', self.server.trace)
+        self.assertIn('Repository was removed', self.str_output)
+
+    def test_remove_archived_with_delete_data(self):
+        """Test that --delete-data flag is passed correctly for archived repositories"""
+        self.no_error_run(self.command + ['--id', 'archivedrepo', '--state', 'archived', '--delete-data'],
+                          self.server_args)
+        self.assertIn('DELETE:/api/v1/cluster/self/repository/archived/archivedrepo', self.server.trace)
+        self.assertIn('remove_repository=True', self.server.queries)
+        self.assertIn('Repository was removed', self.str_output)
+
+    def test_cannot_delete_data_for_imported(self):
+        """Test that --delete-data fails for imported repositories"""
+        self.system_exit_run(self.command + ['--id', 'importedrepo', '--state', 'imported', '--delete-data'],
+                             self.server_args)
+        self.assertIn('cannot delete the data of an imported repository', self.str_output)
+
+    def test_remove_repository_without_delete_data(self):
+        """Test that remove_repository=False is passed when --delete-data is not specified"""
+        self.no_error_run(self.command + ['--id', 'repo1', '--state', 'archived'], self.server_args)
+        self.assertIn('remove_repository=False', self.server.queries)
+
+
 class TestBackupServiceSettings(CommandTest):
     """Test the backup-service settings subcommand"""
 

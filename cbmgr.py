@@ -7000,12 +7000,13 @@ class BackupService(Subcommand):
         self.repo_get_cmd = BackupServiceRepoGet(self.subparser)
         self.repo_add_cmd = BackupServiceRepoAdd(self.subparser)
         self.repo_archive_cmd = BackupServiceRepoArchive(self.subparser)
+        self.repo_remove_cmd = BackupServiceRepoRemove(self.subparser)
         self.plan_cmd = BackupServicePlan(self.subparser)
         self.nodeThreads_cmd = BackupServiceNodeThreadsMap(self.subparser)
 
     def execute(self, opts):
-        subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'repo-add', 'repo-archive', 'plan',
-                       'node-threads']
+        subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'repo-add', 'repo-archive', 'repo-remove',
+                       'plan', 'node-threads']
 
         if opts.sub_cmd is None or opts.sub_cmd not in subcommands:
             _exit_if_errors([f'<subcommand> must be one of {subcommands}'])
@@ -7022,6 +7023,8 @@ class BackupService(Subcommand):
             self.repo_add_cmd.execute(opts)
         elif opts.sub_cmd == 'repo-archive':
             self.repo_archive_cmd.execute(opts)
+        elif opts.sub_cmd == 'repo-remove':
+            self.repo_remove_cmd.execute(opts)
         elif opts.sub_cmd == 'plan':
             self.plan_cmd.execute(opts)
         elif opts.sub_cmd == 'node-threads':
@@ -7435,8 +7438,44 @@ class BackupServiceRepoArchive:
         return 'Archive a repository'
 
 
+class BackupServiceRepoRemove:
+    """Removes a backup repository
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        repository_parser = subparser.add_parser('repo-remove', help='Remove a backup repository', add_help=False,
+                                                 allow_abbrev=False)
+
+        group = repository_parser.add_argument_group('Backup service repository configuration')
+        group.add_argument('--id', metavar='<id>', help='The repository id', required=True)
+        group.add_argument('--state', metavar='<state>', choices=['archived', 'imported'],
+                           help='The repository state.', required=True)
+        group.add_argument('--delete-data', action='store_true',
+                           help='Used to delete the repository data of an archived repository')
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service repo-remove subcommand"""
+        if opts.delete_data and opts.state == 'imported':
+            _exit_if_errors(['cannot delete the data of an imported repository'])
+
+        _, errors = self.rest.delete_backup_repository(opts.id, opts.state, opts.delete_data)
+        _exit_if_errors(errors)
+        _success('Repository was removed')
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-backup-service-repo-remove")
+
+    @staticmethod
+    def get_description():
+        return 'Remove a repository'
+
+
 class BackupServiceRepository:
-    """This command manages backup services repositories.
+    """(Deprecated) This command manages backup services repositories.
 
     Things this command can do is:
     - List repositories
@@ -7496,6 +7535,9 @@ class BackupServiceRepository:
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
         """Run the backup-service repository subcommand"""
+        _deprecated("The 'backup-service repository' subcommand is deprecated. Please use the 'repo-add', "
+                    "'repo-list', 'repo-get', 'repo-remove' and 'repo-archive' subcommands instead")
+
         if opts.list:
             self.list_repositories(opts.state, opts.output == 'json')
         elif opts.get:

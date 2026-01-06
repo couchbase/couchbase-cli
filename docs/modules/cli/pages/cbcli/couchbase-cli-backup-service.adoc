@@ -28,9 +28,6 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 man:couchbase-cli-backup-service-settings[1]::
   Manage backup service configuration.
 
-man:couchbase-cli-backup-service-repository[1]::
-  Manage backup repositories.
-
 man:couchbase-cli-backup-service-plan[1]::
   Manage backup plans.
 
@@ -48,6 +45,9 @@ man:couchbase-cli-backup-service-repo-add[1]::
 
 man:couchbase-cli-backup-service-repo-archive[1]::
   Archive a backup service repository.
+
+man:couchbase-cli-backup-service-repo-remove[1]::
+  Remove a backup service repository.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

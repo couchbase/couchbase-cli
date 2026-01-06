@@ -23,6 +23,11 @@ usage: couchbase-cli backup-service repository (--list | --get | --archive | --a
 
 == DESCRIPTION
 
+DEPRECATED: This subcommand is deprecated and will be removed in future
+releases. Please use the man:couchbase-cli-backup-service-repo-add[1], man:couchbase-cli-backup-service-repo-get[1],
+man:couchbase-cli-backup-service-repo-list[1], man:couchbase-cli-backup-service-repo-remove[1] and
+man:couchbase-cli-backup-service-repo-archive[1] subcommands instead.
+
 Manage backup service repositories
 
 == ACTION OPTIONS
@@ -235,6 +240,11 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 
 == SEE ALSO
 
-man:couchbase-cli-backup-service[1]
+man:couchbase-cli-backup-service[1],
+man:couchbase-cli-backup-service-repo-add[1],
+man:couchbase-cli-backup-service-repo-get[1],
+man:couchbase-cli-backup-service-repo-remove[1],
+man:couchbase-cli-backup-service-repo-archive[1],
+man:couchbase-cli-backup-service-repo-list[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]

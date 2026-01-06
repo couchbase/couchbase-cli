@@ -185,6 +185,7 @@ man:couchbase-cli-backup-service[1],
 man:couchbase-cli-backup-service-repo-get[1],
 man:couchbase-cli-backup-service-repo-list[1],
 man:couchbase-cli-backup-service-repo-archive[1],
+man:couchbase-cli-backup-service-repo-remove[1],
 man:couchbase-cli-backup-service-plan[1]
 
 
