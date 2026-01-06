@@ -1,0 +1,85 @@
+= couchbase-cli-backup-service-repo-archive(1)
+:description: Archive a backup service repository
+ifndef::doctype-manpage[:doctitle: backup-service repo-archive]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-repo-archive -
+endif::[]
+Archive a backup service repository
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] _repo-archive_ [--id <id>]
+    [--new-id <new_id>]
+
+== DESCRIPTION
+
+Archives an active backup repository. When a repository is archived, it is
+moved from the active state to the archived state and is assigned a new ID.
+This action is not reversible. Archived repositories no longer run scheduled
+backup tasks but their data remains accessible for restore operations.
+
+This command is useful when you want to stop scheduled backups for a repository
+while keeping the backup data available.
+
+== OPTIONS
+
+--id <id>::
+    The ID of the active repository to archive. This argument is required.
+
+--new-id <new_id>::
+    The new ID to assign to the archived repository. This argument is required.
+    The new ID must be unique and cannot conflict with existing repository IDs.
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To archive an active repository with ID 'weekly-backup' and assign it a new
+ID of 'weekly-backup-archived', run the following command.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-archive --id weekly-backup --new-id weekly-backup-archived
+----
+
+After archiving, the repository will no longer run scheduled backup tasks.
+You can verify the repository has been archived using the `repo-get` command
+with the `--state archived` flag.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-get --id weekly-backup-archived --state archived
+
+ID: weekly-backup-archived
+State: archived
+Healthy: True
+Archive: /path/to/archive
+Repository: 179a36cc-2ad9-4360-a080-42ddc98e53c7
+plan: _daily_backups
+Creation time: 2025-12-19T14:15:02.29496Z
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1],
+man:couchbase-cli-backup-service-repo-add[1],
+man:couchbase-cli-backup-service-repo-get[1],
+man:couchbase-cli-backup-service-repo-list[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
+

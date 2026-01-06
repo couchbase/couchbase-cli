@@ -5304,6 +5304,49 @@ class TestBackupServiceRepoAdd(CommandTest):
         self.assertEqual('refresh-token-value', body['cloud_credentials_refresh_token'])
 
 
+class TestBackupServiceRepoArchive(CommandTest):
+    """Test the backup-service repo-archive subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repo-archive']
+        super(TestBackupServiceRepoArchive, self).setUp()
+
+    def test_missing_id(self):
+        """Test that the command fails if --id is not provided"""
+        self.system_exit_run(self.command + ['--new-id', 'archivedrepo'], self.server_args)
+        self.assertIn('--id', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_missing_new_id(self):
+        """Test that the command fails if --new-id is not provided"""
+        self.system_exit_run(self.command + ['--id', 'activerepo'], self.server_args)
+        self.assertIn('--new-id', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_archive_repository_success(self):
+        """Test that the command successfully archives a repository with both required parameters"""
+        self.no_error_run(self.command + ['--id', 'activerepo', '--new-id', 'archivedrepo'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/activerepo/archive', self.server.trace)
+        self.assertIn('Repository was archived', self.str_output)
+
+    def test_archive_repository_request_body(self):
+        """Test that the correct JSON body is sent in the archive request"""
+        self.no_error_run(self.command + ['--id', 'weeklybackup', '--new-id', 'weeklybackup_archived'],
+                          self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/weeklybackup/archive', self.server.trace)
+        # Verify JSON body contains expected parameters
+        self.assertEqual(1, len(self.server.rest_params))
+        body = json.loads(self.server.rest_params[0])
+        self.assertEqual('weeklybackup_archived', body['id'])
+
+
 class TestBackupServiceSettings(CommandTest):
     """Test the backup-service settings subcommand"""
 

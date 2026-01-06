@@ -6999,11 +6999,13 @@ class BackupService(Subcommand):
         self.repo_list_cmd = BackupServiceRepoList(self.subparser)
         self.repo_get_cmd = BackupServiceRepoGet(self.subparser)
         self.repo_add_cmd = BackupServiceRepoAdd(self.subparser)
+        self.repo_archive_cmd = BackupServiceRepoArchive(self.subparser)
         self.plan_cmd = BackupServicePlan(self.subparser)
         self.nodeThreads_cmd = BackupServiceNodeThreadsMap(self.subparser)
 
     def execute(self, opts):
-        subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'repo-add', 'plan', 'node-threads']
+        subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'repo-add', 'repo-archive', 'plan',
+                       'node-threads']
 
         if opts.sub_cmd is None or opts.sub_cmd not in subcommands:
             _exit_if_errors([f'<subcommand> must be one of {subcommands}'])
@@ -7018,6 +7020,8 @@ class BackupService(Subcommand):
             self.repo_get_cmd.execute(opts)
         elif opts.sub_cmd == 'repo-add':
             self.repo_add_cmd.execute(opts)
+        elif opts.sub_cmd == 'repo-archive':
+            self.repo_archive_cmd.execute(opts)
         elif opts.sub_cmd == 'plan':
             self.plan_cmd.execute(opts)
         elif opts.sub_cmd == 'node-threads':
@@ -7398,6 +7402,37 @@ class BackupServiceRepoAdd:
     @staticmethod
     def get_description():
         return 'Adds a new active repository'
+
+
+class BackupServiceRepoArchive:
+    """Archive a repository. The archived repository will have a new id.
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        repository_parser = subparser.add_parser('repo-archive', help='Archive a repository', add_help=False,
+                                                 allow_abbrev=False)
+
+        group = repository_parser.add_argument_group('Backup service repository configuration')
+        group.add_argument('--id', metavar='<id>', help='The repository id', required=True)
+        group.add_argument('--new-id', metavar='<id>', help='The new repository id', required=True)
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service repo-archive subcommand"""
+
+        _, errors = self.rest.archive_backup_repository(opts.id, opts.new_id)
+        _exit_if_errors(errors)
+        _success('Repository was archived')
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-backup-service-repo-archive")
+
+    @staticmethod
+    def get_description():
+        return 'Archive a repository'
 
 
 class BackupServiceRepository:
