@@ -1,0 +1,63 @@
+= couchbase-cli-backup-service-repo-resume(1)
+:description: Resume a backup service repository
+ifndef::doctype-manpage[:doctitle: backup-service repo-resume]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-repo-resume -
+endif::[]
+Resume a backup service repository
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] _repo-resume_ [--id <id>]
+
+== DESCRIPTION
+
+Resumes a paused backup repository. When a repository is resumed, all scheduled
+backup and merge tasks that were previously suspended will be reactivated. The
+repository will continue running backup operations according to its configured
+schedule.
+
+This command is used to restore normal backup operations for a repository that
+was previously paused.
+
+== OPTIONS
+
+--id <id>::
+    The ID of the repository to resume. This argument is required.
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To resume a paused repository with ID 'weekly-backup', run the following
+command.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-resume --id weekly-backup
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1],
+man:couchbase-cli-backup-service-repo-pause[1],
+man:couchbase-cli-backup-service-repo-get[1],
+man:couchbase-cli-backup-service-repo-list[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
+

@@ -7001,12 +7001,14 @@ class BackupService(Subcommand):
         self.repo_add_cmd = BackupServiceRepoAdd(self.subparser)
         self.repo_archive_cmd = BackupServiceRepoArchive(self.subparser)
         self.repo_remove_cmd = BackupServiceRepoRemove(self.subparser)
+        self.repo_pause_cmd = BackupServiceRepoPause(self.subparser)
+        self.repo_resume_cmd = BackupServiceRepoResume(self.subparser)
         self.plan_cmd = BackupServicePlan(self.subparser)
         self.nodeThreads_cmd = BackupServiceNodeThreadsMap(self.subparser)
 
     def execute(self, opts):
         subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'repo-add', 'repo-archive', 'repo-remove',
-                       'plan', 'node-threads']
+                       'repo-pause', 'repo-resume', 'plan', 'node-threads']
 
         if opts.sub_cmd is None or opts.sub_cmd not in subcommands:
             _exit_if_errors([f'<subcommand> must be one of {subcommands}'])
@@ -7025,6 +7027,10 @@ class BackupService(Subcommand):
             self.repo_archive_cmd.execute(opts)
         elif opts.sub_cmd == 'repo-remove':
             self.repo_remove_cmd.execute(opts)
+        elif opts.sub_cmd == 'repo-pause':
+            self.repo_pause_cmd.execute(opts)
+        elif opts.sub_cmd == 'repo-resume':
+            self.repo_resume_cmd.execute(opts)
         elif opts.sub_cmd == 'plan':
             self.plan_cmd.execute(opts)
         elif opts.sub_cmd == 'node-threads':
@@ -7472,6 +7478,64 @@ class BackupServiceRepoRemove:
     @staticmethod
     def get_description():
         return 'Remove a repository'
+
+
+class BackupServiceRepoPause:
+    """Pause a repository.
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        repository_parser = subparser.add_parser('repo-pause', help='Pause a repository', add_help=False,
+                                                 allow_abbrev=False)
+
+        repository_parser.add_argument('--id', metavar='<id>', help='The repository id', required=True)
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service repo-pause subcommand"""
+
+        _, errors = self.rest.pause_backup_repository(opts.id)
+        _exit_if_errors(errors)
+        _success('Repository was paused')
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-backup-service-repo-pause")
+
+    @staticmethod
+    def get_description():
+        return 'Pause a repository'
+
+
+class BackupServiceRepoResume:
+    """Resume a repository.
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        repository_parser = subparser.add_parser('repo-resume', help='Resume a repository', add_help=False,
+                                                 allow_abbrev=False)
+
+        repository_parser.add_argument('--id', metavar='<id>', help='The repository id', required=True)
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service repo-resume subcommand"""
+
+        _, errors = self.rest.resume_backup_repository(opts.id)
+        _exit_if_errors(errors)
+        _success('Repository was resumed')
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-backup-service-repo-resume")
+
+    @staticmethod
+    def get_description():
+        return 'Resume a repository'
 
 
 class BackupServiceRepository:

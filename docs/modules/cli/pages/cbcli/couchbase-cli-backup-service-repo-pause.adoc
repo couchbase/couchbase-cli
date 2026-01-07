@@ -1,0 +1,72 @@
+= couchbase-cli-backup-service-repo-pause(1)
+:description: Pause a backup service repository
+ifndef::doctype-manpage[:doctitle: backup-service repo-pause]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-repo-pause -
+endif::[]
+Pause a backup service repository
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] _repo-pause_ [--id <id>]
+
+== DESCRIPTION
+
+Pauses an active backup repository. When a repository is paused, all scheduled
+backup and merge tasks for that repository are temporarily suspended. The
+repository remains in the active state but no new backup operations will be
+started until the repository is resumed.
+
+This command is useful when you need to temporarily stop backup operations,
+for example during maintenance windows or when troubleshooting issues, without
+permanently archiving the repository.
+
+== OPTIONS
+
+--id <id>::
+    The ID of the active repository to pause. This argument is required.
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To pause an active repository with ID 'weekly-backup', run the following
+command.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-pause --id weekly-backup
+----
+
+To resume backup operations for the paused repository, use the `repo-resume`
+command.
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-resume --id weekly-backup
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1],
+man:couchbase-cli-backup-service-repo-resume[1],
+man:couchbase-cli-backup-service-repo-get[1],
+man:couchbase-cli-backup-service-repo-list[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
+

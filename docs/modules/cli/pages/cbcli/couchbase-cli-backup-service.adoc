@@ -49,6 +49,12 @@ man:couchbase-cli-backup-service-repo-archive[1]::
 man:couchbase-cli-backup-service-repo-remove[1]::
   Remove a backup service repository.
 
+man:couchbase-cli-backup-service-repo-pause[1]::
+  Pause a backup service repository.
+
+man:couchbase-cli-backup-service-repo-resume[1]::
+  Resume a backup service repository.
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]

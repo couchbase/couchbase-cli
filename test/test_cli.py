@@ -5410,6 +5410,60 @@ class TestBackupServiceRepoRemove(CommandTest):
         self.assertIn('remove_repository=False', self.server.queries)
 
 
+class TestBackupServiceRepoPause(CommandTest):
+    """Test the backup-service repo-pause subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repo-pause']
+        super(TestBackupServiceRepoPause, self).setUp()
+
+    def test_missing_id(self):
+        """Test that the command fails if --id is not provided"""
+        self.system_exit_run(self.command, self.server_args)
+        self.assertIn('--id', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_pause_repository_success(self):
+        """Test that the command successfully pauses a repository"""
+        self.no_error_run(self.command + ['--id', 'myrepo'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/myrepo/pause', self.server.trace)
+        self.assertIn('Repository was paused', self.str_output)
+
+
+class TestBackupServiceRepoResume(CommandTest):
+    """Test the backup-service repo-resume subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repo-resume']
+        super(TestBackupServiceRepoResume, self).setUp()
+
+    def test_missing_id(self):
+        """Test that the command fails if --id is not provided"""
+        self.system_exit_run(self.command, self.server_args)
+        self.assertIn('--id', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_resume_repository_success(self):
+        """Test that the command successfully resumes a repository"""
+        self.no_error_run(self.command + ['--id', 'myrepo'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/myrepo/resume', self.server.trace)
+        self.assertIn('Repository was resumed', self.str_output)
+
+
 class TestBackupServiceSettings(CommandTest):
     """Test the backup-service settings subcommand"""
 

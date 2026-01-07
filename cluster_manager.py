@@ -2651,7 +2651,7 @@ class ClusterManager(object):
         """Archive an active repository
 
         Args:
-            repository_id (str): The repository id to be retrieved
+            repository_id (str): The repository id
             new_id (str): The id that will be given to the archived repository
             cluster (str): Only 'self' is supported.
         """
@@ -2664,6 +2664,36 @@ class ClusterManager(object):
 
         return self._post_json(f'{hosts[0]}/api/v1/cluster/{cluster}/repository/active/{repository_id}/archive',
                                {'id': new_id})
+
+    def pause_backup_repository(self, repository_id):
+        """Pause an active repository
+
+        Args:
+            repository_id (str): The repository id
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._post_json(f'{hosts[0]}/api/v1/cluster/self/repository/active/{repository_id}/pause', None)
+
+    def resume_backup_repository(self, repository_id):
+        """Resume an active repository
+
+        Args:
+            repository_id (str): The repository id
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._post_json(f'{hosts[0]}/api/v1/cluster/self/repository/active/{repository_id}/resume', None)
 
     def add_backup_active_repository(self, repository_id: str, body: Dict[str, Any], cluster: str = 'self'):
         """Archive an active repository
