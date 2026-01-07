@@ -16,7 +16,7 @@ _couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
     [--password <password>] [--client-cert <path>]
     [--client-cert-password <password>] [--client-key <path>]
     [--client-key-password <password>] _repo-remove_ [--id <id>]
-    [--state <state>] [--delete-data]
+    [--state <state>] [--delete-data] [--cloud-versions]
 
 == DESCRIPTION
 
@@ -41,6 +41,13 @@ repository, it must first be archived. This can be done using the `repo-archive`
     If specified, the underlying backup data will also be deleted. This flag
     is only valid for archived repositories. Imported repositories cannot have
     their data deleted.
+
+--cloud-versions::
+    If specified, all versions of cloud repository objects will be deleted. The
+    --delete-data flag must also be provided. Versioning permissions are also
+    required. In case versioning permissions have been disabled for the repo, they
+    can be re-enabled using the man:couchbase-cli-backup-service-repo-cloud-config[1]
+    command.
 
 include::{partialsdir}/cbcli/part-common-options.adoc[]
 
@@ -84,7 +91,8 @@ man:couchbase-cli-backup-service[1],
 man:couchbase-cli-backup-service-repo-add[1],
 man:couchbase-cli-backup-service-repo-get[1],
 man:couchbase-cli-backup-service-repo-list[1],
-man:couchbase-cli-backup-service-repo-archive[1]
+man:couchbase-cli-backup-service-repo-archive[1],
+man:couchbase-cli-backup-service-repo-cloud-config[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]
 

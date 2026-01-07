@@ -2785,13 +2785,12 @@ class ClusterManager(object):
 
         return self._delete(f'{hosts[0]}/api/v1/plan/{name}', None)
 
-    def delete_backup_repository(self, repository_id: str, state: str, delete_repo: bool, cluster: str = 'self'):
+    def delete_backup_repository(self, repository_id: str, state: str, delete_repo: bool, cloud_versions: bool):
         """Delete a backup repository
         Args:
             repository_id (str): The id to be deleted.
             state (str): The state in which the instance to be deleted is.
             delete_repo (bool): Whether or not to delete the backup Repository.
-            cluster (str): Only 'self' is supported.
         """
         hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
         if errors:
@@ -2799,7 +2798,8 @@ class ClusterManager(object):
 
         if not hosts:
             raise ServiceNotAvailableException(BACKUP_SERVICE)
-        url = f'{hosts[0]}/api/v1/cluster/{cluster}/repository/{state}/{repository_id}?remove_repository={delete_repo!s}'
+        query_params = f'remove_repository={delete_repo!s}&cloud_versions={cloud_versions!s}'
+        url = f'{hosts[0]}/api/v1/cluster/self/repository/{state}/{repository_id}?{query_params}'
         return self._delete(url, None)
 
     def add_backup_plan(self, name: str, plan: Dict[str, Any]):

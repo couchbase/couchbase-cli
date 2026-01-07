@@ -5448,7 +5448,7 @@ class TestBackupServiceRepoRemove(CommandTest):
         self.no_error_run(self.command + ['--id', 'archivedrepo', '--state', 'archived', '--delete-data'],
                           self.server_args)
         self.assertIn('DELETE:/api/v1/cluster/self/repository/archived/archivedrepo', self.server.trace)
-        self.assertIn('remove_repository=True', self.server.queries)
+        self.assertIn('remove_repository=True', self.server.queries[0])
         self.assertIn('Repository was removed', self.str_output)
 
     def test_cannot_delete_data_for_imported(self):
@@ -5460,7 +5460,27 @@ class TestBackupServiceRepoRemove(CommandTest):
     def test_remove_repository_without_delete_data(self):
         """Test that remove_repository=False is passed when --delete-data is not specified"""
         self.no_error_run(self.command + ['--id', 'repo1', '--state', 'archived'], self.server_args)
-        self.assertIn('remove_repository=False', self.server.queries)
+        self.assertIn('remove_repository=False', self.server.queries[0])
+
+    def test_cloud_versions_without_delete_data_fails(self):
+        """Test that --cloud-versions fails without --delete-data"""
+        self.system_exit_run(self.command + ['--id', 'repo1', '--state', 'archived', '--cloud-versions'],
+                             self.server_args)
+        self.assertIn('to delete old object versions, the repository data must also be deleted', self.str_output)
+
+    def test_cloud_versions_with_delete_data_success(self):
+        """Test that --cloud-versions with --delete-data succeeds"""
+        self.no_error_run(self.command + ['--id', 'archivedrepo', '--state', 'archived', '--delete-data',
+                                          '--cloud-versions'], self.server_args)
+        self.assertIn('DELETE:/api/v1/cluster/self/repository/archived/archivedrepo', self.server.trace)
+        self.assertIn('remove_repository=True', self.server.queries[0])
+        self.assertIn('cloud_versions=True', self.server.queries[0])
+        self.assertIn('Repository was removed', self.str_output)
+
+    def test_cloud_versions_false_when_not_specified(self):
+        """Test that cloud_versions=False is passed when --cloud-versions is not specified"""
+        self.no_error_run(self.command + ['--id', 'repo1', '--state', 'archived', '--delete-data'], self.server_args)
+        self.assertIn('cloud_versions=False', self.server.queries[0])
 
 
 class TestBackupServiceRepoPause(CommandTest):
@@ -5934,7 +5954,7 @@ class TestBackupServiceRepository(CommandTest):
         self.no_error_run(self.command + ['--remove', '--id', 'r', '--state', 'archived', '--remove-data'],
                           self.server_args)
         self.assertIn('DELETE:/api/v1/cluster/self/repository/archived/r', self.server.trace)
-        self.assertIn('remove_repository=True', self.server.queries)
+        self.assertIn('remove_repository=True', self.server.queries[0])
 
 
 class TestBackupServicePlan(CommandTest):

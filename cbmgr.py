@@ -7483,6 +7483,8 @@ class BackupServiceRepoRemove:
                            help='The repository state.', required=True)
         group.add_argument('--delete-data', action='store_true',
                            help='Used to delete the repository data of an archived repository')
+        group.add_argument('--cloud-versions', action='store_true',
+                           help='Delete all versions of cloud repository objects')
 
     @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
     def execute(self, opts):
@@ -7490,7 +7492,10 @@ class BackupServiceRepoRemove:
         if opts.delete_data and opts.state == 'imported':
             _exit_if_errors(['cannot delete the data of an imported repository'])
 
-        _, errors = self.rest.delete_backup_repository(opts.id, opts.state, opts.delete_data)
+        if opts.cloud_versions and not opts.delete_data:
+            _exit_if_errors(['to delete old object versions, the repository data must also be deleted'])
+
+        _, errors = self.rest.delete_backup_repository(opts.id, opts.state, opts.delete_data, opts.cloud_versions)
         _exit_if_errors(errors)
         _success('Repository was removed')
 
@@ -7743,7 +7748,7 @@ class BackupServiceRepository:
         if delete_repo and state == 'imported':
             _exit_if_errors(['cannot delete the repository for an imported repository'])
 
-        _, errors = self.rest.delete_backup_repository(repository_id, state, delete_repo)
+        _, errors = self.rest.delete_backup_repository(repository_id, state, delete_repo, False)
         _exit_if_errors(errors)
         _success('Repository was deleted')
 

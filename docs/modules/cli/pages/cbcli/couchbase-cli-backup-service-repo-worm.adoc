@@ -28,6 +28,9 @@ This command allows you to either set a WORM compliance period (in days) or
 disable WORM for a repository once its validity period has expired. Only paused
 repositories can have their WORM configuration modified.
 
+Object versioning needs to be enabled. In case it has been disabled, it can be
+re-enabled using the man:couchbase-cli-backup-service-repo-cloud-config[1] command.
+
 == OPTIONS
 
 --id <id>::
@@ -85,6 +88,7 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 == SEE ALSO
 
 man:couchbase-cli-backup-service[1],
+man:couchbase-cli-backup-service-repo-cloud-config[1],
 man:couchbase-cli-backup-service-repo-list[1],
 man:couchbase-cli-backup-service-repo-get[1],
 man:couchbase-cli-backup-service-repo-add[1],
