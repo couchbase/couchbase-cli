@@ -5464,6 +5464,77 @@ class TestBackupServiceRepoResume(CommandTest):
         self.assertIn('Repository was resumed', self.str_output)
 
 
+class TestBackupServiceRepoWORM(CommandTest):
+    """Test the backup-service repo-worm subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repo-worm']
+        super(TestBackupServiceRepoWORM, self).setUp()
+
+    def test_missing_id(self):
+        """Test that the command fails if --id is not provided"""
+        self.system_exit_run(self.command + ['--period', '30'], self.server_args)
+        self.assertIn('--id', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_missing_period_or_disable(self):
+        """Test that the command fails if neither --period nor --disable is provided"""
+        self.system_exit_run(self.command + ['--id', 'myrepo'], self.server_args)
+        self.assertIn('--period', self.str_error)
+        self.assertIn('--disable', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_period_and_disable_mutually_exclusive(self):
+        """Test that the command fails if both --period and --disable are provided"""
+        self.system_exit_run(self.command + ['--id', 'myrepo', '--period', '30', '--disable'], self.server_args)
+        self.assertIn('not allowed with argument', self.str_error)
+
+    def test_period_below_minimum(self):
+        """Test that the command fails if --period is less than 3"""
+        self.system_exit_run(self.command + ['--id', 'myrepo', '--period', '2'], self.server_args)
+        self.assertIn('the provided period must be in the [3, 36525] range', self.str_output)
+
+    def test_period_above_maximum(self):
+        """Test that the command fails if --period is greater than 36525"""
+        self.system_exit_run(self.command + ['--id', 'myrepo', '--period', '36526'], self.server_args)
+        self.assertIn('the provided period must be in the [3, 36525] range', self.str_output)
+
+    def test_set_worm_period_success(self):
+        """Test that the command successfully sets WORM period for a repository"""
+        self.no_error_run(self.command + ['--id', 'myrepo', '--period', '30'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/myrepo/worm', self.server.trace)
+        self.rest_parameter_match([json.dumps({'disable': False, 'period': 30}, sort_keys=True)])
+        self.assertIn('Repository WORM config was set', self.str_output)
+
+    def test_set_worm_period_minimum(self):
+        """Test that the command accepts the minimum period of 3 days"""
+        self.no_error_run(self.command + ['--id', 'myrepo', '--period', '3'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/myrepo/worm', self.server.trace)
+        self.rest_parameter_match([json.dumps({'disable': False, 'period': 3}, sort_keys=True)])
+        self.assertIn('Repository WORM config was set', self.str_output)
+
+    def test_set_worm_period_maximum(self):
+        """Test that the command accepts the maximum period of 36525 days"""
+        self.no_error_run(self.command + ['--id', 'myrepo', '--period', '36525'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/myrepo/worm', self.server.trace)
+        self.rest_parameter_match([json.dumps({'disable': False, 'period': 36525}, sort_keys=True)])
+        self.assertIn('Repository WORM config was set', self.str_output)
+
+    def test_disable_worm_success(self):
+        """Test that the command successfully disables WORM for a repository"""
+        self.no_error_run(self.command + ['--id', 'myrepo', '--disable'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/myrepo/worm', self.server.trace)
+        self.rest_parameter_match([json.dumps({'disable': True}, sort_keys=True)])
+        self.assertIn('Repository WORM config was set', self.str_output)
+
+
 class TestBackupServiceSettings(CommandTest):
     """Test the backup-service settings subcommand"""
 

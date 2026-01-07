@@ -55,6 +55,9 @@ man:couchbase-cli-backup-service-repo-pause[1]::
 man:couchbase-cli-backup-service-repo-resume[1]::
   Resume a backup service repository.
 
+man:couchbase-cli-backup-service-repo-worm[1]::
+  Configure WORM for a backup service repository.
+
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
 include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]

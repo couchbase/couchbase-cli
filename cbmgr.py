@@ -7003,12 +7003,13 @@ class BackupService(Subcommand):
         self.repo_remove_cmd = BackupServiceRepoRemove(self.subparser)
         self.repo_pause_cmd = BackupServiceRepoPause(self.subparser)
         self.repo_resume_cmd = BackupServiceRepoResume(self.subparser)
+        self.repo_worm_cmd = BackupServiceRepoWORM(self.subparser)
         self.plan_cmd = BackupServicePlan(self.subparser)
         self.nodeThreads_cmd = BackupServiceNodeThreadsMap(self.subparser)
 
     def execute(self, opts):
         subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'repo-add', 'repo-archive', 'repo-remove',
-                       'repo-pause', 'repo-resume', 'plan', 'node-threads']
+                       'repo-pause', 'repo-resume', 'repo-worm', 'plan', 'node-threads']
 
         if opts.sub_cmd is None or opts.sub_cmd not in subcommands:
             _exit_if_errors([f'<subcommand> must be one of {subcommands}'])
@@ -7031,6 +7032,8 @@ class BackupService(Subcommand):
             self.repo_pause_cmd.execute(opts)
         elif opts.sub_cmd == 'repo-resume':
             self.repo_resume_cmd.execute(opts)
+        elif opts.sub_cmd == 'repo-worm':
+            self.repo_worm_cmd.execute(opts)
         elif opts.sub_cmd == 'plan':
             self.plan_cmd.execute(opts)
         elif opts.sub_cmd == 'node-threads':
@@ -7536,6 +7539,44 @@ class BackupServiceRepoResume:
     @staticmethod
     def get_description():
         return 'Resume a repository'
+
+
+class BackupServiceRepoWORM:
+    """Set WORM for a repository.
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        repository_parser = subparser.add_parser('repo-worm', help='Set WORM for a repository', add_help=False,
+                                                 allow_abbrev=False)
+
+        repository_parser.add_argument('--id', metavar='<id>', help='The repository id', required=True)
+
+        action_group = repository_parser.add_mutually_exclusive_group(required=True)
+        action_group.add_argument('--period', type=int, metavar='<days>',
+                                  help='The WORM compliance period in days [3, 36525]')
+        action_group.add_argument('--disable', action='store_true',
+                                  help='Disable WORM once its validity period has expired')
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service repo-worm subcommand"""
+
+        if opts.period is not None and (opts.period < 3 or opts.period > 36525):
+            _exit_if_errors(['the provided period must be in the [3, 36525] range'])
+
+        _, errors = self.rest.set_worm_for_backup_repo(opts.id, opts.period, opts.disable)
+        _exit_if_errors(errors)
+        _success('Repository WORM config was set')
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-backup-service-repo-worm")
+
+    @staticmethod
+    def get_description():
+        return 'Set WORM for a repository'
 
 
 class BackupServiceRepository:

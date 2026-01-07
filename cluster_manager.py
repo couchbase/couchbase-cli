@@ -2695,11 +2695,35 @@ class ClusterManager(object):
 
         return self._post_json(f'{hosts[0]}/api/v1/cluster/self/repository/active/{repository_id}/resume', None)
 
-    def add_backup_active_repository(self, repository_id: str, body: Dict[str, Any], cluster: str = 'self'):
-        """Archive an active repository
+    def set_worm_for_backup_repo(self, repository_id: str, period: Optional[int], disable: bool):
+        """Set WORM for a repository
 
         Args:
-            repository_id (str): The id to be given to the new repository.
+            repository_id (str): The repository id.
+            period (int | None): The WORM compliance period.
+            disable (bool): Whether to disable WORM for the repository.
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        body: Dict[str, Any] = {
+            "disable": disable
+        }
+
+        if period is not None:
+            body["period"] = period
+
+        return self._post_json(f'{hosts[0]}/api/v1/cluster/self/repository/active/{repository_id}/worm', body)
+
+    def add_backup_active_repository(self, repository_id: str, body: Dict[str, Any], cluster: str = 'self'):
+        """Add an active repository
+
+        Args:
+            repository_id (str): The repository id.
             body (dict): The add active repository request.
             cluster (str): Only 'self' is supported.
         """

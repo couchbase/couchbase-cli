@@ -11,6 +11,7 @@
  ** xref:cli:cbcli/couchbase-cli-backup-service-repo-pause.adoc[backup-service repo-pause]
  ** xref:cli:cbcli/couchbase-cli-backup-service-repo-remove.adoc[backup-service repo-remove]
  ** xref:cli:cbcli/couchbase-cli-backup-service-repo-resume.adoc[backup-service repo-resume]
+ ** xref:cli:cbcli/couchbase-cli-backup-service-repo-worm.adoc[backup-service repo-worm]
  ** xref:cli:cbcli/couchbase-cli-backup-service-repository.adoc[backup-service repository]
  ** xref:cli:cbcli/couchbase-cli-backup-service-settings.adoc[backup-service settings]
  ** xref:cli:cbcli/couchbase-cli-bucket-compact.adoc[bucket-compact]
