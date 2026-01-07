@@ -5535,6 +5535,51 @@ class TestBackupServiceRepoWORM(CommandTest):
         self.assertIn('Repository WORM config was set', self.str_output)
 
 
+class TestBackupServiceRepoCloudConfig(CommandTest):
+    """Test the backup-service repo-cloud-config subcommand"""
+
+    def setUp(self):
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True,
+                            '/pools/default/nodeServices': {'nodesExt': [{
+                                'hostname': host,
+                                'services': {
+                                    'backupAPI': port,
+                                },
+                            }]}}
+        self.command = ['couchbase-cli', 'backup-service'] + cluster_connect_args + ['repo-cloud-config']
+        super(TestBackupServiceRepoCloudConfig, self).setUp()
+
+    def test_missing_id(self):
+        """Test that the command fails if --id is not provided"""
+        self.system_exit_run(self.command + ['--retention-delete-versions', '1'], self.server_args)
+        self.assertIn('--id', self.str_error)
+        self.assertIn('required', self.str_error)
+
+    def test_invalid_retention_delete_versions_value(self):
+        """Test that --retention-delete-versions only accepts 0 or 1"""
+        self.system_exit_run(self.command + ['--id', 'myrepo', '--retention-delete-versions', 'yes'], self.server_args)
+        self.assertIn('invalid choice', self.str_error)
+
+    def test_set_retention_delete_versions_enable(self):
+        """Test that the command successfully enables retention-delete-versions for a repository"""
+        self.no_error_run(self.command + ['--id', 'myrepo', '--retention-delete-versions', '1'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/myrepo/cloudConfig', self.server.trace)
+        self.rest_parameter_match([json.dumps({'retention_delete_versions': True}, sort_keys=True)])
+        self.assertIn('Repository cloud config was modified successfully', self.str_output)
+
+    def test_set_retention_delete_versions_disable(self):
+        """Test that the command successfully disables retention-delete-versions for a repository"""
+        self.no_error_run(self.command + ['--id', 'myrepo', '--retention-delete-versions', '0'], self.server_args)
+        self.assertIn('POST:/api/v1/cluster/self/repository/active/myrepo/cloudConfig', self.server.trace)
+        self.rest_parameter_match([json.dumps({'retention_delete_versions': False}, sort_keys=True)])
+        self.assertIn('Repository cloud config was modified successfully', self.str_output)
+
+    def test_no_cloud_options_provided(self):
+        """Test that the command fails if no cloud options are provided"""
+        self.system_exit_run(self.command + ['--id', 'myrepo'], self.server_args)
+        self.assertIn('At least one cloud argument is required', self.str_output)
+
+
 class TestBackupServiceSettings(CommandTest):
     """Test the backup-service settings subcommand"""
 

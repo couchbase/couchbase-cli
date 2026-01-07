@@ -2719,6 +2719,22 @@ class ClusterManager(object):
 
         return self._post_json(f'{hosts[0]}/api/v1/cluster/self/repository/active/{repository_id}/worm', body)
 
+    def modify_repository_cloud_config(self, repository_id: str, body: Dict[str, Any]):
+        """Modify repository cloud config
+
+        Args:
+            repository_id (str): The repository id
+            body (dict): The request body
+        """
+        hosts, errors = self.get_hostnames_for_service(BACKUP_SERVICE)
+        if errors:
+            return None, errors
+
+        if not hosts:
+            raise ServiceNotAvailableException(BACKUP_SERVICE)
+
+        return self._post_json(f'{hosts[0]}/api/v1/cluster/self/repository/active/{repository_id}/cloudConfig', body)
+
     def add_backup_active_repository(self, repository_id: str, body: Dict[str, Any], cluster: str = 'self'):
         """Add an active repository
 

@@ -7004,12 +7004,13 @@ class BackupService(Subcommand):
         self.repo_pause_cmd = BackupServiceRepoPause(self.subparser)
         self.repo_resume_cmd = BackupServiceRepoResume(self.subparser)
         self.repo_worm_cmd = BackupServiceRepoWORM(self.subparser)
+        self.repo_cloud_config_cmd = BackupServiceRepoCloudConfig(self.subparser)
         self.plan_cmd = BackupServicePlan(self.subparser)
         self.nodeThreads_cmd = BackupServiceNodeThreadsMap(self.subparser)
 
     def execute(self, opts):
         subcommands = ['settings', 'repository', 'repo-list', 'repo-get', 'repo-add', 'repo-archive', 'repo-remove',
-                       'repo-pause', 'repo-resume', 'repo-worm', 'plan', 'node-threads']
+                       'repo-pause', 'repo-resume', 'repo-worm', 'repo-cloud-config', 'plan', 'node-threads']
 
         if opts.sub_cmd is None or opts.sub_cmd not in subcommands:
             _exit_if_errors([f'<subcommand> must be one of {subcommands}'])
@@ -7034,6 +7035,8 @@ class BackupService(Subcommand):
             self.repo_resume_cmd.execute(opts)
         elif opts.sub_cmd == 'repo-worm':
             self.repo_worm_cmd.execute(opts)
+        elif opts.sub_cmd == 'repo-cloud-config':
+            self.repo_cloud_config_cmd.execute(opts)
         elif opts.sub_cmd == 'plan':
             self.plan_cmd.execute(opts)
         elif opts.sub_cmd == 'node-threads':
@@ -7577,6 +7580,48 @@ class BackupServiceRepoWORM:
     @staticmethod
     def get_description():
         return 'Set WORM for a repository'
+
+
+class BackupServiceRepoCloudConfig:
+    """Modify the cloud config for a repository.
+    """
+
+    def __init__(self, subparser):
+        """setup the parser"""
+        self.rest = None
+        repository_parser = subparser.add_parser('repo-cloud-config', help='Modify the cloud config for a repository',
+                                                 add_help=False, allow_abbrev=False)
+
+        repository_parser.add_argument('--id', metavar='<id>', help='The repository id', required=True)
+
+        cloud_group = repository_parser.add_argument_group('Backup repository cloud arguments')
+        cloud_group.add_argument('--retention-delete-versions', metavar="<0|1>", choices=["0", "1"],
+                                 help='Enable or disable deleting old object versions when pruning backups with '
+                                 'expired retention period')
+
+    @rest_initialiser(version_check=True, enterprise_check=True, cluster_init_check=True)
+    def execute(self, opts):
+        """Run the backup-service repo-cloud-config subcommand"""
+
+        body = {}
+
+        if opts.retention_delete_versions is not None:
+            body["retention_delete_versions"] = opts.retention_delete_versions == "1"
+
+        if body == {}:
+            _exit_if_errors(['At least one cloud argument is required'])
+
+        _, errors = self.rest.modify_repository_cloud_config(opts.id, body)
+        _exit_if_errors(errors)
+        _success('Repository cloud config was modified successfully')
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-backup-service-repo-cloud-config")
+
+    @staticmethod
+    def get_description():
+        return 'Modify the cloud config for a repository'
 
 
 class BackupServiceRepository:

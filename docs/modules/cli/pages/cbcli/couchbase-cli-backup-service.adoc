@@ -46,6 +46,9 @@ man:couchbase-cli-backup-service-repo-add[1]::
 man:couchbase-cli-backup-service-repo-archive[1]::
   Archive a backup service repository.
 
+man:couchbase-cli-backup-service-repo-cloud-config[1]::
+  Modify cloud configuration for a backup service repository.
+
 man:couchbase-cli-backup-service-repo-remove[1]::
   Remove a backup service repository.
 

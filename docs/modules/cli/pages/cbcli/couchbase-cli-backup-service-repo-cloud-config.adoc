@@ -1,0 +1,80 @@
+= couchbase-cli-backup-service-repo-cloud-config(1)
+:description: Modify the cloud config for a backup service repository
+ifndef::doctype-manpage[:doctitle: backup-service repo-cloud-config]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-backup-service-repo-cloud-config -
+endif::[]
+Modify the cloud config for a backup service repository
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli backup-service_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] _repo-cloud-config_ [--id <id>]
+    [--retention-delete-versions <0|1>]
+
+== DESCRIPTION
+
+Modifies the cloud configuration for a backup service repository. This command
+allows you to control cloud versioning behavior and retention settings for
+repositories stored in cloud object storage.
+
+== OPTIONS
+
+--id <id>::
+    The repository ID. This argument is required.
+
+--retention-delete-versions <0|1>::
+    Enable or disable deleting old object versions when pruning backups with
+    expired retention period. Set to `1` to enable deletion of old versions,
+    or `0` to disable.
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To enable deleting old object versions when pruning backups for a repository
+named 'cloud-backup', run the following command:
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-cloud-config --id cloud-backup --retention-delete-versions 1
+----
+
+If successful, the following output will be displayed:
+
+----
+Repository cloud config was modified successfully
+----
+
+To disable deleting old object versions when pruning backups for the same
+repository:
+
+----
+$ couchbase-cli backup-service -c 127.0.0.1:8091 -u Administrator -p password \
+  repo-cloud-config --id cloud-backup --retention-delete-versions 0
+----
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-backup-service[1],
+man:couchbase-cli-backup-service-repo-list[1],
+man:couchbase-cli-backup-service-repo-get[1],
+man:couchbase-cli-backup-service-repo-add[1],
+man:couchbase-cli-backup-service-repo-worm[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
+

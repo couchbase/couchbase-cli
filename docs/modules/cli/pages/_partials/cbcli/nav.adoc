@@ -6,6 +6,7 @@
  ** xref:cli:cbcli/couchbase-cli-backup-service-plan.adoc[backup-service plan]
  ** xref:cli:cbcli/couchbase-cli-backup-service-repo-add.adoc[backup-service repo-add]
  ** xref:cli:cbcli/couchbase-cli-backup-service-repo-archive.adoc[backup-service repo-archive]
+ ** xref:cli:cbcli/couchbase-cli-backup-service-repo-cloud-config.adoc[backup-service repo-cloud-config]
  ** xref:cli:cbcli/couchbase-cli-backup-service-repo-get.adoc[backup-service repo-get]
  ** xref:cli:cbcli/couchbase-cli-backup-service-repo-list.adoc[backup-service repo-list]
  ** xref:cli:cbcli/couchbase-cli-backup-service-repo-pause.adoc[backup-service repo-pause]
