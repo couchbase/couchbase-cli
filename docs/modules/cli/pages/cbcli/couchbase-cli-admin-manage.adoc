@@ -1,4 +1,4 @@
-= couchbase-cli-lock-admin(1)
+= couchbase-cli-admin-manage(1)
 :description: Manages the built-in Couchbase Server administrator
 ifndef::doctype-manpage[:doctitle: admin-manage]
 
