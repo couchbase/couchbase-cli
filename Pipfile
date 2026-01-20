@@ -4,7 +4,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
-cryptography = "==41.0.1"
+cryptography = "==41.0.3"
 pem = "==23.1.0"
 pycryptodome = "==3.18.0"
 pyopenssl = "==23.2.0"
