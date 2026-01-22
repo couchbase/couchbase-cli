@@ -36,7 +36,7 @@ class Transfer:
         self.source_alias = "source"
         self.sink_alias = "destination"
         self.usage = \
-            "DEPRECATED: Please use cbdatarecovery instead.\n" \
+            "DEPRECATED: Please use cbdatarecovery, cbimport or cbexport instead.\n" \
             "%prog [options] source destination\n\n" \
             "Transfer couchbase cluster data from source to destination.\n\n" \
             "Examples:\n" \

@@ -28,7 +28,9 @@ cbbackupwrapper
 cbcli
 cbcollect
 cbdatarecovery
+cbexport
 cblogredaction
+cbimport
 CBO
 cbrecovery
 cbrestore

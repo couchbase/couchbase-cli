@@ -25,7 +25,8 @@ _cbtransfer_ [--username <user>] [--password <password>] [--ssl]
 
 == DESCRIPTION
 
-DEPRECATION WARNING: This tool has been deprecated please use cbdatarecovery instead.
+DEPRECATION WARNING: This tool has been deprecated please use cbdatarecovery,
+cbimport or cbexport instead.
 
 The `cbtransfer` tool is a generic tool for transferring data from various
 types of source to various types of sinks. Both `cbbackup` and `cbrestore`
