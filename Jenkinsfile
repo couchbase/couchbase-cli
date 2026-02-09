@@ -12,7 +12,7 @@
  import jenkins.model.CauseOfInterruption.UserInterruption
 
 pipeline {
-    agent { label "ubuntu-18.04&&neo" }
+    agent { label "linux&&neo" }
 
     environment {
         PROJECTPATH="${WORKSPACE}/couchbase-cli"
