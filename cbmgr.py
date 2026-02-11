@@ -2262,6 +2262,10 @@ class NodeInit(Subcommand):
                            help="Configure the node to communicate via ipv6")
         group.add_argument("--ipv4", dest="ipv4", action="store_true", default=False,
                            help="Configure the node to communicate via ipv4")
+        group.add_argument("--ipv6only", dest="ipv6_only", action="store_true", default=False,
+                           help="Configure the node to only use ipv6")
+        group.add_argument("--ipv4only", dest="ipv4_only", action="store_true", default=False,
+                           help="Configure the node to only use ipv4")
 
     @rest_initialiser(credentials_required=False)
     def execute(self, opts):
@@ -2269,21 +2273,31 @@ class NodeInit(Subcommand):
 
         if (opts.data_path is None and opts.index_path is None and opts.analytics_path is None
                 and opts.eventing_path is None and opts.java_home is None and opts.hostname is None
-                and opts.ipv6 is None and opts.ipv4 is None):
+                and opts.ipv6 is None and opts.ipv4 is None and opts.ipv6_only is None and opts.ipv4_only is None):
             _exit_if_errors(["No node initialization parameters specified"])
 
-        if opts.ipv4 and opts.ipv6:
-            _exit_if_errors(["Use either --ipv4 or --ipv6"])
+        flags_used = sum([opts.ipv4, opts.ipv6, opts.ipv6_only, opts.ipv4_only])
+        if flags_used > 1:
+            _exit_if_errors(["--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive"])
+
+        afamily_only = None
 
         if opts.ipv4:
             afamily = 'ipv4'
         elif opts.ipv6:
             afamily = 'ipv6'
+        elif opts.ipv4_only:
+            afamily = 'ipv4'
+            afamily_only = True
+        elif opts.ipv6_only:
+            afamily = 'ipv6'
+            afamily_only = True
         else:
             afamily = None
 
         _, errors = self.rest.node_init(hostname=opts.hostname,
                                         afamily=afamily,
+                                        afamily_only=afamily_only,
                                         data_path=opts.data_path,
                                         index_path=opts.index_path,
                                         cbas_path=opts.analytics_path,

@@ -1184,7 +1184,7 @@ class TestNodeInit(CommandTest):
 
     def test_node_init_ipv6_and_ipv4(self):
         self.system_exit_run(self.command + self.name_args + ['--ipv4', '--ipv6'], self.server_args)
-        self.assertIn('Use either --ipv4 or --ipv6', self.str_output)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
 
     def test_node_init_ipv6(self):
         self.no_error_run(self.command + self.name_args + ['--ipv6'], self.server_args)
@@ -1197,6 +1197,34 @@ class TestNodeInit(CommandTest):
         self.assertIn('POST:/nodeInit', self.server.trace)
         expected_params = ['hostname=foo', 'afamily=ipv4']
         self.rest_parameter_match(expected_params)
+
+    def test_node_init_ipv6only(self):
+        self.no_error_run(self.command + self.name_args + ['--ipv6only'], self.server_args)
+        self.assertIn('POST:/nodeInit', self.server.trace)
+        expected_params = ['hostname=foo', 'afamily=ipv6', 'afamilyOnly=true']
+        self.rest_parameter_match(expected_params)
+
+    def test_node_init_ipv4only(self):
+        self.no_error_run(self.command + self.name_args + ['--ipv4only'], self.server_args)
+        self.assertIn('POST:/nodeInit', self.server.trace)
+        expected_params = ['hostname=foo', 'afamily=ipv4', 'afamilyOnly=true']
+        self.rest_parameter_match(expected_params)
+
+    def test_node_init_ipv6_and_ipv6only(self):
+        self.system_exit_run(self.command + self.name_args + ['--ipv6', '--ipv6only'], self.server_args)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
+
+    def test_node_init_ipv4_and_ipv6only(self):
+        self.system_exit_run(self.command + self.name_args + ['--ipv4', '--ipv6only'], self.server_args)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
+
+    def test_node_init_ipv4_and_ipv4only(self):
+        self.system_exit_run(self.command + self.name_args + ['--ipv4', '--ipv4only'], self.server_args)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
+
+    def test_node_init_ipv4only_and_ipv6only(self):
+        self.system_exit_run(self.command + self.name_args + ['--ipv4only', '--ipv6only'], self.server_args)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
 
 
 class TestNodeReset(CommandTest):

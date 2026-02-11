@@ -1396,7 +1396,7 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
-    def node_init(self, hostname=None, afamily=None, data_path=None,
+    def node_init(self, hostname=None, afamily=None, afamily_only=None, data_path=None,
                   index_path=None, cbas_path=None, eventing_path=None,
                   java_home=None):
         url = f'{self.hostname}/nodeInit'
@@ -1407,6 +1407,9 @@ class ClusterManager(object):
 
         if afamily is not None:
             params["afamily"] = afamily
+
+        if afamily_only is not None:
+            params["afamilyOnly"] = "true" if afamily_only else "false"
 
         if data_path is not None:
             params["dataPath"] = data_path

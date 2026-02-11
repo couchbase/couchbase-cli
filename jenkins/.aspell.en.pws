@@ -28,6 +28,8 @@ cbbackupwrapper
 cbcli
 cbcollect
 cbdatarecovery
+cbexport
+cbimport
 cblogredaction
 CBO
 cbrecovery
