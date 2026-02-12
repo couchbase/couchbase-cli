@@ -19,7 +19,7 @@ _couchbase-cli user-manage_ [--cluster <url>] [--username <user>] [--password <p
     [--set-group] [--delete-group] [--list-groups] [--get-group]
     [-- get] [--lock] [--unlock] [--rbac-username <username>]
     [--rbac-password <password>] [--rbac-name <name>] [--roles <roles_list>]
-    [--auth-domain <domain>] [--user-groups <group>]
+    [--auth-domain <domain>] [--user-groups <group>] [--temporary-password]
     [--group-description <text>] [--ldap-ref <ref>]
 
 == DESCRIPTION
@@ -99,6 +99,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   Specifies the groups the user should be added to. This is used when creating
   a user (--set) or when updating the users group, and
   should be specified as a comma separated list.
+
+--temporary-password::
+  Sets a temporary password which the user must change on their next login.
+  This option can only be used with _local_ users.
 
 --group-name <group>::
   Specifies the target group for the group operations (--set-group,
@@ -455,6 +459,13 @@ $ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
  -p password --set --rbac-username jdoe --rbac-password cbpass \
  --rbac-name "John Doe" --roles bucket_admin[default],replication_admin \
  --auth-domain local
+----
+To create a local user that with a temporary password (Enterprise Edition only):
+----
+$ couchbase-cli user-manage -c 127.0.0.1:8091 -u Administrator \
+ -p password --set --rbac-username jdoe --rbac-password cbpass \
+ --rbac-name "John Doe" --roles bucket_admin[default] \
+ --auth-domain local --temporary-password
 ----
 If you have external user source setup in your cluster and you want to add a
 user "John Doe" with username `jdoe` who should have the ability to manage only

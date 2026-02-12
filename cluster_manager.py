@@ -1595,7 +1595,7 @@ class ClusterManager(object):
         url = f'{self.hostname}/whoami'
         return self._get(url)
 
-    def set_rbac_user(self, username, password, name, roles, auth_domain, groups):
+    def set_rbac_user(self, username, password, name, roles, auth_domain, groups, temporary_password=None):
         if auth_domain is None:
             return None, ["The authentication type is required"]
 
@@ -1625,6 +1625,8 @@ class ClusterManager(object):
             params['groups'] = groups
         elif 'groups' in defaults:
             params['groups'] = ','.join(defaults['groups'])
+        if temporary_password:
+            params['temporaryPassword'] = 'true'
 
         return self._put(url, params)
 

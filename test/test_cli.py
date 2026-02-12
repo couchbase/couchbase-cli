@@ -2777,7 +2777,30 @@ class TestUserManage(CommandTest):
         self.assertIn('PATCH:/settings/rbac/users/local/username', self.server.trace)
         expected_params = ['locked=false']
         self.rest_parameter_match(expected_params)
+
+    def test_set_local_user_with_temporary_password(self):
+        self.no_error_run(self.command + ['--set', '--rbac-username', 'username', '--rbac-password', 'pwd',
+                                          '--auth-domain', 'local', '--roles', 'admin', '--rbac-name', 'name',
+                                          '--temporary-password'],
+                          self.server_args)
+        self.assertIn('PUT:/settings/rbac/users/local/username', self.server.trace)
+        expected_params = ['name=name', 'password=pwd', 'roles=admin', 'temporaryPassword=true']
         self.rest_parameter_match(expected_params)
+
+    def test_set_external_user_with_temporary_password(self):
+        self.system_exit_run(self.command + ['--set', '--rbac-username', 'username', '--auth-domain',
+                                             'external', '--roles', 'admin', '--rbac-name', 'name',
+                                             '--temporary-password'],
+                             self.server_args)
+        self.assertIn('--temporary-password cannot be used for external users', self.str_output)
+
+    def test_set_local_user_with_temporary_password_community(self):
+        self.server_args['enterprise'] = False
+        self.system_exit_run(self.command + ['--set', '--rbac-username', 'username', '--rbac-password', 'pwd',
+                                             '--auth-domain', 'local', '--roles', 'admin', '--rbac-name', 'name',
+                                             '--temporary-password'],
+                             self.server_args)
+        self.assertIn('--temporary-password is only supported on Enterprise Edition', self.str_output)
 
 
 class TestMasterPassword(CommandTest):
