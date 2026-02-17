@@ -12,7 +12,7 @@ Changes node-to-node encryption
 == SYNOPSIS
 
 [verse]
-_couchbase-cli node-to-node-encryption_ [--cluster <url>] [-username <username>] [--password <password>]
+_couchbase-cli node-to-node-encryption_ [--cluster <url>] [--username <username>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
     [--client-key-password <password>] [--get] [--enable] [--disable]
 

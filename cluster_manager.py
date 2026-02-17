@@ -1427,7 +1427,7 @@ class ClusterManager(object):
 
         return None, ["Bucket not found"]
 
-    def node_init(self, hostname=None, afamily=None, data_path=None,
+    def node_init(self, hostname=None, afamily=None, afamily_only=None, data_path=None,
                   index_path=None, cbas_path=None, eventing_path=None,
                   java_home=None):
         url = f'{self.hostname}/nodeInit'
@@ -1438,6 +1438,9 @@ class ClusterManager(object):
 
         if afamily is not None:
             params["afamily"] = afamily
+
+        if afamily_only is not None:
+            params["afamilyOnly"] = "true" if afamily_only else "false"
 
         if data_path is not None:
             params["dataPath"] = data_path
@@ -1626,7 +1629,7 @@ class ClusterManager(object):
         url = f'{self.hostname}/whoami'
         return self._get(url)
 
-    def set_rbac_user(self, username, password, name, roles, auth_domain, groups):
+    def set_rbac_user(self, username, password, name, roles, auth_domain, groups, temporary_password=None):
         if auth_domain is None:
             return None, ["The authentication type is required"]
 
@@ -1656,6 +1659,8 @@ class ClusterManager(object):
             params['groups'] = groups
         elif 'groups' in defaults:
             params['groups'] = ','.join(defaults['groups'])
+        if temporary_password:
+            params['temporaryPassword'] = 'true'
 
         return self._put(url, params)
 

@@ -1218,7 +1218,7 @@ class TestNodeInit(CommandTest):
 
     def test_node_init_ipv6_and_ipv4(self):
         self.system_exit_run(self.command + self.name_args + ['--ipv4', '--ipv6'], self.server_args)
-        self.assertIn('Use either --ipv4 or --ipv6', self.str_output)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
 
     def test_node_init_ipv6(self):
         self.no_error_run(self.command + self.name_args + ['--ipv6'], self.server_args)
@@ -1231,6 +1231,34 @@ class TestNodeInit(CommandTest):
         self.assertIn('POST:/nodeInit', self.server.trace)
         expected_params = ['hostname=foo', 'afamily=ipv4']
         self.rest_parameter_match(expected_params)
+
+    def test_node_init_ipv6only(self):
+        self.no_error_run(self.command + self.name_args + ['--ipv6only'], self.server_args)
+        self.assertIn('POST:/nodeInit', self.server.trace)
+        expected_params = ['hostname=foo', 'afamily=ipv6', 'afamilyOnly=true']
+        self.rest_parameter_match(expected_params)
+
+    def test_node_init_ipv4only(self):
+        self.no_error_run(self.command + self.name_args + ['--ipv4only'], self.server_args)
+        self.assertIn('POST:/nodeInit', self.server.trace)
+        expected_params = ['hostname=foo', 'afamily=ipv4', 'afamilyOnly=true']
+        self.rest_parameter_match(expected_params)
+
+    def test_node_init_ipv6_and_ipv6only(self):
+        self.system_exit_run(self.command + self.name_args + ['--ipv6', '--ipv6only'], self.server_args)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
+
+    def test_node_init_ipv4_and_ipv6only(self):
+        self.system_exit_run(self.command + self.name_args + ['--ipv4', '--ipv6only'], self.server_args)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
+
+    def test_node_init_ipv4_and_ipv4only(self):
+        self.system_exit_run(self.command + self.name_args + ['--ipv4', '--ipv4only'], self.server_args)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
+
+    def test_node_init_ipv4only_and_ipv6only(self):
+        self.system_exit_run(self.command + self.name_args + ['--ipv4only', '--ipv6only'], self.server_args)
+        self.assertIn('--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive', self.str_output)
 
 
 class TestNodeReset(CommandTest):
@@ -2811,7 +2839,30 @@ class TestUserManage(CommandTest):
         self.assertIn('PATCH:/settings/rbac/users/local/username', self.server.trace)
         expected_params = ['locked=false']
         self.rest_parameter_match(expected_params)
+
+    def test_set_local_user_with_temporary_password(self):
+        self.no_error_run(self.command + ['--set', '--rbac-username', 'username', '--rbac-password', 'pwd',
+                                          '--auth-domain', 'local', '--roles', 'admin', '--rbac-name', 'name',
+                                          '--temporary-password'],
+                          self.server_args)
+        self.assertIn('PUT:/settings/rbac/users/local/username', self.server.trace)
+        expected_params = ['name=name', 'password=pwd', 'roles=admin', 'temporaryPassword=true']
         self.rest_parameter_match(expected_params)
+
+    def test_set_external_user_with_temporary_password(self):
+        self.system_exit_run(self.command + ['--set', '--rbac-username', 'username', '--auth-domain',
+                                             'external', '--roles', 'admin', '--rbac-name', 'name',
+                                             '--temporary-password'],
+                             self.server_args)
+        self.assertIn('--temporary-password cannot be used for external users', self.str_output)
+
+    def test_set_local_user_with_temporary_password_community(self):
+        self.server_args['enterprise'] = False
+        self.system_exit_run(self.command + ['--set', '--rbac-username', 'username', '--rbac-password', 'pwd',
+                                             '--auth-domain', 'local', '--roles', 'admin', '--rbac-name', 'name',
+                                             '--temporary-password'],
+                             self.server_args)
+        self.assertIn('--temporary-password is only supported on Enterprise Edition', self.str_output)
 
 
 class TestMasterPassword(CommandTest):

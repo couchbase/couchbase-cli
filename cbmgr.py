@@ -2278,6 +2278,10 @@ class NodeInit(Subcommand):
                            help="Configure the node to communicate via ipv6")
         group.add_argument("--ipv4", dest="ipv4", action="store_true", default=False,
                            help="Configure the node to communicate via ipv4")
+        group.add_argument("--ipv6only", dest="ipv6_only", action="store_true", default=False,
+                           help="Configure the node to only use ipv6")
+        group.add_argument("--ipv4only", dest="ipv4_only", action="store_true", default=False,
+                           help="Configure the node to only use ipv4")
 
     @rest_initialiser(credentials_required=False)
     def execute(self, opts):
@@ -2285,21 +2289,31 @@ class NodeInit(Subcommand):
 
         if (opts.data_path is None and opts.index_path is None and opts.analytics_path is None
                 and opts.eventing_path is None and opts.java_home is None and opts.hostname is None
-                and opts.ipv6 is None and opts.ipv4 is None):
+                and opts.ipv6 is None and opts.ipv4 is None and opts.ipv6_only is None and opts.ipv4_only is None):
             _exit_if_errors(["No node initialization parameters specified"])
 
-        if opts.ipv4 and opts.ipv6:
-            _exit_if_errors(["Use either --ipv4 or --ipv6"])
+        flags_used = sum([opts.ipv4, opts.ipv6, opts.ipv6_only, opts.ipv4_only])
+        if flags_used > 1:
+            _exit_if_errors(["--ipv4, --ipv6, --ipv4only, and --ipv6only are mutually exclusive"])
+
+        afamily_only = None
 
         if opts.ipv4:
             afamily = 'ipv4'
         elif opts.ipv6:
             afamily = 'ipv6'
+        elif opts.ipv4_only:
+            afamily = 'ipv4'
+            afamily_only = True
+        elif opts.ipv6_only:
+            afamily = 'ipv6'
+            afamily_only = True
         else:
             afamily = None
 
         _, errors = self.rest.node_init(hostname=opts.hostname,
                                         afamily=afamily,
+                                        afamily_only=afamily_only,
                                         data_path=opts.data_path,
                                         index_path=opts.index_path,
                                         cbas_path=opts.analytics_path,
@@ -4796,8 +4810,10 @@ class UserManage(Subcommand):
         group.add_argument("--group-name", dest="group", metavar="<group>", help="Group name")
         group.add_argument("--group-description", dest="description", metavar="<text>", help="Group description")
         group.add_argument("--ldap-ref", dest="ldap_ref", metavar="<ref>", help="LDAP group's distinguished name")
+        group.add_argument("--temporary-password", dest="temporary_password", action="store_true",
+                           help="Force the user to change their password on next login (Enterprise Edition only)")
 
-    @rest_initialiser(cluster_init_check=True, version_check=True)
+    @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         num_selectors = sum([opts.delete, opts.list, opts.my_roles, opts.set, opts.get, opts.get_group,
                              opts.list_group, opts.delete_group, opts.set_group, opts.lock, opts.unlock])
@@ -4931,11 +4947,15 @@ class UserManage(Subcommand):
         if opts.rbac_pass is not None and opts.auth_domain == "external":
             _warning("--rbac-password cannot be used with the external auth domain")
             opts.rbac_pass = None
+        if opts.temporary_password and not self.enterprise:
+            _exit_if_errors(["--temporary-password is only supported on Enterprise Edition"])
+        if opts.temporary_password and opts.auth_domain == "external":
+            _exit_if_errors(["--temporary-password cannot be used for external users"])
         if opts.auth_domain is None:
             _exit_if_errors(["--auth-domain is required with the --set option"])
 
         _, errors = self.rest.set_rbac_user(opts.rbac_user, opts.rbac_pass, opts.rbac_name, opts.roles,
-                                            opts.auth_domain, opts.groups)
+                                            opts.auth_domain, opts.groups, opts.temporary_password)
         _exit_if_errors(errors)
 
         if opts.roles is not None and "query_external_access" in opts.roles:

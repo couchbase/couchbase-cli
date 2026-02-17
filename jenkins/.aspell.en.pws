@@ -29,8 +29,8 @@ cbcli
 cbcollect
 cbdatarecovery
 cbexport
-cblogredaction
 cbimport
+cblogredaction
 CBO
 cbrecovery
 cbrestore
