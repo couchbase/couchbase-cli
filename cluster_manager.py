@@ -1156,6 +1156,8 @@ class ClusterManager(object):
             dek_lifetime,
             invalid_hlc_strategy,
             hlc_max_future_threshold,
+            throttle_reserved,
+            throttle_hard_limit,
             timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
@@ -1245,6 +1247,11 @@ class ClusterManager(object):
         if hlc_max_future_threshold is not None:
             params["hlcMaxFutureThreshold"] = hlc_max_future_threshold
 
+        if throttle_reserved is not None:
+            params["throttleReserved"] = throttle_reserved
+        if throttle_hard_limit is not None:
+            params["throttleHardLimit"] = throttle_hard_limit
+
         result, errors = self._post_form_encoded(url, params)
         if errors:
             return None, errors
@@ -1288,7 +1295,8 @@ class ClusterManager(object):
                     abort_outside, paralleldb_and_view_compact, purge_interval,
                     history_retention_bytes, history_retention_seconds, history_retention_default,
                     rank, encryption_key, dek_rotation_interval, dek_lifetime, couchbase_bucket: bool = True,
-                    invalid_hlc_strategy=None, hlc_max_future_threshold=None, xcluster_versioning: bool = False):
+                    invalid_hlc_strategy=None, hlc_max_future_threshold=None, xcluster_versioning: bool = False,
+                    throttle_reserved=None, throttle_hard_limit=None):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -1364,6 +1372,11 @@ class ClusterManager(object):
 
         if xcluster_versioning:
             params["enableCrossClusterVersioning"] = "true"
+
+        if throttle_reserved is not None:
+            params["throttleReserved"] = throttle_reserved
+        if throttle_hard_limit is not None:
+            params["throttleHardLimit"] = throttle_hard_limit
 
         return self._post_form_encoded(url, params)
 

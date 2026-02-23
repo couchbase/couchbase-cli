@@ -32,6 +32,7 @@ _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
     [--num-vbuckets <128|1024>]
     [--encryption-key <key>] [--dek-rotate-every <days>] [--dek-lifetime <days>]
     [--invalid-hlc-strategy <error|ignore|replace>] [--hlc-max-future-threshold <seconds>]
+    [--reserved <number>] [--hard-limit <number>]
 
 == DESCRIPTION
 
@@ -261,6 +262,14 @@ The number of days which the DEK (Data Encryption Key) should be kept for.
 
 --hlc-max-future-threshold <seconds>::
 The number of seconds of acceptable drift at which new CAS values will be accepted.
+
+--reserved <number>::
+Measured in units per second. The guaranteed resource usage that is reserved for
+this bucket only.
+
+--hard-limit <number>::
+Measured in units per second. If set, the bucket will be throttled at this limit
+regardless of any capacity left over.
 
 include::{partialsdir}/cbcli/part-common-history-retention.adoc[]
 

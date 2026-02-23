@@ -1354,6 +1354,12 @@ class BucketCreate(Subcommand):
             type=(int),
             help="The number of seconds of acceptable drift at which new CAS values will be accepted")
 
+        group.add_argument("--reserved", dest="throttle_reserved", metavar="<number>", type=(int),
+                           help="The guaranteed resource usage reserved for this bucket (units/s)")
+        group.add_argument("--hard-limit", dest="throttle_hard_limit", metavar="<number>", type=(int),
+                           help="If set, the bucket will be throttled at this limit regardless of any capacity "
+                           "left over (units/s)")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
@@ -1476,7 +1482,7 @@ class BucketCreate(Subcommand):
                                             opts.history_retention_bytes, opts.history_retention_seconds,
                                             opts.enable_history_retention, opts.rank, opts.num_vbuckets, opts.encryption_key,
                                             dek_rotate_interval, dek_lifetime, opts.invalid_hlc_strategy,
-                                            opts.hlc_max_future_threshold)
+                                            opts.hlc_max_future_threshold, opts.throttle_reserved, opts.throttle_hard_limit)
         _exit_if_errors(errors)
         _success("Bucket created")
 
@@ -1608,6 +1614,12 @@ class BucketEdit(Subcommand):
             type=(int),
             help="The number of seconds of acceptable drift at which new CAS values will be accepted")
 
+        group.add_argument("--reserved", dest="throttle_reserved", metavar="<number>", type=(int),
+                           help="The guaranteed resource usage reserved for this bucket (units/s)")
+        group.add_argument("--hard-limit", dest="throttle_hard_limit", metavar="<number>", type=(int),
+                           help="If set, the bucket will be throttled at this limit regardless of any capacity "
+                           "left over (units/s)")
+
         group.add_argument("--enable-cross-cluster-versioning", dest="xcluster_versioning", action='store_true')
         group.add_argument("--force", dest="force", action='store_true')
 
@@ -1715,7 +1727,8 @@ class BucketEdit(Subcommand):
                                           opts.history_retention_bytes, opts.history_retention_seconds,
                                           opts.enable_history_retention, opts.rank, opts.encryption_key,
                                           dek_rotate_interval, dek_lifetime, is_couchbase_bucket, opts.invalid_hlc_strategy,
-                                          opts.hlc_max_future_threshold, opts.xcluster_versioning)
+                                          opts.hlc_max_future_threshold, opts.xcluster_versioning,
+                                          opts.throttle_reserved, opts.throttle_hard_limit)
         _exit_if_errors(errors)
 
         _success("Bucket edited")

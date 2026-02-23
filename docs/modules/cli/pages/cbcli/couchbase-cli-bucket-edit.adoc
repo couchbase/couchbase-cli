@@ -31,7 +31,7 @@ _couchbase-cli bucket-edit_ [--cluster <url>] [--username <user>]
     [--enable-history-retention-by-default <0|1>] [--rank <num>]
     [--encryption-key <key>] [--dek-rotate-every <days>] [--dek-lifetime <days>]
     [--invalid-hlc-strategy <error|ignore|replace>] [--hlc-max-future-threshold <seconds>]
-    [--enable-cross-cluster-versioning]
+    [--enable-cross-cluster-versioning] [--reserved <number>] [--hard-limit <number>]
 
 == DESCRIPTION
 
@@ -233,6 +233,14 @@ Run index and data compaction in parallel. Global setting only.
 
 --force::
   Skip any prompts asking you whether to continue.
+
+--reserved <number>::
+Measured in units per second. The guaranteed resource usage that is reserved for this
+bucket only.
+
+--hard-limit <number>::
+Measured in units per second. If set, the bucket will be throttled at this limit
+regardless of any capacity left over.
 
 include::{partialsdir}/cbcli/part-common-history-retention.adoc[]
 
