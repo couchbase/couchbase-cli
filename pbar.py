@@ -65,7 +65,7 @@ elif platform.system() in ['Linux', 'Darwin'] or platform.system().startswith('C
         def ioctl_gwinsz(fd):
             """Gets the windows size for a given file descriptor"""
             try:
-                return struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+                return termios.tcgetwinsize(fd)
             except BaseException:
                 return None
 
@@ -77,6 +77,9 @@ elif platform.system() in ['Linux', 'Darwin'] or platform.system().startswith('C
                 os.close(fd)
             except BaseException:
                 return None, None, None, None
+
+        if window_size is None:
+            return None, None, None, None
 
         return int(window_size[1]), int(window_size[0]), 0, 0
 
