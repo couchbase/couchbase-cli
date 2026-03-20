@@ -22,6 +22,8 @@ _couchbase-cli cluster-init_ [--cluster <url>] [--cluster-username <username>] [
     [--index-storage-setting <setting>] [--services <services>]
     [--update-notifications <1|0>]
     [--ip-family <ipv4|ipv6|ipv4-only|ipv6-only>] [--node-to-node-encryption <on|off>]
+    [--node-capacity <capacity>] [--throttle-enabled <1|0>]
+    [--read-unit-size <size>] [--write-unit-size <size>]
 
 == DESCRIPTION
 
@@ -148,6 +150,21 @@ which will determine how the global secondary indexes (GSI) are stored.
   Specifies if node to node encryption should be used. The default option is
   'off'. When set to 'on' all communications between nodes will be over a
   encrypted connection.
+
+--node-capacity::
+  The number of units (bytes) per second. This is a global counter that any
+  bucket can consume from. This sets the total amount of resources available on
+  the node.
+
+--throttle-enabled::
+  Enable or disable the throttling feature. Accepted values are "1" to enable
+  and "0" to disable.
+
+--read-unit-size::
+  The size in bytes of read that will consume 1 unit.
+
+--write-unit-size::
+  The size in bytes of write that will consume 1 unit.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 

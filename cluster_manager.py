@@ -1533,6 +1533,26 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
+    def set_global_memcached_settings(
+            self,
+            node_capacity=None,
+            throttle_enabled=None,
+            read_unit_size=None,
+            write_unit_size=None):
+        url = f'{self.hostname}/pools/default/settings/memcached/global'
+        params = {}
+
+        if node_capacity is not None:
+            params["nodeCapacity"] = node_capacity
+        if throttle_enabled is not None:
+            params["throttleEnabled"] = "true" if throttle_enabled == "1" else "false"
+        if read_unit_size is not None:
+            params["readUnitSize"] = read_unit_size
+        if write_unit_size is not None:
+            params["writeUnitSize"] = write_unit_size
+
+        return self._post_form_encoded(url, params)
+
     def node_info(self):
         url = f'{self.hostname}/nodes/self'
         return self._get(url)

@@ -409,6 +409,49 @@ class TestClusterInit(CommandTest):
                              ['--services', 'manager-only'], self.server_args)
         self.assertIn('--services cannot be specified on Enterprise Analytics', self.str_output)
 
+    def test_init_cluster_with_throttle_settings(self):
+        self.server_args['init'] = False
+        full_options = cluster_connect_args[:2] + self.command_args + [
+            '--cluster-ramsize', '512', '--services', 'data',
+            '--node-capacity', '10000', '--throttle-enabled', '1',
+            '--read-unit-size', '1024', '--write-unit-size', '2048'
+        ]
+
+        self.no_error_run(self.command + full_options, self.server_args)
+        self.assertIn('SUCCESS', self.str_output)
+        expected_params = ['memoryQuota=512', 'username=Administrator', 'password=asdasd', 'port=6789',
+                           'nodeCapacity=10000', 'throttleEnabled=true', 'readUnitSize=1024', 'writeUnitSize=2048']
+        self.rest_parameter_match(expected_params, False)
+        self.assertIn('POST:/pools/default/settings/memcached/global', self.server.trace)
+
+    def test_init_cluster_with_throttle_disabled(self):
+        self.server_args['init'] = False
+        full_options = cluster_connect_args[:2] + self.command_args + [
+            '--cluster-ramsize', '512', '--services', 'data',
+            '--node-capacity', '10000', '--throttle-enabled', '0'
+        ]
+
+        self.no_error_run(self.command + full_options, self.server_args)
+        self.assertIn('SUCCESS', self.str_output)
+        expected_params = ['memoryQuota=512', 'username=Administrator', 'password=asdasd', 'port=6789',
+                           'nodeCapacity=10000', 'throttleEnabled=false']
+        self.rest_parameter_match(expected_params, False)
+        self.assertIn('POST:/pools/default/settings/memcached/global', self.server.trace)
+
+    def test_init_cluster_with_only_node_capacity(self):
+        self.server_args['init'] = False
+        full_options = cluster_connect_args[:2] + self.command_args + [
+            '--cluster-ramsize', '512', '--services', 'data',
+            '--node-capacity', '50000'
+        ]
+
+        self.no_error_run(self.command + full_options, self.server_args)
+        self.assertIn('SUCCESS', self.str_output)
+        expected_params = ['memoryQuota=512', 'username=Administrator', 'password=asdasd', 'port=6789',
+                           'nodeCapacity=50000']
+        self.rest_parameter_match(expected_params, False)
+        self.assertIn('POST:/pools/default/settings/memcached/global', self.server.trace)
+
 
 class TestBucketCompact(CommandTest):
     def setUp(self):

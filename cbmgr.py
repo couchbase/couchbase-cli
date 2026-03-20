@@ -1109,6 +1109,15 @@ class ClusterInit(Subcommand):
                            help="Set the IP family for the cluster")
         group.add_argument("--node-to-node-encryption", dest="encryption", metavar="<on|off>", default="off",
                            choices=["on", "off"], help="Enable node to node encryption")
+        group.add_argument("--node-capacity", dest="node_capacity", metavar="<units>", type=(int),
+                           help="The number of units (bytes) per second. This is a global counter that any "
+                           "bucket can consume from")
+        group.add_argument("--throttle-enabled", dest="throttle_enabled", metavar="<1|0>", choices=["0", "1"],
+                           help="Enable/Disable throttling feature")
+        group.add_argument("--read-unit-size", dest="read_unit_size", metavar="<bytes>", type=(int),
+                           help="Size of read that will consume 1 unit")
+        group.add_argument("--write-unit-size", dest="write_unit_size", metavar="<bytes>", type=(int),
+                           help="Size of write that will consume 1 unit")
 
     @rest_initialiser(enterprise_check=False, enterprise_analytics_check=False)
     def execute(self, opts):
@@ -1181,6 +1190,13 @@ class ClusterInit(Subcommand):
             indexer_storage_mode=indexer_storage,
             send_stats=opts.notifications == "1")
         _exit_if_errors(errors)
+
+        # Set global throttling settings if any were provided
+        if (opts.node_capacity is not None or opts.throttle_enabled is not None or opts.read_unit_size is not None or
+                opts.write_unit_size is not None):
+            _, errors = self.rest.set_global_memcached_settings(
+                opts.node_capacity, opts.throttle_enabled, opts.read_unit_size, opts.write_unit_size)
+            _exit_if_errors(errors)
 
         _success("Cluster initialized")
 
