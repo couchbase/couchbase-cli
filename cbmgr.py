@@ -3501,6 +3501,15 @@ class SettingCluster(Subcommand):
         group.add_argument("--cluster-query-ramsize", dest="query_mem_quota", metavar="<quota>",
                            type=(int), help="The query service memory quota in mebibytes")
         group.add_argument("--cluster-name", dest="name", metavar="<name>", help="The cluster name")
+        group.add_argument("--node-capacity", dest="node_capacity", metavar="<capacity>", type=(int),
+                           help="The number of units (bytes) per second. This is a global counter that any "
+                           "bucket can consume from")
+        group.add_argument("--throttle-enabled", dest="throttle_enabled", metavar="<1|0>", choices=["0", "1"],
+                           help="Enable/Disable throttling feature")
+        group.add_argument("--read-unit-size", dest="read_unit_size", metavar="<size>", type=(int),
+                           help="Size of read that will consume 1 unit")
+        group.add_argument("--write-unit-size", dest="write_unit_size", metavar="<size>", type=(int),
+                           help="Size of write that will consume 1 unit")
 
     @rest_initialiser(cluster_init_check=True, version_check=True)
     def execute(self, opts):
@@ -3521,6 +3530,12 @@ class SettingCluster(Subcommand):
                 password = opts.new_password
 
             _, errors = self.rest.set_admin_credentials(username, password, opts.port)
+            _exit_if_errors(errors)
+
+        # Set global throttling settings if any were provided
+        if opts.node_capacity is not None or opts.throttle_enabled is not None or opts.read_unit_size is not None or opts.write_unit_size is not None:
+            _, errors = self.rest.set_global_memcached_settings(
+                opts.node_capacity, opts.throttle_enabled, opts.read_unit_size, opts.write_unit_size)
             _exit_if_errors(errors)
 
         _success("Cluster settings modified")

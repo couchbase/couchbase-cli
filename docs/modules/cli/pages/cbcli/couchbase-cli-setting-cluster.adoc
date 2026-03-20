@@ -19,7 +19,9 @@ _couchbase-cli setting-cluster_ [--cluster <url>] [--username <user>] [--passwor
     [--cluster-ramsize <mebibytes>] [--cluster-name <name>]
     [--cluster-index-ramsize <mebibytes>] [--cluster-fts-ramsize <mebibytes>]
     [--cluster-eventing-ramsize <mebibytes>]
-    [--cluster-analytics-ramsize <mebibytes>]
+    [--cluster-analytics-ramsize <mebibytes>] [--cluster-query-ramsize <mebibytes>]
+    [--node-capacity <capacity>] [--throttle-enabled <1|0>]
+    [--read-unit-size <size>] [--write-unit-size <size>]
 
 == DESCRIPTION
 
@@ -78,6 +80,21 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --cluster-port::
   Specifies the port for the Couchbase Administration Console. Defaults to
   port 8091.
+
+--node-capacity::
+  The number of units (bytes) per second. This is a global counter that any
+  bucket can consume from. This sets the total amount of resources available on
+  the node.
+
+--throttle-enabled::
+  Enable or disable the throttling feature. Accepted values are "1" to enable
+  and "0" to disable.
+
+--read-unit-size::
+  The size in bytes of read that will consume 1 unit.
+
+--write-unit-size::
+  The size in bytes of write that will consume 1 unit.
 
 include::{partialsdir}/cbcli/part-host-formats.adoc[]
 
