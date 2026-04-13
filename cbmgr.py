@@ -1376,12 +1376,33 @@ class BucketCreate(Subcommand):
                            help="If set, the bucket will be throttled at this limit regardless of any capacity "
                            "left over (units/s)")
 
+        group.add_argument("--continuous-backup-enabled", dest="continuous_backup_enabled", metavar="<0|1>",
+                           choices=["0", "1"], help="Enable continuous backup for this bucket (0 or 1)")
+        group.add_argument("--continuous-backup-location", dest="continuous_backup_location", metavar="<location>",
+                           help="The location for continuous backup")
+        group.add_argument("--continuous-backup-interval", dest="continuous_backup_interval", metavar="<minutes>",
+                           type=(int), help="The interval in minutes for continuous backup")
+        group.add_argument("--continuous-backup-retention-period", dest="continuous_backup_retention_period",
+                           metavar="<hours>", type=(int),
+                           help="The retention period in hours for continuous backup (0 to disable, max 876000)")
+
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
         if opts.max_ttl and not self.enterprise:
             _exit_if_errors(["Maximum TTL can only be configured on enterprise edition"])
         if opts.compression_mode and not self.enterprise:
             _exit_if_errors(["Compression mode can only be configured on enterprise edition"])
+        if (opts.continuous_backup_enabled is not None or opts.continuous_backup_location is not None or
+            opts.continuous_backup_interval is not None or
+                opts.continuous_backup_retention_period is not None) and not self.enterprise:
+            _exit_if_errors(["Continuous backup can only be configured on enterprise edition"])
+
+        if opts.continuous_backup_interval is not None and opts.continuous_backup_interval < 2:
+            _exit_if_errors(["--continuous-backup-interval cannot be lower than 2 minutes"])
+
+        if (opts.continuous_backup_retention_period is not None and
+                opts.continuous_backup_retention_period > 876000):
+            _exit_if_errors(["--continuous-backup-retention-period cannot be greater than 876000 hours"])
 
         if opts.hlc_max_future_threshold is not None and opts.hlc_max_future_threshold < 10:
             _exit_if_errors(["--hlc-max-future-threshold cannot be lower than 10"])
@@ -1498,7 +1519,9 @@ class BucketCreate(Subcommand):
                                             opts.history_retention_bytes, opts.history_retention_seconds,
                                             opts.enable_history_retention, opts.rank, opts.num_vbuckets, opts.encryption_key,
                                             dek_rotate_interval, dek_lifetime, opts.invalid_hlc_strategy,
-                                            opts.hlc_max_future_threshold, opts.throttle_reserved, opts.throttle_hard_limit)
+                                            opts.hlc_max_future_threshold, opts.throttle_reserved, opts.throttle_hard_limit,
+                                            opts.continuous_backup_enabled, opts.continuous_backup_location,
+                                            opts.continuous_backup_interval, opts.continuous_backup_retention_period)
         _exit_if_errors(errors)
         _success("Bucket created")
 
@@ -1636,6 +1659,16 @@ class BucketEdit(Subcommand):
                            help="If set, the bucket will be throttled at this limit regardless of any capacity "
                            "left over (units/s)")
 
+        group.add_argument("--continuous-backup-enabled", dest="continuous_backup_enabled", metavar="<0|1>",
+                           choices=["0", "1"], help="Enable continuous backup for this bucket (0 or 1)")
+        group.add_argument("--continuous-backup-location", dest="continuous_backup_location", metavar="<location>",
+                           help="The location for continuous backup")
+        group.add_argument("--continuous-backup-interval", dest="continuous_backup_interval", metavar="<minutes>",
+                           type=(int), help="The interval in minutes for continuous backup")
+        group.add_argument("--continuous-backup-retention-period", dest="continuous_backup_retention_period",
+                           metavar="<hours>", type=(int),
+                           help="The retention period in hours for continuous backup (0 to disable, max 876000)")
+
         group.add_argument("--enable-cross-cluster-versioning", dest="xcluster_versioning", action='store_true')
         group.add_argument("--force", dest="force", action='store_true')
 
@@ -1646,6 +1679,18 @@ class BucketEdit(Subcommand):
 
         if opts.compression_mode and not self.enterprise:
             _exit_if_errors(["Compression mode can only be configured on enterprise edition"])
+
+        if (opts.continuous_backup_enabled is not None or opts.continuous_backup_location is not None or
+            opts.continuous_backup_interval is not None or
+                opts.continuous_backup_retention_period is not None) and not self.enterprise:
+            _exit_if_errors(["Continuous backup can only be configured on enterprise edition"])
+
+        if opts.continuous_backup_interval is not None and opts.continuous_backup_interval < 2:
+            _exit_if_errors(["--continuous-backup-interval cannot be lower than 2 minutes"])
+
+        if (opts.continuous_backup_retention_period is not None and
+                opts.continuous_backup_retention_period > 876000):
+            _exit_if_errors(["--continuous-backup-retention-period cannot be greater than 876000 hours"])
 
         if opts.hlc_max_future_threshold is not None and opts.hlc_max_future_threshold < 10:
             _exit_if_errors(["--hlc-max-future-threshold cannot be lower than 10"])
@@ -1744,7 +1789,9 @@ class BucketEdit(Subcommand):
                                           opts.enable_history_retention, opts.rank, opts.encryption_key,
                                           dek_rotate_interval, dek_lifetime, is_couchbase_bucket, opts.invalid_hlc_strategy,
                                           opts.hlc_max_future_threshold, opts.xcluster_versioning,
-                                          opts.throttle_reserved, opts.throttle_hard_limit)
+                                          opts.throttle_reserved, opts.throttle_hard_limit,
+                                          opts.continuous_backup_enabled, opts.continuous_backup_location,
+                                          opts.continuous_backup_interval, opts.continuous_backup_retention_period)
         _exit_if_errors(errors)
 
         _success("Bucket edited")

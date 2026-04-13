@@ -1158,6 +1158,10 @@ class ClusterManager(object):
             hlc_max_future_threshold,
             throttle_reserved,
             throttle_hard_limit,
+            continuous_backup_enabled,
+            continuous_backup_location,
+            continuous_backup_interval,
+            continuous_backup_retention_period,
             timeout=60):
         url = f'{self.hostname}/pools/default/buckets'
 
@@ -1252,6 +1256,15 @@ class ClusterManager(object):
         if throttle_hard_limit is not None:
             params["throttleHardLimit"] = throttle_hard_limit
 
+        if continuous_backup_enabled is not None:
+            params["continuousBackupEnabled"] = one_zero_boolean_to_string(continuous_backup_enabled)
+        if continuous_backup_location is not None:
+            params["continuousBackupLocation"] = continuous_backup_location
+        if continuous_backup_interval is not None:
+            params["continuousBackupInterval"] = continuous_backup_interval
+        if continuous_backup_retention_period is not None:
+            params["continuousBackupRetentionPeriod"] = continuous_backup_retention_period
+
         result, errors = self._post_form_encoded(url, params)
         if errors:
             return None, errors
@@ -1296,7 +1309,9 @@ class ClusterManager(object):
                     history_retention_bytes, history_retention_seconds, history_retention_default,
                     rank, encryption_key, dek_rotation_interval, dek_lifetime, couchbase_bucket: bool = True,
                     invalid_hlc_strategy=None, hlc_max_future_threshold=None, xcluster_versioning: bool = False,
-                    throttle_reserved=None, throttle_hard_limit=None):
+                    throttle_reserved=None, throttle_hard_limit=None,
+                    continuous_backup_enabled=None, continuous_backup_location=None, continuous_backup_interval=None,
+                    continuous_backup_retention_period=None):
         url = f'{self.hostname}/pools/default/buckets/{name}'
 
         if name is None:
@@ -1377,6 +1392,15 @@ class ClusterManager(object):
             params["throttleReserved"] = throttle_reserved
         if throttle_hard_limit is not None:
             params["throttleHardLimit"] = throttle_hard_limit
+
+        if continuous_backup_enabled is not None:
+            params["continuousBackupEnabled"] = one_zero_boolean_to_string(continuous_backup_enabled)
+        if continuous_backup_location is not None:
+            params["continuousBackupLocation"] = continuous_backup_location
+        if continuous_backup_interval is not None:
+            params["continuousBackupInterval"] = continuous_backup_interval
+        if continuous_backup_retention_period is not None:
+            params["continuousBackupRetentionPeriod"] = continuous_backup_retention_period
 
         return self._post_form_encoded(url, params)
 

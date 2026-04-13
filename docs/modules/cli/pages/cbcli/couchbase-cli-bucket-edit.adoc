@@ -32,6 +32,8 @@ _couchbase-cli bucket-edit_ [--cluster <url>] [--username <user>]
     [--encryption-key <key>] [--dek-rotate-every <days>] [--dek-lifetime <days>]
     [--invalid-hlc-strategy <error|ignore|replace>] [--hlc-max-future-threshold <seconds>]
     [--enable-cross-cluster-versioning] [--reserved <number>] [--hard-limit <number>]
+    [--continuous-backup-enabled <0|1>] [--continuous-backup-location <location>]
+    [--continuous-backup-interval <minutes>] [--continuous-backup-retention-period <hours>]
 
 == DESCRIPTION
 
@@ -241,6 +243,23 @@ bucket only.
 --hard-limit <number>::
 Measured in units per second. If set, the bucket will be throttled at this limit
 regardless of any capacity left over.
+
+--continuous-backup-enabled <0|1>::
+Enables or disables continuous backup for this bucket. Set to "1" to enable
+or "0" to disable.
+
+--continuous-backup-location <location>::
+The location where continuous backup data will be stored.
+
+--continuous-backup-interval <minutes>::
+This interval determines the most recent restore time - e.g. an interval of two
+minutes means you can restore to up to two minutes ago or any point in time
+before (up to the retention period). The interval must be two minutes or above.
+Short intervals will use more disk space.
+
+--continuous-backup-retention-period <hours>::
+The retention period for continuous backup data. Setting this to 0 disables
+continuous backup retention. The maximum value is 876000 hours (100 years).
 
 include::{partialsdir}/cbcli/part-common-history-retention.adoc[]
 

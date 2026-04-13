@@ -766,6 +766,85 @@ class TestBucketCreate(CommandTest):
         ]
         self.rest_parameter_match(expected_params)
 
+    def test_bucket_create_continuous_backup(self):
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'ramQuotaMB=100',
+            'storageBackend=magma', 'rank=3', 'numVBuckets=128',
+            'continuousBackupEnabled=true', 'continuousBackupLocation=%2Fbackup%2Flocation',
+            'continuousBackupInterval=60',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_create_continuous_backup_disabled(self):
+        args = ['--continuous-backup-enabled', '0']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'ramQuotaMB=100',
+            'storageBackend=magma', 'rank=3', 'numVBuckets=128', 'continuousBackupEnabled=false',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_create_continuous_backup_CE(self):
+        self.server_args['enterprise'] = False
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60']
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        self.assertIn('Continuous backup can only be configured on enterprise edition', self.str_output)
+
+    def test_bucket_create_continuous_backup_interval_too_low(self):
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '1']
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        self.assertIn('--continuous-backup-interval cannot be lower than 2 minutes', self.str_output)
+
+    def test_bucket_create_continuous_backup_retention_period(self):
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60', '--continuous-backup-retention-period', '720']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'ramQuotaMB=100',
+            'storageBackend=magma', 'rank=3', 'numVBuckets=128',
+            'continuousBackupEnabled=true', 'continuousBackupLocation=%2Fbackup%2Flocation',
+            'continuousBackupInterval=60', 'continuousBackupRetentionPeriod=720',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_create_continuous_backup_retention_period_max(self):
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60', '--continuous-backup-retention-period', '876000']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'ramQuotaMB=100',
+            'storageBackend=magma', 'rank=3', 'numVBuckets=128',
+            'continuousBackupEnabled=true', 'continuousBackupLocation=%2Fbackup%2Flocation',
+            'continuousBackupInterval=60', 'continuousBackupRetentionPeriod=876000',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_create_continuous_backup_retention_period_too_high(self):
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60', '--continuous-backup-retention-period', '876001']
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        self.assertIn('--continuous-backup-retention-period cannot be greater than 876000 hours', self.str_output)
+
+    def test_bucket_create_continuous_backup_retention_period_zero(self):
+        args = ['--continuous-backup-retention-period', '0']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'bucketType=couchbase', 'name=name', 'evictionPolicy=fullEviction', 'replicaNumber=0', 'ramQuotaMB=100',
+            'storageBackend=magma', 'rank=3', 'numVBuckets=128', 'continuousBackupRetentionPeriod=0',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_create_continuous_backup_retention_period_CE(self):
+        self.server_args['enterprise'] = False
+        args = ['--continuous-backup-retention-period', '720']
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        self.assertIn('Continuous backup can only be configured on enterprise edition', self.str_output)
+
 
 class TestBucketDelete(CommandTest):
     def setUp(self):
@@ -1000,6 +1079,91 @@ class TestBucketEdit(CommandTest):
             'rank=3', 'throttleHardLimit=3000',
         ]
         self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_continuous_backup(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'ramQuotaMB=100',
+            'rank=3', 'continuousBackupEnabled=true', 'continuousBackupLocation=%2Fbackup%2Flocation',
+            'continuousBackupInterval=60',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_continuous_backup_disabled(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        args = ['--continuous-backup-enabled', '0']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'ramQuotaMB=100',
+            'rank=3', 'continuousBackupEnabled=false',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_continuous_backup_CE(self):
+        self.server_args['enterprise'] = False
+        self.server_args['buckets'].append(self.bucket_membase)
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60']
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        self.assertIn('Continuous backup can only be configured on enterprise edition', self.str_output)
+
+    def test_bucket_edit_continuous_backup_interval_too_low(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '1']
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        self.assertIn('--continuous-backup-interval cannot be lower than 2 minutes', self.str_output)
+
+    def test_bucket_edit_continuous_backup_retention_period(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60', '--continuous-backup-retention-period', '720']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'ramQuotaMB=100',
+            'rank=3', 'continuousBackupEnabled=true', 'continuousBackupLocation=%2Fbackup%2Flocation',
+            'continuousBackupInterval=60', 'continuousBackupRetentionPeriod=720',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_continuous_backup_retention_period_max(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60', '--continuous-backup-retention-period', '876000']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'ramQuotaMB=100',
+            'rank=3', 'continuousBackupEnabled=true', 'continuousBackupLocation=%2Fbackup%2Flocation',
+            'continuousBackupInterval=60', 'continuousBackupRetentionPeriod=876000',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_continuous_backup_retention_period_too_high(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        args = ['--continuous-backup-enabled', '1', '--continuous-backup-location', '/backup/location',
+                '--continuous-backup-interval', '60', '--continuous-backup-retention-period', '876001']
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        self.assertIn('--continuous-backup-retention-period cannot be greater than 876000 hours', self.str_output)
+
+    def test_bucket_edit_continuous_backup_retention_period_zero(self):
+        self.server_args['buckets'].append(self.bucket_membase)
+        args = ['--continuous-backup-retention-period', '0']
+        self.no_error_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        expected_params = [
+            'evictionPolicy=fullEviction', 'flushEnabled=1', 'threadsNumber=8', 'replicaNumber=0', 'ramQuotaMB=100',
+            'rank=3', 'continuousBackupRetentionPeriod=0',
+        ]
+        self.rest_parameter_match(expected_params)
+
+    def test_bucket_edit_continuous_backup_retention_period_CE(self):
+        self.server_args['enterprise'] = False
+        self.server_args['buckets'].append(self.bucket_membase)
+        args = ['--continuous-backup-retention-period', '720']
+        self.system_exit_run(self.command + self.command_args + self.command_couch_args + args, self.server_args)
+        self.assertIn('Continuous backup can only be configured on enterprise edition', self.str_output)
 
 
 class TestBucketFlush(CommandTest):
