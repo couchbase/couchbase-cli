@@ -2689,6 +2689,12 @@ class SettingAudit(Subcommand):
         print(f'Log path: {audit_settings["logPath"] if "logPath" in audit_settings else "N/A"}')
         print(f'Rotate interval: {audit_settings["rotateInterval"]}')
         print(f'Rotate size: {audit_settings["rotateSize"]}')
+
+        prune_age = audit_settings["pruneAge"]
+        if prune_age == 0:
+            prune_age = 'N/A'
+        print(f'Prune age: {prune_age}')
+
         print(f'Disabled users: {audit_settings["disabledUsers"]}')
 
         if not audit_settings["auditdEnabled"]:

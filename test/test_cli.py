@@ -1236,11 +1236,40 @@ class TestSettingAudit(CommandTest):
             'rotateInterval': 0,
             'rotateSize': 0,
             'disabledUsers': [],
+            'pruneAge': 0,
         }
 
         self.server_args['/settings/audit/descriptors'] = {}
         self.no_error_run(self.command + ['--get-settings'], self.server_args)
         self.assertIn('Log path: N/A', self.str_output)
+
+    def test_setting_audit_zero_prune_age(self):
+        self.server_args['audit_settings'] = {
+            'auditdEnabled': False,
+            'uid': 'uuid',
+            'rotateInterval': 0,
+            'rotateSize': 0,
+            'disabledUsers': [],
+            'pruneAge': 0,
+        }
+
+        self.server_args['/settings/audit/descriptors'] = {}
+        self.no_error_run(self.command + ['--get-settings'], self.server_args)
+        self.assertIn('Prune age: N/A', self.str_output)
+
+    def test_setting_audit_prune_age(self):
+        self.server_args['audit_settings'] = {
+            'auditdEnabled': False,
+            'uid': 'uuid',
+            'rotateInterval': 0,
+            'rotateSize': 0,
+            'disabledUsers': [],
+            'pruneAge': 1234,
+        }
+
+        self.server_args['/settings/audit/descriptors'] = {}
+        self.no_error_run(self.command + ['--get-settings'], self.server_args)
+        self.assertIn('Prune age: 1234', self.str_output)
 
     def test_setting_audit_clear_events_and_users(self):
         self.no_error_run(self.command + ['--set', '--disabled-users', '', '--disable-events', ''], self.server_args)
