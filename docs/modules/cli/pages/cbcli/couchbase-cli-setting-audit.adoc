@@ -119,6 +119,7 @@ commands can return json if `--output json` is provided):
     Log path: /opt/couchbase/var/lib/couchbase/logs
     Rotate interval: 86400
     Rotate size: 20971520
+    Prune age: N/A
     Disabled users: []
 
 To retrieve the list of events that can be audited use the command:
