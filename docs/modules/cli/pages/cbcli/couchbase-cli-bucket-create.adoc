@@ -17,7 +17,7 @@ _couchbase-cli bucket-create_ [--cluster <url>] [--username <user>]
     [--client-key <path>] [--client-key-password <password>] [--bucket <name>]
     [--bucket-type <type>] [--storage-backend <storage>] [--durability-min-level <level>]
     [--bucket-ramsize <size>] [--bucket-replica <num>]
-    [--bucket-priority <priority>] [--bucket-eviction-policy <policy>]
+    [--bucket-eviction-policy <policy>]
     [--max-ttl <seconds>] [--compression-mode <mode>] [--enable-flush <num>]
     [--enable-index-replica <num>] [--conflict-resolution <type>] [--wait]
     [--database-fragmentation-threshold-percentage <perc>]
@@ -87,19 +87,6 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   is only a single server in the cluster. The minimum number of replicas is
   zero, and the maximum three. This option is valid for Couchbase and
   Ephemeral buckets only.
-
---bucket-priority <priority>::
-  Specifies the priority of this bucket's background tasks. This option is
-  valid for Couchbase and Ephemeral buckets only. For Couchbase buckets,
-  background task-types include disk I/O, DCP stream-processing, and
-  item-paging. For Ephemeral buckets, background task-types are the same as
-  for Couchbase buckets, with the exception of disk I/O, which does not apply
-  to Ephemeral buckets. The value of this option may be "high" or "low". The
-  default is "low". Specifying "high" may result in faster processing; but
-  only when more than one bucket is defined for the cluster, and when
-  different priority settings have been established among the buckets. When
-  Couchbase and Ephemeral buckets have different priority settings, this
-  affects the prioritization only of task-types other than disk I/O.
 
 --bucket-eviction-policy <policy>::
   The memory-cache eviction policy for this bucket. This option is valid for
@@ -278,12 +265,12 @@ of 1GB, run the following command.
    --bucket-ramsize 1024
 
 To create a Couchbase bucket named "airline-data" with a memory cache size of
-1GB, two data replicas, high background-task priority, full eviction, flushing
-enabled, and view index replication enabled, run the following command.
+1GB, two data replicas, full eviction, flushing enabled, and 
+view index replication enabled, run the following command.
 
   $ couchbase-cli bucket-create -c 192.168.1.5:8091 --username Administrator \
    --password password --bucket travel-data --bucket-type couchbase \
-   --bucket-ramsize 1024 --bucket-replica 2 --bucket-priority high \
+   --bucket-ramsize 1024 --bucket-replica 2 \
    --bucket-eviction-policy fullEviction --enable-flush 1 \
    --enable-index-replica 1
 
