@@ -16,7 +16,7 @@ _couchbase-cli bucket-edit_ [--cluster <url>] [--username <user>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
     [--client-key <path>] [--client-key-password <password>]
     [--bucket <name>] [--bucket-ramsize <size>]
-    [--bucket-replica <num>] [--bucket-priority <priority>]
+    [--bucket-replica <num>]
     [--bucket-eviction-policy <policy>] [--enable-flush <num>]
     [--max-ttl <seconds>] [--compression-mode <mode>]
     [--remove-bucket-port <num>]
@@ -62,19 +62,6 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --bucket-port <num>::
   Sets the port on which the bucket listens. This parameter is deprecated, and
   therefore not recommended for use.
-
---bucket-priority <priority>::
-  Specifies the priority of this bucket's background tasks. This option is
-  valid for Couchbase and Ephemeral buckets only. For Couchbase buckets,
-  background task-types include disk I/O, DCP stream-processing, and
-  item-paging. For Ephemeral buckets, background task-types are the same as
-  for Couchbase buckets, with the exception of disk I/O, which does not apply
-  to Ephemeral buckets. The value of this option may be "high" or "low". The
-  default is "low". Specifying "high" may result in faster processing; but
-  only when more than one bucket is defined for the cluster, and when
-  different priority settings have been established among the buckets. When
-  Couchbase and Ephemeral buckets have different priority settings, this
-  affects the prioritization only of task-types other than disk I/O.
 
 --bucket-eviction-policy <policy>::
   The memory-cache eviction policy for this bucket. This option is valid for
