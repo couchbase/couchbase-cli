@@ -1567,13 +1567,13 @@ class ClusterManager(object):
         params = {}
 
         if node_capacity is not None:
-            params["nodeCapacity"] = node_capacity
+            params["node_capacity"] = node_capacity
         if throttle_enabled is not None:
-            params["throttleEnabled"] = "true" if throttle_enabled == "1" else "false"
+            params["throttle_enabled"] = "true" if throttle_enabled == "1" else "false"
         if read_unit_size is not None:
-            params["readUnitSize"] = read_unit_size
+            params["read_unit_size"] = read_unit_size
         if write_unit_size is not None:
-            params["writeUnitSize"] = write_unit_size
+            params["write_unit_size"] = write_unit_size
 
         return self._post_form_encoded(url, params)
 

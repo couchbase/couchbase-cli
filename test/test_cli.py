@@ -419,8 +419,15 @@ class TestClusterInit(CommandTest):
 
         self.no_error_run(self.command + full_options, self.server_args)
         self.assertIn('SUCCESS', self.str_output)
-        expected_params = ['memoryQuota=512', 'username=Administrator', 'password=asdasd', 'port=6789',
-                           'nodeCapacity=10000', 'throttleEnabled=true', 'readUnitSize=1024', 'writeUnitSize=2048']
+        expected_params = [
+            'memoryQuota=512',
+            'username=Administrator',
+            'password=asdasd',
+            'port=6789',
+            'node_capacity=10000',
+            'throttle_enabled=true',
+            'read_unit_size=1024',
+            'write_unit_size=2048']
         self.rest_parameter_match(expected_params, False)
         self.assertIn('POST:/pools/default/settings/memcached/global', self.server.trace)
 
@@ -434,7 +441,7 @@ class TestClusterInit(CommandTest):
         self.no_error_run(self.command + full_options, self.server_args)
         self.assertIn('SUCCESS', self.str_output)
         expected_params = ['memoryQuota=512', 'username=Administrator', 'password=asdasd', 'port=6789',
-                           'nodeCapacity=10000', 'throttleEnabled=false']
+                           'node_capacity=10000', 'throttle_enabled=false']
         self.rest_parameter_match(expected_params, False)
         self.assertIn('POST:/pools/default/settings/memcached/global', self.server.trace)
 
@@ -448,7 +455,7 @@ class TestClusterInit(CommandTest):
         self.no_error_run(self.command + full_options, self.server_args)
         self.assertIn('SUCCESS', self.str_output)
         expected_params = ['memoryQuota=512', 'username=Administrator', 'password=asdasd', 'port=6789',
-                           'nodeCapacity=50000']
+                           'node_capacity=50000']
         self.rest_parameter_match(expected_params, False)
         self.assertIn('POST:/pools/default/settings/memcached/global', self.server.trace)
 
@@ -2301,21 +2308,25 @@ class TestSettingCluster(CommandTest):
             '2048']
         self.no_error_run(self.command + args, self.server_args)
         self.assertIn('POST:/pools/default/settings/memcached/global', self.server.trace)
-        expected_params = ['nodeCapacity=10000', 'throttleEnabled=true', 'readUnitSize=1024', 'writeUnitSize=2048']
+        expected_params = [
+            'node_capacity=10000',
+            'throttle_enabled=true',
+            'read_unit_size=1024',
+            'write_unit_size=2048']
         self.rest_parameter_match(expected_params)
 
     def test_setting_cluster_throttle_disabled(self):
         args = ['--node-capacity', '50000', '--throttle-enabled', '0']
         self.no_error_run(self.command + args, self.server_args)
         self.assertIn('POST:/pools/default/settings/memcached/global', self.server.trace)
-        expected_params = ['nodeCapacity=50000', 'throttleEnabled=false']
+        expected_params = ['node_capacity=50000', 'throttle_enabled=false']
         self.rest_parameter_match(expected_params)
 
     def test_setting_cluster_only_node_capacity(self):
         args = ['--node-capacity', '25000']
         self.no_error_run(self.command + args, self.server_args)
         self.assertIn('POST:/pools/default/settings/memcached/global', self.server.trace)
-        expected_params = ['nodeCapacity=25000']
+        expected_params = ['node_capacity=25000']
         self.rest_parameter_match(expected_params)
 
 
