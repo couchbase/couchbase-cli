@@ -15,6 +15,8 @@ include::part-common-cluster.adoc[]
   non-echoed stdin. You may also specify your password by using the
   environment variable CB_REST_PASSWORD.
 
+include::part-common-ssl.adoc[]
+
 --client-cert <path>::
   The path to a client certificate used to authenticate when connecting to a
   cluster. May be supplied with `--client-key` as an alternative to the

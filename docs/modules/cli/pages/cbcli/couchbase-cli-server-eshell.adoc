@@ -14,8 +14,8 @@ Opens a shell to talk to the cluster manager process
 [verse]
 _couchbase-cli server-eshell_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--vm <vm_name>] [--erl-path <path>]
-    [--ns-ebin-path <path>] [--hosts-path <path>] [--base-path <path>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>] [--vm <vm_name>]
+    [--erl-path <path>] [--ns-ebin-path <path>] [--hosts-path <path>] [--base-path <path>]
 
 == DESCRIPTION
 

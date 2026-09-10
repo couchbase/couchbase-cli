@@ -14,7 +14,8 @@ Changes node-to-node encryption
 [verse]
 _couchbase-cli node-to-node-encryption_ [--cluster <url>] [-username <username>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--get] [--enable] [--disable]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>] [--get]
+    [--enable] [--disable]
 
 == DESCRIPTION
 

@@ -14,7 +14,7 @@ Manage SSL certificates
 [verse]
 _couchbase-cli ssl-manage_ [--cluster <url>] [--username <user>] [--password <password>]
   [--client-cert <path>] [--client-cert-password <password>] [--client-key <path]
-  [--client-key-password <password>]
+  [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
   [--cluster-cert-info] [ --cluster-ca-info] [--cluster-ca-load] [--cluster-ca-delete <id>]
   [ --upload-cluster-ca <path> `*(deprecated)*`] [--node-cert-info] [--regenerate-cert <path>]
   [--set-node-certificate] [--pkey-passphrase-settings <path>] [--set-client-auth <path>]

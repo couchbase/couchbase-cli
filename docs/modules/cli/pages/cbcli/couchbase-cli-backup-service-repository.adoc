@@ -12,8 +12,9 @@ Manage the backup service repositories.
 
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
-    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
-    [--client-key <path>] [--client-key-password <password>]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
     [--output] repository [--list] [--get] [--archive]
     [--add] [--remove] [--id <id>] [--new-id <id>] [--state <state>]
     [--profile <name>] [--backup-archive <archive>] [--bucket-name <name>]
@@ -45,6 +46,8 @@ Manage backup service repositories
     Remove an archived or imported repository. This operation cannot be undone.
 
 == OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --id <id>::
     Specify the repository id.

@@ -14,8 +14,8 @@ Edits cluster settings
 [verse]
 _couchbase-cli cluster-edit_ [--cluster <url>] [--cluster-username <username>] [--cluster-password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--cluster-port <port>]
-    [--cluster-ramsize <mebibytes>] [--cluster-name <name>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
+    [--cluster-port <port>] [--cluster-ramsize <mebibytes>] [--cluster-name <name>]
     [--cluster-index-ramsize <mebibytes>] [--cluster-fts-ramsize <mebibytes>]
 
 == DESCRIPTION

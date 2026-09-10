@@ -14,7 +14,7 @@ Delete a bucket
 [verse]
 _couchbase-cli bucket-delete_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--bucket <name>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>] [--bucket <name>]
 
 == DESCRIPTION
 
