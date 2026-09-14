@@ -15,7 +15,7 @@
   recommended for production environments because it does not protect the user
   from a man-in-the-middle attack.
 
---cacert::
+--cacert <path>::
   Specifies that the SSL connection should use the cacert provided when
   connecting to the cluster. This argument takes the path the certificate
   file as its value. This is the most secure way to connect to your cluster.

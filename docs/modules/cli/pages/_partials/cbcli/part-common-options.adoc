@@ -21,6 +21,8 @@ include::part-common-cluster.adoc[]
   error. You may also specify your token by using the environment variable
   CB_REST_AUTH_TOKEN.
 
+include::part-common-ssl.adoc[]
+
 --client-cert <path>::
   The path to a client certificate used to authenticate when connecting to a
   cluster. May be supplied with `--client-key` as an alternative to the

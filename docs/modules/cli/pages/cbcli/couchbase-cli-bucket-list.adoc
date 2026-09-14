@@ -14,7 +14,7 @@ List all buckets
 [verse]
 _couchbase-cli bucket-list_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
 
 == DESCRIPTION
 

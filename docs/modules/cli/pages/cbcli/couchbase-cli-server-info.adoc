@@ -14,7 +14,7 @@ Displays information and statistics about the Couchbase Server specified.
 [verse]
 _couchbase-cli server-info_ [--cluster <url>] [--username <username>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
 
 == DESCRIPTION
 

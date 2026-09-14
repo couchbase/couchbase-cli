@@ -14,7 +14,8 @@ Modifies auto-reprovision settings
 [verse]
 _couchbase-cli setting-autoreprovision_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--enabled <1|0>] [--max-nodes <num>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>] [--enabled <1|0>]
+    [--max-nodes <num>]
 
 == DESCRIPTION
 

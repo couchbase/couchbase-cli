@@ -13,7 +13,8 @@ Lists all hosts in the cluster
 
 [verse]
 _couchbase-cli host-list_ [--cluster <url>] [--username <user>] [--password <password>] [--client-cert <path>]
-    [--client-cert-password <password>] [--client-key <path>] [--client-key-password <password>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
 
 == DESCRIPTION
 
