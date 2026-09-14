@@ -11,15 +11,17 @@ Manage the backup service repositories.
 == SYNOPSIS
 
 [verse]
-./couchbase-cli backup-service repository -h
-usage: couchbase-cli backup-service repository (--list | --get | --archive | --add | --remove | -h) [--id <id>]
-                                               [--new-id <id>] [--state <state>] [--plan <plan_name>]
-                                               [--backup-archive <archive>] [--bucket-name <name>] [--remove-data]
-                                               [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
-                                               [--cloud-credentials-id <id>] [--cloud-credentials-key <key>]
-                                               [--cloud-credentials-refresh-token <token>]
-                                               [--cloud-credentials-region <region>] [--cloud-endpoint <endpoint>]
-                                               [--s3-force-path-style]
+_couchbase-cli backup-service repository (--list | --get | --archive | --add | --remove | -h)
+    [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>]
+    [--no-ssl-verify] [--cacert <path>]
+    [--output] [--archive] [--id <id>] [--new-id <id>] [--state <state>]
+    [--profile <name>] [--backup-archive <archive>] [--bucket-name <name>]
+    [--cloud-credentials-name <name>] [--cloud-staging-dir <path>]
+    [--cloud-credentials-id <id>] [--cloud-credentials-key <key>]
+    [--cloud-credentials-refresh-token <token>] [--cloud-credentials-region <region>]
+    [--cloud-endpoint <endpoint>] [--s3-force-path-style] [--remove-data]
 
 == DESCRIPTION
 
@@ -44,6 +46,8 @@ Manage backup service repositories
     Remove an archived or imported repository. This operation cannot be undone.
 
 == OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --id <id>::
     Specify the repository id.

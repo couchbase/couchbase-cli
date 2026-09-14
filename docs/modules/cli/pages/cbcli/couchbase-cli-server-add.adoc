@@ -13,7 +13,8 @@ Adds a server to the cluster
 
 [verse]
 _couchbase-cli server-add_ [--cluster <url>] [--username <username>] [--password <password>]
-    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>] [--client-key-password <password>]
+    [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
     [--server-add <servers>] [--group-name <name>]
     [--server-add-username <username>] [--server-add-password <password>]
     [--services <services>] [--index-storage-setting <mode>]

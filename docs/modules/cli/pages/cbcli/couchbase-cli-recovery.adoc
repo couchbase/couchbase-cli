@@ -14,7 +14,8 @@ Recovers a previously failed over node
 [verse]
 _couchbase-cli recovery_ [--cluster <url>] [--username <username>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--server-recovery <servers>] [--recovery-type <type>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
+    [--server-recovery <servers>] [--recovery-type <type>]
 
 == DESCRIPTION
 

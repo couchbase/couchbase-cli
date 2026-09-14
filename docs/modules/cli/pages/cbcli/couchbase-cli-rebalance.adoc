@@ -14,13 +14,16 @@ Rebalances data and indexes across nodes in a cluster
 [verse]
 _couchbase-cli rebalance_ [--cluster <url>] [--username <user>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--server-remove <servers>]
-    [--update-services] [--fts-add <servers>] [--fts-remove <servers>]
+    [--client-key-password <password>]  [--no-ssl-verify] [--cacert <path>]
+    [--server-remove <servers>] [--update-services]
+    [--fts-add <servers>] [--fts-remove <servers>]
     [--index-add <servers>] [--index-remove <servers>] [--query-add <servers>]
     [--query-remove <servers>] [--backup-add <servers>]
     [--backup-remove <servers>] [--analytics-add <servers>]
     [--analytics-remove <servers>] [--eventing-add <servers>]
     [--eventing-remove <servers>] [--no-progress-bar] [--no-wait]
+    [--server-remove <servers>] [--no-progress-bar]
+    [--no-wait]
 
 == DESCRIPTION
 

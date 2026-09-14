@@ -14,7 +14,8 @@ Edits cluster IP family settings
 [verse]
 _couchbase-cli ip-family_ [--cluster <url>] [-username <username>] [--password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--get] [--set] [--ipv4] [--ipv4only] [--ipv6]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>] [--get] [--set]
+    [--ipv4] [--ipv4only] [--ipv6]
     [--ipv6only]
 
 == DESCRIPTION

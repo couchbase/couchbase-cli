@@ -12,15 +12,19 @@ Manage the backup service settings
 
 [verse]
 _couchbase-cli backup-service [--cluster <url>] [--username <user>]
-    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
-    [--client-key <path>] [--client-key-password <password>] settings [--get]
-    [--set] [--history-rotation-period <days>] [--history-rotation-size <mebibytes>]
+    [--password <password>] [--client-cert <path>]
+    [--client-cert-password <password>] [--client-key <path>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
+    settings [--get] [--set] [--history-rotation-period <days>]
+    [--history-rotation-size <mebibytes>]
 
 == DESCRIPTION
 
 Manage the backup service settings
 
 == OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --get::
   Retrieve current backup service settings.

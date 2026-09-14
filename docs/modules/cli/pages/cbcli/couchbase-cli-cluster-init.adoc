@@ -14,8 +14,8 @@ Initializes a Couchbase Server cluster
 [verse]
 _couchbase-cli cluster-init_ [--cluster <url>] [--cluster-username <username>] [--cluster-password <password>]
     [--client-cert <path>] [--client-cert-password <password>] [--client-key <path>]
-    [--client-key-password <password>] [--cluster-port <port>]
-    [--cluster-ramsize <mebibytes>] [--cluster-name <name>]
+    [--client-key-password <password>] [--no-ssl-verify] [--cacert <path>]
+    [--cluster-port <port>] [--cluster-ramsize <mebibytes>] [--cluster-name <name>]
     [--cluster-index-ramsize <mebibytes>] [--cluster-fts-ramsize <mebibytes>]
     [--cluster-eventing-ramsize <mebibytes>]
     [--cluster-analytics-ramsize <mebibytes>] [--cluster-query-ramsize <mebibytes>]
@@ -57,6 +57,8 @@ which will determine how the global secondary indexes (GSI) are stored.
   Couchbase Server Administration Console as well as be used for data access
   and future configuration. This option specifies the password for the
   administrator user.
+
+include::{partialsdir}/cbcli/part-common-ssl.adoc[]
 
 --cluster-ramsize::
   Specifies the data services memory quota (in MiB). This quota will be assigned
