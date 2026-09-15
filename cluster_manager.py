@@ -517,9 +517,12 @@ class ClusterManager(object):
 
         params = {"hostname": add_server, "services": opts.services}
 
+        # Credentials may travel alongside the certificate: the server being
+        # added may be configured to not accept the internal client certificate
+        # as proof of identity on its own.
         if opts.use_client_cert:
             params["clientCertAuth"] = 'true'
-        else:
+        if opts.server_username is not None:
             params["user"] = opts.server_username
             params["password"] = opts.server_password
 
