@@ -2288,7 +2288,9 @@ class ClusterManager(object):
             col_migration_mode,
             col_mapping_rule,
             conflict_logging=None,
-            forward_local_only=None):
+            forward_local_only=None,
+            clog_pause_repl_threshold=None,
+            clog_monitor_duration=None):
 
         url = f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
@@ -2325,6 +2327,10 @@ class ClusterManager(object):
             params['conflictLogging'] = json.dumps(conflict_logging, indent=None, separators=(',', ':'))
         if forward_local_only:
             params['forwardLocalOnly'] = one_zero_boolean_to_string(forward_local_only)
+        if clog_pause_repl_threshold is not None:
+            params['cLogPauseReplThreshold'] = clog_pause_repl_threshold
+        if clog_monitor_duration is not None:
+            params['cLogMonitorDuration'] = clog_monitor_duration
 
         return self._post_form_encoded(url, params)
 
@@ -2374,7 +2380,7 @@ class ClusterManager(object):
                                 log_level, stats_interval, filter_expression, priority, reset_expiry, filter_del,
                                 filter_exp, filter_binary, filter_del_with_exp, filter_exp_with_exp,
                                 col_explicit_mappings, col_migration_mode, col_mapping_rule, conflict_logging,
-                                forward_local_only=None):
+                                forward_local_only=None, clog_pause_repl_threshold=None, clog_monitor_duration=None):
         url = f'{self.hostname}/controller/createReplication'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                                        fail_interval, replication_thresh, src_nozzles,
@@ -2414,6 +2420,10 @@ class ClusterManager(object):
             params['conflictLogging'] = json.dumps(conflict_logging, indent=None, separators=(',', ':'))
         if forward_local_only:
             params['forwardLocalOnly'] = one_zero_boolean_to_string(forward_local_only)
+        if clog_pause_repl_threshold is not None:
+            params['cLogPauseReplThreshold'] = clog_pause_repl_threshold
+        if clog_monitor_duration is not None:
+            params['cLogMonitorDuration'] = clog_monitor_duration
 
         return self._post_form_encoded(url, params)
 

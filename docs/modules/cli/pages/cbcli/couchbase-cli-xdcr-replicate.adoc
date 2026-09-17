@@ -34,6 +34,8 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>] [--password
     [--conflict-logging-rule-map <mapping>]
     [--conflict-logging-rule-default <collection-string>]
     [--conflict-logging-rule-disable <collection-string>]
+    [--conflict-logging-pause-repl-threshold <num>]
+    [--conflict-logging-monitor-duration <seconds>]
 
 == DESCRIPTION
 
@@ -196,6 +198,19 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 
 --conflict-logging-rule-disable <collection-string>::
   Turns off conflict logging for the given collection.
+
+--conflict-logging-pause-repl-threshold <num>::
+  The number of conflicts, per source cluster node, that may be logged within
+  `--conflict-logging-monitor-duration` seconds before the replication is
+  paused. By default XDCR stops logging conflicts for a period of time when
+  too many are logged, so that its ability to replicate documents is
+  protected. Setting a threshold instead pauses the replication once it is
+  exceeded.
+
+--conflict-logging-monitor-duration <seconds>::
+  The period, in seconds, over which the logged conflicts are counted when
+  deciding whether the replication should be paused. Used together with
+  `--conflict-logging-pause-repl-threshold`.
 
 == COLLECTION OPTIONS
 

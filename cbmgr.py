@@ -5229,6 +5229,15 @@ class XdcrReplicate(Subcommand):
         conflict_logging_group.add_argument('--conflict-logging-rule-disable', type=str, metavar='<collection>',
                                             action='append', help='Disable conflict logging for specified '
                                                                   'scope/collection')
+        conflict_logging_group.add_argument('--conflict-logging-pause-repl-threshold', type=(int), metavar='<num>',
+                                            dest='clog_pause_repl_threshold', default=None,
+                                            help='The number of conflicts, per source cluster node, that may be '
+                                                 'logged within the monitor duration before the replication is '
+                                                 'paused.')
+        conflict_logging_group.add_argument('--conflict-logging-monitor-duration', type=(int), metavar='<seconds>',
+                                            dest='clog_monitor_duration', default=None,
+                                            help='The period, in seconds, over which logged conflicts are counted '
+                                                 'when deciding whether to pause the replication')
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_check=False)
     def execute(self, opts):
@@ -5275,6 +5284,22 @@ class XdcrReplicate(Subcommand):
         settings, errors = self.rest.get_xdcr_replicator_settings(opts.replicator_id)
         _exit_if_errors(errors)
         print(json.dumps(settings, indent=4, sort_keys=True))
+
+    @staticmethod
+    def _parse_conflict_logging_pause_args(opts):
+        threshold, duration = opts.clog_pause_repl_threshold, opts.clog_monitor_duration
+        if threshold is None and duration is None:
+            return None, None
+
+        if opts.conflict_logging == "0":
+            _exit_if_errors(["if conflict-logging is disabled [--conflict-logging-pause-repl-threshold, "
+                             "--conflict-logging-monitor-duration] cannot be passed"])
+        if threshold is not None and threshold < 0:
+            _exit_if_errors(["--conflict-logging-pause-repl-threshold cannot be negative"])
+        if duration is not None and duration < 1:
+            _exit_if_errors(["--conflict-logging-monitor-duration must be at least 1 second"])
+
+        return threshold, duration
 
     def _parse_conflict_logging_args(self, opts):
         if opts.conflict_logging is None:
@@ -5364,6 +5389,7 @@ class XdcrReplicate(Subcommand):
             _exit_if_errors(["if conflict-logging is disabled --conflict-logging-default cannot be passed"])
 
         conflict_logging = self._parse_conflict_logging_args(opts)
+        clog_pause_repl_threshold, clog_monitor_duration = self._parse_conflict_logging_pause_args(opts)
 
         _, errors = self.rest.create_xdcr_replication(opts.cluster_name, opts.to_bucket, opts.from_bucket, opts.chk_int,
                                                       opts.worker_batch_size, opts.doc_batch_size, opts.fail_interval,
@@ -5374,7 +5400,8 @@ class XdcrReplicate(Subcommand):
                                                       opts.filter_binary, opts.filter_del_with_exp,
                                                       opts.filter_exp_with_exp, opts.collection_explicit_mappings,
                                                       opts.collection_migration, opts.collection_mapping_rules,
-                                                      conflict_logging, opts.forward_local_only)
+                                                      conflict_logging, opts.forward_local_only,
+                                                      clog_pause_repl_threshold, clog_monitor_duration)
         _exit_if_errors(errors)
 
         _success("XDCR replication created")
@@ -5432,6 +5459,7 @@ class XdcrReplicate(Subcommand):
             _exit_if_errors(['cannot enable both collection migration and explicit mappings'])
 
         conflict_logging = self._parse_conflict_logging_args(opts)
+        clog_pause_repl_threshold, clog_monitor_duration = self._parse_conflict_logging_pause_args(opts)
 
         _, errors = self.rest.xdcr_replicator_settings(opts.chk_int, opts.worker_batch_size, opts.doc_batch_size,
                                                        opts.fail_interval, opts.rep_thresh, opts.src_nozzles,
@@ -5442,7 +5470,8 @@ class XdcrReplicate(Subcommand):
                                                        opts.filter_del_with_exp, opts.filter_exp_with_exp,
                                                        opts.collection_explicit_mappings, opts.collection_migration,
                                                        opts.collection_mapping_rules, conflict_logging,
-                                                       opts.forward_local_only)
+                                                       opts.forward_local_only, clog_pause_repl_threshold,
+                                                       clog_monitor_duration)
         _exit_if_errors(errors)
 
         _success("XDCR replicator settings updated")

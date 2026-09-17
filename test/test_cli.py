@@ -3509,6 +3509,48 @@ class TestXdcrReplicate(CommandTest):
         }
         self.assertEqual(expected, data)
 
+    def test_conflict_logging_pause_replication(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2', '--force',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging', '1',
+            '--conflict-logging-default', 'default.cl.default',
+            '--conflict-logging-pause-repl-threshold', '100',
+            '--conflict-logging-monitor-duration', '60',
+        ]
+
+        self.no_error_run(self.command + args, self.server_args)
+        self.assertIn('POST:/controller/createReplication', self.server.trace)
+        self.assertEqual('100', self.find_rest_param('cLogPauseReplThreshold'))
+        self.assertEqual('60', self.find_rest_param('cLogMonitorDuration'))
+
+    def test_conflict_logging_pause_replication_disabled_conflict_logging(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging', '0',
+            '--conflict-logging-pause-repl-threshold', '100',
+        ]
+
+        self.system_exit_run(self.command + args, self.server_args)
+        self.assertIn('--conflict-logging-monitor-duration] cannot be passed', self.str_output)
+
+    def test_conflict_logging_pause_replication_negative_threshold(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging-pause-repl-threshold', '-1',
+        ]
+
+        self.system_exit_run(self.command + args, self.server_args)
+        self.assertIn('--conflict-logging-pause-repl-threshold cannot be negative', self.str_output)
+
+    def test_conflict_logging_pause_replication_invalid_duration(self):
+        args = [
+            '--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+            '--xdcr-from-bucket', 'bucket1', '--conflict-logging-monitor-duration', '0',
+        ]
+
+        self.system_exit_run(self.command + args, self.server_args)
+        self.assertIn('--conflict-logging-monitor-duration must be at least 1 second', self.str_output)
+
     def test_delete_replicate(self):
         self.no_error_run(self.command + ['--delete', '--xdcr-replicator', '1'], self.server_args)
         self.assertIn('DELETE:/controller/cancelXDCR/1', self.server.trace)
@@ -3546,6 +3588,14 @@ class TestXdcrReplicate(CommandTest):
                           self.server_args)
         self.assertIn('POST:/settings/replications/1', self.server.trace)
         expected_params = ['forwardLocalOnly=false', 'filterSkipRestream=0']
+        self.rest_parameter_match(expected_params)
+
+    def test_settings_conflict_logging_pause_replication(self):
+        self.no_error_run(self.command + ['--settings', '--xdcr-replicator', '1',
+                                          '--conflict-logging-pause-repl-threshold', '0',
+                                          '--conflict-logging-monitor-duration', '120'], self.server_args)
+        self.assertIn('POST:/settings/replications/1', self.server.trace)
+        expected_params = ['cLogPauseReplThreshold=0', 'cLogMonitorDuration=120', 'filterSkipRestream=0']
         self.rest_parameter_match(expected_params)
 
     def test_settings_collection_args(self):
