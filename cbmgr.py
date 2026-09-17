@@ -5191,6 +5191,12 @@ class XdcrReplicate(Subcommand):
         group.add_argument('--filter-binary', choices=['1', '0'], metavar='<1|0>', default=None, dest='filter_binary',
                            help='When set to true binary documents are not replicated. When false binary documents may '
                                 'be replicated')
+        group.add_argument('--filter-deletions-with-expression', choices=['1', '0'], metavar='<1|0>', default=None,
+                           dest='filter_del_with_exp',
+                           help='When set to true the filter expression will also be applied to delete mutations')
+        group.add_argument('--filter-expirations-with-expression', choices=['1', '0'], metavar='<1|0>', default=None,
+                           dest='filter_exp_with_exp',
+                           help='When set to true the filter expression will also be applied to expiry mutations')
         group.add_argument('--force', action='store_true', help='Skips any confirmation prompts')
 
         collection_group = self.parser.add_argument_group("Collection options")
@@ -5228,6 +5234,11 @@ class XdcrReplicate(Subcommand):
                                     or opts.collection_mapping_rules is not None):
             _exit_if_errors(["[--collection-migration, --collection-explicit-mappings, --collection-mapping-rules] can"
                              " only be configured on enterprise edition"])
+
+        if opts.filter_del_with_exp is not None and opts.filter_del is None:
+            _exit_if_errors(["--filter-deletion is needed when --filter-deletions-with-expression is passed"])
+        if opts.filter_exp_with_exp is not None and opts.filter_exp is None:
+            _exit_if_errors(["--filter-expiration is needed when --filter-expirations-with-expression is passed"])
 
         if opts.compression == "0":
             opts.compression = "None"
@@ -5356,7 +5367,8 @@ class XdcrReplicate(Subcommand):
                                                       opts.usage_limit, opts.compression, opts.log_level,
                                                       opts.stats_interval, opts.filter, opts.priority,
                                                       opts.reset_expiry, opts.filter_del, opts.filter_exp,
-                                                      opts.filter_binary, opts.collection_explicit_mappings,
+                                                      opts.filter_binary, opts.filter_del_with_exp,
+                                                      opts.filter_exp_with_exp, opts.collection_explicit_mappings,
                                                       opts.collection_migration, opts.collection_mapping_rules,
                                                       conflict_logging)
         _exit_if_errors(errors)
@@ -5423,6 +5435,7 @@ class XdcrReplicate(Subcommand):
                                                        opts.log_level, opts.stats_interval, opts.replicator_id,
                                                        opts.filter, opts.filter_skip, opts.priority, opts.reset_expiry,
                                                        opts.filter_del, opts.filter_exp, opts.filter_binary,
+                                                       opts.filter_del_with_exp, opts.filter_exp_with_exp,
                                                        opts.collection_explicit_mappings, opts.collection_migration,
                                                        opts.collection_mapping_rules, conflict_logging)
         _exit_if_errors(errors)

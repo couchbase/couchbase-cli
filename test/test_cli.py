@@ -3373,6 +3373,34 @@ class TestXdcrReplicate(CommandTest):
 
         self.rest_parameter_match(expected_params)
 
+    def test_create_filter_with_expression_args(self):
+        self.no_error_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket', 'bucket2',
+                                          '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:',
+                                          '--filter-deletion', '1', '--filter-expiration', '1',
+                                          '--filter-deletions-with-expression', '1',
+                                          '--filter-expirations-with-expression', '0'], self.server_args)
+        self.assertIn('POST:/controller/createReplication', self.server.trace)
+        expected_params = ['toBucket=bucket2', 'fromBucket=bucket1', 'toCluster=cluster1',
+                           'filterExpression=key%3A', 'replicationType=continuous',
+                           'filterDeletion=true', 'filterExpiration=true',
+                           'filterDeletionsWithExpression=true', 'filterExpirationsWithExpression=false']
+
+        self.rest_parameter_match(expected_params)
+
+    def test_create_filter_deletions_with_expression_without_filter_deletion(self):
+        self.system_exit_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket',
+                                             'bucket2', '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:',
+                                             '--filter-deletions-with-expression', '1'], self.server_args)
+        self.assertIn('--filter-deletion is needed when --filter-deletions-with-expression is passed',
+                      self.str_output)
+
+    def test_create_filter_expirations_with_expression_without_filter_expiration(self):
+        self.system_exit_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket',
+                                             'bucket2', '--xdcr-from-bucket', 'bucket1', '--filter-expression', 'key:',
+                                             '--filter-expirations-with-expression', '1'], self.server_args)
+        self.assertIn('--filter-expiration is needed when --filter-expirations-with-expression is passed',
+                      self.str_output)
+
     def test_create_with_mutually_exclusive_args(self):
         self.system_exit_run(self.command + ['--create', '--xdcr-cluster-name', 'cluster1', '--xdcr-to-bucket',
                                              'bucket2', '--xdcr-from-bucket', 'bucket1', '--filter-expression',
@@ -3493,11 +3521,14 @@ class TestXdcrReplicate(CommandTest):
     def test_setting_filter_args(self):
         self.no_error_run(self.command + ['--settings', '--xdcr-replicator', '1', '--filter-expression', 'key:',
                                           '--filter-skip-restream', '--reset-expiry', '1',
-                                          '--filter-deletion', '0', '--filter-expiration', '1', '--filter-binary', '1'],
+                                          '--filter-deletion', '0', '--filter-expiration', '1', '--filter-binary', '1',
+                                          '--filter-deletions-with-expression', '1',
+                                          '--filter-expirations-with-expression', '0'],
                           self.server_args)
         self.assertIn('POST:/settings/replications/1', self.server.trace)
         expected_params = ['filterExpression=key%3A', 'filterSkipRestream=1', 'filterBypassExpiry=true',
-                           'filterDeletion=false', 'filterExpiration=true', 'filterBinary=true']
+                           'filterDeletion=false', 'filterExpiration=true', 'filterBinary=true',
+                           'filterDeletionsWithExpression=true', 'filterExpirationsWithExpression=false']
         self.rest_parameter_match(expected_params)
 
     def test_settings_collection_args(self):

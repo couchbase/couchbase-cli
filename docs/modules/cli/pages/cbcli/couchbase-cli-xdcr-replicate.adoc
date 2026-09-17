@@ -26,6 +26,8 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>] [--password
     [--stats-interval <milliseconds>][--optimistic-replication-threshold <bytes>]
     [--log-level <level>] [--priority <High|Medium|Low>] [--reset-expiry <1|0>]
     [--filter-deletion <1|0>] [--filter-expiration <1|0>] [--filter-binary <1|0>]
+    [--filter-deletions-with-expression <1|0>]
+    [--filter-expirations-with-expression <1|0>]
     [--collection-explicit-mappings <1|0>] [--collection-migration <1|0>]
     [--collection-mapping-rules <mappings>] [--conflict-logging <1|0>]
     [--conflict-logging-default <collection-string>]
@@ -139,18 +141,34 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --filter-deletion <1|0>::
   When set to true, delete mutations will not be sent to the target cluster.
   This means documents will not be deleted in the target cluster via delete
-  operations on the source cluster.
+  operations on the source cluster. However, if
+  `--filter-deletions-with-expression` is also set then deletions matching
+  the expression _will_ be replicated.
 
 --filter-expiration <1|0>::
   When set to true, expiry mutations will not be sent to the target cluster.
   This means documents will not be deleted in the target cluster via
-  expirations on the source cluster.
+  expirations on the source cluster. However, if
+  `--filter-expirations-with-expression` is also set then expirations
+  matching the expression _will_ be replicated.
 
 --filter-binary <1|0>::
   When set to true, binary mutations will not be sent to the target cluster.
   When false, binary mutations will be sent to the target cluster depending
   on the filter expression. See
   xref:rest-api:rest-xdcr-create-replication.adoc[Creating a Replication].
+
+--filter-deletions-with-expression <1|0>::
+  When set to true, the filter expression will also be applied to delete
+  mutations. This means deletions will only be sent to the target cluster if
+  they match the filter expression. This option must be specified together
+  with `--filter-deletion`.
+
+--filter-expirations-with-expression <1|0>::
+  When set to true, the filter expression will also be applied to expiry
+  mutations. This means expirations will only be sent to the target cluster if
+  they match the filter expression. This option must be specified together
+  with `--filter-expiration`.
 
 == CONFLICT LOGGING OPTIONS
 
