@@ -5197,6 +5197,10 @@ class XdcrReplicate(Subcommand):
         group.add_argument('--filter-expirations-with-expression', choices=['1', '0'], metavar='<1|0>', default=None,
                            dest='filter_exp_with_exp',
                            help='When set to true the filter expression will also be applied to expiry mutations')
+        group.add_argument('--forward-local-only', choices=['1', '0'], metavar='<1|0>', default=None,
+                           dest='forward_local_only',
+                           help='When set to true only mutations made locally on this cluster will be sent to the '
+                                'target cluster')
         group.add_argument('--force', action='store_true', help='Skips any confirmation prompts')
 
         collection_group = self.parser.add_argument_group("Collection options")
@@ -5370,7 +5374,7 @@ class XdcrReplicate(Subcommand):
                                                       opts.filter_binary, opts.filter_del_with_exp,
                                                       opts.filter_exp_with_exp, opts.collection_explicit_mappings,
                                                       opts.collection_migration, opts.collection_mapping_rules,
-                                                      conflict_logging)
+                                                      conflict_logging, opts.forward_local_only)
         _exit_if_errors(errors)
 
         _success("XDCR replication created")
@@ -5437,7 +5441,8 @@ class XdcrReplicate(Subcommand):
                                                        opts.filter_del, opts.filter_exp, opts.filter_binary,
                                                        opts.filter_del_with_exp, opts.filter_exp_with_exp,
                                                        opts.collection_explicit_mappings, opts.collection_migration,
-                                                       opts.collection_mapping_rules, conflict_logging)
+                                                       opts.collection_mapping_rules, conflict_logging,
+                                                       opts.forward_local_only)
         _exit_if_errors(errors)
 
         _success("XDCR replicator settings updated")

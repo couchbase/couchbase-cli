@@ -2287,7 +2287,8 @@ class ClusterManager(object):
             col_explicit_mappings,
             col_migration_mode,
             col_mapping_rule,
-            conflict_logging=None):
+            conflict_logging=None,
+            forward_local_only=None):
 
         url = f'{self.hostname}/settings/replications/{urllib.parse.quote_plus(replicator_id)}'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
@@ -2322,6 +2323,8 @@ class ClusterManager(object):
             params['colMappingRules'] = col_mapping_rule
         if conflict_logging is not None:
             params['conflictLogging'] = json.dumps(conflict_logging, indent=None, separators=(',', ':'))
+        if forward_local_only:
+            params['forwardLocalOnly'] = one_zero_boolean_to_string(forward_local_only)
 
         return self._post_form_encoded(url, params)
 
@@ -2370,7 +2373,8 @@ class ClusterManager(object):
                                 fail_interval, replication_thresh, src_nozzles, dst_nozzles, usage_limit, compression,
                                 log_level, stats_interval, filter_expression, priority, reset_expiry, filter_del,
                                 filter_exp, filter_binary, filter_del_with_exp, filter_exp_with_exp,
-                                col_explicit_mappings, col_migration_mode, col_mapping_rule, conflict_logging):
+                                col_explicit_mappings, col_migration_mode, col_mapping_rule, conflict_logging,
+                                forward_local_only=None):
         url = f'{self.hostname}/controller/createReplication'
         params = self._get_xdcr_params(chk_interval, worker_batch_size, doc_batch_size,
                                        fail_interval, replication_thresh, src_nozzles,
@@ -2408,6 +2412,8 @@ class ClusterManager(object):
             params['colMappingRules'] = col_mapping_rule
         if conflict_logging is not None:
             params['conflictLogging'] = json.dumps(conflict_logging, indent=None, separators=(',', ':'))
+        if forward_local_only:
+            params['forwardLocalOnly'] = one_zero_boolean_to_string(forward_local_only)
 
         return self._post_form_encoded(url, params)
 

@@ -27,7 +27,7 @@ _couchbase-cli xdcr-replicate_ [--cluster <url>] [--username <user>] [--password
     [--log-level <level>] [--priority <High|Medium|Low>] [--reset-expiry <1|0>]
     [--filter-deletion <1|0>] [--filter-expiration <1|0>] [--filter-binary <1|0>]
     [--filter-deletions-with-expression <1|0>]
-    [--filter-expirations-with-expression <1|0>]
+    [--filter-expirations-with-expression <1|0>] [--forward-local-only <1|0>]
     [--collection-explicit-mappings <1|0>] [--collection-migration <1|0>]
     [--collection-mapping-rules <mappings>] [--conflict-logging <1|0>]
     [--conflict-logging-default <collection-string>]
@@ -169,6 +169,11 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   mutations. This means expirations will only be sent to the target cluster if
   they match the filter expression. This option must be specified together
   with `--filter-expiration`.
+
+--forward-local-only <1|0>::
+  When set to true, only mutations made locally on this cluster will be sent to
+  the target cluster. Mutations this cluster received from another cluster via
+  XDCR will not be forwarded on.
 
 == CONFLICT LOGGING OPTIONS
 
