@@ -16,7 +16,7 @@ from mock_server import MockRESTServer
 
 import couchbaseConstants as cbcs
 from cb_bin_client import MemcachedClient
-from pump import Batch, filter_bucket_nodes
+from pump import Batch, Sink, SinkBatchFuture, filter_bucket_nodes
 from pump_bfd import BFD, CBB_VERSION, DDOC_FILE_NAME, FTS_FILE_NAME, INDEX_FILE_NAME, BFDSource
 from pump_bfd2 import BFDSinkEx
 from pump_csv import CSVSink, CSVSource
@@ -1174,6 +1174,24 @@ class TestMCSink(unittest.TestCase):
             expected_out += hdr + ext + key + val
 
         self.assertEqual(fake_connection.s.sent, [expected_out])
+
+
+class TestSinkBatchFuture(unittest.TestCase):
+    def test_wait_until_consumed_detects_dead_worker(self):
+        """Test a sink worker that dies does not leave the pump waiting forever"""
+        def die_after_pulling(sink):
+            sink.pull_next_batch()
+            raise RuntimeError('simulated sink worker failure')
+
+        sink = Sink(None, 'http://localhost:8091', None, None, None, None,
+                    {'stop': False}, defaultdict(int))
+        sink.init_worker(die_after_pulling)
+
+        batch = Batch(sink)
+        rv, future = sink.push_next_batch(batch, SinkBatchFuture(sink, batch))
+        self.assertEqual(0, rv)
+
+        self.assertIn('sink worker exited', future.wait_until_consumed())
 
 
 # ------ Memcached client tests ------

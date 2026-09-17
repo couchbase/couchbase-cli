@@ -84,7 +84,9 @@ class SinkBatchFuture(object):
         self.done_rv = None
 
     def wait_until_consumed(self):
-        self.done.wait()
+        while not self.done.wait(timeout=5):
+            if not self.sink.worker.is_alive():
+                return 'error: sink worker exited without consuming batch'
         return self.done_rv
 
 
