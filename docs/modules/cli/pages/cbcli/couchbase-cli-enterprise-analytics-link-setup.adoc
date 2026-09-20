@@ -1,5 +1,5 @@
 = couchbase-cli-enterprise-analytics-link-setup(1)
-:description: Manage Enterprise Analytics links
+:description: Manage Operational Insights links (deprecated)
 ifndef::doctype-manpage[:doctitle: enterprise-analytics-link-setup]
 
 ifdef::doctype-manpage[]
@@ -7,79 +7,31 @@ ifdef::doctype-manpage[]
 
 couchbase-cli-enterprise-analytics-link-setup -
 endif::[]
-Manage Enterprise Analytics links
+Manage Operational Insights links (deprecated)
 
 == SYNOPSIS
 
 [verse]
-_couchbase-cli enterprise-analytics-link-setup_ [--cluster <cluster>] [--username <username>]
-    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
-    [--client-key <path>] [--client-key-password <password>] [--create] [--delete]
-    [--edit] [--list] [--name <name>] [--link-details <json>] [--link-details-path <path>]
+_couchbase-cli enterprise-analytics-link-setup_ [<options>]
 
 == DESCRIPTION
 
-This command is used to manage links used by the external dataset and remote
-cluster capabilities of the Enterprise Analytics Service.
+DEPRECATED: Please use the man:couchbase-cli-operational-insights-link-setup[1]
+command, which provides the same functionality as this command and takes the
+same options. This command is retained only so that scripts written against
+the former product name keep working, and it will be removed in a future
+release.
 
 == OPTIONS
 
-=== Common Link Options
-
-include::{partialsdir}/cbcli/part-common-options.adoc[]
-
---create::
-  Creates a new link.
-
---delete::
-  Deletes a link.
-
---edit::
-  Edits a link.
-
---get::
-  Retrieve link details.
-
---list::
-  List defined links.
-
---name <name>::
-  The name of the link.
-
---link-details <json>::
-  The link details as JSON string
-
---link-details-path <path>::
-  The path to the link details JSON file
-
-include::{partialsdir}/cbcli/part-host-formats.adoc[]
-
-include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
-
-== EXAMPLES
-
-To create a new link named "l1", run the following command:
-
-$ couchbase-cli enterprise-analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --create --name l1 --link-details-path <path>
-
-To delete the new link named "l1", run the following command:
-
-$ couchbase-cli enterprise-analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --delete --name l1
-
-To list the defined links run the following command:
-
-$ couchbase-cli enterprise-analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --list
-
-To retrieve the link details for a link named "l1", run the following command:
-
-$ couchbase-cli enterprise-analytics-link-setup -c 192.168.1.5 -u Administrator \
- -p password --get --name l1
+See man:couchbase-cli-operational-insights-link-setup[1].
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
 include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli-operational-insights-link-setup[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]

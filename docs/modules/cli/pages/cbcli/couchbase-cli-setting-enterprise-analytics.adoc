@@ -1,5 +1,5 @@
 = couchbase-cli-setting-enterprise-analytics(1)
-:description: Manage Enterprise Analytics service settings
+:description: Manage Operational Insights service settings (deprecated)
 ifndef::doctype-manpage[:doctitle: setting-enterprise-analytics]
 
 ifdef::doctype-manpage[]
@@ -7,71 +7,28 @@ ifdef::doctype-manpage[]
 
 couchbase-cli-setting-enterprise-analytics -
 endif::[]
-Manage Enterprise Analytics service settings
+Manage Operational Insights service settings (deprecated)
 
 == SYNOPSIS
 
 [verse]
-_couchbase-cli setting-enterprise-analytics_ [--cluster <url>] [--username <user>]
-    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
-    [--client-key <path>] [--client-key-password <password>] [--get] [--set]
-    [--partitions <num>] [--scheme <scheme>] [--bucket <bucket>]
-    [--prefix <prefix>] [--region <region>] [--endpoint <endpoint>]
-    [--anonymous-auth <0|1>] [--path-style-addressing <0|1>]
+_couchbase-cli setting-enterprise-analytics_ [<options>]
 
 == DESCRIPTION
 
-Manage Enterprise Analytics service settings
+DEPRECATED: Please use the man:couchbase-cli-setting-operational-insights[1]
+command, which provides the same functionality as this command and takes the
+same options. This command is retained only so that scripts written against
+the former product name keep working, and it will be removed in a future
+release.
+
+This command addresses the cluster through the REST endpoint of the former
+product name, so it remains usable against a cluster which is older than the
+`setting-operational-insights` command.
 
 == OPTIONS
 
-include::{partialsdir}/cbcli/part-common-options.adoc[]
-
---get::
-  Retrieve current Enterprise Analytics service settings.
-
---set::
-  Set Enterprise Analytics settings.
-
---partitions <num>::
-  The number of storage partitions (positive integer, lower than the configured maximum)
-
---scheme <scheme>::
-  The BLOB storage scheme (e.g. s3)
-
---bucket <bucket>::
-  The BLOB storage bucket
-
---prefix <prefix>::
-  The BLOB storage prefix
-
---region <region>::
-  The BLOB storage region
-
---endpoint <endpoint>::
-  The BLOB storage endpoint
-
---anonymous-auth <0|1>::
-  Allow BLOB storage anonymous auth
-
---path-style-addressing <0|1>::
-  Use BLOB storage path style addressing
-
-include::{partialsdir}/cbcli/part-host-formats.adoc[]
-
-include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
-
-== EXAMPLES
-
-To retrieve the Enterprise Analytics service settings:
-
-  $ couchbase-cli setting-enterprise-analytics -c 127.0.01:8091 -u Administrator \
-   -p password --get
-
-To set the BLOB storage scheme to s3:
-
-  $ couchbase-cli setting-enterprise-analytics -c 127.0.01:8091 -u Administrator \
-   -p password --set --scheme s3
+See man:couchbase-cli-setting-operational-insights[1].
 
 == ENVIRONMENT AND CONFIGURATION VARIABLES
 
@@ -79,6 +36,6 @@ include::{partialsdir}/cbcli/part-common-env.adoc[]
 
 == SEE ALSO
 
-man:couchbase-cli[1]
+man:couchbase-cli-setting-operational-insights[1]
 
 include::{partialsdir}/cbcli/part-footer.adoc[]

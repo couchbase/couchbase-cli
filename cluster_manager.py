@@ -2930,9 +2930,30 @@ class ClusterManager(object):
         params = dict(filter(lambda x: x[1], params.items()))
         return self._post_form_encoded(url, params)
 
+    def set_operational_insights_settings(self, opts):
+        """Sets the Operational Insights settings"""
+        return self._post_operational_insights_settings(f'{self.hostname}/settings/operationalInsights', opts)
+
+    def get_operational_insights_settings(self):
+        """Gets the Operational Insights settings"""
+        return self._get(f'{self.hostname}/settings/operationalInsights')
+
     def set_enterprise_analytics_settings(self, opts):
-        """Sets the enterprise analytics settings"""
-        url = f'{self.hostname}/settings/analytics'
+        """Sets the Operational Insights settings through the endpoint named for the former product
+
+        This backs the deprecated setting-enterprise-analytics subcommand, which may be pointed at a cluster
+        predating the /settings/operationalInsights alias.
+        """
+        return self._post_operational_insights_settings(f'{self.hostname}/settings/analytics', opts)
+
+    def get_enterprise_analytics_settings(self):
+        """Gets the Operational Insights settings through the endpoint named for the former product
+
+        See set_enterprise_analytics_settings.
+        """
+        return self._get(f'{self.hostname}/settings/analytics')
+
+    def _post_operational_insights_settings(self, url, opts):
         params = {}
 
         if opts.num_storage_partitions:
@@ -2954,13 +2975,7 @@ class ClusterManager(object):
 
         return self._post_form_encoded(url, params)
 
-    def get_enterprise_analytics_settings(self):
-        """Gets the enterprise analytics settings"""
-        url = f'{self.hostname}/settings/analytics'
-
-        return self._get(url)
-
-    def _enterprise_analytics_link_url(self, name):
+    def _operational_insights_link_url(self, name):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -2970,23 +2985,23 @@ class ClusterManager(object):
 
         return f'{hosts[0]}/api/v1/link{("/" + urllib.parse.quote_plus(name)) if name else ""}', None
 
-    def set_enterprise_analytics_link(self, opts):
-        url, errors = self._enterprise_analytics_link_url(opts.name)
+    def set_operational_insights_link(self, opts):
+        url, errors = self._operational_insights_link_url(opts.name)
         if errors:
             return None, errors
 
         send_json = self._put_json if opts.edit else self._post_json
         return send_json(url, opts.parsed_link_details)
 
-    def delete_enterprise_analytics_link(self, opts):
-        url, errors = self._enterprise_analytics_link_url(opts.name)
+    def delete_operational_insights_link(self, opts):
+        url, errors = self._operational_insights_link_url(opts.name)
         if errors:
             return None, errors
 
         return self._delete(url, None)
 
-    def get_enterprise_analytics_links(self, opts):
-        url, errors = self._enterprise_analytics_link_url(opts.name)
+    def get_operational_insights_links(self, opts):
+        url, errors = self._operational_insights_link_url(opts.name)
         if errors:
             return None, errors
 

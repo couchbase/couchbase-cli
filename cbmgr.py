@@ -1142,7 +1142,7 @@ class ClusterInit(Subcommand):
             _exit_if_errors(err)
             if not settings.get('blobStorageScheme'):
                 _exit_if_errors(
-                    ["Cannot initialize cluster before running the 'setting-enterprise-analytics' command"])
+                    ["Cannot initialize cluster before running the 'setting-operational-insights' command"])
 
         if not self.enterprise and opts.notifications == "0":
             _exit_if_errors(["--update-notifications can only be configured on Enterprise Edition"])
@@ -3495,19 +3495,19 @@ class SettingCluster(Subcommand):
         return "Modify cluster settings"
 
 
-class SettingEnterpriseAnalytics(Subcommand):
-    """The settings enterprise analytics subcommand"""
+class SettingOperationalInsights(Subcommand):
+    """The settings operational insights subcommand"""
 
     def __init__(self):
-        super(SettingEnterpriseAnalytics, self).__init__()
-        self.parser.prog = "couchbase-cli setting-enterprise-analytics"
-        group = self.parser.add_argument_group("Enterprise analytics settings")
+        super(SettingOperationalInsights, self).__init__()
+        self.parser.prog = "couchbase-cli setting-operational-insights"
+        group = self.parser.add_argument_group("Operational Insights settings")
 
         group_me = group.add_mutually_exclusive_group(required=True)
         group_me.add_argument("--get", dest="get", action="store_true",
-                              help="Get the enterprise analytics settings")
+                              help="Get the Operational Insights settings")
         group_me.add_argument("--set", dest="set", action="store_true",
-                              help="Set the enterprise analytics settings")
+                              help="Set the Operational Insights settings")
 
         group.add_argument("--partitions", dest="num_storage_partitions", type=(int), metavar="<num_partitions>",
                            help="The number of storage partitions (positive integer, lower than the configured " +
@@ -3527,8 +3527,10 @@ class SettingEnterpriseAnalytics(Subcommand):
         group.add_argument("--path-style-addressing", dest="blob_storage_path_style_addressing", metavar="<0|1>",
                            choices=["0", "1"], help="Use BLOB storage path style addressing")
 
-    # We disable the cluster init check so people can use '--set' before the cluster is initialised. See MB-66986.
-    @rest_initialiser(cluster_init_check=False, version_check=True)
+    # The settings endpoint is an alias carried by the Operational Insights configuration profile, so it is served
+    # only by a cluster running the product -- hence the product check below. We disable the cluster init check so
+    # people can use '--set' before the cluster is initialised. See MB-66986.
+    @rest_initialiser(cluster_init_check=False, version_check=True, enterprise_analytics_check=True)
     def execute(self, opts):
         if opts.set:
             if not (opts.num_storage_partitions or opts.blob_storage_scheme or opts.blob_storage_bucket
@@ -3546,14 +3548,49 @@ class SettingEnterpriseAnalytics(Subcommand):
             if opts.blob_storage_path_style_addressing == "1":
                 opts.blob_storage_path_style_addressing = "true"
 
-            _, errors = self.rest.set_enterprise_analytics_settings(opts)
+            _, errors = self._set_settings(opts)
             _exit_if_errors(errors)
 
-            _success("Enterprise analytics settings modified")
+            _success("Operational Insights settings modified")
 
         if opts.get:
-            enterprise_analytics_settings, errors = self.rest.get_enterprise_analytics_settings()
-            print(json.dumps(enterprise_analytics_settings, indent=2))
+            operational_insights_settings, errors = self._get_settings()
+            print(json.dumps(operational_insights_settings, indent=2))
+
+    # Overridden by the deprecated subcommand, which addresses the cluster through a different endpoint
+    def _set_settings(self, opts):
+        return self.rest.set_operational_insights_settings(opts)
+
+    def _get_settings(self):
+        return self.rest.get_operational_insights_settings()
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-setting-operational-insights")
+
+    @staticmethod
+    def get_description():
+        return "Modify Operational Insights settings"
+
+
+class SettingEnterpriseAnalytics(SettingOperationalInsights):
+    """The settings enterprise analytics subcommand (Deprecated)"""
+
+    def __init__(self):
+        super(SettingEnterpriseAnalytics, self).__init__()
+        self.parser.prog = "couchbase-cli setting-enterprise-analytics"
+
+    def execute(self, opts):
+        _deprecated("Please use the setting-operational-insights command instead")
+        super(SettingEnterpriseAnalytics, self).execute(opts)
+
+    # The deprecated name is kept for scripts which may be pointed at a cluster predating the
+    # /settings/operationalInsights alias, so it stays on the endpoint that every Operational Insights cluster serves
+    def _set_settings(self, opts):
+        return self.rest.set_enterprise_analytics_settings(opts)
+
+    def _get_settings(self):
+        return self.rest.get_enterprise_analytics_settings()
 
     @staticmethod
     def get_man_page_name():
@@ -3561,7 +3598,7 @@ class SettingEnterpriseAnalytics(Subcommand):
 
     @staticmethod
     def get_description():
-        return "Modify enterprise analytics settings"
+        return "Modify Operational Insights settings (deprecated)"
 
 
 class SettingEncryption(Subcommand):
@@ -5974,14 +6011,14 @@ class AnalyticsLinkSetup(Subcommand):
         return "Manage Analytics Links"
 
 
-class EnterpriseAnalyticsLinkSetup(Subcommand):
-    """The Enterprise Analytics link setup subcommand"""
+class OperationalInsightsLinkSetup(Subcommand):
+    """The Operational Insights link setup subcommand"""
 
     def __init__(self):
-        super(EnterpriseAnalyticsLinkSetup, self).__init__()
-        self.parser.prog = "couchbase-cli enterprise-analytics-link-setup"
+        super(OperationalInsightsLinkSetup, self).__init__()
+        self.parser.prog = "couchbase-cli operational-insights-link-setup"
 
-        group = self.parser.add_argument_group("Enterprise Analytics link setup options")
+        group = self.parser.add_argument_group("Operational Insights link setup options")
         action_group = group.add_mutually_exclusive_group(required=True)
         action_group.add_argument("--create", dest="create", action="store_true",
                                   default=False, help="Create a link")
@@ -6029,7 +6066,7 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
         except ValueError as err:
             _exit_if_errors(['Failed to parse link-details JSON', err])
 
-        _, errors = self.rest.set_enterprise_analytics_link(opts)
+        _, errors = self.rest.set_operational_insights_link(opts)
         _exit_if_errors(errors)
 
         _success("Link created" if opts.create else "Link edited")
@@ -6038,7 +6075,7 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
         if opts.name is None:
             _exit_if_errors(['--name is required to delete a link'])
 
-        _, errors = self.rest.delete_enterprise_analytics_link(opts)
+        _, errors = self.rest.delete_operational_insights_link(opts)
         _exit_if_errors(errors)
         _success("Link deleted")
 
@@ -6046,9 +6083,29 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
         if opts.get and opts.name is None:
             _exit_if_errors(['--name is required to get a link'])
 
-        clusters, errors = self.rest.get_enterprise_analytics_links(opts)
+        clusters, errors = self.rest.get_operational_insights_links(opts)
         _exit_if_errors(errors)
         print(json.dumps(clusters, sort_keys=True, indent=2))
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-operational-insights-link-setup")
+
+    @staticmethod
+    def get_description():
+        return "Manage Operational Insights links"
+
+
+class EnterpriseAnalyticsLinkSetup(OperationalInsightsLinkSetup):
+    """The Enterprise Analytics link setup subcommand (Deprecated)"""
+
+    def __init__(self):
+        super(EnterpriseAnalyticsLinkSetup, self).__init__()
+        self.parser.prog = "couchbase-cli enterprise-analytics-link-setup"
+
+    def execute(self, opts):
+        _deprecated("Please use the operational-insights-link-setup command instead")
+        super(EnterpriseAnalyticsLinkSetup, self).execute(opts)
 
     @staticmethod
     def get_man_page_name():
@@ -6056,7 +6113,7 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
 
     @staticmethod
     def get_description():
-        return "Manage Enterprise Analytics Links"
+        return "Manage Operational Insights links (deprecated)"
 
 
 class UserChangePassword(Subcommand):

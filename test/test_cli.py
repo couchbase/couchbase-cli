@@ -4549,7 +4549,7 @@ class TestAnalyticsLinkSetup(CommandTest):
         self.assertIn('DELETE:/analytics/link/Default/me', self.server.trace)
 
 
-class TestEnterpriseAnalyticsLinkSetup(CommandTest):
+class TestOperationalInsightsLinkSetup(CommandTest):
     def setUp(self):
         self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, 'enterprise_analytics': True,
                             'version': '1.2.0-0000-enterprise-analytics',
@@ -4559,8 +4559,8 @@ class TestEnterpriseAnalyticsLinkSetup(CommandTest):
                                     'cbas': port,
                                 }
                             }]}}
-        self.command = ['couchbase-cli', 'enterprise-analytics-link-setup'] + cluster_connect_args
-        super(TestEnterpriseAnalyticsLinkSetup, self).setUp()
+        self.command = ['couchbase-cli', 'operational-insights-link-setup'] + cluster_connect_args
+        super(TestOperationalInsightsLinkSetup, self).setUp()
 
     def test_no_flags(self):
         self.system_exit_run(self.command, self.server_args)
@@ -4646,6 +4646,20 @@ class TestEnterpriseAnalyticsLinkSetup(CommandTest):
                           '--link-details-path', link_options_file.name], self.server_args)
 
         link_options_file.close()
+
+
+class TestEnterpriseAnalyticsLinkSetup(TestOperationalInsightsLinkSetup):
+    """The deprecated alias must behave exactly as operational-insights-link-setup does."""
+
+    def setUp(self):
+        super(TestEnterpriseAnalyticsLinkSetup, self).setUp()
+        self.command = ['couchbase-cli', 'enterprise-analytics-link-setup'] + cluster_connect_args
+
+    def test_deprecation_notice(self):
+        self.no_error_run(self.command + ['--list'], self.server_args)
+        self.assertIn('DEPRECATED', self.str_output)
+        self.assertIn('operational-insights-link-setup', self.str_output)
+        self.assertIn('GET:/api/v1/link', self.server.trace)
 
 
 class VerifyAzureOptions(unittest.TestCase):
@@ -5401,67 +5415,76 @@ class TestSettingAnalytics(CommandTest):
         self.rest_parameter_match(['numReplicas=3'])
 
 
-class TestSettingEnterpriseAnalytics(CommandTest):
+class TestSettingOperationalInsights(CommandTest):
+    settings_path = '/settings/operationalInsights'
+
     def setUp(self):
-        self.command = ['couchbase-cli', 'setting-enterprise-analytics'] + cluster_connect_args
-        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True}
+        self.command = ['couchbase-cli', 'setting-operational-insights'] + cluster_connect_args
+        self.server_args = {'enterprise': True, 'init': True, 'is_admin': True, 'enterprise_analytics': True,
+                            'version': '1.2.0-0000-enterprise-analytics'}
         super().setUp()
 
     def test_get_and_set(self):
         self.system_exit_run(self.command + ['--get', '--set'], self.server_args)
         self.assertIn('ERROR: argument --set: not allowed with argument --get', self.str_error)
 
+    def test_not_enterprise_analytics(self):
+        self.server_args['enterprise_analytics'] = False
+        self.server_args['version'] = '8.0.0-0000-enterprise'
+        self.system_exit_run(self.command + ['--get'], self.server_args)
+        self.assertIn('Command only available for Enterprise Analytics', self.str_output)
+
     def test_get(self):
-        self.server_args['/settings/analytics'] = {'numStoragePartitions': 7}
+        self.server_args[self.settings_path] = {'numStoragePartitions': 7}
         self.no_error_run(self.command + ['--get'], self.server_args)
-        self.assertIn('GET:/settings/analytics', self.server.trace)
+        self.assertIn(f'GET:{self.settings_path}', self.server.trace)
         self.assertIn(json.dumps({'numStoragePartitions': 7}, indent=2), self.str_output)
 
     def test_partitions(self):
         self.no_error_run(self.command + ['--set', '--partitions', '7'], self.server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['numStoragePartitions=7'])
 
     def test_scheme(self):
         self.no_error_run(self.command + ['--set', '--scheme', 's3'], self.server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['blobStorageScheme=s3'])
 
     def test_bucket(self):
         self.no_error_run(self.command + ['--set', '--bucket', 'aaa'], self.server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['blobStorageBucket=aaa'])
 
     def test_prefix(self):
         self.no_error_run(self.command + ['--set', '--prefix', 'aaa'], self.server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['blobStoragePrefix=aaa'])
 
     def test_region(self):
         self.no_error_run(self.command + ['--set', '--region', 'aaa'], self.server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['blobStorageRegion=aaa'])
 
     def test_endpoint(self):
         self.no_error_run(self.command + ['--set', '--endpoint', 'aaa'], self.server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['blobStorageEndpoint=aaa'])
 
     def test_anonymous_auth(self):
         self.no_error_run(self.command + ['--set', '--anonymous-auth', '1'], self.server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['blobStorageAnonymousAuth=true'])
 
     def test_path_style_addressing(self):
         self.no_error_run(self.command + ['--set', '--path-style-addressing', '1'], self.server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['blobStoragePathStyleAddressing=true'])
 
     def test_all_flags(self):
         self.no_error_run(self.command + ['--set', '--partitions', '7', '--scheme', 's3', '--bucket', 'aaa',
                                           '--prefix', 'aaa', '--region', 'aaa', '--endpoint', 'aaa',
                                           '--anonymous-auth', '1', '--path-style-addressing', '1',], self.server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['numStoragePartitions=7', 'blobStorageScheme=s3', 'blobStorageBucket=aaa',
                                    'blobStoragePrefix=aaa', 'blobStorageRegion=aaa', 'blobStorageEndpoint=aaa',
                                    'blobStorageAnonymousAuth=true', 'blobStoragePathStyleAddressing=true'])
@@ -5472,10 +5495,33 @@ class TestSettingEnterpriseAnalytics(CommandTest):
         self.no_error_run(self.command + ['--set', '--partitions', '7', '--scheme', 's3', '--bucket', 'aaa',
                                           '--prefix', 'aaa', '--region', 'aaa', '--endpoint', 'aaa',
                                           '--anonymous-auth', '1', '--path-style-addressing', '1',], server_args)
-        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertIn(f'POST:{self.settings_path}', self.server.trace)
         self.rest_parameter_match(['numStoragePartitions=7', 'blobStorageScheme=s3', 'blobStorageBucket=aaa',
                                    'blobStoragePrefix=aaa', 'blobStorageRegion=aaa', 'blobStorageEndpoint=aaa',
                                    'blobStorageAnonymousAuth=true', 'blobStoragePathStyleAddressing=true'])
+
+
+class TestSettingEnterpriseAnalytics(TestSettingOperationalInsights):
+    """The deprecated alias must behave exactly as setting-operational-insights does, bar the endpoint it calls."""
+
+    settings_path = '/settings/analytics'
+
+    def setUp(self):
+        super(TestSettingEnterpriseAnalytics, self).setUp()
+        self.command = ['couchbase-cli', 'setting-enterprise-analytics'] + cluster_connect_args
+
+    def test_uses_the_former_endpoint(self):
+        """The deprecated name may be pointed at a cluster which does not serve /settings/operationalInsights."""
+        self.no_error_run(self.command + ['--set', '--partitions', '7'], self.server_args)
+        self.assertIn('POST:/settings/analytics', self.server.trace)
+        self.assertNotIn('POST:/settings/operationalInsights', self.server.trace)
+
+    def test_deprecation_notice(self):
+        self.server_args[self.settings_path] = {'numStoragePartitions': 7}
+        self.no_error_run(self.command + ['--get'], self.server_args)
+        self.assertIn('DEPRECATED', self.str_output)
+        self.assertIn('setting-operational-insights', self.str_output)
+        self.assertIn(f'GET:{self.settings_path}', self.server.trace)
 
 
 if __name__ == '__main__':

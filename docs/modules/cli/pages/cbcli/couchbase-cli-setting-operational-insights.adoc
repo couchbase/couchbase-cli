@@ -1,0 +1,84 @@
+= couchbase-cli-setting-operational-insights(1)
+:description: Manage Operational Insights service settings
+ifndef::doctype-manpage[:doctitle: setting-operational-insights]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-setting-operational-insights -
+endif::[]
+Manage Operational Insights service settings
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli setting-operational-insights_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] [--get] [--set]
+    [--partitions <num>] [--scheme <scheme>] [--bucket <bucket>]
+    [--prefix <prefix>] [--region <region>] [--endpoint <endpoint>]
+    [--anonymous-auth <0|1>] [--path-style-addressing <0|1>]
+
+== DESCRIPTION
+
+Manage Operational Insights service settings
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--get::
+  Retrieve current Operational Insights service settings.
+
+--set::
+  Set Operational Insights settings.
+
+--partitions <num>::
+  The number of storage partitions (positive integer, lower than the configured maximum)
+
+--scheme <scheme>::
+  The BLOB storage scheme (e.g. s3)
+
+--bucket <bucket>::
+  The BLOB storage bucket
+
+--prefix <prefix>::
+  The BLOB storage prefix
+
+--region <region>::
+  The BLOB storage region
+
+--endpoint <endpoint>::
+  The BLOB storage endpoint
+
+--anonymous-auth <0|1>::
+  Allow BLOB storage anonymous auth
+
+--path-style-addressing <0|1>::
+  Use BLOB storage path style addressing
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To retrieve the Operational Insights service settings:
+
+  $ couchbase-cli setting-operational-insights -c 127.0.01:8091 -u Administrator \
+   -p password --get
+
+To set the BLOB storage scheme to s3:
+
+  $ couchbase-cli setting-operational-insights -c 127.0.01:8091 -u Administrator \
+   -p password --set --scheme s3
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]

@@ -540,6 +540,7 @@ endpoints = [
     (r'/pools/default/trustedCAs/\d+$', {'DELETE': get_by_path}),
     (r'/pools/nodes', {'GET': get_by_path}),
     (r'/settings/analytics', {'POST': do_nothing, 'GET': get_by_path}),
+    (r'/settings/operationalInsights$', {'POST': do_nothing, 'GET': get_by_path}),
     (r'/settings/encryptionKeys$', {'POST': do_nothing, 'GET': get_encryption_keys}),
     (r'/settings/encryptionKeys/\d+', {'PUT': do_nothing, 'DELETE': do_nothing}),
     (r'/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
