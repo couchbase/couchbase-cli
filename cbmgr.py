@@ -3513,7 +3513,8 @@ class SettingOperationalInsights(Subcommand):
                            help="The number of storage partitions (positive integer, lower than the configured " +
                            "maximum)")
         group.add_argument("--scheme", dest="blob_storage_scheme", metavar="<scheme>",
-                           help="The BLOB storage scheme (e.g. s3)")
+                           choices=["s3", "gs", "azblob"],
+                           help="The BLOB storage scheme ('s3', 'gs' or 'azblob')")
         group.add_argument("--bucket", dest="blob_storage_bucket", metavar="<bucket>",
                            help="The BLOB storage bucket")
         group.add_argument("--prefix", dest="blob_storage_prefix", metavar="<prefix>",
@@ -3526,6 +3527,22 @@ class SettingOperationalInsights(Subcommand):
                            choices=["0", "1"], help="Allow BLOB storage anonymous auth")
         group.add_argument("--path-style-addressing", dest="blob_storage_path_style_addressing", metavar="<0|1>",
                            choices=["0", "1"], help="Use BLOB storage path style addressing")
+        group.add_argument("--disable-ssl-verify", dest="blob_storage_disable_ssl_verify", metavar="<0|1>",
+                           choices=["0", "1"], help="Disable verification of the BLOB storage TLS certificate")
+        group.add_argument("--certificate", dest="blob_storage_certificates", metavar="<path>", action="append",
+                           help="The certificate used to verify the BLOB storage endpoint (supply one parameter for"
+                                " each certificate)")
+        group.add_argument("--access-key-id", dest="blob_storage_access_key_id", metavar="<id>",
+                           help="The BLOB storage access key ID")
+        group.add_argument("--secret-access-key", dest="blob_storage_secret_access_key", metavar="<key>",
+                           help="The BLOB storage secret access key")
+        group.add_argument("--checksum-behavior", dest="blob_storage_checksum_behavior", metavar="<behavior>",
+                           choices=["when_required", "when_supported"],
+                           help="The BLOB storage checksum behavior ('when_required' or 'when_supported')")
+        group.add_argument("--azure-client-id", dest="blob_storage_azure_client_id", metavar="<id>",
+                           help="The BLOB storage Azure client ID")
+        group.add_argument("--skip-validation", dest="skip_validation", metavar="<0|1>", choices=["0", "1"],
+                           help="Skip validation of the supplied BLOB storage settings")
 
     # The settings endpoint is an alias carried by the Operational Insights configuration profile, so it is served
     # only by a cluster running the product -- hence the product check below. We disable the cluster init check so
@@ -3533,11 +3550,21 @@ class SettingOperationalInsights(Subcommand):
     @rest_initialiser(cluster_init_check=False, version_check=True, enterprise_analytics_check=True)
     def execute(self, opts):
         if opts.set:
-            if not (opts.num_storage_partitions or opts.blob_storage_scheme or opts.blob_storage_bucket
-                    or opts.blob_storage_prefix or opts.blob_storage_region or opts.blob_storage_endpoint
-                    or opts.blob_storage_anonymous_auth or opts.blob_storage_path_style_addressing):
+            if (opts.num_storage_partitions is None and opts.blob_storage_scheme is None
+                    and opts.blob_storage_bucket is None and opts.blob_storage_prefix is None
+                    and opts.blob_storage_region is None and opts.blob_storage_endpoint is None
+                    and opts.blob_storage_anonymous_auth is None
+                    and opts.blob_storage_path_style_addressing is None
+                    and opts.blob_storage_disable_ssl_verify is None
+                    and opts.blob_storage_certificates is None
+                    and opts.blob_storage_access_key_id is None
+                    and opts.blob_storage_secret_access_key is None
+                    and opts.blob_storage_checksum_behavior is None
+                    and opts.blob_storage_azure_client_id is None and opts.skip_validation is None):
                 _exit_if_errors(["At least one option (--partitions, --scheme, --bucket, --prefix, --region," +
-                                 " --endpoint, --anonymous-auth, --path-style-addressing) must be specified."])
+                                 " --endpoint, --anonymous-auth, --path-style-addressing, --disable-ssl-verify," +
+                                 " --certificate, --access-key-id, --secret-access-key, --checksum-behavior," +
+                                 " --azure-client-id, --skip-validation) must be specified."])
 
             if opts.blob_storage_anonymous_auth == "0":
                 opts.blob_storage_anonymous_auth = "false"
@@ -3547,14 +3574,30 @@ class SettingOperationalInsights(Subcommand):
                 opts.blob_storage_path_style_addressing = "false"
             if opts.blob_storage_path_style_addressing == "1":
                 opts.blob_storage_path_style_addressing = "true"
+            if opts.blob_storage_disable_ssl_verify == "0":
+                opts.blob_storage_disable_ssl_verify = "false"
+            if opts.blob_storage_disable_ssl_verify == "1":
+                opts.blob_storage_disable_ssl_verify = "true"
+            if opts.skip_validation == "0":
+                opts.skip_validation = "false"
+            if opts.skip_validation == "1":
+                opts.skip_validation = "true"
 
-            _, errors = self._set_settings(opts)
+            if opts.blob_storage_certificates:
+                opts.blob_storage_certificates = [_exit_on_file_read_failure(path).strip()
+                                                  for path in opts.blob_storage_certificates]
+
+            result, errors = self._set_settings(opts)
             _exit_if_errors(errors)
 
             _success("Operational Insights settings modified")
+            # a warning is shaped like one of the service's errors, {"code": <n>, "msg": <text>}
+            for warning in (result or {}).get("warnings", []):
+                _warning(warning["msg"])
 
         if opts.get:
             operational_insights_settings, errors = self._get_settings()
+            _exit_if_errors(errors)
             print(json.dumps(operational_insights_settings, indent=2))
 
     # Overridden by the deprecated subcommand, which addresses the cluster through a different endpoint
@@ -6027,12 +6070,14 @@ class OperationalInsightsLinkSetup(Subcommand):
         action_group.add_argument("--edit", dest="edit", action="store_true",
                                   default=False, help="Modify a link")
         action_group.add_argument("--get", dest="get", action="store_true",
-                                  default=False, help="List all links")
+                                  default=False, help="Get a link")
         action_group.add_argument("--list", dest="list", action="store_true",
                                   default=False, help="List all links")
 
         group.add_argument("--name", dest="name", metavar="<name>",
                            help="The name of the link")
+        group.add_argument("--type", dest="type", metavar="<type>",
+                           help="Only list links of this type (e.g. 's3', 'azureblob', 'gcs', 'kafka')")
 
         ld_group = group.add_mutually_exclusive_group()
         ld_group.add_argument("--link-details", dest="link_details", metavar="<json>",
@@ -6042,6 +6087,9 @@ class OperationalInsightsLinkSetup(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_analytics_check=True)
     def execute(self, opts):
+        if opts.type and not opts.list:
+            _exit_if_errors(['--type may only be used with --list'])
+
         if opts.create or opts.edit:
             self._set(opts)
         elif opts.delete:
@@ -6066,10 +6114,14 @@ class OperationalInsightsLinkSetup(Subcommand):
         except ValueError as err:
             _exit_if_errors(['Failed to parse link-details JSON', err])
 
-        _, errors = self.rest.set_operational_insights_link(opts)
+        result, errors = self.rest.set_operational_insights_link(opts)
         _exit_if_errors(errors)
 
         _success("Link created" if opts.create else "Link edited")
+        # an S3 link created with a role ARN is answered with the external ID that the role's trust policy must
+        # require; it is not retrievable afterwards, so it has to be shown here
+        if result:
+            print(json.dumps(result, sort_keys=True, indent=2))
 
     def _delete(self, opts):
         if opts.name is None:

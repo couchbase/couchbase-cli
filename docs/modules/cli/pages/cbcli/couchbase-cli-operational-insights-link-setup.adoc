@@ -15,7 +15,8 @@ Manage Operational Insights links
 _couchbase-cli operational-insights-link-setup_ [--cluster <cluster>] [--username <username>]
     [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
     [--client-key <path>] [--client-key-password <password>] [--create] [--delete]
-    [--edit] [--list] [--name <name>] [--link-details <json>] [--link-details-path <path>]
+    [--edit] [--get] [--list] [--name <name>] [--type <type>] [--link-details <json>]
+    [--link-details-path <path>]
 
 == DESCRIPTION
 
@@ -46,6 +47,10 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
 --name <name>::
   The name of the link.
 
+--type <type>::
+  Only list links of the given type, for example `s3`, `azureblob`, `azuredatalake`,
+  `gcs` or `kafka`. May only be used with `--list`.
+
 --link-details <json>::
   The link details as JSON string
 
@@ -72,6 +77,11 @@ To list the defined links run the following command:
 
 $ couchbase-cli operational-insights-link-setup -c 192.168.1.5 -u Administrator \
  -p password --list
+
+To list only the defined S3 links, run the following command:
+
+$ couchbase-cli operational-insights-link-setup -c 192.168.1.5 -u Administrator \
+ -p password --list --type s3
 
 To retrieve the link details for a link named "l1", run the following command:
 
