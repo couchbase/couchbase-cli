@@ -3150,37 +3150,61 @@ class ClusterManager(object):
         params = dict(filter(lambda x: x[1], params.items()))
         return self._post_form_encoded(url, params)
 
+    # The parameters accepted by the settings endpoint, in the order the man page lists them, mapped to the option
+    # they are supplied by. An empty string is a meaningful value for most of these -- it clears the setting -- so
+    # options are included whenever they are not None rather than when they are truthy.
+    OPERATIONAL_INSIGHTS_SETTINGS_PARAMS = {
+        "numStoragePartitions": "num_storage_partitions",
+        "blobStorageScheme": "blob_storage_scheme",
+        "blobStorageBucket": "blob_storage_bucket",
+        "blobStoragePrefix": "blob_storage_prefix",
+        "blobStorageRegion": "blob_storage_region",
+        "blobStorageEndpoint": "blob_storage_endpoint",
+        "blobStorageAnonymousAuth": "blob_storage_anonymous_auth",
+        "blobStoragePathStyleAddressing": "blob_storage_path_style_addressing",
+        "blobStorageDisableSslVerify": "blob_storage_disable_ssl_verify",
+        "blobStorageCertificates": "blob_storage_certificates",
+        "blobStorageAccessKeyId": "blob_storage_access_key_id",
+        "blobStorageSecretAccessKey": "blob_storage_secret_access_key",
+        "blobStorageChecksumBehavior": "blob_storage_checksum_behavior",
+        "blobStorageAzureClientId": "blob_storage_azure_client_id",
+        "skipValidation": "skip_validation",
+    }
+
+    def set_operational_insights_settings(self, opts):
+        """Sets the Operational Insights settings"""
+        return self._post_operational_insights_settings(f'{self.hostname}/settings/operationalInsights', opts)
+
+    def get_operational_insights_settings(self):
+        """Gets the Operational Insights settings"""
+        return self._get(f'{self.hostname}/settings/operationalInsights')
+
     def set_enterprise_analytics_settings(self, opts):
-        """Sets the enterprise analytics settings"""
-        url = f'{self.hostname}/settings/analytics'
+        """Sets the Operational Insights settings through the endpoint named for the former product
+
+        This backs the deprecated setting-enterprise-analytics subcommand, which may be pointed at a cluster
+        predating the /settings/operationalInsights alias.
+        """
+        return self._post_operational_insights_settings(f'{self.hostname}/settings/analytics', opts)
+
+    def get_enterprise_analytics_settings(self):
+        """Gets the Operational Insights settings through the endpoint named for the former product
+
+        See set_enterprise_analytics_settings.
+        """
+        return self._get(f'{self.hostname}/settings/analytics')
+
+    def _post_operational_insights_settings(self, url, opts):
         params = {}
 
-        if opts.num_storage_partitions:
-            params["numStoragePartitions"] = opts.num_storage_partitions
-        if opts.blob_storage_scheme:
-            params["blobStorageScheme"] = opts.blob_storage_scheme
-        if opts.blob_storage_bucket:
-            params["blobStorageBucket"] = opts.blob_storage_bucket
-        if opts.blob_storage_prefix:
-            params["blobStoragePrefix"] = opts.blob_storage_prefix
-        if opts.blob_storage_region:
-            params["blobStorageRegion"] = opts.blob_storage_region
-        if opts.blob_storage_endpoint:
-            params["blobStorageEndpoint"] = opts.blob_storage_endpoint
-        if opts.blob_storage_anonymous_auth:
-            params["blobStorageAnonymousAuth"] = opts.blob_storage_anonymous_auth
-        if opts.blob_storage_path_style_addressing:
-            params["blobStoragePathStyleAddressing"] = opts.blob_storage_path_style_addressing
+        for param, dest in self.OPERATIONAL_INSIGHTS_SETTINGS_PARAMS.items():
+            value = getattr(opts, dest, None)
+            if value is not None:
+                params[param] = value
 
         return self._post_form_encoded(url, params)
 
-    def get_enterprise_analytics_settings(self):
-        """Gets the enterprise analytics settings"""
-        url = f'{self.hostname}/settings/analytics'
-
-        return self._get(url)
-
-    def _enterprise_analytics_link_url(self, name):
+    def _operational_insights_link_url(self, name):
         hosts, errors = self.get_hostnames_for_service(CBAS_SERVICE)
         if errors:
             return None, errors
@@ -3190,33 +3214,36 @@ class ClusterManager(object):
 
         return f'{hosts[0]}/api/v1/link{("/" + urllib.parse.quote_plus(name)) if name else ""}', None
 
-    def set_enterprise_analytics_link(self, opts):
-        url, errors = self._enterprise_analytics_link_url(opts.name)
+    def set_operational_insights_link(self, opts):
+        url, errors = self._operational_insights_link_url(opts.name)
         if errors:
             return None, errors
 
         send_json = self._put_json if opts.edit else self._post_json
         return send_json(url, opts.parsed_link_details)
 
-    def delete_enterprise_analytics_link(self, opts):
-        url, errors = self._enterprise_analytics_link_url(opts.name)
+    def delete_operational_insights_link(self, opts):
+        url, errors = self._operational_insights_link_url(opts.name)
         if errors:
             return None, errors
 
         return self._delete(url, None)
 
-    def get_enterprise_analytics_links(self, opts):
-        url, errors = self._enterprise_analytics_link_url(opts.name)
+    def get_operational_insights_links(self, opts):
+        url, errors = self._operational_insights_link_url(opts.name)
         if errors:
             return None, errors
 
-        return self._get(url, None)
+        params = {"type": opts.type} if opts.type else None
+        return self._get(url, params)
 
     # Low level methods for basic HTML operations
 
     @classmethod
     def _url_encode_params(cls, params):
-        return urllib.parse.urlencode(params if params is not None else {})
+        # 'doseq' so a list value is rendered as the repeated key that requests actually sends, rather than as the
+        # repr of the list
+        return urllib.parse.urlencode(params if params is not None else {}, doseq=True)
 
     @classmethod
     def _json_encode_params(cls, params):
@@ -3296,6 +3323,24 @@ class ClusterManager(object):
                                                          verify=self.ca_cert, timeout=self.timeout,
                                                          headers=self.headers))
 
+    # The key a service uses for an error that belongs to the request as a whole rather than to one parameter; it has
+    # no flag or field to name, so the message is reported on its own.
+    GLOBAL_ERROR_KEY = "_"
+
+    @classmethod
+    def _flatten_errors(cls, errors):
+        """Renders a map of parameter name to error(s) as a flat list of messages.
+
+        A parameter may carry either a single message or a list of them, and a message may belong to the request as a
+        whole rather than to a parameter.
+        """
+        flattened = []
+        for key, value in errors.items():
+            messages = value if isinstance(value, list) else [value]
+            for message in messages:
+                flattened.append(str(message) if key == cls.GLOBAL_ERROR_KEY else f"{key} - {str(message)}")
+        return flattened
+
     def _handle_response(self, response):
         if self.debug:
             output = str(response.status_code)
@@ -3325,7 +3370,7 @@ class ClusterManager(object):
                 if "errors" in errors and isinstance(errors["errors"], list):
                     return None, errors["errors"]
                 if "errors" in errors and isinstance(errors["errors"], dict):
-                    return None, [f"{key} - {str(value)}" for key, value in errors["errors"].items()]
+                    return None, self._flatten_errors(errors["errors"])
                 return None, [errors]
             return None, [response.text]
         elif response.status_code == 401:

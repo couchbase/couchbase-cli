@@ -1167,7 +1167,7 @@ class ClusterInit(Subcommand):
             _exit_if_errors(err)
             if not settings.get('blobStorageScheme'):
                 _exit_if_errors(
-                    ["Cannot initialize cluster before running the 'setting-enterprise-analytics' command"])
+                    ["Cannot initialize cluster before running the 'setting-operational-insights' command"])
 
         if not self.enterprise and opts.notifications == "0":
             _exit_if_errors(["--update-notifications can only be configured on Enterprise Edition"])
@@ -3642,25 +3642,26 @@ class SettingCluster(Subcommand):
         return "Modify cluster settings"
 
 
-class SettingEnterpriseAnalytics(Subcommand):
-    """The settings enterprise analytics subcommand"""
+class SettingOperationalInsights(Subcommand):
+    """The settings operational insights subcommand"""
 
     def __init__(self):
-        super(SettingEnterpriseAnalytics, self).__init__()
-        self.parser.prog = "couchbase-cli setting-enterprise-analytics"
-        group = self.parser.add_argument_group("Enterprise analytics settings")
+        super(SettingOperationalInsights, self).__init__()
+        self.parser.prog = "couchbase-cli setting-operational-insights"
+        group = self.parser.add_argument_group("Operational Insights settings")
 
         group_me = group.add_mutually_exclusive_group(required=True)
         group_me.add_argument("--get", dest="get", action="store_true",
-                              help="Get the enterprise analytics settings")
+                              help="Get the Operational Insights settings")
         group_me.add_argument("--set", dest="set", action="store_true",
-                              help="Set the enterprise analytics settings")
+                              help="Set the Operational Insights settings")
 
         group.add_argument("--partitions", dest="num_storage_partitions", type=(int), metavar="<num_partitions>",
                            help="The number of storage partitions (positive integer, lower than the configured " +
                            "maximum)")
         group.add_argument("--scheme", dest="blob_storage_scheme", metavar="<scheme>",
-                           help="The BLOB storage scheme (e.g. s3)")
+                           choices=["s3", "gs", "azblob"],
+                           help="The BLOB storage scheme ('s3', 'gs' or 'azblob')")
         group.add_argument("--bucket", dest="blob_storage_bucket", metavar="<bucket>",
                            help="The BLOB storage bucket")
         group.add_argument("--prefix", dest="blob_storage_prefix", metavar="<prefix>",
@@ -3673,16 +3674,44 @@ class SettingEnterpriseAnalytics(Subcommand):
                            choices=["0", "1"], help="Allow BLOB storage anonymous auth")
         group.add_argument("--path-style-addressing", dest="blob_storage_path_style_addressing", metavar="<0|1>",
                            choices=["0", "1"], help="Use BLOB storage path style addressing")
+        group.add_argument("--disable-ssl-verify", dest="blob_storage_disable_ssl_verify", metavar="<0|1>",
+                           choices=["0", "1"], help="Disable verification of the BLOB storage TLS certificate")
+        group.add_argument("--certificate", dest="blob_storage_certificates", metavar="<path>", action="append",
+                           help="The certificate used to verify the BLOB storage endpoint (supply one parameter for"
+                                " each certificate)")
+        group.add_argument("--access-key-id", dest="blob_storage_access_key_id", metavar="<id>",
+                           help="The BLOB storage access key ID")
+        group.add_argument("--secret-access-key", dest="blob_storage_secret_access_key", metavar="<key>",
+                           help="The BLOB storage secret access key")
+        group.add_argument("--checksum-behavior", dest="blob_storage_checksum_behavior", metavar="<behavior>",
+                           choices=["when_required", "when_supported"],
+                           help="The BLOB storage checksum behavior ('when_required' or 'when_supported')")
+        group.add_argument("--azure-client-id", dest="blob_storage_azure_client_id", metavar="<id>",
+                           help="The BLOB storage Azure client ID")
+        group.add_argument("--skip-validation", dest="skip_validation", metavar="<0|1>", choices=["0", "1"],
+                           help="Skip validation of the supplied BLOB storage settings")
 
-    # We disable the cluster init check so people can use '--set' before the cluster is initialised. See MB-66986.
-    @rest_initialiser(cluster_init_check=False, version_check=True)
+    # The settings endpoint is an alias carried by the Operational Insights configuration profile, so it is served
+    # only by a cluster running the product -- hence the product check below. We disable the cluster init check so
+    # people can use '--set' before the cluster is initialised. See MB-66986.
+    @rest_initialiser(cluster_init_check=False, version_check=True, enterprise_analytics_check=True)
     def execute(self, opts):
         if opts.set:
-            if not (opts.num_storage_partitions or opts.blob_storage_scheme or opts.blob_storage_bucket
-                    or opts.blob_storage_prefix or opts.blob_storage_region or opts.blob_storage_endpoint
-                    or opts.blob_storage_anonymous_auth or opts.blob_storage_path_style_addressing):
+            if (opts.num_storage_partitions is None and opts.blob_storage_scheme is None
+                    and opts.blob_storage_bucket is None and opts.blob_storage_prefix is None
+                    and opts.blob_storage_region is None and opts.blob_storage_endpoint is None
+                    and opts.blob_storage_anonymous_auth is None
+                    and opts.blob_storage_path_style_addressing is None
+                    and opts.blob_storage_disable_ssl_verify is None
+                    and opts.blob_storage_certificates is None
+                    and opts.blob_storage_access_key_id is None
+                    and opts.blob_storage_secret_access_key is None
+                    and opts.blob_storage_checksum_behavior is None
+                    and opts.blob_storage_azure_client_id is None and opts.skip_validation is None):
                 _exit_if_errors(["At least one option (--partitions, --scheme, --bucket, --prefix, --region," +
-                                 " --endpoint, --anonymous-auth, --path-style-addressing) must be specified."])
+                                 " --endpoint, --anonymous-auth, --path-style-addressing, --disable-ssl-verify," +
+                                 " --certificate, --access-key-id, --secret-access-key, --checksum-behavior," +
+                                 " --azure-client-id, --skip-validation) must be specified."])
 
             if opts.blob_storage_anonymous_auth == "0":
                 opts.blob_storage_anonymous_auth = "false"
@@ -3692,15 +3721,66 @@ class SettingEnterpriseAnalytics(Subcommand):
                 opts.blob_storage_path_style_addressing = "false"
             if opts.blob_storage_path_style_addressing == "1":
                 opts.blob_storage_path_style_addressing = "true"
+            if opts.blob_storage_disable_ssl_verify == "0":
+                opts.blob_storage_disable_ssl_verify = "false"
+            if opts.blob_storage_disable_ssl_verify == "1":
+                opts.blob_storage_disable_ssl_verify = "true"
+            if opts.skip_validation == "0":
+                opts.skip_validation = "false"
+            if opts.skip_validation == "1":
+                opts.skip_validation = "true"
 
-            _, errors = self.rest.set_enterprise_analytics_settings(opts)
+            if opts.blob_storage_certificates:
+                opts.blob_storage_certificates = [_exit_on_file_read_failure(path).strip()
+                                                  for path in opts.blob_storage_certificates]
+
+            result, errors = self._set_settings(opts)
             _exit_if_errors(errors)
 
-            _success("Enterprise analytics settings modified")
+            _success("Operational Insights settings modified")
+            # a warning is shaped like one of the service's errors, {"code": <n>, "msg": <text>}
+            for warning in (result or {}).get("warnings", []):
+                _warning(warning["msg"])
 
         if opts.get:
-            enterprise_analytics_settings, errors = self.rest.get_enterprise_analytics_settings()
-            print(json.dumps(enterprise_analytics_settings, indent=2))
+            operational_insights_settings, errors = self._get_settings()
+            _exit_if_errors(errors)
+            print(json.dumps(operational_insights_settings, indent=2))
+
+    # Overridden by the deprecated subcommand, which addresses the cluster through a different endpoint
+    def _set_settings(self, opts):
+        return self.rest.set_operational_insights_settings(opts)
+
+    def _get_settings(self):
+        return self.rest.get_operational_insights_settings()
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-setting-operational-insights")
+
+    @staticmethod
+    def get_description():
+        return "Modify Operational Insights settings"
+
+
+class SettingEnterpriseAnalytics(SettingOperationalInsights):
+    """The settings enterprise analytics subcommand (Deprecated)"""
+
+    def __init__(self):
+        super(SettingEnterpriseAnalytics, self).__init__()
+        self.parser.prog = "couchbase-cli setting-enterprise-analytics"
+
+    def execute(self, opts):
+        _deprecated("Please use the setting-operational-insights command instead")
+        super(SettingEnterpriseAnalytics, self).execute(opts)
+
+    # The deprecated name is kept for scripts which may be pointed at a cluster predating the
+    # /settings/operationalInsights alias, so it stays on the endpoint that every Operational Insights cluster serves
+    def _set_settings(self, opts):
+        return self.rest.set_enterprise_analytics_settings(opts)
+
+    def _get_settings(self):
+        return self.rest.get_enterprise_analytics_settings()
 
     @staticmethod
     def get_man_page_name():
@@ -3708,7 +3788,7 @@ class SettingEnterpriseAnalytics(Subcommand):
 
     @staticmethod
     def get_description():
-        return "Modify enterprise analytics settings"
+        return "Modify Operational Insights settings (deprecated)"
 
 
 class SettingEncryption(Subcommand):
@@ -6200,14 +6280,14 @@ class AnalyticsLinkSetup(Subcommand):
         return "Manage Analytics Links"
 
 
-class EnterpriseAnalyticsLinkSetup(Subcommand):
-    """The Enterprise Analytics link setup subcommand"""
+class OperationalInsightsLinkSetup(Subcommand):
+    """The Operational Insights link setup subcommand"""
 
     def __init__(self):
-        super(EnterpriseAnalyticsLinkSetup, self).__init__()
-        self.parser.prog = "couchbase-cli enterprise-analytics-link-setup"
+        super(OperationalInsightsLinkSetup, self).__init__()
+        self.parser.prog = "couchbase-cli operational-insights-link-setup"
 
-        group = self.parser.add_argument_group("Enterprise Analytics link setup options")
+        group = self.parser.add_argument_group("Operational Insights link setup options")
         action_group = group.add_mutually_exclusive_group(required=True)
         action_group.add_argument("--create", dest="create", action="store_true",
                                   default=False, help="Create a link")
@@ -6216,12 +6296,14 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
         action_group.add_argument("--edit", dest="edit", action="store_true",
                                   default=False, help="Modify a link")
         action_group.add_argument("--get", dest="get", action="store_true",
-                                  default=False, help="List all links")
+                                  default=False, help="Get a link")
         action_group.add_argument("--list", dest="list", action="store_true",
                                   default=False, help="List all links")
 
         group.add_argument("--name", dest="name", metavar="<name>",
                            help="The name of the link")
+        group.add_argument("--type", dest="type", metavar="<type>",
+                           help="Only list links of this type (e.g. 's3', 'azureblob', 'gcs', 'kafka')")
 
         ld_group = group.add_mutually_exclusive_group()
         ld_group.add_argument("--link-details", dest="link_details", metavar="<json>",
@@ -6231,6 +6313,9 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
 
     @rest_initialiser(cluster_init_check=True, version_check=True, enterprise_analytics_check=True)
     def execute(self, opts):
+        if opts.type and not opts.list:
+            _exit_if_errors(['--type may only be used with --list'])
+
         if opts.create or opts.edit:
             self._set(opts)
         elif opts.delete:
@@ -6255,16 +6340,20 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
         except ValueError as err:
             _exit_if_errors(['Failed to parse link-details JSON', err])
 
-        _, errors = self.rest.set_enterprise_analytics_link(opts)
+        result, errors = self.rest.set_operational_insights_link(opts)
         _exit_if_errors(errors)
 
         _success("Link created" if opts.create else "Link edited")
+        # an S3 link created with a role ARN is answered with the external ID that the role's trust policy must
+        # require; it is not retrievable afterwards, so it has to be shown here
+        if result:
+            print(json.dumps(result, sort_keys=True, indent=2))
 
     def _delete(self, opts):
         if opts.name is None:
             _exit_if_errors(['--name is required to delete a link'])
 
-        _, errors = self.rest.delete_enterprise_analytics_link(opts)
+        _, errors = self.rest.delete_operational_insights_link(opts)
         _exit_if_errors(errors)
         _success("Link deleted")
 
@@ -6272,9 +6361,29 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
         if opts.get and opts.name is None:
             _exit_if_errors(['--name is required to get a link'])
 
-        clusters, errors = self.rest.get_enterprise_analytics_links(opts)
+        clusters, errors = self.rest.get_operational_insights_links(opts)
         _exit_if_errors(errors)
         print(json.dumps(clusters, sort_keys=True, indent=2))
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-operational-insights-link-setup")
+
+    @staticmethod
+    def get_description():
+        return "Manage Operational Insights links"
+
+
+class EnterpriseAnalyticsLinkSetup(OperationalInsightsLinkSetup):
+    """The Enterprise Analytics link setup subcommand (Deprecated)"""
+
+    def __init__(self):
+        super(EnterpriseAnalyticsLinkSetup, self).__init__()
+        self.parser.prog = "couchbase-cli enterprise-analytics-link-setup"
+
+    def execute(self, opts):
+        _deprecated("Please use the operational-insights-link-setup command instead")
+        super(EnterpriseAnalyticsLinkSetup, self).execute(opts)
 
     @staticmethod
     def get_man_page_name():
@@ -6282,7 +6391,7 @@ class EnterpriseAnalyticsLinkSetup(Subcommand):
 
     @staticmethod
     def get_description():
-        return "Manage Enterprise Analytics Links"
+        return "Manage Operational Insights links (deprecated)"
 
 
 class UserChangePassword(Subcommand):

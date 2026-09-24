@@ -539,7 +539,8 @@ endpoints = [
     (r'/pools/default/buckets/\w+/scopes/\w+/collections/\w+$', {'PATCH': do_nothing}),
     (r'/pools/default/trustedCAs/\d+$', {'DELETE': get_by_path}),
     (r'/pools/nodes', {'GET': get_by_path}),
-    (r'/settings/analytics', {'POST': do_nothing, 'GET': get_by_path}),
+    (r'/settings/analytics', {'POST': get_by_path, 'GET': get_by_path}),
+    (r'/settings/operationalInsights$', {'POST': get_by_path, 'GET': get_by_path}),
     (r'/settings/encryptionKeys$', {'POST': do_nothing, 'GET': get_encryption_keys}),
     (r'/settings/encryptionKeys/\d+', {'PUT': do_nothing, 'DELETE': do_nothing}),
     (r'/settings/indexes$', {'POST': do_nothing, 'GET': get_indexes_settings}),
@@ -615,11 +616,11 @@ endpoints = [
       'DELETE': do_nothing}),
 
     # enterprise analytics link
-    (r'api/v1/link', {'GET': do_nothing}),
+    (r'api/v1/link', {'GET': get_by_path}),
     (r'api/v1/link/[^/]+',
-     {'GET': do_nothing,
-      'POST': do_nothing,
-      'PUT': do_nothing,
+     {'GET': get_by_path,
+      'POST': get_by_path,
+      'PUT': get_by_path,
       'DELETE': do_nothing}),
 
     # eventing api

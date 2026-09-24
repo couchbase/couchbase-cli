@@ -1,0 +1,137 @@
+= couchbase-cli-setting-operational-insights(1)
+:description: Manage Operational Insights service settings
+ifndef::doctype-manpage[:doctitle: setting-operational-insights]
+
+ifdef::doctype-manpage[]
+== NAME
+
+couchbase-cli-setting-operational-insights -
+endif::[]
+Manage Operational Insights service settings
+
+== SYNOPSIS
+
+[verse]
+_couchbase-cli setting-operational-insights_ [--cluster <url>] [--username <user>]
+    [--password <password>] [--client-cert <path>] [--client-cert-password <password>]
+    [--client-key <path>] [--client-key-password <password>] [--get] [--set]
+    [--partitions <num>] [--scheme <scheme>] [--bucket <bucket>]
+    [--prefix <prefix>] [--region <region>] [--endpoint <endpoint>]
+    [--anonymous-auth <0|1>] [--path-style-addressing <0|1>]
+    [--disable-ssl-verify <0|1>] [--certificate <path>] [--access-key-id <id>]
+    [--secret-access-key <key>] [--checksum-behavior <behavior>]
+    [--azure-client-id <id>] [--skip-validation <0|1>]
+
+== DESCRIPTION
+
+Manage Operational Insights service settings.
+
+Most settings may be changed at any time, but `--partitions` and `--scheme` fix
+the shape of the storage the cluster is built on: once the cluster has been
+initialized and its BLOB storage configured, changing either is rejected. Set
+them with `--set` before running `cluster-init`.
+
+Several settings apply to one BLOB storage scheme only, and are rejected when
+they conflict with the configured `--scheme`. `--region`, `--certificate`,
+`--path-style-addressing`, `--access-key-id`, `--secret-access-key` and
+`--checksum-behavior` apply to `s3` alone; `--azure-client-id` applies to
+`azblob` alone; and `--anonymous-auth` is not supported by `azblob`.
+
+== OPTIONS
+
+include::{partialsdir}/cbcli/part-common-options.adoc[]
+
+--get::
+  Retrieve current Operational Insights service settings.
+
+--set::
+  Set Operational Insights settings.
+
+--partitions <num>::
+  The number of storage partitions (positive integer, lower than the configured maximum)
+
+--scheme <scheme>::
+  The BLOB storage scheme, one of `s3`, `gs` or `azblob`
+
+--bucket <bucket>::
+  The BLOB storage bucket
+
+--prefix <prefix>::
+  The BLOB storage prefix
+
+--region <region>::
+  The BLOB storage region
+
+--endpoint <endpoint>::
+  The BLOB storage endpoint
+
+--anonymous-auth <0|1>::
+  Allow BLOB storage anonymous auth
+
+--path-style-addressing <0|1>::
+  Use BLOB storage path style addressing
+
+--disable-ssl-verify <0|1>::
+  Disable verification of the BLOB storage TLS certificate
+
+--certificate <path>::
+  The path to a certificate used to verify the BLOB storage endpoint. Supply
+  this option once for each certificate.
+
+--access-key-id <id>::
+  The BLOB storage access key ID. Must be supplied together with
+  `--secret-access-key`.
+
+--secret-access-key <key>::
+  The BLOB storage secret access key. Must be supplied together with
+  `--access-key-id`.
+
+--checksum-behavior <behavior>::
+  The BLOB storage checksum behavior, either `when_required` or
+  `when_supported`.
+
+--azure-client-id <id>::
+  The BLOB storage Azure client ID
+
+--skip-validation <0|1>::
+  Skip validation of the supplied BLOB storage settings. Validation writes to,
+  reads back and deletes a test object, so it is worth skipping only where the
+  settings are known to be good and the round trip is unwanted. Skipping
+  validation also lifts the restriction on changing `--partitions` and
+  `--scheme` after the cluster has been initialized, which will leave existing
+  data unreachable -- do not use it for that purpose.
+
+include::{partialsdir}/cbcli/part-host-formats.adoc[]
+
+include::{partialsdir}/cbcli/part-certificate-authentication.adoc[]
+
+== EXAMPLES
+
+To retrieve the Operational Insights service settings:
+
+  $ couchbase-cli setting-operational-insights -c 127.0.01:8091 -u Administrator \
+   -p password --get
+
+To set the BLOB storage scheme to s3:
+
+  $ couchbase-cli setting-operational-insights -c 127.0.01:8091 -u Administrator \
+   -p password --set --scheme s3
+
+To point the cluster at an S3-compatible endpoint with static credentials, and
+verify it with a private certificate authority:
+
+  $ couchbase-cli setting-operational-insights -c 127.0.01:8091 -u Administrator \
+   -p password --set --scheme s3 --bucket my-bucket --region us-east-1 \
+   --endpoint https://storage.example.com --path-style-addressing 1 \
+   --access-key-id my-key-id --secret-access-key my-secret \
+   --certificate /path/to/ca.pem
+
+== ENVIRONMENT AND CONFIGURATION VARIABLES
+
+include::{partialsdir}/cbcli/part-common-env.adoc[]
+
+== SEE ALSO
+
+man:couchbase-cli[1]
+
+include::{partialsdir}/cbcli/part-footer.adoc[]
