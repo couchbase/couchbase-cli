@@ -2831,13 +2831,16 @@ class ServerAdd(Subcommand):
     @rest_initialiser(cluster_init_check=True, version_check=True,
                       enterprise_check=False, enterprise_analytics_check=False)
     def execute(self, opts):
-        if opts.use_client_cert:
-            if opts.server_username is not None or opts.server_password is not None:
-                _exit_if_errors(["cannot use --server-add-username and --server-add-password with --use-client-cert"])
-        else:
-            if opts.server_username is None or opts.server_password is None:
-                _exit_if_errors(
-                    ["provide either both --server-add-username and --server-add-password or the --use-client-cert flag"])
+        # Credentials may be given alongside --use-client-cert: the server being
+        # added may be configured to not accept the internal client certificate
+        # as proof of identity on its own.
+        if (opts.server_username is None) != (opts.server_password is None):
+            _exit_if_errors(
+                ["provide both --server-add-username and --server-add-password"])
+
+        if not opts.use_client_cert and opts.server_username is None:
+            _exit_if_errors(
+                ["provide either both --server-add-username and --server-add-password or the --use-client-cert flag"])
 
         if not self.enterprise and opts.index_storage_mode == 'memopt':
             _exit_if_errors(["memopt option for --index-storage-setting can only be configured on enterprise edition"])

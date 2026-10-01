@@ -51,6 +51,13 @@ include::{partialsdir}/cbcli/part-common-options.adoc[]
   appropriate credentials. This flag specifies the password for a user who
   has the ability to modify the cluster topology on the server being added.
 
+--use-client-cert::
+  Authenticate to the server being added with this node's internal client
+  certificate instead of a username and password. The server being added must
+  have client certificate authentication enabled. Credentials may be given as
+  well, and are required if that server is configured to not accept the
+  internal client certificate as proof of identity on its own.
+
 --group-name <name>::
   The name of the group to add the server to. If this option is not specified
   then the server is added to the default group.

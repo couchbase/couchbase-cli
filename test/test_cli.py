@@ -1699,10 +1699,13 @@ class TestServerAdd(CommandTest):
         self.rest_parameter_match(expected_params)
 
     def test_server_add_use_client_cert_user_pass(self):
-        self.system_exit_run(self.command + self.cmd_args + ["--use-client-cert"], self.server_args)
-        self.assertIn(
-            'cannot use --server-add-username and --server-add-password with --use-client-cert',
-            self.str_output)
+        # Credentials may accompany the certificate: the server being added may
+        # be configured to not accept it as proof of identity on its own
+        self.no_error_run(self.command + self.cmd_args + ["--use-client-cert"], self.server_args)
+        self.assertIn('POST:/controller/addNode', self.server.trace)
+        expected_params = ['hostname=some-host%3A6789', 'clientCertAuth=true', 'services=kv',
+                           'user=Administrator', 'password=asdasd']
+        self.rest_parameter_match(expected_params)
 
     def test_server_add_no_auth(self):
         self.system_exit_run(self.command + self.cmd_server_add_args, self.server_args)
@@ -1715,7 +1718,7 @@ class TestServerAdd(CommandTest):
                              self.cmd_server_add_args +
                              ['--server-add-username', 'Administrator'], self.server_args)
         self.assertIn(
-            'provide either both --server-add-username and --server-add-password or the --use-client-cert flag',
+            'provide both --server-add-username and --server-add-password',
             self.str_output)
 
     def test_server_add_no_user(self):
@@ -1723,7 +1726,16 @@ class TestServerAdd(CommandTest):
                              self.cmd_server_add_args +
                              ['--server-add-password', 'asdasd'], self.server_args)
         self.assertIn(
-            'provide either both --server-add-username and --server-add-password or the --use-client-cert flag',
+            'provide both --server-add-username and --server-add-password',
+            self.str_output)
+
+    def test_server_add_use_client_cert_half_creds(self):
+        self.system_exit_run(self.command +
+                             self.cmd_server_add_args +
+                             ['--use-client-cert', '--server-add-username', 'Administrator'],
+                             self.server_args)
+        self.assertIn(
+            'provide both --server-add-username and --server-add-password',
             self.str_output)
 
     def test_server_add_basic(self):
