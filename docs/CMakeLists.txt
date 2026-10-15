@@ -20,6 +20,13 @@ FOREACH(CMD IN LISTS COUCHBASE_CLI_CMDS)
             FILES_MATCHING PATTERN "*.html")
 ENDFOREACH()
 
+# Also add the couchbase-cli docs to the admin_tools package
+INSTALL(
+    DIRECTORY generated/doc/couchbase-cli
+    DESTINATION ${admin_tools_INSTALL_PREFIX}/share/doc
+    EXCLUDE_FROM_ALL COMPONENT admin_tools
+)
+
 if(NOT WIN32)
     # 1   Executable programs or shell commands
     # 2   System calls (functions provided by the kernel)
@@ -36,4 +43,13 @@ if(NOT WIN32)
                 DESTINATION share/man
                 FILES_MATCHING PATTERN "*.${SECTION}")
     ENDFOREACH()
+
+    # Also add the couchbase-cli man pages to the admin_tools package, filtering out docs for other binaries not in the
+    # package.
+    INSTALL(
+        DIRECTORY generated/man/
+        DESTINATION ${admin_tools_INSTALL_PREFIX}/share/man
+        EXCLUDE_FROM_ALL COMPONENT admin_tools
+        FILES_MATCHING PATTERN "couchbase-cli*"
+    )
 ENDIF()
