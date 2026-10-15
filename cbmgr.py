@@ -130,17 +130,28 @@ def get_ns_ebin_path():
     return os.path.join(lib_path, "ns_server", "erlang", "lib", "ns_server", "ebin")
 
 
-def get_man_path():
-    base_path = get_base_cb_path()
-    if not base_path:
-        return None
+def get_man_page_path(page):
+    base_paths = [
+        # The admin tools package root, if running from it (cbmgr.py would be in <root>/lib/python)
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")),
+        # The Couchbase Server install
+        get_base_cb_path(),
+    ]
+    for base_path in base_paths:
+        if not base_path:
+            continue
 
-    share_path = os.path.join(base_path, "share")
+        share_path = os.path.join(base_path, "share")
 
-    if platform.system() == "Windows":
-        return os.path.join(share_path, "doc", "couchbase-cli")
+        if platform.system() == "Windows":
+            page_path = os.path.join(share_path, "doc", "couchbase-cli", page)
+        else:
+            page_path = os.path.join(share_path, "man", "man1", page)
 
-    return os.path.join(share_path, "man", "man1")
+        if os.path.isfile(page_path):
+            return page_path
+
+    return None
 
 
 def get_doc_page_name(command: str) -> str:
@@ -823,20 +834,25 @@ class CBHelpAction(Action):
         if option_string == "-h":
             parser.print_help()
         else:
-            CBHelpAction._show_man_page(self.klass.get_man_page_name())
+            CBHelpAction._show_man_page(self.klass.get_man_page_name(), parser)
         parser.exit()
 
     @staticmethod
-    def _show_man_page(page):
-        man_path = get_man_path()
+    def _show_man_page(page, parser):
+        page_path = get_man_page_path(page)
+        if page_path is None:
+            # Fall back to the short help if the man page isn't present
+            parser.print_help()
+            return
+
         if os.name == "nt":
             try:
-                subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", os.path.join(man_path, page)])
+                subprocess.call(["rundll32.exe", "url.dll,FileProtocolHandler", page_path])
             except OSError as e:
                 _exit_if_errors(["Unable to open man page using your browser, %s" % e])
         else:
             try:
-                subprocess.call(["man", os.path.join(man_path, page)])
+                subprocess.call(["man", page_path])
             except OSError:
                 _exit_if_errors(["Unable to open man page using the 'man' command, ensure it is on your path or"
                                  + "install a manual reader"])
