@@ -4840,13 +4840,13 @@ class SettingMasterPassword(Subcommand):
         return "Changing the settings of the master password"
 
 
-class SslManage(Subcommand):
+class TlsManage(Subcommand):
     """The user manage subcommand"""
 
     def __init__(self):
-        super(SslManage, self).__init__()
-        self.parser.prog = "couchbase-cli ssl-manage"
-        group = self.parser.add_argument_group("SSL manage options")
+        super(TlsManage, self).__init__()
+        self.parser.prog = "couchbase-cli tls-manage"
+        group = self.parser.add_argument_group("TLS manage options")
         me_group = group.add_mutually_exclusive_group(required=True)
         me_group.add_argument("--cluster-cert-info", dest="cluster_cert", action="store_true",
                               default=False, help="Gets the cluster certificate(s)")
@@ -4871,7 +4871,7 @@ class SslManage(Subcommand):
         me_group.add_argument("--set-client-auth", dest="client_auth_path", metavar="<path>",
                               help="A path to a file containing the client auth configuration")
         me_group.add_argument("--client-auth", dest="show_client_auth", action="store_true",
-                              help="Show ssl client certificate authentication value")
+                              help="Show tls client certificate authentication value")
 
     @rest_initialiser(version_check=True)
     def execute(self, opts):
@@ -4984,11 +4984,31 @@ class SslManage(Subcommand):
                 _exit_if_errors([f'Client auth config does not contain valid json: {e}'])
             _, errors = self.rest.set_client_cert_auth(config)
             _exit_if_errors(errors)
-            _success("SSL client auth updated")
+            _success("TLS client auth updated")
         elif opts.show_client_auth:
             result, errors = self.rest.retrieve_client_cert_auth()
             _exit_if_errors(errors)
             print(json.dumps(result, sort_keys=True, indent=2))
+
+    @staticmethod
+    def get_man_page_name():
+        return get_doc_page_name("couchbase-cli-tls-manage")
+
+    @staticmethod
+    def get_description():
+        return "Manage cluster certificates (deprecated)"
+
+
+class SslManage(TlsManage):
+    """The SSL manage subcommand (Deprecated)"""
+
+    def __init__(self):
+        super(SslManage, self).__init__()
+        self.parser.prog = "couchbase-cli ssl-manage"
+
+    def execute(self, opts):
+        _deprecated("Please use tls-manage instead")
+        super(SslManage, self).execute(opts)
 
     @staticmethod
     def get_man_page_name():

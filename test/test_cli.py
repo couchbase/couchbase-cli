@@ -3071,7 +3071,7 @@ class TestSslManage(CommandTest):
         client_json.close()
         self.no_error_run(self.command + ['--set-client-auth', client_json.name], self.server_args)
         self.assertIn('POST:/settings/clientCertAuth', self.server.trace)
-        self.assertIn('SSL client auth updated', self.str_output)
+        self.assertIn('TLS client auth updated', self.str_output)
 
     def test_set_client_auth_not_init(self):
         self.server_args['init'] = False
@@ -3080,7 +3080,7 @@ class TestSslManage(CommandTest):
         client_json.close()
         self.no_error_run(self.command + ['--set-client-auth', client_json.name], self.server_args)
         self.assertIn('POST:/settings/clientCertAuth', self.server.trace)
-        self.assertIn('SSL client auth updated', self.str_output)
+        self.assertIn('TLS client auth updated', self.str_output)
 
     def test_client_auth(self):
         self.server_args['/settings/clientCertAuth'] = {'prefixes': [], 'state': 'disable'}
