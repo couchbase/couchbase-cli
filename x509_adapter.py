@@ -136,11 +136,17 @@ class X509AdapterFactory():
         certs = self._parse_certs()
         key = self._parse_key()
 
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(key)
-            f.write(certs)
-            f.flush()
+        # The file must be closed before 'load_cert_chain' opens it by name: on Windows, a file opened by
+        # 'NamedTemporaryFile' with 'delete=True' can't be opened a second time while it's still open (MB-74987).
+        f = tempfile.NamedTemporaryFile(delete=False)
+        try:
+            with f:
+                f.write(key)
+                f.write(certs)
+
             return X509Adapter(f.name, password=self.password)
+        finally:
+            os.unlink(f.name)
 
     def _parse_certs(self) -> bytes:
         data = self._read_file_bytes(self.client_ca)

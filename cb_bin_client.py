@@ -100,11 +100,12 @@ class MemcachedClient(object):
                 sock = socket.socket(_family, socktype, proto)
                 sock.settimeout(10)
                 if use_ssl:
-                    cert_req = ssl.CERT_REQUIRED
-                    if not verify:
-                        cert_req = ssl.CERT_NONE
-                    sock = ssl.wrap_socket(sock, server_side=False, do_handshake_on_connect=True, cert_reqs=cert_req,
-                                           ca_certs=cacert)
+                    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                    ctx.check_hostname = False
+                    ctx.verify_mode = ssl.CERT_REQUIRED if verify else ssl.CERT_NONE
+                    if cacert:
+                        ctx.load_verify_locations(cafile=cacert)
+                    sock = ctx.wrap_socket(sock, server_side=False, do_handshake_on_connect=True)
 
                 self.s = sock
                 self.s.connect_ex(sockaddr)
