@@ -14,9 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import re
+import ssl
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from x509_adapter import X509Adapter, X509AdapterError, X509AdapterFactory
 
@@ -215,6 +219,44 @@ class X509AdapterFactoryTest(unittest.TestCase):
                 X509AdapterFactory(host="https://localhost:19000",
                                    client_ca=self.path_to("valid_cert.pem"),
                                    client_pk=self.path_to(filename)).generate()
+
+    def test_temporary_file_closed_before_load_and_removed(self):
+        tests = [
+            ("Success", "valid_key.pem", False),
+            ("LoadFailure", "valid_rsa_key.pem", True),
+        ]
+
+        real_named_temporary_file = tempfile.NamedTemporaryFile
+        real_load_cert_chain = ssl.SSLContext.load_cert_chain
+
+        for name, key, shouldFail in tests:
+            with self.subTest(name=name):
+                files = []
+                closed_at_load = []
+
+                def named_temporary_file(*args, **kwargs):
+                    f = real_named_temporary_file(*args, **kwargs)
+                    files.append(f)
+                    return f
+
+                def load_cert_chain(ctx, certfile, *args, **kwargs):
+                    closed_at_load.append(files[-1].closed)
+                    return real_load_cert_chain(ctx, certfile, *args, **kwargs)
+
+                with mock.patch("x509_adapter.tempfile.NamedTemporaryFile", side_effect=named_temporary_file), \
+                        mock.patch.object(ssl.SSLContext, "load_cert_chain", new=load_cert_chain):
+                    factory = X509AdapterFactory(host="https://localhost:19000",
+                                                 client_ca=self.path_to("valid_cert.pem"),
+                                                 client_pk=self.path_to(key))
+                    if shouldFail:
+                        with self.assertRaises(X509AdapterError):
+                            factory.generate()
+                    else:
+                        self.assertIsNotNone(factory.generate())
+
+                self.assertEqual(len(files), 1)
+                self.assertEqual(closed_at_load, [True])
+                self.assertFalse(os.path.exists(files[0].name))
 
     @classmethod
     def path_to(cls, filename: str) -> Path:
